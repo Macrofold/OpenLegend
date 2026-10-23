@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 22, 2026 — Production custom-model deployment design
+
+The [custom-model pair](projects/custom-models-feature-spec.md), [MX tracker](maintainers/custom-models.md) and [limit inventory](limits/custom-models.md) specify ordinary production NPC generation through stable Macrofold deployments, optional model-revision pins, capability-aware output and existing local/world authority. [Macrofold's contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md) owns hosting, automatic recovery, deliberate revision updates and shared infrastructure costs; RunPod/vLLM is the first managed adapter, alongside operator-trusted compatible endpoints.
+
+Production continuity takes precedence over experimental reproducibility: worker restarts and diagnostic identity changes do not independently invalidate valid answers or require a new game profile. The service uses standing capacity/spending configuration; experiment IDs, finite study sessions and certificate equality are not game admission requirements. Optional comparisons reuse the same target and existing harness. Per-call charging remains separate from hosting cost, and local validation, current world permissions, original deadlines and no automatic inference replay remain protected. Implementation and live operating/model-quality evidence remain open; no default model is selected by design alone.
+
 ## October 20, 2026 — Generalize context construction and bound delivery
 
 The [context design](projects/situation-aware-cognition-context-tech-design.md#5-situation-detection-without-an-exclusive-classifier) composes the actual decision with typed requirements, supported relevance and dependencies from existing source/world owners. Scene names, family quotas and benchmark templates do not determine relevance; unused capacity does not justify optional information. Faithful projection retains current facts, units, time, scope, attribution, uncertainty and exact References.

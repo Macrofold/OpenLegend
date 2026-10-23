@@ -34,6 +34,10 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 [Context implementation and qualification (SC01–SC12)](cognition-context.md) coordinates the [feature specification](../projects/situation-aware-cognition-context-feature-spec.md), [technical design](../projects/situation-aware-cognition-context-tech-design.md), [supplied-request evidence and conversation decisions](../projects/situation-aware-cognition-context-evidence-and-decisions.md), [complete repertoire review](../projects/situation-aware-cognition-context-repertoire-review.md) and [SCX constraints](../limits/cognition.md#situation-aware-context-selection). The selected design is complete; runtime and gameplay qualification remain open. CR/CE/IS/PF retain their existing semantic and acceptance owners, including full accepted identity, required evidence, exact References, compatible speech/action and distinct SPK/CTR scope.
 
+## Custom model deployments
+
+[Custom models (MX01–MX08)](custom-models.md) owns the [feature specification](../projects/custom-models-feature-spec.md), [technical design](../projects/custom-models-tech-design.md) and [limits](../limits/custom-models.md). The production target is ordinary NPC generation through Macrofold-managed or trusted imported endpoints, with stable deployment references, automatic serving recovery and existing game authority. Optional benchmark work is independent of production delivery. Runtime integration and live acceptance remain open; [research items 8–10](npc-cognition-research-needs-design.md#8-low-refusal-characterization-without-loss-of-agency) retain unrun comparisons.
+
 ## October 14 foundation review
 
 [Foundation evidence](../verification/foundation-review.md) · [Focused follow-up tasks](foundation-review-todos.md) · [Foundational tests](foundational-tests.md) · [Hardening evidence](../verification/foundation-hardening.md). These reports distinguish inspected code, executed checks and remaining qualification.
