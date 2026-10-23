@@ -2,6 +2,15 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { NetworkError, type NetworkOwner } from '@open-legend/network';
 import { MacrofoldTransport, MacrofoldHttpError, macrofoldObject as object } from './macrofold.js';
 import {
+  captureMacrofoldDeploymentTarget,
+  captureMacrofoldDeploymentReceipt,
+  decodeMacrofoldGeneration,
+  macrofoldDeploymentRequestFields,
+  prepareMacrofoldGenerationInput,
+  type MacrofoldDeploymentTarget,
+  type MacrofoldOutputMode,
+} from './macrofold-inference-target.js';
+import {
   microUsdToUsd,
   parseNonnegativeSafeInteger,
   sumSafeIntegers,
@@ -33,12 +42,9 @@ import type {
 export type MacrofoldDecisionModel = 'typesafe/jev-1.13' | 'microsoft/microsoft-decision-1';
 export type MacrofoldBillingMode = NonNullable<AiReceipt['macrofoldBillingMode']>;
 
-export interface MacrofoldGenerationConfig {
+interface MacrofoldTransportConfig {
   baseUrl: string;
   apiKey: string;
-  model: string;
-  billingMode: MacrofoldBillingMode;
-  providerConnectionId?: string;
   /** An explicit caller-funded limit; this client owns no aggregate spending ledger. */
   maxCostUsd: number;
   timeoutMs?: number;
@@ -46,8 +52,28 @@ export interface MacrofoldGenerationConfig {
   network?: NetworkOwner;
 }
 
-export interface MacrofoldDecisionConfig extends Omit<MacrofoldGenerationConfig, 'model'> {
+export type MacrofoldGenerationConfig = MacrofoldTransportConfig &
+  (
+    | {
+        model: string;
+        billingMode: MacrofoldBillingMode;
+        providerConnectionId?: string;
+        macrofoldDeployment?: never;
+        macrofoldOutputMode?: never;
+      }
+    | {
+        macrofoldDeployment: MacrofoldDeploymentTarget;
+        macrofoldOutputMode: MacrofoldOutputMode;
+        model?: never;
+        billingMode?: never;
+        providerConnectionId?: never;
+      }
+  );
+
+export interface MacrofoldDecisionConfig extends MacrofoldTransportConfig {
   model: MacrofoldDecisionModel;
+  billingMode: MacrofoldBillingMode;
+  providerConnectionId?: string;
 }
 
 export interface MacrofoldGenerationRequest extends GenerateRequest {
@@ -103,6 +129,7 @@ export function captureMacrofoldInferenceReceipt(
 ): Record<string, unknown> {
   receipt.completionUncertain = macrofoldInferenceEvidence(run, status, result).completionUncertain;
   const inference = object(result['inference']);
+  captureMacrofoldDeploymentReceipt(inference, receipt, receipt.macrofoldRequestedDeployment);
   const admittedMode = receipt.macrofoldBillingMode;
   const reportedMode = record(inference['billing'])
     ? inference['billing']['billing_mode']
@@ -237,12 +264,29 @@ function captureEmbeddedInferenceUsage(
           },
         })
       : undefined;
+  // Deployment request fees are fixed independently of token metering. The
+  // gateway's provisional flag can describe missing usage even when its exact
+  // matched deployment attribution and all request-fee fields establish zero.
+  // Uncertain execution still retains its original reservation.
+  const fixedDeploymentFee =
+    billingMode === 'byok' &&
+    !receipt.completionUncertain &&
+    receipt.macrofoldRequestedDeployment !== undefined &&
+    receipt.macrofoldDeployment !== undefined &&
+    receipt.macrofoldCostAttribution?.basis === 'deployment' &&
+    receipt.macrofoldCostAttribution.deploymentId === receipt.macrofoldDeployment.deploymentId &&
+    receipt.macrofoldCostAttribution.infrastructureCostIncluded === false &&
+    microUsdToUsd(billing['charged_micro_usd']) === 0 &&
+    microUsdToUsd(billing['reported_micro_usd']) === 0 &&
+    microUsdToUsd(billing['budget_cost_micro_usd']) === 0;
   const estimatedCostUsd =
     billingMode === 'managed'
       ? microUsdToUsd(billing['charged_micro_usd'])
-      : billingMode === 'byok' && billing['provisional'] === false && embeddedUsage
-        ? microUsdToUsd(billing['reported_micro_usd'])
-        : undefined;
+      : fixedDeploymentFee
+        ? 0
+        : billingMode === 'byok' && billing['provisional'] === false && embeddedUsage
+          ? microUsdToUsd(billing['reported_micro_usd'])
+          : undefined;
   const reported = billing['provider_reported_cost_usd'];
   const providerReportedCostUsd =
     billing['provider_reported_cost_status'] === 'reported' &&
@@ -383,16 +427,31 @@ function createMacrofoldExecutor(
   kind: 'decision' | 'generation',
 ) {
   const config = Object.freeze({ ...configuration });
+  const deployment = config.macrofoldDeployment
+    ? captureMacrofoldDeploymentTarget(config.macrofoldDeployment)
+    : undefined;
+  const model = deployment ? `deployment:${deployment.modelBinding.deployment_id}` : config.model;
+  const billingMode = deployment ? 'byok' : config.billingMode;
   const maxCost = usdToMicroUsd(config.maxCostUsd);
-  const timeout = config.timeoutMs ?? 120_000;
+  const configuredTimeout = config.timeoutMs ?? 120_000;
+  const timeout = deployment ? Math.min(configuredTimeout, 240_000) : configuredTimeout;
   if (
     !maxCost ||
-    !Number.isSafeInteger(timeout) ||
-    timeout < 1 ||
-    timeout > 300_000 ||
-    !config.model.trim() ||
-    config.model.length > 200 ||
-    !['managed', 'byok'].includes(config.billingMode)
+    !Number.isSafeInteger(configuredTimeout) ||
+    configuredTimeout < 1 ||
+    configuredTimeout > 300_000 ||
+    !model?.trim() ||
+    model.length > 200 ||
+    !billingMode ||
+    !['managed', 'byok'].includes(billingMode) ||
+    (deployment !== undefined &&
+      (kind !== 'generation' ||
+        config.model !== undefined ||
+        config.billingMode !== undefined ||
+        config.providerConnectionId !== undefined ||
+        !['json_schema', 'json_object', 'prompted_json'].includes(
+          config.macrofoldOutputMode ?? '',
+        )))
   )
     throw new Error('Invalid Macrofold inference configuration.');
   const api = new MacrofoldTransport(config.baseUrl, config.apiKey, config.fetch, config.network);
@@ -404,9 +463,10 @@ function createMacrofoldExecutor(
     const receipt: AiReceipt = {
       requestId: request.requestId,
       provider: 'macrofold',
-      macrofoldBillingMode: config.billingMode,
-      requestedModel: config.model,
-      model: config.model,
+      macrofoldBillingMode: billingMode,
+      ...(deployment ? { macrofoldRequestedDeployment: deployment } : {}),
+      requestedModel: model,
+      model,
       modelVersionStatus: 'unavailable',
       contextDigest: digest('invalid_context'),
       startedAt: new Date(started).toISOString(),
@@ -453,14 +513,18 @@ function createMacrofoldExecutor(
           const signal = operation.signal;
           const body = {
             ...(request.stream ? { stream: true } : {}),
-            model_binding: {
-              provider: 'openrouter',
-              model: config.model,
-              billing_mode: receipt.macrofoldBillingMode,
-              ...(config.providerConnectionId
-                ? { provider_connection_id: config.providerConnectionId }
-                : {}),
-            },
+            ...(deployment
+              ? macrofoldDeploymentRequestFields(deployment)
+              : {
+                  model_binding: {
+                    provider: 'openrouter',
+                    model,
+                    billing_mode: receipt.macrofoldBillingMode,
+                    ...(config.providerConnectionId
+                      ? { provider_connection_id: config.providerConnectionId }
+                      : {}),
+                  },
+                }),
             input,
             limits: {
               max_cost_micro_usd: String(maxCost),
@@ -589,7 +653,10 @@ function createMacrofoldExecutor(
           /* Original reservation remains uncertain. */
         }
       }
-      if (error instanceof MacrofoldHttpError) receipt.httpStatus = error.status;
+      if (error instanceof MacrofoldHttpError) {
+        receipt.httpStatus = error.status;
+        if (/^[a-z][a-z0-9_]{0,127}$/.test(error.code)) receipt.providerErrorCode = error.code;
+      }
       const outcome = stopped
         ? callerCancelled
           ? 'cancelled'
@@ -651,23 +718,49 @@ export function createMacrofoldDecisionClient(configuration: MacrofoldDecisionCo
   };
 }
 
-/** Native OpenRouter chat with a strict caller-owned JSON schema and optional streamed delivery. */
+/** One existing inference lifecycle for catalog chat and configured deployment generation. */
 export function createMacrofoldGenerationClient(configuration: MacrofoldGenerationConfig): {
   generate<T = JsonValue>(request: MacrofoldGenerationRequest): Promise<AiResult<T>>;
 } {
-  const config = Object.freeze({ ...configuration });
+  const config: MacrofoldGenerationConfig = configuration.macrofoldDeployment
+    ? Object.freeze({
+        ...configuration,
+        macrofoldDeployment: captureMacrofoldDeploymentTarget(configuration.macrofoldDeployment),
+      })
+    : Object.freeze({ ...configuration });
   const execute = createMacrofoldExecutor(config, 'generation');
   return {
     generate<T = JsonValue>(request: MacrofoldGenerationRequest): Promise<AiResult<T>> {
       return execute<T>(request, () => {
-        if (!request.task?.trim() || !request.instructions?.trim())
-          throw new InvalidData('invalid_generation_instructions');
-        if (request.model !== undefined && request.model !== config.model)
-          throw new InvalidData('model_not_authorized');
-        const name =
-          request.schemaName ?? request.task.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
-        if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) throw new InvalidData('invalid_schema_name');
-        const { schema, validate } = prepareSchema(request.schema, 500_000);
+        const deployment = config.macrofoldDeployment;
+        if (deployment) {
+          if (request.model !== undefined || request.reasoningEffort !== undefined)
+            throw new InvalidData('deployment_provider_parameters_unsupported');
+          if (request.macrofoldDeployment) {
+            const selected = captureMacrofoldDeploymentTarget(request.macrofoldDeployment);
+            if (
+              selected.workspaceId !== deployment.workspaceId ||
+              selected.modelBinding.deployment_id !== deployment.modelBinding.deployment_id ||
+              selected.modelBinding.deployment_revision_id !==
+                deployment.modelBinding.deployment_revision_id
+            )
+              throw new InvalidData('deployment_not_authorized');
+          }
+          if (
+            request.macrofoldOutputMode !== undefined &&
+            request.macrofoldOutputMode !== config.macrofoldOutputMode
+          )
+            throw new InvalidData('deployment_output_mode_not_authorized');
+        } else {
+          if (
+            request.macrofoldDeployment !== undefined ||
+            request.macrofoldOutputMode !== undefined
+          )
+            throw new InvalidData('deployment_not_configured');
+          if (request.model !== undefined && request.model !== config.model)
+            throw new InvalidData('model_not_authorized');
+        }
+        const preparedSchema = prepareSchema(request.schema, 500_000);
         const maxOutputTokens = request.maxOutputTokens ?? 4096;
         if (
           !Number.isSafeInteger(maxOutputTokens) ||
@@ -675,52 +768,14 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
           maxOutputTokens > 16_384
         )
           throw new InvalidData('output_limit_exceeded');
-        if (
-          request.reasoningEffort !== undefined &&
-          !['none', 'low', 'medium', 'high'].includes(request.reasoningEffort)
-        )
-          throw new InvalidData('invalid_reasoning_effort');
-        const context = serialize(request.context, 500_000);
         return {
           maxOutputTokens,
-          input: {
-            messages: [
-              { role: 'system', content: request.instructions },
-              {
-                role: 'user',
-                content: typeof request.context === 'string' ? request.context : context,
-              },
-            ],
-            max_tokens: maxOutputTokens,
-            response_format: { type: 'json_schema', json_schema: { name, strict: true, schema } },
-            provider: { require_parameters: true },
-            ...(request.reasoningEffort ? { reasoning: { effort: request.reasoningEffort } } : {}),
-          },
-          decode(raw: unknown): { value: T } | { refused: true } {
-            if (
-              !record(raw) ||
-              !Array.isArray(raw.choices) ||
-              raw.choices.length !== 1 ||
-              !record(raw.choices[0])
-            )
-              throw new InvalidData('invalid_generation_response');
-            const choice = raw.choices[0];
-            const message = choice.message;
-            if (!record(message)) throw new InvalidData('invalid_generation_response');
-            if (message.refusal || choice.finish_reason === 'content_filter')
-              return { refused: true as const };
-            if (choice.finish_reason === 'length') throw new InvalidData('generation_incomplete');
-            if (typeof message.content !== 'string')
-              throw new InvalidData('missing_generation_text');
-            let value: unknown;
-            try {
-              value = JSON.parse(message.content);
-            } catch {
-              throw new InvalidData('invalid_generation_json');
-            }
-            if (!validate(value)) throw new InvalidData('generation_schema_mismatch');
-            return { value: value as T };
-          },
+          input: prepareMacrofoldGenerationInput(
+            { ...request, maxOutputTokens },
+            preparedSchema,
+            config.macrofoldOutputMode,
+          ),
+          decode: (raw) => decodeMacrofoldGeneration<T>(raw, preparedSchema),
         };
       });
     },

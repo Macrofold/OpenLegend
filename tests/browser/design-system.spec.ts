@@ -44,7 +44,7 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
     for (const locator of [
       page.locator('.ol-timebar'),
       page.locator('#world-editorPanel'),
-      page.locator('#world-editorPanel').getByRole('button', { name: 'Send', exact: true }),
+      page.locator('#world-editorPanel').getByRole('button', { name: /\bSend$/ }),
     ]) {
       const bounds = await locator.boundingBox();
       expect(bounds).not.toBeNull();

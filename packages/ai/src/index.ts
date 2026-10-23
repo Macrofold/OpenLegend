@@ -22,6 +22,17 @@ export type {
   MacrofoldBillingMode,
 } from './macrofold-decision.js';
 export { JsonObjectStream } from './json-stream.js';
+export {
+  captureMacrofoldDeploymentTarget,
+  macrofoldDeploymentRequestFields,
+  prepareMacrofoldGenerationInput,
+  decodeMacrofoldGeneration,
+  captureMacrofoldDeploymentReceipt,
+} from './macrofold-inference-target.js';
+export type {
+  MacrofoldDeploymentTarget,
+  MacrofoldOutputMode,
+} from './macrofold-inference-target.js';
 export { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
 export {
   usdToMicroUsd,

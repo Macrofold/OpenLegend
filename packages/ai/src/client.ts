@@ -288,6 +288,8 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
     },
     generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
       return run('openai', request, request.context, (model, contextJson) => {
+        if (request.macrofoldDeployment !== undefined || request.macrofoldOutputMode !== undefined)
+          throw new InvalidData('macrofold_deployment_requires_macrofold');
         if (!request.task?.trim() || !request.instructions?.trim())
           throw new InvalidData('invalid_generation_instructions');
         const name =

@@ -4,6 +4,7 @@ import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { PLAYER_ID } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
+import { projectView } from '../../apps/server/src/view.js';
 import { readConfig } from '../fixtures/database.js';
 test('scoped React action search, contextual facts and known unavailable choices (native fixture)', async ({
   page,
@@ -30,26 +31,35 @@ test('scoped React action search, contextual facts and known unavailable choices
     const menu = page.locator('#contextMenu'),
       search = page.getByRole('searchbox', { name: 'Find an action' }),
       tip = page.getByRole('tooltip');
-    await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
+    // Global gathering and its known blockers belong to the explicit action browser.
+    const openActions = () => page.getByRole('button', { name: /\bActions$/ }).click();
+    await openActions();
     await expect(search).toBeFocused();
     await search.fill('gather');
-    const gather = menu.getByRole('button', { name: /Gather River reeds/ });
+    const gather = menu
+      .getByRole('button', { name: /Gather reed fibers.*Target: River reeds/ })
+      .and(menu.locator('[data-catalogue-action="gather-reeds"]'));
     await gather.hover();
     await expect(tip).toBeVisible();
     const gatheringSeconds = entityGet(game.service.world.entities, 'reeds')?.resource?.workSeconds;
     expect(gatheringSeconds).toBeDefined();
     await expect(tip).toContainText(`${gatheringSeconds} game seconds`);
     await expect(tip).toContainText('Yields');
+    await page.keyboard.press('Escape');
+    // Ground context stays scoped; it does not supply the global hunting catalogue.
+    await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
     await search.fill('hunt');
     await expect(menu.locator('[data-catalogue-action]')).toHaveCount(0);
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
-    await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
+    await openActions();
     await expect(
       menu.getByRole('button', { name: 'Show Unavailable Actions', exact: true }),
     ).toHaveCount(0);
     await search.fill('gather');
     await expect(gather).toHaveAttribute('aria-disabled', 'true');
+    // The complete catalogue also contains berry and branch gathering choices.
+    await search.fill('gather river reeds');
     await search.press('ArrowDown');
     await expect(gather).toBeFocused();
     await expect(tip).toContainText('Resume the world');
@@ -61,14 +71,14 @@ test('scoped React action search, contextual facts and known unavailable choices
     await page.reload();
     await enterGame(page);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
-    await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
+    await openActions();
     await search.fill('gather');
     await expect(gather).toHaveAttribute('aria-disabled', 'true');
     await page.keyboard.press('Escape');
     await page.locator('#world').click({ button: 'right', position: { x: 900, y: 700 } });
-    await expect(menu.locator('.ol-picker-head strong')).toHaveText(
-      game.service.world.presentation!.locationName,
-    );
+    // Bare ground uses the player's current perceived place, not the opening heading.
+    const view = await projectView(game.service);
+    await expect(menu.locator('.ol-picker-head strong')).toHaveText(view.presentation.locationName);
     await search.fill('walk');
     await expect(menu.getByRole('button', { name: /Walk here/ })).toHaveCount(0);
     // Walking belongs to primary click. Evade remains a native action but is

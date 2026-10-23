@@ -9,8 +9,9 @@ import {
 import type { BenchmarkCase, BenchmarkScene } from './types.js';
 import { decodeAnswer } from './options.js';
 import { permittedReaction } from './reaction-policy.js';
-import { armById } from './arms.js';
+import { armById, type BenchmarkArm } from './arms.js';
 import { nearestOfferedCategory } from './numeric-interpretation.js';
+import { assertPairwiseReportFits } from './evidence-limits.js';
 
 export interface GradedCase {
   id: string;
@@ -140,7 +141,20 @@ export interface RunRecord {
   stream?: true;
   result: AiResult<JudgeValue>;
   generation?: JsonValue;
+  outputMode?: 'json_schema' | 'json_object' | 'prompted_json';
   executionPhase?: string;
+  /** Complete study attempt: capability preparation, admission persistence and inference. */
+  attemptLatencyMs?: number;
+}
+/** Reports reuse this index rather than scanning every replicate's complete history. */
+export function groupByModel<T extends { model: string }>(records: readonly T[]): Map<string, T[]> {
+  const groups = new Map<string, T[]>();
+  for (const record of records) {
+    const rows = groups.get(record.model);
+    if (rows) rows.push(record);
+    else groups.set(record.model, [record]);
+  }
+  return groups;
 }
 const mean = (values: number[]) =>
   values.length ? values.reduce((sum, n) => sum + n, 0) / values.length : null;
@@ -174,14 +188,20 @@ export function summarize(
   records: RunRecord[],
   models: string[],
   excludedIds: ReadonlySet<string> = new Set(),
+  availableArms: ReadonlyMap<string, BenchmarkArm> = armById,
 ) {
+  assertPairwiseReportFits(
+    models.length,
+    models.reduce((bytes, model) => bytes + Buffer.byteLength(JSON.stringify(model)) - 2, 0),
+  );
   // Keep the complete original scene when decoding: memory-order choice handles
   // depend on the original question position. Exclusion changes grading only.
   const includedCases = (scene: BenchmarkScene) =>
     scene.cases.filter((test) => !excludedIds.has(test.id));
   const sceneById = new Map(corpus.map((s) => [s.id, s]));
+  const recordsByModel = groupByModel(records);
   const summaries = models.map((model) => {
-    const runs = records.filter((r) => r.model === model);
+    const runs = recordsByModel.get(model) ?? [];
     const byScene = new Map(runs.map((r) => [r.sceneId, r]));
     const rows = corpus.flatMap((scene) =>
       includedCases(scene).map((test) => {
@@ -211,8 +231,8 @@ export function summarize(
     return {
       model,
       probabilitySource:
-        armById.get(model)?.transport.includes('generation') ||
-        armById.get(model)?.transport === 'openai-response'
+        availableArms.get(model)?.transport.includes('generation') ||
+        availableArms.get(model)?.transport === 'openai-response'
           ? 'llm-self-reported'
           : 'native-decision',
       reportedModels: [...new Set(runs.map((r) => r.result.receipt.model))].map((reported) => ({
@@ -369,6 +389,16 @@ export function summarize(
           1,
         ),
       },
+      attemptLatencyMs: {
+        p50: percentile(
+          runs.flatMap((r) => (r.attemptLatencyMs === undefined ? [] : [r.attemptLatencyMs])),
+          0.5,
+        ),
+        p95: percentile(
+          runs.flatMap((r) => (r.attemptLatencyMs === undefined ? [] : [r.attemptLatencyMs])),
+          0.95,
+        ),
+      },
       providerLatencyMs: {
         p50: percentile(
           runs.flatMap((r) =>
@@ -483,10 +513,9 @@ export function summarize(
     })),
     commonCalibration,
     pairwise: models.flatMap((first, i) =>
-      models.slice(i + 1).map((second) => {
-        const a = summaries.find((s) => s.model === first)!,
-          b = summaries.find((s) => s.model === second)!;
-        const bm = new Map(b.cases.map((r) => [r.id, r]));
+      models.slice(i + 1).map((second, offset) => {
+        const a = summaries[i]!,
+          bm = rowMaps[i + offset + 1]!;
         const common = a.cases.filter((r) => r.answered && bm.get(r.id)?.answered);
         return {
           first,

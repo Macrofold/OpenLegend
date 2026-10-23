@@ -1,98 +1,19 @@
-import {
-  DECISION_MODEL,
-  decisionEscalationConfigSchema,
-  defaultDecisionEscalation,
-} from './decision-state.js';
+import { decisionEscalationConfigSchema, defaultDecisionEscalation } from './decision-state.js';
 import { z } from 'zod';
 import { accountBindingSchema } from './authority.js';
 import { readMcpConfig } from './mcp-config.js';
-import { DEFAULT_MACROFOLD_MODEL } from './macrofold-model.js';
+import { numberSetting, readGenerationConfig } from './generation-config.js';
 import { resolve } from 'node:path';
 import {
   configuredCreationTargetSchema,
   creationDestinationSchema,
 } from './creation-target-contracts.js';
-import type { MacrofoldBillingMode, ModelTokenPrices, TokenPrices } from '@open-legend/ai';
-import { captureModelPrices } from '@open-legend/ai';
 import { BASE_STARTING_WORLD_PRESETS, isSafeRecordId } from '@open-legend/domain';
-
-const modelIdentity = z.string().regex(/^[\w./:-]{1,128}$/);
-const tokenRate = z.number().finite().nonnegative();
-const modelPriceSchema = z
-  .object({
-    model: modelIdentity,
-    prices: z
-      .object({
-        inputUsdPerMillion: tokenRate,
-        outputUsdPerMillion: tokenRate,
-        cachedInputUsdPerMillion: tokenRate.optional(),
-        cacheWriteInputUsdPerMillion: tokenRate.optional(),
-      })
-      .strict(),
-    reportedAliases: z.array(modelIdentity).optional(),
-  })
-  .strict();
-
-function modelPricesSetting(
-  raw: string | undefined,
-  model: string,
-  prices: TokenPrices,
-): readonly ModelTokenPrices[] {
-  modelIdentity.parse(model);
-  const catalogue: ModelTokenPrices[] = [{ model, prices }];
-  const owners = new Set([model]);
-  const declared = new Set<string>();
-  let entries: z.infer<typeof modelPriceSchema>[];
-  try {
-    entries = raw === undefined ? [] : z.array(modelPriceSchema).parse(JSON.parse(raw));
-  } catch {
-    throw new Error('OPENAI_MODEL_PRICES_JSON must be an array of valid model price records.');
-  }
-  for (const entry of entries) {
-    if (declared.has(entry.model) || (entry.model !== model && owners.has(entry.model)))
-      throw new Error('OPENAI_MODEL_PRICES_JSON has duplicate model or alias ownership.');
-    declared.add(entry.model);
-    if (entry.model === model) {
-      const rateKeys = [
-        'inputUsdPerMillion',
-        'outputUsdPerMillion',
-        'cachedInputUsdPerMillion',
-        'cacheWriteInputUsdPerMillion',
-      ] as const;
-      if (rateKeys.some((key) => prices[key] !== entry.prices[key]))
-        throw new Error('The default model catalogue prices conflict with its LLM price settings.');
-      // Default fields remain the sole price owner; an identical entry can declare aliases.
-      catalogue[0] = { model, prices, reportedAliases: entry.reportedAliases };
-    } else {
-      owners.add(entry.model);
-      catalogue.push(entry);
-    }
-    for (const alias of entry.reportedAliases ?? []) {
-      if (owners.has(alias))
-        throw new Error('OPENAI_MODEL_PRICES_JSON has duplicate model or alias ownership.');
-      owners.add(alias);
-    }
-  }
-  return captureModelPrices(catalogue);
-}
-
-function numberSetting(
-  env: NodeJS.ProcessEnv,
-  name: string,
-  fallback: number,
-  min: number,
-  max: number,
-): number {
-  const value = env[name] === undefined ? fallback : Number(env[name]);
-  if (!Number.isFinite(value) || value < min || value > max) {
-    throw new Error(`${name} must be a number between ${min} and ${max}.`);
-  }
-  return value;
-}
 
 /** Trusted operator configuration. Secrets and arbitrary endpoints never come from the browser. */
 export function readConfig(env: NodeJS.ProcessEnv = process.env) {
-  const macrofoldKey = env['MACROFOLD_API_KEY'] ?? '';
+  const generation = readGenerationConfig(env);
+  const { macrofoldKey } = generation;
   const macrofoldJevModel = env['MACROFOLD_JEV_MODEL'] ?? 'typesafe/jev-1.13';
   const jevModel = env['JEV_MODEL'] ?? 'jev-1.13.0';
   const databaseUrl = env['OPEN_LEGEND_DATABASE_URL']?.trim() ?? '';
@@ -108,80 +29,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   } catch {
     throw new Error('OPEN_LEGEND_DATABASE_URL is required and must be a PostgreSQL URL.');
   }
-  const configuredBillingMode = env['MACROFOLD_BILLING_MODE'] ?? 'byok';
   const sqlWriteGroups = z.enum(['on', 'off']).parse(env['OPEN_LEGEND_SQL_WRITE_GROUPS'] ?? 'on');
-  if (configuredBillingMode !== 'byok' && configuredBillingMode !== 'managed')
-    throw new Error('MACROFOLD_BILLING_MODE must be byok or managed.');
-  const macrofoldBillingMode: MacrofoldBillingMode = configuredBillingMode;
-  if (
-    env['OPENAI_MODEL'] &&
-    env['OPENAI_MODEL'] !== 'gpt-5.6-luna' &&
-    [
-      'LLM_INPUT_USD_PER_MILLION',
-      'LLM_OUTPUT_USD_PER_MILLION',
-      'LLM_CACHED_INPUT_USD_PER_MILLION',
-      'LLM_CACHE_WRITE_USD_PER_MILLION',
-    ].some((key) => env[key] === undefined)
-  ) {
-    throw new Error(
-      'A custom OPENAI_MODEL requires explicit input, output, cached-input and cache-write price settings.',
-    );
-  }
-  if (
-    env['JEV_MODEL'] &&
-    env['JEV_MODEL'] !== 'jev-1.13.0' &&
-    env['JEV_INPUT_USD_PER_MILLION'] === undefined
-  )
-    throw new Error('A custom JEV_MODEL requires an explicit JEV_INPUT_USD_PER_MILLION.');
-  const llmModel = env['OPENAI_MODEL'] ?? 'gpt-5.6-luna';
-  const llmPrices = Object.freeze({
-    inputUsdPerMillion: numberSetting(env, 'LLM_INPUT_USD_PER_MILLION', 0.2, 0, 1000),
-    outputUsdPerMillion: numberSetting(env, 'LLM_OUTPUT_USD_PER_MILLION', 1.2, 0, 1000),
-    cachedInputUsdPerMillion: numberSetting(env, 'LLM_CACHED_INPUT_USD_PER_MILLION', 0.02, 0, 1000),
-    cacheWriteInputUsdPerMillion: numberSetting(
-      env,
-      'LLM_CACHE_WRITE_USD_PER_MILLION',
-      0.25,
-      0,
-      1000,
-    ),
-  });
-  // Standard short-context rates checked 2026-10-17; fallback admission is at most 100 KB.
-  // An explicit operator catalogue owns its entries; missing models still fail closed.
-  // https://developers.openai.com/api/docs/pricing
-  const catalogue =
-    env['OPENAI_MODEL_PRICES_JSON'] ??
-    JSON.stringify(
-      llmModel === DECISION_MODEL
-        ? []
-        : [
-            {
-              model: DECISION_MODEL,
-              prices: {
-                inputUsdPerMillion: 0.1,
-                outputUsdPerMillion: 0.5,
-                cachedInputUsdPerMillion: 0.01,
-                cacheWriteInputUsdPerMillion: 0.125,
-              },
-            },
-          ],
-    );
-  const llmModelPrices = modelPricesSetting(catalogue, llmModel, llmPrices);
-  // Standard embedding rate checked 2026-10-04. Explicit catalogue ownership wins;
-  // custom/unknown models never inherit it. docs/ai-providers.md#configuration-and-interface
-  const embeddingModelPrices = llmModelPrices.some(
-    (entry) =>
-      entry.model === 'text-embedding-3-small' ||
-      entry.reportedAliases?.includes('text-embedding-3-small'),
-  )
-    ? llmModelPrices
-    : captureModelPrices([
-        ...llmModelPrices,
-        {
-          model: 'text-embedding-3-small',
-          prices: { inputUsdPerMillion: 0.02, outputUsdPerMillion: 0 },
-        },
-      ]);
   const selectedWorldPreset = z
     .enum(BASE_STARTING_WORLD_PRESETS)
     .safeParse(env['OPEN_LEGEND_WORLD_PRESET'] ?? 'wilderness');
@@ -286,6 +134,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     .int()
     .parse(numberSetting(env, 'OPEN_LEGEND_PLAYER_CAPACITY', 100, 1, 10000));
   return {
+    ...generation,
     creation: {
       startup: creationStartup,
       installationId: creationInstallationId,
@@ -319,15 +168,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
         ? ''
         : (env['OPENAI_EMBEDDING_API_KEY'] ?? env['OPENAI_API_KEY'] ?? ''),
     embeddingModel: env['EMBEDDING_MODEL'] ?? 'text-embedding-3-small',
-    embeddingModelPrices,
     embeddingDimensions: numberSetting(env, 'EMBEDDING_DIMENSIONS', 512, 64, 3072),
     embeddingReserveUsd: numberSetting(env, 'EMBEDDING_CALL_RESERVE_USD', 0.01, 0.000001, 1),
-    miniModel: env['COGNITION_MINI_MODEL'] ?? 'gpt-5-mini',
-    complexModel: env['COGNITION_COMPLEX_MODEL'] ?? 'gpt-5',
-    summaryModel: env['COGNITION_SUMMARY_MODEL'] ?? 'gpt-5-nano',
-    macrofoldMiniModel: env['MACROFOLD_MINI_MODEL'] ?? 'openai/gpt-5-mini',
-    macrofoldComplexModel: env['MACROFOLD_COMPLEX_MODEL'] ?? 'openai/gpt-5',
-    macrofoldSummaryModel: env['MACROFOLD_SUMMARY_MODEL'] ?? 'openai/gpt-5-nano',
     host,
     godMode: env['OPEN_LEGEND_GOD_MODE'] === 'true',
     port,
@@ -356,15 +198,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     jevReserveUsd: numberSetting(env, 'JEV_CALL_RESERVE_USD', 0.005, 0.000001, 1),
     llmReserveUsd: numberSetting(env, 'LLM_CALL_RESERVE_USD', 0.08, 0.000001, 10),
     aiTimeoutMs: numberSetting(env, 'AI_TIMEOUT_SECONDS', 35, 5, 120) * 1000,
-    macrofoldUrl: env['MACROFOLD_BASE_URL'] ?? 'http://localhost:3210',
-    macrofoldKey,
-    macrofoldBillingMode,
-    // Connection IDs select credentials already stored in Macrofold, not raw keys.
-    macrofoldProviderConnectionId: env['MACROFOLD_PROVIDER_CONNECTION_ID'] ?? '',
     macrofoldJevModel,
     macrofoldJevConnectionId:
       env['MACROFOLD_JEV_CONNECTION_ID'] || env['MACROFOLD_PROVIDER_CONNECTION_ID'] || '',
-    macrofoldModel: env['MACROFOLD_MODEL'] ?? DEFAULT_MACROFOLD_MODEL,
     macrofoldHarness: env['MACROFOLD_HARNESS'] ?? 'opencode',
     macrofoldWorldConnectionId: env['MACROFOLD_WORLD_CONNECTION_ID'] ?? '',
     macrofoldWorldRunUsd: numberSetting(env, 'MACROFOLD_WORLD_RUN_MAX_USD', 1, 0.000001, 5),
@@ -375,21 +211,15 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
       5,
       1800,
     ),
-    macrofoldRunUsd: numberSetting(env, 'MACROFOLD_RUN_MAX_USD', 0.25, 0.000001, 10),
     // Selected by the application/world compute owner; never allocated by an actor lane.
     macrofoldWorkerId: env['MACROFOLD_WORKER_ID']?.trim() ?? '',
     macrofoldTimeoutSeconds: numberSetting(env, 'MACROFOLD_TIMEOUT_SECONDS', 300, 5, 300),
     jevKey: env['TYPESAFE_API_KEY'] ?? env['JEV_API_KEY'] ?? '',
-    llmKey: env['OPENAI_API_KEY'] ?? '',
     jevModel,
-    llmModel,
     jevPrices: {
       inputUsdPerMillion: numberSetting(env, 'JEV_INPUT_USD_PER_MILLION', 0.042, 0, 1000),
       outputUsdPerMillion: 0,
     },
-    // Explicit estimates; operators must set rates for a different model. No claim of invoice totals.
-    llmPrices,
-    llmModelPrices,
   };
 }
 

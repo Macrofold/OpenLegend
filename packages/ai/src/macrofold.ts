@@ -26,6 +26,12 @@ export class MacrofoldHttpError extends Error {
       this.code === 'execution_disabled' ||
       // Macrofold rejects insufficient credit before creating a Run or reserving spend.
       (this.status === 402 && this.code === 'insufficient_credit') ||
+      // These canonical deployment errors establish no new admission. Other
+      // conflicts/unavailable responses can still represent uncertain work.
+      (this.status === 409 &&
+        ['deployment_binding_stale', 'deployment_not_ready'].includes(this.code)) ||
+      (this.status === 402 && this.code === 'deployment_budget_exhausted') ||
+      (this.status === 503 && this.code === 'deployment_unavailable') ||
       [400, 401, 403, 404, 413, 422, 429].includes(this.status)
     );
   }

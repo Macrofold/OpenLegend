@@ -18,6 +18,8 @@ Adult players, non-explicit presentation with optional sex, and browser-only del
 
 ## How to use and maintain this register
 
+**Selected custom-model capability: Done — designed; implementation and live acceptance open.** The [feature specification](../projects/custom-models-feature-spec.md), [technical design](../projects/custom-models-tech-design.md) and [MX tracker](custom-models.md) settle production deployment selection, automatic hosting recovery, local response validation and optional comparison tooling from [NPC research items 8–10](npc-cognition-research-needs-design.md#8-low-refusal-characterization-without-loss-of-agency). Macrofold owns provisioning and the shared inference contract. Model comparisons do not gate this integration; broader local decision protocols, ND27/PD07 release work, voice and personality/memory extensions retain their existing owners.
+
 Use the [maintainer index](README.md) for delivery, [open decisions](../../archive/05-project/open-decisions.md) for consequential choices, [research backlog](../../archive/05-project/research-backlog.md) for empirical questions and [policies to revisit](revisitable-policies.md) for reconsideration triggers.
 
 For selected work, check the actual available revision and relevant owner evidence. Define a useful outcome, meaningful failures, necessary dependencies and remaining decisions. Follow the [design workflow](../../.agents/skills/openlegend-design/SKILL.md) and [feature-documentation structure](../feature-documentation.md): use existing paired specifications, focused tasks and limits inventories where adequate. World-specific rules remain world-owned.

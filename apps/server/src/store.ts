@@ -1783,6 +1783,21 @@ export class SqlGameRepository implements GameRepository {
         .get(id);
       if (!row) return;
       const prior = row['receipt'] ? (JSON.parse(String(row['receipt'])) as AiReceipt) : undefined;
+      // Later accounting may omit optional metadata without changing the exact admitted Run.
+      // Retain its already-established deployment revision and separate hosting attribution.
+      if (
+        prior?.macrofoldDeployment ||
+        prior?.macrofoldCostAttribution ||
+        prior?.macrofoldRequestedDeployment
+      )
+        receipt = {
+          ...receipt,
+          macrofoldDeployment: receipt.macrofoldDeployment ?? prior.macrofoldDeployment,
+          macrofoldCostAttribution:
+            receipt.macrofoldCostAttribution ?? prior.macrofoldCostAttribution,
+          macrofoldRequestedDeployment:
+            receipt.macrofoldRequestedDeployment ?? prior.macrofoldRequestedDeployment,
+        };
       assertAttemptReceiptContinuity(prior, receipt);
       if (row['status'] === 'settled') {
         // A final priced receipt is immutable; an unpriced attempt may receive

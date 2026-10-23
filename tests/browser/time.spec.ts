@@ -5,6 +5,10 @@ import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../fixtures/database.js';
 
+// Time/control checks need desktop layout, while scene journeys cover larger frames.
+const desktopViewport = { width: 1024, height: 720 };
+test.use({ viewport: desktopViewport });
+
 test('time settings persist with sole-tab entry, explicit transfer, logout and manual world pause', async ({
   page,
 }, info) => {
@@ -76,7 +80,11 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     expect(await page.evaluate(() => sessionStorage.getItem('open-legend:tab-id'))).toBe(identity);
     await settings.click();
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
-    await page.screenshot({ path: info.outputPath('time-settings.png') });
+    // These images document time controls; full WebGL viewport readbacks can
+    // consume this journey's 60-second deadline without testing more controls.
+    const desktopTimeBounds = await page.locator('.ol-time-settings').boundingBox();
+    expect(desktopTimeBounds).not.toBeNull();
+    await page.screenshot({ path: info.outputPath('time-settings.png'), clip: desktopTimeBounds! });
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
     const panelBounds = await page.locator('.ol-time-settings').boundingBox();
@@ -85,8 +93,11 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     await expect(
       page.getByText('Leaving this tab pauses your play.', { exact: false }),
     ).toBeVisible();
-    await page.screenshot({ path: info.outputPath('time-settings-narrow.png') });
-    await page.setViewportSize({ width: 1440, height: 960 });
+    await page.screenshot({
+      path: info.outputPath('time-settings-narrow.png'),
+      clip: panelBounds!,
+    });
+    await page.setViewportSize(desktopViewport);
 
     const actorId = game.service.controlledEntityId;
     const exposure = game.service.world.participationPolicy!.exitExposureSeconds!;
@@ -159,22 +170,34 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       await expect(other.getByRole('dialog')).toBeHidden();
       await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.screenshot({ path: info.outputPath('tab-resume-narrow.png') });
+      await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
       const bounds = await page.getByRole('dialog').boundingBox();
       expect(bounds!.x).toBeGreaterThanOrEqual(0);
       expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
+      await page.screenshot({ path: info.outputPath('tab-resume-narrow.png'), clip: bounds! });
       await page.getByRole('button', { name: 'Resume Here', exact: true }).click();
       await expect(page.getByRole('dialog')).toBeHidden();
       await expect(other.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await other.getByRole('button', { name: 'Resume Here', exact: true }).click();
       await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await enterGame(other);
+      const otherControls = () =>
+        game.service.controlsElsewhere({
+          ...game.service.localScope,
+          connectionId: identity!,
+        });
+      expect(otherControls()).toBe(true);
       // Ordinary close runs pagehide/release. Default Playwright close skips unload;
-      // abrupt loss and its heartbeat expiry are exercised separately below.
+      // abrupt loss and subsequent elapsed-time reconciliation are checked below.
       await Promise.all([
         other.waitForEvent('close', { timeout: 5000 }),
         other.close({ runBeforeUnload: true }),
       ]);
+      // Closing the document is not an acknowledgement of queued server cleanup.
+      await expect.poll(otherControls).toBe(false);
+      // Restore the foreground tab before evaluating its synthetic focus event;
+      // background page scheduling can otherwise delay that evaluation.
+      await page.bringToFront();
       await focus(true);
       await enterGame(page); // The selected page is gone; one surviving tab needs no Resume.
       const logoutTab = await page.context().newPage();
@@ -215,9 +238,12 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     expect(await game.service.store.recentJobs()).toEqual([]);
     const beforeClose = game.service.world.simTime;
     await page.close();
+    await expect
+      .poll(() => entityGet(game.service.world.entities, actorId)?.actor?.participation?.phase)
+      .toBe('exiting');
     clock.now += 12_001;
-    // This fixture has no timer: reconcile native disconnect/heartbeat expiry,
-    // then spend the authored exposure before expecting the absent-world pause.
+    // Advance only after native disconnect has begun departure. Elapsed real time
+    // must not renew its original game-time deadline or skip the authored exposure.
     await game.service.tick(0);
     await expect
       .poll(() => game.service.world.exitExposures?.[actorId])
