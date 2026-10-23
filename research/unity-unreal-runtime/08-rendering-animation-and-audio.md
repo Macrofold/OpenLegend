@@ -74,13 +74,47 @@ The High Definition Render Pipeline (HDRP) has its own ray-tracing setup and sce
 
 This is a key comparison constraint: “Unity supports ray tracing,” “URP runs in a browser,” and “a specific HDRP ray-traced effect is supported” are different claims. The relevant unit of comparison includes the pipeline, effect, API, device, and version, rather than the engine name alone.
 
-## 4. Temporal reconstruction and perceived responsiveness
+## 4. Materials and texture residency
+
+### Unreal Substrate: surface response, representation, and evaluation
+
+Substrate describes a surface through composable “slabs”: scattering functions with physical parameters that can be mixed or layered. The current 5.8 overview makes it the default for new projects. Its Blendable GBuffer stores a simpler material representation with a predictable footprint; Adaptive GBuffer retains richer combinations at additional evaluation and storage cost. Closure-count and byte budgets can simplify a material automatically. A closure represents a scattering contribution evaluated for lighting. Adaptive support is limited to specified current consoles and SM6 desktop paths; other platforms use Blendable. Optional rough-reflection and material-layer features remain explicitly Experimental. [R35]
+
+The programmer guide explains the representation difference: Adaptive stores a bitstream whose layout varies per pixel, whereas Blendable retains a conventional layout. Ordinary scene-texture lookup exposes only the first Adaptive closure. Accessing richer material information therefore requires the Substrate-aware path; a familiar GBuffer read is not a complete description of a layered surface. Deferred, forward, analytic-light, and environment-light evaluation have distinct shader interfaces, and the documented shader API can change. [R36]
+
+**Maturity caveat:** the live parent documentation still labels Substrate **Beta**, while the overview describes its newer default configuration and retains older pre-production limitations. These conflicting statements do not support a uniform maturity claim for every path. This chapter records the actual configurations and explicit feature limitations rather than treating the 5.8 header as proof that all Substrate functionality has equal readiness. [R35], [R37]
+
+### Three different Unreal texture lifecycles
+
+Traditional texture streaming estimates required mipmap resolution from component bounds, texture density, visibility, and viewpoint. An asynchronous worker calculates ideal resolutions, then reduces selected mip levels until the streaming pool permits them. Load/unload requests have separate priorities and a temporary-memory limit. This works at whole-mipmap granularity. The guide's old UE 4.15 performance percentages are historical and are not current measurements. [R38]
+
+Streaming Virtual Texturing instead divides mip levels into fixed-size tiles. GPU feedback identifies tiles sampled by visible pixels; the CPU loads those tiles from disk into a GPU cache. Requests are reactive, so a newly exposed area can appear before its finest tiles arrive. Sampling adds lookup arithmetic and texture fetches; compatible samples can share a stack, while different coordinates prevent that sharing. Tile borders trade filtering quality against memory. Finer residency granularity therefore adds feedback, lookup, and caching costs. [R39]
+
+Runtime Virtual Texturing generates cached texels on the GPU from configured scene components and materials. A volume defines its spatial coverage; materials write surface attributes and other materials sample them. This shading cache is camera-independent and is not refreshed completely every frame: moving, skeletal, or animated contributors are poor matches for its documented static-content assumption. A hybrid can bake and stream distant, low-resolution mips while generating detailed mips at runtime. Otherwise, distant low mips may require many source actors to remain resident merely so their shading can be regenerated. “Runtime” describes texel production, not a guarantee of immediate updates or arbitrary persistent terrain mutation. [R40]
+
+The virtual-texture allocator separately owns page-table memory and physical tile pools. Physical pages form a least-recently-used cache; oversubscription can repeatedly evict and reload visible tiles, causing I/O and flicker. Optional residency bias reduces resolution to ease pressure. The highest active bias applies across virtual-texture sampling, so pressure in one pool can affect other sampled textures. Page-table growth has its own lifetime and is not equivalent to currently visible texture bytes. [R41]
+
+### Unity Shader Graph: one authoring graph, multiple generated programs
+
+Shader Graph 17.6 targets determine generated shader compatibility. A graph targeting URP and HDRP ordinarily generates a subshader for each; unsupported blocks become inactive, and the same graph need not produce identical images across pipelines. This is shared authoring with target-specific code generation, not one universal material execution path. Changing the active pipeline also requires reimporting a multi-target graph to update its material inspector. [R42]
+
+Its Master Stack separates vertex and fragment evaluation. A node connected into both contexts is evaluated in both shader stages; an inactive output and the node chain used only by that output do not contribute to the final shader. Graph reuse consequently does not imply that a calculation runs once per object or once per frame. [R43] Shader-variant preparation and its build/runtime tradeoff are covered in [chapter 09](09-content-tools-ui-and-platforms.md).
+
+### Unity mip streaming: calculated demand and a qualified budget
+
+Unity 6.6 chooses mip levels using camera settings, mesh UV layout, and MeshFilter or SkinnedMeshRenderer information. A texture shared by several objects needs the highest resolution requested by any of them. Spare budget can retain more detail than the current view requires. Terrain textures, texture arrays, cubemap arrays, and 3D textures are excluded. Rendering without supported component metadata cannot automatically calculate appropriate demand; unusual tiling/offset conventions can also produce incorrect estimates. These restrictions matter for custom draw paths and generated content. [R44]
+
+The memory budget includes non-streaming textures, reducing the portion available for streamed mips. A minimum retained-resolution constraint can make actual usage exceed the budget; the number is not an unconditional cap. Dropping or loading mip levels can expose visible transitions, and Editor measurements can include Editor-window textures. Selection, requested loading, residency, and the final sampled detail are therefore distinct stages. [R45]
+
+**Research interpretation.** These systems determine which optical detail is evaluated or resident. A material that looks wet, a cached road blend, or a discarded high-resolution texture does not itself establish friction, water quantity, damage, ownership, or saved world history. The rendered description and the world's physical or semantic rules remain different evidence domains.
+
+## 5. Temporal reconstruction and perceived responsiveness
 
 Unreal's Temporal Super Resolution (TSR) reconstructs a higher-resolution image from lower-resolution frames over time. Detail convergence depends on both internal resolution and actual frame rate. Newly revealed areas have little valid history, while motion and incorrect velocity information can damage reconstruction. Lower resolution reduces some rendering work, but the upscaler has its own cost and some later work runs at display resolution. The documentation explicitly warns that CPU limits or display synchronization can reduce the rate at which useful samples arrive. Its old demonstration timings are not measurements of the current workload. [R14]
 
 **Research interpretation.** Display resolution, simulation frequency, input latency, and temporal convergence are independent quantities. A high displayed frame rate does not prove that a character's decisions are fresh; a sharp still image does not establish quality during camera motion. A complete statement of a measured result must identify which of those outcomes was observed. The source evidence here explains why a single average frame rate cannot represent all of them.
 
-## 5. Animation: selecting motion, solving pose, and paying for updates
+## 6. Animation: selecting motion, solving pose, and paying for updates
 
 ### Motion Matching
 
@@ -108,7 +142,7 @@ Unity Animation Rigging **6.6.0** is a core package coupled to the editor, using
 
 Unreal's current Unreal Animation Framework (UAF) plugin is explicitly **Experimental**. Its description identifies a functional, dataflow-oriented animation framework, and its modules integrate with other animation/gameplay systems. This evidence does not establish that UAF has replaced production Animation Blueprints or that every integration is shipping-ready. Historical material using earlier framework names needs to be mapped to the current plugin and maturity before its claims are reused. [R22]
 
-## 6. Visual effects: particles are not persistent world entities
+## 7. Visual effects: particles are not persistent world entities
 
 Niagara distributes work among systems, emitters, and particles. GPU particle simulation does not remove the CPU cost of the owning systems and emitters. Batching instances can reduce overhead, while combining effects changes culling granularity. Pools reduce allocation and collection work but do not eliminate activation or warm-up costs. Effect Types provide shared scalability and culling controls. The current guide still contains wording about features being introduced in 5.4; those historical rollout statements are not treated as 5.8 status evidence. [R23]
 
@@ -118,7 +152,7 @@ Niagara GPU ray-tracing collisions remain **Experimental** in the 5.8 documentat
 
 Unity Visual Effect Graph 17.6 describes systems as connected spawn, initialize, update, and output contexts. GPU events can cause one particle system to spawn particles in another; local versus world simulation space determines how particles follow transforms. This is useful for large visual populations and chained effects, but a GPU event in that graph is still part of its effects lifecycle. The documented graph semantics alone establish neither saved world identity nor deterministic gameplay consequences. [R26]
 
-## 7. Audio: generating a signal, choosing voices, and modeling propagation
+## 8. Audio: generating a signal, choosing voices, and modeling propagation
 
 ### Sound graphs and voice budgets
 
@@ -152,7 +186,7 @@ The following is **research interpretation**, not an implementation plan. Severa
 
 The cited voice, occlusion, and spatialization mechanisms support the first two layers. They do not supply evidence that the later layers are solved by an audio engine. Similarly, a subtitle or transcript is a presentation of speech, not proof that every nearby character should receive that content.
 
-## 8. Comparison of the actual optimization contracts
+## 9. Comparison of the actual optimization contracts
 
 The table is a synthesis of the cited mechanisms, not an engine ranking or proposed architecture.
 
@@ -171,46 +205,57 @@ The table is a synthesis of the cited mechanisms, not an engine ranking or propo
 
 The common pattern is a bounded, observable output contract with explicit approximations or lifetime rules. Whether that contract is acceptable for a different system is a separate semantic question. None of the documentation establishes an OpenLegend population capacity, frame budget, or character-behavior speedup; no such benchmark was performed.
 
-## 9. Provenance and source register
+## 10. Provenance and source register
 
 All sources below were inspected on **2026-10-23**. “Live 5.8” means Epic's current page showed the 5.8 documentation branch; most pages expose no publication/revision date. “6.6” means the version-pinned 6000.6 manual/API, generally built on 2026-10-21 or 22. Build dates show publication of a documentation build, not that every paragraph was newly authored. Package versions are taken from page metadata where available. Text and relevant sections were inspected; embedded videos and example binaries were not watched or executed.
 
-| ID  | Source and version                                      | Medium; evidence used and limit                                                           |
-| --- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| R01 | [Render Dependency Graph][R01], live 5.8                | Epic technical guide; scheduling, declarations, lifetimes, diagnostics; no GPU experiment |
-| R02 | [URP render graph introduction][R02], 6.6               | Unity manual; resource lifetimes, culling, queue synchronization, tile pass merging       |
-| R03 | [Nanite overview][R03], live 5.8                        | Epic guide; cluster hierarchy, streaming, skeletal and foliage scope                      |
-| R04 | [Nanite technical details][R04], live 5.8               | Epic guide; residency, fallback, pools; old demo measurements excluded                    |
-| R05 | [GPU Resident Drawer][R05], 6.6                         | Unity manual; actual pipeline/platform compatibility and batching scope                   |
-| R06 | [Upgrade to Unity 6.6][R06], 6.6                        | Version-specific manual; obsolete dynamic batching, Cinemachine package coupling          |
-| R07 | [GPU occlusion culling][R07], 6.6                       | Unity manual; depth history and conservative bounds                                       |
-| R08 | [Lumen technical details][R08], live 5.8                | Epic guide; tracing representations, caches, current skeletal coverage                    |
-| R09 | [Lumen performance guide][R09], live 5.8                | Epic guide; Lumen Lite and qualified frame-rate targets                                   |
-| R10 | [MegaLights][R10], live 5.8                             | Epic technical guide; stochastic budget, quality, costs, profiling conditions             |
-| R11 | [Virtual Shadow Maps][R11], live 5.8                    | Epic technical guide; page residency, cache invalidation, depth approximation             |
-| R12 | [Adaptive Probe Volumes concepts][R12], 6.6             | Unity manual; brick structure, baked scenarios, runtime sky contribution                  |
-| R13 | [HDRP ray-tracing setup][R13], 17.6.0; build 2026-10-22 | Unity package guide; configuration/geometry scope; 2019.3 intro not maturity evidence     |
-| R14 | [Temporal Super Resolution][R14], live 5.8              | Epic technical guide; temporal convergence; historical demo timings excluded              |
-| R15 | [Motion Matching][R15], live 5.8                        | Epic guide; Pose Search query, schema and motion database                                 |
-| R16 | [Animation optimization][R16], live 5.8                 | Epic guide; parallel evaluation constraints, fast paths, debugging                        |
-| R17 | [Animation Budget Allocator][R17], live 5.8             | Epic guide; significance, component scheduling and update degradation                     |
-| R18 | [Animator reference][R18], 6.6                          | Unity API documentation; threading, graph rebinds, activation and layer costs             |
-| R19 | [Playables][R19], 6.6                                   | Unity manual; composable presentation graph, outputs and timing                           |
-| R20 | [AnimatorCullingMode][R20], 6.6                         | Unity API documentation; exact offscreen evaluation modes                                 |
-| R21 | [Animation Rigging][R21], 6.6.0; generated 2026-08-12   | Unity package documentation; C# Jobs and procedural constraints                           |
-| R22 | [UAF plugin][R22], live 5.8                             | Epic API/plugin index; explicitly Experimental, no production replacement claim           |
-| R23 | [Niagara scalability][R23], live 5.8                    | Epic engineering guide; CPU/GPU ownership and pooling; stale 5.4 rollout text excluded    |
-| R24 | [Niagara lightweight emitters][R24], live 5.8           | Epic guide; fixed-function restrictions; origin wording still says 5.4                    |
-| R25 | [Niagara GPU ray-tracing collisions][R25], live 5.8     | Epic guide; Experimental status and one-frame delay                                       |
-| R26 | [Visual Effect Graph systems][R26], 17.6.0              | Unity package manual; context graph, simulation space, GPU events                         |
-| R27 | [MetaSounds reference][R27], live 5.8                   | Epic technical guide; dataflow, sources, patches and presets                              |
-| R28 | [Sound Concurrency][R28], live 5.8                      | Epic guide; active-component limits, rejection, voice-stealing policy                     |
-| R29 | [Audio settings][R29], 6.6                              | Unity manual; real/virtual voice budgets and DSP-buffer tradeoff                          |
-| R30 | [Sound Attenuation][R30], live 5.8                      | Epic guide; source/listener obstruction test and filtering                                |
-| R31 | [Audio Gameplay Volumes][R31], live 5.8                 | Epic guide; Beta status, modular region effects and audio-thread processing               |
-| R32 | [Audio spatializer][R32], 6.6                           | Unity manual; native-plugin boundary                                                      |
-| R33 | [Steam Audio Unity integration][R33], live undated      | Valve manual; acoustic mechanisms; exact editor-patch compatibility untested              |
-| R34 | [Steam Audio downloads][R34], accessed 2026-10-23       | Valve release index; 4.8.1 latest listed; publication date not supplied                   |
+| ID  | Source and version                                             | Medium; evidence used and limit                                                                                       |
+| --- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| R01 | [Render Dependency Graph][R01], live 5.8                       | Epic technical guide; scheduling, declarations, lifetimes, diagnostics; no GPU experiment                             |
+| R02 | [URP render graph introduction][R02], 6.6                      | Unity manual; resource lifetimes, culling, queue synchronization, tile pass merging                                   |
+| R03 | [Nanite overview][R03], live 5.8                               | Epic guide; cluster hierarchy, streaming, skeletal and foliage scope                                                  |
+| R04 | [Nanite technical details][R04], live 5.8                      | Epic guide; residency, fallback, pools; old demo measurements excluded                                                |
+| R05 | [GPU Resident Drawer][R05], 6.6                                | Unity manual; actual pipeline/platform compatibility and batching scope                                               |
+| R06 | [Upgrade to Unity 6.6][R06], 6.6                               | Version-specific manual; obsolete dynamic batching, Cinemachine package coupling                                      |
+| R07 | [GPU occlusion culling][R07], 6.6                              | Unity manual; depth history and conservative bounds                                                                   |
+| R08 | [Lumen technical details][R08], live 5.8                       | Epic guide; tracing representations, caches, current skeletal coverage                                                |
+| R09 | [Lumen performance guide][R09], live 5.8                       | Epic guide; Lumen Lite and qualified frame-rate targets                                                               |
+| R10 | [MegaLights][R10], live 5.8                                    | Epic technical guide; stochastic budget, quality, costs, profiling conditions                                         |
+| R11 | [Virtual Shadow Maps][R11], live 5.8                           | Epic technical guide; page residency, cache invalidation, depth approximation                                         |
+| R12 | [Adaptive Probe Volumes concepts][R12], 6.6                    | Unity manual; brick structure, baked scenarios, runtime sky contribution                                              |
+| R13 | [HDRP ray-tracing setup][R13], 17.6.0; build 2026-10-22        | Unity package guide; configuration/geometry scope; 2019.3 intro not maturity evidence                                 |
+| R14 | [Temporal Super Resolution][R14], live 5.8                     | Epic technical guide; temporal convergence; historical demo timings excluded                                          |
+| R15 | [Motion Matching][R15], live 5.8                               | Epic guide; Pose Search query, schema and motion database                                                             |
+| R16 | [Animation optimization][R16], live 5.8                        | Epic guide; parallel evaluation constraints, fast paths, debugging                                                    |
+| R17 | [Animation Budget Allocator][R17], live 5.8                    | Epic guide; significance, component scheduling and update degradation                                                 |
+| R18 | [Animator reference][R18], 6.6                                 | Unity API documentation; threading, graph rebinds, activation and layer costs                                         |
+| R19 | [Playables][R19], 6.6                                          | Unity manual; composable presentation graph, outputs and timing                                                       |
+| R20 | [AnimatorCullingMode][R20], 6.6                                | Unity API documentation; exact offscreen evaluation modes                                                             |
+| R21 | [Animation Rigging][R21], 6.6.0; generated 2026-08-12          | Unity package documentation; C# Jobs and procedural constraints                                                       |
+| R22 | [UAF plugin][R22], live 5.8                                    | Epic API/plugin index; explicitly Experimental, no production replacement claim                                       |
+| R23 | [Niagara scalability][R23], live 5.8                           | Epic engineering guide; CPU/GPU ownership and pooling; stale 5.4 rollout text excluded                                |
+| R24 | [Niagara lightweight emitters][R24], live 5.8                  | Epic guide; fixed-function restrictions; origin wording still says 5.4                                                |
+| R25 | [Niagara GPU ray-tracing collisions][R25], live 5.8            | Epic guide; Experimental status and one-frame delay                                                                   |
+| R26 | [Visual Effect Graph systems][R26], 17.6.0                     | Unity package manual; context graph, simulation space, GPU events                                                     |
+| R27 | [MetaSounds reference][R27], live 5.8                          | Epic technical guide; dataflow, sources, patches and presets                                                          |
+| R28 | [Sound Concurrency][R28], live 5.8                             | Epic guide; active-component limits, rejection, voice-stealing policy                                                 |
+| R29 | [Audio settings][R29], 6.6                                     | Unity manual; real/virtual voice budgets and DSP-buffer tradeoff                                                      |
+| R30 | [Sound Attenuation][R30], live 5.8                             | Epic guide; source/listener obstruction test and filtering                                                            |
+| R31 | [Audio Gameplay Volumes][R31], live 5.8                        | Epic guide; Beta status, modular region effects and audio-thread processing                                           |
+| R32 | [Audio spatializer][R32], 6.6                                  | Unity manual; native-plugin boundary                                                                                  |
+| R33 | [Steam Audio Unity integration][R33], live undated             | Valve manual; acoustic mechanisms; exact editor-patch compatibility untested                                          |
+| R34 | [Steam Audio downloads][R34], accessed 2026-10-23              | Valve release index; 4.8.1 latest listed; publication date not supplied                                               |
+| R35 | [Substrate overview][R35], live 5.8                            | Epic guide; default configuration, closure/storage budgets and platform limits; conflicting maturity prose identified |
+| R36 | [Programming with Substrate GBuffer formats][R36], live 5.8    | Epic programmer guide; variable per-pixel storage, closure access and lighting interfaces; no shader execution        |
+| R37 | [Substrate documentation index][R37], live 5.8                 | Epic index; retained Beta label inspected as a documentation conflict, not definitive status for every path           |
+| R38 | [Texture Streaming overview][R38], live 5.8                    | Epic guide; mip selection, pool budget and request lifecycle; UE 4.15 benchmark claims excluded                       |
+| R39 | [Streaming Virtual Texturing][R39], live 5.8                   | Epic guide; GPU tile feedback, reactive requests, sampler costs and filtering limits                                  |
+| R40 | [Runtime Virtual Texturing][R40], live 5.8                     | Epic guide; GPU-produced shading cache, static-content assumption, baked/streamed low-mip hybrid; videos not watched  |
+| R41 | [Virtual Texture Memory Pools][R41], live 5.8                  | Epic guide; page-table versus tile memory, eviction, oversubscription and global residency bias                       |
+| R42 | [Shader Graph targets][R42], 17.6.0; generated 2026-10-21      | Unity package manual; per-target subshaders, block compatibility and differing pipeline output                        |
+| R43 | [Shader Graph Master Stack][R43], 17.6.0                       | Unity package manual; vertex/fragment evaluation and inactive output chains                                           |
+| R44 | [Mipmap streaming introduction][R44], 6000.6; built 2026-10-22 | Unity manual; demand calculation, sharing, supported data and renderer limitations                                    |
+| R45 | [Configure mipmap streaming][R45], 6000.6; built 2026-10-22    | Unity manual; non-streaming allocation, retained-resolution floor and budget exceptions                               |
 
 ### Additional inspected media and access limits
 
@@ -250,3 +295,14 @@ The [SIGGRAPH 2025 course page](https://advances.realtimerendering.com/s2025/) i
 [R32]: https://docs.unity.com/en-us/engine/6000.6/manual/xr/audio/vraudio-spatializer
 [R33]: https://valvesoftware.github.io/steam-audio/doc/unity/index.html
 [R34]: https://valvesoftware.github.io/steam-audio/downloads.html
+[R35]: https://dev.epicgames.com/documentation/unreal-engine/overview-of-substrate-materials-in-unreal-engine
+[R36]: https://dev.epicgames.com/documentation/unreal-engine/programming-with-substrate-gbuffer-formats
+[R37]: https://dev.epicgames.com/documentation/unreal-engine/substrate-materials-in-unreal-engine
+[R38]: https://dev.epicgames.com/documentation/unreal-engine/texture-streaming-overview-for-unreal-engine
+[R39]: https://dev.epicgames.com/documentation/unreal-engine/streaming-virtual-texturing-in-unreal-engine
+[R40]: https://dev.epicgames.com/documentation/unreal-engine/runtime-virtual-texturing-in-unreal-engine
+[R41]: https://dev.epicgames.com/documentation/unreal-engine/virtual-texture-memory-pools-in-unreal-engine
+[R42]: https://docs.unity3d.com/Packages/com.unity.shadergraph@17.6/manual/Graph-Target.html
+[R43]: https://docs.unity3d.com/Packages/com.unity.shadergraph@17.6/manual/Master-Stack.html
+[R44]: https://docs.unity3d.com/6000.6/Documentation/Manual/TextureStreaming-introduction.html
+[R45]: https://docs.unity3d.com/6000.6/Documentation/Manual/TextureStreaming-configure.html

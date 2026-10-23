@@ -1,6 +1,6 @@
 # Current research frontiers and evidence boundaries
 
-Research snapshot: **23 October 2026**. This chapter complements the current Unreal/Unity mechanisms in chapters 02–11 with recent primary papers, technical reports, conference speaker notes, and an official video transcript. These sources were read for mechanisms, evaluation conditions, and limitations. Their experiments were not reproduced.
+Research snapshot: **23 October 2026**. This chapter complements the current Unreal/Unity mechanisms in the subsystem chapters with recent primary papers, technical reports, conference speaker notes, and an official video transcript. These sources were read for mechanisms, evaluation conditions, and limitations. Their experiments were not reproduced.
 
 The distinction between a **shipping engine feature**, a **published research implementation**, and a **demonstration** remains explicit. No result here selects an OpenLegend design, model, library, or provider. A newer publication date also does not establish that a technique dominates every older or simpler alternative.
 
