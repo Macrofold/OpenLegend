@@ -134,6 +134,14 @@ Unreal **Mass Avoidance is Experimental**. It computes steering forces from sepa
 
 **Interpretation.** Crowd steering predicts near-term motion to choose a useful velocity; rigid-body collision response enforces another set of physical constraints; global pathfinding searches another representation again. Similar words such as “collision,” “prediction,” and “agent” do not make those contracts equivalent. Sparse nearest-neighbor work can reduce cost substantially in principle, while concentrated crowds still increase local work and difficult interactions. No capacity number is inferred from the word “Mass.”
 
+### ZoneGraph: navigation along connected lanes
+
+The current ZoneGraph plugin is **Experimental**. Its data representation stores zones, lane points, distances along lanes, tangent/up vectors, links, and a bounding-volume tree over zones. These are different data from a general walkable-surface mesh. [ZoneGraph plugin][S03-40]; [FZoneGraphStorage][S03-41]
+
+The subsystem can locate nearby or overlapping lanes with tag filters, advance a location a specified distance along a lane, and retrieve connected lanes by connection type and flags. Registered data has a lifecycle, and the interface can report an invalid lane or missing storage. A separately documented A* wrapper searches using lanes. Together these APIs establish spatial lookup, lane connectivity, and progression along a route, rather than unrestricted movement over arbitrary surfaces. [UZoneGraphSubsystem][S03-42]; [FZoneGraphAStar][S03-43]
+
+**Interpretation.** Constraining movement to connected lanes can reduce the representation being searched, but that benefit depends on the world matching the lane model. Lane tags are supplied classifications; they do not by themselves represent a character's learned knowledge, permission to act, or proof that a currently changing physical obstacle is absent. Mass's separate simulation and representation levels of detail are covered in the data-oriented runtime chapter.
+
 ### Smart Objects: shared definitions, claims, and streamed actors
 
 Unreal Smart Objects register searchable interaction slots in a spatially partitioned subsystem. Shared immutable definitions hold eligibility/activity data; agents search, claim a slot, approach it, occupy it, and release it after completion or interruption. A claim prevents another claim on that slot, but the agent executes the behavior. Persistent collections can retain runtime interaction data when its actor streams out; ordinary dynamically spawned components do not gain that persistence automatically. Object invalidation releases claims and notifies agents, while an agent abort must release its own claim. Search results therefore precede a separate claim attempt that can fail. [Smart Objects overview][S03-39]
@@ -193,6 +201,10 @@ All sources were accessed **2026-10-23**. UE pages identify **5.8** and are unda
 | S03-37 | [Unreal navigation avoidance][S03-37] | UE 5.8; manual | RVO and Detour differences and boundaries |
 | S03-38 | [Mass Avoidance overview][S03-38] | UE 5.8; **Experimental**; manual | Hash-grid neighbors, simplified shapes, predictive forces |
 | S03-39 | [Smart Objects overview][S03-39] | UE 5.8; manual | Shared definitions, claims, execution and invalidation lifecycle |
+| S03-40 | [ZoneGraph plugin][S03-40] | UE 5.8; **Experimental**; plugin index | Maturity and dependents |
+| S03-41 | [FZoneGraphStorage][S03-41] | UE 5.8; API | Lane, link, progression, and bounding-volume storage |
+| S03-42 | [UZoneGraphSubsystem][S03-42] | UE 5.8; API | Spatial lookup, lane traversal, filtering, registration/validity |
+| S03-43 | [FZoneGraphAStar][S03-43] | UE 5.8; API | Lane-based A* wrapper |
 
 [S03-01]: https://dev.epicgames.com/documentation/en-us/unreal-engine/behavior-tree-in-unreal-engine---overview
 [S03-02]: https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine
@@ -233,3 +245,7 @@ All sources were accessed **2026-10-23**. UE pages identify **5.8** and are unda
 [S03-37]: https://dev.epicgames.com/documentation/en-us/unreal-engine/using-avoidance-with-the-navigation-system-in-unreal-engine
 [S03-38]: https://dev.epicgames.com/documentation/en-us/unreal-engine/mass-avoidance-overview-in-unreal-engine
 [S03-39]: https://dev.epicgames.com/documentation/en-us/unreal-engine/smart-objects-in-unreal-engine---overview
+[S03-40]: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/PluginIndex/ZoneGraph
+[S03-41]: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/ZoneGraph/FZoneGraphStorage
+[S03-42]: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/ZoneGraph/UZoneGraphSubsystem
+[S03-43]: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/ZoneGraph/FZoneGraphAStar
