@@ -1,6 +1,6 @@
 # Preparedness and surprise — limits and constraints
 
-This inventory owns F's discretionary choices. The [feature specification](../projects/preparedness-and-surprise-feature-spec.md), [technical design](../projects/preparedness-and-surprise-tech-design.md) and [PS tracker](../maintainers/preparedness-and-surprise.md) distinguish design completion from runtime delivery. Numerical defaults have one canonical table in [base combat](../worlds/base/combat.md#preparedness-policy). All new settings below are **Proposed — selected design targets, unimplemented and unmeasured**.
+This inventory owns F's discretionary choices. The [feature specification](../projects/preparedness-and-surprise-feature-spec.md), [technical design](../projects/preparedness-and-surprise-tech-design.md) and [SUR tracker](../maintainers/preparedness-and-surprise.md) distinguish design completion from runtime delivery. Numerical defaults have one canonical table in [base combat](../worlds/base/combat.md#preparedness-policy). All new settings below are **Proposed — selected design targets, unimplemented and unmeasured**.
 
 ## SUR-L01 — Damage amplification and eligible outcome
 
