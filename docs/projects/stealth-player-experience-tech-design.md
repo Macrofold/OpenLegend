@@ -1,0 +1,460 @@
+# Playable stealth controls and an honest player perspective — technical design
+
+| Status | Current progress | Last updated |
+| --- | --- | --- |
+| In progress | Player controls, authorized projection and integration acceptance are designed; implementation and runtime qualification remain open. | 2026-10-23 |
+
+## Scope
+
+This is SAD-G's implementation specification for the [feature](stealth-player-experience-feature-spec.md), covering the selected [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) control/presentation slice. It changes documentation only. All type/field names introduced below describe proposed current-format contracts to implement through existing owners; they are not claims that those APIs exist.
+
+The assignment changes **zero executable logic lines**. Future implementation spans domain movement amendments, server authorization/projection, protocol, React interaction and PlayCanvas rendering, so privacy and action continuity are material risks. The plan and exit criteria belong to [SPX](../maintainers/stealth-player-experience.md). No executable tests, migrations, compatibility adapters, branch merges or runtime deployment are part of this design.
+
+## Source manifest
+
+Repository: **Macrofold/OpenLegend**. This branch, **codex/design-stealth-07-player-experience**, was created from the freshly resolved exact tip of **codex/design-stealth-00-contracts**, **a3d40b4d71e29d6504e9f3fcc21e76344a0a284e**. The six specialist branches were fetched/read independently; their commits are not parents or merged content of this branch.
+
+| Responsibility | Branch and inspected commit | Canonical specialist documents |
+| --- | --- | --- |
+| Shared contracts | codex/design-stealth-00-contracts · a3d40b4d71e29d6504e9f3fcc21e76344a0a284e | [Feature](stealth-awareness-feature-spec.md), [technical contracts](stealth-awareness-tech-design.md), [repertoire review](stealth-awareness-repertoire-review.md), [SA tracker](../maintainers/stealth-awareness.md) |
+| A: evidence and recognition | codex/design-stealth-01-perception · 40805523c4a19ab7c6cc455d49d51e4a122ecae0 | [Perspective feature](https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-feature-spec.md), [technical design](https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-tech-design.md), [tracker](https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/maintainers/perspective-perception.md) |
+| D: native startle and interpreted emotion | codex/design-stealth-02-emotions · a54c13dec160d88efbde7a16abe3ea066856293a | [Emotional physiology feature](https://github.com/Macrofold/OpenLegend/blob/a54c13dec160d88efbde7a16abe3ea066856293a/docs/projects/emotional-physiology-feature-spec.md), [technical design](https://github.com/Macrofold/OpenLegend/blob/a54c13dec160d88efbde7a16abe3ea066856293a/docs/projects/emotional-physiology-tech-design.md), [tracker](https://github.com/Macrofold/OpenLegend/blob/a54c13dec160d88efbde7a16abe3ea066856293a/docs/maintainers/emotional-physiology.md) |
+| B: physical gaze and vision | codex/design-stealth-03-vision · 5837c5b30c90dbb30bd26530d196197aa311b35d | [Vision/gaze feature](https://github.com/Macrofold/OpenLegend/blob/5837c5b30c90dbb30bd26530d196197aa311b35d/docs/projects/vision-and-gaze-feature-spec.md), [technical design](https://github.com/Macrofold/OpenLegend/blob/5837c5b30c90dbb30bd26530d196197aa311b35d/docs/projects/vision-and-gaze-tech-design.md), [tracker](https://github.com/Macrofold/OpenLegend/blob/5837c5b30c90dbb30bd26530d196197aa311b35d/docs/maintainers/vision-and-gaze.md) |
+| C: posture, pace and sound | codex/design-stealth-04-acoustics · b242bee437f9e13801bfee77030efd309d88a35d | [Acoustic stealth feature](https://github.com/Macrofold/OpenLegend/blob/b242bee437f9e13801bfee77030efd309d88a35d/docs/projects/acoustic-stealth-feature-spec.md), [technical design](https://github.com/Macrofold/OpenLegend/blob/b242bee437f9e13801bfee77030efd309d88a35d/docs/projects/acoustic-stealth-tech-design.md), [tracker](https://github.com/Macrofold/OpenLegend/blob/b242bee437f9e13801bfee77030efd309d88a35d/docs/maintainers/acoustic-stealth.md) |
+| E: attention and investigation | codex/design-stealth-05-attention · b8ee4a99d6b82b9146cd5cf86a15a69b857ab2b5 | [Attention feature](https://github.com/Macrofold/OpenLegend/blob/b8ee4a99d6b82b9146cd5cf86a15a69b857ab2b5/docs/projects/attention-and-investigation-feature-spec.md), [technical design](https://github.com/Macrofold/OpenLegend/blob/b8ee4a99d6b82b9146cd5cf86a15a69b857ab2b5/docs/projects/attention-and-investigation-tech-design.md), [tracker](https://github.com/Macrofold/OpenLegend/blob/b8ee4a99d6b82b9146cd5cf86a15a69b857ab2b5/docs/maintainers/attention-and-investigation.md) |
+| F: preparation and surprise | codex/design-stealth-06-surprise · 0fb4d86f18ce792c8ea5bef51772ced8c25aae76 | [Preparedness feature](https://github.com/Macrofold/OpenLegend/blob/0fb4d86f18ce792c8ea5bef51772ced8c25aae76/docs/projects/preparedness-and-surprise-feature-spec.md), [technical design](https://github.com/Macrofold/OpenLegend/blob/0fb4d86f18ce792c8ea5bef51772ced8c25aae76/docs/projects/preparedness-and-surprise-tech-design.md), [tracker](https://github.com/Macrofold/OpenLegend/blob/0fb4d86f18ce792c8ea5bef51772ced8c25aae76/docs/maintainers/preparedness-and-surprise.md) |
+
+The immutable links intentionally remain usable on this independent branch. Integration can replace them with local links once the corresponding documents are present, preserving this manifest as the source audit. A later specialist change requires a targeted interface comparison, not silent assumptions or a broad merge.
+
+Root/applicable instructions and documentation, UI, design, performance, PlayCanvas, action, memory, identity, save, spatial and engine/world contracts were read. Current-code statements below are tied to the contracts commit. Repertoire review coverage is stated in the feature; no new external research or execution evidence is claimed.
+
+## Inspected current behavior
+
+| Actual owner at the base | Source finding | Required G integration |
+| --- | --- | --- |
+| [main.tsx](../../apps/client/src/main.tsx), keyboard handler around 1440–1519 | W opens Create; C opens Crafting; Shift+S/A opens Speak/Act; T toggles equipped targeting; P and Shift+brackets request clock changes. No WASD movement. | One input owner and explicit Create→Shift+W change; preserve text/IME/modal and existing panel actions. |
+| [ui/keyboard.ts](../../apps/client/src/ui/keyboard.ts) and [scene.ts](../../apps/client/src/scene.ts), pointer/camera handlers around 2890–3050 | UI ownership checks exist; pointer capture distinguishes click from drag; Control-click is context; camera arrows and construction Q/E already have scopes. | Extend those owners, not new competing window listeners. Release held input on every scope/lifecycle transition. |
+| [kernel.ts](../../packages/domain/src/kernel.ts), move admission around 1482 | Move accepts a destination and uses ordinary work/navigation; new physical work may replace the old action. | Add a narrow same-action direction amendment; do not simulate movement in JavaScript or repeatedly dispatch fresh point walks. |
+| [types.ts](../../packages/domain/src/types.ts), Action, and [spatial.ts](../../packages/domain/src/spatial.ts) | Action holds destination/path/support progress; helpers perform native body/support clearance. General action revision/start time is not currently present. | Preserve actual action identity/progress, add only scoped steering input fields where needed; E/B retain their own amendment revisions. |
+| [view.ts](../../apps/server/src/view.ts), around 218–235 and 629–687 | Server already removes fully unseen entities using seesEntity. Once visible, it publishes broadly complete entity identity, position, appearance, status and action animation. | Replace Boolean-wide detail disclosure with A/B fact permissions. This is a real existing protection with an incomplete future facet boundary, not a claim of a demonstrated exploit. |
+| [perception.ts](../../packages/domain/src/perception.ts), around 328–385 | Current vision uses distance and three body-height obstruction samples. | B/A supply orientation/light/exposed-part/detail meaning; G never infers it from sprites. |
+| [action-animation.ts](../../apps/server/src/action-animation.ts), [entity-description.ts](../../apps/server/src/entity-description.ts) | Animation has no observer argument and reads action phase, tool and target direction; descriptions can read threat/native-response/action/fuel internals. | Build observable motion and descriptions from permitted facts, not private action state. A visible torso does not grant every attached animation or motive. |
+| [protocol/index.ts](../../packages/protocol/src/index.ts), EntityView | Current shape assumes full entity fields. | Update all current-format producers/consumers together to role/facet-safe records. Do not retain a raw hidden entity behind a sanitized rendering facade. |
+| [authority.ts](../../apps/server/src/authority.ts), [http.ts](../../apps/server/src/http.ts), [view.ts](../../apps/server/src/view.ts) | RequestScope already contains audience and account/session/world/timeline/grant/control/connection facts. Streams recheck scope and reset on history changes; publication has a 20 Hz ceiling. | Reuse scope, ordered patches and explicit field removals. The ceiling is transport pacing, not a sensing or game-clock rate. |
+| [scene.ts](../../apps/client/src/scene.ts), around 660–836 and 2280 | A session cache retains at most 128 faint frozen last-seen render entries; ordinary interaction/shadows/interpolation are removed. The cache is not durable authorized memory. | Replace implicit “missing means remembered” with explicit server-authorized historical records; default to labeled markers. Clear stale entries at facet/audience changes. |
+| [world-presentation.ts](../../apps/client/src/world-presentation.ts), around 660–710 | Last-permitted fire images continue contributing local illumination after leaving sight. | Retire historical emitters. A currently perceived source-free glow may remain through a separately permitted appearance field. This is misleading historical lighting, not verified fresh hidden-coordinate transmission. |
+| [speech-captions.tsx](../../apps/client/src/speech-captions.tsx), [scene.ts](../../apps/client/src/scene.ts), caption placement | Captions retain listener-time fragments and scope; body attachment requires observation. Old directional placement becomes neutral after material listener movement. | Extend existing cue presentation with C/A uncertainty and channel/time labels. Never re-anchor to an unseen emitter. |
+| [perceived-event-text.tsx](../../apps/client/src/ui/perceived-event-text.tsx) | Historical references currently call entity inspection. | Route by reference role; a historical or heard subject must not open live body targeting. |
+| [action-catalogue.ts](../../apps/server/src/action-catalogue.ts), [world-service.ts](../../apps/server/src/world-service.ts) | Current action discovery restricts visible targets; native binding/admission has further gates. | Unify catalogue, text, direct keys, shortcuts and direct HTTP through the same current evidence-role binding. This audit does not claim arbitrary hidden IDs currently execute. |
+
+The raw map/scene-geometry path must be replaced or restricted for changing hidden geometry. Static public topology is useful; raw authoritative dynamic structures, doors, attached geometry or actor-associated map entries are not automatically public. No browser, network attack, runtime timing or player test was run.
+
+## Semantic owners and data flow
+
+| Responsibility | Owning implementation seam | G may add | G must not duplicate |
+| --- | --- | --- | --- |
+| Observation/detail/recognition | Domain perception, event-observation, identity/knowledge and memory owners under A/B/C | Safe projection adapters and reference-role checks | Detection accumulation, sound solver, familiarity or client truth percentages |
+| Body, gaze, posture and pace | Spatial state, ordinary action/native work, B/C installed policies | Direction-input amendment and clear own-result projection | Camera-driven body authority, a second movement/pose owner or extra work lane |
+| Finite attention | E's ActivityExecution, Action or native episode owner | UI binding to installed terms and results | Separate watch timer, private search truth or auto-renewal |
+| Preparation/combat | Personal encounters, guard/aim/strike/evasion and contact owners under F | Own permitted preparation/aftermath and exact offered actions | Enemy awareness/readiness meter, local surprise/accuracy/evade formulas |
+| Bodily/psychological effects | D status/contribution/appraisal owners | Own permitted consequences and timing | New fear meter, forced controls, appraisal producer or 24-record mechanics approximation |
+| Access/publication | Existing server RequestScope, view/patch/read guards and command binder | Per-facet allowlist, role bindings, audience replacement, geometry projection | Client-side authorization, parallel privileged stream or source-ID redaction after serialization |
+| Input/panels | main.tsx, ui/keyboard.ts, current request/receipt owners, shared design-system controls | Focused input hook/controller and movement/attention group | Universal UI framework or duplicate catalogue |
+| Rendering | WorldRenderer, scene, world-motion, presentation/caption owners | Permitted contact/marker/cue rendering and exact teardown | World rules or a second remembered-world database |
+
+Flow is native world transition → actual observation → A's observer-permitted facts → server-authorized current/history projection → React/renderer. An input travels the reverse direction only as an intention: focused control → current scoped request → role/authority binding → ordinary prerequisites → one native admission/mutation → receipt and projection. None of these directions uses the camera as a source of perception.
+
+## Authorized projection contract
+
+### Envelope and field freshness
+
+Reuse the existing world ID, save timeline, access scope, history/privacy epoch, current view revision and patch predecessor. Add the **evaluation cut** to the ordinary projection: the simulation time through which the included physical/observer facts are complete. The exact name can align with current protocol conventions; the meaning is mandatory.
+
+An audience is explicit: ordinary embodied perspective versus authorized creator inspection. Resolve it server-side from current grants, never from a query's requested Boolean. View scope includes exact controlled life/generation server-side, even when those internal values are not serialized. Do not add a new general identity service.
+
+Each independently changeable facet carries:
+
+| Proposed public field | Meaning and use |
+| --- | --- |
+| display value | The narrow currently permitted description, representation, point/region/bearing or own condition. |
+| measurementAt | Original observation/measurement time for that facet. |
+| confirmedThrough | Last time that exact facet had actual supporting observation; never inherited from another facet. |
+| temporalRole | Current at the evaluation cut, historical, or explicitly inferred. |
+| quality | The A-owned possible/supported/ambiguous distinction when applicable; omit invented confidence percentages. |
+| precision | Only the admitted spatial/detail precision. |
+| sourceReference | An opaque permitted reference for personal inspection when available; not native evidence/support tuples. |
+| observationContinuity | Opaque scope-local continuity binding only when A supports it; it authorizes no extra fact. |
+
+A's concrete fact families remain canonical. G does not require every field on a facet where it has no meaning, and may compose these semantics into existing structures rather than wrapping every scalar. A missing field is absent, not zero/false. Explicit patch removal must remove the old field; omitted unchanged fields in a patch are different from revoked fields.
+
+Live display means **supported at the published cut**, not a promise about the world after network delay. The client never extrapolates an unseen source beyond its last permitted sample. It cannot know about an undelivered loss, so it must not label an old sample as freshly observed or calculate future state to hide latency.
+
+### Public record families
+
+Replace overbroad EntityView assumptions in place, using a discriminated current-format family through existing GameView and inspection endpoints. Do not send both safe records and hidden full entities.
+
+| Family | Allowed fields | Absent unless separately earned |
+| --- | --- | --- |
+| Own embodiment | Own accepted position/support, installed allowed controls, actual posture/pace/gaze, own active action/attention, inventory/status and scoped command results under existing privacy | Other participants' internals; guessed effective mechanics when required state is incomplete |
+| Current visual contact | Scope-local contact key; observed patch/region; allowed neutral/classified presentation; separately authorized body pose, head pose, appearance, equipment relation, observable motion and name | Hidden body anchor/feet, raw actor ID, exact whole-body size, unseen equipment, private action ID/phase/target, trait/mind state |
+| Current actionable body/surface | Current contact plus an opaque physical target binding and currently offered actions, only when A's body/reference contract and native action prerequisites support it | Target rights from mere recognition, remembered identity, exposed weapon tip or heard voice |
+| Sensory cue | Cue handle, modality, permitted phenomenon/fragments, acquired time, observation interval if continuous, original listener frame, permitted bearing/region, uncertainty, permitted association | Emitter coordinates, true performer, source signatures, raw SPL/accumulation, exact range absent C authorization, hidden target count |
+| Historical subject/facet | Historical reference, channel, original value/time/precision, retained identity association and correction/eligibility status | Live position/health/action/gear, entity-relative routes, current interaction geometry, asset upgrades |
+| Own warning/preparation | F's own permitted meaning/scope/acquired time and noticed/registered state; own preparing/maintaining/ended/not-enough-information, method and actual timing | Enemy preparation, private warning-expiry countdown, guaranteed defense or concealed cause |
+| Own effect/result | Own D consequences and authoritative remaining duration; personally available F outcome/“caught off guard,” actual injury/contact information | Human psychological diagnosis; other minds; exact hidden health/armor or attacker identity inferred from felt harm |
+| Known terrain/static scene | Public immutable topology or authorized retained terrain geometry, permitted labels/supports, own observation status for changing facets | Secret features not disclosed by the world's terrain policy; present hidden door/construction/container/occupant state |
+| Current environmental appearance | Observer-safe current illumination on already permitted surfaces or a coarse glow/phenomenon; authored material appearance | Hidden light position/holder/fuel, source list, current object state derived from remembered fire |
+
+**Exposed part is not whole body.** A head above a wall can provide a head patch/region, without exact feet, body transform, carried weapon or body-target permission. Rendering a complete avatar at a guessed anchor is forbidden. Use the admitted patch/region cue or a non-identifying representation. A physically targetable anonymous body is valid; recognition is not a prerequisite when the action's body-binding contract is satisfied.
+
+**Continuity is earned.** If indistinguishable bodies overlap and lose every unique observation witness, retire the old physical contact binding and selection lock. Reacquisition can create new contacts. Do not preserve identity through hidden canonical IDs, asset reuse, list ordering or guessed closest-position matches.
+
+### Reference roles and inspection
+
+The existing binder must distinguish these roles before any read or command:
+
+| Role | Permitted use | Refusal path |
+| --- | --- | --- |
+| Anonymous cue/exposure | Its received details and evidence-bound investigation | Cannot become Talk.targetId, a body target or a person editor |
+| Learned local individual | Permitted private label/note and supported familiarity | No canonical actor dereference or physical follow |
+| Remembered canonical individual | Eligible history/notes; independently permitted SPK communication | Current body facts still require a current physical binding |
+| Current physical contact | Exact currently admissible physical action/inspection | Loss, ambiguity or changed life invalidates commands; no name-based fallback |
+| Known point/region/surface | Ordinary location selection, route proposal, finite watch/inquiry | The server rechecks actual support/action; a hidden blocker yields a safe failure without naming it |
+| Creator inspection reference | Only in the explicit current authorized audience | Cannot be replayed in ordinary play or used as personal evidence |
+
+The same inspector shell can show live, historical and cue content with a clear heading and distinct permitted actions. It must not fetch a current body when a historical link was selected. Keep navigation/drafts where safe; suppress protected body/detail immediately on authority or evidence loss. Historical retained eligibility is rechecked after awaited/cached reads using existing private retrieval fences.
+
+Map an unknown voice's useful response to ambient **Who's there?**, not a fabricated directed conversation target. A remembered known person's directed communication remains subject to SPK's actual binding/audibility rules.
+
+### Asset and metadata restrictions
+
+A contact's asset selection must itself be permitted. A UUID or hash identifying a hidden character-specific model, portrait, equipment texture, voice bank or animation can leak identity even if its rendered node is hidden. Use common neutral assets for weak contacts; resolve detailed assets only from admitted appearance facets.
+
+Strip hidden subject information from URL paths, accessibility labels, data attributes, React keys, tooltip titles, selection order, browser logs, notifications, sound source groups, command errors and download/preload requests. Share static asset caches where lawful, but no current entity association survives authorization loss. Do not claim that destroying a renderer texture removes bytes a previously authorized creator has already learned; the obligation is correct future publication and no automatic transfer to character knowledge.
+
+### Geometry and light
+
+The server separates immutable public navigation scenery, retained known geometry and currently observed changing geometry before serialization. Reuse existing map/surface types for the allowed subset; do not send a collision-ready copy of secret world geometry merely because the renderer currently accepts SpatialMap.
+
+A hidden obstacle may block real motion. The client can show the known route proposal, but only server physics decides admission/progress and safe blockage wording. A stale remembered door is labeled historical when relevant; it cannot keep animating. Public geometry does not imply a secret room's name, contents or occupants.
+
+The renderer consumes B's observer-safe current appearance. Its selected light count/quality is an aesthetic approximation; it cannot change detection or remove the authoritative readability of an already acquired cue. Historical fire records have no light emitter. A visible bright wall around a corner may remain lit from a source-free field without revealing the lamp's position or holder.
+
+Dynamic shadow/reflection/particle geometry cannot encode a hidden body. Use only separately permitted phenomena; no hidden skeleton is uploaded to generate its shadow. B's initial optics omit reflected vision, refraction, bounce, volumetric smoke and dark adaptation. Decorative effects must not install those senses.
+
+### Projection algorithm and revocation
+
+1. Resolve the current server audience/control scope. Prepare only its required current observation and exact requested history; never hydrate a world-wide entity/knowledge list for later browser filtering.
+2. Acquire one coherent complete native observation cut and the permitted retained source revisions. Incomplete required work remains under existing native hold/continuation; no missing source is treated as absent, safe or neutral.
+3. Construct the allowlisted records from A/B/C facts, own D/E/F feedback and installed descriptors. Resolve public references/asset choices only after role/detail authorization.
+4. After any awaited preparation, recheck current scope, history/privacy revisions and exact required sources immediately before publication. A cache hit grants no authority.
+5. Produce full baseline or an ordered patch. A scope/timeline/audience discontinuity requires a new baseline. Per-contact and per-facet removals are explicit, applied atomically before additions/animation updates.
+6. On the client, reject a patch with the wrong scope or predecessor. Request a fresh baseline without replaying commands. Clear affected render/input bindings at the same revision; old async results cannot revive them.
+7. Derive historical display only from an explicit currently eligible history record. Ordinary live-list omission is not sufficient to create memory: it can mean revocation, forgetting, removal, changed scope or failed preparation.
+
+A live-to-history transition is one coherent update: retire the body target, current facets, sounds, animation and light; optionally install the independently allowed historical record. A forgotten/corrected/revoked facet invalidates its old detail and dependent render objects even while paused. A correction's new eligible account may be shown with attribution, never silently substituted as an original witnessed fact.
+
+## Input routing and ordinary movement
+
+### One input owner
+
+Extend ui/keyboard.ts with a shared semantic binding map and a focused held-input controller invoked by main.tsx/WorldRenderer. Keep React responsible for UI/focus and plain intentions; PlayCanvas supplies pointer rays/camera basis and renders accepted state. No domain world object is imported into client control logic.
+
+Priority is modal scope → child popup/text/IME → captured UI/construction/target-selection gesture → eligible focused world controls → ordinary panel shortcuts. A key event is consumed once. Modifier chords suppress plain movement keys; entering Shift+S releases any held plain S before opening speech. Browser/OS shortcuts remain available.
+
+Held movement/gaze state clears on focus leaving the world, opening a blocking overlay, window blur, page hiding, pointer cancellation where relevant, suspension, disconnect/stale transport, manual pause, control/body/world/timeline/audience change and controller disposal. Send neutral/release best effort; server freshness expiry is independent protection. Returning focus never resumes held movement until a fresh press. Stop remains a reachable button while panels cover the world.
+
+The selected bindings and exact pointer semantics are in the feature. Rendering preferences and remapping are local/account UI preferences, not rewindable world state; keep them in the existing preference owner. Persist semantic control IDs and scoped key/chord values, not physical target IDs or private world data.
+
+### Direction movement: missing narrow capability
+
+The base only admits point movement. Implement a **direction-driven variant of ordinary move work**, not a client path loop, new physical lane or special stealth mode. Extend the existing move command/action owner with a destination-versus-direction discriminant, updating current callers together. Preserve the present destination route and native action family.
+
+The public held-input message is carried through the existing authenticated command transport. It contains only:
+
+| Field | Requirement |
+| --- | --- |
+| Current access scope / command identity | Existing server-issued control scope plus unique request identity for a discrete start/end; supplied actor/body authority is ignored. |
+| Input session | Opaque server-issued binding for this current controlled move, including its native action and controller/life server-side. A start resolves it; updates cannot create another action. |
+| Sequence | Strictly increasing within the current input session. An old sequence cannot renew freshness or supersede Stop. |
+| Direction | Finite normalized horizontal vector or neutral. No speed, elapsed simulation time, current coordinate, path, velocity or target truth from the client. |
+| Expected work | Exact current work binding for starting/replacing; optional exact B orientation/E attention amendment references when actually applicable. |
+| Requested mode | Destination move remains its ordinary point/support request; direction mode means direct steering, not auto-detouring toward an unseen destination. |
+
+For a start, preflight the current body's ordinary movement and permitted interruption. Atomically replace the previous work only if the new start can be admitted. An accepted start creates one ordinary action and input binding. While held, compatible direction amendments settle earned prior motion, update only the selected direction and preserve action ID, route purpose, costs, contact-distance progress and compatible E/B facets. They do not emit another action-start event, reset footstep cadence, reroll a check or refill a watch deadline.
+
+The server forms the short physical continuation from actual position, installed speed/pace/posture and the existing native motion boundaries, using shared straight steering/support-edge/clearance helpers. Direction mode stops at a blockage and reports the permitted reason; it does not pathfind around a wall or choose another floor. Valid actual support seams/slopes are crossed through the existing native query. Renderer geometry and same-surface guessing cannot decide motion. If an admitted body cannot safely steer under its installed movement family, refuse explicitly and retain click-to-move.
+
+Direction is normalized once; opposed keys cancel that axis and diagonals have no extra speed. No keyboard-derived sprint or fear modifier is permitted. Standing/quiet/crouched speeds and body-assisted turning costs come from reconciled B/C rules. The UI shows available pace names/actual consequences from installed descriptors.
+
+Neutral input ends only the exact direction action/session it owns, using ordinary termination. It cannot stop a subsequent click-walk, guard or newly controlled actor. An action-only stop and **Stop all work** remain distinct: the latter ends queued/waiting plan continuation through the current full-cancellation owner. Space invokes the visible full Stop choice when present; releasing WASD ends only held movement. Do not let a waiting plan immediately restart movement after the user selected Stop all work.
+
+### Input timing and limits
+
+Selected operational defaults are inventoried in [SPX-L](../limits/stealth-player-experience.md). They are transport/control safety choices, not simulation rules:
+
+- Send start, direction change and release promptly; coalesce replaceable intermediate directional/gaze updates to at most 20 per real second. Do not coalesce discrete posture, attack, cancellation or committed outcomes.
+- Keep at most one in-flight replaceable update and one latest pending value. An explicit neutral/release has priority and carries a higher sequence; it cannot sit behind a queue of obsolete movement.
+- A held-input heartbeat renews the server freshness binding at most every 100 ms while eligible. After 300 ms without a fresh valid renewal, stop that held movement at the next native input boundary. Server monotonic transport time owns this watchdog; it grants no simulated progress, effect duration or offline continuation.
+- Apply accepted inputs at the current ordered native boundary. Do not backdate a request using browser timestamps or rewind to make a late dodge succeed. Slow or out-of-order traffic can reduce usable control; show it and measure it, rather than hiding it with invalid position prediction.
+- A rejected/stale packet does not renew a lease. Expired bindings require a fresh start. Stop invalidates its input session before later queued packets are examined.
+- On pause/restore/control transfer, close transient input sessions. Save native progress coherently; do not save pressed keys, browser timers or network leases as intent to resume.
+
+Reuse transport/control-presence ownership rather than implementing a second authentication or heartbeat service. The direction session is disposable delivery metadata linked to existing action authority. Its single writer is the current server control owner. If current transport cannot support timely neutral priority, the implementation must add that support inside the same owner before claiming direct-control acceptance.
+
+### Independent gaze
+
+B owns one optional orientation control on the existing action, with at most one directive per installed independently steerable group. The selected human has one; the protocol must not hard-code a universal human head.
+
+G selects **orient once** for F+pointer and Q/E. Each meaningful request binds a permitted fixed point/region-derived bearing or an explicit relative direction at admission, with head/eyes only as the ordinary default. Relative direction resolves against accepted physical pose, not camera heading. The renderer's requested-look preview is visually distinct from the server-confirmed gaze. A partial direction outside the body's limit is not silently clamped and labeled reached; B refuses unless the player explicitly accepts a displayed limited result.
+
+For continuous pointer movement, only the latest compatible amendment survives. Releasing F stops submissions; an already accepted orient-once instruction completes normally, and the achieved pose remains. This is not a new unbounded maintained-look mode. A persistent tracked body requires a separate explicitly offered current-observation-bound directive through B/E, including finite extent and loss policy.
+
+A fixed world point remains fixed while walking. A relative pose is not permanent tracking of a world bearing. On target loss, stop or retain only the last permitted point according to the selected directive; never update from hidden truth. Head-only gaze leaves guard body/shield facing unchanged. Body assistance requires explicit admission and its actual movement/guard consequences.
+
+B's native moving-goal control cadence is independent of input packets, display frames and the server publication ceiling. G neither samples its own perception nor reruns detection on pointer movement. Use B's accepted-and-turning, reached, explicitly-limited, blocked/incompatible, stale-target and ended states, keeping technical incomplete separate.
+
+### Posture, pace and work replacement
+
+C's posture request selects an explicit desired posture, expected current work and ordinary replacement mode. Debounce duplicate local submissions immediately; do not toggle against an optimistic local value. The old accepted body remains authoritative until C commits the complete transition after the final support/clearance/equipment check.
+
+A failed preflight preserves old work/pose/resources/randomness. A late physical failure retains actually spent time and records no successful posture/sound. Cancellation does not invent partial smaller collision geometry. C's quiet pace amendment settles prior movement before changing eligible future contacts; footsteps come from actual traveled distance, not animation or key presses.
+
+Pace/posture controls show installed availability and refusal facts. The initial human standing-only evade is visible in the offered action explanation; no automatic stand-evade composition is added. Committed evasion pins its real endpoint/path/duration and refuses posture/pace changes. G uses exact action receipts for any interrupt/replacement, not a generic “done” toast.
+
+## Attention, inquiry and preparation adapters
+
+E defines semantics, not a new independent wire-command vocabulary. Use ordinary installed activity descriptors/known bindings to offer and submit watch, scan, listen, inspect and investigate. Displaying a capability requires an installed supported method. Hidden/unsupported methods are not offered from a hard-coded human action list.
+
+Preserve E's exact terms: method pin, finite foci, concerns, trigger, original deadline/check allowance, and optional explicit anticipation. Foci are travel-relative, fixed permitted region, captured bearing, or a currently observed subject with declared loss behavior. A source association is not a focus-body reference.
+
+**Default Watch observes.** Offer a separate clearly named **Watch for danger** preset when supported, selecting the player's own anticipated physical-attack families and focus ordinals. That intention establishes neither an attacker nor hostility. Listen has no invented directional anticipation or sensitivity multiplier. A doorway-vigilance journey deliberately chooses the danger preset.
+
+A compatible amendment preserves its exact parent action, route/purpose/progress/cooperation. Direction updates in G's movement variant qualify as amendments only when the native family and B/E compatibility checks pass. Fixed region/bearing stays fixed; travel-relative focus follows the actual admitted nonzero motion tangent. At a real direction change, coverage can lapse while B turns. With no initial travel frame, show the admitted unfulfilled state rather than guessing from body heading.
+
+E feedback maps as follows:
+
+| Native own-work meaning | Player wording/behavior |
+| --- | --- |
+| preparing | Explain actual aligning/preparing and exact/estimated/unknown remaining work as supplied. |
+| maintaining | Watching the stated scope, with actual remaining finite duration; not guaranteed readiness for every danger. |
+| unfulfilled: turning | Turning toward the selected scope; no current claimed coverage. |
+| lost-required-observation / blocked-method | View/method unavailable, with permitted limitation; not proof a hidden threat departed. |
+| incompatible-work / physical-recovery | Name own current limitation; offer normal stop/replace choices. |
+| lost-capability | Own selected method unavailable; no fabricated ordinary sight/hearing fallback. |
+| missing-travel-frame | No movement direction to watch from yet. |
+| ended | Actual completed/expired/cancelled/interrupted reason and permitted partial findings. |
+
+Ending an attached watch cancels only its exact owned B maintenance; a borrowed or later-replaced directive survives. The underlying compatible walk/guard remains. Ending/replacing the parent ends the action-owned watch; it does not become a stationary plan. A later incompatible Look explicitly ends/replaces the conflicting facet through shared admission. No client-only paused watch or automatic head recenter is allowed.
+
+Investigate binds an original permitted location fact and explicitly selected method/vantage. With a bearing but no range, require the player to choose an authorized reachable place or use the owner's bounded known-vantage choices; never derive an arbitrary hidden source point. New evidence does not covertly retarget the route. A search reports method, checked scope/time, actual findings, exclusions and partial/inaccessible/unsupported/interrupted/incomplete outcome. No empty page or no-detection result certifies an empty room.
+
+## HUD, sensory presentation and target behavior
+
+### Shared components and state
+
+| UI responsibility | Reuse/extension |
+| --- | --- |
+| Actual action, posture/pace transition and Stop | Existing Current work/HUD status and action receipt; new compact movement/attention control composes the same ActionOption rows and availability. |
+| Own gaze and selected watch preview | Plain WorldRenderer intention/preview calls; actual accepted gaze/coverage from projection, with no PlayCanvas object escaping. |
+| Cue text, reading time, overflow and history | Existing speech-caption/timed-UI ownership, generalized only to actual additional sensory cue families; same scoped queue/history route. |
+| Current/cue/historical inspection | Existing inspection shell with explicit reference role and temporal heading; same action browser for valid choices. |
+| Own effects and combat controls | Existing character/status/aim controls, using D/F permitted results and installed action details. |
+| Settings/remapping | Existing settings/preferences primitives; bindings are semantic actions with scope and conflict checks. |
+| Render contacts and historical markers | Scene/presentation owners with record-kind lifecycles; world-motion only interpolates eligible current visual facts. |
+
+Do not create separate controls for the same action in every journey. A button, key, text request and contextual choice bind the same method, costs, replacement and target. An open panel retains layout, draft and reading position during safe same-owner refresh; stale commands disable immediately. Permission loss clears protected content before awaiting refresh.
+
+### Sound and uncertain contacts
+
+The cue renderer receives C's already admitted direction/uncertainty/elevation and A's classification/association. It does not calculate dB, distance, source count or hidden positions. An unknown rustle is a rustle, not a guard or enemy. A subthreshold accumulation has no cue at all.
+
+Use a broad arc/wedge only when a bearing is supplied. If only a region is supplied, use a soft region boundary/pattern with its uncertainty, not a precise center pin presented as truth. If neither is supplied, use neutral text. A broad region may have a representative layout anchor purely for text placement; it is not an interactable source coordinate and must not be called a location estimate.
+
+Captured listener origin/orientation/time remain part of the cue. Camera rotation may reproject a permitted world bearing. Listener translation never computes a new source bearing from hidden state. Reuse the current 0.5 m motion-to-neutral fallback for transient captions until a fully labeled old-origin display is implemented. History can show the captured old origin/direction. These are display choices; C's physical uncertainty stays intact.
+
+A sound impulse becomes historical after its actual occurrence; lingering reading time is not sustained emission. Continuous evidence updates only its permitted acoustic facets. Familiar speech may refresh identity while every old visual field stays old. Do not move captions to a newly visible person's head without a current supported body association.
+
+Audio playback itself follows the same detail grant. No hidden-position spatial audio node, identifying voice sample, weapon timbre or exact number of footsteps unless those facts are permitted. A safe approximate bearing uses a renderer-generated diffuse placement that cannot be interpreted as true range; the same text meaning is available without audio. Actual game speech text/voice and accessibility are distinct from a fictional body's hearing capability.
+
+### Selection, hover, action shortcuts and warnings
+
+In view and world picking use only current permitted contact geometry. A picked figure can be anonymous but actionable; a tip/region cue can be detectable but not actionable. Current target permission is checked again at the exact server command boundary and attack's later required boundaries.
+
+Selection/hover is harmless UI. It does not aim a weapon, turn a head, threaten someone or create attention work. Physical aim is an explicitly selected action. Enemy coloration/outlines never derive from global faction, private AI goals, awareness, preparedness or inferred hostility. A selection outline is a neutral pointer aid; hostile action wording requires actual permitted evidence and CTR's opponent-specific shortcut rules.
+
+Default historical markers have their own history hit target, separate from scene body picking. Their inspector offers history and permissible location inquiry only. Losing a target converts a safe open panel in place; it retires attack/follow, cursor affordances, aim previews and stale shortcuts immediately. A delayed result cannot restore them. No auto-promotion from local voice/remembered person to current body.
+
+Attack preview gives the exact equipped/selected method, real commitment/cost/recovery, known range and permitted target conditions. No “unaware,” surprise probability, guaranteed 2× or private defender readiness. Lethal confirmation uses F's maximum authorized harm and actual consent rules, not hidden preparedness; otherwise its presence/amount would become an awareness probe. Observe native refusal ordering and safe messages consistently across UI and crafted requests.
+
+Warnings display actually acquired motion, words or contact. An arrow can be noticed too late to evade; a friend may betray without adequate earlier warning. The UI must present all important authorized cues, but must not invent an advance telegraph to guarantee defense. Combat input is never backdated, and camera framing cannot suppress physical acquisition.
+
+### Startle, fear and surprise
+
+D's selected native startle has no categorical action lock or locomotion penalty. Show only supplied own consequences, for example less steady aim and shorter newly available evade; preserve ordinary movement, Stop, speech and compatible action input. Injuries, incapacitation and other actual restrictions retain separate reasons.
+
+Use D's complete effective-parameter projection. Do not calculate fear from a capped history list, sum body/appraisal fear, round a missing value to neutral, or duplicate its attack/evasion formula. Existing accepted evasion geometry remains frozen; new endpoint offers/refusals use the native current parameters. Show remaining **normal-play time** and distinguish current speed; a client countdown is descriptive, never authority for effect end.
+
+F supplies own preparation as preparing/maintaining, ended with reason, or not-enough-information; own warnings have acquired time and noticed/registered meaning; own permitted actual aftermath may include caughtOffGuard. Adapt these into existing feedback, without native life/cause/evidence tuples. No target-private countdown or attacker-side disclosure of a defender's surprise result.
+
+The effect from an impact is published after that impact's defense/harm resolution. No UI animation makes it appear that the same new shock reduced its own defense. Later native-ordered attacks may use it normally. An effect ending does not claim emotional calm or safety.
+
+SA-D01 additionally governs any retained appraisal's applicability on control transfer, not just generation. Until selected, G cannot promise that a formerly autonomous person's fear is active or masked during direct control, nor expose private prior-controller thoughts. Native bodily feedback is independently specified.
+
+## Latency, interpolation and stale states
+
+### Rendering rules
+
+Own input echo may move a nonphysical requested-direction marker or press a button immediately. It cannot move collision geometry, expose terrain, emit footsteps, acquire sight or finish a posture. The minimum implementation renders confirmed own motion with existing smoothing; predictive own-body art is optional later work requiring the same strict separation and must not discover facts.
+
+Other subjects receive no extrapolation. Interpolate only between two authorized visual samples of the same permitted facet/contact/life scope, and only if the observation owner confirms uninterrupted support over that interval. Two visible endpoints alone do not prove visibility between them. Do not publish a hidden future path for smooth movement. If continuity or support is missing, hold/snap to the permitted sample or demote to history.
+
+On loss/revocation, immediately remove from the interpolation set and apply demotion/removal before the next frame. A fade can affect only the already frozen historical representation. An old equip/pose asset load cannot upgrade a current coarse contact or a historical record. Projection changes invalidate queued animation, light, audio, raycast and outline data as well as the mesh.
+
+The existing spatial interpolation helper preserves actual support seams. It cannot use a full secret map to smooth a public contact. If only a region/patch is authorized, render that uncertainty; do not invent precise floor/body anchors.
+
+### Transition matrix
+
+| Transition | Server behavior | Client behavior |
+| --- | --- | --- |
+| Ordinary update, same scope | Ordered complete cut/patch with independent facet removals | Preserve panel state; update only authorized changed facets. |
+| Lost one facet | Revoke that facet even if contact persists | Remove its art/label/attachment/action assumptions; leave valid remaining facts. |
+| Lost all visual support | Retire current physical binding; optionally project eligible history | Stop interpolation/tracking, demote selection and disable current commands atomically. |
+| Cue ends | End current cue interval; retain allowed occurrence/history | Reading may continue marked historical; no ongoing emitter. |
+| Native preparation incomplete | Existing coherent hold/continuation and explicit technical condition | No inferred safe/empty/neutral result; disable affected unsafe commands. |
+| Patch predecessor missing / out of order | New scoped baseline on request | Reject patch, stop live prediction/input and mark stale until current baseline. |
+| Same-character network delay | Continue only valid current control under freshness rules | Retain last permitted display as dated/stale, not freshly live; unsafe controls disabled; no auto replay. |
+| Forgetting/correction/privacy change | Recheck reads, emit affected removals or reset history scope | Clear affected protected details, cue/marker/inspector state and late reads even while paused. |
+| Control/body change | Retire exact old-life input/target bindings; obtain new scope | Release keys, remove old private/current data, retain only safe preferences. |
+| Timeline/world restore | Validate native current state, new scope/baseline, no old leases | Clear abandoned future, historical render cache and pending commands; reload current permitted baseline. |
+| Creator→ordinary | New ordinary audience baseline; no privileged field reuse | Synchronously clear creator data before drawing ordinary view, including map and detached inspectors. |
+| Ordinary→creator | Verify current inspect/create grants separately | Persistent creator banner; no automatic personal-memory grant. |
+| Pause | Freeze mechanical clock; new physical starts refuse under existing rules | Keep reading/camera, release held input; show paused; allowed cancellation uses actual owner. |
+
+Use the existing delayed visual loader policy, not per-feature spinners. Immediately guard duplicate/unsafe submissions. An async request's success/error/finally/focus work is fenced by its exact attempt and scope, including receipt recovery; ignoring it only in a leaf component is insufficient.
+
+### Time and fairness
+
+The current base maps one normal real second to one game minute. Native movement, gaze, posture, attention, preparation, attacks, startle and recovery all use that common simulation conversion. 3×/8× changes the speed of all those mechanics, not only travel or only danger. Browser reading duration and network watchdogs remain distinct operational clocks.
+
+A cue already acquired during a short high-speed interval must remain available as an event/history even if no sampled live body frame was published. Do not lengthen the mechanical effect to match caption reading, and do not pretend 8× is qualified for ordinary reaction play. Normal play defaults to 1×; 0.5×/pause remain only where the current permission policy allows them.
+
+Qualification must measure acquisition → publication → rendered/readable cue → input arrival → native admission/action. A cue technically present in a payload but hidden by a sheet, low contrast, microscopic art or a full routine queue fails player fairness. A cue not actually acquired is not a UI defect to repair by exposing hidden information. These two failure categories need separate reports.
+
+## Accessibility and input customization implementation
+
+Reuse React Aria primitives and existing token/layout/focus behavior. Implement all essential choices as named buttons/action rows, with visible focus, accessible reasons and non-drag region/direction alternatives. Disabled actions need reachable explanations; do not rely on hover on a disabled HTML control.
+
+The binding registry owns semantic action, allowed scopes, default chord, hold-versus-toggle capability and conflict checking. Validate conflicts within simultaneously active scopes, including W/Create, C/Crafting, Shift+S/A and construction Q/E. Do not silently swap another action. A proposed conflict needs explicit user reassignment/clearing in settings; restore defaults restores the whole coherent profile. Runtime current hints use that map.
+
+Choose KeyboardEvent.code for position-based movement defaults and display the user's resolved key labels where available; text/panel commands retain existing character/chord expectations. Layout/remap fallback must remain understandable without a browser keyboard-map API. Repeated keydown does not submit repeated discrete commands. A direction controller derives held combinations; discrete buttons share ordinary request guards.
+
+Store only preferences in the existing settings owner. Essential hold gestures have explicit toggle/button equivalents with an active label and Stop; toggled motion still requires current focus/control/heartbeat and never continues when hidden. Screen-reader announcements use restrained semantic updates, with urgent acquired danger separate from routine cues and a full reviewable list. Do not announce position every frame.
+
+On narrow screens preserve current work/Stop and active combat controls in the existing reserved sheet footer. Selecting another panel cannot hide the only Cancel/Release choice. Enlarged text, forced colors and reduced motion must distinguish the same current/historical/uncertain states. No fictional subtitle device or sensory trait is required to enable accessibility presentation of already earned information.
+
+## Persistence, lifecycle and extension seams
+
+Save accepted native body/pose/work/evidence/effect state in their existing owners under the current-format contract. Persist steering's native partial motion only as needed for a coherent cut; its transient human input session does not survive restore/control loss, so the corresponding held movement ends through ordinary reconciliation before simulation resumes without fresh input. Do not erase completed movement, reset contact-distance accumulation or replay action-start effects. Ordinary click-path and E/B finite saved activities retain their separately specified continuation semantics.
+
+Historical facts come from awareness/experience/knowledge with existing correction/forgetting eligibility. A browser cache is bounded disposable presentation, never the canonical record. Do not persist hidden/current/history DTOs to localStorage, URLs, generic analytics or an offline mirrored world to improve reconnect. Existing safe draft and preference policies remain.
+
+Alternate-world example: an admitted machine with vibration sensing and no fear can receive a broad surface region, choose a supported observation method and move through its own body controller. It gets no human voice/fear/crouch fallback. Another body can have several gaze groups; the UI selects its installed named controls rather than assuming one head. These examples test interface composition; implementing those worlds is out of scope.
+
+No new package, event bus, identity service, memory store, scheduler, permission system or UI framework is required. Extract focused projection/input helpers when they serve these actual multiple callers. World labels and tuning remain installed content; “request pending,” “last observed” and “connection stale” are generic UI semantics.
+
+## Performance and operational bounds
+
+Cost grows with changed observer-contact facets, actual nearby cue density, selected history pages, renderer-visible contacts and input-active controlled bodies. It must not become all entities × all players × render frames, or lifetime history hydration per keydown.
+
+| Path | Shared preparation and invalidation | Bound / overload behavior |
+| --- | --- | --- |
+| Input | Reuse current installed movement/pose descriptors; invalidate actual body/work/control/policy changes | One held session per control owner; latest replaceable value, prompt release, bounded rate and watchdog; refuse stale/malformed input before native work. |
+| Current projection | A/B/C's prepared observer facts and existing view caches; invalidate actual support/detail/source/scope changes | Existing native continuation handles required work. Page optional lists; no nearest-N cap that erases required cues or grants hidden facts. |
+| History | Select permitted observer/source IDs before indexed hydration; no live entity join for old details | Existing bounded paged reader; selected marker cache and cue window only, with history continuation. |
+| Rendering | Per-contact/facet changes; common neutral assets; no React updates on unchanged per-frame pose | Reuse existing resource lifetime/caches; cap optional history/cue decorations, not semantic access. |
+| Strong cues | Existing event delivery with scoped occurrence identity; coalesce only repeatable low-value presentation | Required outcomes/history are preserved; overflow shows a useful history notice. Never coalesce a distinct attack or delete evidence as “too many sounds.” |
+| Terrain/light | Reuse public immutable geometry and current permitted appearance field | Changed dynamic disclosure is scoped; graphics light budgets do not change sensing. |
+
+The [limits inventory](../limits/stealth-player-experience.md) defines proposed input/cue/history windows, existing limits reused and explicit unqualified growth dimensions. No full-scale capacity, frame-rate or network-latency result is claimed. Existing entire eligible live scenes can still be large; measure them instead of selecting arbitrary hidden bodies to omit.
+
+Future verification measures representative cold/warm observer publication, dense changing cues, many inert known surfaces, partial visibility changes, reconnect/full baseline, creator downgrade and history correction. Count candidate/facet work, native outcomes, in-flight backlog, retained render nodes, transferred bytes and end-to-end cue/admission latency. Preserve actual mechanics and disclosure in every optimization. A fast isolated shader or native helper does not qualify the whole path.
+
+## Developer-ready acceptance
+
+These are required checks for later implementation, **not executed tests or completed UX**. Exercise through existing native/server/protocol/browser callers; write no test suite merely to mirror tables. Relevant automated checks, focused scenarios and uncoached/assistive-technology review are selected under repository verification policy. SPX tracks their unchecked state.
+
+| ID | Setup / action | Required observable result |
+| --- | --- | --- |
+| G-AC01 | Ordinary player behind a wall; orbit, zoom, Alt read-through, open list/inspect, inspect payload and assets | No hidden live body, ID-linked asset, position, pose, equipment, behavior, target or source coordinate. Known authorized geometry remains usable. |
+| G-AC02 | Body visible, hand/weapon concealed; later only hand loses support | Independently authorized body remains; lost hand/equipment detail and animation disappear on the same patch. |
+| G-AC03 | Only a head/tip is exposed | Patch/region cue does not disclose exact hidden feet, complete skeleton or unjustified body target. |
+| G-AC04 | Two indistinguishable figures overlap and lose unique witness | Selection continuity retires; no canonical-ID lock follows the right hidden person. |
+| G-AC05 | Change hidden actor ID/equipment/action/position while permitted evidence is identical | Ordinary payload semantics, asset associations, cue labels/grouping, target ordering and error meaning remain equivalent. No padding/constant-time security claim is implied. |
+| G-AC06 | Receive voice only, familiar versus unfamiliar listeners | Separate allowed association/words/direction; no live body or refreshed old spear. Ambient response works for an unknown voice. |
+| G-AC07 | Move after a directional cue; hidden source moves separately | Old bearing stays captured or becomes neutral; new listener position does not reveal source range/direction. |
+| G-AC08 | Weak exposure below A threshold; repeated redraw/reconnect | No pre-acquisition meter/hint and no extra accumulation or recognition. |
+| G-AC09 | Seen person disappears, followed by delayed asset and inspection reply | Live target/interpolation/outline/shadow/audio vanish; only explicit historical record can remain. Late work cannot resurrect detail. |
+| G-AC10 | Remembered lit fire extinguishes/moves unseen; independent glow may still be acquired | History stays frozen; it emits no light. Only fresh permitted source-free appearance updates illumination. |
+| G-AC11 | Known building changes behind cover | Public terrain persists; present door/contents/secret metadata is not streamed. Real movement can block with actor-safe explanation. |
+| G-AC12 | Press WASD on ground/slope/support seam; diagonal/opposed keys | Same ordinary movement speed/clearance/sound/time owners; no faster diagonal, floor drop, client body move or repeated action starts. |
+| G-AC13 | Change direction repeatedly while walking with compatible attention | Same native action/progress and finite watch deadline; actual turns produce real coverage gaps. |
+| G-AC14 | Blocked steer and failed replacement from another action | No auto-detour, clipping, hidden blocker identity or premature cancellation of valid old work. |
+| G-AC15 | Key release then delayed older update; click-walk replaces steering | Old packet cannot revive steering or cancel replacement work. |
+| G-AC16 | Packet loss, scope change, focus loss, modal, IME, hidden tab or pause | Prompt local release, bounded server stop, no replay on return; typing never moves. |
+| G-AC17 | W/C/Shift+W, Shift+S/A, construction Q/E, arrows and Escape | One documented meaning per eligible scope; panels/text/camera/placement retain correct ownership. |
+| G-AC18 | Request crouch/stand; introduce low clearance before completion | Pending/transition/actual pose distinct; final refusal retains actual old posture and no successful completion sound. |
+| G-AC19 | Evade crouched; attempt posture/pace during admitted evade | Explicit real refusal without hidden stand, altered endpoint, fake progress or duplicate cost. |
+| G-AC20 | Look while walking, then release; head-only look while guarding | B-compatible real pose/rate; no snapback, camera sight grant or automatic shield turn. |
+| G-AC21 | Out-of-limit gaze or stale body target | Honest blocked/limited/stale result; no optimistic full turn or continued hidden tracking. |
+| G-AC22 | Default Watch versus explicit Watch for danger | Observation alone supplies no anticipation; selected danger scope remains own intention, not an attacker disclosure. |
+| G-AC23 | Watch accepted but still turning/blocked; expiry of attached watch | Never label maintained prematurely; expiry preserves compatible parent action and unrelated gaze. |
+| G-AC24 | Replace watch parent or issue conflicting Look | Exact facet ends/changes through native owner; no UI-only maintained/paused watch or automatic renewal. |
+| G-AC25 | Listen, then investigate a broad sound; find wrong person or nobody | No range bonus, culprit assignment or global empty-room result; actual checked scope/partial findings and a useful stopping point. |
+| G-AC26 | Default/exterior Inspect from scene, panel and keyboard | Reading display does not itself spend inspection work or reveal contents; explicit action uses same real admission. |
+| G-AC27 | Hover/select a stranger, then deliberately aim/attack | Harmless selection; only real committed preparation can produce threatening evidence. |
+| G-AC28 | Ambush an unseen-prepared target, vary only their private readiness | No oracle preview/outline/lethal-dialog change; attacker sees only allowed outcome. |
+| G-AC29 | Betrayal by visible familiar person; second listener/witness differs | No prior hidden hostility marker; each participant gets only acquired cue/aftermath. |
+| G-AC30 | Eligible startle with no other restriction | Movement/Stop/speech remain usable; supplied own attack/evasion consequences shown with actual timing, no input lock. |
+| G-AC31 | Fear changes after evade admission; choose new excessive endpoint | Old evade retains trajectory/duration; new invalid endpoint refuses before cost and refreshes choice. |
+| G-AC32 | Contact produces startle; second attack follows in native order | First hit uses precontact state; later result may use prior shock; UI chronology agrees. |
+| G-AC33 | 1×, pause, 3×/8× and half-effect save/reopen | Shared mechanical clock applies to every subsystem; no repeated onset, wall-timer expiry, selective slow danger or old held-key resume. |
+| G-AC34 | Lost stream predecessor, stale receipt and required query incomplete | New scoped baseline/clear status, no fabricated safe/empty/zero result and no duplicated consequential action. |
+| G-AC35 | Forget/correct while async history is held; body/timeline change | Current authority rechecked before disclosure; old marker/details/commands cannot reappear. |
+| G-AC36 | Creator inspection enter/return, including paused and late responses | Server grants respected; all privileged payload/renderer/panel/map/target caches cleared before ordinary render; no character memory grant. |
+| G-AC37 | Ordinary client crafts inspect/speed/create request | Server denies missing capability; hiding toolbar alone is insufficient. Human-private records remain protected from creator authority. |
+| G-AC38 | Audio off, high contrast, reduced motion, enlarged text, keyboard only and narrow sheet | Same permitted cue meaning/precision/timing and reachable actions/Stop; no cue or critical reason depends on color/hover/shake alone. |
+| G-AC39 | Dense routine cues plus meaningful acquired danger | Danger remains readable, no distinct outcome lost; overflow links permitted history without claiming all captions were shown. |
+| G-AC40 | Uncoached G-J01–G-J10 in the integrated first-playable world | Players can explain current versus remembered, actual posture, available reactions and why a result is uncertain; record enjoyment/usefulness separately from technical correctness. |
+| G-AC41 | Alternate admitted body/sense and no fear channel | Controls/labels use installed meaning or explicit unsupported state; no silent human sight/hearing/crouch/fear assumption. |
+| G-AC42 | Same histories grow while live vicinity stays fixed; cold restore/dense cue change | Bounded selected reads/input queues; record real whole-path costs and remaining scaling limits rather than deleting facts to pass. |
+
+## Contradictions and integration recommendations
+
+These findings are instructions for SAD-I and the owning implementation tasks, not permission to fork shared mechanics or claim the conflicts are already resolved.
+
+| Item | Evidence / contradiction | Integration decision required and conservative G behavior |
+| --- | --- | --- |
+| SA-D01 | D expands the open controlled-player fear decision to producer, retained-appraisal applicability, disclosure, revocation and transfer. The shared/F summaries retain older narrower wording. | Preserve D's full unresolved scope. No automatic AI, masking/unmasking or persistent fear claim. Native bodily feedback can proceed. |
+| SA-D02 | Shared conceptual EvidenceRef.revision is numeric; existing personal-source revisions can be exact SHA-256 strings. A/F record a proposed correction. | Adopt a family-preserving shared representation once. G consumes opaque permitted references; never converts a digest to a number or invents a client revision. |
+| SA-D03 | E maintaining capture loses actual method-start time needed by F after approach/preparation; action admission can be earlier. | Reconcile F's proposed currentMethodStartedAt in E's owner; never derive readiness from local press time or action age. |
+| G-I01: detection/stat and movement policy | A initially confines Perception effects to recognition; B extends physical detection/detail. B side/back travel and C pace/posture need one composition. | Integrate installed policy owners before mechanical qualification. G displays resulting allowed detail/speed; no duplicate stat or UI penalty. |
+| G-I02: body detail and motion publication | Base complete EntityView/actionAnimation conflicts with A/B exposed-part/facet permission. | Replace current-format projection and description producers together, including source-safe assets and target roles; do not stage safe sprites over unsafe data. |
+| G-I03: static map and remembered fire | Broad map serialization and historical illumination do not meet ordinary-perspective promise. | Separate permitted geometry/current appearance/history. Remove historical light emitters; no per-client secret-geometry cache. |
+| G-I04: speech localization and curiosity | Current speech direction lacks C's quality-dependent spread/elevation. C leaves curiosity future; E selects an opted-in contrast profile. | Use C's actual future projection when implemented; keep current code labeled baseline. Reconcile E's narrow contrast without retuning ordinary hares. |
+| G-I05: direct movement and gaze/watch | Current move is destination-based; repeated point commands would restart work. B/E have exact finite amendment ownership. | Add the narrow ordinary steering amendment described here and qualify B/C/E composition. No new parallel lane, local motion or endless watch. |
+| G-I06: source-free light/daylight | B and first-playable lighting select world-owned illumination; renderer clock/light approximations are not sensing authority. | One installed daylight/appearance producer; UI brightness and graphics budgets only affect aesthetics. |
+| G-I07: filenames and current help | Shared trackers reserve stealth-player-view; user requires stealth-player-experience. README retains old floor-selection help while current camera/spatial contract does not. | Use the requested filenames and current camera help. Proposed WASD/Create remap stays labeled future until implementation. |
+| G-I08: warning producers | F still needs B/A incoming-flight and A/SPK received/understood ordinary-warning integration. | G consumes acquired warning, never hidden velocity/intended target or missing words. Do not claim every attack gives a reaction opportunity. |
+
+SAD-I should integrate contract decisions before dependent implementation, retain independent work IDs/unchecked evidence, and reconcile overlapping small repertoire paragraphs without overwriting specialist semantics. It owns final broad gameplay-priority/coverage reconciliation. Do not merge every experimental branch to solve this assignment.
+
+No new owner decision is required to finish this player-interface design. SA-D01 remains a separately bounded unselected product policy; SA-D02/03 and G-I items are explicit cross-specialist implementation gates. Proposed input/history/feedback defaults remain subject to measured tuning, not additional permission ceremony.
+
+## Maintained records
+
+- Player behavior and journeys: [Feature specification](stealth-player-experience-feature-spec.md).
+- Implementation and verification: [SPX tracker](../maintainers/stealth-player-experience.md), [SA coordination](../maintainers/stealth-awareness.md).
+- Limits: [Player-experience inventory](../limits/stealth-player-experience.md), [shared awareness inventory](../limits/stealth-awareness.md), [UI limits](../limits/ui-ux.md), [interface limits](../limits/interface.md).
+- Current authority/contracts: [Engine/world boundaries](../engine-and-world-boundaries.md), [action capabilities](../action-capabilities.md), [spatial world](../spatial-world.md), [memory](../memory-architecture.md), [identity](../identity-and-references.md), [save/load](../save-and-load.md), [simulation time](../simulation-time.md).
+- Presentation conventions: [World interaction](../ui-ux/world-interaction.md), [React](../ui-ux/react.md), [system feedback](../ui-ux/system-feedback.md), [world presentation](../world-presentation.md).
