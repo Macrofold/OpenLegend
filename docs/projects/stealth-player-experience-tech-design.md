@@ -458,3 +458,4 @@ No new owner decision is required to finish this player-interface design. SA-D01
 - Limits: [Player-experience inventory](../limits/stealth-player-experience.md), [shared awareness inventory](../limits/stealth-awareness.md), [UI limits](../limits/ui-ux.md), [interface limits](../limits/interface.md).
 - Current authority/contracts: [Engine/world boundaries](../engine-and-world-boundaries.md), [action capabilities](../action-capabilities.md), [spatial world](../spatial-world.md), [memory](../memory-architecture.md), [identity](../identity-and-references.md), [save/load](../save-and-load.md), [simulation time](../simulation-time.md).
 - Presentation conventions: [World interaction](../ui-ux/world-interaction.md), [React](../ui-ux/react.md), [system feedback](../ui-ux/system-feedback.md), [world presentation](../world-presentation.md).
+

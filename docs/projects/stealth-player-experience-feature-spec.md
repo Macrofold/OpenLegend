@@ -75,12 +75,12 @@ These bindings are a selected future profile, not a claim about current code. Wo
 | Quiet / ordinary pace | Z; pace button | Request the other installed pace. Quiet pace and crouch are independent; there is no “undetected” toggle. |
 | Look independently | Hold F and point at a permitted place; Q/E turn the requested look direction while the world is focused | Submit compatible orient-once intentions. The head/receiver actually turns at its admitted rate and within its body's limits. Releasing F stops new requests, without snapping the accepted pose back. |
 | Look without holding/dragging | Look button, then select a permitted point; keyboard direction controls and Confirm | Same orientation intention. The preview marks the requested direction; the accepted gaze marker remains distinct until reached. |
-| Watch area | Watch button or area's contextual Watch choice | Preview a finite scope and purpose, then explicitly Start watching. No default all-around watch or automatic repetition. |
+| Watch area | Watch button or area's contextual Watch choice | Preview a finite scope and purpose, then explicitly Start watching. Default Watch observes; the explicit Watch for danger preset adds the player's chosen anticipation. No default all-around watch or automatic repetition. |
 | Investigate a cue | Investigate on a permitted Noticed/history entry | Preview the original approximate search area and stopping condition, then start the offered activity. A sound with only a bearing needs a player-selected permitted place within that bearing. |
 | Listen / Scan / Inspect area | Movement & attention expansion or ordinary action browser | Use the installed finite action and its real work cost, coverage and completion rules. Listen does not increase hearing range. |
 | Equipped targeting | T; existing target button | Preserve equipped-method selection and exact target review. No release or attack until the ordinary explicit action requests it. |
 | Quick contextual action | Existing Command-click / equivalent platform gesture | Resolve the same currently offered exact method/target as the menu under CTR's opponent-specific rules. It cannot act on a historical marker. |
-| Stop current work | Space with world focus; visible Stop | Cancel the exact displayed owned work using existing cancellation rules. It is not Escape and cannot cancel a replacement task using a stale reference. |
+| Stop all work | Space with world focus when the visible full Stop is offered | Use existing full cancellation for the exact displayed work, including queued/waiting continuation. Releasing WASD ends only its own held movement. Neither operation can cancel replacement work using a stale reference. |
 | Speak / Act | Shift+S / Shift+A | Preserve existing text-composer meanings. Modifiers do not additionally move the character. |
 | Panels | I Inventory; C Crafting; K Character; V In view; J Journal | Preserve existing bindings. |
 | Create | **Shift+W** | Deliberately replaces current W so direct movement is unambiguous. Update launcher hint, help and remapping together; no hidden context-dependent W alias. |
@@ -116,7 +116,7 @@ Direct movement may replace ordinary interruptible work under that work's existi
 
 Looking changes actual sensory orientation; watching chooses a finite activity with a scope and purpose. Opening an inspector reads currently permitted details. A deliberate Inspect action may spend time to acquire additional evidence through E; the panel itself does not perform that action.
 
-Start Watch with a visible region/direction preview, the installed method, duration, bodily requirement and what current work it replaces or attaches to. The default is a relevant approach such as a doorway, not a named hidden attacker. Server-confirmed feedback says **Preparing to watch** or **Watching this approach**, never **Safe** or **Immune to surprise**. Coverage and expected danger descriptions include only the player's own chosen intention and permitted evidence.
+Start Watch with a visible region/direction preview, the installed method, duration, bodily requirement and what current work it replaces or attaches to. Default **Watch** observes that scope without adding danger anticipation. The distinct **Watch for danger** preset explicitly selects supported physical-attack concerns for the chosen approach, such as a doorway, without naming a hidden attacker. Server-confirmed feedback says **Preparing to watch** or **Watching this approach**, never **Safe** or **Immune to surprise**. Coverage and expected danger descriptions include only the player's own chosen intention and permitted evidence.
 
 Compatible walking or guarding may carry E's finite attached watch. Its expiry ends that watch without canceling the underlying walk/guard. A changed heading, sensory capability or incompatible work can break actual coverage; the UI immediately reflects the resulting authoritative phase or ending. It neither turns the character back nor quietly renews the watch. A new watch requires an explicit new request.
 
@@ -132,14 +132,17 @@ Listen, scan, inspect and investigate show the installed expected time and real 
 | Recognized voice | Permitted known name or familiarity description, actual heard fragment and rough direction if available | Live body, mouth animation, unseen equipment, exact origin or unheard words |
 | Weak visual cue | Authorized movement/shape/region with uncertainty | Full colored faction outline or distinctive sprite reconstructed from a hidden asset identifier |
 | Threatening cue | The noticed movement, words or contact and available reaction choices | Global “enemy sees you,” hidden suspicion/readiness bar or automatic hostile classification |
-| Own preparation | Actual preparing/maintaining/ended state, method, scope and time | Promise that an attack will miss or cannot surprise |
-| Startle / fear effects | Own current bodily condition, admitted mechanical consequences and recovery timing | Claims about the human user's feelings, another person's private emotion, forced retreat or a fake input lock |
+| Own preparation | Actual preparing/maintaining/ended state, method, scope and time; incomplete information replaces an unsupported ready claim with “Preparation information unavailable” | Promise that an attack will miss or cannot surprise; treating incomplete information as unprepared or safe |
+| Own received warning | “Warning heard” for an actually noticed warning; “Expecting danger from this approach” only for its registered anticipation, with permitted scope/evidence | A hidden source identity, guaranteed defense, or a countdown of private warning eligibility |
+| Startle / fear effects | Own current bodily condition, admitted mechanical consequences and supplied recovery timing; a finite startle ending leaves independently applicable effects visible | Claims about the human user's feelings, another person's private emotion, forced retreat, invented persistent-effect countdown or a fake input lock |
 | Surprise aftermath | Own permitted “Caught off guard” outcome and actual body/result information | Attacker-side confirmation of another character's private lack of preparedness |
 | Combat result | Only personally permitted hit/defense/injury facts from the committed result | Hidden exact damage/health, target identity, or a guaranteed surprise bonus before contact |
 
 A sound direction is anchored to where the listener was when they heard it. Turning the camera can reproject that captured bearing; walking elsewhere cannot triangulate it using hidden source data. If the old bearing is no longer useful, keep the original-position label and history route rather than drawing a false current radar arrow. A new real cue can supply a new independent observation.
 
 Critical admitted cues have text and visual equivalents independent of audio, tiny sprites and camera framing. They appear beside the existing sensory/current-work surfaces, remain reviewable in permitted history, and are not discarded beneath routine chatter. Presenting a cue does not promise that the world provided enough time to avoid every attack.
+
+Lethal-action review uses the maximum harm authorized by the combat preview, including a possible surprise result. Its confirmation must not change solely because a target's hidden preparedness changed. An already released projectile never pauses for a new impact-time confirmation.
 
 ### Darkness, periphery, cover and art
 
@@ -194,7 +197,7 @@ Open the caption's historical/voice inspection. Previously seen possessions reta
 
 ### G-J05 — Vigilance at a doorway
 
-Select the visible doorway/approach, choose Watch, preview scope, duration and expected danger, and confirm. The current-work area shows accepted preparation followed by maintained watching only when E/F actually supply it.
+Select the visible doorway/approach, choose **Watch for danger**, preview scope, duration and the explicitly selected attack concerns, and confirm. Default Watch alone would only observe. The current-work area shows accepted preparation followed by maintained watching only when E/F actually supply it; incomplete information cannot retain an old maintaining badge.
 
 The player can move their camera, inspect permitted records, or choose a compatible defensive action without adding an all-around awareness power. Looking away, losing the needed sense or doing incompatible work updates/ends relevant preparation through the owners. Expiry is visible and does not renew itself. An unknown attacker entering that approach can meet a prepared defender; success of defense is still separate.
 
@@ -214,7 +217,7 @@ The target blocks, evades or is hit according to native resolution. Present only
 
 After an eligible sudden attack, own status shows **Startled** and the actual consequences, such as less steady aim and a shorter available evade, with remaining normal-play time. It does not disable WASD, Stop, speech or ordinary flight merely for drama.
 
-An already admitted evade keeps its frozen path and duration; a newly chosen endpoint must satisfy the current allowed range. A too-distant request refuses before cost and refreshes the offered choice. At pause, mechanical recovery stops. At debug 3×/8× all simulation work and recovery accelerate together; reading aids may remain readable without extending the effect. Existing longer-term appraisal feedback is conditional on its actual producer and disclosure policy, not invented after startle fades.
+An already admitted evade keeps its frozen path and duration; a newly chosen endpoint must satisfy the current allowed range. A too-distant request refuses before cost and refreshes the offered choice. At pause, mechanical recovery stops. At debug 3×/8× all simulation work and recovery accelerate together; reading aids may remain readable without extending the effect. When finite startle ends, remove only that effect's claim: another authorized contribution can still affect aim or evasion. Do not announce calm, safety or full mechanical recovery, or invent a timer for a persistent effect. Longer-term appraisal applicability and disclosure remain conditional on SA-D01.
 
 ### G-J09 — Lose visual contact
 
@@ -254,7 +257,7 @@ The worthwhile additions are small and reusable: a clear historical inspection r
 
 ## Open decisions and evidence limits
 
-- **SA-D01 remains open:** how directly controlled characters acquire longer-term psychological fear. This design specifies native startle and the display of already authorized own effects; it does not choose a fear producer or schedule AI for a human-controlled character.
+- **SA-D01 remains open:** the controlled-character fear producer, whether retained appraisals mechanically apply during direct control, disclosure, revocation and control-transfer behavior. D recommends native-body-only initial control (mask interpreted appraisal mechanics while preserving records/lifetimes), with deterministic interpretation if persistent player fear is desired; neither is adopted. This design specifies native startle and already authorized own feedback. It does not choose active versus masked prior fear, schedule AI for a human-controlled character or disclose a former controller's private thoughts.
 - **SA-D02 / SA-D03 and G integration items:** exact evidence-revision representation and preparation-method timing require shared-owner reconciliation, as recorded in the [integration contract](stealth-player-experience-tech-design.md#contradictions-and-integration-recommendations). UI can consume the specified safe outcomes without inventing either internal value.
 - Numerical presentation/input defaults are selected starting proposals in the limits inventory, not measured optimums. Human understanding, enjoyment, accessibility, latency, graphics and load acceptance remain unchecked in the tracker.
 
@@ -265,3 +268,4 @@ The worthwhile additions are small and reusable: a clear historical inspection r
 - Technical design and acceptance: [Technical design](stealth-player-experience-tech-design.md).
 - Shared contracts: [Stealth awareness](stealth-awareness-tech-design.md).
 - Existing conventions: [World interaction](../ui-ux/world-interaction.md), [world presentation](../world-presentation.md), [UI brief](../ui-design-brief.md) and [gameplay priorities](../repertoires/gameplay-priorities.md).
+
