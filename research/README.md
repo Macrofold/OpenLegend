@@ -1,8 +1,14 @@
 # Research
 
-| Research status           | Progress                                                                                                                                          | Last updated |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Maintained research index | Links engine/platform research and the expanded Godot community/AI review, with the browser-first milestone remaining the selected next delivery. | 2026-10-17   |
+| Research status           | Progress                                                                                                                                                                     | Last updated |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Maintained research index | Links engine/platform research, the Godot community/AI review, and the current Unreal/Unity subsystem study; the browser-first milestone remains the selected next delivery. | 2026-10-23   |
+
+## Current Unreal and Unity runtime mechanisms
+
+The [Unreal/Unity runtime research collection](unity-unreal-runtime/README.md) studies current engine systems across simulation, perception, AI, navigation, physics, data/concurrency, world scale, networking/persistence, rendering/animation/audio, content/tools/UI/platforms, profiling, gameplay frameworks, and recent primary research. Its evidence cutoff is **2026-10-23**.
+
+Start with its [OpenLegend context and coverage map](unity-unreal-runtime/00-openlegend-context-and-coverage.md) and [version/provenance baseline](unity-unreal-runtime/01-evidence-and-version-baseline.md). The collection explains mechanisms and limitations with per-chapter source registers. It does not select OpenLegend designs, change the engine/platform decision, or authorize implementation or benchmarks.
 
 ## Game engines and platforms
 

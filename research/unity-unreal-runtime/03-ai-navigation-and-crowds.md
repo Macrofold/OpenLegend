@@ -1,7 +1,7 @@
 # AI execution, navigation, and crowds
 
-| Research status | Scope | Reviewed |
-| --- | --- | --- |
+| Research status                              | Scope                                                                                                                        | Reviewed   |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------- |
 | Complete for the documented mechanisms below | Current behavior execution, environment queries, interaction reservations, learned policies, navigation, and local avoidance | 2026-10-23 |
 
 The central distinction in this chapter is between choosing an intention, finding an available interaction or route, and executing movement or an action. A system can accelerate one of these without solving the others. This research examines Unreal Engine 5.8 and Unity 6.6, with **Behavior 1.0.16**, **AI Navigation 2.0.16**, **ML-Agents 4.1.0**, and **com.unity.ai.inference 2.6.1**. The last package's current display name is **Sentis**. Package identities matter: similarly named older packages are not interchangeable evidence. [Unity package metadata][S03-09] [S03-12] [S03-15] [S03-24]
@@ -76,7 +76,7 @@ Unreal's current mesh-resolution system permits low, default, and high resolutio
 
 Unity's AI Navigation 2.0.16 provides surfaces for specific agent types, with selectable source geometry and collection scope. Voxel size changes geometric detail retained during baking. Tiles support parallel construction and bounded regional rebuilds, while smaller tiles can fragment the mesh and affect paths. Height-mesh data is optional additional information. These controls trade construction/memory cost against geometric representation; the manual's numeric examples are not adopted as universal tuning values here. [NavMesh Surface][S03-24]
 
-Unity documents convex polygons with adjacency, A* search, a corridor of polygons, local adjustment of that corridor after avoidance, and steering toward the next visible corner. Its local simulation accounts for acceleration and constrains the simulated agent to the mesh after movement. “Visible corner” in this context belongs to route geometry; it does not mean the character noticed or knows the entire route. [Navigation system inner workings][S03-25]
+Unity documents convex polygons with adjacency, A\* search, a corridor of polygons, local adjustment of that corridor after avoidance, and steering toward the next visible corner. Its local simulation accounts for acceleration and constrains the simulated agent to the mesh after movement. “Visible corner” in this context belongs to route geometry; it does not mean the character noticed or knows the entire route. [Navigation system inner workings][S03-25]
 
 Unity area costs weight distance, while area masks control allowed regions. The documentation cautions that polygon node placement can make the resulting route differ from the shortest geometric line. A graph-optimal result is therefore relative to its representation and costs; it is not proof of optimal travel in continuous space. [Navigation Areas and Costs][S03-26]
 
@@ -92,13 +92,13 @@ Unity's asynchronous NavMesh update API hashes sources and build settings to reb
 
 Unity distinguishes a moving local obstruction from a hole carved into the route representation. Without carving, nearby avoidance may fail to escape clutter or a blocked corridor. With the default stationary-only carving mode, moving removes the hole and local avoidance takes over; the hole returns after the stationary delay. The other mode updates after a movement threshold. The documented navigation result lags obstacle changes by a frame. This saves repeated rebuilding while accepting a specific delay and a difference in what global planning knows. [About NavMesh Obstacles][S03-30]
 
-| Changing situation | Engine mechanism described above | Distinct consequence |
-| --- | --- | --- |
-| A moving neighbor enters the next few steps of travel | Local avoidance | Changes immediate velocity; does not necessarily find another global route |
-| A stationary obstacle blocks a corridor | Carving or mesh update | Changes route connectivity used by pathfinding |
-| Unchanged world content streams into memory | Navigation chunk residency | Makes an existing representation available |
-| Underlying geometry changes | Dirty-region rebuild | Recalculates affected traversability |
-| Construction uses coarser geometry | Mesh-resolution change | Can remove a passage that the detailed geometry permits |
+| Changing situation                                    | Engine mechanism described above | Distinct consequence                                                       |
+| ----------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------- |
+| A moving neighbor enters the next few steps of travel | Local avoidance                  | Changes immediate velocity; does not necessarily find another global route |
+| A stationary obstacle blocks a corridor               | Carving or mesh update           | Changes route connectivity used by pathfinding                             |
+| Unchanged world content streams into memory           | Navigation chunk residency       | Makes an existing representation available                                 |
+| Underlying geometry changes                           | Dirty-region rebuild             | Recalculates affected traversability                                       |
+| Construction uses coarser geometry                    | Mesh-resolution change           | Can remove a passage that the detailed geometry permits                    |
 
 The table is an analytical separation of the documented mechanisms, not a proposed policy for when OpenLegend should use them.
 
@@ -142,9 +142,9 @@ Unreal **Mass Avoidance is Experimental**. It computes steering forces from sepa
 
 The current ZoneGraph plugin is **Experimental**. Its data representation stores zones, lane points, distances along lanes, tangent/up vectors, links, and a bounding-volume tree over zones. These are different data from a general walkable-surface mesh. [ZoneGraph plugin][S03-40]; [FZoneGraphStorage][S03-41]
 
-The subsystem can locate nearby or overlapping lanes with tag filters, advance a location a specified distance along a lane, and retrieve connected lanes by connection type and flags. Registered data has a lifecycle, and the interface can report an invalid lane or missing storage. A separately documented A* wrapper searches using lanes. Together these APIs establish spatial lookup, lane connectivity, and progression along a route, rather than unrestricted movement over arbitrary surfaces. [UZoneGraphSubsystem][S03-42]; [FZoneGraphAStar][S03-43]
+The subsystem can locate nearby or overlapping lanes with tag filters, advance a location a specified distance along a lane, and retrieve connected lanes by connection type and flags. Registered data has a lifecycle, and the interface can report an invalid lane or missing storage. A separately documented A\* wrapper searches using lanes. Together these APIs establish spatial lookup, lane connectivity, and progression along a route, rather than unrestricted movement over arbitrary surfaces. [UZoneGraphSubsystem][S03-42]; [FZoneGraphAStar][S03-43]
 
-**Interpretation.** Constraining movement to connected lanes can reduce the representation being searched, but that benefit depends on the world matching the lane model. Lane tags are supplied classifications; they do not by themselves represent a character's learned knowledge, permission to act, or proof that a currently changing physical obstacle is absent. Mass's separate simulation and representation levels of detail are covered in the data-oriented runtime chapter.
+**Interpretation.** Constraining movement to connected lanes can reduce the representation being searched, but that benefit depends on the world matching the lane model. Lane tags are supplied classifications; they do not by themselves represent a character's learned knowledge, permission to act, or proof that a currently changing physical obstacle is absent. Mass's separate simulation and representation levels of detail are covered in [world streaming and scale](06-world-streaming-and-scale.md).
 
 ### Smart Objects: shared definitions, claims, and streamed actors
 
@@ -164,52 +164,52 @@ The inspected sources do not establish worst-case queue latency, global deadlock
 
 All sources were accessed **2026-10-23**. UE pages identify **5.8** and are undated live documentation unless stated otherwise. Unity package build dates below are documentation generator dates, not claimed feature-introduction dates. “Read” means the relevant technical sections were inspected. The StateTree selectors landing page and guessed Unity event/blackboard/subgraph URLs returned no usable content; their unavailable bodies are not evidence. The current node reference supplied the event and subgraph details used here.
 
-| ID | First-party source | Version/date; medium | Inspected scope |
-| --- | --- | --- | --- |
-| S03-01 | [Behavior Tree overview][S03-01] | UE 5.8; manual | Events, observers, services, conceptual concurrency |
-| S03-02 | [StateTree overview][S03-02] | UE 5.8; manual | Selection, transitions, data bindings, global tasks |
-| S03-03 | [FStateTreeTaskBase][S03-03] | UE 5.8; API | Completion, scheduling, event-only ticks, lifecycle |
-| S03-04 | [FStateTreeScheduledTick][S03-04] | UE 5.8; API | Sleep, custom cadence, one-frame and every-frame requests |
-| S03-05 | [ETickReason][S03-05] | UE 5.8; API | Reasons for scheduling and forced fallback |
-| S03-06 | [EQS overview][S03-06] | UE 5.8; manual | Generation, contexts, filtering before scoring |
-| S03-07 | [UEnvQueryManager][S03-07] | UE 5.8; API | Time slicing and cancellation |
-| S03-08 | [FEnvQueryManagerConfig][S03-08] | UE 5.8; API | Testing allowance, breadth/depth policy, separate duration warnings |
-| S03-09 | [Behavior graphs][S03-09] | Behavior 1.0.16; built 2026-05-28; manual | Control flow and statuses |
-| S03-10 | [Behavior node types][S03-10] | Behavior 1.0.16; built 2026-05-28; manual | Event modes, static/dynamic subgraphs, navigation fallback |
-| S03-11 | [Save and load running graph state][S03-11] | Behavior 1.0.16; built 2026-05-28; manual | Serialization and external-object resolution |
-| S03-12 | [ML-Agents overview][S03-12] | ML-Agents 4.1.0; built 2026-07-29; manual | C# environment/runtime versus Python training |
-| S03-13 | [How Sentis runs a model][S03-13] | com.unity.ai.inference 2.6.1; built 2026-04-02; manual | Backends, dependencies, pending output, readback |
-| S03-14 | [Split inference over multiple frames][S03-14] | Same package/version; manual | Incremental layer scheduling |
-| S03-15 | [Sentis overview][S03-15] | Same package/version; manual | Metadata, display-name change, released status |
-| S03-16 | [Create a worker][S03-16] | Same package/version; manual | Backend differences, DirectML, unsupported operators |
-| S03-17 | [Run a model][S03-17] | Same package/version; manual | Initial compilation/allocation and reuse |
-| S03-18 | [Neural Network Engine overview][S03-18] | UE 5.8; **Beta**; manual | Interfaces, model/instance lifetime, memory ownership, failure |
-| S03-19 | [NNERuntimeIREE][S03-19] | UE 5.8; **Experimental**; plugin index | Compiler-based runtime description |
-| S03-20 | [Learning Agents][S03-20] | UE 5.8; **Experimental**; plugin index | Purpose, modules, dependencies |
-| S03-21 | [ULearningAgentsInteractor][S03-21] | UE 5.8; API | Schemas, observation/action batches, agent lifecycle |
-| S03-22 | [Navigation System][S03-22] | UE 5.8; manual | Tiled polygons, costs, generation modes |
-| S03-23 | [Navigation Mesh Resolutions][S03-23] | UE 5.8; manual | Regional resolution and disappearing passage example |
-| S03-24 | [NavMesh Surface][S03-24] | AI Navigation 2.0.16; built 2026-10-07; manual | Source collection, voxels, tiles, height data |
-| S03-25 | [Navigation system inner workings][S03-25] | Same package/version; manual | A*, corridors, steering, RVO, movement constraints |
-| S03-26 | [Navigation Areas and Costs][S03-26] | Same package/version; manual | Masks, weighted costs, discretization limits |
-| S03-27 | [Navigation Invokers][S03-27] | UE 5.8; manual | Local generation and seed-distance restriction |
-| S03-28 | [World-Partitioned Navigation Mesh][S03-28] | UE 5.8; **Experimental**; manual | Streaming chunks, base mesh, dirtying rules |
-| S03-29 | [UpdateNavMeshDataAsync][S03-29] | Unity 6.6; API | Hashes, complete source set, ordering, settings changes |
-| S03-30 | [About NavMesh Obstacles][S03-30] | AI Navigation 2.0.16; manual | Movement thresholds, stationary carving, one-frame delay |
-| S03-31 | [NavMesh Link][S03-31] | Same package/version; manual | Agent types, widths, surface connection |
-| S03-32 | [Automatic Navigation Link Generation][S03-32] | UE 5.8; **Experimental**; manual | Jump/fall connectivity constraints |
-| S03-33 | [pathfindingIterationsPerFrame][S03-33] | Unity 6.6; API | Per-frame asynchronous search-node allowance |
-| S03-34 | [NavMeshAgent][S03-34] | Unity 6.6; API | Pending/stale/partial/invalid and movement state |
-| S03-35 | [FindPathAsync][S03-35] | UE 5.8; API | Request identity, completion callback, navigation data |
-| S03-36 | [Using NavMeshAgent with other components][S03-36] | AI Navigation 2.0.16; manual | Transform ownership and physics/animation integration |
-| S03-37 | [Unreal navigation avoidance][S03-37] | UE 5.8; manual | RVO and Detour differences and boundaries |
-| S03-38 | [Mass Avoidance overview][S03-38] | UE 5.8; **Experimental**; manual | Hash-grid neighbors, simplified shapes, predictive forces |
-| S03-39 | [Smart Objects overview][S03-39] | UE 5.8; manual | Shared definitions, claims, execution and invalidation lifecycle |
-| S03-40 | [ZoneGraph plugin][S03-40] | UE 5.8; **Experimental**; plugin index | Maturity and dependents |
-| S03-41 | [FZoneGraphStorage][S03-41] | UE 5.8; API | Lane, link, progression, and bounding-volume storage |
-| S03-42 | [UZoneGraphSubsystem][S03-42] | UE 5.8; API | Spatial lookup, lane traversal, filtering, registration/validity |
-| S03-43 | [FZoneGraphAStar][S03-43] | UE 5.8; API | Lane-based A* wrapper |
-| S03-44 | [Navigation Mesh settings][S03-44] | UE 5.8; manual reference | Tile capacity, generation concurrency, gathering, cache-memory tradeoff |
+| ID     | First-party source                                 | Version/date; medium                                   | Inspected scope                                                         |
+| ------ | -------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------- |
+| S03-01 | [Behavior Tree overview][S03-01]                   | UE 5.8; manual                                         | Events, observers, services, conceptual concurrency                     |
+| S03-02 | [StateTree overview][S03-02]                       | UE 5.8; manual                                         | Selection, transitions, data bindings, global tasks                     |
+| S03-03 | [FStateTreeTaskBase][S03-03]                       | UE 5.8; API                                            | Completion, scheduling, event-only ticks, lifecycle                     |
+| S03-04 | [FStateTreeScheduledTick][S03-04]                  | UE 5.8; API                                            | Sleep, custom cadence, one-frame and every-frame requests               |
+| S03-05 | [ETickReason][S03-05]                              | UE 5.8; API                                            | Reasons for scheduling and forced fallback                              |
+| S03-06 | [EQS overview][S03-06]                             | UE 5.8; manual                                         | Generation, contexts, filtering before scoring                          |
+| S03-07 | [UEnvQueryManager][S03-07]                         | UE 5.8; API                                            | Time slicing and cancellation                                           |
+| S03-08 | [FEnvQueryManagerConfig][S03-08]                   | UE 5.8; API                                            | Testing allowance, breadth/depth policy, separate duration warnings     |
+| S03-09 | [Behavior graphs][S03-09]                          | Behavior 1.0.16; built 2026-05-28; manual              | Control flow and statuses                                               |
+| S03-10 | [Behavior node types][S03-10]                      | Behavior 1.0.16; built 2026-05-28; manual              | Event modes, static/dynamic subgraphs, navigation fallback              |
+| S03-11 | [Save and load running graph state][S03-11]        | Behavior 1.0.16; built 2026-05-28; manual              | Serialization and external-object resolution                            |
+| S03-12 | [ML-Agents overview][S03-12]                       | ML-Agents 4.1.0; built 2026-07-29; manual              | C# environment/runtime versus Python training                           |
+| S03-13 | [How Sentis runs a model][S03-13]                  | com.unity.ai.inference 2.6.1; built 2026-04-02; manual | Backends, dependencies, pending output, readback                        |
+| S03-14 | [Split inference over multiple frames][S03-14]     | Same package/version; manual                           | Incremental layer scheduling                                            |
+| S03-15 | [Sentis overview][S03-15]                          | Same package/version; manual                           | Metadata, display-name change, released status                          |
+| S03-16 | [Create a worker][S03-16]                          | Same package/version; manual                           | Backend differences, DirectML, unsupported operators                    |
+| S03-17 | [Run a model][S03-17]                              | Same package/version; manual                           | Initial compilation/allocation and reuse                                |
+| S03-18 | [Neural Network Engine overview][S03-18]           | UE 5.8; **Beta**; manual                               | Interfaces, model/instance lifetime, memory ownership, failure          |
+| S03-19 | [NNERuntimeIREE][S03-19]                           | UE 5.8; **Experimental**; plugin index                 | Compiler-based runtime description                                      |
+| S03-20 | [Learning Agents][S03-20]                          | UE 5.8; **Experimental**; plugin index                 | Purpose, modules, dependencies                                          |
+| S03-21 | [ULearningAgentsInteractor][S03-21]                | UE 5.8; API                                            | Schemas, observation/action batches, agent lifecycle                    |
+| S03-22 | [Navigation System][S03-22]                        | UE 5.8; manual                                         | Tiled polygons, costs, generation modes                                 |
+| S03-23 | [Navigation Mesh Resolutions][S03-23]              | UE 5.8; manual                                         | Regional resolution and disappearing passage example                    |
+| S03-24 | [NavMesh Surface][S03-24]                          | AI Navigation 2.0.16; built 2026-10-07; manual         | Source collection, voxels, tiles, height data                           |
+| S03-25 | [Navigation system inner workings][S03-25]         | Same package/version; manual                           | A\*, corridors, steering, RVO, movement constraints                     |
+| S03-26 | [Navigation Areas and Costs][S03-26]               | Same package/version; manual                           | Masks, weighted costs, discretization limits                            |
+| S03-27 | [Navigation Invokers][S03-27]                      | UE 5.8; manual                                         | Local generation and seed-distance restriction                          |
+| S03-28 | [World-Partitioned Navigation Mesh][S03-28]        | UE 5.8; **Experimental**; manual                       | Streaming chunks, base mesh, dirtying rules                             |
+| S03-29 | [UpdateNavMeshDataAsync][S03-29]                   | Unity 6.6; API                                         | Hashes, complete source set, ordering, settings changes                 |
+| S03-30 | [About NavMesh Obstacles][S03-30]                  | AI Navigation 2.0.16; manual                           | Movement thresholds, stationary carving, one-frame delay                |
+| S03-31 | [NavMesh Link][S03-31]                             | Same package/version; manual                           | Agent types, widths, surface connection                                 |
+| S03-32 | [Automatic Navigation Link Generation][S03-32]     | UE 5.8; **Experimental**; manual                       | Jump/fall connectivity constraints                                      |
+| S03-33 | [pathfindingIterationsPerFrame][S03-33]            | Unity 6.6; API                                         | Per-frame asynchronous search-node allowance                            |
+| S03-34 | [NavMeshAgent][S03-34]                             | Unity 6.6; API                                         | Pending/stale/partial/invalid and movement state                        |
+| S03-35 | [FindPathAsync][S03-35]                            | UE 5.8; API                                            | Request identity, completion callback, navigation data                  |
+| S03-36 | [Using NavMeshAgent with other components][S03-36] | AI Navigation 2.0.16; manual                           | Transform ownership and physics/animation integration                   |
+| S03-37 | [Unreal navigation avoidance][S03-37]              | UE 5.8; manual                                         | RVO and Detour differences and boundaries                               |
+| S03-38 | [Mass Avoidance overview][S03-38]                  | UE 5.8; **Experimental**; manual                       | Hash-grid neighbors, simplified shapes, predictive forces               |
+| S03-39 | [Smart Objects overview][S03-39]                   | UE 5.8; manual                                         | Shared definitions, claims, execution and invalidation lifecycle        |
+| S03-40 | [ZoneGraph plugin][S03-40]                         | UE 5.8; **Experimental**; plugin index                 | Maturity and dependents                                                 |
+| S03-41 | [FZoneGraphStorage][S03-41]                        | UE 5.8; API                                            | Lane, link, progression, and bounding-volume storage                    |
+| S03-42 | [UZoneGraphSubsystem][S03-42]                      | UE 5.8; API                                            | Spatial lookup, lane traversal, filtering, registration/validity        |
+| S03-43 | [FZoneGraphAStar][S03-43]                          | UE 5.8; API                                            | Lane-based A\* wrapper                                                  |
+| S03-44 | [Navigation Mesh settings][S03-44]                 | UE 5.8; manual reference                               | Tile capacity, generation concurrency, gathering, cache-memory tradeoff |
 
 [S03-01]: https://dev.epicgames.com/documentation/en-us/unreal-engine/behavior-tree-in-unreal-engine---overview
 [S03-02]: https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine

@@ -1,7 +1,7 @@
 # Physics, collision, and spatial queries
 
-| Research status | Scope | Reviewed |
-| --- | --- | --- |
+| Research status                              | Scope                                                                                                                                                                   | Reviewed   |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
 | Complete for the documented mechanisms below | Collision representation, broadphase maintenance, rigid-body solving, continuous collision, spatial queries, current 2D physics, deformables, and diagnostic boundaries | 2026-10-23 |
 
 Physics cost depends on what is represented, which pairs or queries become candidates, how contacts are solved, and when results become available. Those are separate stages. A cheaper representation can change the answer; a delayed result can remain pending; a non-allocating query can still be incomplete. This chapter examines those distinctions in **Unreal Engine 5.8**, **Unity 6.6**, and **Unity Physics 6.6.0**. Patch baselines and the evidence policy are in [chapter 01](01-evidence-and-version-baseline.md).
@@ -10,13 +10,13 @@ This is research into documented engine behavior. It does not prescribe OpenLege
 
 ## 1. There is more than one physics world or backend
 
-| Current system | Representation and responsibility | Evidence |
-| --- | --- | --- |
-| Unreal Chaos | Unreal's physics family includes rigid bodies, destruction, cloth, ragdolls, fields, and deformable systems; individual extensions have their own maturity and coupling limits | [Physics in Unreal Engine][S04-01] |
-| Unity built-in 3D | GameObject physics uses the PhysX integration by default | [Physics integrations][S04-02] |
-| Unity built-in 2D | Rigidbody2D/Collider2D components use a separate Box2D integration | [Physics integrations][S04-02] |
-| Unity Physics 6.6.0 | Data-oriented physics package with an ECS-facing pipeline and independently usable simulation/query structures | [Design][S04-16]; [Pipeline][S04-15] |
-| Unity Physics Core 2D | The current `Unity.U2D.Physics` API is based on Box2D version 3 and is separate from built-in Rigidbody2D/Collider2D components | [Physics Core 2D introduction][S04-05] |
+| Current system        | Representation and responsibility                                                                                                                                              | Evidence                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| Unreal Chaos          | Unreal's physics family includes rigid bodies, destruction, cloth, ragdolls, fields, and deformable systems; individual extensions have their own maturity and coupling limits | [Physics in Unreal Engine][S04-01]     |
+| Unity built-in 3D     | GameObject physics uses the PhysX integration by default                                                                                                                       | [Physics integrations][S04-02]         |
+| Unity built-in 2D     | Rigidbody2D/Collider2D components use a separate Box2D integration                                                                                                             | [Physics integrations][S04-02]         |
+| Unity Physics 6.6.0   | Data-oriented physics package with an ECS-facing pipeline and independently usable simulation/query structures                                                                 | [Design][S04-16]; [Pipeline][S04-15]   |
+| Unity Physics Core 2D | The current `Unity.U2D.Physics` API is based on Box2D version 3 and is separate from built-in Rigidbody2D/Collider2D components                                                | [Physics Core 2D introduction][S04-05] |
 
 **Provenance exception: Havok.** The Unity 6.6 integrations page still includes an additional-resources link to Havok. That link does not establish current editor support. Unity's live support notice retains Havok Physics for Unity support for the remaining Unity 2022 LTS and 6.0 LTS periods, while the 6000.5.0f1 release explicitly marks the package unsupported on that editor. This dossier therefore does not present the older Havok package as a supported Unity 6.6 alternative. The older release is used to document removal, not to infer current solver implementation. [Current support notice][S04-03]; [6000.5.0f1 removal record][S04-04]
 
@@ -28,14 +28,14 @@ The inspected Unity documents establish PhysX as a backend, but do not establish
 
 Unreal's current `ECollisionEnabled::Type` API distinguishes six participation modes. This matters because bodies can exist for queries, simulation, both, or probes rather than always incurring the same work. [Collision-enabled API][S04-06]
 
-| Mode | Documented participation |
-| --- | --- |
-| NoCollision | No physics-engine representation |
-| QueryOnly | Raycasts, sweeps, and overlaps |
-| PhysicsOnly | Rigid-body and constraint simulation |
-| QueryAndPhysics | Queries and simulation |
-| ProbeOnly | Probing the physics simulation |
-| QueryAndProbe | Queries and simulation probing |
+| Mode            | Documented participation             |
+| --------------- | ------------------------------------ |
+| NoCollision     | No physics-engine representation     |
+| QueryOnly       | Raycasts, sweeps, and overlaps       |
+| PhysicsOnly     | Rigid-body and constraint simulation |
+| QueryAndPhysics | Queries and simulation               |
+| ProbeOnly       | Probing the physics simulation       |
+| QueryAndProbe   | Queries and simulation probing       |
 
 The current Collision Response Reference still describes only four states. Its list is therefore incomplete relative to the current enum. This is a concrete case where a page headed “5.8” contains inherited text that should not be treated as a complete current contract. The table above follows the API; it does not infer undocumented probe response details. [Collision Response Reference][S04-07]
 
@@ -69,14 +69,14 @@ Unity Physics collision filtering uses membership and accepted-layer masks, with
 
 Unity Physics runs its PhysicsSystemGroup within the fixed-step simulation group. Initialization builds the physics-world representation from ECS state. Simulation produces body pairs, creates contacts, constructs contact/joint Jacobians, solves and integrates. Export writes resulting transforms and velocities back into ECS components. Custom systems can be ordered between these phases; their dependencies determine which intermediate data they can safely inspect or modify. [Physics pipeline][S04-15]
 
-| Pipeline stage | Why the distinction matters |
-| --- | --- |
-| Build or update the world | Establishes the geometry, motion, and filters available to the step |
-| Find body pairs | Rejects most separated or ineligible combinations |
-| Generate contacts | Determines actual contact data from candidate shapes |
-| Build constraints | Converts contacts and joints into the relationships solved numerically |
-| Solve and integrate | Updates motion subject to the admitted constraints |
-| Export results | Makes completed physical state available to ECS consumers |
+| Pipeline stage            | Why the distinction matters                                            |
+| ------------------------- | ---------------------------------------------------------------------- |
+| Build or update the world | Establishes the geometry, motion, and filters available to the step    |
+| Find body pairs           | Rejects most separated or ineligible combinations                      |
+| Generate contacts         | Determines actual contact data from candidate shapes                   |
+| Build constraints         | Converts contacts and joints into the relationships solved numerically |
+| Solve and integrate       | Updates motion subject to the admitted constraints                     |
+| Export results            | Makes completed physical state available to ECS consumers              |
 
 Unity Physics' design describes a stateless solver that avoids requiring hidden persistent solver caches to reproduce a step, supporting immediate simulation and explicit state control. It also describes the package as deterministic. This dossier does not extend that statement to an unqualified guarantee across arbitrary architectures, floating-point settings, package changes, job schedules, or application input ordering; the inspected design page does not specify all those boundaries. [Unity Physics design][S04-16]
 
@@ -126,13 +126,13 @@ Unity's RaycastCommand schedules batches whose result buffers must not be read b
 
 Unity's OverlapSphereNonAlloc writes into the caller's array without growing it and returns the array length when full. **Inference:** that count alone cannot distinguish exactly-capacity results from truncation of a larger result set. Avoiding allocations does not establish that every matching collider was returned. [OverlapSphereNonAlloc][S04-29]
 
-| Observed state | What it establishes | What it does not establish |
-| --- | --- | --- |
-| Query scheduled | Work was submitted | A result already exists |
-| Broadphase candidate | Bounds/filter conditions admitted it | Exact surface intersection |
-| Completed zero-hit query | No admitted hit in that query's represented snapshot | No relevant object in omitted/unloaded/unsynchronized data |
-| Full fixed-capacity result array | The available result capacity was filled | The complete set was returned |
-| Completed older result | The requested calculation finished | Its assumptions remain valid after world changes |
+| Observed state                   | What it establishes                                  | What it does not establish                                 |
+| -------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- |
+| Query scheduled                  | Work was submitted                                   | A result already exists                                    |
+| Broadphase candidate             | Bounds/filter conditions admitted it                 | Exact surface intersection                                 |
+| Completed zero-hit query         | No admitted hit in that query's represented snapshot | No relevant object in omitted/unloaded/unsynchronized data |
+| Full fixed-capacity result array | The available result capacity was filled             | The complete set was returned                              |
+| Completed older result           | The requested calculation finished                   | Its assumptions remain valid after world changes           |
 
 The table is analytical synthesis of the preceding contracts. It is not an additional engine API or an OpenLegend result protocol.
 
@@ -187,52 +187,52 @@ Unity's Physics Debug window visualizes collision geometry, contacts, queries, b
 
 All sources below were inspected on **2026-10-23**. “Current” means the specified version or live page as retrieved, not a guarantee that every sentence was recently rewritten. Sources support the nearby claims only; publication dates are not invented for undated manuals. The Unity 6000.6 manuals inspected here generally carry October 2026 build stamps. Package API metadata identifies Unity Physics **6.6.0**.
 
-| ID | Source | Version/date and medium | Inspection and limits |
-| --- | --- | --- | --- |
-| S04-01 | [Physics in Unreal Engine][S04-01] | UE 5.8, undated manual | Physics family and destruction mechanisms read; no performance measurement inferred |
-| S04-02 | [Physics integrations in Unity][S04-02] | Unity 6.6, manual built 2026-10-22 | Backend distinctions read; extra Havok link is not compatibility evidence |
-| S04-03 | [Unity subscription/support updates][S04-03] | Live official notice; relevant announcement 2025-11-10 | Havok support continuation/removal scope read; pricing not researched here |
-| S04-04 | [Unity 6000.5.0f1][S04-04] | 2026-06-15 release notes | Deprecated-package section read solely as removal provenance |
-| S04-05 | [Physics Core 2D introduction][S04-05] | Unity 6.6 manual | API/backend distinction, platform requirement, data/thread model read |
-| S04-06 | [ECollisionEnabled::Type][S04-06] | UE 5.8 current API | All six values read |
-| S04-07 | [Collision Response Reference][S04-07] | UE 5.8 manual, inherited text | Four-state description conflicts with current enum completeness |
-| S04-08 | [Simple versus Complex Collision][S04-08] | UE 5.8 manual | Shape routing, simulation limitation, memory tradeoff read |
-| S04-09 | [Collider types and performance][S04-09] | Unity 6.6 manual | Shape families and dynamic-body limitations read |
-| S04-10 | [Mesh cooking options][S04-10] | Unity 6.6 manual | Setup/runtime cost and cleaning/welding read; no universal cost ranking adopted |
-| S04-11 | [Broadphase optimization][S04-11] | Unity 6.6 manual | Pruning methods and subdivision tradeoffs read |
-| S04-12 | [Console Variables Reference][S04-12] | UE 5.8 current generated reference | Selected Chaos acceleration controls inspected; not a full source-code audit |
-| S04-13 | [PhysicsStep][S04-13] | Unity Physics 6.6.0 API, built 2026-10-16 | Incremental broadphase, solver/substep/synchronization fields read |
-| S04-14 | [CollisionFilter][S04-14] | Unity Physics 6.6.0 API | Masks and group overrides read |
-| S04-15 | [Physics pipeline][S04-15] | Unity Physics 6.6.0 manual | Phase ordering and ECS boundaries read |
-| S04-16 | [Unity Physics design][S04-16] | Unity Physics 6.6.0 manual | Stateless/deterministic vendor description read; scope qualification retained |
-| S04-17 | [FPBDIsland][S04-17] | UE 5.8 API | Connectivity, ownership, merge and sleep interfaces read |
-| S04-18 | [FPBDCollisionSolver][S04-18] | UE 5.8 API | Contact-manifold and iterative correction methods read |
-| S04-19 | [UPhysicsSettings][S04-19] | UE 5.8 API, mixed-age comments | Modern Chaos/async fields read; legacy PhysX/APEX remarks not generalized |
-| S04-20 | [Physics project settings][S04-20] | Unity 6.6 manual | Solver, iterations, sleep, and determinism scope read |
-| S04-21 | [Manual simulation][S04-21] | Unity 6.6 manual | Cadence, local scenes, fixed-step caveat read |
-| S04-22 | [Sweep-based CCD][S04-22] | Unity 6.6 manual | Linear sweep, impact handling, angular limitation read |
-| S04-23 | [Speculative CCD][S04-23] | Unity 6.6 manual | Expanded bounds, possible ghost/missed contacts read |
-| S04-24 | [Collision queries][S04-24] | Unity Physics 6.6.0 manual | Collectors, query kinds, snapshot synchronization read |
-| S04-25 | [Transform synchronization][S04-25] | Unity 6.6 manual, built 2026-10-22 | Deferred state and explicit synchronization read |
-| S04-26 | [Query-only physics][S04-26] | Unity 6.6 manual | Queries without default stepping read; loose deprecation wording not adopted |
-| S04-27 | [AsyncLineTraceByChannel][S04-27] | UE 5.8 API | Callback/polling and next-frame result window read |
-| S04-28 | [RaycastCommand][S04-28] | Unity 6.6 API | Job completion, result layout, invalid sentinel, profiling limit read |
-| S04-29 | [OverlapSphereNonAlloc][S04-29] | Unity 6.6 API | Fixed-capacity behavior read; ambiguity conclusion explicitly inferred |
-| S04-30 | [Physics Core 2D workflow][S04-30] | Unity 6.6 manual | Bodies, shapes, definitions, presentation separation read |
-| S04-31 | [Physics Core 2D worlds][S04-31] | Unity 6.6 manual, built 2026-10-22 | Default-world recreation and pause lifecycle read |
-| S04-32 | [Physics Core 2D multithreading][S04-32] | Unity 6.6 manual | Per-world locking and excluded create/destroy methods read |
-| S04-33 | [Physics Core 2D memory lifecycle][S04-33] | Unity 6.6 manual, built 2026-10-22 | Destruction and NativeArray ownership read; broad span wording not generalized |
-| S04-34 | [Physics Core 2D intersections][S04-34] | Unity 6.6 manual | Geometry/world query families read |
-| S04-35 | [Physics Core 2D contacts][S04-35] | Unity 6.6 manual | World/shape/target event admission read |
-| S04-36 | [Chaos Visual Debugger introduction][S04-36] | UE 5.8 manual | Recording and timelines/stages read; embedded video not watched |
-| S04-37 | [Physics Debug window][S04-37] | Unity 6.6 manual | Diagnostic tabs and geometry/contact/query display read |
-| S04-38 | [Physics Fields overview][S04-38] | UE 5.8 manual | Field lifetimes, filters, physics/world sampling distinction read |
-| S04-39 | [Rigidbody sleeping][S04-39] | Unity 6.6 manual, built 2026-10-22 | Wake/sleep behavior read; energy threshold taken from settings reference |
-| S04-40 | [PhysicsWorld][S04-40] | Unity 6.6 API | World isolation/capacity overview and acceleration-bound remarks inspected |
-| S04-41 | [Panel Cloth overview][S04-41] | UE 5.8 manual with retained 5.3 introduction | Simulation/render separation and current documented capabilities read |
-| S04-42 | [Cloth][S04-42] | Unity 6.6 manual, built 2026-10-22 | One-way interaction and supported colliders read |
-| S04-43 | [Chaos Flesh plugin][S04-43] | UE 5.8 plugin index, Experimental | Current maturity label inspected |
-| S04-44 | [Chaos Flesh overview][S04-44] | UE 5.8 manual | Tetrahedra, constraints, solver ordering, coupling and caching read |
+| ID     | Source                                       | Version/date and medium                                | Inspection and limits                                                               |
+| ------ | -------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| S04-01 | [Physics in Unreal Engine][S04-01]           | UE 5.8, undated manual                                 | Physics family and destruction mechanisms read; no performance measurement inferred |
+| S04-02 | [Physics integrations in Unity][S04-02]      | Unity 6.6, manual built 2026-10-22                     | Backend distinctions read; extra Havok link is not compatibility evidence           |
+| S04-03 | [Unity subscription/support updates][S04-03] | Live official notice; relevant announcement 2025-11-10 | Havok support continuation/removal scope read; pricing not researched here          |
+| S04-04 | [Unity 6000.5.0f1][S04-04]                   | 2026-06-15 release notes                               | Deprecated-package section read solely as removal provenance                        |
+| S04-05 | [Physics Core 2D introduction][S04-05]       | Unity 6.6 manual                                       | API/backend distinction, platform requirement, data/thread model read               |
+| S04-06 | [ECollisionEnabled::Type][S04-06]            | UE 5.8 current API                                     | All six values read                                                                 |
+| S04-07 | [Collision Response Reference][S04-07]       | UE 5.8 manual, inherited text                          | Four-state description conflicts with current enum completeness                     |
+| S04-08 | [Simple versus Complex Collision][S04-08]    | UE 5.8 manual                                          | Shape routing, simulation limitation, memory tradeoff read                          |
+| S04-09 | [Collider types and performance][S04-09]     | Unity 6.6 manual                                       | Shape families and dynamic-body limitations read                                    |
+| S04-10 | [Mesh cooking options][S04-10]               | Unity 6.6 manual                                       | Setup/runtime cost and cleaning/welding read; no universal cost ranking adopted     |
+| S04-11 | [Broadphase optimization][S04-11]            | Unity 6.6 manual                                       | Pruning methods and subdivision tradeoffs read                                      |
+| S04-12 | [Console Variables Reference][S04-12]        | UE 5.8 current generated reference                     | Selected Chaos acceleration controls inspected; not a full source-code audit        |
+| S04-13 | [PhysicsStep][S04-13]                        | Unity Physics 6.6.0 API, built 2026-10-16              | Incremental broadphase, solver/substep/synchronization fields read                  |
+| S04-14 | [CollisionFilter][S04-14]                    | Unity Physics 6.6.0 API                                | Masks and group overrides read                                                      |
+| S04-15 | [Physics pipeline][S04-15]                   | Unity Physics 6.6.0 manual                             | Phase ordering and ECS boundaries read                                              |
+| S04-16 | [Unity Physics design][S04-16]               | Unity Physics 6.6.0 manual                             | Stateless/deterministic vendor description read; scope qualification retained       |
+| S04-17 | [FPBDIsland][S04-17]                         | UE 5.8 API                                             | Connectivity, ownership, merge and sleep interfaces read                            |
+| S04-18 | [FPBDCollisionSolver][S04-18]                | UE 5.8 API                                             | Contact-manifold and iterative correction methods read                              |
+| S04-19 | [UPhysicsSettings][S04-19]                   | UE 5.8 API, mixed-age comments                         | Modern Chaos/async fields read; legacy PhysX/APEX remarks not generalized           |
+| S04-20 | [Physics project settings][S04-20]           | Unity 6.6 manual                                       | Solver, iterations, sleep, and determinism scope read                               |
+| S04-21 | [Manual simulation][S04-21]                  | Unity 6.6 manual                                       | Cadence, local scenes, fixed-step caveat read                                       |
+| S04-22 | [Sweep-based CCD][S04-22]                    | Unity 6.6 manual                                       | Linear sweep, impact handling, angular limitation read                              |
+| S04-23 | [Speculative CCD][S04-23]                    | Unity 6.6 manual                                       | Expanded bounds, possible ghost/missed contacts read                                |
+| S04-24 | [Collision queries][S04-24]                  | Unity Physics 6.6.0 manual                             | Collectors, query kinds, snapshot synchronization read                              |
+| S04-25 | [Transform synchronization][S04-25]          | Unity 6.6 manual, built 2026-10-22                     | Deferred state and explicit synchronization read                                    |
+| S04-26 | [Query-only physics][S04-26]                 | Unity 6.6 manual                                       | Queries without default stepping read; loose deprecation wording not adopted        |
+| S04-27 | [AsyncLineTraceByChannel][S04-27]            | UE 5.8 API                                             | Callback/polling and next-frame result window read                                  |
+| S04-28 | [RaycastCommand][S04-28]                     | Unity 6.6 API                                          | Job completion, result layout, invalid sentinel, profiling limit read               |
+| S04-29 | [OverlapSphereNonAlloc][S04-29]              | Unity 6.6 API                                          | Fixed-capacity behavior read; ambiguity conclusion explicitly inferred              |
+| S04-30 | [Physics Core 2D workflow][S04-30]           | Unity 6.6 manual                                       | Bodies, shapes, definitions, presentation separation read                           |
+| S04-31 | [Physics Core 2D worlds][S04-31]             | Unity 6.6 manual, built 2026-10-22                     | Default-world recreation and pause lifecycle read                                   |
+| S04-32 | [Physics Core 2D multithreading][S04-32]     | Unity 6.6 manual                                       | Per-world locking and excluded create/destroy methods read                          |
+| S04-33 | [Physics Core 2D memory lifecycle][S04-33]   | Unity 6.6 manual, built 2026-10-22                     | Destruction and NativeArray ownership read; broad span wording not generalized      |
+| S04-34 | [Physics Core 2D intersections][S04-34]      | Unity 6.6 manual                                       | Geometry/world query families read                                                  |
+| S04-35 | [Physics Core 2D contacts][S04-35]           | Unity 6.6 manual                                       | World/shape/target event admission read                                             |
+| S04-36 | [Chaos Visual Debugger introduction][S04-36] | UE 5.8 manual                                          | Recording and timelines/stages read; embedded video not watched                     |
+| S04-37 | [Physics Debug window][S04-37]               | Unity 6.6 manual                                       | Diagnostic tabs and geometry/contact/query display read                             |
+| S04-38 | [Physics Fields overview][S04-38]            | UE 5.8 manual                                          | Field lifetimes, filters, physics/world sampling distinction read                   |
+| S04-39 | [Rigidbody sleeping][S04-39]                 | Unity 6.6 manual, built 2026-10-22                     | Wake/sleep behavior read; energy threshold taken from settings reference            |
+| S04-40 | [PhysicsWorld][S04-40]                       | Unity 6.6 API                                          | World isolation/capacity overview and acceleration-bound remarks inspected          |
+| S04-41 | [Panel Cloth overview][S04-41]               | UE 5.8 manual with retained 5.3 introduction           | Simulation/render separation and current documented capabilities read               |
+| S04-42 | [Cloth][S04-42]                              | Unity 6.6 manual, built 2026-10-22                     | One-way interaction and supported colliders read                                    |
+| S04-43 | [Chaos Flesh plugin][S04-43]                 | UE 5.8 plugin index, Experimental                      | Current maturity label inspected                                                    |
+| S04-44 | [Chaos Flesh overview][S04-44]               | UE 5.8 manual                                          | Tetrahedra, constraints, solver ordering, coupling and caching read                 |
 
 ### Inspected leads not used as current implementation evidence
 

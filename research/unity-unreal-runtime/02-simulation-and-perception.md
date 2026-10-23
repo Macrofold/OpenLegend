@@ -1,7 +1,7 @@
 # Simulation time, scheduling, and what characters perceive
 
-| Research status | Scope | Reviewed |
-| --- | --- | --- |
+| Research status                              | Scope                                                                                                                                 | Reviewed   |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
 | Complete for the documented mechanisms below | Current Unreal Engine 5.8 and Unity 6.6 scheduling, clocks, sensing, and the boundary between an engine query and character knowledge | 2026-10-23 |
 
 This chapter examines when work happens, what information it reads, and what its result means. These questions matter to simulations containing many independently acting characters, changing geometry, and knowledge that belongs to particular observers. The chapter describes existing engine mechanisms; it does not propose OpenLegend architecture or change its rules. The release and package baseline is recorded in the research index. Unreal documentation below identifies itself as 5.8; Unity manual and API URLs are explicitly scoped to 6000.6. Documentation access is evidence of the published contract, not an engine benchmark or a source-code audit.
@@ -14,11 +14,11 @@ A simulation has at least three distinguishable quantities: real time that passe
 
 Actors and components can tick every frame, at a minimum interval, or remain disabled. Tick groups establish broad ordering, while prerequisites establish dependencies between particular tick functions. Independent work within a group can run in parallel. The world timer manager runs after the post-physics group, along with latent actions, camera updates, and streaming work. These are execution-order guarantees, not a guarantee that all gameplay is deterministic. [Actor Ticking][S02-01]
 
-| Published Unreal phase | What a reader may assume about physics data | Consequence of that contract |
-| --- | --- | --- |
-| Before physics | Previous frame's simulation results | Work can prepare inputs for the next solve. |
-| During physics | Completion is unspecified relative to this tick | Reading a position here does not promise a completed current-frame physics result. |
-| After physics | Current frame's simulation is complete | Dependent queries can use the completed result. |
+| Published Unreal phase | What a reader may assume about physics data     | Consequence of that contract                                                       |
+| ---------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Before physics         | Previous frame's simulation results             | Work can prepare inputs for the next solve.                                        |
+| During physics         | Completion is unspecified relative to this tick | Reading a position here does not promise a completed current-frame physics result. |
+| After physics          | Current frame's simulation is complete          | Dependent queries can use the completed result.                                    |
 
 The table describes the documented frame model, without extrapolating to every asynchronous physics configuration. [Actor Ticking][S02-01]
 
@@ -40,14 +40,14 @@ Unity publishes a lifecycle ordering for script initialization, fixed and frame 
 
 The following distinctions are analytical, grounded in the contracts above rather than performance measurements:
 
-| Mechanism | Work affected | What remains semantically unresolved by that mechanism alone |
-| --- | --- | --- |
-| Disable an unnecessary recurring callback | Removes its future invocations | Whether another event must reactivate it |
-| Invoke a callback at an explicit deadline | Avoids repeatedly testing a deadline | Whether changed conditions invalidate the scheduled result |
-| Run independent work concurrently | Reduces serialized waiting when resources permit | Total computation, contention, and publication order |
-| Spread computation over more frames | Reduces work admitted to an individual frame | Result latency and the age of its inputs |
-| Clamp elapsed simulation time | Avoids an unbounded catch-up spiral | Equality with real elapsed time is intentionally lost |
-| Reduce update frequency | Executes fewer samples | Which transitions can happen between those samples |
+| Mechanism                                 | Work affected                                    | What remains semantically unresolved by that mechanism alone |
+| ----------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------ |
+| Disable an unnecessary recurring callback | Removes its future invocations                   | Whether another event must reactivate it                     |
+| Invoke a callback at an explicit deadline | Avoids repeatedly testing a deadline             | Whether changed conditions invalidate the scheduled result   |
+| Run independent work concurrently         | Reduces serialized waiting when resources permit | Total computation, contention, and publication order         |
+| Spread computation over more frames       | Reduces work admitted to an individual frame     | Result latency and the age of its inputs                     |
+| Clamp elapsed simulation time             | Avoids an unbounded catch-up spiral              | Equality with real elapsed time is intentionally lost        |
+| Reduce update frequency                   | Executes fewer samples                           | Which transitions can happen between those samples           |
 
 These categories cannot safely be collapsed into a single “update less” optimization. Some avoid redundant work; some defer necessary work; some change what the simulation computes.
 
@@ -89,14 +89,14 @@ Detailed decision execution and model scheduling are covered in [AI, navigation,
 
 The following is a conceptual classification, not a proposed implementation:
 
-| Question | Kind of answer | What it does not establish |
-| --- | --- | --- |
-| Would geometry contribute to a camera's rendered image? | Presentation visibility | That an in-world character saw or recognized it |
-| Does a configured geometric query reach a target? | Spatial result against a particular scene representation | Attention, identity, comprehension, or durable knowledge |
-| Did a character's configured sense accept a stimulus? | Perception result | A complete history of everything the character experienced |
-| Is an actor still retained in the component's perception information? | Stored sensing state | That the actor is currently visible |
-| Which observation should influence behavior next? | Attention or selection policy | That other unprocessed observations are absent |
-| What may a character recall or tell someone? | Knowledge and disclosure semantics | A consequence that follows automatically from rendering or a raycast |
+| Question                                                              | Kind of answer                                           | What it does not establish                                           |
+| --------------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------- |
+| Would geometry contribute to a camera's rendered image?               | Presentation visibility                                  | That an in-world character saw or recognized it                      |
+| Does a configured geometric query reach a target?                     | Spatial result against a particular scene representation | Attention, identity, comprehension, or durable knowledge             |
+| Did a character's configured sense accept a stimulus?                 | Perception result                                        | A complete history of everything the character experienced           |
+| Is an actor still retained in the component's perception information? | Stored sensing state                                     | That the actor is currently visible                                  |
+| Which observation should influence behavior next?                     | Attention or selection policy                            | That other unprocessed observations are absent                       |
+| What may a character recall or tell someone?                          | Knowledge and disclosure semantics                       | A consequence that follows automatically from rendering or a raycast |
 
 Unreal's separation between current and retained perceptions makes one of these boundaries explicit. Unity's observation callback makes the supplied policy input explicit. Neither public contract makes a renderer's camera culling result a substitute for observer-specific knowledge. [AI Perception][S02-11]; [ML-Agents: Agents][S02-15]
 
@@ -106,7 +106,7 @@ This distinction also applies to distance-based simulation changes. An object be
 
 The inspected contracts establish scheduling phases, retained sensing data, query queues, and lifecycle hooks. They do not establish a universal event-driven simulation of all continuous interactions, exact prediction of every future perception transition, complete cross-platform determinism, or measured population capacity. No engine was run for this study.
 
-The Unreal 5.8 page titled *Physics Sub-Stepping* still contains APEX Destruction and broad mobile-support wording inherited from earlier engine generations. Its current header cannot authenticate every statement in its body. The page was inspected as a provenance warning; those backend and platform claims are not used as current facts. Modern physics mechanisms are discussed using more specific current APIs in the physics chapter. [Physics Sub-Stepping][S02-16]
+The Unreal 5.8 page titled _Physics Sub-Stepping_ still contains APEX Destruction and broad mobile-support wording inherited from earlier engine generations. Its current header cannot authenticate every statement in its body. The page was inspected as a provenance warning; those backend and platform claims are not used as current facts. Modern physics mechanisms are discussed using more specific current APIs in the physics chapter. [Physics Sub-Stepping][S02-16]
 
 Other specific unresolved points are the worst-case delay and fairness of sight processing under load, application-defined behavior after a timer's participant disappears, and the exact dependency coverage required to reuse a future perception prediction. Exposed interfaces do not provide sufficient evidence to resolve these by assertion. They remain research limits rather than OpenLegend proposals or unmeasured defects.
 
@@ -114,24 +114,24 @@ Other specific unresolved points are the worst-case delay and fairness of sight 
 
 All entries were accessed on **2026-10-23**. “Undated live” means the inspected page supplied a current version label but no reliable publication date. A documentation generator/build date identifies the documentation snapshot, not the introduction date of its mechanism. Relevant prose/API sections were read; no video viewing or executable validation is implied.
 
-| ID | First-party source | Version/date and medium | Inspection and qualification |
-| --- | --- | --- | --- |
-| S02-01 | [Actor Ticking][S02-01] | UE 5.8; undated live manual | Read ordering, dependencies, and tick registration. |
-| S02-02 | [Gameplay Timers][S02-02] | UE 5.8; undated live manual | Read timer ownership, handles, and destruction behavior. |
-| S02-03 | [Fixed updates][S02-03] | Unity 6.6; live manual | Read fixed/variable cadence and catch-up explanation. |
-| S02-04 | [Handling variation in time][S02-04] | Unity 6.6; live manual | Read clamping, unscaled time, and fixed-step catch-up limit. |
-| S02-05 | [In-game time and real time][S02-05] | Unity 6.6; live manual | Read time-scale and pause behavior. |
-| S02-06 | [Event function execution order][S02-06] | Unity 6.6; live manual | Read lifecycle and simplified-loop qualification. |
-| S02-07 | [PlayerLoop][S02-07] | Unity 6.6; API reference | Read loop inspection and replacement contract. |
-| S02-08 | [UAIPerceptionSystem][S02-08] | UE 5.8; undated generated API | Read registration, batching, aging, delayed delivery, and lifecycle. |
-| S02-09 | [UAIPerceptionComponent][S02-09] | UE 5.8; undated generated API | Read stored target data, updates, and forgetting interfaces. |
-| S02-10 | [FAIStimulus][S02-10] | UE 5.8; undated generated API | Read fields, aging, validity, and expiration interfaces. |
-| S02-11 | [AI Perception][S02-11] | UE 5.8; undated live manual | Read sight/hearing configuration, retained/current perception, and forgetting. |
-| S02-12 | [UAISense_Sight][S02-12] | UE 5.8; undated generated API | Read query partition explanation and pending/asynchronous interfaces; no numeric budget defaults inferred. |
-| S02-13 | [UAISense_Hearing][S02-13] | UE 5.8; undated generated API | Read noise-event and listener interfaces; not evidence of acoustic propagation. |
-| S02-14 | [Unity Behavior introduction][S02-14] | Behavior 1.0.16; documentation built 2026-05-28 | Read events, blackboards, and node lifecycle; execution details continue in chapter 03. |
-| S02-15 | [ML-Agents: Agents][S02-15] | ML-Agents 4.1.0; documentation built 2026-07-29 | Read observation/action contract and decision scheduling. |
-| S02-16 | [Physics Sub-Stepping][S02-16] | UE 5.8 header; undated live manual | Inspected; inherited APEX/mobile statements excluded from current factual claims. |
+| ID     | First-party source                       | Version/date and medium                         | Inspection and qualification                                                                               |
+| ------ | ---------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| S02-01 | [Actor Ticking][S02-01]                  | UE 5.8; undated live manual                     | Read ordering, dependencies, and tick registration.                                                        |
+| S02-02 | [Gameplay Timers][S02-02]                | UE 5.8; undated live manual                     | Read timer ownership, handles, and destruction behavior.                                                   |
+| S02-03 | [Fixed updates][S02-03]                  | Unity 6.6; live manual                          | Read fixed/variable cadence and catch-up explanation.                                                      |
+| S02-04 | [Handling variation in time][S02-04]     | Unity 6.6; live manual                          | Read clamping, unscaled time, and fixed-step catch-up limit.                                               |
+| S02-05 | [In-game time and real time][S02-05]     | Unity 6.6; live manual                          | Read time-scale and pause behavior.                                                                        |
+| S02-06 | [Event function execution order][S02-06] | Unity 6.6; live manual                          | Read lifecycle and simplified-loop qualification.                                                          |
+| S02-07 | [PlayerLoop][S02-07]                     | Unity 6.6; API reference                        | Read loop inspection and replacement contract.                                                             |
+| S02-08 | [UAIPerceptionSystem][S02-08]            | UE 5.8; undated generated API                   | Read registration, batching, aging, delayed delivery, and lifecycle.                                       |
+| S02-09 | [UAIPerceptionComponent][S02-09]         | UE 5.8; undated generated API                   | Read stored target data, updates, and forgetting interfaces.                                               |
+| S02-10 | [FAIStimulus][S02-10]                    | UE 5.8; undated generated API                   | Read fields, aging, validity, and expiration interfaces.                                                   |
+| S02-11 | [AI Perception][S02-11]                  | UE 5.8; undated live manual                     | Read sight/hearing configuration, retained/current perception, and forgetting.                             |
+| S02-12 | [UAISense_Sight][S02-12]                 | UE 5.8; undated generated API                   | Read query partition explanation and pending/asynchronous interfaces; no numeric budget defaults inferred. |
+| S02-13 | [UAISense_Hearing][S02-13]               | UE 5.8; undated generated API                   | Read noise-event and listener interfaces; not evidence of acoustic propagation.                            |
+| S02-14 | [Unity Behavior introduction][S02-14]    | Behavior 1.0.16; documentation built 2026-05-28 | Read events, blackboards, and node lifecycle; execution details continue in chapter 03.                    |
+| S02-15 | [ML-Agents: Agents][S02-15]              | ML-Agents 4.1.0; documentation built 2026-07-29 | Read observation/action contract and decision scheduling.                                                  |
+| S02-16 | [Physics Sub-Stepping][S02-16]           | UE 5.8 header; undated live manual              | Inspected; inherited APEX/mobile statements excluded from current factual claims.                          |
 
 [S02-01]: https://dev.epicgames.com/documentation/en-us/unreal-engine/actor-ticking-in-unreal-engine
 [S02-02]: https://dev.epicgames.com/documentation/en-us/unreal-engine/gameplay-timers-in-unreal-engine

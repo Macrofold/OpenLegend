@@ -1,7 +1,7 @@
 # Content creation, asset lifecycles, UI, and platforms
 
-| Research status | Evidence cut | Scope |
-| --- | --- | --- |
+| Research status                                                      | Evidence cut                                                                                     | Scope                                                                                                                                            |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Complete source synthesis; no engine execution or platform benchmark | 2026-10-23; Unreal Engine 5.8 and Unity 6.6, with separately versioned packages identified below | Procedural content, importing and building assets, runtime ownership, UI/input, accessibility/localization, editor tooling, and browser delivery |
 
 This chapter studies how authored or generated material becomes usable runtime content, and how a player interacts with its presentation. It makes no engine selection or proposed OpenLegend design. Release-channel verification is centralized in the [version baseline](01-evidence-and-version-baseline.md); rendering and animation are covered in [chapter 08](08-rendering-animation-and-audio.md).
@@ -44,15 +44,15 @@ Unity 6.6 lists Splines **2.9.1** for curves and paths used in shapes, trajector
 
 The following table is an analytical classification of the mechanisms studied here. The categories prevent similarly named operations from being treated as interchangeable.
 
-| Stage | Concrete concern | What successful completion does not establish |
-| --- | --- | --- |
-| Authored source | DCC files, textures, text, procedural graphs, source definitions | That the file is valid, trusted, or runtime-ready |
-| Import | Format conversion, dependency discovery, importer settings | That every platform can load the original source format at runtime |
-| Derived-data build | Shaders, compressed/processed data, compiled terrain | That the derived cache is authoritative or permanently retained |
-| Content packaging | Local archives, content directories, bundles/chunks, catalogs | That dependencies are resident or instances exist |
-| Runtime loading | Asynchronous I/O, dependency resolution, reference ownership | That the loaded asset has been instantiated or has gameplay identity |
-| Instance lifetime | Objects referring to shared assets, activation and destruction | That the underlying asset can be unloaded immediately |
-| Persistent world history | Stable identity and consequential changes | That visual content can reconstruct every saved semantic fact |
+| Stage                    | Concrete concern                                                 | What successful completion does not establish                        |
+| ------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Authored source          | DCC files, textures, text, procedural graphs, source definitions | That the file is valid, trusted, or runtime-ready                    |
+| Import                   | Format conversion, dependency discovery, importer settings       | That every platform can load the original source format at runtime   |
+| Derived-data build       | Shaders, compressed/processed data, compiled terrain             | That the derived cache is authoritative or permanently retained      |
+| Content packaging        | Local archives, content directories, bundles/chunks, catalogs    | That dependencies are resident or instances exist                    |
+| Runtime loading          | Asynchronous I/O, dependency resolution, reference ownership     | That the loaded asset has been instantiated or has gameplay identity |
+| Instance lifetime        | Objects referring to shared assets, activation and destruction   | That the underlying asset can be unloaded immediately                |
+| Persistent world history | Stable identity and consequential changes                        | That visual content can reconstruct every saved semantic fact        |
 
 The engine documentation below directly describes the first six categories. The final category is included to mark an evidence boundary relevant to OpenLegend, not to claim the engines lack save systems or to propose one.
 
@@ -90,13 +90,13 @@ The Unity 6.6 package catalog identifies Addressables **2.11.2** as the editor's
 
 Addressables 4.1 supports two content build systems. Content directories, introduced in 4.0, use hashed content files with optional archive packing and currently support **local content only**. The systems differ in dependency accounting and delivery capabilities. [C15]
 
-| Property | AssetBundle build | Content-directory build |
-| --- | --- | --- |
-| Dependency granularity | Bundles and their dependency graph | Individual assets |
-| Content boundary | Explicit bundle/group packing | Content-directory/root-asset build |
-| Remote content in the inspected version | Supported | Not supported |
-| Shared dependency handling | Depends on packing and grouping | Implicit deduplication within the content build |
-| Cross-system sharing | Can duplicate content when mixed with the other system | Same limitation |
+| Property                                | AssetBundle build                                      | Content-directory build                         |
+| --------------------------------------- | ------------------------------------------------------ | ----------------------------------------------- |
+| Dependency granularity                  | Bundles and their dependency graph                     | Individual assets                               |
+| Content boundary                        | Explicit bundle/group packing                          | Content-directory/root-asset build              |
+| Remote content in the inspected version | Supported                                              | Not supported                                   |
+| Shared dependency handling              | Depends on packing and grouping                        | Implicit deduplication within the content build |
+| Cross-system sharing                    | Can duplicate content when mixed with the other system | Same limitation                                 |
 
 The table summarizes the same build-system source and should not be read as an engine recommendation. In particular, per-asset dependency accounting does not imply that every storage read is an isolated tiny file or that remote content gets the same behavior.
 
@@ -215,52 +215,52 @@ The inspected sources do not establish an OpenLegend content scale, population l
 
 Every source below was inspected on **2026-10-23**. Epic's “live 5.8” pages showed the current documentation branch but usually supplied no revision date. Unity's “6.6” sources are pinned to the 6000.6 manual/API, generally built on 2026-10-21 or 22; the Wasm64 prerequisites page showed 2026-10-16. A documentation build date is not proof that every paragraph was newly authored. Package versions and release dates are identified separately. Relevant text/tables were read; no sample project, video, or engine binary was executed for this chapter.
 
-| ID | Source and current scope | Medium; evidence and limits |
-| --- | --- | --- |
-| C01 | [PCG overview][C01], live 5.8 | Epic guide; point data, graph operations and intermediate inspection |
-| C02 | [PCG generation modes][C02], live 5.8 | Epic guide; partition/hierarchy/runtime scheduling and cleanup |
-| C03 | [PCG GPU processing][C03], live 5.8 | Epic guide; Beta, compute grouping, transfer and terrain-data residency |
-| C04 | [Mesh Terrain][C04], live 5.8 | Epic guide; Experimental, authoring and compiled representations |
-| C05 | [Crafting Mesh Terrain][C05], live 5.8 | Epic guide; partition dependency, whole-section recomputation, partial water integration |
-| C06 | [Procedural Vegetation Editor][C06], live 5.8 | Epic guide; Experimental authoring, exported assets, 5.7 incompatibility |
-| C07 | [Mesh.AllocateWritableMeshData][C07], 6.6 | Unity API; job-accessible mesh construction and allocation ownership |
-| C08 | [Splines package][C08], 6.6 catalog: 2.9.1 | Unity package catalog; version and scope only, detailed package page unavailable |
-| C09 | [ProBuilder manual][C09], 6.1 | Unity package manual; editor geometry/UV tools and C# extension API |
-| C10 | [Importing using Interchange][C10], live 5.8 | Epic guide; pipeline/reimport and narrow runtime example; broad format-status claims excluded |
-| C11 | [Asset Management][C11], live 5.8 | Epic guide; primary identifiers, soft-reference bundles, runtime ownership |
-| C12 | [Derived Data Cache][C12], live 5.8 | Epic guide; cache hierarchy and backend boundaries; no deployment performed |
-| C13 | [Refreshing the Asset Database][C13], 6.6 | Unity manual; import stages, dependencies and refresh-loop restarts |
-| C14 | [Addressables package catalog][C14], 6.6 | Unity catalog; default 2.11.2 versus compatible 4.1.1 |
-| C15 | [Addressables content build systems][C15], 4.1.1 | Unity manual; per-asset directories versus bundles, local/remote limits |
-| C16 | [Addressables asset memory][C16], 4.1.1 | Unity manual; reference counts, asset/directory lifetimes and diagnostics |
-| C17 | [Content Directories introduction][C17], 6.6 | Unity manual; root assets, on-demand references, build separation |
-| C18 | [Addressables changelog][C18], 4.1.1 released 2026-09-29 | Unity release record; exact package date, not a performance source |
-| C19 | [URP shader variants and dynamic branching][C19], 6.6 | Unity manual; supported keyword sets and build/runtime tradeoff |
-| C20 | [Slate/UMG invalidation][C20], live 5.8 | Epic guide; hierarchy/layout/paint caches and retainer costs |
-| C21 | [UI Toolkit introduction][C21], 6.6 | Unity manual; retained visual tree, UXML/USS and events |
-| C22 | [Runtime binding modes and update triggers][C22], 6.6 | Unity manual; every-frame fallback and manual invalidation |
-| C23 | [ListView][C23], 6.6 | Unity manual; recycling, item refresh and view rebuild |
-| C24 | [World-space UI][C24], 6.6 | Unity manual; current UI Toolkit world-space capability |
-| C25 | [Enhanced Input][C25], live 5.8 | Epic guide; actions, contexts, modifiers and trigger lifecycle |
-| C26 | [CommonUI][C26], live 5.8 | Epic overview; focus/routing, styling and controller navigation |
-| C27 | [Input System actions][C27], 1.20.1 | Unity package manual; abstract input, callbacks/polling and rebinding |
-| C28 | [Screen readers][C28], live 5.8 | Epic guide; Experimental, exposed widget metadata and platform scope |
-| C29 | [Accessibility module introduction][C29], 6.6 | Unity manual; desktop/mobile readers and explicit semantic hierarchy |
-| C30 | [Accessibility module architecture][C30], 6.6 | Unity manual; event/frame updates and node registration lifetime |
-| C31 | [Localization overview][C31], live 5.8 | Epic guide; gather/archive/compile and separate localization targets |
-| C32 | [Localization package][C32], 6.6 catalog: 1.5.13 | Unity catalog; localized strings/assets and exchange capabilities |
-| C33 | [Smart Strings][C33], 1.5 | Unity package manual; grammatical formatting, not machine translation |
-| C34 | [Graph Toolkit][C34], 6.6 | Unity manual; graph-authoring front end without runtime executor |
-| C35 | [Slate Insights][C35], live 5.8 | Epic guide; widget invalidation/paint/update inspection |
-| C36 | [UI Toolkit Debugger][C36], 6.6 | Unity manual; live inspection and non-persistent experimental style edits |
-| C37 | [Unity 6.6 release announcement][C37], 2026-09-01 | Official staff post; WebGPU production status and progressive asset loading; comments excluded |
-| C38 | [WebGPU features][C38], 6.6 | Unity feature matrix; supported and absent graphics capabilities |
-| C39 | [WebGPU limitations][C39], 6.6 | Unity manual; readback, shaders, buffer/format restrictions |
-| C40 | [64-bit WebAssembly support][C40], 6.6 | Unity manual; memory ceiling and representation overhead |
-| C41 | [64-bit WebAssembly prerequisites][C41], 6.6; build 2026-10-16 | Unity compatibility table; browser versions, no independent device tests |
-| C42 | [Web technical limitations][C42], 6.6 | Unity manual; managed versus native/Burst threading, AOT, networking, audio |
-| C43 | [Pixel Streaming overview][C43], live 5.8 | Epic guide; remote rendering/WebRTC topology; stale HTML5-export wording excluded |
-| C44 | [Pixel Streaming 2 overview][C44], live 5.8 | Epic migration guide; API abstraction and version-matched infrastructure |
+| ID  | Source and current scope                                       | Medium; evidence and limits                                                                    |
+| --- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| C01 | [PCG overview][C01], live 5.8                                  | Epic guide; point data, graph operations and intermediate inspection                           |
+| C02 | [PCG generation modes][C02], live 5.8                          | Epic guide; partition/hierarchy/runtime scheduling and cleanup                                 |
+| C03 | [PCG GPU processing][C03], live 5.8                            | Epic guide; Beta, compute grouping, transfer and terrain-data residency                        |
+| C04 | [Mesh Terrain][C04], live 5.8                                  | Epic guide; Experimental, authoring and compiled representations                               |
+| C05 | [Crafting Mesh Terrain][C05], live 5.8                         | Epic guide; partition dependency, whole-section recomputation, partial water integration       |
+| C06 | [Procedural Vegetation Editor][C06], live 5.8                  | Epic guide; Experimental authoring, exported assets, 5.7 incompatibility                       |
+| C07 | [Mesh.AllocateWritableMeshData][C07], 6.6                      | Unity API; job-accessible mesh construction and allocation ownership                           |
+| C08 | [Splines package][C08], 6.6 catalog: 2.9.1                     | Unity package catalog; version and scope only, detailed package page unavailable               |
+| C09 | [ProBuilder manual][C09], 6.1                                  | Unity package manual; editor geometry/UV tools and C# extension API                            |
+| C10 | [Importing using Interchange][C10], live 5.8                   | Epic guide; pipeline/reimport and narrow runtime example; broad format-status claims excluded  |
+| C11 | [Asset Management][C11], live 5.8                              | Epic guide; primary identifiers, soft-reference bundles, runtime ownership                     |
+| C12 | [Derived Data Cache][C12], live 5.8                            | Epic guide; cache hierarchy and backend boundaries; no deployment performed                    |
+| C13 | [Refreshing the Asset Database][C13], 6.6                      | Unity manual; import stages, dependencies and refresh-loop restarts                            |
+| C14 | [Addressables package catalog][C14], 6.6                       | Unity catalog; default 2.11.2 versus compatible 4.1.1                                          |
+| C15 | [Addressables content build systems][C15], 4.1.1               | Unity manual; per-asset directories versus bundles, local/remote limits                        |
+| C16 | [Addressables asset memory][C16], 4.1.1                        | Unity manual; reference counts, asset/directory lifetimes and diagnostics                      |
+| C17 | [Content Directories introduction][C17], 6.6                   | Unity manual; root assets, on-demand references, build separation                              |
+| C18 | [Addressables changelog][C18], 4.1.1 released 2026-09-29       | Unity release record; exact package date, not a performance source                             |
+| C19 | [URP shader variants and dynamic branching][C19], 6.6          | Unity manual; supported keyword sets and build/runtime tradeoff                                |
+| C20 | [Slate/UMG invalidation][C20], live 5.8                        | Epic guide; hierarchy/layout/paint caches and retainer costs                                   |
+| C21 | [UI Toolkit introduction][C21], 6.6                            | Unity manual; retained visual tree, UXML/USS and events                                        |
+| C22 | [Runtime binding modes and update triggers][C22], 6.6          | Unity manual; every-frame fallback and manual invalidation                                     |
+| C23 | [ListView][C23], 6.6                                           | Unity manual; recycling, item refresh and view rebuild                                         |
+| C24 | [World-space UI][C24], 6.6                                     | Unity manual; current UI Toolkit world-space capability                                        |
+| C25 | [Enhanced Input][C25], live 5.8                                | Epic guide; actions, contexts, modifiers and trigger lifecycle                                 |
+| C26 | [CommonUI][C26], live 5.8                                      | Epic overview; focus/routing, styling and controller navigation                                |
+| C27 | [Input System actions][C27], 1.20.1                            | Unity package manual; abstract input, callbacks/polling and rebinding                          |
+| C28 | [Screen readers][C28], live 5.8                                | Epic guide; Experimental, exposed widget metadata and platform scope                           |
+| C29 | [Accessibility module introduction][C29], 6.6                  | Unity manual; desktop/mobile readers and explicit semantic hierarchy                           |
+| C30 | [Accessibility module architecture][C30], 6.6                  | Unity manual; event/frame updates and node registration lifetime                               |
+| C31 | [Localization overview][C31], live 5.8                         | Epic guide; gather/archive/compile and separate localization targets                           |
+| C32 | [Localization package][C32], 6.6 catalog: 1.5.13               | Unity catalog; localized strings/assets and exchange capabilities                              |
+| C33 | [Smart Strings][C33], 1.5                                      | Unity package manual; grammatical formatting, not machine translation                          |
+| C34 | [Graph Toolkit][C34], 6.6                                      | Unity manual; graph-authoring front end without runtime executor                               |
+| C35 | [Slate Insights][C35], live 5.8                                | Epic guide; widget invalidation/paint/update inspection                                        |
+| C36 | [UI Toolkit Debugger][C36], 6.6                                | Unity manual; live inspection and non-persistent experimental style edits                      |
+| C37 | [Unity 6.6 release announcement][C37], 2026-09-01              | Official staff post; WebGPU production status and progressive asset loading; comments excluded |
+| C38 | [WebGPU features][C38], 6.6                                    | Unity feature matrix; supported and absent graphics capabilities                               |
+| C39 | [WebGPU limitations][C39], 6.6                                 | Unity manual; readback, shaders, buffer/format restrictions                                    |
+| C40 | [64-bit WebAssembly support][C40], 6.6                         | Unity manual; memory ceiling and representation overhead                                       |
+| C41 | [64-bit WebAssembly prerequisites][C41], 6.6; build 2026-10-16 | Unity compatibility table; browser versions, no independent device tests                       |
+| C42 | [Web technical limitations][C42], 6.6                          | Unity manual; managed versus native/Burst threading, AOT, networking, audio                    |
+| C43 | [Pixel Streaming overview][C43], live 5.8                      | Epic guide; remote rendering/WebRTC topology; stale HTML5-export wording excluded              |
+| C44 | [Pixel Streaming 2 overview][C44], live 5.8                    | Epic migration guide; API abstraction and version-matched infrastructure                       |
 
 [C01]: https://dev.epicgames.com/documentation/en-us/unreal-engine/procedural-content-generation-overview
 [C02]: https://dev.epicgames.com/documentation/en-us/unreal-engine/using-pcg-generation-modes-in-unreal-engine

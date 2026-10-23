@@ -22,14 +22,14 @@ The Gameplay Ability System (GAS) combines abilities, attributes, effects, tasks
 
 The current ability documentation distinguishes the following operations:
 
-| Operation | Documented meaning |
-| --- | --- |
-| Grant/revoke | Server-authorized availability of an ability; distinct from starting an execution. |
-| Check activation | Ask whether current conditions allow activation. |
-| Try activation | Perform the availability check and activate when allowed. |
-| Commit | Apply costs and cooldowns when the ability calls the commit operation. |
-| Cancel | Request interruption; the ability can reject cancellation. |
-| End | Terminate execution and release its active/blocking state. |
+| Operation        | Documented meaning                                                                 |
+| ---------------- | ---------------------------------------------------------------------------------- |
+| Grant/revoke     | Server-authorized availability of an ability; distinct from starting an execution. |
+| Check activation | Ask whether current conditions allow activation.                                   |
+| Try activation   | Perform the availability check and activate when allowed.                          |
+| Commit           | Apply costs and cooldowns when the ability calls the commit operation.             |
+| Cancel           | Request interruption; the ability can reject cancellation.                         |
+| End              | Terminate execution and release its active/blocking state.                         |
 
 Abilities ordinarily launch asynchronous tasks and respond to delegates rather than put their primary work in an ability tick. A missing normal `EndAbility` call can leave the framework believing an ability remains active indefinitely. Cancellation has a cleanup path; it is not synonymous with silently abandoning a callback. Local-predicted, local-only, server-initiated, and server-only execution policies distinguish immediate response from authority. Local prediction remains subject to server correction. [G04]
 
@@ -45,13 +45,13 @@ Attributes have base and current floating-point values. Attribute Sets connect t
 
 These facilities separate several categories that a feature checklist can blur:
 
-| Category | Example of the distinction |
-| --- | --- |
-| Definition | A reusable description of an effect or ability. |
-| Instance | One application, its source/target, remaining duration, and mutable execution data. |
-| Derived value | A current attribute calculated in the presence of active modifiers. |
-| Persistent consequence | A change that remains after the temporary effect or execution ends. |
-| Presentation | A sound, animation, particle effect, or UI response describing the result. |
+| Category               | Example of the distinction                                                          |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| Definition             | A reusable description of an effect or ability.                                     |
+| Instance               | One application, its source/target, remaining duration, and mutable execution data. |
+| Derived value          | A current attribute calculated in the presence of active modifiers.                 |
+| Persistent consequence | A change that remains after the temporary effect or execution ends.                 |
+| Presentation           | A sound, animation, particle effect, or UI response describing the result.          |
 
 The table is an analytical decomposition, not an assertion that a single engine object stores every row. It explains why ending a visible effect, expiring an attribute modifier, undoing an action, and restoring a saved world are not interchangeable operations.
 
@@ -95,15 +95,15 @@ Unity Behavior and Unreal StateTree/Behavior Trees provide additional authored d
 
 The existing [engine/world boundary](../../docs/engine-and-world-boundaries.md), [repertoire coverage](../../docs/repertoires/coverage.md), and [needs-design register](../../docs/maintainers/needs-design.md) identify a much wider world than a conventional ability-and-animation example. The following table records how the researched mechanisms relate to those areas. It is a **coverage and evidence map**, not a list of proposed implementations.
 
-| Existing OpenLegend area of interest | Engine mechanisms examined | What those mechanisms do not, by themselves, establish |
-| --- | --- | --- |
-| Needs, stamina, health, injuries, illness | Attributes, effects, timers, execution graphs, physical contacts | A validated physiological model; the causal meaning of symptoms, treatment, or death. |
-| Inventory, crafting, tools, materials, invention | Shared definitions, typed registries, components, activation/commit lifecycles, import pipelines | Conservation, ownership transfer, recipe semantics, or atomic durable exchange. |
-| Agreements, relationships, groups, institutions, economy | Tags, predicates, authority, reservations, dialogue graphs, persistence | A social rule system, mutually understood obligations, trust, prices, or historical evidence. |
-| Memory, perception, knowledge, narration | Stimulus state, graph context, observable events, reference identity, generated-language research | Who witnessed an event, what they inferred, what they later remember, or whether narration is true. |
-| Ecology, animals, generations, growth | Population data, simulation scheduling, navigation, spatial queries, LOD, procedural content | Population balance, inheritance, reproduction, accumulated ecological consequences, or offscreen causal continuity. |
-| Weather, heat, fire, fluids, destruction | Physics, fields, rendering, particles, material systems, procedural world generation | Agreement between visible phenomena and mechanically meaningful world state. |
-| World authoring and extensibility | Registries, feature plugins, data assets, graph authoring, serialization | Stable authored-rule compatibility, trust isolation, validation of arbitrary rules, or save migration. |
+| Existing OpenLegend area of interest                     | Engine mechanisms examined                                                                        | What those mechanisms do not, by themselves, establish                                                              |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Needs, stamina, health, injuries, illness                | Attributes, effects, timers, execution graphs, physical contacts                                  | A validated physiological model; the causal meaning of symptoms, treatment, or death.                               |
+| Inventory, crafting, tools, materials, invention         | Shared definitions, typed registries, components, activation/commit lifecycles, import pipelines  | Conservation, ownership transfer, recipe semantics, or atomic durable exchange.                                     |
+| Agreements, relationships, groups, institutions, economy | Tags, predicates, authority, reservations, dialogue graphs, persistence                           | A social rule system, mutually understood obligations, trust, prices, or historical evidence.                       |
+| Memory, perception, knowledge, narration                 | Stimulus state, graph context, observable events, reference identity, generated-language research | Who witnessed an event, what they inferred, what they later remember, or whether narration is true.                 |
+| Ecology, animals, generations, growth                    | Population data, simulation scheduling, navigation, spatial queries, LOD, procedural content      | Population balance, inheritance, reproduction, accumulated ecological consequences, or offscreen causal continuity. |
+| Weather, heat, fire, fluids, destruction                 | Physics, fields, rendering, particles, material systems, procedural world generation              | Agreement between visible phenomena and mechanically meaningful world state.                                        |
+| World authoring and extensibility                        | Registries, feature plugins, data assets, graph authoring, serialization                          | Stable authored-rule compatibility, trust isolation, validation of arbitrary rules, or save migration.              |
 
 These limits are deliberately narrower than saying an engine “cannot” support a system. The documentation establishes reusable infrastructure. Application code, external systems, content, and validation can supply further meaning. This study does not infer that work is already included or prescribe what OpenLegend should add.
 
@@ -123,25 +123,25 @@ These are comparisons of the documented mechanisms and OpenLegend's existing sta
 
 All entries were inspected on **23 October 2026**. Unreal entries resolve to current **5.8** documentation/API pages; Unity entries use explicit **6000.6** paths. They describe the mechanisms above, not measured OpenLegend performance. The older sample-game links embedded in some Epic pages were not used as evidence of current sample compatibility.
 
-| ID | Primary source | Evidence used |
-| --- | --- | --- |
-| G01 | [Epic: Gameplay Framework](https://dev.epicgames.com/documentation/unreal-engine/gameplay-framework-in-unreal-engine) | Ownership roles and process/level lifetimes. |
-| G02 | [Unity 6.6: MonoBehaviour components](https://docs.unity3d.com/6000.6/Documentation/Manual/class-MonoBehaviour.html) | Component instances and lifecycle hooks. |
-| G03 | [Epic: Gameplay Ability System](https://dev.epicgames.com/documentation/unreal-engine/gameplay-ability-system-for-unreal-engine) | Framework responsibilities and constituent systems. |
-| G04 | [Epic: Gameplay Abilities](https://dev.epicgames.com/documentation/unreal-engine/using-gameplay-abilities-in-unreal-engine) | Grant, activation, commitment, cancellation, termination, and network execution policy. |
-| G05 | [Epic: Ability Tasks](https://dev.epicgames.com/documentation/unreal-engine/gameplay-ability-tasks-in-unreal-engine) | Asynchronous work, lifetime, and replication boundary. |
-| G06 | [Epic: Gameplay Effects](https://dev.epicgames.com/documentation/en-us/unreal-engine/gameplay-effects-for-the-gameplay-ability-system-in-unreal-engine) | Definition/specification separation, effect duration, modifiers, cues, shared components. |
-| G07 | [Epic: Attributes and Attribute Sets](https://dev.epicgames.com/documentation/unreal-engine/gameplay-attributes-and-attribute-sets-for-the-gameplay-ability-system-in-unreal-engine) | Base/current values, explicit clamping and replication behavior. |
-| G08 | [Epic: Gameplay Tags](https://dev.epicgames.com/documentation/unreal-engine/using-gameplay-tags-in-unreal-engine) | Registration, hierarchy, composition, empty-query semantics. |
-| G09 | [Epic: FGameplayTag API](https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/GameplayTags/FGameplayTag) and [Blueprint tag library](https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/GameplayTags/UBlueprintGameplayTagLibrary) | Specific matching operations and parent-tag expansion. |
-| G10 | [Epic: Data Registries](https://dev.epicgames.com/documentation/en-us/unreal-engine/data-registries-in-unreal-engine) | Typed read-only lookup, source precedence, caches and mutable-progress boundary. |
-| G11 | [Unity 6.6: ScriptableObject data assets](https://docs.unity3d.com/6000.6/Documentation/Manual/class-ScriptableObject.html) | Shared standalone asset definitions. |
-| G12 | [Unity 6.6: SerializeReference](https://docs.unity3d.com/6000.6/Documentation/ScriptReference/SerializeReference.html) | Managed graph identity, host scope, cloning, cost. |
-| G13 | [Unity 6.6: Serialization rules](https://docs.unity3d.com/6000.6/Documentation/Manual/script-serialization-rules.html) | Current field/type rules, including dictionary support. |
-| G14 | [Epic: Game Features and Modular Gameplay](https://dev.epicgames.com/documentation/unreal-engine/game-features-and-modular-gameplay-in-unreal-engine) | Plugin actions, opt-in component injection, side selection, content registration. |
-| G15 | [Epic: Modular Gameplay plugin](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/PluginIndex/ModularGameplay) | Current Beta designation. |
-| G16 | [Epic: Common Conversation plugin](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/PluginIndex/CommonConversation) | Current Experimental designation and authored graph scope. |
-| G17 | [Epic: CommonConversationRuntime API](https://dev.epicgames.com/documentation/unreal-engine/API/Plugins/CommonConversationRuntime?lang=en-US) | Definition/instance split, participant and requirement/side-effect types. |
+| ID  | Primary source                                                                                                                                                                                                                                                 | Evidence used                                                                             |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| G01 | [Epic: Gameplay Framework](https://dev.epicgames.com/documentation/unreal-engine/gameplay-framework-in-unreal-engine)                                                                                                                                          | Ownership roles and process/level lifetimes.                                              |
+| G02 | [Unity 6.6: MonoBehaviour components](https://docs.unity3d.com/6000.6/Documentation/Manual/class-MonoBehaviour.html)                                                                                                                                           | Component instances and lifecycle hooks.                                                  |
+| G03 | [Epic: Gameplay Ability System](https://dev.epicgames.com/documentation/unreal-engine/gameplay-ability-system-for-unreal-engine)                                                                                                                               | Framework responsibilities and constituent systems.                                       |
+| G04 | [Epic: Gameplay Abilities](https://dev.epicgames.com/documentation/unreal-engine/using-gameplay-abilities-in-unreal-engine)                                                                                                                                    | Grant, activation, commitment, cancellation, termination, and network execution policy.   |
+| G05 | [Epic: Ability Tasks](https://dev.epicgames.com/documentation/unreal-engine/gameplay-ability-tasks-in-unreal-engine)                                                                                                                                           | Asynchronous work, lifetime, and replication boundary.                                    |
+| G06 | [Epic: Gameplay Effects](https://dev.epicgames.com/documentation/en-us/unreal-engine/gameplay-effects-for-the-gameplay-ability-system-in-unreal-engine)                                                                                                        | Definition/specification separation, effect duration, modifiers, cues, shared components. |
+| G07 | [Epic: Attributes and Attribute Sets](https://dev.epicgames.com/documentation/unreal-engine/gameplay-attributes-and-attribute-sets-for-the-gameplay-ability-system-in-unreal-engine)                                                                           | Base/current values, explicit clamping and replication behavior.                          |
+| G08 | [Epic: Gameplay Tags](https://dev.epicgames.com/documentation/unreal-engine/using-gameplay-tags-in-unreal-engine)                                                                                                                                              | Registration, hierarchy, composition, empty-query semantics.                              |
+| G09 | [Epic: FGameplayTag API](https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/GameplayTags/FGameplayTag) and [Blueprint tag library](https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/GameplayTags/UBlueprintGameplayTagLibrary) | Specific matching operations and parent-tag expansion.                                    |
+| G10 | [Epic: Data Registries](https://dev.epicgames.com/documentation/en-us/unreal-engine/data-registries-in-unreal-engine)                                                                                                                                          | Typed read-only lookup, source precedence, caches and mutable-progress boundary.          |
+| G11 | [Unity 6.6: ScriptableObject data assets](https://docs.unity3d.com/6000.6/Documentation/Manual/class-ScriptableObject.html)                                                                                                                                    | Shared standalone asset definitions.                                                      |
+| G12 | [Unity 6.6: SerializeReference](https://docs.unity3d.com/6000.6/Documentation/ScriptReference/SerializeReference.html)                                                                                                                                         | Managed graph identity, host scope, cloning, cost.                                        |
+| G13 | [Unity 6.6: Serialization rules](https://docs.unity3d.com/6000.6/Documentation/Manual/script-serialization-rules.html)                                                                                                                                         | Current field/type rules, including dictionary support.                                   |
+| G14 | [Epic: Game Features and Modular Gameplay](https://dev.epicgames.com/documentation/unreal-engine/game-features-and-modular-gameplay-in-unreal-engine)                                                                                                          | Plugin actions, opt-in component injection, side selection, content registration.         |
+| G15 | [Epic: Modular Gameplay plugin](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/PluginIndex/ModularGameplay)                                                                                                                                   | Current Beta designation.                                                                 |
+| G16 | [Epic: Common Conversation plugin](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/PluginIndex/CommonConversation)                                                                                                                             | Current Experimental designation and authored graph scope.                                |
+| G17 | [Epic: CommonConversationRuntime API](https://dev.epicgames.com/documentation/unreal-engine/API/Plugins/CommonConversationRuntime?lang=en-US)                                                                                                                  | Definition/instance split, participant and requirement/side-effect types.                 |
 
 [G01]: https://dev.epicgames.com/documentation/unreal-engine/gameplay-framework-in-unreal-engine
 [G02]: https://docs.unity3d.com/6000.6/Documentation/Manual/class-MonoBehaviour.html

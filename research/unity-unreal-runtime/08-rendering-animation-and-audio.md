@@ -1,7 +1,7 @@
 # Rendering, animation, visual effects, and audio
 
-| Research status | Evidence cut | Scope |
-| --- | --- | --- |
+| Research status                                          | Evidence cut                                                                                                    | Scope                                                                                                                                    |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Complete source synthesis; no engine benchmark performed | 2026-10-23; Unreal Engine 5.8 documentation and Unity 6.6 documentation, with package versions identified below | Mechanisms, work avoided or moved, fidelity limits, platform conditions, and the boundary between presentation and persistent simulation |
 
 This chapter examines how the engines produce images, movement, effects, and sound from an already meaningful world. It does not select an engine or propose an OpenLegend implementation. The [version baseline](01-evidence-and-version-baseline.md) owns release and support-channel verification. References to a current documentation branch do not turn its older examples into current measurements.
@@ -14,7 +14,7 @@ OpenLegend's engine/world and authority boundaries make one distinction particul
 
 Unreal's Render Dependency Graph (RDG) records rendering operations and their resource relationships before executing them. Shader-parameter metadata exposes which textures and buffers a pass reads or writes. The graph can consequently discard unused passes, schedule compute/graphics synchronization, reuse memory whose previous contents are no longer needed, issue resource transitions, and record command lists in parallel. RDG Insights exposes the resulting dependencies and memory lifetimes. These are capabilities of the render graph; a graph declaration still needs to describe the real resource use correctly. [R01]
 
-The work saved is partly *absence of work*: an intermediate image with no live consumer need not be produced. Another part is *overlap*: independent work can run while another queue is occupied. A third part is *shorter ownership*: two temporary resources can share backing memory when their uses do not overlap. These are analytically different savings. An asynchronous pass can take the same amount of GPU work while shortening the critical path; that does not mean the pass became cheaper in isolation.
+The work saved is partly _absence of work_: an intermediate image with no live consumer need not be produced. Another part is _overlap_: independent work can run while another queue is occupied. A third part is _shorter ownership_: two temporary resources can share backing memory when their uses do not overlap. These are analytically different savings. An asynchronous pass can take the same amount of GPU work while shortening the critical path; that does not mean the pass became cheaper in isolation.
 
 ### Unity render graph
 
@@ -42,7 +42,7 @@ Unity 6.6 also marks dynamic batching obsolete in its version-specific upgrade g
 
 Unity's GPU occlusion culling uses depth information from the current and previous frame. An object is retained if either view indicates it is unoccluded, which deliberately favors conservative visibility over immediate removal. It tests bounds against a depth hierarchy; elongated objects with large bounds can therefore remain visible when much of their actual geometry is hidden. Its likely benefits depend on scene occlusion, object bounds, and compatible GPU Resident Drawer content. More culling is not automatically a net saving in an open scene with little occlusion. [R07]
 
-The relevant distinction is between *draw visibility* and *knowledge*. A GPU visibility result answers whether drawing geometry contributes to a particular image under that renderer's conservative rules. It does not answer whether a character could see an event, recognized it, remembered it, or had permission to learn it. This is an interpretation of the camera-dependent inputs, not a limitation peculiar to one engine.
+The relevant distinction is between _draw visibility_ and _knowledge_. A GPU visibility result answers whether drawing geometry contributes to a particular image under that renderer's conservative rules. It does not answer whether a character could see an event, recognized it, remembered it, or had permission to learn it. This is an interpretation of the camera-dependent inputs, not a limitation peculiar to one engine.
 
 ## 3. Lighting: cached approximations, sampling budgets, and invalidation
 
@@ -142,13 +142,13 @@ The Valve downloads page identifies Steam Audio 4.8.1 as the latest release foun
 
 The following is **research interpretation**, not an implementation plan. Several questions can have different answers for the same hypothetical spoken sentence:
 
-| Question | Relevant kind of computation | Why the answer can differ |
-| --- | --- | --- |
-| Was a voice mixed for the player's device? | Voice priority, source playback, buffering | A sound may lose a voice budget despite an underlying event existing. |
-| How did the sound reach a listener? | Attenuation, obstruction, spatialization, propagation | Approximate geometry and filtering shape the signal. |
-| Could a character detect speech? | Character/world perception rules | A player-listener mix is not every character's sensory model. |
-| Did the character understand the words? | Language, context, attention, permitted knowledge | Acoustic arrival alone does not establish comprehension. |
-| Did the character learn or remember something? | Persistent semantic state | A transient audio buffer contains no automatic memory or permission contract. |
+| Question                                       | Relevant kind of computation                          | Why the answer can differ                                                     |
+| ---------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Was a voice mixed for the player's device?     | Voice priority, source playback, buffering            | A sound may lose a voice budget despite an underlying event existing.         |
+| How did the sound reach a listener?            | Attenuation, obstruction, spatialization, propagation | Approximate geometry and filtering shape the signal.                          |
+| Could a character detect speech?               | Character/world perception rules                      | A player-listener mix is not every character's sensory model.                 |
+| Did the character understand the words?        | Language, context, attention, permitted knowledge     | Acoustic arrival alone does not establish comprehension.                      |
+| Did the character learn or remember something? | Persistent semantic state                             | A transient audio buffer contains no automatic memory or permission contract. |
 
 The cited voice, occlusion, and spatialization mechanisms support the first two layers. They do not supply evidence that the later layers are solved by an audio engine. Similarly, a subtitle or transcript is a presentation of speech, not proof that every nearby character should receive that content.
 
@@ -156,18 +156,18 @@ The cited voice, occlusion, and spatialization mechanisms support the first two 
 
 The table is a synthesis of the cited mechanisms, not an engine ranking or proposed architecture.
 
-| Mechanism | Work that can be avoided or moved | What remains or becomes approximate |
-| --- | --- | --- |
-| Render dependency graphs | Dead passes, overlong temporary lifetimes, unnecessary serialization | Correct dependency declarations; resource barriers; actual GPU work |
-| Nanite | Excess geometric detail and much traditional submission work | Streaming, materials, instances, separate animation and gameplay work |
-| GPU Resident Drawer | Repeated CPU submission for compatible renderers | Compatibility rules, GPU work, shader variants, data updates |
-| GPU occlusion | Drawing conservatively hidden bounds | Visibility-history delay and false positives; no semantic perception result |
-| Lumen caches | Repeated full surface/material/lighting evaluation | Coverage, refresh latency, alternative geometry representations |
-| MegaLights | Exhaustive per-light sampling | Stochastic error, denoising, acceleration structure and translucency costs |
-| Shadow-map page caches | Redrawing unchanged depth | Invalidation under moving lights, geometry, and deformation |
-| Animation budgets/culling | Full-rate pose evaluation on every character | Interpolation error and dependencies on updated transforms/events |
-| Stateless visual effects | Retaining and stepping arbitrary particle histories | Restricted effect behavior; image work still exists |
-| Audio concurrency/virtualization | Mixing every active sound at full cost | Voice-selection loss; no automatic change to the underlying event |
+| Mechanism                        | Work that can be avoided or moved                                    | What remains or becomes approximate                                         |
+| -------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Render dependency graphs         | Dead passes, overlong temporary lifetimes, unnecessary serialization | Correct dependency declarations; resource barriers; actual GPU work         |
+| Nanite                           | Excess geometric detail and much traditional submission work         | Streaming, materials, instances, separate animation and gameplay work       |
+| GPU Resident Drawer              | Repeated CPU submission for compatible renderers                     | Compatibility rules, GPU work, shader variants, data updates                |
+| GPU occlusion                    | Drawing conservatively hidden bounds                                 | Visibility-history delay and false positives; no semantic perception result |
+| Lumen caches                     | Repeated full surface/material/lighting evaluation                   | Coverage, refresh latency, alternative geometry representations             |
+| MegaLights                       | Exhaustive per-light sampling                                        | Stochastic error, denoising, acceleration structure and translucency costs  |
+| Shadow-map page caches           | Redrawing unchanged depth                                            | Invalidation under moving lights, geometry, and deformation                 |
+| Animation budgets/culling        | Full-rate pose evaluation on every character                         | Interpolation error and dependencies on updated transforms/events           |
+| Stateless visual effects         | Retaining and stepping arbitrary particle histories                  | Restricted effect behavior; image work still exists                         |
+| Audio concurrency/virtualization | Mixing every active sound at full cost                               | Voice-selection loss; no automatic change to the underlying event           |
 
 The common pattern is a bounded, observable output contract with explicit approximations or lifetime rules. Whether that contract is acceptable for a different system is a separate semantic question. None of the documentation establishes an OpenLegend population capacity, frame budget, or character-behavior speedup; no such benchmark was performed.
 
@@ -175,46 +175,46 @@ The common pattern is a bounded, observable output contract with explicit approx
 
 All sources below were inspected on **2026-10-23**. “Live 5.8” means Epic's current page showed the 5.8 documentation branch; most pages expose no publication/revision date. “6.6” means the version-pinned 6000.6 manual/API, generally built on 2026-10-21 or 22. Build dates show publication of a documentation build, not that every paragraph was newly authored. Package versions are taken from page metadata where available. Text and relevant sections were inspected; embedded videos and example binaries were not watched or executed.
 
-| ID | Source and version | Medium; evidence used and limit |
-| --- | --- | --- |
-| R01 | [Render Dependency Graph][R01], live 5.8 | Epic technical guide; scheduling, declarations, lifetimes, diagnostics; no GPU experiment |
-| R02 | [URP render graph introduction][R02], 6.6 | Unity manual; resource lifetimes, culling, queue synchronization, tile pass merging |
-| R03 | [Nanite overview][R03], live 5.8 | Epic guide; cluster hierarchy, streaming, skeletal and foliage scope |
-| R04 | [Nanite technical details][R04], live 5.8 | Epic guide; residency, fallback, pools; old demo measurements excluded |
-| R05 | [GPU Resident Drawer][R05], 6.6 | Unity manual; actual pipeline/platform compatibility and batching scope |
-| R06 | [Upgrade to Unity 6.6][R06], 6.6 | Version-specific manual; obsolete dynamic batching, Cinemachine package coupling |
-| R07 | [GPU occlusion culling][R07], 6.6 | Unity manual; depth history and conservative bounds |
-| R08 | [Lumen technical details][R08], live 5.8 | Epic guide; tracing representations, caches, current skeletal coverage |
-| R09 | [Lumen performance guide][R09], live 5.8 | Epic guide; Lumen Lite and qualified frame-rate targets |
-| R10 | [MegaLights][R10], live 5.8 | Epic technical guide; stochastic budget, quality, costs, profiling conditions |
-| R11 | [Virtual Shadow Maps][R11], live 5.8 | Epic technical guide; page residency, cache invalidation, depth approximation |
-| R12 | [Adaptive Probe Volumes concepts][R12], 6.6 | Unity manual; brick structure, baked scenarios, runtime sky contribution |
-| R13 | [HDRP ray-tracing setup][R13], 17.6.0; build 2026-10-22 | Unity package guide; configuration/geometry scope; 2019.3 intro not maturity evidence |
-| R14 | [Temporal Super Resolution][R14], live 5.8 | Epic technical guide; temporal convergence; historical demo timings excluded |
-| R15 | [Motion Matching][R15], live 5.8 | Epic guide; Pose Search query, schema and motion database |
-| R16 | [Animation optimization][R16], live 5.8 | Epic guide; parallel evaluation constraints, fast paths, debugging |
-| R17 | [Animation Budget Allocator][R17], live 5.8 | Epic guide; significance, component scheduling and update degradation |
-| R18 | [Animator reference][R18], 6.6 | Unity API documentation; threading, graph rebinds, activation and layer costs |
-| R19 | [Playables][R19], 6.6 | Unity manual; composable presentation graph, outputs and timing |
-| R20 | [AnimatorCullingMode][R20], 6.6 | Unity API documentation; exact offscreen evaluation modes |
-| R21 | [Animation Rigging][R21], 6.6.0; generated 2026-08-12 | Unity package documentation; C# Jobs and procedural constraints |
-| R22 | [UAF plugin][R22], live 5.8 | Epic API/plugin index; explicitly Experimental, no production replacement claim |
-| R23 | [Niagara scalability][R23], live 5.8 | Epic engineering guide; CPU/GPU ownership and pooling; stale 5.4 rollout text excluded |
-| R24 | [Niagara lightweight emitters][R24], live 5.8 | Epic guide; fixed-function restrictions; origin wording still says 5.4 |
-| R25 | [Niagara GPU ray-tracing collisions][R25], live 5.8 | Epic guide; Experimental status and one-frame delay |
-| R26 | [Visual Effect Graph systems][R26], 17.6.0 | Unity package manual; context graph, simulation space, GPU events |
-| R27 | [MetaSounds reference][R27], live 5.8 | Epic technical guide; dataflow, sources, patches and presets |
-| R28 | [Sound Concurrency][R28], live 5.8 | Epic guide; active-component limits, rejection, voice-stealing policy |
-| R29 | [Audio settings][R29], 6.6 | Unity manual; real/virtual voice budgets and DSP-buffer tradeoff |
-| R30 | [Sound Attenuation][R30], live 5.8 | Epic guide; source/listener obstruction test and filtering |
-| R31 | [Audio Gameplay Volumes][R31], live 5.8 | Epic guide; Beta status, modular region effects and audio-thread processing |
-| R32 | [Audio spatializer][R32], 6.6 | Unity manual; native-plugin boundary |
-| R33 | [Steam Audio Unity integration][R33], live undated | Valve manual; acoustic mechanisms; exact editor-patch compatibility untested |
-| R34 | [Steam Audio downloads][R34], accessed 2026-10-23 | Valve release index; 4.8.1 latest listed; publication date not supplied |
+| ID  | Source and version                                      | Medium; evidence used and limit                                                           |
+| --- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| R01 | [Render Dependency Graph][R01], live 5.8                | Epic technical guide; scheduling, declarations, lifetimes, diagnostics; no GPU experiment |
+| R02 | [URP render graph introduction][R02], 6.6               | Unity manual; resource lifetimes, culling, queue synchronization, tile pass merging       |
+| R03 | [Nanite overview][R03], live 5.8                        | Epic guide; cluster hierarchy, streaming, skeletal and foliage scope                      |
+| R04 | [Nanite technical details][R04], live 5.8               | Epic guide; residency, fallback, pools; old demo measurements excluded                    |
+| R05 | [GPU Resident Drawer][R05], 6.6                         | Unity manual; actual pipeline/platform compatibility and batching scope                   |
+| R06 | [Upgrade to Unity 6.6][R06], 6.6                        | Version-specific manual; obsolete dynamic batching, Cinemachine package coupling          |
+| R07 | [GPU occlusion culling][R07], 6.6                       | Unity manual; depth history and conservative bounds                                       |
+| R08 | [Lumen technical details][R08], live 5.8                | Epic guide; tracing representations, caches, current skeletal coverage                    |
+| R09 | [Lumen performance guide][R09], live 5.8                | Epic guide; Lumen Lite and qualified frame-rate targets                                   |
+| R10 | [MegaLights][R10], live 5.8                             | Epic technical guide; stochastic budget, quality, costs, profiling conditions             |
+| R11 | [Virtual Shadow Maps][R11], live 5.8                    | Epic technical guide; page residency, cache invalidation, depth approximation             |
+| R12 | [Adaptive Probe Volumes concepts][R12], 6.6             | Unity manual; brick structure, baked scenarios, runtime sky contribution                  |
+| R13 | [HDRP ray-tracing setup][R13], 17.6.0; build 2026-10-22 | Unity package guide; configuration/geometry scope; 2019.3 intro not maturity evidence     |
+| R14 | [Temporal Super Resolution][R14], live 5.8              | Epic technical guide; temporal convergence; historical demo timings excluded              |
+| R15 | [Motion Matching][R15], live 5.8                        | Epic guide; Pose Search query, schema and motion database                                 |
+| R16 | [Animation optimization][R16], live 5.8                 | Epic guide; parallel evaluation constraints, fast paths, debugging                        |
+| R17 | [Animation Budget Allocator][R17], live 5.8             | Epic guide; significance, component scheduling and update degradation                     |
+| R18 | [Animator reference][R18], 6.6                          | Unity API documentation; threading, graph rebinds, activation and layer costs             |
+| R19 | [Playables][R19], 6.6                                   | Unity manual; composable presentation graph, outputs and timing                           |
+| R20 | [AnimatorCullingMode][R20], 6.6                         | Unity API documentation; exact offscreen evaluation modes                                 |
+| R21 | [Animation Rigging][R21], 6.6.0; generated 2026-08-12   | Unity package documentation; C# Jobs and procedural constraints                           |
+| R22 | [UAF plugin][R22], live 5.8                             | Epic API/plugin index; explicitly Experimental, no production replacement claim           |
+| R23 | [Niagara scalability][R23], live 5.8                    | Epic engineering guide; CPU/GPU ownership and pooling; stale 5.4 rollout text excluded    |
+| R24 | [Niagara lightweight emitters][R24], live 5.8           | Epic guide; fixed-function restrictions; origin wording still says 5.4                    |
+| R25 | [Niagara GPU ray-tracing collisions][R25], live 5.8     | Epic guide; Experimental status and one-frame delay                                       |
+| R26 | [Visual Effect Graph systems][R26], 17.6.0              | Unity package manual; context graph, simulation space, GPU events                         |
+| R27 | [MetaSounds reference][R27], live 5.8                   | Epic technical guide; dataflow, sources, patches and presets                              |
+| R28 | [Sound Concurrency][R28], live 5.8                      | Epic guide; active-component limits, rejection, voice-stealing policy                     |
+| R29 | [Audio settings][R29], 6.6                              | Unity manual; real/virtual voice budgets and DSP-buffer tradeoff                          |
+| R30 | [Sound Attenuation][R30], live 5.8                      | Epic guide; source/listener obstruction test and filtering                                |
+| R31 | [Audio Gameplay Volumes][R31], live 5.8                 | Epic guide; Beta status, modular region effects and audio-thread processing               |
+| R32 | [Audio spatializer][R32], 6.6                           | Unity manual; native-plugin boundary                                                      |
+| R33 | [Steam Audio Unity integration][R33], live undated      | Valve manual; acoustic mechanisms; exact editor-patch compatibility untested              |
+| R34 | [Steam Audio downloads][R34], accessed 2026-10-23       | Valve release index; 4.8.1 latest listed; publication date not supplied                   |
 
 ### Additional inspected media and access limits
 
-The [SIGGRAPH 2025 course page](https://advances.realtimerendering.com/s2025/) identifies Epic authors Krzysztof Narkowicz and Tiago Costa's *MegaLights: Stochastic Direct Lighting in Unreal Engine 5* and links [their presentation PDF](https://advances.realtimerendering.com/s2025/content/MegaLights_Stochastic_Direct_Lighting_2025.pdf), updated 2025-08-25. The source is directly relevant to the mechanism still documented in 5.8, but the 14.5 MB PDF exceeded the retrieval limit. The landing page and abstract were inspected; the full slides and embedded video were **not** consumed and are not used to support details in this chapter. This is an explicit retrieval gap, not a claim that a 2025 talk establishes 5.8 feature status.
+The [SIGGRAPH 2025 course page](https://advances.realtimerendering.com/s2025/) identifies Epic authors Krzysztof Narkowicz and Tiago Costa's _MegaLights: Stochastic Direct Lighting in Unreal Engine 5_ and links [their presentation PDF](https://advances.realtimerendering.com/s2025/content/MegaLights_Stochastic_Direct_Lighting_2025.pdf), updated 2025-08-25. The source is directly relevant to the mechanism still documented in 5.8, but the 14.5 MB PDF exceeded the retrieval limit. The landing page and abstract were inspected; the full slides and embedded video were **not** consumed and are not used to support details in this chapter. This is an explicit retrieval gap, not a claim that a 2025 talk establishes 5.8 feature status.
 
 [R01]: https://dev.epicgames.com/documentation/en-us/unreal-engine/render-dependency-graph-in-unreal-engine
 [R02]: https://docs.unity3d.com/6000.6/Documentation/Manual/urp/render-graph-introduction.html

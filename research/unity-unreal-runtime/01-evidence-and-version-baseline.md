@@ -1,8 +1,8 @@
 # Evidence, versions and research boundaries
 
-| Research status | Progress | Last reviewed |
-| --- | --- | --- |
-| In progress | Release and source rules are established; subsystem research and cross-checking are underway. | 2026-10-23 |
+| Research status             | Progress                                                                                              | Last reviewed |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- | ------------- |
+| Completed research snapshot | Current release baselines, subsystem analysis, source registers and inspection limits are documented. | 2026-10-23    |
 
 ## Purpose and scope
 
@@ -16,14 +16,14 @@ Coverage includes simulation clocks and scheduling; sensing, attention and AI ex
 
 The review cutoff is **October 23, 2026**. These are the latest production release lines and patches verified in official material during this study, not installed or benchmarked engine builds.
 
-| Product or evidence layer | Baseline | What the source establishes |
-| --- | --- | --- |
-| Unreal Engine release line | **5.8** | Epic's release announcement is dated June 23, 2026; its current documentation is labeled 5.8. [V01](https://www.unrealengine.com/news/unreal-engine-5-8-is-now-available) |
-| Unreal patch | **5.8.4** | Epic staff's hotfix announcement is dated October 20, 2026. The forum listing's later activity date is not its release date. [V02](https://forums.unrealengine.com/t/5-8-4-hotfix-released/2842775) |
-| Unity release line | **Unity 6.6 / 6000.6** | The versioned manual identifies this release line. [V03](https://docs.unity3d.com/6000.6/Documentation/Manual/UnityManual.html) |
-| Unity patch | **6000.6.7f1** | The patch's official release page gives October 21, 2026. [V04](https://unity.com/releases/editor/whats-new/6000.6.7f1) |
-| Unity long-term support | **6.3 LTS**, separately labeled where relevant | Unity distinguishes long-term support from its supported update releases. A support recommendation does not establish which release has the newest mechanisms. [V05](https://unity.com/releases/unity-6/support) |
-| Unity packages | Recorded per subsystem | Editor defaults can differ from newer compatible releases. [V06](https://unity.com/releases/editor/whats-new/6000.6.0f1), [V04](https://unity.com/releases/editor/whats-new/6000.6.7f1) |
+| Product or evidence layer  | Baseline                                       | What the source establishes                                                                                                                                                                                      |
+| -------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unreal Engine release line | **5.8**                                        | Epic's release announcement is dated June 23, 2026; its current documentation is labeled 5.8. [V01](https://www.unrealengine.com/news/unreal-engine-5-8-is-now-available)                                        |
+| Unreal patch               | **5.8.4**                                      | Epic staff's hotfix announcement is dated October 20, 2026. The forum listing's later activity date is not its release date. [V02](https://forums.unrealengine.com/t/5-8-4-hotfix-released/2842775)              |
+| Unity release line         | **Unity 6.6 / 6000.6**                         | The versioned manual identifies this release line. [V03](https://docs.unity3d.com/6000.6/Documentation/Manual/UnityManual.html)                                                                                  |
+| Unity patch                | **6000.6.7f1**                                 | The patch's official release page gives October 21, 2026. [V04](https://unity.com/releases/editor/whats-new/6000.6.7f1)                                                                                          |
+| Unity long-term support    | **6.3 LTS**, separately labeled where relevant | Unity distinguishes long-term support from its supported update releases. A support recommendation does not establish which release has the newest mechanisms. [V05](https://unity.com/releases/unity-6/support) |
+| Unity packages             | Recorded per subsystem                         | Editor defaults can differ from newer compatible releases. [V06](https://unity.com/releases/editor/whats-new/6000.6.0f1), [V04](https://unity.com/releases/editor/whats-new/6000.6.7f1)                          |
 
 For example, the Unity 6.6 launch package matrix is not the final package matrix for every 6.6 patch: the October 21 patch explicitly updates AI Navigation to 2.0.16 and Input System to 1.20.1. Package-specific details belong in their respective chapters. [V04](https://unity.com/releases/editor/whats-new/6000.6.7f1)
 
@@ -31,15 +31,15 @@ Unreal's announcement discusses work toward UE6; that is roadmap evidence, not a
 
 ## How evidence is classified
 
-| Evidence class | How it is used | What it cannot establish alone |
-| --- | --- | --- |
-| Versioned official manual or API reference | Supported behavior, configuration, contracts and declared limitations of the named version | Internal algorithms absent from the text, a shipping workload's performance, or correctness on every platform |
-| Release notes and official staff announcements | Additions, removals, maturity changes, fixes and exact patch provenance | A complete explanation of the affected algorithm or independent confirmation of marketing performance claims |
-| First-party engineering article or technical presentation | Mechanism, motivation, implementation details and a specified example workload | A universal result for other content, hardware, engine releases or OpenLegend |
-| Primary paper or author-maintained research material | The authors' method, experimental setup, findings and stated limits | Integration into a shipping engine, production readiness or superiority outside its evaluation |
-| Official sample or public source | What that sample or revision actually implements | A default engine guarantee or a production-scale qualification |
-| Search excerpt, landing page or video description | Discovery and attribution | Full-text or full-video inspection; detailed claims not present in the accessible evidence |
-| Original analysis in this collection | Reasoned comparison of the inspected mechanisms and their boundaries | A measured result, an external author's claim, or an accepted OpenLegend decision |
+| Evidence class                                            | How it is used                                                                             | What it cannot establish alone                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Versioned official manual or API reference                | Supported behavior, configuration, contracts and declared limitations of the named version | Internal algorithms absent from the text, a shipping workload's performance, or correctness on every platform |
+| Release notes and official staff announcements            | Additions, removals, maturity changes, fixes and exact patch provenance                    | A complete explanation of the affected algorithm or independent confirmation of marketing performance claims  |
+| First-party engineering article or technical presentation | Mechanism, motivation, implementation details and a specified example workload             | A universal result for other content, hardware, engine releases or OpenLegend                                 |
+| Primary paper or author-maintained research material      | The authors' method, experimental setup, findings and stated limits                        | Integration into a shipping engine, production readiness or superiority outside its evaluation                |
+| Official sample or public source                          | What that sample or revision actually implements                                           | A default engine guarantee or a production-scale qualification                                                |
+| Search excerpt, landing page or video description         | Discovery and attribution                                                                  | Full-text or full-video inspection; detailed claims not present in the accessible evidence                    |
+| Original analysis in this collection                      | Reasoned comparison of the inspected mechanisms and their boundaries                       | A measured result, an external author's claim, or an accepted OpenLegend decision                             |
 
 Each chapter cites its specific claims and retains a local source register with version/date, medium and access limitations. Current documentation is often undated; **accessed on October 23, 2026** is an inspection date, not an invented publication date. A book, paper or talk is not silently made current by a recent search-engine crawl.
 
@@ -81,12 +81,12 @@ The complete Unreal 5.8 release-note page exceeded the web reader's response lim
 
 All sources below were checked on 2026-10-23. Subsystem chapters retain their own detailed sources.
 
-| ID | Source | Date/version | Medium and inspection |
-| --- | --- | --- | --- |
-| V01 | [Unreal Engine 5.8 is now available](https://www.unrealengine.com/news/unreal-engine-5-8-is-now-available) | 2026-06-23; UE5.8 | Official release article; relevant body inspected |
-| V02 | [5.8.4 Hotfix Released](https://forums.unrealengine.com/t/5-8-4-hotfix-released/2842775) | 2026-10-20; UE5.8.4 | Official staff release post inspected; user replies are not used as verified defect evidence |
-| V03 | [Unity 6.6 User Manual](https://docs.unity3d.com/6000.6/Documentation/Manual/UnityManual.html) | 6000.6; living manual | Version header and relevant body inspected |
-| V04 | [Unity 6000.6.7f1](https://unity.com/releases/editor/whats-new/6000.6.7f1) | 2026-10-21 | Official patch notes and package changes inspected |
-| V05 | [Unity 6 releases and support](https://unity.com/releases/unity-6/support) | Current support page | Official support policy; release-line distinction inspected |
-| V06 | [Unity 6000.6.0f1](https://unity.com/releases/editor/whats-new/6000.6.0f1) | 2026-08-31 | Official launch patch/package matrix; used with later patch and package documentation |
-| V07 | [Unreal: What's New](https://dev.epicgames.com/documentation/unreal-engine/whats-new) | UE5.8; living documentation | Official release and maturity index inspected |
+| ID  | Source                                                                                                     | Date/version                | Medium and inspection                                                                        |
+| --- | ---------------------------------------------------------------------------------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------- |
+| V01 | [Unreal Engine 5.8 is now available](https://www.unrealengine.com/news/unreal-engine-5-8-is-now-available) | 2026-06-23; UE5.8           | Official release article; relevant body inspected                                            |
+| V02 | [5.8.4 Hotfix Released](https://forums.unrealengine.com/t/5-8-4-hotfix-released/2842775)                   | 2026-10-20; UE5.8.4         | Official staff release post inspected; user replies are not used as verified defect evidence |
+| V03 | [Unity 6.6 User Manual](https://docs.unity3d.com/6000.6/Documentation/Manual/UnityManual.html)             | 6000.6; living manual       | Version header and relevant body inspected                                                   |
+| V04 | [Unity 6000.6.7f1](https://unity.com/releases/editor/whats-new/6000.6.7f1)                                 | 2026-10-21                  | Official patch notes and package changes inspected                                           |
+| V05 | [Unity 6 releases and support](https://unity.com/releases/unity-6/support)                                 | Current support page        | Official support policy; release-line distinction inspected                                  |
+| V06 | [Unity 6000.6.0f1](https://unity.com/releases/editor/whats-new/6000.6.0f1)                                 | 2026-08-31                  | Official launch patch/package matrix; used with later patch and package documentation        |
+| V07 | [Unreal: What's New](https://dev.epicgames.com/documentation/unreal-engine/whats-new)                      | UE5.8; living documentation | Official release and maturity index inspected                                                |

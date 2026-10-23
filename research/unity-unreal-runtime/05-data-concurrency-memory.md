@@ -12,27 +12,27 @@ Unreal's Mass and Unity's Entities both organize homogeneous data into batches. 
 
 The following is the **6000.6.0f1 release-note package matrix**, not a claim that these are the latest independently available releases. Integrated core packages track the editor; other packages have separate release histories. Unity's Entities package page explicitly describes the core-package version relationship. [Unity package matrix](https://unity.com/releases/editor/whats-new/6000.6.0f1); [Entities package status](https://docs.unity3d.com/6000.6/Documentation/Manual/com.unity.entities.html).
 
-| Package or group | Recorded version |
-| --- | --- |
-| Collections; Entities; Entities Graphics; Unity Physics; Netcode for Entities; Transport | 6.6.0 |
-| Burst | 2.0.0 |
-| Addressables | 2.11.2 |
-| Netcode for GameObjects | 2.13.2 |
-| Character Controller | 1.4.5 |
-| AI Navigation | 2.0.14 |
-| Behavior | 1.0.16 |
-| AI Inference, branded Sentis | 2.6.1 |
-| ML-Agents | 4.1.0 |
-| Input System | 1.20.0 |
-| Test Framework | 1.8.0 |
-| Performance Testing; UI Test Framework | 6.6.0 |
-| Memory Profiler | 1.1.12 |
-| Profile Analyzer | 1.4.0 |
-| Multiplayer Play Mode; Dedicated Server | 3.0.0 |
-| Multiplayer Tools | 2.2.10 |
-| Multiplayer Services | 2.3.1 |
-| Scriptable Build Pipeline | 3.0.3 |
-| Project Auditor entry in release matrix | 2.0.0 |
+| Package or group                                                                         | Recorded version |
+| ---------------------------------------------------------------------------------------- | ---------------- |
+| Collections; Entities; Entities Graphics; Unity Physics; Netcode for Entities; Transport | 6.6.0            |
+| Burst                                                                                    | 2.0.0            |
+| Addressables                                                                             | 2.11.2           |
+| Netcode for GameObjects                                                                  | 2.13.2           |
+| Character Controller                                                                     | 1.4.5            |
+| AI Navigation                                                                            | 2.0.14           |
+| Behavior                                                                                 | 1.0.16           |
+| AI Inference, branded Sentis                                                             | 2.6.1            |
+| ML-Agents                                                                                | 4.1.0            |
+| Input System                                                                             | 1.20.0           |
+| Test Framework                                                                           | 1.8.0            |
+| Performance Testing; UI Test Framework                                                   | 6.6.0            |
+| Memory Profiler                                                                          | 1.1.12           |
+| Profile Analyzer                                                                         | 1.4.0            |
+| Multiplayer Play Mode; Dedicated Server                                                  | 3.0.0            |
+| Multiplayer Tools                                                                        | 2.2.10           |
+| Multiplayer Services                                                                     | 2.3.1            |
+| Scriptable Build Pipeline                                                                | 3.0.3            |
+| Project Auditor entry in release matrix                                                  | 2.0.0            |
 
 The verified **6000.6.7f1** patch separately updates Input System to **1.20.1**, Profile Analyzer to **1.4.2**, AI Navigation to **2.0.16**, and Multiplayer Services to **2.4.0**. This is patch-specific evidence; the package matrix above must not silently be relabeled as the complete resolved package set of that patch. [6000.6.7f1 release notes](https://unity.com/releases/editor/whats-new/6000.6.7f1).
 
@@ -94,14 +94,14 @@ Entities system groups add another ordering layer. Creation constraints, update 
 
 The following table is analysis of the preceding mechanisms, not measured performance results.
 
-| Mechanism | Work it can avoid or overlap | Work or obligation that remains |
-| --- | --- | --- |
-| Contiguous component batches | Repeated object dispatch and unrelated field access | Query selection, sparse occupancy, relocation, cross-entity reads |
-| Deferred structural commands | Immediate synchronization at every individual mutation | Buffer allocation, command ordering, playback, visibility delay |
-| Dependency graph | A worker blocking while waiting for known prerequisite work | Accurate read/write declarations and a critical path through dependencies |
-| Work stealing | Workers idle while another queue has runnable tasks | Scheduling overhead and limits from serial or conflicting work |
-| Immutable shared data | Repeated copies and locks around unchanged data | Version/lifetime ownership and changes requiring a new representation |
-| Lower-frequency work | Recomputing unchanged or low-detail results every frame | Temporal error, missed boundaries, and transition work when detail increases |
+| Mechanism                    | Work it can avoid or overlap                                | Work or obligation that remains                                              |
+| ---------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Contiguous component batches | Repeated object dispatch and unrelated field access         | Query selection, sparse occupancy, relocation, cross-entity reads            |
+| Deferred structural commands | Immediate synchronization at every individual mutation      | Buffer allocation, command ordering, playback, visibility delay              |
+| Dependency graph             | A worker blocking while waiting for known prerequisite work | Accurate read/write declarations and a critical path through dependencies    |
+| Work stealing                | Workers idle while another queue has runnable tasks         | Scheduling overhead and limits from serial or conflicting work               |
+| Immutable shared data        | Repeated copies and locks around unchanged data             | Version/lifetime ownership and changes requiring a new representation        |
+| Lower-frequency work         | Recomputing unchanged or low-detail results every frame     | Temporal error, missed boundaries, and transition work when detail increases |
 
 For autonomous worlds, a dependency can be more than a memory hazard: two simultaneous actions may compete for the same object, or one event may change what another character can perceive. Thread safety prevents unsafe access; it does not choose the world's rule for resolving those interactions. Determinism and authority are treated further in [07](07-networking-persistence-and-replay.md) and [10](10-profiling-and-verification.md).
 
@@ -131,31 +131,31 @@ This corrects a potentially misleading blanket statement that Unity Web is singl
 
 All sources below were inspected as text on 2026-10-23. Versioned documentation establishes the stated family, not a measured performance result. “Current” Epic pages may retain older examples; only the mechanisms actually supported by their text are used.
 
-| Source | Date/version and medium | Material inspected and limits |
-| --- | --- | --- |
-| [Unity 6000.6.0f1](https://unity.com/releases/editor/whats-new/6000.6.0f1) | 2026-08-31; release notes | Relevant package matrix; not an exhaustive latest-package claim. |
-| [Unity 6000.6.7f1](https://unity.com/releases/editor/whats-new/6000.6.7f1) | 2026-10-21; release notes | Patch date and package changes. |
-| [Entities package](https://docs.unity3d.com/6000.6/Documentation/Manual/com.unity.entities.html) | Unity 6.6; manual | Core-package version relationship. |
-| [Current Project Auditor](https://docs.unity3d.com/6000.6/Documentation/Manual/project-auditor/project-auditor-introduction.html) | Unity 6.6; manual | Built-in status qualifies the separate package-matrix entry. |
-| [Mass Entity](https://dev.epicgames.com/documentation/unreal-engine/overview-of-mass-entity-in-unreal-engine) | UE 5.8 page; manual | Data, queries, processors, deferred composition. |
-| [QueryExecutor](https://dev.epicgames.com/documentation/unreal-engine/simplified-mass-processor) | UE 5.8 page; technical guide | Typed requirements and current processor wrapper. |
-| [Archetypes](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/concepts-archetypes.html) | Entities 6.6.0; manual | Chunk layout and lifecycle. |
-| [Upgrade guide](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/upgrade-guide.html) | Entities 6.6.0; migration reference | Managed-component deprecation; current compatibility distinction. |
-| [Structural changes](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/concepts-structural-changes.html) | Entities 6.6.0; manual | Mutation categories and synchronization. |
-| [Command buffers](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/systems-entity-command-buffers.html) | Entities 6.6.0; manual | Immediate identifier allocation, delayed storage, producer safety. |
-| [Enableable components](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/components-enableable-intro.html) | Entities 6.6.0; manual | Query membership without archetype movement. |
-| [Query filters](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/systems-entityquery-filters.html) | Entities 6.6.0; manual | Chunk-level potential-write tracking, filtering lifetime. |
-| [Blob assets](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/blob-assets-concept.html) | Entities 6.6.0; manual | Immutability and relocatable references. |
-| [Tasks System](https://dev.epicgames.com/documentation/unreal-engine/tasks-systems-in-unreal-engine) | UE 5.8 page; manual | Graphs, nested work, pipes, waits, oversubscription. |
-| [Jobs overview](https://docs.unity3d.com/6000.6/Documentation/Manual/job-system-overview.html) | Unity 6.6; manual | Workers, work stealing, data access. |
-| [Creating jobs](https://docs.unity3d.com/6000.6/Documentation/Manual/job-system-creating-jobs.html) | Unity 6.6; manual | Scheduling, completion, unsafe static access. |
-| [Job dependencies](https://docs.unity3d.com/6000.6/Documentation/Manual/job-system-job-dependencies.html) | Unity 6.6; manual | Producer-consumer handles. |
-| [Native containers](https://docs.unity3d.com/6000.6/Documentation/Manual/job-system-native-container.html) | Unity 6.6; manual | Access annotations and allocator lifetimes. |
-| [System order](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/systems-update-order.html) | Entities 6.6.0; manual | Creation, grouped updates, disposal. |
-| [Incremental UObject GC](https://dev.epicgames.com/documentation/unreal-engine/incremental-garbage-collection-in-unreal-engine) | UE 5.8 page; Experimental guide | Reachability slices and reference-barrier requirements. |
-| [Unity GC modes](https://docs.unity3d.com/6000.6/Documentation/Manual/performance-incremental-garbage-collection.html) | Unity 6.6; manual | Incremental behavior, marking churn, Web exclusion. |
-| [Unity memory article](https://learn.unity.com/article/understanding-memory-management-in-unity) | 2026-09-18; engineering article | Managed heap, OS memory, non-moving GC, prospective CoreCLR. |
-| [Web threading](https://docs.unity3d.com/6000.6/Documentation/Manual/web-multithreading-intro.html) | Unity 6.6; manual | Native/managed distinction and hosting prerequisites. |
-| [Burst Web jobs](https://docs.unity3d.com/6000.6/Documentation/Manual/web-multithreading-burst.html) | Unity 6.6; manual | Native execution versus main-thread fallback. |
+| Source                                                                                                                            | Date/version and medium             | Material inspected and limits                                      |
+| --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------ |
+| [Unity 6000.6.0f1](https://unity.com/releases/editor/whats-new/6000.6.0f1)                                                        | 2026-08-31; release notes           | Relevant package matrix; not an exhaustive latest-package claim.   |
+| [Unity 6000.6.7f1](https://unity.com/releases/editor/whats-new/6000.6.7f1)                                                        | 2026-10-21; release notes           | Patch date and package changes.                                    |
+| [Entities package](https://docs.unity3d.com/6000.6/Documentation/Manual/com.unity.entities.html)                                  | Unity 6.6; manual                   | Core-package version relationship.                                 |
+| [Current Project Auditor](https://docs.unity3d.com/6000.6/Documentation/Manual/project-auditor/project-auditor-introduction.html) | Unity 6.6; manual                   | Built-in status qualifies the separate package-matrix entry.       |
+| [Mass Entity](https://dev.epicgames.com/documentation/unreal-engine/overview-of-mass-entity-in-unreal-engine)                     | UE 5.8 page; manual                 | Data, queries, processors, deferred composition.                   |
+| [QueryExecutor](https://dev.epicgames.com/documentation/unreal-engine/simplified-mass-processor)                                  | UE 5.8 page; technical guide        | Typed requirements and current processor wrapper.                  |
+| [Archetypes](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/concepts-archetypes.html)                            | Entities 6.6.0; manual              | Chunk layout and lifecycle.                                        |
+| [Upgrade guide](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/upgrade-guide.html)                               | Entities 6.6.0; migration reference | Managed-component deprecation; current compatibility distinction.  |
+| [Structural changes](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/concepts-structural-changes.html)            | Entities 6.6.0; manual              | Mutation categories and synchronization.                           |
+| [Command buffers](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/systems-entity-command-buffers.html)            | Entities 6.6.0; manual              | Immediate identifier allocation, delayed storage, producer safety. |
+| [Enableable components](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/components-enableable-intro.html)         | Entities 6.6.0; manual              | Query membership without archetype movement.                       |
+| [Query filters](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/systems-entityquery-filters.html)                 | Entities 6.6.0; manual              | Chunk-level potential-write tracking, filtering lifetime.          |
+| [Blob assets](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/blob-assets-concept.html)                           | Entities 6.6.0; manual              | Immutability and relocatable references.                           |
+| [Tasks System](https://dev.epicgames.com/documentation/unreal-engine/tasks-systems-in-unreal-engine)                              | UE 5.8 page; manual                 | Graphs, nested work, pipes, waits, oversubscription.               |
+| [Jobs overview](https://docs.unity3d.com/6000.6/Documentation/Manual/job-system-overview.html)                                    | Unity 6.6; manual                   | Workers, work stealing, data access.                               |
+| [Creating jobs](https://docs.unity3d.com/6000.6/Documentation/Manual/job-system-creating-jobs.html)                               | Unity 6.6; manual                   | Scheduling, completion, unsafe static access.                      |
+| [Job dependencies](https://docs.unity3d.com/6000.6/Documentation/Manual/job-system-job-dependencies.html)                         | Unity 6.6; manual                   | Producer-consumer handles.                                         |
+| [Native containers](https://docs.unity3d.com/6000.6/Documentation/Manual/job-system-native-container.html)                        | Unity 6.6; manual                   | Access annotations and allocator lifetimes.                        |
+| [System order](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/systems-update-order.html)                         | Entities 6.6.0; manual              | Creation, grouped updates, disposal.                               |
+| [Incremental UObject GC](https://dev.epicgames.com/documentation/unreal-engine/incremental-garbage-collection-in-unreal-engine)   | UE 5.8 page; Experimental guide     | Reachability slices and reference-barrier requirements.            |
+| [Unity GC modes](https://docs.unity3d.com/6000.6/Documentation/Manual/performance-incremental-garbage-collection.html)            | Unity 6.6; manual                   | Incremental behavior, marking churn, Web exclusion.                |
+| [Unity memory article](https://learn.unity.com/article/understanding-memory-management-in-unity)                                  | 2026-09-18; engineering article     | Managed heap, OS memory, non-moving GC, prospective CoreCLR.       |
+| [Web threading](https://docs.unity3d.com/6000.6/Documentation/Manual/web-multithreading-intro.html)                               | Unity 6.6; manual                   | Native/managed distinction and hosting prerequisites.              |
+| [Burst Web jobs](https://docs.unity3d.com/6000.6/Documentation/Manual/web-multithreading-burst.html)                              | Unity 6.6; manual                   | Native execution versus main-thread fallback.                      |
 
 No engine workload was executed for this chapter. No entity-count, latency, memory, or speedup claim is inferred from API availability.
