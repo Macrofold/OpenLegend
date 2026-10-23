@@ -70,7 +70,7 @@ The historical [implementation record](../../docs/verification/performance/overh
 
 The same performance record labels an October 17 CPU attribution exercise with a scope correction: its first sample included a loaded checkpoint with cold history and was **not** a warm resident production profile. It later records a corrected resident workload. Inclusive profiling categories overlap, so their percentages cannot be added or interpreted as disjoint savings. Recorded sampled work in perception, motion forecasting, animal behavior, draft/copy machinery, and publication does not by itself prove the current dominant production bottleneck.
 
-This study therefore uses the measurements to identify relevant mechanisms and confounders, not to assert a speedup, capacity target, or final ranking. No fresh profile was authorized or run here. The distinction is preserved in [profiling and verification](10-profiling-and-verification.md).
+This study therefore uses the measurements to identify relevant mechanisms and confounders, not to assert a speedup, capacity target, or final ranking. No fresh profile was run here. The distinction is preserved in [profiling and verification](10-profiling-and-verification.md).
 
 ## 5. Engine and subsystem coverage map
 

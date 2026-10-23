@@ -87,7 +87,7 @@ Game Features packages functionality into plugins and activates feature actions.
 
 The associated **Modular Gameplay plugin is still marked Beta** in the current 5.8 plugin reference. This status is recorded separately from the maturity of GAS or the engine release as a whole. The documentation describes plugin composition; it does not establish a security sandbox for arbitrary untrusted world-author code. That last statement is an evidence boundary, not a claim that extensibility is impossible. [G15]
 
-Unreal's **Common Conversation is Experimental**. Its current API separates an asset containing conversation graphs/participants from active conversation instances. Requirements gate branches, choices describe available options, participant components connect actors, and side-effect nodes run after tasks. Its conversation memory stores arbitrary structs in conversation contexts. This is useful authored-dialogue infrastructure, but that API alone does not demonstrate a lifetime model of autobiographical memory, private beliefs, relationships, or freely generated dialogue. [G16, G17]
+Unreal's **Common Conversation is Experimental**. Its current API separates an asset containing conversation graphs/participants from active conversation instances. Requirements gate branches, choices describe available options, participant components connect actors, and side-effect nodes run after tasks. Its conversation memory stores arbitrary structs in conversation contexts. This is useful authored-dialogue infrastructure, but that API alone does not demonstrate a lifetime model of autobiographical memory, private beliefs, relationships, or freely generated dialogue. [G16], [G17]
 
 Unity Behavior and Unreal StateTree/Behavior Trees provide additional authored decision/execution graphs, examined in [chapter 03](03-ai-navigation-and-crowds.md). A conversation tree, behavior tree, animation graph, and effect graph all use graph-shaped authoring, but their state, timing, cancellation, and output contracts differ. Their common visual shape is not evidence of interchangeable runtime semantics.
 
@@ -142,3 +142,21 @@ All entries were inspected on **23 October 2026**. Unreal entries resolve to cur
 | G15 | [Epic: Modular Gameplay plugin](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/PluginIndex/ModularGameplay) | Current Beta designation. |
 | G16 | [Epic: Common Conversation plugin](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/PluginIndex/CommonConversation) | Current Experimental designation and authored graph scope. |
 | G17 | [Epic: CommonConversationRuntime API](https://dev.epicgames.com/documentation/unreal-engine/API/Plugins/CommonConversationRuntime?lang=en-US) | Definition/instance split, participant and requirement/side-effect types. |
+
+[G01]: https://dev.epicgames.com/documentation/unreal-engine/gameplay-framework-in-unreal-engine
+[G02]: https://docs.unity3d.com/6000.6/Documentation/Manual/class-MonoBehaviour.html
+[G03]: https://dev.epicgames.com/documentation/unreal-engine/gameplay-ability-system-for-unreal-engine
+[G04]: https://dev.epicgames.com/documentation/unreal-engine/using-gameplay-abilities-in-unreal-engine
+[G05]: https://dev.epicgames.com/documentation/unreal-engine/gameplay-ability-tasks-in-unreal-engine
+[G06]: https://dev.epicgames.com/documentation/en-us/unreal-engine/gameplay-effects-for-the-gameplay-ability-system-in-unreal-engine
+[G07]: https://dev.epicgames.com/documentation/unreal-engine/gameplay-attributes-and-attribute-sets-for-the-gameplay-ability-system-in-unreal-engine
+[G08]: https://dev.epicgames.com/documentation/unreal-engine/using-gameplay-tags-in-unreal-engine
+[G09]: https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/GameplayTags/FGameplayTag
+[G10]: https://dev.epicgames.com/documentation/en-us/unreal-engine/data-registries-in-unreal-engine
+[G11]: https://docs.unity3d.com/6000.6/Documentation/Manual/class-ScriptableObject.html
+[G12]: https://docs.unity3d.com/6000.6/Documentation/ScriptReference/SerializeReference.html
+[G13]: https://docs.unity3d.com/6000.6/Documentation/Manual/script-serialization-rules.html
+[G14]: https://dev.epicgames.com/documentation/unreal-engine/game-features-and-modular-gameplay-in-unreal-engine
+[G15]: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/PluginIndex/ModularGameplay
+[G16]: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/PluginIndex/CommonConversation
+[G17]: https://dev.epicgames.com/documentation/unreal-engine/API/Plugins/CommonConversationRuntime?lang=en-US

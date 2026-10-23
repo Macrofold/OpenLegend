@@ -112,6 +112,10 @@ Unreal's current automatic navigation-link generation is **Experimental**. It ge
 
 ## 4. Search scheduling, pending states, and movement ownership
 
+Unreal exposes separate limits for tile-pool capacity, the hard tile-count limit, and simultaneous tile-generation jobs. Fully asynchronous data gathering is another setting, so asynchronous generation alone should not be read as a guarantee that all preparation avoids the game thread. The reference also describes a specific memory tradeoff: filtering low spans out of the tile cache reduces retained data but prevents some modifications without rebuilding the full tile. [Navigation Mesh settings][S03-44]
+
+**Interpretation.** Capacity, construction concurrency, and search progress are different resources. A missing tile caused by unavailable representation or exhausted capacity does not prove that the physical world has no traversable route. The cited settings do not specify a universal fallback policy for every capacity failure.
+
 Unity's asynchronous pathfinding has a configurable number of nodes expanded per frame. A long search can span multiple frames; allowing more expansions trades response delay against work in each frame. The documentation scopes this control to asynchronous requests such as destination updates, not every possible synchronous query. [pathfindingIterationsPerFrame][S03-33]
 
 The NavMeshAgent API exposes separate facts: whether it has a path, whether a computation is pending, whether the path is stale, whether the agent is attached to a mesh, and whether the path is complete, partial, or invalid. Changing allowed areas makes a path stale. Desired velocity includes avoidance, while transform synchronization can be controlled separately. These are distinct states that a single “route exists” Boolean would collapse. [NavMeshAgent][S03-34]
@@ -205,6 +209,7 @@ All sources were accessed **2026-10-23**. UE pages identify **5.8** and are unda
 | S03-41 | [FZoneGraphStorage][S03-41] | UE 5.8; API | Lane, link, progression, and bounding-volume storage |
 | S03-42 | [UZoneGraphSubsystem][S03-42] | UE 5.8; API | Spatial lookup, lane traversal, filtering, registration/validity |
 | S03-43 | [FZoneGraphAStar][S03-43] | UE 5.8; API | Lane-based A* wrapper |
+| S03-44 | [Navigation Mesh settings][S03-44] | UE 5.8; manual reference | Tile capacity, generation concurrency, gathering, cache-memory tradeoff |
 
 [S03-01]: https://dev.epicgames.com/documentation/en-us/unreal-engine/behavior-tree-in-unreal-engine---overview
 [S03-02]: https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine
@@ -249,3 +254,4 @@ All sources were accessed **2026-10-23**. UE pages identify **5.8** and are unda
 [S03-41]: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/ZoneGraph/FZoneGraphStorage
 [S03-42]: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/ZoneGraph/UZoneGraphSubsystem
 [S03-43]: https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/ZoneGraph/FZoneGraphAStar
+[S03-44]: https://dev.epicgames.com/documentation/en-us/unreal-engine/navigation-mesh-settings-in-the-unreal-engine-project-settings

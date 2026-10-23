@@ -23,7 +23,7 @@ The review cutoff is **October 23, 2026**. These are the latest production relea
 | Unity release line | **Unity 6.6 / 6000.6** | The versioned manual identifies this release line. [V03](https://docs.unity3d.com/6000.6/Documentation/Manual/UnityManual.html) |
 | Unity patch | **6000.6.7f1** | The patch's official release page gives October 21, 2026. [V04](https://unity.com/releases/editor/whats-new/6000.6.7f1) |
 | Unity long-term support | **6.3 LTS**, separately labeled where relevant | Unity distinguishes long-term support from its supported update releases. A support recommendation does not establish which release has the newest mechanisms. [V05](https://unity.com/releases/unity-6/support) |
-| Unity packages | Exact version recorded beside each subsystem | Editor version, bundled package version and the newest compatible package can differ. A package's versioned manual and changelog are separate evidence from the editor launch notes. [V06](https://unity.com/releases/editor/whats-new/6000.6.0f1), [V04](https://unity.com/releases/editor/whats-new/6000.6.7f1) |
+| Unity packages | Recorded per subsystem | Editor defaults can differ from newer compatible releases. [V06](https://unity.com/releases/editor/whats-new/6000.6.0f1), [V04](https://unity.com/releases/editor/whats-new/6000.6.7f1) |
 
 For example, the Unity 6.6 launch package matrix is not the final package matrix for every 6.6 patch: the October 21 patch explicitly updates AI Navigation to 2.0.16 and Input System to 1.20.1. Package-specific details belong in their respective chapters. [V04](https://unity.com/releases/editor/whats-new/6000.6.7f1)
 

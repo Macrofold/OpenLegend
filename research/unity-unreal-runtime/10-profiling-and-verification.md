@@ -1,0 +1,183 @@
+# Profiling, verification, and the meaning of determinism
+
+Research date: **23 October 2026**. This chapter uses the [UE 5.8.4 / Unity 6000.6.7f1 baseline](01-evidence-and-version-baseline.md) and explicitly identifies separately versioned tooling. It describes what the engines' tools observe, how measurement changes execution, and which conclusions the evidence supports. It is research, not a proposed OpenLegend testing program or a set of implementation tasks.
+
+An authored persistent world has more than one meaningful outcome: a frame appears, a simulated action resolves, a character receives an observation, a record becomes durable, and a client catches up. These outcomes can happen on different timelines. A renderer's frame rate cannot establish that all of them remain timely or correct. Conversely, an expensive offline import is not automatically a runtime bottleneck. The distinction between work, waiting, memory retention, and semantic correctness organizes the discussion below.
+
+## 1. Timing evidence: where work runs and what actually delays completion
+
+### Unreal Timing Insights
+
+Timing Insights displays CPU and GPU tracks, frame spikes, thread activity, timers, counters, and caller/callee relationships. It can correlate a selected interval with the events running inside it rather than reducing a trace to a single average frame time. Task execution paths and context-switch information are additional layers of that timeline. The documentation also distinguishes the full Unreal tool from the smaller feature surface in UEFN; their names do not imply identical capabilities. [Timing Insights](https://dev.epicgames.com/documentation/unreal-engine/timing-insights-in-unreal-engine)
+
+Task Graph Insights records distinct creation, launch, scheduling, start, finish, and completion milestones. Relationships connect prerequisites, subsequent tasks, and nested tasks. This distinguishes time spent executing a task body from time between stages. Its documented critical-path calculation uses the longest dependency chain of task execution durations, with duration defined between start and finish. That displayed metric is not automatically a complete end-to-end latency calculation including every queue, external service, and OS interruption. The page retains wording about the calculation evolving, so this report uses its explicit definition rather than assuming a universal critical-path algorithm. [Task Graph Insights](https://dev.epicgames.com/documentation/unreal-engine/task-graph-insights-in-unreal-engine-5)
+
+Context-switch traces add CPU-core tracks and show when a thread was executing or preempted. Work attributed to other processes or the OS can appear as unknown activity. This evidence helps distinguish a long wall-clock interval from uninterrupted execution of the engine's own code. Availability is platform-dependent; the current page lists Windows and specified console platforms, not every engine target. [Context switches](https://dev.epicgames.com/documentation/unreal-engine/context-switches-in-unreal-engine-5)
+
+**Independent interpretation:** total CPU time and elapsed completion time answer different questions. Several workers may accumulate more CPU milliseconds than one frame's elapsed duration because they overlap. A small serial dependency can still determine when a result is ready. Increasing worker activity is therefore not sufficient evidence that an observation, simulation update, or client response finishes sooner.
+
+### Unity instrumentation and observer overhead
+
+Ordinary Unity profiling reports instrumented regions. Deep Profiling adds instrumentation to script methods so their calls become visible, but Unity documents substantial extra execution and memory cost; complex applications can become impractically slow or exhaust memory. A deeper call tree is therefore a more intrusive observation, not an automatically more representative timing result. Instrumentation settings are part of the provenance of the capture. [Deep Profiling](https://docs.unity3d.com/6000.6/Documentation/Manual/profiler-deep-profiling.html)
+
+Unity's standalone Profiler places the profiling UI in another process. This reduces the self-profiling and shared-process overhead of inspecting Editor or Play-mode execution. It does not claim that an Editor workload becomes identical to the target Player workload. [Standalone Profiler](https://docs.unity3d.com/6000.6/Documentation/Manual/profiler-standalone-process.html)
+
+Brian Will's Unity engineering article, updated **29 September 2026**, emphasizes representative hardware and workload measurements. It explains that unnecessary dependency edges can serialize otherwise independent jobs and that parallelization can lose to scheduling or memory contention. It also distinguishes Burst compilation from merely writing code intended for Burst: compilation status can be inspected. These mechanisms support inspecting actual execution paths. The article's illustrative speedup ranges and rough operation counts are not adopted here as transferable OpenLegend performance estimates. [General C# and DOTS performance](https://learn.unity.com/article/c-and-dots-specific-performance-tips)
+
+## 2. Memory evidence: allocation, occupancy, retention, and residency
+
+### Unreal allocation history
+
+Memory Insights records allocations and frees with call stacks and Low Level Memory tags. Time-window queries distinguish allocations that are still live, short-lived churn, growth, decline, and memory retained beyond a selected transition. Asset metadata can add attribution by asset or class. Capture has a lifecycle requirement: allocation tracing must be active from process start; late attachment cannot reconstruct the missing allocation history. The documentation requires Development packaging for its packaged-project capture path. Those conditions matter when interpreting a trace's coverage. A retained allocation is evidence of lifetime; whether that lifetime is a leak still depends on the owning system's intended behavior. [Memory Insights](https://dev.epicgames.com/documentation/unreal-engine/memory-insights-in-unreal-engine)
+
+### Unity snapshots and the current preview frontier
+
+Unity's Memory Profiler captures managed heap contents and native memory-manager information, with OS information for tracked, untracked, and resident memory. Its analysis follows managed roots such as static fields and GC handles. It does not collect stack-held managed references or identify every object awaiting the next collection, so the displayed managed-object graph has defined coverage limits. A snapshot can contain underlying bytes beyond what the UI exposes. For a world with private actor state, a diagnostic snapshot is consequently another copy of runtime information, rather than a character's filtered view. [Memory Profiler introduction](https://docs.unity3d.com/Packages/com.unity.memoryprofiler@1.2/manual/memory-profiler-introduction.html)
+
+The released editor package baseline lists **Memory Profiler 1.1.12**, while the newer inspected documentation describes **1.2.0-pre.1**, dated **27 August 2026**. This is a **preview**, not a silently substituted stable baseline. It adds a top-level Roots & Impact view that groups memory by what keeps it alive and apportions shared retention among roots. It also adds statuses for bundle-retained assets and uses pagination to avoid materializing an excessively large flattened table in managed memory. Its changelog explicitly corrects assumptions about the sign of object identity values for newer Unity versions. These are changes in attribution and diagnostic tooling; they are not evidence that the application's retained memory itself became smaller. [Memory Profiler 1.2 preview changelog](https://docs.unity3d.com/Packages/com.unity.memoryprofiler@1.2/changelog/CHANGELOG.html)
+
+### ECS-specific measurements
+
+Entities 6.6's Structural Changes Profiler separates creation, destruction, component addition, and component removal. It attributes counts and time to the relevant world and system. This gives evidence about composition transitions that is different from the time spent updating unchanged component arrays. [Structural Changes Profiler](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/profiler-module-structural-changes.html)
+
+The Entities Memory Profiler reports allocated and unused archetype memory per frame, with entity and chunk information. This exposes storage occupancy: two worlds with the same active entity count can use different memory because their archetype compositions and chunk utilization differ. These measurements concern ECS storage and do not represent the entire process's assets, managed heap, driver allocations, or other subsystems. [Entities Memory Profiler](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/profiler-module-memory.html)
+
+**Independent interpretation:** allocation rate, live bytes, reserved capacity, and physical residency can move in different directions. A cache can reduce repeated construction while retaining more memory. A pool can stabilize allocation rate while keeping its high-water capacity. Releasing the last gameplay handle can precede eventual freeing of a shared backing asset. These distinctions explain why a claim of reduced garbage collection is not interchangeable with a claim of reduced memory footprint. The underlying ownership mechanisms are discussed in [data and memory](05-data-concurrency-memory.md) and [streaming](06-world-streaming-and-scale.md).
+
+## 3. Network and streaming evidence
+
+Networking Insights exposes packets, replicated objects, properties, RPCs, and replication counters. It separates connection-specific data from frame-level work shared across connections. Packet statistics can show objects scheduled for serialization versus those that actually fit. A significant measurement caveat is explicit: reported packet size is **before compression**, so it may exceed the eventual wire payload. The trace therefore supports attribution of replication content but cannot be treated unconditionally as an external network-interface byte counter. [Networking Insights](https://dev.epicgames.com/documentation/unreal-engine/networking-insights-in-unreal-engine)
+
+UE 5.8 includes a **World Streaming Insights** surface whose API and trace-event format are explicitly **Experimental** and may change without deprecation. The current plugin index describes tools for profiling, debugging, and monitoring world streaming. This evidence establishes the feature and its stability boundary, but the API index alone does not establish a complete supported workflow or measured benefit for every streaming configuration. [Plugin index](https://dev.epicgames.com/documentation/unreal-engine/API/PluginIndex/WorldStreamingInsights), [WorldStreamingInsights API](https://dev.epicgames.com/documentation/unreal-engine/API/Plugins/WorldStreamingInsights)
+
+The distinction matters for [networking and persistence](07-networking-persistence-and-replay.md): a state can be eligible for replication, scheduled, serialized, placed in a packet, delivered, applied, and displayed at different times. Storage can likewise be requested before it completes. A trace must actually include the relevant stage before its timestamp can support a latency claim about that stage. This is an analytical limit of observation, not a proposed instrumentation design.
+
+## 4. Repeated measurements and what a comparison means
+
+### Current Profile Analyzer behavior
+
+The **Profile Analyzer 1.4** manual resolves to **1.4.2**, dated **9 October 2026** in its changelog. The 1.4 feature set adds GC allocation bytes and event counts alongside CPU timing, with per-frame and per-marker statistics and CSV exports. This allows allocation distributions to be compared over a selected range instead of inspecting only one event. Data must actually exist in the capture; the UI reports the absence of GC allocation data rather than manufacturing it. [Profile Analyzer changes](https://docs.unity3d.com/Packages/com.unity.performance.profile-analyzer@1.4/manual/whats-new.html), [1.4.2 changelog](https://docs.unity3d.com/Packages/com.unity.performance.profile-analyzer@1.4/changelog/CHANGELOG.html)
+
+The saved analysis format also changed to version 9. The current analyzer reads older version 7/8 files, but older analyzers cannot read the new version 9 output. Sharing the underlying profiler capture and sharing a derived analysis are therefore different compatibility operations. [Profile Analyzer upgrade guide](https://docs.unity3d.com/Packages/com.unity.performance.profile-analyzer@1.4/manual/upgrade-guide.html)
+
+### Performance Testing 6.6
+
+`Measure.Method` supports warmup, repeated measurements, iterations, and adaptive sample collection based on an error target and confidence level. Setup and cleanup run outside the measured method region. A consequential current detail is its optional `GC()` behavior: it counts allocation calls **and performs a blocking collection before each timed region**. Adding setup/cleanup can create additional timed regions and therefore additional collections. Unity explicitly says timings for an allocating method are not directly comparable between runs with and without that option. A benchmark configuration can thus change the collector behavior being measured. [Method measurements](https://docs.unity3d.com/Packages/com.unity.test-framework.performance@6.6/manual/measure-method.html)
+
+`Measure.Frames` measures frame time or selected profiler markers over a frame sequence. It has separate warmup and measurement controls, and the current documentation excludes Edit-mode tests from this API. Its marker collection also excludes deep-profiling markers and `Profiler.BeginSample` in the documented path. Selecting a test API determines which observations are included; a method microbenchmark, an Editor test, and a rendered-frame sequence are different experiments. [Frame measurements](https://docs.unity3d.com/Packages/com.unity.test-framework.performance@6.6/manual/measure-frames.html)
+
+### Analytical limits of performance claims
+
+A mean describes total observed cost divided by the number of observations. It can conceal infrequent transitions whose worst pauses dominate experience. A percentile describes a distribution only for the sampled workload and measurement procedure; it is not a guarantee about unseen workloads. Warmup, repeated state reuse, cache residency, target hardware, development instrumentation, background activity, and the time window all affect the interpretation. These are general measurement distinctions, not reported engine benchmark results.
+
+For the mechanisms in this research, the following variables change what an otherwise identical headline count means:
+
+| Headline measure | Additional workload information needed to interpret it |
+| --- | --- |
+| Entity or actor count | Active queries, per-entity component size, representation transitions, dependencies, dormant fraction |
+| Concurrent client count | Relevant objects per client, shared audience, change frequency, prediction span, packet budget |
+| Streaming cell count | Unique versus shared dependencies, activation work, decompression, representation creation, release timing |
+| Low allocation rate | Retained capacity, fragmentation, shared asset ownership, native allocations |
+| Low average frame time | Tail pauses, cold transitions, correction bursts, work performed outside the render loop |
+| Fast save completion | State extraction and serialization time, snapshot consistency, storage completion semantics |
+
+This table is a synthesis of the lifecycle mechanisms in chapters 05–07. It contains no unmeasured capacity target and makes no recommendation to redesign OpenLegend around a particular engine counter.
+
+## 5. Testing facilities: assertions, execution environments, and fault conditions
+
+### Unreal's layers
+
+The Automation Test Framework supports API checks, feature tests, content stress, and screenshot comparison. Its interfaces include input simulation and level-based functional tests. Epic distinguishes this engine-dependent framework from minimal pure unit testing and explicitly warns tests against depending on pre-existing Editor or game state. A successful screenshot comparison and a successful state-transition assertion establish different properties. [Automation Test Framework](https://dev.epicgames.com/documentation/unreal-engine/automation-test-framework-in-unreal-engine)
+
+The current **Low-Level Tests** framework uses Catch2 with module-oriented targets and engine-specific lifecycle support. It minimizes required compilation and runtime resources while still allowing tests that use engine components, assets, or UObjects when appropriate. The framework's name does not limit it to only pure functions; its actual dependencies determine how isolated a test is. [Low-Level Tests](https://dev.epicgames.com/documentation/unreal-engine/lowlevel-tests-in-unreal-engine)
+
+Gauntlet coordinates complete application sessions, including multiple client and server processes, platform devices, logs, and crashes. It consumes existing cooked builds; it does not produce those builds itself. Game-side assertions or control logic are separate, and its optional controller helps drive and monitor a running instance. Parallel sessions also require resources such as server ports to remain distinct. This is orchestration around tests, rather than automatic proof that the gameplay exercised by those processes is correct. [Gauntlet overview](https://dev.epicgames.com/documentation/unreal-engine/gauntlet-automation-framework-overview-in-unreal-engine)
+
+### Unity's execution contexts and static analysis
+
+Unity Test Framework **1.8.0** extends NUnit with `UnityTest` yielding. In Play mode the test runs as a coroutine; in Edit mode it runs through the Editor update loop. Yield instructions can wait for frame progression, domain reload, or mode changes. This matters when an operation is deferred: a successful immediate API invocation does not prove the next-loop result has occurred. [UnityTest API](https://docs.unity3d.com/Packages/com.unity.test-framework@1.8/api/UnityEngine.TestTools.UnityTestAttribute.html)
+
+Project Auditor is **built into Unity 6.4 and later**; its separate 2.0 package documentation is for earlier editor versions. The current 6000.6 manual describes analysis of code, asset import settings, shaders, GameObjects, project settings, and build information. Rules and target-platform selection influence the report. Static analysis can identify a risky API or asset setting without executing a representative workload; that is different evidence from measuring its actual contribution to a slow frame. [Current Project Auditor](https://docs.unity3d.com/6000.6/Documentation/Manual/project-auditor/project-auditor-introduction.html)
+
+### Fault injection changes the conditions, not the correctness criterion
+
+Unreal Network Emulation exposes incoming and outgoing lag/loss, duplication, reordering, and jitter controls, through the Editor and runtime configuration surfaces. Some combinations are constrained: the documented fixed lag and packet-order settings cannot be enabled together. Local clients and a local server otherwise tend to experience much cleaner conditions than deployed clients. Emulation makes particular failure conditions observable; the gameplay or protocol still supplies the assertion that defines correct recovery. [Network Emulation](https://dev.epicgames.com/documentation/unreal-engine/using-network-emulation-in-unreal-engine)
+
+Unity's current Multiplayer Tools manual identifies **2.2.12**. Its Network Simulator exposes delay, loss, disconnects, lag spikes, and scripted scenarios through the Unity Transport simulator pipeline. It is a simulator at that transport integration point, not evidence that every dependency or external service is subject to the same injected condition. The **15 September 2026** patch adds a warning for multiple active simulators because they affect the same transport and only the latest enabled one takes effect; it also fixes interference when one is disabled. Test setup can itself create misleading conditions. [Network Simulator](https://docs.unity3d.com/Packages/com.unity.multiplayer.tools@2.2/manual/network-simulator.html), [2.2.12 changelog](https://docs.unity3d.com/Packages/com.unity.multiplayer.tools@2.2/changelog/CHANGELOG.html)
+
+## 6. Debug history is not automatically an authoritative event log
+
+Entities 6.6 marks the **Journaling window deprecated**, with removal planned. The retained journaling mechanism has a bounded FIFO memory store that overwrites old records. It records read-write access, not every mutation as it happens. Its postprocessing can infer a likely writer from successive accesses, but that inference can be wrong when an accessor makes no change. These documented limits prevent interpreting the debug view as a complete, durable, causally exact history of world events. [Entities Journaling](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/entities-journaling.html)
+
+The current component lifecycle callbacks provide another targeted debugging surface. `IDebugOnAdded` and `IDebugOnRemoved` run when the component is added or removed, with read-only component access. They are included in the Editor and Development builds and excluded from release builds. They therefore cannot supply runtime behavior that a shipped world depends on. The page presents them as a way to inspect what caused a structural transition, not a general event-sourcing facility. [Component lifecycle callbacks](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/entities-component-lifecycle-callbacks.html)
+
+**Independent interpretation for OpenLegend's domain:** a trace saying that a system obtained write access is weaker evidence than an accepted world transition; a retained observation is different from the authoritative event that produced it. Debugging information can expose execution details without defining which character was entitled to know those details. Diagnostic history, persistence history, and private memory consequently cannot be equated solely because all three have timestamps.
+
+## 7. Determinism has a scope
+
+The term can refer to several distinct properties. The following definitions are analytical distinctions used to assess the sources, not claims that either engine guarantees all of them.
+
+| Meaning | What is held fixed | What equality concerns |
+| --- | --- | --- |
+| Import determinism | Source assets, import settings, toolchain, dependencies | Produced artifacts or artifact hashes |
+| Scenario reproducibility | Initial state, scripted input, simulation schedule, environment | Selected observations within stated tolerances |
+| Simulation determinism | Initial state, ordered inputs, random state, numerical and execution rules | Repeated state transitions, potentially exact bits |
+| Replay fidelity | Recording, decoder, replay execution environment | The state or presentation actually included in the recording |
+| Test-verdict determinism | Submission, verifier, fixtures, declared environment | The pass/fail decision under those checks |
+
+Entities 6.6's `EntitySceneImporterDeterminismChecker.Check` concretely tests the first meaning: it runs two SubScene imports and compares artifact hashes, optionally exporting mismatches for inspection. It does not run two long-lived worlds and compare their autonomous behavior. A tool named determinism checker must be read against this exact scope. [Importer determinism API](https://docs.unity3d.com/Packages/com.unity.entities@6.6/api/Unity.Scenes.Editor.EntitySceneImporterDeterminismChecker.Check.html)
+
+Unity's current Web manual explicitly excludes a guarantee of identical physics results between Web and other platforms. It identifies different handling of tiny floating-point values in WebAssembly versus the FTZ/DAZ settings used elsewhere; differences can accumulate over simulation steps. A fixed time interval alone does not erase that numerical boundary. [Web technical overview](https://docs.unity3d.com/6000.6/Documentation/Manual/webgl-technical-overview.html)
+
+The ECS and task mechanisms in [chapter 05](05-data-concurrency-memory.md) add an ordering dimension: safe parallel access does not specify the order of unrelated effects, and stable entity identity does not make chunk positions stable. The correction and replay mechanisms in [chapter 07](07-networking-persistence-and-replay.md) add a temporal dimension: reconstructed replicated state and an input-driven recomputation are different operations. These are deductions from the documented contracts, not assertions of engine-wide nondeterminism for every workload.
+
+### A recent primary research example: CraftBench-UE
+
+**CraftBench-UE**, an arXiv preprint submitted **19 September 2026**, reconstructs saved gameplay submissions in fresh UE 5.8 projects and separately checks builds, native assets, and runtime assertions. Fixed-timestep Play-in-Editor tests use numerical tolerances; an LLM does not decide the verdict. Its 70 bounded tasks exclude visual appeal and complete-game integration. Experiments use Windows, one attempt per task/model/configuration, and restricted authoring-time playtests. One compared editor interface is proprietary and developed by the authors' organization. These conditions limit generalization to other tools or long-running worlds. The HTML methodology and limitations were inspected; the benchmark was not reproduced. [CraftBench-UE v1](https://arxiv.org/html/2609.23142v1)
+
+Research implication: structural validity, runtime behavior, and verifier coverage are separate properties. Reproducible pass/fail results establish only the conditions actually checked, without proving bit-identical physics on every platform.
+
+## 8. What this research establishes, and what remains unmeasured
+
+The current tools provide complementary evidence: execution timelines, allocation lifetimes, chunk occupancy, packet contents, asset diagnostics, controlled fault conditions, and explicit behavior checks. Their value depends on their capture boundaries and the question asked. Newer tooling also changes the evidence itself: Memory Profiler's preview introduces root-based attribution, Profile Analyzer adds allocation distributions, Entities deprecates a debug window, and component callbacks differ between development and release execution.
+
+No Unity or Unreal build, benchmark, memory capture, network scenario, or CraftBench experiment was executed for this research. No measured capacity or predicted speedup is claimed. The cited documentation and paper establish mechanisms and documented constraints. OpenLegend's server authority, character privacy, durable transitions, and browser presentation remain the context for interpreting those mechanisms; this chapter does not substitute engine diagnostics for those existing semantic contracts.
+
+## Source provenance register
+
+All sources were retrieved on **23 October 2026**. Live UE pages identify the 5.8 branch; inherited wording is not treated as a new feature announcement. Unity package numbers below are the inspected document metadata, not inferred from the editor version. Preview and deprecated status remain explicit.
+
+| Source | Version/date and medium | Inspected evidence and limits |
+| --- | --- | --- |
+| [Timing Insights](https://dev.epicgames.com/documentation/unreal-engine/timing-insights-in-unreal-engine) | UE 5.8 manual | Timelines, counters, call relationships; distinguishes UEFN subset. |
+| [Task Graph Insights](https://dev.epicgames.com/documentation/unreal-engine/task-graph-insights-in-unreal-engine-5) | UE 5.8 manual | Task milestones, dependencies and explicit critical-path duration definition. |
+| [Context switches](https://dev.epicgames.com/documentation/unreal-engine/context-switches-in-unreal-engine-5) | UE 5.8 manual | Core/thread execution and preemption; documented platform coverage. |
+| [Deep Profiling](https://docs.unity3d.com/6000.6/Documentation/Manual/profiler-deep-profiling.html) | Unity 6000.6 manual | Added method instrumentation and memory/timing overhead. |
+| [Standalone Profiler](https://docs.unity3d.com/6000.6/Documentation/Manual/profiler-standalone-process.html) | Unity 6000.6 manual | Separate process and observer overhead. |
+| [C# and DOTS performance](https://learn.unity.com/article/c-and-dots-specific-performance-tips) | Updated 29 September 2026; Unity engineering article | Representative measurement and job dependencies; linked e-book/videos not represented as consumed here. |
+| [Memory Insights](https://dev.epicgames.com/documentation/unreal-engine/memory-insights-in-unreal-engine) | UE 5.8 manual | Start-of-process capture, attribution and time-window allocation queries. |
+| [Memory Profiler introduction](https://docs.unity3d.com/Packages/com.unity.memoryprofiler@1.2/manual/memory-profiler-introduction.html) | 1.2.0-pre.1 manual | Snapshot contents, managed-root traversal and omitted stack references. |
+| [Memory Profiler changelog](https://docs.unity3d.com/Packages/com.unity.memoryprofiler@1.2/changelog/CHANGELOG.html) | 1.2.0-pre.1, 27 August 2026 | Preview Roots & Impact, statuses, pagination, current identity interpretation. |
+| [Structural Changes Profiler](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/profiler-module-structural-changes.html) | Entities 6.6.0 | Per-world/system composition-change costs and counts. |
+| [Entities Memory Profiler](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/profiler-module-memory.html) | Entities 6.6.0 | Archetype allocated/unused memory and occupancy. |
+| [Networking Insights](https://dev.epicgames.com/documentation/unreal-engine/networking-insights-in-unreal-engine) | UE 5.8 manual | Packet content, counters and pre-compression size caveat. |
+| [World Streaming Insights index](https://dev.epicgames.com/documentation/unreal-engine/API/PluginIndex/WorldStreamingInsights) | UE 5.8 plugin index | Indexed feature description inspected; direct page body unavailable. |
+| [WorldStreamingInsights API](https://dev.epicgames.com/documentation/unreal-engine/API/Plugins/WorldStreamingInsights) | UE 5.8 API | Experimental API and trace-format compatibility warning. |
+| [Profile Analyzer changes](https://docs.unity3d.com/Packages/com.unity.performance.profile-analyzer@1.4/manual/whats-new.html) | 1.4.2 manual | Current 1.4 GC allocation panels and statistics. |
+| [Profile Analyzer changelog](https://docs.unity3d.com/Packages/com.unity.performance.profile-analyzer@1.4/changelog/CHANGELOG.html) | 1.4.2, 9 October 2026 | Patch identity; 1.4 feature introduction dates. |
+| [Profile Analyzer upgrade](https://docs.unity3d.com/Packages/com.unity.performance.profile-analyzer@1.4/manual/upgrade-guide.html) | 1.4.2 manual | Analysis format 9 and backward-read limitations. |
+| [Measure.Method](https://docs.unity3d.com/Packages/com.unity.test-framework.performance@6.6/manual/measure-method.html) | Performance Testing 6.6.0 | Warmup, repeated regions and blocking-GC comparability caveat. |
+| [Measure.Frames](https://docs.unity3d.com/Packages/com.unity.test-framework.performance@6.6/manual/measure-frames.html) | Performance Testing 6.6.0 | Frame/marker capture and Edit-mode restrictions. |
+| [Automation Test Framework](https://dev.epicgames.com/documentation/unreal-engine/automation-test-framework-in-unreal-engine) | UE 5.8 manual | Framework boundaries, functional assertions and test state. |
+| [Low-Level Tests](https://dev.epicgames.com/documentation/unreal-engine/lowlevel-tests-in-unreal-engine) | UE 5.8 manual | Catch2, module targets and engine dependencies. |
+| [Gauntlet](https://dev.epicgames.com/documentation/unreal-engine/gauntlet-automation-framework-overview-in-unreal-engine) | UE 5.8 manual; older platform examples | Session/process orchestration and supplied-build requirement; old platform list not generalized. |
+| [UnityTest API](https://docs.unity3d.com/Packages/com.unity.test-framework@1.8/api/UnityEngine.TestTools.UnityTestAttribute.html) | Test Framework 1.8.0 | Edit/Play execution contexts and yielding. |
+| [Project Auditor](https://docs.unity3d.com/6000.6/Documentation/Manual/project-auditor/project-auditor-introduction.html) | Unity 6000.6 manual | Built-in lifecycle since 6.4, analysis coverage and target context. |
+| [Network Emulation](https://dev.epicgames.com/documentation/unreal-engine/using-network-emulation-in-unreal-engine) | UE 5.8 manual | Loss, delay, jitter, duplication, reordering and incompatible settings. |
+| [Network Simulator](https://docs.unity3d.com/Packages/com.unity.multiplayer.tools@2.2/manual/network-simulator.html) | Multiplayer Tools 2.2.12 | UTP simulation integration and scripted network conditions. |
+| [Multiplayer Tools changelog](https://docs.unity3d.com/Packages/com.unity.multiplayer.tools@2.2/changelog/CHANGELOG.html) | 2.2.12, 15 September 2026 | Multiple-simulator interaction warning and fixes. |
+| [Entities Journaling](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/entities-journaling.html) | Entities 6.6.0; window deprecated | FIFO retention, access records and inferred-write ambiguity. |
+| [Component lifecycle callbacks](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/entities-component-lifecycle-callbacks.html) | Entities 6.6.0 | Debug-only addition/removal callbacks; absent in release builds. |
+| [Importer determinism checker](https://docs.unity3d.com/Packages/com.unity.entities@6.6/api/Unity.Scenes.Editor.EntitySceneImporterDeterminismChecker.Check.html) | Entities 6.6.0 API | Two imports and artifact hashes; no runtime determinism claim. |
+| [Web technical overview](https://docs.unity3d.com/6000.6/Documentation/Manual/webgl-technical-overview.html) | Unity 6000.6 manual | Only physics numerical-boundary passage used here. |
+| [CraftBench-UE v1](https://arxiv.org/html/2609.23142v1) | 19 September 2026; arXiv primary preprint, Wu/Calderone/Tsen | HTML methodology, environment, limitations and conflicts inspected; no reproduction or peer-review claim. |

@@ -32,9 +32,11 @@ The following is the **6000.6.0f1 release-note package matrix**, not a claim tha
 | Multiplayer Tools | 2.2.10 |
 | Multiplayer Services | 2.3.1 |
 | Scriptable Build Pipeline | 3.0.3 |
-| Project Auditor, added | 2.0.0 |
+| Project Auditor entry in release matrix | 2.0.0 |
 
 The verified **6000.6.7f1** patch separately updates Input System to **1.20.1**, Profile Analyzer to **1.4.2**, AI Navigation to **2.0.16**, and Multiplayer Services to **2.4.0**. This is patch-specific evidence; the package matrix above must not silently be relabeled as the complete resolved package set of that patch. [6000.6.7f1 release notes](https://unity.com/releases/editor/whats-new/6000.6.7f1).
+
+Separately inspected package documentation resolves NGO to **2.13.3** and Multiplayer Tools to **2.2.12**; Memory Profiler also has a newer **1.2.0-pre.1 preview**. Their dates and status are documented in [networking](07-networking-persistence-and-replay.md) and [profiling](10-profiling-and-verification.md). Project Auditor's release-matrix entry needs another qualification: the current editor manual says it is built in from **Unity 6.4**, while the separate package serves older editors. [Current Project Auditor](https://docs.unity3d.com/6000.6/Documentation/Manual/project-auditor/project-auditor-introduction.html).
 
 ## Unreal Mass: composition and batches
 
@@ -134,6 +136,7 @@ All sources below were inspected as text on 2026-10-23. Versioned documentation 
 | [Unity 6000.6.0f1](https://unity.com/releases/editor/whats-new/6000.6.0f1) | 2026-08-31; release notes | Relevant package matrix; not an exhaustive latest-package claim. |
 | [Unity 6000.6.7f1](https://unity.com/releases/editor/whats-new/6000.6.7f1) | 2026-10-21; release notes | Patch date and package changes. |
 | [Entities package](https://docs.unity3d.com/6000.6/Documentation/Manual/com.unity.entities.html) | Unity 6.6; manual | Core-package version relationship. |
+| [Current Project Auditor](https://docs.unity3d.com/6000.6/Documentation/Manual/project-auditor/project-auditor-introduction.html) | Unity 6.6; manual | Built-in status qualifies the separate package-matrix entry. |
 | [Mass Entity](https://dev.epicgames.com/documentation/unreal-engine/overview-of-mass-entity-in-unreal-engine) | UE 5.8 page; manual | Data, queries, processors, deferred composition. |
 | [QueryExecutor](https://dev.epicgames.com/documentation/unreal-engine/simplified-mass-processor) | UE 5.8 page; technical guide | Typed requirements and current processor wrapper. |
 | [Archetypes](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/concepts-archetypes.html) | Entities 6.6.0; manual | Chunk layout and lifecycle. |
