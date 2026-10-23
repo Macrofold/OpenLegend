@@ -110,7 +110,7 @@ Unreal's current Unreal Animation Framework (UAF) plugin is explicitly **Experim
 
 ## 6. Visual effects: particles are not persistent world entities
 
-Niagara distributes work among systems, emitters, and particles. GPU particle simulation does not remove the CPU cost of the owning systems and emitters. Batching instances can reduce overhead, while combining effects changes culling granularity. Pools reduce allocation and collection work but do not eliminate activation or warm-up costs. Effect Types provide shared scalability and culling controls. The current guide still contains wording about features being introduced in 5.4; those historical rollout statements are not treated as5.8 status evidence. [R23]
+Niagara distributes work among systems, emitters, and particles. GPU particle simulation does not remove the CPU cost of the owning systems and emitters. Batching instances can reduce overhead, while combining effects changes culling granularity. Pools reduce allocation and collection work but do not eliminate activation or warm-up costs. Effect Types provide shared scalability and culling controls. The current guide still contains wording about features being introduced in 5.4; those historical rollout statements are not treated as 5.8 status evidence. [R23]
 
 Niagara's lightweight, or stateless, emitters reduce the need to retain and tick per-particle simulation state. The dedicated page describes fixed-function modules and restrictions on custom modules, scratchpads, and dynamic inputs. These constraints explain the tradeoff: a restricted effect can be evaluated more cheaply than an arbitrary stateful simulation. Its introductory “5.4 introduces” wording dates the feature's origin, not the evidence cut for this research. Claims that all emitters or particle workloads become cost-free would exceed the documented mechanism. [R24]
 
@@ -173,7 +173,7 @@ The common pattern is a bounded, observable output contract with explicit approx
 
 ## 9. Provenance and source register
 
-All sources below were inspected on **2026-10-23**. “Live5.8” means Epic's current page showed the 5.8 documentation branch; most pages expose no publication/revision date. “6.6” means the version-pinned 6000.6 manual/API, generally built on 2026-10-21 or 22. Build dates show publication of a documentation build, not that every paragraph was newly authored. Package versions are taken from page metadata where available. Text and relevant sections were inspected; embedded videos and example binaries were not watched or executed.
+All sources below were inspected on **2026-10-23**. “Live 5.8” means Epic's current page showed the 5.8 documentation branch; most pages expose no publication/revision date. “6.6” means the version-pinned 6000.6 manual/API, generally built on 2026-10-21 or 22. Build dates show publication of a documentation build, not that every paragraph was newly authored. Package versions are taken from page metadata where available. Text and relevant sections were inspected; embedded videos and example binaries were not watched or executed.
 
 | ID | Source and version | Medium; evidence used and limit |
 | --- | --- | --- |
@@ -214,7 +214,7 @@ All sources below were inspected on **2026-10-23**. “Live5.8” means Epic's c
 
 ### Additional inspected media and access limits
 
-The [SIGGRAPH 2025 course page](https://advances.realtimerendering.com/s2025/) identifies Epic authors Krzysztof Narkowicz and Tiago Costa's *MegaLights: Stochastic Direct Lighting in Unreal Engine 5* and links [their presentation PDF](https://advances.realtimerendering.com/s2025/content/MegaLights_Stochastic_Direct_Lighting_2025.pdf), updated 2025-08-25. The source is directly relevant to the mechanism still documented in 5.8, but the 14.5 MB PDF exceeded the retrieval limit. The landing page and abstract were inspected; the full slides and embedded video were **not** consumed and are not used to support details in this chapter. This is an explicit retrieval gap, not a claim that a 2025 talk establishes5.8 feature status.
+The [SIGGRAPH 2025 course page](https://advances.realtimerendering.com/s2025/) identifies Epic authors Krzysztof Narkowicz and Tiago Costa's *MegaLights: Stochastic Direct Lighting in Unreal Engine 5* and links [their presentation PDF](https://advances.realtimerendering.com/s2025/content/MegaLights_Stochastic_Direct_Lighting_2025.pdf), updated 2025-08-25. The source is directly relevant to the mechanism still documented in 5.8, but the 14.5 MB PDF exceeded the retrieval limit. The landing page and abstract were inspected; the full slides and embedded video were **not** consumed and are not used to support details in this chapter. This is an explicit retrieval gap, not a claim that a 2025 talk establishes 5.8 feature status.
 
 [R01]: https://dev.epicgames.com/documentation/en-us/unreal-engine/render-dependency-graph-in-unreal-engine
 [R02]: https://docs.unity3d.com/6000.6/Documentation/Manual/urp/render-graph-introduction.html

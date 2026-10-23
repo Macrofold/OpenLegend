@@ -1,0 +1,135 @@
+# OpenLegend context and research coverage
+
+Research date: **23 October 2026**. Repository: **Macrofold/OpenLegend**. Grounding revision: [`d1299aaf7cd834efbc9937e31c81efa3773b8418`](https://github.com/Macrofold/OpenLegend/commit/d1299aaf7cd834efbc9937e31c81efa3773b8418), the verified `main` base used to create this research branch.
+
+## 1. Purpose and authority
+
+This collection studies how current Unreal and Unity systems work, the work they perform, the guarantees they provide, and the tradeoffs they expose. It includes adjacent current research where that helps distinguish a shipping engine mechanism from an experimental capability. It does **not** select an engine, propose OpenLegend subsystem designs, authorize implementation, or revise the accepted product direction.
+
+The user's latest instruction to create a branch governs this task. The branch is `codex/unity-unreal-runtime-research-20261023`. The research is separate from the existing [engine/platform comparison](../game-engines/README.md), which answers broader platform-choice questions. This collection answers runtime-mechanism questions.
+
+Three kinds of repository evidence are deliberately kept distinct:
+
+| Evidence | Owner inspected | How it is used here |
+| --- | --- | --- |
+| Executable behavior and current contracts | [README](../../README.md), relevant [architecture](../../docs/architecture.md) and [simulation-time](../../docs/simulation-time.md) sections, selected domain source files | Ground the analysis in the current implementation and its actual boundaries. |
+| Intended engine/product scope | [Engine and world boundaries](../../docs/engine-and-world-boundaries.md), [repertoire catalogue](../../docs/repertoires/README.md), [coverage](../../docs/repertoires/coverage.md), [gameplay priorities](../../docs/repertoires/gameplay-priorities.md), [needs-design register](../../docs/maintainers/needs-design.md) | Establish the areas the research must consider. Proposed capabilities are not reported as implemented. |
+| Recorded experiments and earlier investigations | [Performance](../../docs/performance.md), [bottleneck ledger](../../docs/verification/performance/bottlenecks.md), [animal/cadence experiments](../../docs/verification/performance/09-animal-and-cadence-experiments.md), [simulation implementation evidence](../../docs/verification/performance/overhaul-simulation-implementation.md) | Supply historical observations with their dates, workload qualifications, and limitations. They are not fresh measurements of this branch. |
+
+The architecture and performance documents are large, evolving records. Relevant sections and their qualifications were inspected; this was not a line-by-line audit of every repository document or runtime path. No simulation, benchmark, game server, database workload, engine build, or paid model invocation was run for this research.
+
+## 2. The product context that changes the comparison
+
+The intended product is an engine for authored realities with a coherent default world. The [engine/world boundary](../../docs/engine-and-world-boundaries.md) distinguishes runtime responsibilities—identity, admission, authorization, bounded execution, observation delivery, and preservation—from authored rules about species, needs, cognition, physics policy, and social behavior. That document labels itself a **target architecture** and explicitly does not claim that the current implementation already supplies a fully general module runtime.
+
+The same document retains PlayCanvas, React, the authoritative domain, application coordination, and replaceable execution adapters. This research does not change that decision. Unreal and Unity are studied as sources of concrete mechanisms, including mechanisms whose assumptions differ from OpenLegend's current browser/server architecture.
+
+The [repertoire catalogue](../../docs/repertoires/README.md) spans 28 categories, including actions, combat, objects, adventure, abilities, needs, resources, crafting, settlements, ecology, bodies, economy, relationships, characters, mechanics, psychology, traits, diplomacy, institutions, history, languages, arts, faith, magic, technology, automation, unusual realities, and simulation experiments. The catalogue explicitly calls its entries proposals, not installed capabilities or commitments to ship every item. Its priorities put a complete, enjoyable game ahead of an isolated technical showcase.
+
+Consequently, the research is broad in **system coverage** without converting every catalogue idea into a separate engine project. An economy, a relationship, an illness, and a magical obligation can share scheduling or storage machinery while having entirely different authored meanings. A common representation is not evidence that those meanings have already been solved.
+
+## 3. Current architecture relevant to the study
+
+The following is a bounded description of documented current behavior, supplemented by the source checks in section 4. It is not a new decomposition proposal.
+
+| Current area | Grounded observation | Consequence for interpreting engine research |
+| --- | --- | --- |
+| Authoritative state | A TypeScript domain owns world behavior; server coordination handles admission, execution, persistence, and publication. [README](../../README.md), [architecture](../../docs/architecture.md). | A rendering engine's object state or a client prediction is not automatically equivalent to authoritative world state. |
+| Browser presentation | PlayCanvas renders the world and React supplies interface behavior. Geometry and sensory policies are not admitted by appearance alone. [README](../../README.md), [engine/world boundary](../../docs/engine-and-world-boundaries.md). | Desktop renderer claims need platform qualification, and visual effects do not by themselves create physical capabilities. |
+| Time and native execution | Simulation-time behavior is distinct from server wake frequency, browser frames, and provider latency. The documented normal mapping is one real second to one game minute; offline catch-up is not the current contract. [Simulation time](../../docs/simulation-time.md), [clock source](../../packages/domain/src/simulation-time.ts). | Fixed-step engines, capped catch-up loops, delayed jobs, and elapsed-time mechanics must be compared by their temporal effects. |
+| Navigation and geometry | Current documentation describes Recast/Detour navigation and Rapier-backed clearance/query work, including direct clear-route behavior. [README](../../README.md), [architecture](../../docs/architecture.md). | Reuse of a navigation or collision library does not imply a general rigid-body simulation or the same movement semantics as CharacterController/CharacterMovement. |
+| Perception and knowledge | Geometric sight, hearing/intelligibility, event audiences, and retained knowledge have separate responsibilities. [Architecture](../../docs/architecture.md), [perception source](../../packages/domain/src/perception.ts). | Camera culling, network relevance, an AI stimulus, and what a character knows are different filters. |
+| Animals and cognition | Default-world animals have native behavior; not every participant action requires a language model. Character cognition and execution have separate owners. [README](../../README.md), [animal source](../../packages/domain/src/worlds/base/animal-behavior.ts). | Neural-agent research must not be used to describe all simulation work or all animal decision cost. |
+| Persistence and publication | Current documentation distinguishes durable records/receipts and revisions from scoped public updates, including typed server-sent events. [Architecture](../../docs/architecture.md). | A SaveGame file, replication stream, replay, and database history solve different problems. |
+
+The exact language/library versions installed in OpenLegend were not upgraded or benchmarked. The Unreal/Unity version baseline belongs to [chapter 01](01-evidence-and-version-baseline.md), not to this repository table.
+
+## 4. Source-level grounding of the motivating animal/perception workload
+
+The earlier task context raised the possibility that an animal-escape workload spends more time predicting observations than selecting an escape direction. This research does not turn that observation into an unqualified current bottleneck claim. It inspected the relevant source responsibilities and the qualifications attached to the repository's recorded measurements.
+
+### Animal escape selection and continuation
+
+In [`animal-behavior.ts`](../../packages/domain/src/worlds/base/animal-behavior.ts), escape selection samples a finite set of headings, checks reachable clearance along each, and scores separation, clearance, and continuity. The current source uses 16 candidate directions. Threat memory records position and only records an attacker's identity when the animal can currently see that attacker. Continued movement updates a remembered threat from eligible visible state and uses a review deadline; it does not automatically reselect a route on every host wake.
+
+This is enough to identify separate work categories: threat observation, memory update, direction selection, physical movement/clearance, review scheduling, and consequences visible to others. It is not enough to assign a percentage of total runtime cost to any category. The local escape routine is also not evidence of a complete global flee-path planner.
+
+### Perception candidates and exact checks
+
+[`perception.ts`](../../packages/domain/src/perception.ts) already contains a receiver index, conservative receiver bounds, and exact geometric checks. It also contains sight memoization tied to immutable world/entity information and relevant observer/target geometry. Its cache capacities bound stored memoized entries; they are not permission to omit additional observers or redefine who can perceive an event.
+
+The source tests coarse target-body exposure at multiple heights and distinguishes geometric visibility from knowledge-bearing event handling. Therefore, “add a spatial index,” “cache sight,” or “use more than one target point” would not be a novel discovery from studying another engine. The research instead examines how other engines organize candidate work, deferred queries, validity, and result consumers.
+
+### Predicted motion boundaries
+
+[`motion-boundaries.ts`](../../packages/domain/src/motion-boundaries.ts) maintains motion tracks and pairwise crossing information, filters candidates using movement bounds/reach, and reuses sight/contact calculations when their inputs remain valid. Its cache relationships include participating bodies and geometry/motion signatures. The important distinction is between reusing a valid calculation and changing when a real crossing becomes observable.
+
+The historical [implementation record](../../docs/verification/performance/overhaul-simulation-implementation.md), under “Crossing predictions now belong to one native call — October 17, 2026,” records removal of cross-publication prediction inheritance while retaining within-call reuse. Later sections record additional reuse of unaffected calculations and explicitly qualify what was or was not runtime-tested. Those later changes prevent an earlier profile from being treated as a measurement of all subsequent implementations.
+
+### What the existing measurements actually establish
+
+The same performance record labels an October 17 CPU attribution exercise with a scope correction: its first sample included a loaded checkpoint with cold history and was **not** a warm resident production profile. It later records a corrected resident workload. Inclusive profiling categories overlap, so their percentages cannot be added or interpreted as disjoint savings. Recorded sampled work in perception, motion forecasting, animal behavior, draft/copy machinery, and publication does not by itself prove the current dominant production bottleneck.
+
+This study therefore uses the measurements to identify relevant mechanisms and confounders, not to assert a speedup, capacity target, or final ranking. No fresh profile was authorized or run here. The distinction is preserved in [profiling and verification](10-profiling-and-verification.md).
+
+## 5. Engine and subsystem coverage map
+
+Coverage is organized by the questions an engine must answer. The chapters examine mechanisms, lifecycle, cost drivers, platform/maturity limits, failure modes, and evidence boundaries. A cross-reference indicates substantive coverage, not a claim that all implementations of that area were benchmarked.
+
+| System family | Subsystems included | Research chapter |
+| --- | --- | --- |
+| Time and execution | Frame/fixed clocks, tick phases, dependencies, deadlines, elapsed time, catch-up, asynchronous work, event-driven execution | [02 — Simulation and perception](02-simulation-and-perception.md) |
+| Sensing and attention | Sight candidates, hearing stimuli, exact queries, budgets, aging, pending results, observer knowledge, fairness | [02](02-simulation-and-perception.md), [03](03-ai-navigation-and-crowds.md) |
+| Decisions and activities | Behavior Trees, StateTree, EQS, Unity Behavior, tasks, events, interruption, reservations, Smart Objects | [03 — AI, navigation, and crowds](03-ai-navigation-and-crowds.md), [11](11-gameplay-frameworks-and-semantic-systems.md) |
+| Learned controllers | Training versus inference, ML-Agents, Sentis, NNE, Learning Agents, backend/device constraints | [03](03-ai-navigation-and-crowds.md), [12](12-research-frontiers-and-evidence-boundaries.md) |
+| Navigation and movement | Navmesh build/update, tiles, streaming, links, query state, path invalidation, local avoidance, crowds, lanes, character movement | [03](03-ai-navigation-and-crowds.md), [04](04-physics-and-spatial-queries.md) |
+| Physics and spatial queries | Broad/narrow phases, query filtering, islands, sleeping, contacts, CCD, substeps, async physics, 2D/3D, character/vehicle and destruction boundaries | [04 — Physics and spatial queries](04-physics-and-spatial-queries.md) |
+| Data organization | Actors/components, Mass, Entities, chunks/archetypes, structural changes, command buffers, shared data, managed/native memory | [05 — Data, concurrency, and memory](05-data-concurrency-memory.md) |
+| Parallel execution | Task dependencies, Jobs, Burst, synchronization, data ownership, worker/main-thread handoff, browser threading | [05](05-data-concurrency-memory.md), [09](09-content-tools-ui-and-platforms.md) |
+| World size and residency | World Partition, runtime grids/hash sets, Data Layers, HLOD, streaming sources, entity scenes, content lifetimes, coordinate precision | [06 — World streaming and scale](06-world-streaming-and-scale.md) |
+| Population scaling | Simulation, representation, animation, and replication LOD; significance; Mass/InstancedActors; reactivation and identity | [06](06-world-streaming-and-scale.md), [08](08-rendering-animation-and-audio.md) |
+| Networking | Authority, relevancy, Iris/Replication Graph, snapshots, prediction, anticipation, rollback, ownership, transport | [07 — Networking, persistence, and replay](07-networking-persistence-and-replay.md) |
+| Durable state and history | Serialization, saves, identity restoration, replay/checkpoints, determinism, state/event distinctions, compatibility | [07](07-networking-persistence-and-replay.md), [11](11-gameplay-frameworks-and-semantic-systems.md) |
+| Rendering architecture | Render graphs, GPU/CPU responsibilities, pipeline differences, resource lifetimes, batching/instancing, culling | [08 — Rendering, animation, and audio](08-rendering-animation-and-audio.md) |
+| Geometry and lighting | Nanite, skeletal/foliage limits, Lumen/Lumen Lite, MegaLights, shadows, Unity lighting/probes, upscaling | [08](08-rendering-animation-and-audio.md), [12](12-research-frontiers-and-evidence-boundaries.md) |
+| Animation and bodies | Motion Matching, animation budgets, Animator/Playables, rigging/IK, root movement, neural motion, physical validity | [08](08-rendering-animation-and-audio.md), [12](12-research-frontiers-and-evidence-boundaries.md) |
+| Effects and audio | Niagara/VFX Graph, particle collision latency, MetaSounds, voices, virtualization, occlusion, acoustics and hearing boundaries | [08](08-rendering-animation-and-audio.md) |
+| Content and construction | PCG, runtime generation, terrain, asset import/cooking, caches, dependencies, Addressables, generated-content limitations | [09 — Content, tools, UI, and platforms](09-content-tools-ui-and-platforms.md) |
+| Interface and controls | UI frameworks, input actions, focus/navigation, accessibility trees, localization, platform constraints | [09](09-content-tools-ui-and-platforms.md) |
+| Authoring and extensibility | Editor graphs, feature plugins, data registries, content definitions, serialization, import/runtime boundaries | [09](09-content-tools-ui-and-platforms.md), [11](11-gameplay-frameworks-and-semantic-systems.md) |
+| Measurement and verification | CPU/GPU timelines, allocations, memory snapshots, networking, traces, profiling overhead, workload/equivalence limits | [10 — Profiling and verification](10-profiling-and-verification.md) |
+| Gameplay rules | Abilities, costs, cooldowns, effects, attributes, tags, cancellation, execution ownership, authored conversation | [11 — Gameplay frameworks and semantic systems](11-gameplay-frameworks-and-semantic-systems.md) |
+| Persistent-agent and research frontiers | Motion generation, embodied agents, memory/action evaluation, multiagent interaction, recent technical talks and research limitations | [12 — Research frontiers and evidence boundaries](12-research-frontiers-and-evidence-boundaries.md) |
+
+## 6. Coverage of the broader intended product
+
+The [needs-design register](../../docs/maintainers/needs-design.md) extends beyond an engine's renderer or AI framework. Its intended areas remain visible in the analysis:
+
+- **Personal activities, independent initiative, meaningful attention, and shared activity:** execution lifecycles, decision scheduling, bounded work, reservations, and asynchronous cancellation are covered in chapters 02, 03, and 11. The research distinguishes cheap selection from expensive interpretation without deciding how OpenLegend should allocate them.
+- **Bodies, care, ecology, aging, food, materials, weather, heat, and fire:** chapters 04, 08, 09, and 11 separate physics, visible effects, population updates, authoring infrastructure, and application-specific meanings. A convincing fire effect is not evidence of heat transfer or persistent burn damage.
+- **Building, crafting, invention, publishing, and alternate worlds:** chapters 06, 09, and 11 examine content residency, runtime generation, definitions, feature composition, and the limits of treating loaded content as executable rules.
+- **Barter, ownership, promises, groups, institutions, conflict, and continuity:** chapters 07 and 11 examine identity, authority, durable state, and execution semantics; chapter 12 discusses contemporary multiagent evidence. No benchmark is treated as validation of a full simulated society.
+- **Memory, learning, shared history, selective knowledge, and narration:** chapters 02, 07, 11, and 12 distinguish world truth, observations, retained state, generated interpretations, and historical recovery.
+- **Communication and player expression:** chapters 08 and 09 cover audible presentation, spatial audio, UI, input, and accessibility. The hearing/intelligibility and knowledge boundary remains explicit in chapter 02; audio playback is not assumed to determine what an NPC understood.
+- **Platforms, shared service, creator participation, and operator controls:** chapters 07 and 09 cover technical network/platform/extensibility boundaries. Commercial offers, revenue allocation, patron governance, well-being research, and real-world introductions are product/service areas in the register, not standard Unreal/Unity runtime subsystems. This engine study makes no new commercial, legal, clinical, or operating-policy claims about them.
+
+The final item is a boundary of the evidence, not a forgotten category. Broad engine research can explain an asset pipeline, network authority, or UI capability; it cannot establish a marketplace policy, a beneficial health outcome, or a community's governance rules merely by finding a similarly named plugin.
+
+## 7. Questions used to compare mechanisms
+
+Across the chapters, the comparison follows six recurring questions:
+
+1. **Which clock and snapshot does the work use?** A completed query may be correct for an earlier world and stale for a later one.
+2. **What is being bounded?** Candidate count, exact-query count, execution time, memory, bandwidth, and decision latency are different quantities. A budget that defers work can change observable timing even when it preserves eventual coverage.
+3. **What invalidates reused work?** Identity, geometry, movement, ownership, content versions, and relevant rules can matter independently. A cache is only as correct as its dependency boundary.
+4. **Which population is reduced?** Rendered objects, animated bodies, thinking agents, simulated participants, replicated objects, and remembered individuals need not be the same set.
+5. **Who may observe or act on the result?** Visibility, relevance, authority, and private knowledge remain distinct even when all use spatial filtering.
+6. **What survives interruption and reconstruction?** Cancellation, unloading, save/load, reconnect, prediction correction, and process restart have different cleanup and restoration requirements.
+
+These are analytical questions used to read the evidence. They do not add project acceptance gates, implementation tasks, or a proposed architecture.
+
+## 8. What “comprehensive” means for this collection
+
+The collection covers the relevant engine system families and their interactions, current version/maturity discrepancies, the intended OpenLegend world scope, and selected contemporary primary research. It records actual inspection depth and access limitations. It does not claim to have consumed every page, paper, plugin, or video on the internet.
+
+The release and package facts are bounded by the research date. Where a current manual retains an older explanation, the chapters state the conflict and use dated release evidence or more specific current APIs. Where a paper or talk demonstrates a research result, that result remains distinct from an installed engine capability and from measured OpenLegend behavior. The [version/evidence baseline](01-evidence-and-version-baseline.md) defines these rules for the entire collection.
