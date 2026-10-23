@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "study": "emberville",
+  "subject": "Emberville",
+  "purpose": "Reference for environment variety, composition, atmosphere and readable real-time action.",
+  "retrieved_on": "2026-10-22",
+  "source_page": "https://store.steampowered.com/app/2295170/Emberville/",
+  "source_metadata_url": "https://store.steampowered.com/api/appdetails?appids=2295170&l=english",
+  "storage_boundary": "Third-party original public Steam images. Git contains notes and metadata only; no Open Legend asset-storage publication is claimed.",
+  "access_domain": "Public publisher-origin reference material",
+  "repository_payload": "metadata_only",
+  "rights_note": "Copyright remains with Cygnus Cross and respective rights holders. Reference use does not grant production reuse rights.",
+  "build_note": "Trailer and screenshot build identifiers are unspecified.",
+  "dimension_note": "Dimensions describe supplied files, not internal rendering resolution.",
+  "verification": "Downloaded screenshot files decoded; four selected images inspected at full supplied resolution. Both trailers visually inspected through one-second samples; no audio, input-latency or hands-on gameplay qualification.",
+  "trailers": [
+    {
+      "steam_movie_id": 257378218,
+      "title": "Emberville Release Date Trailer",
+      "source_url": "https://video.akamai.steamstatic.com/store_trailers/2295170/650849269/a6e052d42036f08b6d49bf488c3467bccfcdf6e3/1784205887/hls_264_master.m3u8?t=1792598808",
+      "inspected_duration_seconds": 100.121,
+      "inspection": "Full-runtime visual sampling at approximately one frame per second; no retained video payload in Git."
+    },
+    {
+      "steam_movie_id": 256978300,
+      "title": "Official Trailer",
+      "source_url": "https://video.akamai.steamstatic.com/store_trailers/2295170/1859803169/808d9040371d588c1da49832d581dd45a5aaf5cf/1769613285/hls_264_master.m3u8?t=1790133223",
+      "inspected_duration_seconds": 106.887696,
+      "inspection": "Full-runtime visual sampling at approximately one frame per second; no retained video payload in Git."
+    }
+  ],
+  "items": [
+    {
+      "id": "S15",
+      "kind": "official_storefront_screenshot",
+      "steam_screenshot_id": 15,
+      "caption": "Misty streets and warm lamps",
+      "source_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2295170/4577873712ff9d0d5371db051e5b51478996753c/ss_4577873712ff9d0d5371db051e5b51478996753c.1920x1080.jpg?t=1792598817",
+      "embedding_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2295170/4577873712ff9d0d5371db051e5b51478996753c/ss_4577873712ff9d0d5371db051e5b51478996753c.1920x1080.jpg?t=1792598817",
+      "provenance": "Publisher-supplied Steam image; not assistant-captured gameplay.",
+      "storage_boundary": "Original third-party Steam delivery",
+      "access_domain": "Public",
+      "width_px": 1920,
+      "height_px": 1080,
+      "bytes": 639186,
+      "sha256": "63718b80476002f29a0e711c8b0d882c515ce30108f050947e0d611683e45dc2",
+      "media_type": "image/jpeg"
+    },
+    {
+      "id": "S02",
+      "kind": "official_storefront_screenshot",
+      "steam_screenshot_id": 2,
+      "caption": "Warm timber social interior",
+      "source_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2295170/f63e84da48018f6a346471916c1b33c5f017b9fe/ss_f63e84da48018f6a346471916c1b33c5f017b9fe.1920x1080.jpg?t=1792598817",
+      "embedding_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2295170/f63e84da48018f6a346471916c1b33c5f017b9fe/ss_f63e84da48018f6a346471916c1b33c5f017b9fe.1920x1080.jpg?t=1792598817",
+      "provenance": "Publisher-supplied Steam image; not assistant-captured gameplay.",
+      "storage_boundary": "Original third-party Steam delivery",
+      "access_domain": "Public",
+      "width_px": 1920,
+      "height_px": 1080,
+      "bytes": 759815,
+      "sha256": "5ca61807c54bc5dbb2280a8db2a3233d1c851a34ace2c343aa0832af036a07ec",
+      "media_type": "image/jpeg"
+    },
+    {
+      "id": "S13",
+      "kind": "official_storefront_screenshot",
+      "steam_screenshot_id": 13,
+      "caption": "Laboratory materials and attack contrast",
+      "source_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2295170/23d04252e8ebb1a2fa12a60ec638fc3f09b9194c/ss_23d04252e8ebb1a2fa12a60ec638fc3f09b9194c.1920x1080.jpg?t=1792598817",
+      "embedding_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2295170/23d04252e8ebb1a2fa12a60ec638fc3f09b9194c/ss_23d04252e8ebb1a2fa12a60ec638fc3f09b9194c.1920x1080.jpg?t=1792598817",
+      "provenance": "Publisher-supplied Steam image; not assistant-captured gameplay.",
+      "storage_boundary": "Original third-party Steam delivery",
+      "access_domain": "Public",
+      "width_px": 1920,
+      "height_px": 1080,
+      "bytes": 523234,
+      "sha256": "9e292b9c34e79910236a1ec19fbafad088953fae19c9d665cd1d4469ccc78a65",
+      "media_type": "image/jpeg"
+    },
+    {
+      "id": "S08",
+      "kind": "official_storefront_screenshot",
+      "steam_screenshot_id": 8,
+      "caption": "Desert oasis and open space",
+      "source_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2295170/f4af7406cc847a91e6829b780a02ea8bf9b8608c/ss_f4af7406cc847a91e6829b780a02ea8bf9b8608c.1920x1080.jpg?t=1792598817",
+      "embedding_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2295170/f4af7406cc847a91e6829b780a02ea8bf9b8608c/ss_f4af7406cc847a91e6829b780a02ea8bf9b8608c.1920x1080.jpg?t=1792598817",
+      "provenance": "Publisher-supplied Steam image; not assistant-captured gameplay.",
+      "storage_boundary": "Original third-party Steam delivery",
+      "access_domain": "Public",
+      "width_px": 1920,
+      "height_px": 1080,
+      "bytes": 756991,
+      "sha256": "df192553d5a776a9edc313e9b9eb81e3f58fe2c69bf538ada209d08ac133155e",
+      "media_type": "image/jpeg"
+    }
+  ]
+}

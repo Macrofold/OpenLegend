@@ -4,6 +4,8 @@
 
 [Production workflows](README.md) · [Research principles](../../archive/02-research/ai-game-development/09-openlegend-principles.md) · [Task-specific research examples](../../archive/02-research/ai-game-development/10-openlegend-workflows.md)
 
+[Narrative and writing](../narrative/README.md) supplies complementary craft guidance for specific people, creative situations, humor, voice and consequence. This workflow owns turning that creative intention into playable content and evaluating the result.
+
 Use this route to turn an idea into a place, person or situation that somebody wants to engage with, then follow their choices into consequences worth discovering. It applies to a new authored encounter, an improvement to an existing resident, a supported invented object used in play, or a comparison between creative models. It also applies when the intended pleasure is quiet company, curiosity, observation or making something beautiful.
 
 The work can begin with a mechanical idea, a striking image, a person, a location or a player observation. Creative exploration can move between them. The final result still has to join actual world behavior, permitted knowledge and appropriate presentation. The [gameplay priorities](../repertoires/gameplay-priorities.md) choose the worthwhile activity; this route explains how to develop it.
@@ -54,6 +56,8 @@ Create a concise person with formative history, values, pleasures, attachments, 
 Follow [character authorship and changing personality](../projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality). Keep the person's tendencies distinct from present world conditions, revisable beliefs and chosen intentions. An explicitly seeded opening goal is legitimate authoring when that is the selected scenario; label it as setup. It cannot establish independently formed motivation. Do not hide instructions to thank, confess, stop work or invite someone in a personality description to obtain the hoped-for scene.
 
 When two authored people already know one another, use their existing personal knowledge and recognition owners as well as the prose. A name mentioned in a biography does not itself bind a perceived person. Preserve each participant's separate view of the relationship.
+
+For a situation involving an authored past, use [discoverable history](../narrative/authoring-discoverable-history.md) to give each surviving trace an immediate value, connect several possible entry orders, and develop what present action can change for later visitors. Its worked example remains hypothetical; this workflow still owns rehearsal and playable delivery.
 
 An author may inspect permitted design and world information that a resident should not receive. Supply runtime cognition with that resident's own allowed evidence. Shared [agent-content requirements](../agent-content-and-companion-safety.md) continue to govern generated characters and player-facing expression; a new persona or model does not replace them.
 

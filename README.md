@@ -198,6 +198,7 @@ The latest design additions cover [world locks and invention ownership](archive/
 - [Maintainer work index](docs/maintainers/README.md) — navigation to cross-cutting work and the focused [ACT](docs/maintainers/actor-model.md), [CR](docs/maintainers/cognition-redesign.md), [NC](docs/maintainers/narration-and-conversations.md), [INV](docs/maintainers/inventions-and-world-evolution.md) and [production-data](docs/maintainers/production-data.md) trackers
 - [Research and design archive](archive/README.md)
 - [Production workflows](docs/production-workflows/README.md) — reusable routes from an idea through art, assets, animation, interfaces, sound and playable consequences; [production principles](archive/02-research/ai-game-development/09-openlegend-principles.md) explain their fit for OpenLegend.
+- [Narrative and writing](docs/narrative/README.md) — creative situations, distinct voices, humor, discoverable world history and meaningful consequences; [focused game references](archive/02-research/game-inspiration/README.md#player-stories-authored-worlds-and-personal-meaning) connect the studies to their design and production owners.
 - [Save/load design](docs/save-and-load.md) — high-level constraints for future state, simulation and storage design; manual and rolling autosave slots, bounded capture and documented recovery qualification
 - [Runtime performance design](docs/performance.md) and [prioritized tasks](docs/maintainers/performance.md) — compact persistence, triggered background work, bounded CPU and the measured scale path; cold event storage, gameplay retry epochs and actor scheduling are implemented; multiplayer and scale qualification remain pending
 - [Real-time multiplayer synchronization](archive/07-technical-architecture/realtime-synchronization.md) — batching, prediction, replication and future improvements
@@ -207,6 +208,7 @@ The latest design additions cover [world locks and invention ownership](archive/
 - [Project decisions](archive/05-project/open-decisions.md) and [implementation status](archive/05-project/implementation-status.md)
 - [First playable MVP agreement](archive/05-project/first-playable-mvp.md)
 - [Art direction and reference board](art-direction/README.md)
+- [Game ideas to explore](docs/game-ideas/README.md)
 - [Marketing and creator ecosystem](archive/06-marketing/README.md)
 - [Patrons, contributors, and world history](archive/06-marketing/patrons-contributors-and-world-history.md)
 

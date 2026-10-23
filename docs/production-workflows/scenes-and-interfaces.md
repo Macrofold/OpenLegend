@@ -18,6 +18,8 @@ A world-content author and environment contributor establish these choices toget
 
 The [creative brief](../../art-direction/final-board/creative-brief.md) calls for layered nature, expressive people, meaningful detail and purposeful light, including warmth and daylight. Its [living-place vignette](../../art-direction/final-board/creative-brief.md#a-living-place-with-visible-causes) illustrates a coherent scene where rain, materials, people's routines and animal behavior can contribute to beauty because they share actual causes. Treat that as a scene-design target, not proof those world systems already exist. The [Sea of Stars study](../../art-direction/research/sea-of-stars/README.md) adds a concrete review hierarchy: establish a recognizable large form or route, then material/use features, then selected fine accents, with quiet regions preserving legibility. Use density to reveal material, use and identity rather than to fill space.
 
+Use the [Emberville study](../../art-direction/research/emberville/README.md) when a journey needs distinct places. Describe how each stop changes enclosure, materials, everyday use and atmosphere: a welcoming interior and an exposed ruin can give different reasons to pause or proceed. Carry recognizable local materials or landmarks between views so variety still feels like one world.
+
 **Useful result:** the place fulfills its intended visual and player purpose, whether activity, discovery, orientation, atmosphere or a quiet interval. If that purpose is unclear or unrewarding, revise the situation or composition before multiplying decorative assets; [characters and play](characters-and-play.md) can help when the missing value is an encounter or activity.
 
 ### 2. Build a traversable blockout and review approaches
@@ -115,6 +117,8 @@ A designer or agent should be able to explain what the player is choosing withou
 The design stage may use an AI design tool, direct drawing, HTML/CSS or existing components. The chosen tool should make the result easy to inspect and revise. A screenshot from another game is useful for hierarchy or craftsmanship but is not the production design and does not supply rights to its art.
 
 Inspect the screen over representative scenery. Decide the relative weight of the world, item imagery, title, primary action and optional details. Use ornament deliberately; quiet regions should support reading and decision-making. Follow the existing color and type roles rather than letting each agent invent a parallel theme.
+
+The [ROCKBEASTS study](../../art-direction/research/rockbeasts/README.md#4-make-menus-feel-like-objects-and-actions-in-this-world) shows how a notebook, contract or stage plan can connect decisions to a game's identity. Explore an equipment spread, annotated map or keepsake display when its arrangement helps the actual task. Choose the material metaphor for the selected world and decision, then retain the established information hierarchy and shared controls.
 
 **Useful result:** a coherent composition that can be implemented against a stable visual target. An early alternative may deliberately use placeholders, but label them and define which artwork still needs production.
 
