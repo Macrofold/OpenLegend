@@ -1,8 +1,8 @@
 # How execution, animation and rendering scale independently
 
-| Research status | Progress | Last updated |
-| --- | --- | --- |
-| Completed desk research; not a benchmark | Explains data-oriented execution, separate detail controls and browser capabilities without selecting an Open Legend implementation. | 2026-10-23 |
+| Research status                          | Progress                                                                                                                             | Last updated |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed desk research; not a benchmark | Explains data-oriented execution, separate detail controls and browser capabilities without selecting an Open Legend implementation. | 2026-10-23   |
 
 ## 1. Processing a batch does not merge the people in it
 
@@ -24,11 +24,11 @@ Individuality need not mean a different memory layout for every person. Unity's 
 
 The [MassGameplay overview](https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-mass-gameplay-in-unreal-engine) documents distinct controls for representation, simulation and network replication. Simulation detail can group entities and vary calculation frequency. Network relevance is evaluated per connected viewer. StateTree behavior can wake in response to signals rather than continually reevaluating everything. These are framework mechanisms, not evidence that every game using Mass employs the same policy.
 
-| Kind of work | What a lower-cost version changes | What it does not establish |
-| --- | --- | --- |
-| Visual representation | Mesh, animation representation, visibility and rendering cost | Whether the actor still notices an event or takes damage |
-| Simulation detail | Frequency or sophistication of selected calculations | That changing frequency preserves the same outcomes |
-| Network replication | Which viewer receives which updates, and how often | Permission to reveal private information or alter server truth |
+| Kind of work          | What a lower-cost version changes                             | What it does not establish                                     |
+| --------------------- | ------------------------------------------------------------- | -------------------------------------------------------------- |
+| Visual representation | Mesh, animation representation, visibility and rendering cost | Whether the actor still notices an event or takes damage       |
+| Simulation detail     | Frequency or sophistication of selected calculations          | That changing frequency preserves the same outcomes            |
+| Network replication   | Which viewer receives which updates, and how often            | Permission to reveal private information or alter server truth |
 
 The retrieved documentation is presented under Unreal 5.8, but some paragraphs retain older version-specific wording. This study relies on the documented separation of responsibilities, not on those paragraphs to declare a current production-readiness status for every plugin.
 
@@ -54,16 +54,16 @@ For many similar numerical operations, the useful opportunity is substantial par
 
 Several different costs must remain visible:
 
-| Cost | Why a large population exposes it |
-| --- | --- |
-| Memory capacity | Every independently tracked position, target and status consumes storage, even if updating it is cheap |
-| Memory traffic | Reading and writing a large record many times can dominate its arithmetic |
-| Divergent execution | A group performing many unrelated kinds of work is less regular than a group running the same short calculation |
-| Neighbor discovery | Dense interactions can remain expensive after movement itself becomes cheap |
-| Synchronization | One actor's result may affect another actor's next calculation |
-| CPU/GPU transfer | Frequently handing complete population data back and forth can consume the benefit of offloading |
-| Competition with rendering | Simulation and visuals can compete for the same GPU resources |
-| Outcome ordering | Parallel calculation needs an explicit interpretation when actors affect the same object or each other |
+| Cost                       | Why a large population exposes it                                                                               |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Memory capacity            | Every independently tracked position, target and status consumes storage, even if updating it is cheap          |
+| Memory traffic             | Reading and writing a large record many times can dominate its arithmetic                                       |
+| Divergent execution        | A group performing many unrelated kinds of work is less regular than a group running the same short calculation |
+| Neighbor discovery         | Dense interactions can remain expensive after movement itself becomes cheap                                     |
+| Synchronization            | One actor's result may affect another actor's next calculation                                                  |
+| CPU/GPU transfer           | Frequently handing complete population data back and forth can consume the benefit of offloading                |
+| Competition with rendering | Simulation and visuals can compete for the same GPU resources                                                   |
+| Outcome ordering           | Parallel calculation needs an explicit interpretation when actors affect the same object or each other          |
 
 These are analytical workload distinctions, not measurements of Open Legend. None supports a universal assertion that GPUs are unsuitable for complex agents, or that moving a calculation to a GPU necessarily improves end-to-end latency.
 
@@ -73,13 +73,13 @@ The [WebGPU explainer](https://gpuweb.github.io/gpuweb/explainer/) makes the tra
 
 The existing [engine performance study](../game-engines/performance-and-hardware.md) remains the broader hardware/platform reference. The crowd-specific findings are:
 
-| Capability | Primary evidence | Research implication |
-| --- | --- | --- |
-| GPU instancing in the existing renderer family | [PlayCanvas hardware instancing](https://developer.playcanvas.com/user-manual/graphics/advanced-rendering/hardware-instancing/) | Repeated geometry can share rendering submissions while keeping individual transforms |
-| General GPU computation | [PlayCanvas compute shaders](https://developer.playcanvas.com/user-manual/graphics/shaders/compute-shaders/) | Supported on its WebGPU path; unavailable through its WebGL path |
-| GPU-produced draw counts and visibility work | [PlayCanvas indirect drawing](https://developer.playcanvas.com/user-manual/graphics/advanced-rendering/indirect-drawing/) | Supported on WebGPU, with capability checks; avoids some CPU-controlled drawing work |
-| Browser multithreading for compiled code | [Emscripten pthreads](https://emscripten.org/docs/porting/pthreads.html) | Shared-memory threads use workers and require the appropriate cross-origin isolation setup |
-| Different GPU programming interfaces | [Chrome's WebGL-to-WebGPU guide](https://developer.chrome.com/docs/web-platform/webgpu/from-webgl-to-webgpu) | WebGL supports vertex/fragment shaders; WebGPU also exposes compute and explicit command encoding |
+| Capability                                     | Primary evidence                                                                                                                | Research implication                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| GPU instancing in the existing renderer family | [PlayCanvas hardware instancing](https://developer.playcanvas.com/user-manual/graphics/advanced-rendering/hardware-instancing/) | Repeated geometry can share rendering submissions while keeping individual transforms             |
+| General GPU computation                        | [PlayCanvas compute shaders](https://developer.playcanvas.com/user-manual/graphics/shaders/compute-shaders/)                    | Supported on its WebGPU path; unavailable through its WebGL path                                  |
+| GPU-produced draw counts and visibility work   | [PlayCanvas indirect drawing](https://developer.playcanvas.com/user-manual/graphics/advanced-rendering/indirect-drawing/)       | Supported on WebGPU, with capability checks; avoids some CPU-controlled drawing work              |
+| Browser multithreading for compiled code       | [Emscripten pthreads](https://emscripten.org/docs/porting/pthreads.html)                                                        | Shared-memory threads use workers and require the appropriate cross-origin isolation setup        |
+| Different GPU programming interfaces           | [Chrome's WebGL-to-WebGPU guide](https://developer.chrome.com/docs/web-platform/webgpu/from-webgl-to-webgpu)                    | WebGL supports vertex/fragment shaders; WebGPU also exposes compute and explicit command encoding |
 
 These are capabilities in current upstream documentation, not confirmation that Open Legend's pinned engine version, deployment headers or target devices already expose every listed feature. No package update, capability test or browser benchmark was performed for this study.
 

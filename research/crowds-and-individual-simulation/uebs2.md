@@ -1,10 +1,10 @@
 # Ultimate Epic Battle Simulator 2: what its scale does and does not demonstrate
 
-| Research field | Status |
-| --- | --- |
+| Research field  | Status                                                                                               |
+| --------------- | ---------------------------------------------------------------------------------------------------- |
 | Research status | Completed desk research; primary developer statements and a separate public source example inspected |
-| Progress | Evidence synthesized; proprietary algorithms and performance claims remain qualified |
-| Last updated | 2026-10-23; no game run or benchmark performed |
+| Progress        | Evidence synthesized; proprietary algorithms and performance claims remain qualified                 |
+| Last updated    | 2026-10-23; no game run or benchmark performed                                                       |
 
 ## Finding
 
@@ -16,15 +16,15 @@ Documented economies include constrained navigation geometry, drastic distance-b
 
 “Developer statement” below means attributable primary evidence, not independent measurement or an audit of the shipped binary.
 
-| Evidence | What it establishes | What it does not establish |
-| --- | --- | --- |
-| [Developer GPU explanation, 2021](https://steamcommunity.com/app/1468720/discussions/0/3110267314129208740/) | The described crowd pipeline runs AI, transforms, animation, rendering and culling on the GPU; units have separate state and enemies. | Exact algorithms, complexity, update frequency or humanlike reasoning. |
-| [GPU memory guidance, edited May 2022](https://steamcommunity.com/app/1468720/discussions/0/3110267314139888374/) | Character properties occupy GPU memory; capacity matters greatly. | Controlled FPS results or guaranteed present-day capacities. |
-| [Performance advice, May–June 2022](https://steamcommunity.com/app/1468720/discussions/0/4536825080741228104/) | More teams mean more pathfinding; battle extent, RTS and animation settings affect cost. | A particular shared navigation algorithm. |
-| [Team-limit discussion, May 2022](https://steamcommunity.com/app/1468720/discussions/0/3274690571072081535/) | Four opposing teams was an explicit GPU-memory/pathfinding tradeoff at that stage. | The current team limit or millions of unrelated destination problems. |
-| [Map modding tutorial, February–March 2025](https://steamcommunity.com/workshop/discussions/18446744073709551615/600771622034502381/?appid=1468720) | Navigation has one layer; thin obstacles can be problematic. | Grid resolution, search method or avoidance guarantees. |
-| [Developer LOD guidance, October 2024](https://steamcommunity.com/workshop/discussions/18446744073709551615/4694532143495334056/?appid=1468720) | The final human LOD uses a generic 100-triangle mesh. | Reduced thinking frequency or loss of identity at distance. |
-| [Launch announcement, May 2022](https://steamcommunity.com/games/1468720/announcements/detail/3199255960103884476) | Dynamic swarm navigation and expressly approximated mass ragdolls were advertised launch features. | Full articulated-body physics for every soldier. |
+| Evidence                                                                                                                                            | What it establishes                                                                                                                   | What it does not establish                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [Developer GPU explanation, 2021](https://steamcommunity.com/app/1468720/discussions/0/3110267314129208740/)                                        | The described crowd pipeline runs AI, transforms, animation, rendering and culling on the GPU; units have separate state and enemies. | Exact algorithms, complexity, update frequency or humanlike reasoning. |
+| [GPU memory guidance, edited May 2022](https://steamcommunity.com/app/1468720/discussions/0/3110267314139888374/)                                   | Character properties occupy GPU memory; capacity matters greatly.                                                                     | Controlled FPS results or guaranteed present-day capacities.           |
+| [Performance advice, May–June 2022](https://steamcommunity.com/app/1468720/discussions/0/4536825080741228104/)                                      | More teams mean more pathfinding; battle extent, RTS and animation settings affect cost.                                              | A particular shared navigation algorithm.                              |
+| [Team-limit discussion, May 2022](https://steamcommunity.com/app/1468720/discussions/0/3274690571072081535/)                                        | Four opposing teams was an explicit GPU-memory/pathfinding tradeoff at that stage.                                                    | The current team limit or millions of unrelated destination problems.  |
+| [Map modding tutorial, February–March 2025](https://steamcommunity.com/workshop/discussions/18446744073709551615/600771622034502381/?appid=1468720) | Navigation has one layer; thin obstacles can be problematic.                                                                          | Grid resolution, search method or avoidance guarantees.                |
+| [Developer LOD guidance, October 2024](https://steamcommunity.com/workshop/discussions/18446744073709551615/4694532143495334056/?appid=1468720)     | The final human LOD uses a generic 100-triangle mesh.                                                                                 | Reduced thinking frequency or loss of identity at distance.            |
+| [Launch announcement, May 2022](https://steamcommunity.com/games/1468720/announcements/detail/3199255960103884476)                                  | Dynamic swarm navigation and expressly approximated mass ragdolls were advertised launch features.                                    | Full articulated-body physics for every soldier.                       |
 
 ## Individual state and shared work are compatible
 
@@ -50,7 +50,7 @@ The 2021 GPU account describes the crowd system. It does not establish literally
 
 The official map tutorial says navigation supports only one layer. A bridge cannot provide traversable space both above and below the same surface. The tutorial also recommends thick invisible collision geometry for fences because thin obstacles can produce problems. A visually three-dimensional battlefield therefore does not imply arbitrary three-dimensional navigation. These are explicit authoring constraints, not guesses from a video. They do not reveal the internal grid, cell size or search algorithm. [Map Modding Tutorial](https://steamcommunity.com/workshop/discussions/18446744073709551615/600771622034502381/?appid=1468720)
 
-The developer calls the launch system dynamic swarm pathfinding and describes it responding to environmental changes and body piles. That terminology is insufficient to identify A*, potential fields, flow fields, ORCA or another implementation. The full launch text was retrieved in the studio's [official announcement feed for the original game](https://steamcommunity.com/app/616560/announcements/), which reproduced the sequel announcement; the individual sequel event page did not expose its body to the text extractor.
+The developer calls the launch system dynamic swarm pathfinding and describes it responding to environmental changes and body piles. That terminology is insufficient to identify A\*, potential fields, flow fields, ORCA or another implementation. The full launch text was retrieved in the studio's [official announcement feed for the original game](https://steamcommunity.com/app/616560/announcements/), which reproduced the sequel announcement; the individual sequel event page did not expose its body to the text extractor.
 
 ### Distant appearance is drastically cheaper
 
@@ -72,12 +72,12 @@ The June 2022 pathfinding patch addressed units converging on isolated points, o
 
 The developer's GPU-memory post, edited in May 2022, offered these **historical recommendations**, not benchmark measurements. It explains that AI properties reside in GPU memory and that exhausting available memory can cause abrupt slowdown. [Original guidance](https://steamcommunity.com/app/1468720/discussions/0/3110267314139888374/)
 
-| GPU memory | Historical suggested population | Qualification in the developer's guidance |
-| --- | --- | --- |
-| 3–4 GB | 100,000–500,000 | A million may work with stuttering or slowdown. |
-| 6–8 GB | 1–4 million | Scenario and GPU dependent. |
-| 10–16 GB | 4–10 million | Guidance, not a controlled result. |
-| 20–24 GB | 10–16 million | Explicit estimate; the developer said it did not own a card above 16 GB. |
+| GPU memory | Historical suggested population | Qualification in the developer's guidance                                |
+| ---------- | ------------------------------- | ------------------------------------------------------------------------ |
+| 3–4 GB     | 100,000–500,000                 | A million may work with stuttering or slowdown.                          |
+| 6–8 GB     | 1–4 million                     | Scenario and GPU dependent.                                              |
+| 10–16 GB   | 4–10 million                    | Guidance, not a controlled result.                                       |
+| 20–24 GB   | 10–16 million                   | Explicit estimate; the developer said it did not own a card above 16 GB. |
 
 The same post generally recommends staying at or below **one million**, the stated stability target. It does not attach reproducible scenes, exact GPUs, resolution, frame-time percentiles or activity levels to the ranges. A ten-million showcase therefore cannot be converted into a guaranteed ten-million-unit performance contract.
 

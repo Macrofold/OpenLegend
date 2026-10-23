@@ -1,11 +1,11 @@
 # Games that preserve individuals while reducing simulation work
 
-| Field | Status |
-|---|---|
-| Research date | 2026-10-23 |
-| Status | Completed desk research; no benchmark performed |
-| Evidence | Original developer articles, presentations, and firsthand interviews |
-| Scope | Comparative findings; no Open Legend architecture or code selected |
+| Field         | Status                                                               |
+| ------------- | -------------------------------------------------------------------- |
+| Research date | 2026-10-23                                                           |
+| Status        | Completed desk research; no benchmark performed                      |
+| Evidence      | Original developer articles, presentations, and firsthand interviews |
+| Scope         | Comparative findings; no Open Legend architecture or code selected   |
 
 An actor can have an individual identity and purpose without reconsidering everything every rendered frame. The cases below separate route computation, action execution, personal state, visual presentation, and distant-world simulation. Some retain specific individuals while reducing detail. Others aggregate remote populations or generate identity when a player first needs it. Those are different promises and should remain distinct when assessing what Open Legend can learn.
 
@@ -15,15 +15,15 @@ The scale figures below are attributed reports with their original scope. They d
 
 ### Local movement and path request budgets
 
-**Source:** Tomas, *Friday Facts #117 — Path Finder Optimisation I*, 2015-12-18. Official developer engineering article. [Primary URL](https://factorio.com/blog/post/fff-117).
+**Source:** Tomas, _Friday Facts #117 — Path Finder Optimisation I_, 2015-12-18. Official developer engineering article. [Primary URL](https://factorio.com/blog/post/fff-117).
 
-The pathfinder processes a bounded number of search nodes per tick; overwhelming its request queue can leave enemy groups unresponsive despite stable frame rate. Profiling showed many very short routes. The developers reduced requests by asking blocking biters to move aside and by using direct local movement for assembling groups and returning to spawners. That cheaper movement follows around an obstruction and falls back to a real path search when it fails. One profiled workload reduced search steps for very short routes from nearly 10,000 to approximately 1,000, and the next short-distance category from roughly 1,000 to 200. These are category-specific work counts in a developer workload, not a tenfold whole-game speedup or a portable capacity measurement.
+The pathfinder processes a bounded number of search nodes per tick; overwhelming its request queue can leave enemy groups unresponsive despite stable frame rate. Profiling showed many very short routes. The developers reduced requests by asking blocking biters to move aside and by using direct local movement for assembling groups and returning to spawners. That cheaper movement follows around an obstruction and falls back to a real path search when it fails. In one profiled workload, search steps for paths of length at most five fell from nearly 10,000 to approximately 1,000. Separately, the number of path requests for paths of length at most 50 fell from nearly 1,000 to slightly above 200. These measure different parts of the workload, not a tenfold whole-game speedup or a portable capacity measurement.
 
 **Research implication:** Responsiveness must be measured separately from frame rate. A smooth game can still have an overloaded AI queue. Real independent units can share congestion resolution and avoid searching for movements that cheap steering already handles.
 
 ### Reuse both successful and failed work
 
-**Source:** Tomas/Oxyd, *Friday Facts #121 — Path Finder Optimisation II*, 2016-01-15. [Primary URL](https://factorio.com/blog/post/fff-121).
+**Source:** Tomas/Oxyd, _Friday Facts #121 — Path Finder Optimisation II_, 2016-01-15. [Primary URL](https://factorio.com/blog/post/fff-121).
 
 The developers describe a bounded cache of paths, retaining expensive-to-find paths preferentially. A new request can connect into a cached route, reuse its useful middle section, and leave it toward another destination; exact start-and-end equality is unnecessary. Unsuccessful searches are also cached so repeated unreachable requests do not continually repeat the same expensive failure. The article also explains why cheap local movement cannot replace a pathfinder completely: it can become trapped by obstacle geometry.
 
@@ -31,9 +31,9 @@ The developers describe a bounded cache of paths, retaining expensive-to-find pa
 
 ### An abstraction can guide an exact search without replacing it
 
-**Source:** Oxyd/TOGoS/Klonan, *Friday Facts #317 — New pathfinding algorithm*, 2019-10-18. [Primary URL](https://factorio.com/blog/post/fff-317).
+**Source:** Oxyd/TOGoS/Klonan, _Friday Facts #317 — New pathfinding algorithm_, 2019-10-18. [Primary URL](https://factorio.com/blog/post/fff-317).
 
-Units submit starts and destinations and may receive waypoints many ticks later. The replacement pathfinder uses connected land regions within 32-by-32-tile chunks to construct a compact connectivity model. This abstraction deliberately ignores entities, so it supplies a heuristic while the detailed search still handles real obstructions. The abstract search uses Reverse Resumable A*: search from the destination, retain discovered state, and resume as further information is needed. Restricting the abstract topology to terrain avoids rebuilding it whenever an ordinary object changes; terrain changes such as landfill still matter. The motivation includes expensive long detours around water and bursts of distant enemy movement caused by artillery.
+Units submit starts and destinations and may receive waypoints many ticks later. The replacement pathfinder uses connected land regions within 32-by-32-tile chunks to construct a compact connectivity model. This abstraction deliberately ignores entities, so it supplies a heuristic while the detailed search still handles real obstructions. The abstract search uses Reverse Resumable A\*: search from the destination, retain discovered state, and resume as further information is needed. Restricting the abstract topology to terrain avoids rebuilding it whenever an ordinary object changes; terrain changes such as landfill still matter. The motivation includes expensive long detours around water and bursts of distant enemy movement caused by artillery.
 
 **Research implication:** Sharing a coarse approximation does not require treating the approximation as authoritative. That is a useful distinction when individual characters have routes whose validity still needs to respect their concrete world.
 
@@ -41,7 +41,7 @@ Units submit starts and destinations and may receive waypoints many ticks later.
 
 ### Deep decisions and high-frequency presentation run separately
 
-**Source:** Brian Bell, Maxis/EA, *Multi-Actor Behavior Sequencing in The Sims 4*, GDC 2014, 64-slide developer presentation. [Primary PDF](https://media.gdcvault.com/GDC2014/Presentations/Bell_Brian_Multi_Actor_Behavior.pdf).
+**Source:** Brian Bell, Maxis/EA, _Multi-Actor Behavior Sequencing in The Sims 4_, GDC 2014, 64-slide developer presentation. [Primary PDF](https://media.gdcvault.com/GDC2014/Presentations/Bell_Brian_Multi_Actor_Behavior.pdf).
 
 Bell describes a simulation whose complex decisions can spike in cost while presentation must remain smooth. Path planning and animation selection belong to the simulation; high-frequency path following and animation playback belong to the renderer. Separate threads communicate through journaled operations. Channels associate Sims or objects with timelines, permit independent sequences, and synchronize dependent multi-actor interactions. The operation queue reacts to enqueues and barrier removal instead of actively ticking each queued operation. The presentation system preserves meaningful sequence integrity rather than skipping arbitrary steps to catch up.
 
@@ -49,7 +49,7 @@ Bell describes a simulation whose complex decisions can spike in cost while pres
 
 ### Reactive autonomy can still produce distinct personalities
 
-**Source:** Firsthand interview with original *The Sims 4* lead AI programmer David “Rez” Graham, Lauren Morton, PC Gamer, 2026-03-18. [Interview](https://www.pcgamer.com/games/the-sims/sims-dont-plan-anything-says-former-sims-4-developer-though-he-always-wanted-to-program-them-to-its-always-shot-down-rightfully-so/).
+**Source:** Firsthand interview with original _The Sims 4_ lead AI programmer David “Rez” Graham, Lauren Morton, PC Gamer, 2026-03-18. [Interview](https://www.pcgamer.com/games/the-sims/sims-dont-plan-anything-says-former-sims-4-developer-though-he-always-wanted-to-program-them-to-its-always-shot-down-rightfully-so/).
 
 Graham describes Sims choosing the next objective on a cadence from motives, traits, and related state, rather than autonomously planning extended action sequences. He distinguishes this from the player's manually populated action queue. He also identifies player agency and the difficulty of communicating an invisible plan as reasons deeper planning did not persist in the projects he discusses.
 
@@ -59,7 +59,7 @@ Graham describes Sims choosing the next objective on a cadence from motives, tra
 
 ### Behavior level of detail on console hardware
 
-**Source:** Warhorse Studios' *Weekly Torch*, staff Q&A with programmer Tomáš “Bary” Barák, post #69, 2018-01-05. [Official forum post](https://forum.kingdomcomerpg.com/t/warhorse-studios-weekly-torch/29593/69).
+**Source:** Warhorse Studios' _Weekly Torch_, staff Q&A with programmer Tomáš “Bary” Barák, post #69, 2018-01-05. [Official forum post](https://forum.kingdomcomerpg.com/t/warhorse-studios-weekly-torch/29593/69).
 
 Barák says the AI team added behavior levels of detail and could simulate more than 500 NPC brains in 10 milliseconds on PS4, separately mentioning thousands of smart/trigger areas and objects. AI runs on a separate thread; he says rendering was the bottleneck at that point. Elsewhere in the answers he describes AI, entities, and RPG work being parallelized while other operations remained serial.
 
@@ -67,7 +67,7 @@ Barák says the AI team added behavior levels of detail and could simulate more 
 
 ### Strong follow-up lead, limited access
 
-**Source lead only:** Petr Smrček, *Supporting Thousands of NPCs in “Kingdom Come: Deliverance” & “Kingdom Come: Deliverance II”*, GDC 2026, scheduled 2026-03-10. [GDC schedule](https://schedule.gdconf.com/session/supporting-thousands-of-npcs-in-kingdom-come-deliverance-kingdom-come-deliverance-ii/915120), [GDC Vault](https://gdcvault.com/play/1035718/).
+**Source lead only:** Petr Smrček, _Supporting Thousands of NPCs in “Kingdom Come: Deliverance” & “Kingdom Come: Deliverance II”_, GDC 2026, scheduled 2026-03-10. [GDC schedule](https://schedule.gdconf.com/session/supporting-thousands-of-npcs-in-kingdom-come-deliverance-kingdom-come-deliverance-ii/915120), [GDC Vault](https://gdcvault.com/play/1035718/).
 
 The indexed official abstract discusses AI levels of detail, frame-time and memory constraints, keeping the scripting interface largely independent of the LOD mechanism, and thousands of complex NPCs at 60 fps. The schedule page returned an error and the Vault page redirected to maintenance during this research. **The full talk was not reviewed.** Treat this as a high-value further source, not evidence for unobserved implementation details or an independent performance guarantee.
 
@@ -91,7 +91,7 @@ The release notes say zombies no longer reconsider their surroundings until dist
 
 ## 5. Project Zomboid: explicit animal-herd aggregation
 
-**Source:** The Indie Stone, *The Skillful HuntZman*, 2023-05-25. [Developer article](https://projectzomboid.com/blog/news/2023/05/the-skillful-huntzman/).
+**Source:** The Indie Stone, _The Skillful HuntZman_, 2023-05-25. [Developer article](https://projectzomboid.com/blog/news/2023/05/the-skillful-huntzman/).
 
 The article's in-progress wilderness system uses a virtual animal following authored paths to represent a group defined by species/group data, such as a buck, does, and fawns. Near the player, it materializes actual animals; far away, they become virtual again. A separated group's members can rejoin at path crossings. Timetables include activities such as eating and sleeping, while tracks, droppings, and disturbed vegetation make passage observable.
 
@@ -117,7 +117,7 @@ Hocking describes Census as a relational database that can start with an ordinar
 
 ### Production evidence for schedules and relational consequences
 
-**Source:** Ubisoft, *Watch Dogs: Legion — The Tools That Built London*, 2021-03-30, featuring team lead programmer Christopher Dragert. [Official article](https://news.ubisoft.com/en-ca/article/4po3S9Pwp1YcgBmGPmQxAh/watch-dogs-legion-the-tools-that-built-london).
+**Source:** Ubisoft, _Watch Dogs: Legion — The Tools That Built London_, 2021-03-30, featuring team lead programmer Christopher Dragert. [Official article](https://news.ubisoft.com/en-ca/article/4po3S9Pwp1YcgBmGPmQxAh/watch-dogs-legion-the-tools-that-built-london).
 
 The account describes persistent characters with demographically coherent profiles, schedules appropriate to their roles, relationships, and affinity affected by the player's conduct. A player can follow a person through activities such as work and a gym visit; actions toward someone can affect relatives and future recruitment. The article emphasizes data generation, tuning/debugging, and integration across systems.
 
@@ -149,3 +149,28 @@ The evidence supports examining hundreds of purposeful characters without assumi
 
 For animals, persistent dispositions, current activity, simple local responses, and occasional reconsideration are conceptually compatible with individuality. For cognitively richer people, additional costs include perception, memory, socially meaningful interaction, and deciding when an existing intention has become inappropriate. The papers on language-model agents examine that separate part of the problem; production game counts should not be read as a direct performance estimate for those workloads.
 
+## 9. Transport and city simulations: individual journeys at different resolutions
+
+### Cities: Skylines II: personal preferences and immediate traffic behavior
+
+The official [Traffic AI developer diary](https://www.paradoxinteractive.com/games/cities-skylines-ii/features/traffic-ai), published 2023-06-26, describes routes scored by time, comfort, money, and behavior. Travelers' age groups weight these concerns differently; emergency vehicles have different permissions from ordinary travelers. Individual preferences can therefore produce different routes through a common network. The account distinguishes route selection from ongoing acceleration, braking, lane changes, and responses to incidents. It describes multicore execution and advertises no fixed limit on moving agents, with capacity constrained by hardware.
+
+**Evidence limit:** This is a developer description and pre-release capacity claim, not a reproducible population/FPS benchmark. No hard-coded cap does not imply unlimited practical capacity or equal detail for every citizen. The company's [2026-09-03 performance update](https://www.paradoxinteractive.com/games/cities-skylines-ii/news/collected-questions) still identifies CPU pathfinding as a major challenge and says some improvements may require changes to simulation behavior. A rich individual transport model can remain computationally difficult after substantial parallelization.
+
+### SUMO: movement integration and behavioral decisions need not share a clock
+
+SUMO's official [Basic Definition documentation](https://sumo.dlr.de/docs/Simulation/Basic_Definition.html), updated 2026-02-13, specifies a default one-second simulation step. Its separate action-step setting controls how often vehicles calculate acceleration changes or lane-change maneuvers. Movement can therefore advance between those decisions. The documentation also gives the corresponding limitation: increasing action intervals beyond assumed reaction times can induce collisions; increasing the movement step can change behavior too. This is a concrete example of a computational shortcut whose validity depends on the model's assumptions, not merely on how smoothly motion looks.
+
+Its [mesoscopic model](https://sumo.dlr.de/docs/Simulation/Meso.html), documentation updated 2026-10-09, preserves vehicles and routes while placing vehicles in queues. Exit times depend on traffic conditions, minimum travel time, and intersection handling. Lane changes and intersection behavior are coarser, and detailed instantaneous vehicle speed is not maintained as in the microscopic model. The documentation claims speeds up to 100 times the microscopic model, but the page supplies no matched workload and hardware benchmark supporting transfer of that ratio to another simulation.
+
+**Research inference:** Coarse movement does not necessarily eliminate individual journeys. It does change which interactions the model represents. Queue-based transport can preserve who traveled where and when without preserving every steering correction. That distinction is relevant to persistent-world research even though road-constrained traffic differs from freely moving animals or people.
+
+### MATSim: individual daily plans within a shared transport system
+
+The [official MATSim overview](https://matsim.org/), accessed 2026-10-23, describes individual travelers moving through road and public-transport networks. Each agent attempts to improve its own day while being affected by others' activities and trips. An iterative optimization process produces transport behavior, and whole days are simulated at second resolution.
+
+**Evidence limit:** Second resolution describes the simulation's time representation, not its wall-clock speed. The reviewed overview does not establish a particular population/runtime result or enough implementation detail to attribute specific queue structures. Its agents' daily plans are also different from open-ended personal cognition: the evidence concerns choices and interactions within a transport model. It should not be presented as proof that every traveler has unrestricted beliefs, memories, or conversational reasoning.
+
+### What this comparison adds
+
+These cases distinguish a person's retained journey from the calculation frequency and physical detail used to execute it. They also show why reducing work can change outcomes: reaction intervals, congestion, lane choices, and travel costs can affect who arrives and when. For Open Legend, the research question is which individual outcomes must remain faithful under simplification. A useful comparison must state both the saved computation and the information or interactions no longer represented. None of these sources alone supplies a capacity estimate for the project's intended actors.

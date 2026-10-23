@@ -1,8 +1,8 @@
 # Navigation and local motion for many individual actors
 
-| Research status | Progress | Last updated |
-| --- | --- | --- |
-| Completed desk research; not a benchmark | Examines shared navigation, individual steering, joint planning and their limits. No Open Legend implementation is selected. | 2026-10-23 |
+| Research status                          | Progress                                                                                                                     | Last updated |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed desk research; not a benchmark | Examines shared navigation, individual steering, joint planning and their limits. No Open Legend implementation is selected. | 2026-10-23   |
 
 ## 1. Individual actors can share navigation work
 
@@ -12,13 +12,13 @@ Consider animals approaching a watering hole. Their identities, hunger, injuries
 
 There are several separate meanings of independence:
 
-| Property | What it preserves | What can still be shared |
-| --- | --- | --- |
-| Persistent identity | One actor remains the same actor over time | Storage layout and execution machinery |
-| Individual state | Different positions, attributes, memories and current activities | Rules operating on those values |
-| Individual objectives | Different actors can want different outcomes | Intermediate route segments and terrain knowledge, when equivalent |
-| Individual reactions | Nearby actors can choose different immediate movements | A steering algorithm or learned policy |
-| Independent computation | Each actor solves everything separately | Very little; this is a stronger requirement than individuality itself |
+| Property                | What it preserves                                                | What can still be shared                                              |
+| ----------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Persistent identity     | One actor remains the same actor over time                       | Storage layout and execution machinery                                |
+| Individual state        | Different positions, attributes, memories and current activities | Rules operating on those values                                       |
+| Individual objectives   | Different actors can want different outcomes                     | Intermediate route segments and terrain knowledge, when equivalent    |
+| Individual reactions    | Nearby actors can choose different immediate movements           | A steering algorithm or learned policy                                |
+| Independent computation | Each actor solves everything separately                          | Very little; this is a stronger requirement than individuality itself |
 
 The primary sources below demonstrate different combinations. Supreme Commander 2 shares route calculations while steering separate units. ORCA computes separate velocities from local interactions. Continuum Crowds deliberately derives motion from fields for groups with common goals. These are materially different compromises; none establishes UEBS2's undisclosed algorithms. The [UEBS2 dossier](uebs2.md) separates that game's disclosures from inference.
 
@@ -26,14 +26,14 @@ The primary sources below demonstrate different combinations. Supreme Commander 
 
 ## 2. Pathfinding, avoidance and arrival are different problems
 
-| Responsibility | Question it answers | Typical limitation when treated alone |
-| --- | --- | --- |
-| Goal selection | What does this actor want to do? | Choosing a destination does not establish a feasible route |
-| Global navigation | Which terrain, passages and intermediate locations lead there? | A route can become crowded or temporarily blocked |
-| Local steering and avoidance | Which immediate movement works around nearby bodies? | Locally safe movement can stall without reaching the goal |
-| Arrival and interaction | Where can this actor stand, wait or use the destination? | Several actors may compete for one usable place |
-| Joint planning through time | Which combination of routes avoids mutual conflicts? | Stronger coordination can require much more computation |
-| Locomotion and presentation | How is movement physically and visually expressed? | Smooth animation does not establish correct navigation |
+| Responsibility               | Question it answers                                            | Typical limitation when treated alone                      |
+| ---------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------- |
+| Goal selection               | What does this actor want to do?                               | Choosing a destination does not establish a feasible route |
+| Global navigation            | Which terrain, passages and intermediate locations lead there? | A route can become crowded or temporarily blocked          |
+| Local steering and avoidance | Which immediate movement works around nearby bodies?           | Locally safe movement can stall without reaching the goal  |
+| Arrival and interaction      | Where can this actor stand, wait or use the destination?       | Several actors may compete for one usable place            |
+| Joint planning through time  | Which combination of routes avoids mutual conflicts?           | Stronger coordination can require much more computation    |
+| Locomotion and presentation  | How is movement physically and visually expressed?             | Smooth animation does not establish correct navigation     |
 
 The distinction between global navigation and local avoidance is explicit in the [ORCA paper](https://gamma.cs.unc.edu/ORCA/publications/ORCA.pdf): its office agents receive preferred velocities following globally planned routes. The avoidance method does not choose those routes for them.
 
@@ -41,7 +41,7 @@ An actor moving around another actor has not necessarily invalidated its entire 
 
 ## 3. Supreme Commander 2: cached flow fields with individual steering
 
-Elijah Emerson's firsthand [Game AI Pro chapter](https://www.gameaipro.com/GameAIPro/GameAIPro_Chapter23_Crowd_Pathfinding_and_Steering_Using_Flow_Field_Tiles.pdf), published in 2013, describes SC2's tiled flow fields. A* searches a graph of passages between sectors. Cached tiles then provide directions through the local terrain, and individual units steer using them. Tiles are associated with exit portals, allowing reuse even across different final destinations. Different movement capabilities require different cost data.
+Elijah Emerson's firsthand [Game AI Pro chapter](https://www.gameaipro.com/GameAIPro/GameAIPro_Chapter23_Crowd_Pathfinding_and_Steering_Using_Flow_Field_Tiles.pdf), published in 2013, describes SC2's tiled flow fields. A\* searches a graph of passages between sectors. Cached tiles then provide directions through the local terrain, and individual units steer using them. Tiles are associated with exit portals, allowing reuse even across different final destinations. Different movement capabilities require different cost data.
 
 An unobstructed final goal permits direct steering. A moving goal causes its tile to be rebuilt; crossing a sector boundary also revises the higher-level route, retaining reusable tiles. Changed terrain marks affected data dirty. Prioritized rebuilding is spread over time. Units can slide or be displaced without immediately requesting a complete replacement path.
 
@@ -75,7 +75,7 @@ Its historical simulator updated at 2–5 steps per second on a 3.4 GHz Pentium 
 
 ### ORCA and the boundary of a local guarantee
 
-The original [ORCA research](https://gamma.cs.unc.edu/ORCA/publications/ORCA.pdf), presented at ISRR 2009 and published in 2011, allocates reciprocal avoidance responsibility and solves a small velocity-selection problem per agent. Its guarantees depend on simplified shapes, holonomic movement, accurate positions and velocities, and cooperative adherence. Dense constraints can be infeasible; a fallback can sacrifice the preferred direction. Applying realistic turning or acceleration limits afterward removes the original strict guarantee.
+The original [ORCA research](https://gamma.cs.unc.edu/ORCA/publications/ORCA.pdf), presented at ISRR 2009 and published in 2011, allocates reciprocal avoidance responsibility and solves a small velocity-selection problem per agent. Its guarantees depend on simplified shapes, holonomic movement, accurate positions and velocities, and cooperative adherence. Dense constraints can be infeasible; the fallback minimizes constraint penetration, potentially violating avoidance constraints and abandoning the preferred direction. A collision-free velocity is then not guaranteed. Applying realistic turning or acceleration limits afterward also removes the original strict guarantee.
 
 The authors report 5,000 agents on eight 2.66 GHz Xeon Clovertown cores: 8 ms for all collision-avoidance linear programs in a circle scenario, and 15.6 ms to update the office agents. These are avoidance/agent-update measurements, not complete game frames with rich cognition.
 
@@ -113,16 +113,16 @@ This illustrates shared learned computation with individual destinations. It doe
 
 The table combines consequences visible across the cited studies with explicit analytical deductions. It describes questions to investigate, not a proposed Open Legend implementation.
 
-| Condition | Why it changes the problem |
-| --- | --- |
-| Many agents in one small area | A spatial query can still return most of the population; locality stops saving much work |
-| Opposing traffic through a narrow passage | Separate locally reasonable decisions can impede one another; some coordination may be necessary |
-| Many actors approaching one exact destination | Reaching the vicinity does not allocate standing space or access to the destination |
-| Many unique goals or movement constraints | Fewer route questions are equivalent, reducing straightforward cache reuse |
-| Rapidly changing terrain or threats | Previously valid navigation may require repeated invalidation and rebuilding |
+| Condition                                        | Why it changes the problem                                                                                 |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Many agents in one small area                    | A spatial query can still return most of the population; locality stops saving much work                   |
+| Opposing traffic through a narrow passage        | Separate locally reasonable decisions can impede one another; some coordination may be necessary           |
+| Many actors approaching one exact destination    | Reaching the vicinity does not allocate standing space or access to the destination                        |
+| Many unique goals or movement constraints        | Fewer route questions are equivalent, reducing straightforward cache reuse                                 |
+| Rapidly changing terrain or threats              | Previously valid navigation may require repeated invalidation and rebuilding                               |
 | Nonreciprocal or physically constrained movement | Local-avoidance assumptions can fail when an actor cannot or will not take its expected share of avoidance |
-| Strong fairness or arrival guarantees | High total flow does not ensure that every particular individual eventually succeeds |
-| Large perception neighborhoods | Candidate interactions increase even if the movement calculation itself stays simple |
+| Strong fairness or arrival guarantees            | High total flow does not ensure that every particular individual eventually succeeds                       |
+| Large perception neighborhoods                   | Candidate interactions increase even if the movement calculation itself stays simple                       |
 
 ### Spatial indexing changes the search, not the number of real interactions
 

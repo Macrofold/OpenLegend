@@ -1,8 +1,14 @@
 # Research
 
-| Research status           | Progress                                                                                                                                          | Last updated |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Maintained research index | Links engine/platform research and the expanded Godot community/AI review, with the browser-first milestone remaining the selected next delivery. | 2026-10-17   |
+| Research status           | Progress                                                                                                                               | Last updated |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Maintained research index | Links engine/platform and crowd/individual-simulation research, with the browser-first milestone remaining the selected next delivery. | 2026-10-23   |
+
+## Crowds and individually simulated actors
+
+The [crowd and individual-simulation research collection](crowds-and-individual-simulation/README.md) investigates UEBS2's GPU crowd claims, shared navigation and local motion, persistent game populations, scientific agent simulation, language-model cognition, and separate rendering/execution costs.
+
+Start with the [research synthesis](crowds-and-individual-simulation/README.md), then the [UEBS2 evidence](crowds-and-individual-simulation/uebs2.md) and [Open Legend implications](crowds-and-individual-simulation/open-legend-implications.md). The [evidence and performance guide](crowds-and-individual-simulation/evidence-and-performance.md) keeps population counts attached to their hardware, cadence and measured workload. This is completed desk research, not a selected architecture, implementation plan or capacity benchmark.
 
 ## Game engines and platforms
 
