@@ -45,7 +45,7 @@ A small **Noticed** surface extends the existing sensory/caption presentation. I
 | Currently seen body, identity unknown | A permitted silhouette/representation and a label such as “Figure” or “Hare” only when that classification was earned | Inspect, approach, or choose an offered physical action against the current body. A name is not required for an otherwise permitted action. |
 | Currently seen, partly detailed subject | Only independently granted pose, appearance, equipment and activity; unknown facets use neutral art or no attachment | No detailed character asset whose texture reveals unearned clothing, face, weapon or affiliation. |
 | Current nonvisual cue | Coarse direction/region, phenomenon and words actually heard; identity only if recognized | Look, listen, investigate an evidence-bound area, or speak normally. No attackable body or exact hidden coordinate is created. |
-| Last-seen subject | Default: a stationary hollow location marker and “Last seen” with observation time; detailed frozen silhouette is optional polish | Open historical inspection or investigate the old location. No live selection ring, attack, follow, body hover or current status. |
+| Last-seen subject | Default: a hollow marker/region/bearing at the retained precision and “Last seen” with observation time; use history alone when no location is available. Detailed frozen silhouette is optional polish | Open historical inspection or investigate the old location. No live selection ring, attack, follow, body hover or current status. |
 | Last-heard or inferred subject | “Last heard” or “Suspected,” with original direction/region and supporting time | Never substitute a precise visual ghost; recognition and a hypothesis do not establish a body. |
 | Unseen current state | Absent from ordinary publication and presentation | No hidden roster, tracking metadata, hitbox, asset request or interaction side channel. |
 
@@ -76,7 +76,7 @@ These bindings are a selected future profile, not a claim about current code. Wo
 | Look independently | Hold F and point at a permitted place; Q/E turn the requested look direction while the world is focused | Submit compatible orient-once intentions. The head/receiver actually turns at its admitted rate and within its body's limits. Releasing F stops new requests, without snapping the accepted pose back. |
 | Look without holding/dragging | Look button, then select a permitted point; keyboard direction controls and Confirm | Same orientation intention. The preview marks the requested direction; the accepted gaze marker remains distinct until reached. |
 | Watch area | Watch button or area's contextual Watch choice | Preview a finite scope and purpose, then explicitly Start watching. Default Watch observes; the explicit Watch for danger preset adds the player's chosen anticipation. No default all-around watch or automatic repetition. |
-| Investigate a cue | Investigate on a permitted Noticed/history entry | Preview the original approximate search area and stopping condition, then start the offered activity. A sound with only a bearing needs a player-selected permitted place within that bearing. |
+| Investigate a cue | Investigate on a permitted Noticed/history entry | Preview the original approximate search area and stopping condition, then start the offered activity. With only a bearing, choose a permitted reachable vantage to investigate it; that vantage need not lie inside the bearing and is not the source. |
 | Listen / Scan / Inspect area | Movement & attention expansion or ordinary action browser | Use the installed finite action and its real work cost, coverage and completion rules. Listen does not increase hearing range. |
 | Equipped targeting | T; existing target button | Preserve equipped-method selection and exact target review. No release or attack until the ordinary explicit action requests it. |
 | Quick contextual action | Existing Command-click / equivalent platform gesture | Resolve the same currently offered exact method/target as the menu under CTR's opponent-specific rules. It cannot act on a historical marker. |
@@ -91,6 +91,8 @@ These bindings are a selected future profile, not a claim about current code. Wo
 WASD uses screen-ground directions captured on each movement-key change. Orbiting the camera while holding the same keys preserves the already requested world direction; a changed key combination captures the new camera basis. This permits looking around without accidentally curving a route. A small own-direction preview makes that choice visible. Camera pitch never creates vertical movement or selects a lower floor.
 
 The default Q/E gaze increments and input rate are presentation choices in the limits inventory. Construction keeps Q/E for rotating its preview and arrows for placement. No Shift-to-sprint binding is added: Shift+S/A already have meaning, and the acoustics specialist has not selected a sprint mechanic. Alternative profiles can remap bindings without inventing a new pace.
+
+The visible **Look** selector has its own keyboard scope: Left/Right change requested yaw, Up/Down requested pitch, Tab reaches installed gaze-group/assistance choices, Enter confirms, and Escape dismisses without physical change. Outside it, arrows retain camera meaning. **Head/eyes only** is the default where supported; **Turn body** explicitly previews the native work, movement and guard consequences. If the owner offers a partial result, **Use reachable direction** accepts only that displayed result. Refusal never silently adopts a limit. Show remapped hints and separate requested from actual gaze throughout.
 
 ### Admission and interruptions
 
@@ -120,7 +122,7 @@ Start Watch with a visible region/direction preview, the installed method, durat
 
 Compatible walking or guarding may carry E's finite attached watch. Its expiry ends that watch without canceling the underlying walk/guard. A changed heading, sensory capability or incompatible work can break actual coverage; the UI immediately reflects the resulting authoritative phase or ending. It neither turns the character back nor quietly renews the watch. A new watch requires an explicit new request.
 
-Listen, scan, inspect and investigate show the installed expected time and real interruption rules. Their completion can say **No new cue noticed in the checked area** with time/coverage. It cannot say **Nobody is there**. Incomplete work, obstructed coverage and no additional evidence are distinct outcomes. Neither repeated clicking nor opening several panels accumulates extra sensory exposure.
+Listen, scan, inspect and investigate show the installed expected time and real interruption rules. A spatial method may report **No new cue noticed in the checked area** with its actual time/coverage. Ambient Listen instead says **No new sound noticed during this listen** unless its owner supplied a spatially checked result. Neither can say **Nobody is there**. Incomplete work, obstructed coverage and no additional evidence are distinct outcomes. Neither repeated clicking nor opening several panels accumulates extra sensory exposure.
 
 ## Readable sensory and combat feedback
 
@@ -128,12 +130,12 @@ Listen, scan, inspect and investigate show the installed expected time and real 
 | --- | --- | --- |
 | Own posture/pace | Confirmed standing/crouched and ordinary/quiet choices; permitted cause of restriction | “Hidden,” “silent,” or an NPC detection percentage derived from those choices |
 | Own movement sound | Actual self-perceived/admitted noise description when supplied, with meaningful material/equipment cause only if known | Client noise calculation or a meter of whether an unseen animal heard it |
-| Weak sound | Neutral phenomenon such as “Faint steps” or “A rustle,” approximate direction/region and original hearing time | “Enemy nearby,” exact range, actor count or species beyond the evidence |
+| Weak sound | Supplied neutral phenomenon such as “Sounds like footsteps” or “A rustle,” approximate direction/region and original hearing time; an identical machine rhythm remains plausible | “Enemy nearby,” exact range, actor count or species beyond the evidence |
 | Recognized voice | Permitted known name or familiarity description, actual heard fragment and rough direction if available | Live body, mouth animation, unseen equipment, exact origin or unheard words |
 | Weak visual cue | Authorized movement/shape/region with uncertainty | Full colored faction outline or distinctive sprite reconstructed from a hidden asset identifier |
 | Threatening cue | The noticed movement, words or contact and available reaction choices | Global “enemy sees you,” hidden suspicion/readiness bar or automatic hostile classification |
 | Own preparation | Actual preparing/maintaining/ended state, method, scope and time; incomplete information replaces an unsupported ready claim with “Preparation information unavailable” | Promise that an attack will miss or cannot surprise; treating incomplete information as unprepared or safe |
-| Own received warning | “Warning heard” for an actually noticed warning; “Expecting danger from this approach” only for its registered anticipation, with permitted scope/evidence | A hidden source identity, guaranteed defense, or a countdown of private warning eligibility |
+| Own received warning | Channel-appropriate supplied wording such as “Warning heard” or “Threatening movement noticed”; “Expecting danger from this approach” only for registered anticipation, with permitted scope/evidence | A hidden source identity, guaranteed defense, or a countdown of private warning eligibility |
 | Startle / fear effects | Own current bodily condition, admitted mechanical consequences and supplied recovery timing; a finite startle ending leaves independently applicable effects visible | Claims about the human user's feelings, another person's private emotion, forced retreat, invented persistent-effect countdown or a fake input lock |
 | Surprise aftermath | Own permitted “Caught off guard” outcome and actual body/result information | Attacker-side confirmation of another character's private lack of preparedness |
 | Combat result | Only personally permitted hit/defense/injury facts from the committed result | Hidden exact damage/health, target identity, or a guaranteed surprise bonus before contact |
@@ -147,6 +149,8 @@ Lethal-action review uses the maximum harm authorized by the combat preview, inc
 ### Darkness, periphery, cover and art
 
 The world determines whether the character detects a body or a particular detail, using the selected physical vision model. The renderer depicts only the resulting permitted facets. Raising brightness, changing graphics quality, orbiting, zooming, read-through or removing aesthetic blur must not grant more facts.
+
+Earned appearance distinctions must also be readable. If art cannot depict a supported distinguishing feature, supply its permitted qualitative description through inspection/cue text. Do not make observably different faces indistinguishable merely because they share a sprite, or invent a distinction for actually matching features. A unique ID-coded portrait is not a substitute for perceived appearance.
 
 Keep known terrain readable enough to navigate. Use dimmer material/value treatment to suggest darkness, rather than making essential controls or already permitted information illegible. Peripheral detection can present a vague movement before recognition; moving actual gaze can improve evidence through the world. Cover and low posture can change sightlines without guaranteeing concealment. A camera-side obstruction may be made transparent for an already permitted body; a character-side obstruction never is.
 
@@ -183,9 +187,9 @@ The person's body heading and head/gaze can differ while walking. Show the head 
 
 ### G-J03 — Footsteps beyond a wall; wrong person or nobody
 
-The Noticed row says, for example, **Steps · heard to the right from your previous position**, with only the available bearing/region. The wall remains readable scenery; no target appears behind it.
+The Noticed row says, for example, **Sounds like footsteps · heard to the right from your previous position**, with only the available bearing/region. The wall remains readable scenery; no target appears behind it. A mechanism producing the same received rhythm remains a possible explanation.
 
-Choose Investigate. If the sound has no range, choose a visible/known reachable place within its indicated direction; the UI does not guess an exact origin. Review the finite search scope and start. New sound/sight can update evidence; retargeting is an explicit admitted choice.
+Choose Investigate. If the sound has no range, choose a permitted reachable vantage or known place from which to investigate the indicated area. A useful corner/doorway can lie beside or opposite the original bearing. Show that historical bearing separately; the chosen endpoint is not a source estimate. Review the finite search scope and start. New sound/sight can update evidence; retargeting is an explicit admitted choice.
 
 A person found there is a newly perceived individual, not automatically the source of the earlier steps. If the search ends without new evidence, show what was checked and when. The player may stop, ask the person, broaden the search through another explicit action, or leave. No “area clear” guarantee or hidden-source pursuit is allowed.
 
@@ -221,7 +225,7 @@ An already admitted evade keeps its frozen path and duration; a newly chosen end
 
 ### G-J09 — Lose visual contact
 
-A person walks behind cover. Remove their current body details, targeting and live animation; stop interpolation at the last permitted sample. If history is authorized, replace them with a hollow **Last seen** marker at that historical point.
+A person walks behind cover. Remove their unsupported current body details, targeting and live animation; stop interpolation at the last permitted sample. If history is authorized, show **Last seen** at retained precision: a hollow marker for an admitted point, a region/bearing cue when that is all that was observed, or a history-list entry without a world marker when no useful location remains. Never infer hidden feet or a precise region center for a ghost. An independently heard voice can continue as its own approximate cue.
 
 The open inspector changes to historical content in place and disables current-body commands. Camera orbit, cursor hover, asset completion and a delayed inspection response cannot restore the live person. A later real observation can establish a new current contact; use the identity owner's association, not matching clothing or proximity, to connect records.
 
