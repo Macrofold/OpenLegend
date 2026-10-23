@@ -1,8 +1,8 @@
 # Preparedness and surprise — feature specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | Specialist design is complete; SUR01–SUR09 retain implementation, integration and gameplay qualification. | 2026-10-23 |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Specialist design is complete; SUR01–SUR09 retain implementation, integration and gameplay qualification. | 2026-10-23   |
 
 ## Purpose and scope
 
@@ -28,12 +28,12 @@ These are selected design and playability scenarios, with composing content subj
 
 ## Four questions, four answers
 
-| Question | Meaning | Owner |
-| --- | --- | --- |
-| What reached this character? | Personally acquired sight, sound, felt contact or understood warning, at its original precision/time. | Perspective A and physical B/C producers |
-| Was there sufficient anticipation? | Registered relevant warning or a genuinely maintained method, with the required bodily capacity and lead. | Existing personal encounters and E's active preparation |
-| Could this hit be avoided or reduced? | Actual reach, path, collision, shield coverage and admitted evasion. | Existing combat, spatial and body owners |
-| How does the experience affect them? | Native startle and later supported emotion, including composure and mechanical adjustments. | Emotional physiology D |
+| Question                              | Meaning                                                                                                   | Owner                                                   |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| What reached this character?          | Personally acquired sight, sound, felt contact or understood warning, at its original precision/time.     | Perspective A and physical B/C producers                |
+| Was there sufficient anticipation?    | Registered relevant warning or a genuinely maintained method, with the required bodily capacity and lead. | Existing personal encounters and E's active preparation |
+| Could this hit be avoided or reduced? | Actual reach, path, collision, shield coverage and admitted evasion.                                      | Existing combat, spatial and body owners                |
+| How does the experience affect them?  | Native startle and later supported emotion, including composure and mechanical adjustments.               | Emotional physiology D                                  |
 
 A failed defense answers only the third question; it does not prove inadequate warning.
 
@@ -58,17 +58,17 @@ Rear angle, unfamiliarity, starting combat with a previously unknown person, tem
 
 ## Chronology players can rely on
 
-| Stage | Consequence |
-| --- | --- |
-| Proposed/refused attack | No warning or preparation is invented. |
-| Admitted approach | Others receive only physical evidence they actually acquire. |
-| Wind-up/aim | Readable weapon/body preparation may warn; an idle armed person or familiar identity alone does not. |
-| Melee attempt/projectile release | Existing permission and attacker mechanics apply. Flight does not freeze the victim's surprise at release. |
-| Flight | Personally perceived motion, an actual authored travel cue or understood warning can allow registration while the shooter remains unknown. |
-| Before outcome consequences | Settle due work and capture the actual victim's prior information/preparation. Evaluate expectedness separately from hit/defense. |
-| Miss/block/interception/hit | Preserve the ordinary result. The designated opportunity is spent even on miss, block or zero injury; it cannot create damage or be saved for a better result. |
-| Contact/injury/startle | Commit through existing owners. This impact's own evidence or shock cannot change its earlier classification or mechanics. |
-| Later attacks | Use genuinely earlier evidence/effects with the required elapsed registration time. |
+| Stage                            | Consequence                                                                                                                                                    |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Proposed/refused attack          | No warning or preparation is invented.                                                                                                                         |
+| Admitted approach                | Others receive only physical evidence they actually acquire.                                                                                                   |
+| Wind-up/aim                      | Readable weapon/body preparation may warn; an idle armed person or familiar identity alone does not.                                                           |
+| Melee attempt/projectile release | Existing permission and attacker mechanics apply. Flight does not freeze the victim's surprise at release.                                                     |
+| Flight                           | Personally perceived motion, an actual authored travel cue or understood warning can allow registration while the shooter remains unknown.                     |
+| Before outcome consequences      | Settle due work and capture the actual victim's prior information/preparation. Evaluate expectedness separately from hit/defense.                              |
+| Miss/block/interception/hit      | Preserve the ordinary result. The designated opportunity is spent even on miss, block or zero injury; it cannot create damage or be saved for a better result. |
+| Contact/injury/startle           | Commit through existing owners. This impact's own evidence or shock cannot change its earlier classification or mechanics.                                     |
+| Later attacks                    | Use genuinely earlier evidence/effects with the required elapsed registration time.                                                                            |
 
 Every projectile uses its actual collision victim's information. A prepared intended target does not protect an unwary bystander; an unwary intended target does not impose surprise on a prepared interceptor. Released flight retains its ordinary consequences after the shooter dies, leaves or changes control.
 
@@ -102,20 +102,20 @@ Correction removes dependent future support without undoing committed harm or sh
 
 ## Required experience scenarios
 
-| Scenario | Useful outcome and meaningful failure |
-| --- | --- |
-| Unknown doorway | Fulfilled anticipation/guard prevents surprise from its covered entrance without identifying the attacker; an uncovered path/height can still fail. |
-| Arrow warning | Warning registers too late to dodge but early enough to prevent extra surprise injury. |
-| Trusted visitor | Familiarity does not protect against betrayal; a genuinely perceived wind-up can. Later relationship judgement remains independent. |
-| Busy rescuer | Native registration works while action/cognition is busy; moving, defending or continuing remains a separate choice. |
-| Prepared interceptor | A companion takes the real contact using their own warning and protection, without needing the archer's identity. |
-| Multiple attackers | Early independent hits can qualify together; after attack evidence registers, identity changes alone do not renew surprise. |
-| Break contact and escape | Losing sight removes live targeting; a quick return does not erase expectation. Leaving with the objective can be the successful outcome. |
-| Noisy diversion | Actual investigation can open a route, while registered danger may sacrifice surprise damage. Noise neither proves an enemy nor forces everyone to turn. |
-| Wary animal | Actual sensing/native alertness can prevent surprise without memory or a model call; a failed hunt can become flight and a decision to stop pursuit. |
-| Rest/new life | Waking injury uses the pre-wake state. A replacement life receives no predecessor's preparation or receipts. |
-| Pause/speed/save | Identical simulated chronology has the same result at 1×/3×/8× and across pause/current-format reload. |
-| Fair shared play | Private readiness never appears in previews. Permission/lethal review accounts for possible amplified harm without revealing hidden awareness. |
+| Scenario                 | Useful outcome and meaningful failure                                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unknown doorway          | Fulfilled anticipation/guard prevents surprise from its covered entrance without identifying the attacker; an uncovered path/height can still fail.      |
+| Arrow warning            | Warning registers too late to dodge but early enough to prevent extra surprise injury.                                                                   |
+| Trusted visitor          | Familiarity does not protect against betrayal; a genuinely perceived wind-up can. Later relationship judgement remains independent.                      |
+| Busy rescuer             | Native registration works while action/cognition is busy; moving, defending or continuing remains a separate choice.                                     |
+| Prepared interceptor     | A companion takes the real contact using their own warning and protection, without needing the archer's identity.                                        |
+| Multiple attackers       | Early independent hits can qualify together; after attack evidence registers, identity changes alone do not renew surprise.                              |
+| Break contact and escape | Losing sight removes live targeting; a quick return does not erase expectation. Leaving with the objective can be the successful outcome.                |
+| Noisy diversion          | Actual investigation can open a route, while registered danger may sacrifice surprise damage. Noise neither proves an enemy nor forces everyone to turn. |
+| Wary animal              | Actual sensing/native alertness can prevent surprise without memory or a model call; a failed hunt can become flight and a decision to stop pursuit.     |
+| Rest/new life            | Waking injury uses the pre-wake state. A replacement life receives no predecessor's preparation or receipts.                                             |
+| Pause/speed/save         | Identical simulated chronology has the same result at 1×/3×/8× and across pause/current-format reload.                                                   |
+| Fair shared play         | Private readiness never appears in previews. Permission/lethal review accounts for possible amplified harm without revealing hidden awareness.           |
 
 [Technical acceptance](preparedness-and-surprise-tech-design.md#acceptance-scenarios) covers positive, negative and adversarial boundaries. These are qualification requirements, not reported passes; existing scenarios can cover multiple assertions.
 
@@ -123,15 +123,15 @@ Correction removes dependent future support without undoing committed harm or sh
 
 Review covered all 42 repertoire file scopes and relevant entries, all 25 combination scenes, optional world profiles and existing stealth/combat audits. It does not claim a reread of every unrelated proposal or new external research. The [shared audit](stealth-awareness-repertoire-review.md) remains the collection-wide owner.
 
-| Existing material | Selected connection |
-| --- | --- |
-| [Combat/rescue](../repertoires/combat-rescue.md): CR-050/051/058/064/065/069/077/078/084/244/248/253/256 | Facing/escape lanes, voluntary interposition, entrance defense, warning without identity, recoverable ambush and simultaneous-contact chronology |
-| [Abilities](../repertoires/abilities-progression.md): AP-049–052/245/255/261 | Competence distinct from anticipation; acknowledged watch handoff; intermittent checks preserve uncertainty |
-| [Mechanics](../repertoires/mechanics.md): MEC-012/018/083/094/247/252/263–266/268/270 | Setup/release, real decoys, recovery/replay integrity, busy actors with choices, affection/readiness/allegiance separated |
-| [Traits](../repertoires/traits.md): TR-006/141–147/151–156/158–159; [psychology](../repertoires/psychology-behavior.md): PB-008/010/181/188/195 | Contextual calm/courage/attention; no trait-text immunity, confidence meter or forced fear |
-| [Relationships](../repertoires/relationships.md): RSH-146/162/166/172–176/278/282/284 | Actual warning/handoff, harmless surprise, betrayal and protective disagreement without forced trust effects |
-| [Adventure](../repertoires/adventure-discovery.md): AD-046/051/058/254/311–312; [bodies](../repertoires/bodies-species.md): BSP-044–046/056/260 | Complete hunting reward, refuge, identity uncertainty, differing senses and native animals |
-| [Signals](../repertoires/languages-knowledge.md): LKN037/134/234/273–274; [delegation](../repertoires/automation-creators.md): ACR-051/054/055/059–060 | Accessible received warnings, dated information, finite watch, voluntary relief and local knowledge |
+| Existing material                                                                                                                                      | Selected connection                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Combat/rescue](../repertoires/combat-rescue.md): CR-050/051/058/064/065/069/077/078/084/244/248/253/256                                               | Facing/escape lanes, voluntary interposition, entrance defense, warning without identity, recoverable ambush and simultaneous-contact chronology |
+| [Abilities](../repertoires/abilities-progression.md): AP-049–052/245/255/261                                                                           | Competence distinct from anticipation; acknowledged watch handoff; intermittent checks preserve uncertainty                                      |
+| [Mechanics](../repertoires/mechanics.md): MEC-012/018/083/094/247/252/263–266/268/270                                                                  | Setup/release, real decoys, recovery/replay integrity, busy actors with choices, affection/readiness/allegiance separated                        |
+| [Traits](../repertoires/traits.md): TR-006/141–147/151–156/158–159; [psychology](../repertoires/psychology-behavior.md): PB-008/010/181/188/195        | Contextual calm/courage/attention; no trait-text immunity, confidence meter or forced fear                                                       |
+| [Relationships](../repertoires/relationships.md): RSH-146/162/166/172–176/278/282/284                                                                  | Actual warning/handoff, harmless surprise, betrayal and protective disagreement without forced trust effects                                     |
+| [Adventure](../repertoires/adventure-discovery.md): AD-046/051/058/254/311–312; [bodies](../repertoires/bodies-species.md): BSP-044–046/056/260        | Complete hunting reward, refuge, identity uncertainty, differing senses and native animals                                                       |
+| [Signals](../repertoires/languages-knowledge.md): LKN037/134/234/273–274; [delegation](../repertoires/automation-creators.md): ACR-051/054/055/059–060 | Accessible received warnings, dated information, finite watch, voluntary relief and local knowledge                                              |
 
 Use **The toll tower at dawn**, **The companion who changes sides**, **The quarry that learns**, **The wolf at the school gate**, and **The household after the victory** in [combinations](../repertoires/combinations.md). Their objectives/aftermath make preparation valuable beyond damage optimization. Materials, architecture, logistics, institutions, arts and optional realities provide context without becoming F requirements. No new numbered entries or priority changes are needed; collection navigation and broad Psychology-priority reconciliation remain SAD-I.
 
