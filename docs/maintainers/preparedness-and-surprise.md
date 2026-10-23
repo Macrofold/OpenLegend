@@ -2,161 +2,134 @@
 
 ## Status and ownership
 
-**SAD-F specialist design complete; implementation and qualification not started.** The [feature specification](../projects/preparedness-and-surprise-feature-spec.md) owns intended behavior, [technical design](../projects/preparedness-and-surprise-tech-design.md) owns F's contracts/algorithms and [base combat](../worlds/base/combat.md#preparedness-policy) owns selected world policy. [The limits inventory](../limits/preparedness-and-surprise.md) owns tunings/tradeoffs.
+**SAD-F design complete; implementation and qualification not started.** The [feature specification](../projects/preparedness-and-surprise-feature-spec.md) owns intended experience, [technical design](../projects/preparedness-and-surprise-tech-design.md) contracts/algorithms, [base combat](../worlds/base/combat.md#preparedness-policy) world rules, and [limits inventory](../limits/preparedness-and-surprise.md) tuning tradeoffs. This tracker owns task bodies and acceptance status. CTR retains encounter/contact/permission and independent-character owners; SA retains combined integration. SUR is distinct from PS product-scalability work.
 
-This tracker owns only surprise/registration/contact integration work. [CTR](combat-and-threat-responses.md) retains encounters, permissions, independent native/human responses and combat acceptance; [SA](stealth-awareness.md) retains cross-project integration. It does not create another combat, threat-memory, emotion or NPC-decision project. SUR identifiers are distinct from the existing PS product-scalability tasks.
+**Delivery order:** connect and exercise one natural strike with real warning or entrance preparation through ordinary damage, native startle, current-format save and permitted feedback first. Complete the ranged path with actual flight/spoken warning and collateral/interception next, then broader supported methods and qualification. Run useful feedback/playability checks as each path becomes available. Before enabling a path, all of its installed required inputs must be complete; stages do not waive any agreed scope. Use existing owners, no speculative framework or legacy compatibility work.
 
-The source baseline and five specialist pins are recorded in the technical design. They were studied without merging their branches. The design-only delivery includes no runtime changes, executable tests, benchmark, model/browser play or balance evidence.
+The technical design records the exact frozen base and A–E revisions studied without merging them. No runtime changes, executable tests, benchmark, provider/browser play or balance evidence is delivered by this design.
 
 ## SUR00 — Selected design
 
-**Status: Completed — design only.** Owner: specialist F. Dependencies: frozen SC01–SC14 and actual A–E feature/technical pairs.
+**Completed — design only.** Owner: F. Dependencies: frozen SC01–SC14 and actual A–E feature/technical pairs.
 
-- [x] Review actual combat/encounter/permission/contact/body/flight/status owners and the full CTR technical design.
-- [x] Define surprise independently of attacker familiarity, current sight, direction, defense success and response latency.
-- [x] Define authored native registration, current preparation, finite encounter continuation and genuine return to unwary.
-- [x] Specify immutable acquisition cuts, exact life/cause/outcome identities, release versus contact, multi-contact consumption and native startle ordering.
-- [x] Define actual mitigation placement, maximum-harm review, fatal-contact terminal reaction and complete-work holding.
-- [x] Specify save/reload, correction, pause/speed, controller/body change and bounded local work.
-- [x] Review all repertoire file scopes and relevant entries; retain useful warning/rescue/betrayal/hunting/escape combinations without duplicate abilities.
-- [x] Provide timestamped cases, positive/negative/adversarial acceptance, exact owner allocation and Prompt 7 disclosure semantics.
-- [x] Identify specific proposed A/E technical amendments while preserving frozen contracts; keep SA-D01 explicitly open.
-- [x] Mark only the selected F design gap complete; retain all implementation, gameplay and shared integration gates.
+- [x] Review actual combat/encounter/permission/flight/body/effect owners and full CTR design.
+- [x] Define warning versus defense, authored registration/lead, finite continuity, exact cuts and life/cause identities.
+- [x] Specify once-only damage, native startle, ordering, permission, current-format continuation and complete required work.
+- [x] Review repertoire scopes/combinations and provide exact chronology, adversarial acceptance and Prompt 7 semantics.
+- [x] Map implementation to existing owners and record A/E amendment gates without changing frozen contracts.
+- [x] Close only the selected F design gap; preserve SA-D01 and all runtime, integration and gameplay gates.
 
-**Exit:** F's product behavior is selected and implementation-ready subject to the named upstream contract dispositions/producers below. Design completion is not current implementation, a merged specialist suite or qualified gameplay.
+**Exit:** selected behavior is specified for implementation subject to the bounded upstream dispositions below; this is not delivered/qualified gameplay.
 
 ## SUR01 — Authored policy and exact typed bindings
 
-**Status: Not started.** Owner: existing domain combat/encounter policy and base-world definitions. Dependencies: SAD-F, relevant SAD-I review, SA-D02 and SA-D03 disposition.
+**Not started.** Owners: existing domain body/combat policy, base-world definitions and shared reference owners. Dependencies: SAD-F; SAD-I disposition for affected contracts only.
 
-- [ ] Add the single installed policy descriptor and validation through existing definition/reference owners; use the base-world values without engine/client/prompt copies.
-- [ ] Bind supported ordinary-assault families, exact current scoped claim/inference admission and one designated direct-outcome rule. Omitted module is neutral; malformed/incomplete installed policy is not.
-- [ ] Implement the exact F contract types/adapters using shared A/E/D identities; preserve acquisition boundary, source-family revision, immutable values and no client-submitted authority.
-- [ ] Settle A's SA-D02 exact revision representation and E's SA-D03 method-start extension with their owners before dependent current-format changes.
-- [ ] Extend maximum-harm consent facts/policy pins independently of private preparedness. Future multiple-contact families remain gated by aggregate harm review.
+- [ ] Implement [SUR-C01/C02](../projects/preparedness-and-surprise-tech-design.md#sur-c01--world-policy-and-protected-mechanism) through existing validation/definition owners, with one authored source, supported danger mappings and explicit omission versus incomplete/invalid outcomes.
+- [ ] Bind exact source/life/cause identities and maximum permissible harm without querying private victim readiness.
+- [ ] Resolve SA-D02 before the evidence-revision adapter changes and SA-D03 before dependent preparation timing. Independent policy/contact work can proceed; neither is a blanket task blocker.
 
-**Exit:** one authored policy can enable/omit/change supported F behavior; consumers share exact identities and values. No runtime default silently hides a missing definition.
+**Exit:** supported worlds can enable/omit/tune the rule through one policy, with exact shared identities and no engine/client/prompt defaults.
 
 ## SUR02 — Native warning registration and encounter continuation
 
-**Status: Not started.** Owner: combat-encounters and existing acquisition/native-exposure adapters. Dependencies: SUR01, SAI-A, relevant B/C acquisition and A/SPK meaning.
+**Not started.** Owners: combat-encounters, A acquisition and existing native exposure adapters. Dependencies: SUR01's relevant types/policy; SAI-A and relevant B/C/SPK producers.
 
-- [ ] Extend current known-pair/anonymous records with compact exact warning support, clock/conversion binding and registration/retention/settling deadlines. Do not use sight-gated personalEncounter as the mechanical query or create another threat collection.
-- [ ] Route actual directed preparation/release/attempt, felt contact and the required incoming-projectile detail through observer-permitted acquisition. Raw weak progress, hidden action labels and future collider facts cannot warn.
-- [ ] Implement B/A's actual observed incoming-motion adapter and reuse native projectile-passage producer/deduplication only where it supplies permitted proof.
-- [ ] Demonstrate A/SPK's ordinary understood current scoped warning producer; raw “Look out!” text, intelligibility or unparsed relative time alone cannot become F authority.
-- [ ] Implement native registration independent of model/memory/action availability, using exact supported general-perception/life/participation predicate and original acquisition boundary.
-- [ ] Implement six-plus-two authored continuation, true fresh renewal, complete continuous confirmation and scoped preparation postponement. Broad self-assault continuation is never prolonged by deliberate work alone. Preserve narrow exact-source continuity, actual own committed offense through recovery and mature scoped confirmation when a real attack consumes a guard; ending unused work supplies none.
-- [ ] Reconcile correction, independent support, life/block transitions, wake/reacquisition, exact duplicate causes, atomic broad/narrow sibling admission, consumed root lineage and pruning through existing nextAt/history owners. Preserve valid warning when current pairFor/re-exposure replaces its UI/recognition pair; never rebind historical source life. Native animals use compact existing references.
+- [ ] Extend existing known/anonymous encounter records with compact warning scope, source lineage and bound deadlines under [SUR-C03](../projects/preparedness-and-surprise-tech-design.md#sur-c03--warning-lifecycle-and-finite-expectation); do not use the sight-gated display query as mechanical authority.
+- [ ] Connect directed physical cues, felt contact, [observed incoming flight](../projects/preparedness-and-surprise-tech-design.md#incoming-flight-producer) and [ordinary understood warnings](../projects/preparedness-and-surprise-tech-design.md#ordinary-spoken-warning-producer) through actual permitted acquisition. Fixtures alone cannot qualify these producers.
+- [ ] Implement registration, fresh/continuous confirmation, broad versus narrow retention, scoped settling, own committed offense and mature confirmation across guard consumption using the specified body predicate.
+- [ ] Validate transient credit once and retain its reduced result. Consume A's canonical lineage through existing receipts, atomically admit sibling scopes, and preserve independent support/correct expiry across correction, sleep/wake, pair replacement and exact-life changes.
 
-**Exit:** real permitted warning can become finite preparedness without AI, and complete expiration/reset cannot be bypassed by source/weapon/control changes, repeated publication or unrelated work.
+**Exit:** real warning becomes finite preparedness without AI or duplicate threat storage; re-publication, unrelated work and identity/control changes cannot reset or renew it improperly.
 
 ## SUR03 — Complete active preparation capture
 
-**Status: Not started.** Owner: E and existing observation/guard/aim/strike/evasion/native-alert action/controller adapters. Dependencies: SUR01, SAI-E, relevant B/C, accepted SA-D03 disposition.
+**Not started.** Owners: E and existing observation/guard/aim/strike/evasion/native-alert adapters. Dependencies: SUR01's policy, SAI-E, relevant B/C and SA-D03 for the start anchor.
 
-- [ ] Supply complete immutable capture for all six installed families, with actual work identity, current fulfillment, scope, danger and source support.
-- [ ] Expose actual method start across native preparing→maintaining transition; preserve genuine breaks and ignore harmless plan revisions. Bind the method's F policy/normal-clock durations in its existing continuation and copy complete per-method timing into F's immutable consumer input.
-- [ ] Apply exact lead anchors: physical method start plus native readiness for shield/aim/strike/evasion; achieved fulfillment for observation/native-alert. Guard readiness is the later of its native boundary and F lead, not two successive delays.
-- [ ] Match original source/region/approach/own-motion scopes against actual contact geometry using existing spatial predicates; preserve height, uncertainty and original frames.
-- [ ] End dependent coverage at Stop/expiry/replacement/actual break; forbid stored scan sectors and invented residual alertness. Blocked locomotion is not automatically blocked native alertness.
-- [ ] Return incomplete for missing required family work; do not return a mechanically meaningful empty set.
+- [ ] Supply complete immutable capture for all six installed families under [active preparation](../projects/preparedness-and-surprise-tech-design.md#active-preparation-and-matching), including actual fulfillment, scopes, constraints and break times.
+- [ ] Bind method start/policy/clock/lead by exact work **and physical family**; a guard and head watch sharing one action must retain independent timing. Preserve starts across native phase transitions, not genuine breaks.
+- [ ] Resolve current and retained coverage through existing spatial predicates, retaining original frame/uncertainty and exact intersections. Persist only the reduced clip needed for continuation.
+- [ ] End actual coverage on Stop/expiry/replacement/break, with no banked scan sectors. Missing required capture is incomplete; blocked motion alone does not negate native alertness.
 
-**Exit:** a truly maintained unknown-entrance defense works; ordinary looking, proposed work, unrelated hunting and expired coverage do not become universal preparedness.
+**Exit:** unknown-entrance preparation works with the correct lead, while ordinary looking, proposed/approaching work and unrelated hunting cannot grant universal readiness.
 
 ## SUR04 — Shared attack/contact, consumption and permission
 
-**Status: Not started.** Owner: combat-consent, kernel/strikes, ranged, contact-defense and living. Dependencies: SUR01–03 and complete D preparation port.
+**Not started.** Owners: combat-consent, both kernel melee paths, strikes, ranged, contact-defense and living. Dependencies: relevant SUR01–03 and D's complete reaction/mechanics interfaces.
 
-- [ ] Integrate both actual melee paths at their irreversible attempt and the actual projectile-collider path at contact.
-- [ ] Freeze attack-side profile/damage/source life/policy/origin/group/carrier at attempt/release; capture actual victim evidence/work before body/guard mutation.
-- [ ] Evaluate surprise independently of hit/defense. Apply the authorized factor once to eligible raw direct injury before shield/body arithmetic.
-- [ ] Spend the first designated outcome on miss/block/zero as well as injury, retain decision/provenance/arithmetic in the existing native outcome and reject conflicting replay.
-- [ ] Keep source release origin distinct from advancing flight position; preserve collateral and interception policy, recovery, trajectory and prior accuracy draws.
-- [ ] Revalidate permission/maximum-harm review before commitment, without hidden-readiness queries or projectile contact-time re-prompt.
-- [ ] Fence/stage nested body/event acquisition in the existing contact transaction so its own impact cannot enter its evidence cut and required D/receipt work is coherent before publication.
-- [ ] Leave sweep/burst/piercing unsupported until their native owner supplies declared designation, per-life consumption, continuing carrier lifetime and aggregate consent. Group splitting cannot create bonuses.
+- [ ] Implement [native evaluation order](../projects/preparedness-and-surprise-tech-design.md#native-evaluation-order): complete melee captures before its irreversible draw; bind ranged release once; select actual projectile collision before pre-contact capture/mutation.
+- [ ] Apply [damage/consumption](../projects/preparedness-and-surprise-tech-design.md#damage-placement-and-outcome-consumption) in the shared contact owner and existing terminal receipts, including misses, blocks, zero injury, collateral and interception.
+- [ ] Include maximum surprise harm in precommit permission/lethal review without a hidden-readiness oracle or released-shot re-prompt. Preserve immutable release origin, trajectory, recovery and sampled results.
+- [ ] Stage contact/body/reaction results before dependent nested acquisition/publication; retain compact outcome/provenance and reject conflicting replay.
+- [ ] Keep future multi-contact families behind the explicit extension gate. Add their bookkeeping with an actual producer, not to current single-contact attacks.
 
-**Exit:** one natural strike and one actual ranged collision complete the full real path exactly once, including miss/protection/collateral/fatal cases. No second combat or damage engine exists.
+**Exit:** both real melee paths and actual ranged collision complete exactly once through existing damage owners, including fatal outcomes.
 
 ## SUR05 — Emotion cause and existing mechanics integration
 
-**Status: Not started.** Owner: D's native reaction, status/contribution and effective-parameter owners with contact integration. Dependencies: SUR04, SAI-D and D/F integration.
+**Not started.** Owners: D's native reaction, status/contribution and effective-parameter owners. Dependencies: SUR04 with SAI-D integration.
 
-- [ ] Supply unexpected-attack-contact only for a real surprising body/own-shield contact, with original exact cause/outcome/life and installed reaction pin.
-- [ ] Preserve D's admitted/replayed/inapplicable/incomplete/conflict meanings and terminal no-effect receipt, including a life ended by the same contact.
-- [ ] Keep all inputs of this contact fixed before its new shock; release dependent acquisition only after coherent harm/effect/receipts.
-- [ ] Retain D's sole Composure/curve/fear aggregation ownership and existing melee-attempt, ranged-release and new-evasion sampling boundaries.
-- [ ] Use selected conditionAdjustment none with generalized fear; add no surprise accuracy/evasion/resistance or running-speed penalty.
-- [ ] Route actual perceived near misses through A/C's abrupt-cue family; an unperceived miss or protected intended target gets no phantom contact reaction.
+- [ ] Supply the [exact unexpected-contact cause](../projects/preparedness-and-surprise-tech-design.md#startle-producer-to-d) only for real surprising body/own-shield contact; leave actual noncontact cues with A/C.
+- [ ] Preserve D's admitted/replayed/inapplicable/incomplete/conflict results, including the terminal no-effect receipt for a life ended by that contact.
+- [ ] Sample existing mechanics at their declared attempt/release/new-evasion boundaries. Prevent same-impact feedback and duplicate fear adjustment; D alone owns emotion strength/duration/composure, with no automatic running-speed penalty.
 
-**Exit:** native contact shock works for supported bodies without AI, duplicates and fatal outcomes remain terminal, and no same-impact or double-penalty feedback occurs. SA-D01 remains separately bounded.
+**Exit:** supported bodies receive one coherent native consequence without AI, duplicate shock, lost terminal results or a second fear calculation. SA-D01 remains separate.
 
 ## SUR06 — Save, deadlines and deterministic continuation
 
-**Status: Not started.** Owner: existing serialization/validation/world-record, temporal-boundary and participant continuation owners. Dependencies: SUR02–05.
+**Not started.** Owners: existing serialization/current validation, world records, temporal boundaries and participant continuation. Dependencies: relevant SUR02–05 records.
 
-- [ ] Update all current-format writers/readers/validators together for encounter warning, actual method start, bound flight and committed outcome/receipt fields.
-- [ ] Persist original acquired/ready/retention/settling times, admitted normal-clock conversion/durations, life/policy/source pins and flight release origin; rebuild only derived indexes.
-- [ ] Include required registration and expiry boundaries in existing nearest-deadline accounting, with normal-speed-second conversion exactly once.
-- [ ] Make partial contact/save/retry recover one coherent pre-contact or committed state, including nested acquisition and D terminal results.
-- [ ] Reject stale resumed body/source/policy/work results; preserve already released flight semantics and no cross-life continuation.
-- [ ] Qualify 1×/3×/8×, pause, step subdivision, save/reload and same-time canonical order without a new scheduler, migration or fallback record shape.
+- [ ] Update current readers/writers/validators together for the [minimal durable state](../projects/preparedness-and-surprise-tech-design.md#current-format-durable-state), including original clock/deadline bindings, family-specific method starts, release origin and existing outcome receipts.
+- [ ] Use existing nearest-deadline/hold owners and rebuild only derived indexes. Save/retry represents one coherent pre-contact or committed result, without retaining full preparation proofs in warnings.
+- [ ] Apply the specified [invalidation matrix](../projects/preparedness-and-surprise-tech-design.md#invalidation-matrix), preserving released effects and exact-life boundaries while rejecting stale work.
+- [ ] Qualify normal-speed conversion, 1×/3×/8×, pause, step subdivision, save/reload and canonical same-time order through existing paths.
 
-**Exit:** restored or resumed work cannot change qualification, double damage, gain extra warning time or revive expired/sleep-retired preparedness.
+**Exit:** continuation cannot reroll, double damage, gain warning time or revive expired/sleep-retired preparedness. No migrations or compatibility schemas are needed.
 
 ## SUR07 — Prompt 7 permitted feedback
 
-**Status: Not started.** Owner: G with existing server view/protocol/client action/history feedback. Dependencies: SUR02–06 and SAD-G/SAI-G.
+**Not started.** Owners: G and existing server view/protocol/client action/history feedback. Dependencies: relevant SUR02–06 and SAD-G/SAI-G.
 
-- [ ] Implement the [semantic disclosure port](../projects/preparedness-and-surprise-tech-design.md#prompt-7-interface) through existing permitted references and DTOs.
-- [ ] Distinguish own preparing/maintaining/ended/not-enough-information and actually noticed/registered warning without promising a successful block.
-- [ ] Show caught-off-guard aftermath only for an actually permitted own contact/outcome; preserve anonymous source and historical location.
-- [ ] Prevent enemy readiness, guaranteed-surprise previews, private counter/timer/reason or an unperceived miss from leaking through any ordinary surface.
-- [ ] Reconcile full/patch/history/tooltips/audio/accessibility/reconnect/control/life/creator transitions with current source revocation.
-- [ ] Verify maximum-harm consent remains stable when only hidden victim readiness changes.
+- [ ] Map the [semantic disclosure interface](../projects/preparedness-and-surprise-tech-design.md#prompt-7-interface) through existing permitted identities: own preparing/maintaining/ended/incomplete work, noticed/registered warning and actual caught-off-guard aftermath.
+- [ ] Preserve anonymous source/historical location and physical-defense uncertainty. Do not expose private enemy readiness, timers, reasons, hidden geometry, guaranteed-2× previews or unperceived misses.
+- [ ] Reconcile full/patch/history/tooltips/audio/accessibility and reconnect/control/life/creator transitions, including stable maximum-harm consent when hidden readiness alone changes.
 
-**Exit:** ordinary users can understand and use preparation/warnings and the outcome without learning a concealed source or another person's private preparedness.
+**Exit:** players can understand preparation and outcomes without discovering concealed enemies or another person's private readiness.
 
 ## SUR08 — Native integration, adversarial correctness and workload
 
-**Status: Not started.** Owner: affected existing test/verification owners; SA/CTR coordinate cross-project gates. Dependencies: SUR01–07 and actual integrated producer/consumer paths.
+**Not started.** Owners: affected existing verification owners, coordinated by SA/CTR. Dependencies: integrated paths from SUR01–07; check each useful slice as it becomes available.
 
-- [ ] Turn [T01–T28](../projects/preparedness-and-surprise-tech-design.md#deterministic-chronology-examples) and [SUR-T01–68](../projects/preparedness-and-surprise-tech-design.md#acceptance-scenarios) into meaningful native/server/storage checks at real callers.
-- [ ] Cover exact cut membership, same timestamp order, correction, stale/incomplete work, future-family admission refusal, current shield/evasion timing and raw-versus-final damage arithmetic.
-- [ ] Cover all actual body/controller/native animal/PvP/collateral/lifecycle cases, including rest, fatal contact, replaced life and released source loss.
-- [ ] Prove ordinary understood warning and actual observed flight paths; a hand-built warning fixture alone is insufficient.
-- [ ] Exercise omission and a materially different supported world/body without human-memory, visual, fear or multiplier assumptions.
-- [ ] Measure cold/warm/many-pair/many-to-one/projectile/correction/restore costs and retained bytes through the real path; preserve complete required work under existing budgets with no top-N warning truncation.
-- [ ] Recheck source changes since the pinned baseline and preserve separate AC09.6/CTR obligations; no F claim silently closes their unrelated gaps.
+- [ ] Cover [T01–T28](../projects/preparedness-and-surprise-tech-design.md#deterministic-chronology-examples) and [SUR-T01–SUR-T68](../projects/preparedness-and-surprise-tech-design.md#acceptance-scenarios) through real callers. Reuse/group existing scenarios and boundary variations; these IDs are coverage, not 96 mandatory new tests.
+- [ ] Include actual flight/spoken-warning producers, current shield/evasion/body rules, permission/collateral, native animals, fatal/rest/life cases and coherent stale/incomplete/retry behavior. Unsupported future families need admission refusal coverage, not speculative implementations.
+- [ ] Exercise omission and a materially different supported world/body without assuming human memory, vision, fear or the bundled multiplier.
+- [ ] Measure actual cold/warm, many-pair/many-to-one, projectile, correction and restore paths under [work/performance](../projects/preparedness-and-surprise-tech-design.md#work-latency-and-performance), including candidates visited and retained bytes; never truncate required warnings to pass a budget.
+- [ ] Recheck source changes since the pinned baseline; preserve separate AC09.6/CTR obligations and record results/limits in existing verification owners.
 
-**Exit:** integrated correctness and workload evidence supports the selected offered scope. Update existing verification owners with results and material limits, not a new duplicate acceptance register.
+**Exit:** meaningful integrated evidence supports the offered scope and workload; no helper-only result or duplicate acceptance register substitutes for it.
 
 ## SUR09 — Playability, independent characters and balance
 
-**Status: Not started.** Owner: existing CTR independent-character/player/browser acceptance with world-policy maintainers. Dependencies: SUR08 and real composing content.
+**Not started.** Owners: CTR independent-character/player/browser acceptance and world-policy maintainers. Dependencies: useful integrated slices and actual composing content; final completion needs SUR08.
 
-- [ ] Observe uncoached usefulness of a spoken warning, finite entrance defense and voluntary watch handoff without compulsory vigilance clicks.
-- [ ] Exercise expected-but-unavoidable projectile damage, prepared interception, betrayal, repeated ambush/quiet return and a failed ambush becoming an escape.
-- [ ] Exercise native memoryless-animal hunting with useful recovery/harvesting/food, a dangerous response and a legitimate choice to abandon pursuit.
-- [ ] Exercise diversion's tradeoff: actual attention/route change can help escape while registered danger removes a surprise bonus in its scope.
-- [ ] Run the selected repertoire combination scenes where their prerequisites exist, including peaceful resolution and successful preparation that needs no manufactured counter-threat.
-- [ ] Qualify independent human choices, no-provider native behavior, PvP fairness, accessible feedback and end-to-end server/client continuation under actual CTR gates.
-- [ ] Record survival/counterplay, attention burden, reset readability and measured performance; adjust only authored policy with corresponding limits and affected acceptance updates.
+- [ ] Observe uncoached use of spoken warning, finite entrance defense, voluntary handoff/interception and expected-but-unavoidable damage, without compulsory vigilance clicks.
+- [ ] Exercise betrayal, brief hiding versus genuine quiet return, failed ambush-to-escape and diversion's route-versus-warning tradeoff.
+- [ ] Qualify native memoryless-animal hunting through useful recovery/harvest/food, dangerous response and a legitimate decision to abandon pursuit.
+- [ ] Use the selected [repertoire combinations](../projects/preparedness-and-surprise-feature-spec.md#repertoire-integration) where supported, including peaceful resolution and preparation allowed to succeed decisively.
+- [ ] Qualify independent human choices, no-provider native behavior, PvP fairness and accessible server/client continuation under actual CTR gates. Record survival/counterplay, attention cost, reset readability and measured performance; tune only through authored policy/limits.
 
-**Exit:** the feature is useful, understandable and enjoyable in the ordinary playable world, not merely a correct 2× helper. No mechanical test result substitutes for this gate.
+**Exit:** preparation is useful, understandable and enjoyable in ordinary play. Mechanical correctness alone does not close this gate.
 
 ## Explicit decisions and integration gates
 
-- **SA-D01 remains open:** controlled-character psychological fear producer. It does not block native warning, surprise/startle or independent supported NPC behavior.
-- **SA-D02 is proposed, not adopted:** A's exact family-specific evidence revision correction. [Decision](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation).
-- **SA-D03 is proposed, not adopted:** E must expose actual current-method start after native phase transition or accept an equally exact port; F's selected guard boundary cannot be guessed. [Decision](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition).
-- **Required implementation producers:** B/A acquired incoming-flight detail, A/SPK ordinary current scoped warning, E complete physical work, D complete mechanics/terminal receipts and local contact publication fencing.
-- **SAD-I remains open:** combined interfaces, actual integrated file paths and central repertoire navigation/priority reconciliation. SAI-F/SAI-I and all SUR delivery remain open.
+- **SA-D01 open:** D's controlled-character psychological producer; native warning/surprise/startle remains independent.
+- **SA-D02 proposed:** [exact evidence-family revisions](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation), blocking only affected reference adapters.
+- **SA-D03 proposed:** [actual method-start exposure](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition), blocking dependent timing consumers. Do not infer starts from action age or charge guard preparation twice.
+- **Required producers/integration:** B/A incoming flight, A/SPK ordinary current scoped warning, E complete methods, D complete mechanics/terminal receipts and local contact publication fencing.
+- **SAD-I/SAI-F/SAI-I open:** combined interface adoption, actual integrated paths and central repertoire/navigation reconciliation. No frozen contract is silently amended here.
 
 ## Maintained records
 
-- [Feature specification](../projects/preparedness-and-surprise-feature-spec.md).
-- [Technical design](../projects/preparedness-and-surprise-tech-design.md).
+- [Feature specification](../projects/preparedness-and-surprise-feature-spec.md) and [technical design](../projects/preparedness-and-surprise-tech-design.md).
 - [World policy](../worlds/base/combat.md#preparedness-policy) and [limits](../limits/preparedness-and-surprise.md).
 - [SA dependencies](stealth-awareness.md), [CTR ownership](combat-and-threat-responses.md), [ND11](needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity).
