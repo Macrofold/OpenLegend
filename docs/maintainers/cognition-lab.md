@@ -24,9 +24,8 @@ The design task does not authorize new automated tests. For implementation quali
 - [ ] Provision the dedicated lab PostgreSQL database and lab data directory in normal development setup. Initialize it with the same selected world's normal initializer; do not add an ordinary-use setup wizard or fall back to gameplay storage.
 - [ ] Add authenticated lab identity, explicit active scenario and revision checks. Keep gameplay pause, control, selected character, model settings, saves and live world independent.
 - [ ] Install the initial hold before any lab clock/director admission. Separate authorized driver liveness from explicit physical participation through the shared owner; the default speaker stays present without a game renderer, while real departure/removal retains its effects.
-- [ ] Provide the explicit current-format, point-in-time game-to-lab import; report source and time and then break all synchronization.
 
-**Dependencies:** existing server/repository/save ownership; no multitenancy rewrite. **Exit:** the lab and game can run in two tabs; edits, new/reset/import, hold, cancellation and load in one cannot alter the other's world or settings. Shared provider/process capacity remains honestly visible. Ordinary game startup still uses the same implementation.
+**Dependencies:** existing server/repository/save ownership; no multitenancy rewrite. **Exit:** ordinary game and the renderer-free lab initialize through the same factory with separate stores, authority and native participation. Lab startup/routing cannot change game state or settings; replacement/import isolation is qualified with CL08. Shared provider/process capacity remains honestly visible.
 
 ## CL02 — Compact desktop shell and immediate speech workflow
 
@@ -88,6 +87,7 @@ The design task does not authorize new automated tests. For implementation quali
 
 ## CL08 — Starting scenarios, checkpoints and retained runs
 
+- [ ] Provide the explicit current-format, point-in-time game-to-lab import; report source and time and then break all synchronization.
 - [ ] Implement the three distinct save intents and their labels: reusable starting scenario, current continuation checkpoint and retained evidence/run.
 - [ ] Capture one exact current applied origin automatically when a new run starts, including unsaved applied edits, without a naming dialog; reuse it for subsequent intervals and record ordered stimuli/interventions. Reset identifies its origin; New uses the normal initializer.
 - [ ] Use current-format native world save/restore for scenario/checkpoint content, including required body, action, memory, recognition and queue continuation state according to native ownership.
