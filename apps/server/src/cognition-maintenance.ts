@@ -820,6 +820,12 @@ export class CognitionMaintenance {
     beforeDispatch?: () => Promise<void>,
   ): Promise<T> {
     const c = this.service.config;
+    const sourceCurrent = this.budgetActor
+      ? this.service.privateReadFence(this.budgetActor, () => {
+          this.assertAdmission();
+          return !this.service.paused && !this.active?.signal.aborted;
+        })
+      : undefined;
     if (
       this.service.paused ||
       this.active?.signal.aborted ||
@@ -850,11 +856,16 @@ export class CognitionMaintenance {
       ))
     )
       throw new Error('Background allowance exhausted.');
-    try {
+    const validateSource = async () => {
       await beforeDispatch?.();
       this.assertAdmission();
       if (this.service.paused || this.active?.signal.aborted)
         throw new Error('Maintenance canceled before dispatch.');
+      if (sourceCurrent && !sourceCurrent())
+        throw new Error('The character’s evidence changed before dispatch.');
+    };
+    try {
+      await validateSource();
     } catch (error) {
       // Admission can change while the reservation is persisted. This receipt proves
       // no dispatch; completed/uncertain provider receipts retain normal accounting.
@@ -865,7 +876,7 @@ export class CognitionMaintenance {
     try {
       if (this.execution && !(await this.service.store.markDecisionDispatch(id)))
         throw new Error('Maintenance dispatch was already claimed.');
-      result = await execute();
+      result = await this.macrofold.withSourceValidation(validateSource, execute);
       result.receipt = normalizeReceiptCost(result.receipt);
       if (result.receipt.completionUncertain) this.executionLease?.uncertain();
       await this.service.store.settle(id, result.receipt);

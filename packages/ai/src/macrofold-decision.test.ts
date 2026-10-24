@@ -6,7 +6,7 @@ import {
   decodeJudge,
 } from './index.js';
 import type { FetchTransport, GenerateRequest, JudgeRequest } from './types.js';
-import type { MacrofoldDecisionModel } from './macrofold-decision.js';
+import type { MacrofoldDecisionConfig, MacrofoldDecisionModel } from './macrofold-decision.js';
 
 const request: JudgeRequest = {
   requestId: 'native-decision-fixture',
@@ -67,7 +67,7 @@ function fixture(
   const result = {
     run_id: options.runId ?? 'run-fixture',
     final: true,
-    execution_outcome: 'pending',
+    execution_outcome: status === 'succeeded' ? 'success' : 'failure',
     persistence_status: 'not_required',
     inference: {
       outcome: options.providerOutcome === 'uncertain' ? 'uncertain' : 'value',
@@ -163,6 +163,161 @@ function client(
 }
 
 describe('standalone Macrofold native decisions', () => {
+  it.each([
+    { recovery: false, truncated: false, maxCostUsd: 0 },
+    { recovery: true, truncated: false, maxCostUsd: 0.02 },
+    { recovery: false, truncated: true, maxCostUsd: 0 },
+  ])(
+    'uses native state/questions and retains deployment scoring evidence: %j',
+    async ({ recovery, truncated, maxCostUsd }) => {
+      const target = {
+        workspaceId: '11111111-1111-4111-8111-111111111111',
+        modelBinding: {
+          deployment_id: '22222222-2222-4222-8222-222222222222',
+          deployment_revision_id: '33333333-3333-4333-8333-333333333333',
+        },
+      };
+      const expected = structuredClone(target);
+      const value = {
+        ...raw(),
+        answers: {
+          ...raw().answers,
+          noticed: { type: 'noul', noul: 0.97, confidence: 0.93 },
+        },
+        latency_ms: 12.5,
+        truncated,
+        native_extension: { privateText: 'Do not retain arbitrary native extensions.' },
+      };
+      const f = fixture({ billingMode: 'byok', recovery, value });
+      const inference = f.terminalReceipt.result.inference;
+      Object.assign(inference, {
+        deployment: expected.modelBinding,
+        cost_attribution: {
+          basis: 'deployment',
+          deployment_id: expected.modelBinding.deployment_id,
+          infrastructure_cost_included: false,
+        },
+      });
+      inference.billing.budget_cost_micro_usd = '0';
+      inference.billing.reported_micro_usd = '0';
+      const scorer = createMacrofoldDecisionClient({
+        baseUrl: 'https://fixture.macrofold.invalid',
+        apiKey: 'fixture-only-key',
+        macrofoldDeployment: target,
+        maxCostUsd,
+        fetch: f.fetcher,
+      });
+      target.workspaceId = '44444444-4444-4444-8444-444444444444';
+      target.modelBinding.deployment_revision_id = '55555555-5555-4555-8555-555555555555';
+      const result = await scorer.judge(request);
+      expect(result).toMatchObject({
+        outcome: truncated ? 'invalid' : 'value',
+        receipt: {
+          macrofoldRequestedDeployment: expected,
+          macrofoldDeployment: {
+            deploymentId: expected.modelBinding.deployment_id,
+            deploymentRevisionId: expected.modelBinding.deployment_revision_id,
+          },
+          nativeLatencyMs: 12.5,
+          nativeTruncated: truncated,
+          providerLatencyMs: 87.25,
+          estimatedCostUsd: 0,
+          completionUncertain: false,
+        },
+      });
+      if (result.outcome === 'value')
+        expect(result.value.answers['noticed']).toEqual({
+          type: 'noul',
+          noul: 0.97,
+          confidence: 0.93,
+        });
+      else expect(result).toMatchObject({ reason: 'judgment_input_truncated' });
+      expect(result.receipt).not.toHaveProperty('native_extension');
+      expect(f.bodies).toEqual([
+        {
+          workspace_id: expected.workspaceId,
+          model_binding: expected.modelBinding,
+          input: { state: request.state, questions: request.questions },
+          limits: {
+            max_cost_micro_usd: maxCostUsd === 0 ? '0' : '20000',
+            max_output_tokens: 1024,
+            timeout_seconds: 120,
+          },
+        },
+      ]);
+      expect(f.paths).toEqual(
+        recovery
+          ? ['/v1/inferences', '/v1/runs/run-fixture', '/v1/runs/run-fixture/result']
+          : ['/v1/inferences'],
+      );
+    },
+  );
+
+  it('rejects mixed provider/deployment bindings and chat output modes at construction', () => {
+    const base = {
+      baseUrl: 'https://fixture.macrofold.invalid',
+      apiKey: 'fixture-only-key',
+      macrofoldDeployment: {
+        workspaceId: '11111111-1111-4111-8111-111111111111',
+        modelBinding: { deployment_id: '22222222-2222-4222-8222-222222222222' },
+      },
+      maxCostUsd: 0.02,
+    };
+    for (const extra of [
+      { model: 'typesafe/jev-1.13' },
+      { billingMode: 'byok' },
+      { providerConnectionId: 'different-connection' },
+      { macrofoldOutputMode: 'json_object' },
+    ]) {
+      const supplied: unknown = { ...base, ...extra };
+      expect(() => createMacrofoldDecisionClient(supplied as MacrofoldDecisionConfig)).toThrow();
+    }
+    expect(() =>
+      createMacrofoldDecisionClient({
+        baseUrl: base.baseUrl,
+        apiKey: base.apiKey,
+        model: 'typesafe/jev-1.13',
+        billingMode: 'managed',
+        maxCostUsd: 0,
+      }),
+    ).toThrow();
+  });
+
+  it('honors accepted/status/result Retry-After while recovering only the original Run', async () => {
+    const f = fixture({ recovery: true });
+    const observed: number[] = [];
+    let statusReads = 0;
+    let resultReads = 0;
+    const fetcher: FetchTransport = async (url, init) => {
+      observed.push(performance.now());
+      const response = await f.fetcher(url, init);
+      const body = await response.json();
+      const path = new URL(url).pathname;
+      if (path === '/v1/inferences')
+        return Response.json(body, { status: 202, headers: { 'Retry-After': '1' } });
+      if (path === '/v1/runs/run-fixture' && ++statusReads === 1)
+        return Response.json({ ...body, status: 'running' }, { headers: { 'Retry-After': '1' } });
+      if (path.endsWith('/result') && ++resultReads === 1)
+        return Response.json(
+          { run_id: 'run-fixture', final: false },
+          { headers: { 'Retry-After': '1' } },
+        );
+      return Response.json(body);
+    };
+    const result = await client(fetcher).judge(request);
+    expect(result.outcome).toBe('value');
+    expect(statusReads).toBe(2);
+    expect(resultReads).toBe(2);
+    expect(observed).toHaveLength(5);
+    for (const [next, previous] of [
+      [1, 0],
+      [2, 1],
+      [4, 3],
+    ] as const)
+      expect(observed[next]! - observed[previous]!).toBeGreaterThanOrEqual(990);
+    expect(f.paths.filter((path) => path === '/v1/inferences')).toHaveLength(1);
+  });
+
   it('retains submitted offered order on tied scores while the caller changes its pending rubric', async () => {
     const mutable = structuredClone(request);
     const question = mutable.questions.status;
@@ -202,7 +357,7 @@ describe('standalone Macrofold native decisions', () => {
   });
 
   it('rejects provided nonnumeric or nonfinite confidence while allowing only omission', () => {
-    for (const question of ['status', 'significance'] as const) {
+    for (const question of ['noticed', 'status', 'significance'] as const) {
       for (const confidence of [null, undefined, '0.9', NaN, Infinity]) {
         const value = raw();
         Object.defineProperty(value.answers[question], 'confidence', {
@@ -334,6 +489,18 @@ describe('standalone Macrofold native decisions', () => {
     },
   );
 
+  it('retains uncertainty when finalized inference execution contradicts its Run', async () => {
+    const f = fixture();
+    f.terminalReceipt.result.execution_outcome = 'failure';
+    const result = await client(f.fetcher).judge(request);
+    expect(result).toMatchObject({
+      outcome: 'uncertain',
+      reason: 'provider_completion_unknown',
+      receipt: { dispatched: true, completionUncertain: true, estimatedCostUsd: 0.000005 },
+    });
+    expect(f.paths).toEqual(['/v1/inferences']);
+  });
+
   it('refuses streaming before any provider request', async () => {
     const f = fixture();
     const result = await client(f.fetcher).judge({ ...request, ...JSON.parse('{"stream":true}') });
@@ -342,15 +509,18 @@ describe('standalone Macrofold native decisions', () => {
     expect(f.fetcher).not.toHaveBeenCalled();
   });
 
-  it('marks definitive admission rejection as undispatched without retry', async () => {
-    const f = fixture({ admitStatus: 402, admitCode: 'insufficient_credit' });
+  it.each([
+    { admitStatus: 402, admitCode: 'insufficient_credit' },
+    { admitStatus: 503, admitCode: 'inference_disabled' },
+  ])('marks definitive admission rejection as undispatched without retry: %j', async (options) => {
+    const f = fixture(options);
     const result = await client(f.fetcher).judge(request);
     expect(result.outcome).toBe('unavailable');
-    expect(result).toMatchObject({ reason: 'insufficient_credit' });
+    expect(result).toMatchObject({ reason: options.admitCode });
     expect(result.receipt).toMatchObject({
       dispatched: false,
       completionUncertain: false,
-      httpStatus: 402,
+      httpStatus: options.admitStatus,
     });
     expect(f.fetcher).toHaveBeenCalledOnce();
   });

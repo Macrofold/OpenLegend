@@ -13,7 +13,7 @@ import { NetworkError } from '@open-legend/network';
 
 const positiveInteger = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
 const capabilitiesSchema = z.object({
-  protocol: z.literal('openai_chat'),
+  protocol: z.enum(['openai_chat', 'systemone']),
   input_modalities: z.array(z.string().max(128)).max(32),
   chat_completions: z.boolean(),
   json_object: z.boolean(),
@@ -29,6 +29,17 @@ const capabilitiesSchema = z.object({
 const projectionSchema = z.object({
   deployment_id: z.uuid(),
   serving_revision_id: z.uuid().nullable(),
+  state: z.enum([
+    'stopped',
+    'starting',
+    'ready',
+    'degraded',
+    'stopping',
+    'failed',
+    'cleanup_pending',
+  ]),
+  admission_open: z.boolean(),
+  ready_replicas: z.number().int().nonnegative().nullable(),
   capabilities: capabilitiesSchema.nullable(),
 });
 
@@ -105,7 +116,13 @@ export async function describeMacrofoldDeployment(
     serving_revision_id: revisionId,
     capabilities,
   } = parsed.data;
-  if (!revisionId || !capabilities)
+  if (
+    !revisionId ||
+    !capabilities ||
+    !parsed.data.admission_open ||
+    !['ready', 'degraded'].includes(parsed.data.state) ||
+    parsed.data.ready_replicas === 0
+  )
     throw new ModelTargetPreparationError(
       'resource-unavailable',
       'deployment_not_ready',
@@ -295,18 +312,12 @@ export class ModelTargetPreparation {
 
   private choose(request: Preparation, description: MacrofoldDeploymentDescription) {
     const { target, schema, outputPolicy, maxOutputTokens } = request;
-    const pinned = target.modelBinding.deployment_revision_id;
-    if (
-      description.deploymentId !== target.modelBinding.deployment_id ||
-      (pinned !== undefined && pinned !== description.revisionId)
-    )
-      throw new ModelTargetPreparationError(
-        'resource-unavailable',
-        'deployment_binding_stale',
-        'The selected Macrofold deployment is not serving the explicitly pinned revision.',
-      );
     const capability = description.capabilities;
-    if (!capability.chat_completions || !capability.input_modalities.includes('text'))
+    if (
+      capability.protocol !== 'openai_chat' ||
+      !capability.chat_completions ||
+      !capability.input_modalities.includes('text')
+    )
       throw new ModelTargetPreparationError(
         'unsupported',
         'unsupported_model_capability',
@@ -357,17 +368,61 @@ export class ModelTargetPreparation {
     });
   }
 
-  async prepare(request: Preparation) {
-    request.operation.throwIfStopped();
-    const target = captureMacrofoldDeploymentTarget(request.target);
-    const retained = { ...request, target };
+  prepare(request: Preparation) {
+    const retained = { ...request };
+    return this.prepareTarget(request.target, request.operation, (target, description) =>
+      this.choose({ ...retained, target }, description),
+    );
+  }
+
+  prepareJudgment(request: {
+    target: MacrofoldDeploymentTarget;
+    maxOutputTokens: number;
+    operation: NetworkOperation;
+  }) {
+    const maxOutputTokens = request.maxOutputTokens;
+    return this.prepareTarget(request.target, request.operation, (target, description) => {
+      const capability = description.capabilities;
+      if (capability.protocol !== 'systemone' || !capability.input_modalities.includes('text'))
+        throw new ModelTargetPreparationError(
+          'unsupported',
+          'unsupported_model_capability',
+          'The selected deployment does not support native decisions.',
+        );
+      return Object.freeze({
+        macrofoldDeployment: target,
+        maxOutputTokens: Math.min(maxOutputTokens, capability.max_output_tokens),
+      });
+    });
+  }
+
+  private async prepareTarget<T>(
+    requested: MacrofoldDeploymentTarget,
+    operation: NetworkOperation,
+    select: (target: MacrofoldDeploymentTarget, description: MacrofoldDeploymentDescription) => T,
+  ): Promise<T> {
+    operation.throwIfStopped();
+    const target = captureMacrofoldDeploymentTarget(requested);
+    const choose = (description: MacrofoldDeploymentDescription) => {
+      const pinned = target.modelBinding.deployment_revision_id;
+      if (
+        description.deploymentId !== target.modelBinding.deployment_id ||
+        (pinned !== undefined && pinned !== description.revisionId)
+      )
+        throw new ModelTargetPreparationError(
+          'resource-unavailable',
+          'deployment_binding_stale',
+          'The selected Macrofold deployment is not serving the explicitly pinned revision.',
+        );
+      return select(target, description);
+    };
     const entry = this.entry(target);
     let fetched = false;
     if (!entry.description || entry.stale) {
       if (entry.retryAfterMs > this.now()) {
         if (entry.failure) throw entry.failure;
       } else {
-        await this.refresh(target, entry, request.operation);
+        await this.refresh(target, entry, operation);
         fetched = true;
       }
     }
@@ -378,7 +433,7 @@ export class ModelTargetPreparation {
         'Deployment capability preparation is temporarily unavailable.',
       );
     try {
-      return this.choose(retained, entry.description);
+      return choose(entry.description);
     } catch (error) {
       // Only an unpinned cached limitation may be outdated. Refresh the still-unsubmitted
       // request once; a pin mismatch and local invalid settings never trigger fallback.
@@ -394,9 +449,9 @@ export class ModelTargetPreparation {
         }
         throw error;
       }
-      const description = await this.refresh(target, entry, request.operation);
+      const description = await this.refresh(target, entry, operation);
       try {
-        return this.choose(retained, description);
+        return choose(description);
       } catch (refreshedError) {
         entry.retryAfterMs = this.now() + 30_000;
         throw refreshedError;

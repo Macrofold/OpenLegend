@@ -52,29 +52,34 @@ interface MacrofoldTransportConfig {
   network?: NetworkOwner;
 }
 
-export type MacrofoldGenerationConfig = MacrofoldTransportConfig &
-  (
-    | {
-        model: string;
-        billingMode: MacrofoldBillingMode;
-        providerConnectionId?: string;
-        macrofoldDeployment?: never;
-        macrofoldOutputMode?: never;
-      }
-    | {
-        macrofoldDeployment: MacrofoldDeploymentTarget;
-        macrofoldOutputMode: MacrofoldOutputMode;
-        model?: never;
-        billingMode?: never;
-        providerConnectionId?: never;
-      }
-  );
-
-export interface MacrofoldDecisionConfig extends MacrofoldTransportConfig {
-  model: MacrofoldDecisionModel;
+type MacrofoldCatalogBinding<Model extends string> = {
+  model: Model;
   billingMode: MacrofoldBillingMode;
   providerConnectionId?: string;
-}
+  macrofoldDeployment?: never;
+  macrofoldOutputMode?: never;
+};
+
+type MacrofoldDeploymentBinding = {
+  macrofoldDeployment: MacrofoldDeploymentTarget;
+  model?: never;
+  billingMode?: never;
+  providerConnectionId?: never;
+};
+
+export type MacrofoldGenerationConfig = MacrofoldTransportConfig &
+  (
+    | MacrofoldCatalogBinding<string>
+    | (MacrofoldDeploymentBinding & {
+        macrofoldOutputMode: MacrofoldOutputMode;
+      })
+  );
+
+export type MacrofoldDecisionConfig = MacrofoldTransportConfig &
+  (
+    | MacrofoldCatalogBinding<MacrofoldDecisionModel>
+    | (MacrofoldDeploymentBinding & { macrofoldOutputMode?: never })
+  );
 
 export interface MacrofoldGenerationRequest extends GenerateRequest {
   /** Stream delivery internally; only the completed, validated value is returned. */
@@ -162,6 +167,16 @@ export function captureMacrofoldInferenceReceipt(
     : undefined;
   if (typeof providerMs === 'number' && Number.isFinite(providerMs) && providerMs >= 0)
     receipt.providerLatencyMs = providerMs;
+  const nativeValue = inference['value'];
+  if (record(nativeValue) && record(nativeValue['answers'])) {
+    // These native diagnostics are separate from transport time. Retain only
+    // supported scalar metadata, never an extra copy of private model output.
+    const nativeMs = nativeValue['latency_ms'];
+    if (typeof nativeMs === 'number' && Number.isFinite(nativeMs) && nativeMs >= 0)
+      receipt.nativeLatencyMs = nativeMs;
+    if (typeof nativeValue['truncated'] === 'boolean')
+      receipt.nativeTruncated = nativeValue['truncated'];
+  }
   return inference;
 }
 
@@ -203,6 +218,12 @@ export function macrofoldInferenceEvidence(
   const completionUncertain =
     outcome === 'uncertain' ||
     providerOutcome === 'uncertain' ||
+    result['execution_outcome'] !==
+      (status['status'] === 'succeeded'
+        ? 'success'
+        : status['status'] === 'failed'
+          ? 'failure'
+          : status['status']) ||
     (!['cancelled', 'timed_out'].includes(String(status['status'])) &&
       status['status'] !== expected);
   return {
@@ -423,7 +444,7 @@ type InferenceRequest = RequestControl & {
 
 /** One admission/Run lifecycle for native decisions and schema-valued generation. */
 function createMacrofoldExecutor(
-  configuration: MacrofoldGenerationConfig,
+  configuration: MacrofoldGenerationConfig | MacrofoldDecisionConfig,
   kind: 'decision' | 'generation',
 ) {
   const config = Object.freeze({ ...configuration });
@@ -436,7 +457,8 @@ function createMacrofoldExecutor(
   const configuredTimeout = config.timeoutMs ?? 120_000;
   const timeout = deployment ? Math.min(configuredTimeout, 240_000) : configuredTimeout;
   if (
-    !maxCost ||
+    maxCost === undefined ||
+    (maxCost === 0 && deployment === undefined) ||
     !Number.isSafeInteger(configuredTimeout) ||
     configuredTimeout < 1 ||
     configuredTimeout > 300_000 ||
@@ -445,13 +467,14 @@ function createMacrofoldExecutor(
     !billingMode ||
     !['managed', 'byok'].includes(billingMode) ||
     (deployment !== undefined &&
-      (kind !== 'generation' ||
-        config.model !== undefined ||
+      (config.model !== undefined ||
         config.billingMode !== undefined ||
         config.providerConnectionId !== undefined ||
-        !['json_schema', 'json_object', 'prompted_json'].includes(
-          config.macrofoldOutputMode ?? '',
-        )))
+        (kind === 'decision'
+          ? config.macrofoldOutputMode !== undefined
+          : !['json_schema', 'json_object', 'prompted_json'].includes(
+              config.macrofoldOutputMode ?? '',
+            ))))
   )
     throw new Error('Invalid Macrofold inference configuration.');
   const api = new MacrofoldTransport(config.baseUrl, config.apiKey, config.fetch, config.network);
@@ -582,6 +605,8 @@ function createMacrofoldExecutor(
           run = await rememberAccepted(accepted);
           const embeddedResult = accepted['result'] ? object(accepted['result']) : undefined;
           let status = macrofoldTerminalStatus(accepted);
+          const waitForRun = (value: Record<string, unknown>) =>
+            delay(Math.max(250, api.retryAfterMs(value) ?? 0), undefined, { signal });
           const readRun = async (path: string): Promise<Record<string, unknown>> => {
             for (;;) {
               signal.throwIfAborted();
@@ -596,15 +621,24 @@ function createMacrofoldExecutor(
               }
             }
           };
+          if (!status) await waitForRun(accepted);
           while (!status || !terminal.has(String(status['status']))) {
             signal.throwIfAborted();
             status = await readRun(`/v1/runs/${encodeURIComponent(run)}`);
             if (status['id'] !== run) throw new InvalidData('macrofold_run_identity_invalid');
             if (terminal.has(String(status['status']))) break;
-            await delay(250, undefined, { signal: signal });
+            await waitForRun(status);
           }
-          const result =
+          let result =
             embeddedResult ?? (await readRun(`/v1/runs/${encodeURIComponent(run)}/result`));
+          // A terminal execution can precede result finalization. Observe only
+          // this accepted Run within its original deadline; never resubmit it.
+          while (result['final'] === false) {
+            if (result['run_id'] !== run)
+              throw new InvalidData('macrofold_terminal_identity_invalid');
+            await waitForRun(result);
+            result = await readRun(`/v1/runs/${encodeURIComponent(run)}/result`);
+          }
           const inference = captureMacrofoldInferenceReceipt(run, status, result, receipt);
           const raw = inference['value'];
           // Caller cancellation during acceptance persistence or recovery still
@@ -696,7 +730,10 @@ function createMacrofoldExecutor(
 export function createMacrofoldDecisionClient(configuration: MacrofoldDecisionConfig): {
   judge(request: MacrofoldDecisionRequest): Promise<AiResult<JudgeValue>>;
 } {
-  if (!['typesafe/jev-1.13', 'microsoft/microsoft-decision-1'].includes(configuration.model))
+  if (
+    !configuration.macrofoldDeployment &&
+    !['typesafe/jev-1.13', 'microsoft/microsoft-decision-1'].includes(configuration.model)
+  )
     throw new Error('Invalid Macrofold decision configuration.');
   const execute = createMacrofoldExecutor(configuration, 'decision');
   return {

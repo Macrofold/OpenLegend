@@ -160,6 +160,9 @@ function probabilities(value: unknown, keys: string[]): Record<string, number> {
 
 export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeValue {
   if (!record(data) || !record(data.answers)) throw new InvalidData('invalid_answers');
+  // A decision about only part of the required evidence cannot answer the
+  // original supplied question. Missing optional diagnostics remain allowed.
+  if (data.truncated === true) throw new InvalidData('judgment_input_truncated');
   const answers: Record<string, JudgmentAnswer> = Object.create(null) as Record<
     string,
     JudgmentAnswer
@@ -173,7 +176,7 @@ export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeVa
       Object.hasOwn(answer, 'confidence') && finite(answer.confidence)
         ? answer.confidence
         : undefined;
-    if (q.type !== 'noul' && Object.hasOwn(answer, 'confidence') && confidence === undefined)
+    if (Object.hasOwn(answer, 'confidence') && confidence === undefined)
       throw new InvalidData(`invalid_${q.type}_answer`);
     if (q.type === 'choice') {
       const distribution = probabilities(answer.probabilities, Object.keys(q.criteria));
@@ -200,7 +203,11 @@ export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeVa
       };
     } else {
       if (!finite(answer.noul)) throw new InvalidData('invalid_noul_answer');
-      answers[id] = { type: 'noul', noul: answer.noul };
+      answers[id] = {
+        type: 'noul',
+        noul: answer.noul,
+        ...(confidence === undefined ? {} : { confidence }),
+      };
     }
   }
   return { answers };

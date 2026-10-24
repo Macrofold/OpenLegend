@@ -41,7 +41,7 @@ export type JudgmentAnswer =
       probabilities: Record<string, number>;
       confidence?: number;
     }
-  | { type: 'noul'; noul: number };
+  | { type: 'noul'; noul: number; confidence?: number };
 
 export interface JudgeValue {
   answers: Record<string, JudgmentAnswer>;
@@ -144,6 +144,10 @@ export interface AiReceipt {
   latencyMs: number;
   /** Reported execution duration; Macrofold measures provider transport and normalization, not isolated model compute. */
   providerLatencyMs?: number;
+  /** Native decision engine's reported scoring duration, excluding Macrofold transport. */
+  nativeLatencyMs?: number;
+  /** Whether the native decision engine reports truncating its input. */
+  nativeTruncated?: boolean;
   /** Intermediary Run start to completion, including its finalization. */
   intermediaryRunLatencyMs?: number;
   /** Intermediary Run admission wait; not the upstream model queue. */

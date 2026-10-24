@@ -1,6 +1,6 @@
 # Custom models — implementation and acceptance
 
-**Status: In progress — production routing and thin benchmark/report integration implemented; joint operating acceptance remains open · October 22, 2026.** This tracker owns OpenLegend's production use of Macrofold custom deployments. Optional experiments consume that capability. Passing local and synthetic checks does not establish hosted-model reliability or character quality.
+**Status: In progress — native judgment, chat routing and tools implemented; live Kev/Huihui qualification blocked by current application-key access · October 24, 2026.** This tracker owns OpenLegend's production use of Macrofold custom deployments. Optional experiments consume that capability. Passing local and synthetic checks does not establish hosted-model reliability or character quality.
 
 ## Maintained records
 
@@ -21,24 +21,25 @@
 - [x] Deliver optional tooling MX04 → MX05; these do not block the production sequence.
 - [ ] Run separately selected comparative work MX07 when needed; no campaign is selected by this implementation.
 
-Production implementation and MX04/MX05 tooling are authorized; MX07 comparative research and selecting a new default model are outside this assignment. Use relevant existing checks/ad-hoc cases under repository verification policy, without new automated tests. Any live execution uses its existing authorization and bounded budget.
+Production implementation and MX04/MX05 tooling are authorized; MX07 comparative research and selecting a new default model are outside this assignment. Use focused tests and suitable existing checks/ad-hoc cases under the current task's authorization and repository verification policy. Any live execution uses its existing authorization and bounded budget.
 
-Ordinary NPC replies now resolve explicit fast/complex deployment targets before their existing spending reservation. Shared immutable capability preparation and the existing inference executor retain original deadlines, permitted context, accepted Run identity, local validation and once-only settlement. The existing benchmark consumes the same target and request preparation. [Verification](../verification/custom-models.md) distinguishes static, injected-HTTP, native-gameplay and actual Macrofold evidence; MX06 owns operating acceptance.
+Native judgments and ordinary NPC replies use separately configured deployment targets. Chat capability preparation precedes its existing spending reservation; native judgments retain the conservative existing reservation and prepare only genuinely new requests within their original execution budget. Shared immutable capability preparation and the existing inference executor retain original deadlines, permitted context, accepted Run identity, local validation and once-only settlement. The existing benchmark consumes the same target and request preparation. [Verification](../verification/custom-models.md) distinguishes static, injected-HTTP, native-gameplay and actual Macrofold evidence; MX06 owns operating acceptance.
 
 ## MX01 — Shared production deployment target
 
-**Owner:** `packages/ai` target/request preparation, generation adapter and receipt types; server direct-inference consumer. **Design:** technical §§2–3. **Dependency:** matching Macrofold contract/API.
+**Owner:** `packages/ai` target/request preparation, native decision/generation adapters and receipt types; server direct-inference consumer. **Design:** technical §§2–3. **Dependency:** matching Macrofold contract/API.
 
 - [x] Add required deployment ID and optional revision pin as the exclusive alternative to existing provider binding; no activation, boot, certificate or experiment ID.
-- [x] Share request preparation while keeping each caller's established executor, Run recovery and accounting owner. Preserve native decision restrictions and omit unsupported provider-only parameters.
+- [x] Share request preparation while keeping each caller's established executor, Run recovery and accounting owner. Preserve protocol-specific restrictions and omit unsupported provider-only parameters.
 - [x] Decode actual admitted deployment/revision and request-only cost attribution. Match an explicit pin, not a cached mutable current revision. Diagnostic identity changes never independently reject an otherwise valid answer.
 - [x] Reuse local schema validation for native JSON-schema, JSON-object and explicitly prompted-JSON modes; reuse supported streaming through existing progress/publication contracts. No post-failure downgrade, paid repair or second parser.
+- [x] Extend the existing native decision adapter with an exclusive SystemOne deployment target. Preserve multiple named Choice/Score/Noul answers, fractional Score, optional confidence/probabilities and supported native timing/truncation metadata; reject chat-only settings and native streaming without dispatch.
 
 **Exit:** both repositories accept the same examples; provider/native decision behavior remains distinct, and usable same-target answers survive benign process changes.
 
 ## MX02 — Production selection and capability preparation
 
-**Owner:** server config/pure generation configuration, NPC response producer and provider parameter preparation. **Design:** technical §§3.2–4. **Dependency:** MX01.
+**Owner:** server config/pure model configuration, native judgment and NPC response producers, and provider parameter preparation. **Design:** technical §§3.2–4. **Dependency:** MX01.
 
 - [x] Parse `OPENLEGEND_MODEL_TARGETS_JSON` with workspace, explicit fast/complex NPC targets, optional revision pins/output reductions and output policy. Absence preserves defaults; malformed supplied values fail locally.
 
@@ -50,8 +51,9 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
   Remote unsupported-capability refusals share the existing non-extending cooldown. A still-active caller can replace a coalesced read interrupted by its first caller, using only its own remaining deadline; no inference retry is introduced.
 
 - [x] Accept operator-trusted external endpoints under their honest capability/provenance limits. Keep hosting credentials/management outside the game and preserve fixture, Jev-only and zero-budget no-call controls.
+- [x] Add `purposes.judgment` to the same trusted settings, with optional pin/output reduction and no `structured_output`. Resolve it before native request admission; preserve omitted-purpose defaults, Jev-only operation, no-call modes and the existing explicit escalation policy. Include the actual workspace/targets/pins/output settings in the existing world-host operating review and configuration fingerprint, without exposing credentials.
 
-**Exit:** normal game configuration can select either or both NPC generators without a study manifest; metadata and output modes are compatible with the actual request.
+**Exit:** normal game configuration can select native judgment and either NPC chat generator without a study manifest; metadata and protocol/output modes match the actual request.
 
 ## MX03 — Existing lifecycle and financial ownership
 
@@ -59,7 +61,7 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 - [x] Persist the selected target/body and accepted Run through existing write-before-dispatch/recovery. Retain original deadlines, uncertainty and once-only settlement; no automatic inference replay.
 
-  Accepted operation records preserve the compact original workspace/model binding before final receipt persistence, while releasing duplicate prompt/schema bodies. Source validation after metadata stays within the original operation. The shared mutation owner rechecks expiry after journal/source waits before recording dispatch, including callers without a source callback; late journal/source completion cannot cause a new HTTP dispatch after expiry.
+  Accepted operation records preserve the compact original workspace/model binding before final receipt persistence, while releasing duplicate prompt/schema bodies. Source validation after metadata stays within the original operation. The shared mutation owner rechecks expiry after journal/source waits before recording dispatch, including callers without a source callback; late journal/source completion cannot cause a new HTTP dispatch after expiry. Permitted-input validation also runs after admission-journal waits for director and maintenance requests. Exact-identity recovery consults the existing journal before current deployment readiness, preserving accepted results through service stop/update; unknown admission never repeats POST and changed logical input conflicts.
 
 - [x] Let stable deployment references survive same-revision recovery and deliberate deployment updates. Preserve each admitted revision; do not invalidate valid replies solely because current serving configuration moved on.
 - [x] Settle explicit request fees independently of shared hosting costs. Missing usage or invoice finality is not a model-output failure; monthly/per-call limits do not claim to cap an externally funded GPU host.
@@ -102,7 +104,7 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 
 - [ ] Verify automatic same-revision host recovery, current-revision update for new requests, optional pins and valid completion of earlier admitted work. Interrupted/unknown requests are never replayed. Include an upgrade that makes a formerly unsupported request valid: stale local capability rejection refreshes once before refusal, repeated unsupported work respects the shared negative-cache cooldown, and a new revision in a successful receipt invalidates only later preparation.
 
-  Live external inference verifies a same-model output-capacity revision, new unpinned selection, stale-pin refusal and original-Run observation after that change with no new provider call. Capability refresh/cooldown is covered by injected scenarios. A managed-worker restart remains unverified: the selected external worker is opaque, no RunPod credential was found, and the approved live setup excludes GPU launch.
+  Live external inference verifies a same-model output-capacity revision, new unpinned selection, stale-pin refusal and original-Run observation after that change with no new provider call. Capability refresh/cooldown is covered by injected scenarios. This OpenLegend caller's managed-worker restart remains unverified: the earlier selected external worker was opaque. Macrofold subsequently qualified managed official Kev separately; that upstream evidence does not close the game caller's native or chat operating checks.
 
 - [x] Exercise unavailable/capacity/context/revocation/deadline/cancellation cases, accepted-Run recovery, request settlement and missing usage/hosting-cost evidence.
 
@@ -111,6 +113,10 @@ Ordinary NPC replies now resolve explicit fast/complex deployment targets before
 - [ ] Under the existing spending authority, establish actual supported runtime and warm/concurrent/recovery behavior. Record tested versions, input/output limits, useful latency, throughput and costs; static/fixture success is not live acceptance.
 
   Four live Qwen 2.5 7B JSON-object API calls returned validated values, including two concurrent requests and streaming; the ordinary complex NPC path published live speech. [Evidence](../verification/custom-models.md#live-external-model-checks) retains all four NPC attempts, measured limits/timings, native fast-reply rejection, separate provider/request fees and verified cleanup preserving accounting. This bounded workload does not establish sustained GPU capacity, reliable character quality or managed-worker recovery. Required current-head CI is reported with the implementation PR.
+
+- [ ] Qualify the native Kev and Huihui chat targets through this OpenLegend adapter against current authorized services. Native input must exercise multiple named questions/all three types, grant/workspace restrictions, service unavailability, context failure, same-key replay and uncertainty recovery; chat retains local JSON validation. Distinguish native scoring, provider interval and complete caller timing. The current application key receives HTTP 403 for deployment discovery, so neither live target is verified by this task. This does not prove that the account has no services. No replacement hosting or inference was launched.
+
+  Exact intended sources and upstream qualification limits are in [operator setup](../live-ai-setup.md#discover-and-authorize-a-current-service). Official Kev is not the incompatible community uncensored checkpoint. Huihui's prior imported-endpoint inference does not qualify the protected managed chat runtime. Former upstream acceptance IDs were deleted and are not usable settings. Current-service evidence remains in the [verification report](../verification/custom-models.md).
 
 **Exit:** the production capability works through ordinary gameplay and supported failures with measured operating limits. A comparative study or model winner is not required.
 

@@ -1,4 +1,5 @@
 import { NetworkError, type NetworkOperation } from '@open-legend/network';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { entityGet } from '@open-legend/domain';
 import { foundationCapabilities } from './foundation-capabilities.js';
 import type { WorldAgentReply } from '@open-legend/protocol';
@@ -10,7 +11,12 @@ import { ActorWorkspaceFiles } from './workspace.js';
 import { COGNITION_PERMISSIONS } from './macrofold-provisioning.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import { macrofoldModelParameters, cognitionOutputTokens } from './macrofold-model.js';
-import { ModelTargetPreparation, describeMacrofoldDeployment } from './generation-targets.js';
+import {
+  ModelTargetPreparation,
+  ModelTargetPreparationError,
+  describeMacrofoldDeployment,
+} from './generation-targets.js';
+import { judgmentDeploymentTarget, macrofoldJudgmentModel } from './generation-config.js';
 import { MacrofoldProvisioner } from './macrofold-provisioning.js';
 import { decisionAllowance } from './cognition-budget.js';
 import { buildStoredContext } from './context.js';
@@ -179,6 +185,11 @@ function failureResult<T>(
     return { outcome: 'invalid', reason: 'The request deadline is invalid.', receipt };
   if (error instanceof MacrofoldTerminalFailure)
     return { outcome: error.outcome, reason: error.reason, receipt };
+  if (error instanceof ModelTargetPreparationError) {
+    receipt.providerErrorCode = error.code;
+    receipt.httpStatus = error.httpStatus;
+    return { outcome: 'unavailable', reason: error.code, receipt };
+  }
   if (error instanceof MacrofoldHttpError) {
     receipt.httpStatus = error.status;
     if (/^[\w.:-]{1,128}$/.test(error.code)) receipt.providerErrorCode = error.code;
@@ -289,8 +300,9 @@ function nativeTerminalEvidence(
  */
 export class MacrofoldBackend implements AiClient {
   private api: MacrofoldTransport;
-  private privateApi: Pick<MacrofoldTransport, 'request'>;
+  private privateApi: Pick<MacrofoldTransport, 'request' | 'retryAfterMs'>;
   private readonly deploymentPreparation: ModelTargetPreparation;
+  private readonly dispatchSource = new AsyncLocalStorage<() => Promise<void>>();
   private readonly deploymentSchemas = new WeakMap<
     GenerateRequest['schema'],
     { schema: PreparedSchema; expiresAt: number; validateSource?: () => Promise<void> }
@@ -327,6 +339,7 @@ export class MacrofoldBackend implements AiClient {
       false,
     );
     this.privateApi = {
+      retryAfterMs: (value) => privateTransport.retryAfterMs(value),
       request: async (...args) => {
         try {
           return await privateTransport.request(...args);
@@ -348,6 +361,11 @@ export class MacrofoldBackend implements AiClient {
   }
   private async save(name: string, value: unknown): Promise<void> {
     await this.service.store.putIntegration(this.key(name), value);
+  }
+  /** Keep the calling gameplay owner's exact source check through metadata/journal waits.
+   * This scope grants no new request or publication authority and retains no caller history. */
+  withSourceValidation<T>(validate: () => Promise<void>, work: () => Promise<T>): Promise<T> {
+    return this.dispatchSource.run(validate, work);
   }
   private receipt(
     id: string,
@@ -381,10 +399,60 @@ export class MacrofoldBackend implements AiClient {
     beforeDispatch?: () => Promise<void>,
     onDispatch?: () => void,
     onProgress?: GenerateRequest['onProgress'],
+    preparation?: {
+      inputFingerprint: string;
+      prepareBody: () => Promise<unknown>;
+      onReplay: (request: unknown) => void;
+    },
   ): Promise<Record<string, unknown>> {
-    // Local serialization must fail before transport marks possible dispatch.
-    const preparedBody = new PreparedJson(body, 500_000);
-    const fingerprint = digest({ path, body });
+    // Ordinary callers capture before the journal wait. Capability-dependent callers
+    // first resolve the exact logical input's prior outcome, before new eligibility.
+    const capture = (body: unknown) => ({
+      body,
+      preparedBody: new PreparedJson(body, 500_000),
+      fingerprint: digest({ path, body }),
+    });
+    let captured = preparation ? undefined : capture(body);
+    const previous = await this.load<{
+      fingerprint: string;
+      inputFingerprint?: string;
+      request?: unknown;
+      response?: Record<string, unknown>;
+      rejected?: boolean;
+      status?: number;
+      code?: string;
+    }>(`operation:${name}`);
+    if (previous) {
+      if (
+        preparation
+          ? previous.inputFingerprint !== preparation.inputFingerprint
+          : previous.fingerprint !== captured?.fingerprint
+      )
+        throw new Error('Macrofold operation ID conflicts with earlier input.');
+      this.api.currentOperation()?.throwIfStopped();
+      if (previous.response) {
+        preparation?.onReplay(previous.request);
+        onDispatch?.();
+        return previous.response;
+      }
+      if (previous.rejected) {
+        if (previous.status) throw new MacrofoldHttpError(previous.status, previous.code ?? '');
+        throw new MacrofoldAdmissionStopped('The original request was not dispatched.');
+      }
+      preparation?.onReplay(previous.request);
+      onDispatch?.();
+      throw new Error(
+        'World Agent could not confirm whether its earlier request started. No duplicate was sent.',
+      );
+    }
+    if (preparation) captured = capture(await preparation.prepareBody());
+    if (!captured) throw new InvalidData('missing_request_body');
+    const { preparedBody, fingerprint } = captured;
+    body = captured.body;
+    const identity = {
+      fingerprint,
+      ...(preparation ? { inputFingerprint: preparation.inputFingerprint } : {}),
+    };
     // Unknown admission retains the exact inference. Once a Run is accepted,
     // retain its original serialized binding until the final receipt can persist
     // it, without keeping another complete private prompt for every decision.
@@ -402,35 +470,12 @@ export class MacrofoldBackend implements AiClient {
       const accepted = typeof response['run_id'] === 'string' && response['run_id'].length > 0;
       await this.save(`operation:${name}`, {
         ...(accepted ? admittedBinding : retained),
-        fingerprint,
+        ...identity,
         response,
       });
     };
-    const previous = await this.load<{
-      fingerprint: string;
-      response?: Record<string, unknown>;
-      rejected?: boolean;
-      status?: number;
-      code?: string;
-    }>(`operation:${name}`);
-    if (previous) {
-      if (previous.fingerprint !== fingerprint)
-        throw new Error('Macrofold operation ID conflicts with earlier input.');
-      if (previous.response) {
-        onDispatch?.();
-        return previous.response;
-      }
-      if (previous.rejected) {
-        if (previous.status) throw new MacrofoldHttpError(previous.status, previous.code ?? '');
-        throw new MacrofoldAdmissionStopped('The original request was not dispatched.');
-      }
-      onDispatch?.();
-      throw new Error(
-        'World Agent could not confirm whether its earlier request started. No duplicate was sent.',
-      );
-    }
     signal?.throwIfAborted();
-    await this.save(`operation:${name}`, { ...retained, fingerprint });
+    await this.save(`operation:${name}`, { ...retained, ...identity });
     // Check after the last journal await, immediately before HTTP dispatch. Once
     // sent, keep observing acceptance so closure can cancel the returned Run ID.
     try {
@@ -441,7 +486,7 @@ export class MacrofoldBackend implements AiClient {
     } catch (error) {
       // No HTTP admission occurred. Keep this refusal distinct from an accepted
       // or ambiguous POST; recovery must not hold a known-unsubmitted charge.
-      await this.save(`operation:${name}`, { fingerprint, rejected: true });
+      await this.save(`operation:${name}`, { ...identity, rejected: true });
       if (error instanceof NetworkError) throw error;
       throw new MacrofoldAdmissionStopped(
         'World Agent authorization could not be confirmed before dispatch.',
@@ -449,7 +494,7 @@ export class MacrofoldBackend implements AiClient {
       );
     }
     if (admissionSignal?.aborted || signal?.aborted) {
-      await this.save(`operation:${name}`, { fingerprint, rejected: true });
+      await this.save(`operation:${name}`, { ...identity, rejected: true });
       if (signal?.aborted) signal.throwIfAborted();
       throw new MacrofoldAdmissionStopped('Macrofold request cancelled before dispatch.');
     }
@@ -491,7 +536,7 @@ export class MacrofoldBackend implements AiClient {
     } catch (error) {
       if (admissionRejected(error, path)) {
         await this.save(`operation:${name}`, {
-          fingerprint,
+          ...identity,
           rejected: true,
           status: error.status,
           code: error.code,
@@ -785,7 +830,13 @@ export class MacrofoldBackend implements AiClient {
       }
       const question = events.question;
       if (terminal.has(String(status['status']))) {
-        const result = object(await this.readRun(api, string(urls['result']), signal));
+        let result = object(await this.readRun(api, string(urls['result']), signal));
+        // Execution can finish before receipt publication. Only observe the same
+        // accepted Run, under the original operation; never replay its inference.
+        while (result['run_id'] === id && result['final'] === false) {
+          await delay(Math.max(250, api.retryAfterMs(result) ?? 0), undefined, { signal });
+          result = object(await this.readRun(api, string(urls['result']), signal));
+        }
         if (result['run_id'] !== id || result['final'] !== true)
           throw new Error('Macrofold result is not final.');
         await this.save(`result:${id}`, { status, result });
@@ -797,7 +848,11 @@ export class MacrofoldBackend implements AiClient {
           'Macrofold requested interactive input; this bounded call cannot continue.',
         );
       // Background reflection needs completion/tool bounds, not interactive streaming.
-      await delay(maxToolCalls === undefined ? 500 : 2000, undefined, { signal });
+      await delay(
+        Math.max(maxToolCalls === undefined ? 500 : 2000, api.retryAfterMs(status) ?? 0),
+        undefined,
+        { signal },
+      );
     }
   }
   reconcileQuestion(
@@ -1763,10 +1818,16 @@ export class MacrofoldBackend implements AiClient {
    * original probabilities, and one durable receipt for the whole bounded batch. */
   async judge(request: JudgeRequest): Promise<AiResult<JudgeValue>> {
     const config = this.service.config;
-    const receipt = this.receipt(request.requestId, 'jev', config.macrofoldJevModel, {
+    const validateSource = this.dispatchSource.getStore();
+    const target = judgmentDeploymentTarget(config.modelTargets);
+    const receipt = this.receipt(request.requestId, 'jev', macrofoldJudgmentModel(config), {
       state: request.state,
       questions: request.questions,
     });
+    if (target) {
+      receipt.macrofoldBillingMode = 'byok';
+      receipt.macrofoldRequestedDeployment = target;
+    }
     const control = requestSignal(request, config.aiTimeoutMs);
     const signal = control.signal;
     let run: string | undefined;
@@ -1780,41 +1841,109 @@ export class MacrofoldBackend implements AiClient {
             throw new MacrofoldUnavailable('The AI service is not configured.');
           signal.throwIfAborted();
           const questions = prepareQuestions(request.questions, 500_000);
-          validateJudgmentSize(request.state, questions);
-          signal.throwIfAborted();
+          // Capture before journal/descriptor I/O; logical replay and new execution
+          // must compare and use the same immutable caller input.
+          const state: unknown = JSON.parse(new PreparedJson(request.state, 500_000).text(500_000));
+          validateJudgmentSize(state, questions);
+          const outputTokens = Math.min(
+            16384,
+            Math.max(1024, Object.keys(questions).length * 64),
+            config.modelTargets?.purposes.judgment?.max_output_tokens ?? Infinity,
+          );
+          const binding = target
+            ? macrofoldDeploymentRequestFields(target)
+            : {
+                model_binding: {
+                  provider: 'openrouter',
+                  model: config.macrofoldJevModel,
+                  billing_mode: receipt.macrofoldBillingMode,
+                  ...(config.macrofoldJevConnectionId
+                    ? { provider_connection_id: config.macrofoldJevConnectionId }
+                    : {}),
+                },
+              };
+          const logicalBody = {
+            ...binding,
+            input: { state, questions },
+            limits: {
+              max_cost_micro_usd: target ? '0' : microdollarLimit(decisionAllowance(config, 'jev')),
+              max_output_tokens: outputTokens,
+              timeout_seconds: Math.ceil(config.aiTimeoutMs / 1000),
+            },
+            ...(target ? { stream: false } : {}),
+          };
           const accepted = await this.mutation(
             `inference:${request.requestId}`,
             '/v1/inferences',
-            {
-              model_binding: {
-                provider: 'openrouter',
-                model: config.macrofoldJevModel,
-                billing_mode: receipt.macrofoldBillingMode,
-                ...(config.macrofoldJevConnectionId
-                  ? { provider_connection_id: config.macrofoldJevConnectionId }
-                  : {}),
-              },
-              input: { state: request.state, questions },
-              limits: {
-                max_cost_micro_usd: microdollarLimit(decisionAllowance(config, 'jev')),
-                max_output_tokens: Math.min(
-                  16384,
-                  Math.max(1024, Object.keys(questions).length * 64),
-                ),
-                timeout_seconds: Math.ceil(config.aiTimeoutMs / 1000),
-              },
-            },
+            undefined,
             signal,
             undefined,
             false,
-            undefined,
+            validateSource,
             () => {
               receipt.dispatched = true;
               receipt.completionUncertain = true;
             },
+            undefined,
+            {
+              inputFingerprint: digest(logicalBody),
+              prepareBody: async () => {
+                if (this.service.config.budgetUsd <= 0)
+                  throw new MacrofoldUnavailable(
+                    'AI execution is disabled by the usage allowance.',
+                  );
+                const prepared = target
+                  ? await this.deploymentPreparation.prepareJudgment({
+                      target,
+                      maxOutputTokens: outputTokens,
+                      operation,
+                    })
+                  : undefined;
+                operation.throwIfStopped();
+                return {
+                  ...logicalBody,
+                  limits: {
+                    ...logicalBody.limits,
+                    max_output_tokens: prepared?.maxOutputTokens ?? outputTokens,
+                    // New execution gets only the original operation's remaining time.
+                    // Replay resolves the journal before deriving these wire bounds again.
+                    timeout_seconds: target
+                      ? Math.min(
+                          logicalBody.limits.timeout_seconds,
+                          240,
+                          Math.max(1, Math.ceil(operation.remainingMs() / 1000)),
+                        )
+                      : logicalBody.limits.timeout_seconds,
+                  },
+                };
+              },
+              onReplay: (original) => {
+                const retained = object(original);
+                const binding = object(retained['model_binding']);
+                if (target) {
+                  receipt.macrofoldRequestedDeployment = captureMacrofoldDeploymentTarget({
+                    workspaceId: string(retained['workspace_id']),
+                    modelBinding: {
+                      deployment_id: string(binding['deployment_id']),
+                      ...(binding['deployment_revision_id'] === undefined
+                        ? {}
+                        : { deployment_revision_id: string(binding['deployment_revision_id']) }),
+                    },
+                  });
+                  receipt.requestedModel =
+                    receipt.model = `deployment:${receipt.macrofoldRequestedDeployment.modelBinding.deployment_id}`;
+                  receipt.macrofoldBillingMode = 'byok';
+                } else {
+                  receipt.requestedModel = receipt.model = string(binding['model']);
+                  if (binding['billing_mode'] !== 'byok' && binding['billing_mode'] !== 'managed')
+                    throw new InvalidData('invalid_original_billing_mode');
+                  receipt.macrofoldBillingMode = binding['billing_mode'];
+                }
+              },
+            },
           );
           run = string(accepted['run_id']);
-          const inference = await this.inferenceResult(accepted, receipt, signal);
+          const inference = await this.inferenceResult(accepted, receipt, signal, target);
           signal.throwIfAborted();
           const failure = inferenceFailure<JudgeValue>(inference, receipt);
           if (failure) return failure;
@@ -1823,6 +1952,12 @@ export class MacrofoldBackend implements AiClient {
         },
       );
     } catch (error) {
+      if (
+        target &&
+        error instanceof MacrofoldHttpError &&
+        ['deployment_binding_stale', 'unsupported_model_capability'].includes(error.code)
+      )
+        this.deploymentPreparation.invalidate(target);
       if (
         run &&
         (signal.aborted ||
@@ -1853,6 +1988,8 @@ export class MacrofoldBackend implements AiClient {
     const run = string(accepted['run_id']);
     receipt.providerRequestId = run;
     const embeddedStatus = macrofoldTerminalStatus(accepted);
+    if (!embeddedStatus)
+      await delay(Math.max(250, this.api.retryAfterMs(accepted) ?? 0), undefined, { signal });
     const resolved = embeddedStatus
       ? { result: object(accepted['result']), status: embeddedStatus }
       : await this.waitRun(run, object(accepted['urls']), signal);

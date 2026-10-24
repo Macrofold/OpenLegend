@@ -208,6 +208,7 @@ interface Running {
   playerSpeechEventId?: string;
   cancelReason?: string;
   responseWatch?: { actorId: string; afterSequence: number; attempt: number };
+  validateJudgmentSource?: () => Promise<void>;
   supersession?: { attempt: number; interruptions: ResponseInterruption[] };
 }
 const choice = (answer: JudgmentAnswer | undefined) =>
@@ -1796,6 +1797,11 @@ export class AiDirector {
     dispatch: (requestId: string) => Promise<AiResult<T>>,
     meter?: Meter,
   ): Promise<T> {
+    const sourceActorId = this.current(run);
+    const sourceCurrent = this.service.privateReadFence(
+      sourceActorId,
+      () => this.current(run) === sourceActorId,
+    );
     if (
       run.job.decision &&
       (this.now() >= run.job.decision.fastPublishBy ||
@@ -1905,7 +1911,22 @@ export class AiDirector {
       if (!(await this.service.store.markDecisionDispatch(id))) {
         throw new StopJob('failed', 'This model request already has dispatch intent.', 'uncertain');
       }
-      const result = await dispatch(id);
+      const result = await this.macrofold.withSourceValidation(
+        async () => {
+          this.current(run);
+          await run.validateJudgmentSource?.();
+          this.current(run);
+          if (!sourceCurrent())
+            throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
+          if (
+            run.job.decision &&
+            (this.now() >= run.job.decision.fastPublishBy ||
+              performance.now() >= run.job.decision.fastPublishByMonotonic)
+          )
+            throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
+        },
+        () => dispatch(id),
+      );
       const accountingStartedAt = new Date().toISOString();
       result.receipt = normalizeReceiptCost(result.receipt);
       await this.service.store.settle(id, result.receipt);
@@ -2229,6 +2250,7 @@ export class AiDirector {
       ) && speechEvidenceIds.size === decisionEvidenceIds.size;
     let attentionCall = 0;
     const contextStartedAt = new Date().toISOString();
+    run.validateJudgmentSource = undefined;
     let prepared = await prepareDecision(
       this.service,
       this.recall,
@@ -2255,6 +2277,7 @@ export class AiDirector {
         : (request, operation) => this.generate<unknown>(run, request, operation),
       run.job.decision ? 'native-only' : 'ordinary',
     );
+    run.validateJudgmentSource = () => prepared.validateConversation();
     this.current(run);
     const validity = run.job.decision ? decisionValidity(this.service.world, actorId) : undefined;
     run.validity = validity;

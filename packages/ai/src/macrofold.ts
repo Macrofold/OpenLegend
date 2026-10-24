@@ -24,6 +24,7 @@ export class MacrofoldHttpError extends Error {
   get admissionRejected(): boolean {
     return (
       this.code === 'execution_disabled' ||
+      this.code === 'inference_disabled' ||
       // Macrofold rejects insufficient credit before creating a Run or reserving spend.
       (this.status === 402 && this.code === 'insufficient_credit') ||
       // These canonical deployment errors establish no new admission. Other
@@ -43,6 +44,7 @@ const operationContext = new AsyncLocalStorage<NetworkOperation>();
 
 export class MacrofoldTransport {
   private base: URL;
+  private readonly responseWaits = new WeakMap<object, number>();
   private readonly network: NetworkOwner;
   private readonly cleanup: NetworkOwner;
   private readonly context = operationContext;
@@ -78,6 +80,10 @@ export class MacrofoldTransport {
   }
   currentOperation(): NetworkOperation | undefined {
     return this.context.getStore();
+  }
+  /** HTTP pacing belongs to this observation, never the serialized Run receipt or request identity. */
+  retryAfterMs(value: unknown): number | undefined {
+    return value !== null && typeof value === 'object' ? this.responseWaits.get(value) : undefined;
   }
   private within<T>(
     signal: AbortSignal | undefined,
@@ -246,6 +252,8 @@ export class MacrofoldTransport {
         }
         const value: unknown = JSON.parse(raw);
         serialize(value, maxResponseBytes);
+        if (retryAfterMs !== undefined && value !== null && typeof value === 'object')
+          this.responseWaits.set(value, retryAfterMs);
         return value;
       };
       try {

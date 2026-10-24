@@ -476,6 +476,7 @@ describe('fixture: cognition vertical slice', () => {
       const completed = {
         run_id: 'judgment-run',
         final: true,
+        execution_outcome: 'success',
         inference: {
           outcome: 'value',
           provider_outcome: 'responded',

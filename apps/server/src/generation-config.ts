@@ -16,7 +16,7 @@ import { DEFAULT_MACROFOLD_MODEL } from './macrofold-model.js';
 export const NPC_GENERATION_PURPOSES = ['npc_response_fast', 'npc_response_complex'] as const;
 export type NpcGenerationPurpose = (typeof NPC_GENERATION_PURPOSES)[number];
 
-const configuredNpcTargetSchema = z
+const configuredTargetSchema = z
   .object({
     model_binding: z
       .object({
@@ -24,15 +24,20 @@ const configuredNpcTargetSchema = z
         deployment_revision_id: z.uuid().optional(),
       })
       .strict(),
+    max_output_tokens: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
+  })
+  .strict();
+const captureConfiguredTarget = <T extends z.infer<typeof configuredTargetSchema>>(target: T) =>
+  Object.freeze({ ...target, model_binding: Object.freeze(target.model_binding) });
+const configuredJudgmentTargetSchema = configuredTargetSchema.transform(captureConfiguredTarget);
+const configuredNpcTargetSchema = configuredTargetSchema
+  .extend({
     structured_output: z
       .enum(['auto', 'json_schema', 'json_object', 'prompted_json'])
       .default('auto'),
-    max_output_tokens: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
   })
   .strict()
-  .transform((target) =>
-    Object.freeze({ ...target, model_binding: Object.freeze(target.model_binding) }),
-  );
+  .transform(captureConfiguredTarget);
 
 const modelTargetsConfigSchema = z
   .object({
@@ -40,14 +45,14 @@ const modelTargetsConfigSchema = z
     workspace_id: z.uuid(),
     purposes: z
       .object({
+        judgment: configuredJudgmentTargetSchema.optional(),
         npc_response_fast: configuredNpcTargetSchema.optional(),
         npc_response_complex: configuredNpcTargetSchema.optional(),
       })
       .strict()
       .refine(
-        (purposes) =>
-          purposes.npc_response_fast !== undefined || purposes.npc_response_complex !== undefined,
-        'Configure npc_response_fast, npc_response_complex, or both.',
+        (purposes) => Object.values(purposes).some((purpose) => purpose !== undefined),
+        'Configure judgment, npc_response_fast, or npc_response_complex.',
       )
       .transform((purposes) => Object.freeze(purposes)),
   })
@@ -57,6 +62,30 @@ const modelTargetsConfigSchema = z
 /** Trusted local settings, not the Macrofold request or a gameplay-save contract. */
 export type ModelTargetsConfig = z.infer<typeof modelTargetsConfigSchema>;
 export type ConfiguredNpcGenerationTarget = z.infer<typeof configuredNpcTargetSchema>;
+
+/** One native decision route covers all existing named-question callers. */
+export function judgmentDeploymentTarget(
+  config: ModelTargetsConfig | undefined,
+): MacrofoldDeploymentTarget | undefined {
+  if (!config) return undefined;
+  const target = config.purposes.judgment;
+  return target
+    ? captureMacrofoldDeploymentTarget({
+        workspaceId: config.workspace_id,
+        modelBinding: target.model_binding,
+      })
+    : undefined;
+}
+
+export function macrofoldJudgmentModel(config: {
+  modelTargets?: ModelTargetsConfig;
+  macrofoldJevModel: string;
+}): string {
+  const target = config.modelTargets?.purposes.judgment;
+  return target
+    ? `deployment:${target.model_binding.deployment_id.toLowerCase()}`
+    : config.macrofoldJevModel;
+}
 
 /** Offline configuration admission; a supplied invalid setting never selects the defaults. */
 export function readModelTargetsConfig(raw: string | undefined): ModelTargetsConfig | undefined {
@@ -179,7 +208,7 @@ export function readGenerationConfig(env: NodeJS.ProcessEnv = process.env) {
   const modelTargets = readModelTargetsConfig(env['OPENLEGEND_MODEL_TARGETS_JSON']);
   if (modelTargets && !macrofoldKey)
     throw new Error(
-      'OPENLEGEND_MODEL_TARGETS_JSON requires the configured Macrofold generation adapter (MACROFOLD_API_KEY).',
+      'OPENLEGEND_MODEL_TARGETS_JSON requires the configured Macrofold adapter (MACROFOLD_API_KEY).',
     );
   if (
     env['OPENAI_MODEL'] &&

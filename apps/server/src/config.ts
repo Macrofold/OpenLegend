@@ -2,7 +2,11 @@ import { decisionEscalationConfigSchema, defaultDecisionEscalation } from './dec
 import { z } from 'zod';
 import { accountBindingSchema } from './authority.js';
 import { readMcpConfig } from './mcp-config.js';
-import { numberSetting, readGenerationConfig } from './generation-config.js';
+import {
+  macrofoldJudgmentModel,
+  numberSetting,
+  readGenerationConfig,
+} from './generation-config.js';
 import { resolve } from 'node:path';
 import {
   configuredCreationTargetSchema,
@@ -182,7 +186,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     decisionEscalation: env['DECISION_ESCALATION_JSON']
       ? decisionEscalationConfigSchema.parse(JSON.parse(env['DECISION_ESCALATION_JSON']))
       : defaultDecisionEscalation(
-          macrofoldKey ? `macrofold/${macrofoldJevModel}` : `jev/${jevModel}`,
+          macrofoldKey
+            ? `macrofold/${macrofoldJudgmentModel({ ...generation, macrofoldJevModel })}`
+            : `jev/${jevModel}`,
         ),
     // Absence preserves the world's authored timeout; this records only an explicit override.
     conversationInactivitySeconds:
