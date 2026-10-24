@@ -1,8 +1,8 @@
 # Stealth, awareness and surprise — shared technical design
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared contracts and source audit are complete; specialist designs, runtime delivery and qualification remain open. | 2026-10-19   |
+| Status      | Current progress                                                                                                           | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared and specialist design deliverables are complete; final integration, runtime delivery and qualification remain open. | 2026-10-24   |
 
 ## Authority and scope
 
@@ -49,7 +49,7 @@ The source audit establishes where changes belong. It does not prove each curren
 | **F — preparedness and surprise**            | Existing personal encounter extension, immutable attack/victim cuts, world combat evaluation, accuracy/evasion consumption and committed attack results.                             | A prior evidence, E/B/C actually active preparation, D current effective mechanics, exact contact victim.             | Native result and scoped reason facts; cannot use omniscient intentions, current camera visibility or an incoming impact as prior warning.                       |
 | **G — player interaction and disclosure**    | Input mapping to ordinary intentions, server/protocol projection and client rendering/feedback, historical inspection and creator audience separation.                               | A permitted current/historical facts, accepted B/C/E work, own D feedback and permitted F results.                    | Controls and information the player can act on; cannot establish sensing, identity, world state or authority from presentation.                                  |
 
-A–G are responsibility groups, not required new packages or services. Detailed algorithms, file splits and tuning remain specialist work. Changes to a shared type or phase require updating this owner and affected specialist designs together before dependent implementation.
+A–G are responsibility groups, not required new packages or services. Completed specialist choices are pinned in the [G source manifest](stealth-player-experience-tech-design.md#source-manifest); they remain separate branch deliverables until SAD-I reconciles their shared seams. Changes to a shared type or phase require updating this owner and affected specialist designs together before dependent implementation.
 
 ### Existing semantic authority
 
@@ -294,7 +294,7 @@ The current decaying-appraisal reframe refuses changed values. The required nume
 
 At provider absence, insufficient funds, no change, cancellation or stale output: native startle/recovery and existing emotion lifetime continue; no fabricated fear/calm, new cause, chosen movement or paid retry appears. Optional interpretation never blocks physical sensing/combat. After any wait, recheck actor/life/controller/authority, policy, appraisal revision and complete eligible source support before publication. Charge an already admitted external attempt according to its real result even when its gameplay proposal becomes stale.
 
-Player psychological acquisition remains [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters). These shared input/effect/lifecycle contracts and NPC/native design can proceed without choosing that producer. Controller identity alone grants no background AI permission over a human-controlled character.
+Player psychological acquisition, retained-appraisal applicability during direct control, disclosure, revocation and control transfer remain [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters). These shared input/effect/lifecycle contracts and NPC/native design can proceed without selecting that player policy. Controller identity alone grants no background AI permission over a human-controlled character.
 
 ## Attention, investigation and active preparation
 
@@ -451,9 +451,9 @@ Implementation begins only after the relevant specialist contracts are complete 
 
 ## Open decisions and specialist choices
 
-**Only unresolved product decision in this shared scope: SA-D01**, the controlled-player producer of longer-term psychological fear. The decision record holds three viable options and a conditional recommendation. It blocks only that producer and its exact player acceptance. It does not block the remaining shared contracts or A–G design work.
+**Only unresolved product decision in this shared scope: SA-D01**, the controlled-player psychological-fear policy, including acquisition, applicability of retained appraisals, disclosure, revocation and control transfer. The decision record holds three viable options and conditional recommendations. It blocks only behavior dependent on that policy and its exact player acceptance; A–G design completion does not select it.
 
-A chooses concrete sense/detail/familiarity evidence thresholds and family schemas; B/C choose the supported body freedoms, sensory/lighting/acoustic laws and authoring parameters; D chooses effect/reappraisal algebra and finite tuning; E/F choose relevant preparation predicates and lead time; G chooses detailed controls and historical display. These are deliberately assigned specialist decisions, not unowned cross-module blockers. Until selected, implementations may not assume omnidirectional vision, perfect voice recognition, unlimited preparedness, zero unknown fear, or an unspecified new action lane.
+A chooses concrete sense/detail/familiarity evidence thresholds and family schemas; B/C choose the supported body freedoms, sensory/lighting/acoustic laws and authoring parameters; D chooses effect/reappraisal algebra and finite tuning; E/F choose relevant preparation predicates and lead time; G chooses detailed controls and historical display. Those choices are documented at the [pinned specialist revisions](stealth-player-experience-tech-design.md#source-manifest). Their [integration register](stealth-player-experience-tech-design.md#contradictions-and-integration-recommendations) records SA-D02 (SC02 revision representation), SA-D03 (SC06/SC11 actual maintained-method start) and G-I01–G-I08. They remain technical gates for SAD-I; this branch does not adopt proposed shared schema amendments. Implementations may not assume omnidirectional vision, perfect voice recognition, unlimited preparedness, zero unknown fear or an unspecified new action lane.
 
 If a specialist proves a shared contract impossible with the inspected owner, record the exact conflicting contract ID, affected specialties, smallest required extension and conservative existing behavior. Amend this document and dependent designs before implementation. Do not silently add a parallel authority or relax privacy/ordering to make a local design work.
 

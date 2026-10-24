@@ -164,6 +164,8 @@ Contract: [reconsideration and concurrency](../projects/combat-and-threat-respon
 
 ## CTR09 — Predictable contextual attack
 
+The selected [player-perspective design](../projects/stealth-player-experience-tech-design.md#selection-hover-action-shortcuts-and-warnings) and [SPX03/SPX04](stealth-player-experience.md) constrain this extension: use only currently authorized target roles, keep historical contacts out of live action shortcuts, distinguish own observed outcomes from hidden preparedness or emotion, and preserve exact gesture identity through revocation. G-AC48–49 covers warning without successful defense and eligible zero-injury contact versus an unperceived miss. CTR still owns action preference, encounter continuity and actual combat policy; design completion does not complete CTR09.
+
 Contract: [existing-path integration](../projects/combat-and-threat-responses-tech-design.md#contextual-action-integration--ctr09), [world preference rules](../worlds/base/combat.md#selected-threat-and-encounter-continuity) and existing UI owners.
 
 - [ ] Extend the installed context-action ranking and preferred-choice guard with current/recent observed aggression and own admitted offensive preference. Use the canonical simulation-time grace and controller/pair-local explicit Speak override, admitted through exact revision-bound preference receipts. Stop only the pair's owned unfinished invocation; a late Stop cannot cancel a newer attack or unrelated work.

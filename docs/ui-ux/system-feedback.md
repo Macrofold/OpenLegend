@@ -50,6 +50,12 @@ Do not adopt “put all state in the URL.” Decide what the state means, who ma
 
 Preserve safe navigation through Back/Forward or panel return when supported, including list position. Do not serialize every component boolean or duplicate writable authority. On account/world changes, re-scope or clear sensitive retained state according to its owner before rendering it; a stale key prefix alone is not an access policy. New persistence, telemetry or history collection is a feature decision, not automatically authorized by these recommendations.
 
+## Selected stealth feedback
+
+The [selected HUD contract](../projects/stealth-player-experience-tech-design.md#hud-sensory-presentation-and-target-behavior), tracked under [SPX](../maintainers/stealth-player-experience.md), reuses Current work, captions and Events. A submitted crouch request is pending until native admission and completion; a body that cannot stand remains crouched with a permitted explanation. **Watching** describes actual maintained observation; **preparing for danger** and any later preparedness feedback require their separate authoritative conditions. Stop/expiry removes only the work it owns.
+
+Show a sound's earned uncertainty and age, last-seen facts as historical, and own mechanically relevant startle consequences without invented injury or another person's private readiness, emotion or detection state. An unperceived miss produces no player cue. Equivalent captions, contrast and reduced-motion feedback preserve the same evidence precision as audio and animation. No global “enemy sees you” indicator is inferred from hidden NPC state. These are designed targets; runtime, accessibility and player qualification remain open.
+
 ## Notifications: match interruption to consequence
 
 | Importance and duration                             | Appropriate presentation                                                    |

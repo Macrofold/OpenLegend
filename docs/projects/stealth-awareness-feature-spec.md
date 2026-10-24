@@ -1,8 +1,8 @@
 # Stealth, awareness and surprise — feature specification
 
-| Status      | Current progress                                                                                      | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared design is complete; specialist designs, implementation and gameplay qualification remain open. | 2026-10-19   |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared and specialist design deliverables are complete; final integration, runtime delivery and play qualification remain open. | 2026-10-24   |
 
 ## Purpose and selected scope
 
@@ -20,7 +20,7 @@ Source inspection uses `Macrofold/OpenLegend` at `86a21ce50aa0633d81b38a430b7727
 
 The existing game has authoritative spatial bodies and movement, range/obstruction-based sight, listener-specific speech, private event evidence, continuous sighting associations, personal combat encounters, native animal response machinery, interpreted appraisals, status effects, prepared responses and observer-scoped player views. These are useful foundations. They do not establish delivered facing/light/concealment sensing, general non-speech acoustics, persistent learned voice recognition, mechanical surprise, native startle, adaptive emotional reconsideration, or complete historical-character disclosure. Current appraisal/contribution mechanisms also need explicit extensions before they can supply the selected accuracy/evasion effects.
 
-All behavior below is an **accepted shared target**, except the explicitly open player-fear decision and specialist tuning. This is a design-only project stage: no new runtime feature, executable test, deployment, measured performance improvement or player-enjoyment result is claimed.
+All behavior below is an **accepted shared target**, except the explicitly open player-fear decision and unresolved integration choices. The [specialist manifest](stealth-player-experience-tech-design.md#source-manifest) pins completed A–F designs; the [G design](stealth-player-experience-feature-spec.md) and [SPX tracker](../maintainers/stealth-player-experience.md) own selected controls and permitted presentation. This is a design-only project stage: no new runtime feature, executable test, deployment, measured performance improvement or player-enjoyment result is claimed.
 
 ## Gameplay goals
 
@@ -47,7 +47,7 @@ Facts retain their own freshness. Seeing someone with a spear, later hearing tha
 
 Crouching changes the admitted body and movement, including relevant eye/ear positions, clearance and physical sound. It never guarantees concealment. Standing under a low obstacle can fail without moving the body through it. Quiet movement trades speed and other authored costs against the sound it actually produces; terrain, contact, equipment, carried loads and activities matter where the installed physical families support them.
 
-Walking direction, body orientation, sensory orientation and camera orientation have distinct meanings. A supported body may look while moving without abandoning its chosen destination. The physical action/pose owner resolves incompatible requests and limits; camera orbit alone cannot turn the character, expand a sense or redirect an attack. The specialist controls design must make deliberate looking and the actual accepted posture readable through ordinary controls.
+Walking direction, body orientation, sensory orientation and camera orientation have distinct meanings. A supported body may look while moving without abandoning its chosen destination. The physical action/pose owner resolves incompatible requests and limits; camera orbit alone cannot turn the character, expand a sense or redirect an attack. The [selected player controls](stealth-player-experience-feature-spec.md) make deliberate looking and actual accepted posture readable through ordinary controls; runtime delivery remains open.
 
 ### Attention and investigation
 
@@ -63,7 +63,7 @@ Startle is an immediate native bodily response to an eligible sudden cue. It req
 
 Interpreted fear can outlast startle. It is a character's appraisal of supported causes, not an automatic assertion that an external situation is objectively dangerous. Compatible cognition may reconsider it without a new external event, including without a visible verbal thought. Reconsideration remains causally tied to the existing episode and cannot invent another frightening event or endlessly renew an unchanged feeling.
 
-Effective mechanical fear can include immediate and persistent contributions. In the selected base world it affects accuracy and evasion; fear does not automatically slow running or fleeing. Its ownership and combination must prevent one cause being counted twice. Emotional state does not silently seize a directly controlled character's movement, select an attack, or narrate the human user's actual feelings. The longer-term acquisition policy for controlled characters remains [SA-D01](#player-fear-decision).
+Effective mechanical fear can include immediate and persistent contributions. In the selected base world it affects accuracy and evasion; fear does not automatically slow running or fleeing. Its ownership and combination must prevent one cause being counted twice. Emotional state does not silently seize a directly controlled character's movement, select an attack, or narrate the human user's actual feelings. The longer-term acquisition and retained-appraisal applicability policy for controlled characters remains [SA-D01](#player-fear-decision).
 
 ### Preparedness and surprise
 
@@ -131,7 +131,7 @@ If the pursuit genuinely ends, knowledge becomes historical and active preparati
 
 At normal speed, an eligible three-second startle subsides after three elapsed real seconds at 1×, corresponding to 180 simulation seconds at the selected 60:1 ratio. At 3× it takes one wall second; at 8×, 0.375 wall seconds. A pause partway through preserves the remaining simulation progress. Save/reopen resumes the same episode and never reapplies its onset.
 
-Supported longer-term fear may remain mechanically relevant after startle. The person can continue to flee at the applicable ordinary movement speed. A later private reconsideration can soften or otherwise validly alter their interpretation without inventing a new external cause; repeated unchanged reconsideration reaches a bounded native outcome rather than renewing fear forever. Unavailable AI leaves coherent native effects and the existing feeling's defined continuation. Controlled-player psychological acquisition follows only the eventual SA-D01 selection.
+Supported longer-term fear may remain mechanically relevant after startle. The person can continue to flee at the applicable ordinary movement speed. A later private reconsideration can soften or otherwise validly alter their interpretation without inventing a new external cause; repeated unchanged reconsideration reaches a bounded native outcome rather than renewing fear forever. Unavailable AI leaves coherent native effects and the existing feeling's defined continuation. Controlled-player psychological acquisition and retained-appraisal applicability follow only the eventual SA-D01 selection.
 
 ### J09 — Hand off a watch and share incomplete information
 
@@ -153,11 +153,11 @@ The engine still separates physical signal, observer evidence, remembered knowle
 
 ## Player fear decision
 
-**SA-D01 remains open:** how directly controlled characters acquire longer-term psychologically interpreted fear, separate from universal eligible native startle. The [decision record](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) owns the alternatives, recommendation and adoption gate.
+**SA-D01 remains open:** how directly controlled characters acquire longer-term psychologically interpreted fear, whether existing interpreted appraisals remain mechanically applicable during direct control, and the associated disclosure, revocation and control-transfer behavior, separate from universal eligible native startle. The [decision record](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) owns the alternatives, recommendation and adoption gate.
 
-The viable choices are deterministic authored appraisal from the character's permitted evidence, opt-in bounded AI interpretation, or native startle only for the initial controlled-player release. The conditional recommendation is deterministic authored appraisal if persistent fear should affect ordinary players: it gives predictable mechanical behavior without a paid real-time dependency. That is a recommendation, not an accepted acquisition policy. All alternatives use the same appraisal/effect owners and preserve direct movement control.
+The viable choices are deterministic authored appraisal from the character's permitted evidence, opt-in bounded AI interpretation, or native-body-only initial player scope that explicitly masks interpreted effects while preserving retained appraisal records and their lifetimes. The conditional recommendation is deterministic authored appraisal if persistent fear should affect ordinary players: it gives predictable mechanical behavior without a paid real-time dependency. That is a recommendation, not an accepted acquisition policy. All alternatives use the same appraisal/effect owners and preserve direct movement control.
 
-Only the controlled-player psychological acquisition producer and its specific acceptance journey depend on this choice. Native startle, NPC emotions, sensing, preparedness, surprise and ordinary player disclosure can be fully designed independently. No model may infer the real human's psychological condition from the fictional character's state.
+Only controlled-player behavior dependent on that psychological policy and its specific acceptance journeys depend on this choice. Stopping new appraisal production alone does not settle the effect of retained appraisals. Native startle, NPC emotions, sensing, preparedness, surprise and ordinary player disclosure can be fully designed independently. No model may infer the real human's psychological condition from the fictional character's state.
 
 ## Cross-project acceptance
 
@@ -176,7 +176,7 @@ The shared design is ready for specialist work when each specialist has one owne
 
 ## Delivery boundaries
 
-Shared contract design is followed by A–G specialist designs, focused implementation slices through existing owners, then whole-journey integration and actual gameplay qualification. [The tracker](../maintainers/stealth-awareness.md) owns this dependency order and exact completion criteria.
+Shared and independently completed A–G designs require final SAD-I reconciliation before their affected implementation slices, whole-journey integration and actual gameplay qualification. [The tracker](../maintainers/stealth-awareness.md) owns this dependency order and exact completion criteria.
 
 This stage does not select a universal probability graph, a replacement event bus/database/scheduler/action system, a new renderer, unrestricted physical acoustics, scent or thermal simulation, complete disguise/impersonation mechanics, every body anatomy, compulsory verbalized emotion, an omniscient detection meter, a new surprise cooldown copied across combat systems, or an ordinary-player speed/creator power. Future supported variants must use the same evidence and authority boundaries; their existence in a repertoire does not install them.
 
