@@ -30,7 +30,7 @@ The design task does not authorize new automated tests. For implementation quali
 ## CL02 — Compact desktop shell and immediate speech workflow
 
 - [ ] Build the fixed header/run strip and three panes with the feature specification's exact geometry, fixed controls, one primary scroller per pane, searchable long collections and shallow replacement views.
-- [ ] Keep current inspected character, speaker/actor, target and historical record as independent selections. Historical inspection never rewrites or locks the current left editor.
+- [ ] Keep current inspected character, speaker/actor, target and historical record as independent selections, with focal response actor and autonomous participants explicitly separate in run policy. Historical inspection never rewrites or locks the current left editor.
 - [ ] Deliver the opening flow: normal initialized scene, selected character, Say composer ready, Submit, one immediate response and readable result summary without opening settings or raw JSON.
 - [ ] Use shared light-theme primitives, compact meaningful icons, hover/focus descriptions, visible primary action labels, keyboard focus and readable statuses. Keep controls stable during streaming, long content and empty/error states.
 

@@ -18,6 +18,8 @@ Adult players, non-explicit presentation with optional sex, and browser-only del
 
 ## How to use and maintain this register
 
+**Selected Cognition Lab: Done — designed; implementation and acceptance open.** The [feature specification](../projects/cognition-lab-feature-spec.md), [technical design](../projects/cognition-lab-tech-design.md), [all-repertoire map](../projects/cognition-lab-repertoire-review.md) and [CL00–CL11](cognition-lab.md) settle the compact isolated developer workspace, current character editors, exact historical inspection, stage-specific one-shot input editing and matched episode comparisons. This closes the overlapping DG02/DG04 and NPC research preparation for this laboratory consumer. It does not close the DG02 or ND04/ND19/ND20 umbrellas, tactile trait-card design, conditional richer retrieval, actual character quality or model/player comparisons.
+
 **Selected custom-model capability: Done — designed; production integration implemented; live operating acceptance open.** The [feature specification](../projects/custom-models-feature-spec.md), [technical design](../projects/custom-models-tech-design.md) and [MX tracker](custom-models.md) settle production deployment selection, automatic hosting recovery, local response validation and optional comparison tooling from [NPC research items 8–10](npc-cognition-research-needs-design.md#8-low-refusal-characterization-without-loss-of-agency). Macrofold owns provisioning and the shared inference contract. Model comparisons do not gate this integration; broader local decision protocols, ND27/PD07 release work, voice and personality/memory extensions retain their existing owners.
 
 Use the [maintainer index](README.md) for delivery, [open decisions](../../archive/05-project/open-decisions.md) for consequential choices, [research backlog](../../archive/05-project/research-backlog.md) for empirical questions and [policies to revisit](revisitable-policies.md) for reconsideration triggers.
@@ -77,6 +79,8 @@ ND13's combat-sensitive Command-click extension is designed under [CTR02/CTR09/C
 
 #### DG02 — One resident who follows through
 
+**Selected rehearsal tool — Done: designed.** [Cognition Lab](../projects/cognition-lab-feature-spec.md) supplies the detailed isolated editor/experiment/inspection consumer; [CL](cognition-lab.md) owns delivery. [The episode recipes](../projects/cognition-lab-repertoire-review.md#repertoire-derived-episode-cards) make ordinary pleasure, independent help/refusal, remembered meaning, useful invention and return to work inspectable. CE/AG/CR/FPV retain real behavior and enjoyment acceptance.
+
 **Selected dependency:** [SPK](speech-and-social-perception.md) supplies ordinary addressed/ambient speech, reliable recognition and full structured personal evidence without compulsory social membership or reply. This repairs a specific input/interaction design and does not complete CE03/CE05, D69 or broader DG02 character quality.
 
 **Selected immediate-conflict slice, October 17 — Done: designed.** [CTR05–CTR08/CTR10](combat-and-threat-responses.md) defines complete busy-context choices, interpreted threat appraisals, required relevance then voluntary choice, meaningful withdrawal/pursuit triggers and strict independent Ada counterattack acceptance. Reuse the [feature/technical pair](../projects/combat-and-threat-responses-feature-spec.md) and CE/AG/CR owners. This does not qualify her ordinary day, broader personality change, relationships or autonomous combat behavior before runtime evidence.
@@ -94,6 +98,8 @@ Reuse bounded PG02 and [investigation](parallel-batch-08-the-missing-belonging.m
 **Owners/dependencies:** FPV and applicable production/launch owners. Prepare while selected game work proceeds; qualify what a session actually offers. Separate usability, enjoyment/voluntary return, broader demand and payment. Investigate [CO01 offers](../projects/initial-commercial-offer-decision-brief.md) in parallel; billing, portability and a marketplace are not prerequisites for ordinary player learning.
 
 #### DG04 — A specific recall problem
+
+**Selected inspection/comparison tool — Done: designed.** [Cognition Lab](../projects/cognition-lab-tech-design.md) specifies captured-versus-current evidence, known selection/exclusion causes, one-factor scenarios and exact request-only reruns. [CL05/CL07/CL09](cognition-lab.md) retains implementation; this does not select a new retrieval method or supply the missing empirical omission evidence.
 
 **Ordinary initial-context selection and omission comparison: Done — designed.** The [situation-aware context pair](../projects/situation-aware-cognition-context-feature-spec.md#14-overlap-open-decisions-and-maintained-records) and [SC01–SC11](cognition-context.md) specify required evidence/dependency closure, existing native discovery/inspection, compact representations, explicit partial/overflow behavior and matched supported-decision/omission comparisons. Broader episode and enjoyment qualification remains with CE/CR. Reuse that design instead of commissioning another general context-selection plan; implementation and evidence remain open.
 
@@ -836,3 +842,4 @@ Test a useful bounded outcome with feedback/debrief or trustworthy scoring, sour
 [Production workflows](../production-workflows/README.md) connect the existing art studies and V3D/INV delivery owners to in-game review. Source rights, useful-asset cost, human review and device qualification remain with those owners.
 
 Use canonical contracts and the actual selected revision's project/tracker evidence over broad statements in older proposals. Research and examples inform selection; they do not adopt features or waive acceptance. [Development save policy](../../AGENTS.md#development-save-policy), privacy/authority and existing verification requirements remain controlling for every selected extension.
+

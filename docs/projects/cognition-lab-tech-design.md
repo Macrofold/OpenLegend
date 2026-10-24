@@ -48,20 +48,20 @@ Opening or operating the lab must not change gameplay pause, selected/controlled
 
 | Responsibility | Existing owner to reuse | Lab integration |
 | --- | --- | --- |
-| Runtime startup and 50 ms host wake | `apps/server/src/http.ts`, `main.ts` | Shared `world-runtime.ts`; lab supplies run control, not different simulation arithmetic. |
-| Serialized native writes, publication, pause and restore | `apps/server/src/world-service.ts` | Commands and authoring enter its mutation lane. Add small lab-facing methods where a required operation lacks an admitted entry point. |
-| PostgreSQL, native records and operational accounting | `apps/server/src/store.ts`, `postgres.ts`, `world-records.ts` | Separate lab repository instance; current native format remains canonical. |
-| Initial authored world | `WorldService.initialize` and the existing `createBaseStartingWorld` caller | Same initializer and installed definitions, distinct database/world. |
-| Perception and context descriptions | `perceived-context.ts`, `context.ts`, `decision-context.ts` | Inspector reads projections; scenario truth is not automatically included in a character request. |
-| Personal memory and retrieval | `memory-repository.ts`, `recall.ts`, `speech-recall.ts` | Full source scope and correction invalidation; selected-request record contains the exact material used. |
-| Cognition coordination and native output admission | `ai-director.ts`, `decision-task.ts`, `decision-preparation.ts`, `decision-publication.ts` | Optional stage/run hooks; ordinary route, reference binding and final admission remain authoritative. |
-| Provider transport | `packages/ai/src/client.ts`, `types.ts`, the selected Macrofold adapter | Retain normal transport, validation, deadlines and receipts. No browser provider calls or raw URL override. |
-| Action interpretation and offers | `action-grounding.ts`, `action-catalogue.ts`, `action-retrieval.ts`, `typed-actions.ts` | Say/Act use these paths. Catalog availability, offered choices and admitted effects remain distinct. |
-| Owner-editing memories and mind | `history-edit.ts`, `god-mind.ts`, existing `WorldService` owner editor methods | Extend the same admitted mutation owners for lab authoring, not a JSON assignment bypass. |
-| Checkpoint and file storage | `game-saves.ts`, `checkpoint.ts`, `save-files.ts` | Save isolated full-world state under the lab directory, with experiment records stored separately. |
-| Diagnostics | `intelligence-log.ts`, `cognition-inspection.ts`, `diagnostic-capture.ts` | Retain trace identities and recorded facts; add experiment ownership and completeness metadata. |
-| Structured inspector renderers | `apps/client/src/ui/diagnostics.tsx` | Extract reusable presentation sections; lab supplies shallow replacement navigation and modals. |
-| Shared UI primitives | `apps/client/src/design-system/` | Compact light-theme workspace; no new component/UI framework. |
+| Runtime startup and 50 ms host wake | [apps/server/src/http.ts](../../apps/server/src/http.ts), [main.ts](../../apps/server/src/main.ts) | Shared `world-runtime.ts`; lab supplies run control, not different simulation arithmetic. |
+| Serialized native writes, publication, pause and restore | [apps/server/src/world-service.ts](../../apps/server/src/world-service.ts) | Commands and authoring enter its mutation lane. Add small lab-facing methods where a required operation lacks an admitted entry point. |
+| PostgreSQL, native records and operational accounting | [apps/server/src/store.ts](../../apps/server/src/store.ts), [postgres.ts](../../apps/server/src/postgres.ts), [world-records.ts](../../apps/server/src/world-records.ts) | Separate lab repository instance; current native format remains canonical. |
+| Initial authored world | [WorldService.initialize and its createBaseStartingWorld call](../../apps/server/src/world-service.ts) | Same initializer and installed definitions, distinct database/world. |
+| Perception and context descriptions | [perceived-context.ts](../../apps/server/src/perceived-context.ts), [context.ts](../../apps/server/src/context.ts), [decision-context.ts](../../apps/server/src/decision-context.ts) | Inspector reads projections; scenario truth is not automatically included in a character request. |
+| Personal memory and retrieval | [memory-repository.ts](../../apps/server/src/memory-repository.ts), [recall.ts](../../apps/server/src/recall.ts), [speech-recall.ts](../../apps/server/src/speech-recall.ts) | Full source scope and correction invalidation; selected-request record contains the exact material used. |
+| Cognition coordination and native output admission | [ai-director.ts](../../apps/server/src/ai-director.ts), [decision-task.ts](../../apps/server/src/decision-task.ts), [decision-preparation.ts](../../apps/server/src/decision-preparation.ts), [decision-publication.ts](../../apps/server/src/decision-publication.ts) | Optional stage/run hooks; ordinary route, reference binding and final admission remain authoritative. |
+| Provider transport | [packages/ai/src/client.ts](../../packages/ai/src/client.ts), `types.ts`, the selected Macrofold adapter | Retain normal transport, validation, deadlines and receipts. No browser provider calls or raw URL override. |
+| Action interpretation and offers | [action-grounding.ts](../../apps/server/src/action-grounding.ts), [action-catalogue.ts](../../apps/server/src/action-catalogue.ts), [action-retrieval.ts](../../apps/server/src/action-retrieval.ts), [typed-actions.ts](../../apps/server/src/typed-actions.ts) | Say/Act use these paths. Catalog availability, offered choices and admitted effects remain distinct. |
+| Owner-editing memories and mind | [history-edit.ts](../../apps/server/src/history-edit.ts), [god-mind.ts](../../apps/server/src/god-mind.ts), existing `WorldService` owner editor methods | Extend the same admitted mutation owners for lab authoring, not a JSON assignment bypass. |
+| Checkpoint and file storage | [game-saves.ts](../../apps/server/src/game-saves.ts), [checkpoint.ts](../../apps/server/src/checkpoint.ts), [save-files.ts](../../apps/server/src/save-files.ts) | Save isolated full-world state under the lab directory, with experiment records stored separately. |
+| Diagnostics | [intelligence-log.ts](../../apps/server/src/intelligence-log.ts), [cognition-inspection.ts](../../apps/server/src/cognition-inspection.ts), [diagnostic-capture.ts](../../apps/server/src/diagnostic-capture.ts) | Retain trace identities and recorded facts; add experiment ownership and completeness metadata. |
+| Structured inspector renderers | [apps/client/src/ui/diagnostics.tsx](../../apps/client/src/ui/diagnostics.tsx) | Extract reusable presentation sections; lab supplies shallow replacement navigation and modals. |
+| Shared UI primitives | [apps/client/src/design-system/](../../apps/client/src/design-system/README.md) | Compact light-theme workspace; no new component/UI framework. |
 
 New modules are deliberately few: `cognition-lab.ts` (workspace/scenario/run owner), `cognition-lab-routes.ts` (authenticated endpoint wiring), `cognition-lab-records.ts` (lab metadata and validation), `cognition-lab-control.ts` (run boundaries and prepared-call handles), and client `ui/cognition-lab/` components. Split a module only for an actual independent responsibility. These are proposed file paths; source links above describe current owners.
 
@@ -69,7 +69,7 @@ Public intentions and views belong in `packages/protocol` under its existing exp
 
 ## 4. State model and identities
 
-### 4.1 Four independent selections
+### 4.1 Independent selections
 
 The client keeps these values separately:
 
@@ -77,6 +77,8 @@ The client keeps these values separately:
 2. Composer `actorId`: who submits the next Say/Act.
 3. Composer target binding: exact person/object/location references required by the selected operation, or an explicit ambient/no-addressed-target choice.
 4. `selectedTraceId` / `selectedStageId`: which captured processing is inspected on the right.
+
+The run policy also stores an explicit `focalActorId`, initialized once from the initial inspected actor and then independently selected. The run strip shows it. Changing inspection, composer actor, targets or historical selection never silently changes that response boundary.
 
 Changing item 4 never replaces item 1's current values. Changing item 1 does not transfer control, change the composer actor or mutate autonomy. A deliberate “Inspect this person” navigation changes inspection only. Targets use exact IDs, not the current inspector selection as an implicit fallback.
 
@@ -110,12 +112,15 @@ Manual scenario edits are interventions. Retain their concise structured differe
 | Operation | Effect |
 | --- | --- |
 | Stop following live updates | Client selection/scroll behavior only. Server simulation and paid work are unaffected. |
-| Pause simulation | Ordinary game pause semantics through the shared owner; resulting job cancellation/deferral remains explicit. |
+| Hold | Close new lab admission and stop native time at a safe boundary while admitted work settles; retain a consistent undispatched prepared call when one exists. This is the ordinary toolbar pause intent. |
+| Native manual pause | Advanced/internal control through the shared owner; resulting job cancellation/deferral remains explicit. It is not the ordinary toolbar Hold action. |
 | Lab breakpoint | A deliberate experiment hold before a selected operation or at a completed run boundary. It is not implemented by toggling ordinary manual pause. |
 | Cancel request | Cancel the exact admitted request through its owning controller. Already accepted effects and paid/uncertain work remain recorded. |
 | Stop run | Close further run-scoped admission, drain or explicitly cancel outstanding work as described below, then publish a terminal run result. |
 
 The shared runtime's clock driver accepts a lab hold that stops offering new native elapsed time and drops time accumulated while held. It does not change the underlying world's ordinary paused flag, cancel background work through the ordinary pause path, run native ticks at zero time to manufacture opportunities, or accumulate catch-up time for resume.
+
+`WorldService.paused` currently includes manual pause, maintenance/storage holds and absence of a participating connection. Add one narrow runtime-driver liveness input for the authorized lab controller: it satisfies the operational away gate while an explicit finite lab run or prepared hold exists, without inventing player presence, taking control of a character or changing `pauseWhenHidden`. Gameplay keeps its existing presence behavior. Storage, manual and maintenance holds remain authoritative. First open is a lab-held boundary with no simulation debt, not a fake active game tab; resuming uses the ordinary service control owner under this explicit driver scope.
 
 The run owner also gates new cognition admission at the shared director boundary. It may allow the selected run's existing admitted work to settle; it must not dispatch unrelated work while the operator is examining a breakpoint. Both gates belong to the lab runtime only. The game runtime remains active.
 
@@ -136,7 +141,15 @@ The default does not wait for an action's future completion, every bystander's l
 
 An already-dispatched child that finishes before the hold becomes quiescent keeps its actual outcome. A future independent opportunity remains pending/eligible under the shared scheduler and is visible when relevant; it is not falsely recorded as completed or automatically dispatched to make the trace look tidy.
 
-### 5.3 Continuous and stepped execution
+### 5.3 Correlation and finite disposition
+
+Attach lab observation identity to native admitted work outside model input: run/interval, source occurrence IDs, focal actor and actual opportunity/decision IDs. Add passive hooks at perception publication, opportunity disposition, job admission and final publication. The native producer supplies cause/dependency references; the lab does not infer causality from similar text or temporal proximity.
+
+If a focal character did not receive the stimulus, the actual perception result closes that interval as not perceived. If native opportunity evaluation elects to continue work, defers, combines a stimulus into another decision or admits nothing, capture that disposition and its actual reason/boundary. Do not force an opportunity merely to produce a call. A decision already in flight before the source arrived counts as the response only if the native owner actually consumed/combined that source; otherwise it is a separate concurrent result. The finite run guards resolve missing/unrecorded progress without inventing a no-decision reason.
+
+The run observer is a small correlation/boundary consumer of these callbacks. It never chooses actions, calls providers, implements scheduling priority or polls every actor for a fictional response. All newly admitted supporting/background attempts contribute to the interval's guard/accounting even when they are not the focal response.
+
+### 5.4 Continuous and stepped execution
 
 Continuous Run repeatedly offers elapsed time and ordinary admission until an operator stop, selected stop condition, configured run spending limit or real error. It does not create a new model call merely because a UI interval elapsed.
 
@@ -144,7 +157,7 @@ Advance-time and run-until use the same clock driver/native boundaries as normal
 
 The selected autonomous participant set is a lab admission policy, not a transfer of human control and not a changed personality. A scripted event authored for a character remains labeled operator-authored. Actual directly controlled-character psychology follows its owning policy; the lab does not resolve the emotion branch's separate SA-D01 decision by selecting a person in a dropdown.
 
-### 5.4 Bounded stopping
+### 5.5 Bounded stopping
 
 Do not wait for abstract “global quiet.” Stop at the selected identity-bound condition. Existing request deadlines, execution capacity, context limits, native work budgets and spending admission continue to bound work. Every run has a visible cost allowance derived from and no larger than its operator-authorized allowance; there is no hidden lab budget multiplication.
 
@@ -157,6 +170,8 @@ If the stop condition cannot be reached because the selected operation was refus
 The shared stage wrapper offers a prepared-call hook after the exact typed application request and server-owned reference/source bindings exist, but before cost reservation, dispatch intent and the provider call for that stage. This must be an ordinary shared dispatch boundary used by attention, routing, action scoring, generation and other supported stages—not a separate lab implementation of those operations.
 
 The current `AiDirector.attempt` wrapper accepts a closure that dispatches the request. Refactor that boundary into a typed prepared request plus an execution function where necessary so the hook can inspect the actual request, not infer it from a log. Existing judgment/generation callers continue through the same attempt reservation, source validation, settlement and publication paths. Equivalent hooks are required for independently dispatched embedding or reflection/harness operations the UI offers to inspect/edit; an unsupported hook must be explicitly unavailable, never approximated with a fabricated payload.
+
+Offer a held hook before acquiring the selected call's scarce execution slot or cost reservation. Never keep a world/SQL mutation lock across the operator wait. Any already-existing parent reservation remains visible under its native accounting owner; the lab cannot silently release or duplicate it. Revalidate source/authority, acquire capacity and reserve the actual selected request only when dispatch is explicitly resumed.
 
 No debug hook is enabled for the gameplay runtime. With the lab hook disabled, ordinary callers receive the same inputs, route choices and outcomes, without diagnostic deep-copy work.
 
@@ -198,7 +213,7 @@ If the captured request or checkpoint is incompatible with the current runtime, 
 
 Opening Edit next input reads the supported stages and opens a preparation sheet. It must not commit the stimulus, advance time or call a model. Prepare and hold is the explicit executing action: it submits the source once, then allows necessary earlier native processing until the next matching actual prepared call. Its incurred calls and source occurrence remain in the run even if the operator later cancels.
 
-The default match is the next supported model call belonging to the chosen focal response. A specific purpose filter matches a reported stage capability, not a mandatory pipeline position. If that response never needs the requested call, finish with its actual no-call or terminal disposition. Do not generate a dummy request. The sheet states that preceding work may incur cost; the held modal shows the resulting exact application input.
+The default match is the next actual decision/judgment/generation call belonging to the chosen focal reaction; it excludes preceding embeddings and other support calls. Show the selected purpose/category before Prepare and hold. An advanced stage selector can deliberately target a supported embedding, reflection or harness operation. A specific purpose filter matches a reported stage capability, not a mandatory pipeline position. If that response never needs the requested call, finish with its actual no-call or terminal disposition. Do not generate a dummy request. The sheet states that preceding work may incur cost; the held modal shows the resulting exact application input.
 
 ## 7. Scenario authoring and mutation contracts
 
@@ -220,11 +235,17 @@ When a field group spans several owners, the server prepares/validates all group
 | World events and event history | `worldEventsEditor`, `worldEventJson`, `saveWorldEventsEditor` | Author the underlying event and relevant perspectives coherently; do not repaint only the center transcript. |
 | Relationships, family, conditions/effects, equipment and nearby objects | `godFamily`, `godFamilyEdit`, `godEffects`, `spawn`, `createItem`, `godAct`, and installed domain owners | Use existing supported relations and effects. An arbitrary descriptive statement does not create a new body channel, consent relationship, promise ledger or action primitive. |
 | Position, location, environmental state and scene setup | Existing creator action/geometry/environment owners admitted by `WorldService` | Geometry and perception update through native state. Reject an impossible/unsupported transform rather than silently approximating it. |
-| Experimental model-only information | The explicit lab context contract in §7.3 | Does not mutate native mechanics, permissions, knowledge provenance or entity identity. |
+| Experimental model-only information | The explicit lab context contract in §7.4 | Does not mutate native mechanics, permissions, knowledge provenance or entity identity. |
 
 This mapping is an implementation starting point, not permission to force every requested field through `savePersonEditor`. Extend an owning operation where the current API cannot express a required supported edit. Keep the domain owner authoritative and expose its actual result.
 
-### 7.2 Speech history, memories and coherent retcons
+### 7.2 Supported value holds
+
+Hold during this experiment is available only for directly writable fields whose native owner advertises a hold capability. The owner applies the authored value at its actual scheduled mutation boundaries and reconciles dependent conditions through its ordinary rules. Each hold records the field, value, starting/ending boundary and that it is an intervention. It does not create natural immunity, explain away ordinary depletion or imply that a held reaction is spontaneous.
+
+Do not repeatedly overwrite arbitrary JSON from a UI timer or repaint a constant over a changing native value. Derived fields cannot be held. A native field whose owner lacks this capability remains visibly unavailable for holding; CL03 adds the narrow owner hook where needed. Releasing a hold leaves the current accepted value in place and resumes ordinary evolution from it; it does not replay missed decay or restore a stale pre-hold value.
+
+### 7.3 Speech history, memories and coherent retcons
 
 The editor distinguishes what happened, what a particular person perceived, what they remember now, and what they believe. These are different editable sources with different consequences. Choosing a speaker and writing a past sentence is insufficient to imply that every nearby or current character heard it.
 
@@ -234,9 +255,9 @@ A prospective edit preview names the selected source and the affected actors/der
 
 Changing a source inside a completed run never rewrites that run's evidence. The operator creates or edits a new starting scenario, then reruns. A current-run retcon is permitted as an explicit intervention when the run is held, with before/after source references; its label makes the experiment's edited history clear. Backdating an utterance is not replaying an actual earlier provider request.
 
-### 7.3 Declared model-only fields
+### 7.4 Declared model-only fields
 
-A custom field record has an application ID, label, datatype (`text`, `number`, `boolean`, `enum`, or validated JSON), value, subject scope, enabled flag, recipient actor IDs and supported input placement. Subject scopes are person, directed relation, object and scene. A directed relation binds exact `fromActorId` and `toActorId`; the direction is never inferred from display order.
+A custom field record has an application ID, label, datatype (`text`, `number`, `boolean` or a labeled numeric `meter`), description, value, subject scope, enabled flag, recipient actor IDs and supported input placement. A meter may declare display bounds/unit; these describe only its experimental display. Subject scopes are person, directed relation, object and scene. A directed relation binds exact `fromActorId` and `toActorId`; the direction is never inferred from display order.
 
 Recipient actor IDs are explicit. A person field defaults to that person's private input; a directed-relation field defaults to its `fromActorId`. Object and scene fields require selecting whose input receives the experimental information. Adding another recipient is an intentional, recorded injection; it is not presented as natural perception. The editor offers source labels such as private belief, observed description and story premise to explain the experiment, but those labels alone do not install knowledge or physical facts.
 
@@ -244,9 +265,9 @@ The shared decision-context assembler accepts a lab-owned extra-context section 
 
 Installed native fields and model-only fields must have different descriptors and mutation endpoints/operation kinds. A model-only `fear`, `hunger`, `blessing`, `knows_secret` or `can_fly` does not install an actual emotion, satisfy a resource, create knowledge provenance or grant flight. If a matching native capability later exists, the operator can deliberately author that native state through its owner. Do not auto-promote custom names into mechanics.
 
-Custom-field size/count ceilings belong to [CLL08](../limits/cognition-lab.md). A rejected field remains in the editor draft with a validation message. No silent truncation, coercion to a string, or hidden exclusion is allowed. The recorded right-hand input includes the exact submitted fields and placement, so an operator can verify that a change affected the request.
+Custom-field transport/storage bounds and the deliberate absence of an extra count quota belong to [CLL08](../limits/cognition-lab.md#cll08). A rejected field remains in the editor draft with a validation message. No silent truncation, coercion to a string, or hidden exclusion is allowed. The recorded right-hand input includes the exact submitted fields and placement, so an operator can verify that a change affected the request.
 
-### 7.4 Typed capability descriptors
+### 7.5 Typed capability descriptors
 
 The workspace bootstrap exposes small, concrete descriptors for installed editable fields, stimulus kinds, stages and maintenance operations. A field descriptor includes identity, label, datatype, value, unit/bounds/options where meaningful, editability, native versus model-only meaning, mutation owner and unavailable reason. Prefer the installed module's existing descriptors; add projections for missing metadata. This is not a new general plugin/schema framework.
 
@@ -268,6 +289,8 @@ Selecting an Act does not imply that arbitrary source text is a supported native
 
 The operator may submit a stimulus as one character while inspecting a different character and focusing the response on a third. The request records all three bindings. The focal actor is whose immediate response defines One response; other autonomous actors retain their actual eligibility and captured outcomes within the chosen run policy.
 
+The Action picker and right-hand evidence distinguish all installed definitions, the actor's known/possessed capabilities, currently eligible choices, choices actually offered to a particular judgment, the proposed selection and the finally admitted result. All installed is a searchable developer catalog view with unavailable reasons; it is not the list the model was given. Selected-call Options shows the complete captured offered set with actual scores/output when available. It must never fill a missing offered set from today's catalog. Source-defined action families/variants remain searchable without rendering hundreds of persistent buttons.
+
 ### 8.2 Run policies and guards
 
 A run policy contains mode (`oneResponse`, `untilCondition`, `forDuration`, `continuous`), focal actor when required, a typed stop condition, autonomous participant IDs, requested simulation duration, active-wall guard, maximum newly dispatched model calls and current authorized spending allowance reference. The policy is validated and displayed before work begins. The run records the requested and effective values plus any constraint that reduced them.
@@ -277,6 +300,8 @@ A run policy contains mode (`oneResponse`, `untilCondition`, `forDuration`, `con
 Continue explicitly opens a new displayed guard interval on the same retained run. It does not reset paid accounting, erase previous interventions, refund calls or recursively continue by itself. Run until stopped is a deliberate continuous mode with visible bounds, not a hidden unbounded loop. Advance time uses the ordinary clock path and tells the operator whether autonomous cognition is enabled during the interval.
 
 ### 8.3 Effective inference configuration
+
+The lab uses an explicitly configured standalone provider allowance under the existing spending owner; it never copies the gameplay world's remaining balance as a new entitlement. Run/interval guards constrain that real allowance and cannot mint additional funds. Restores leave operational spending intact. No new cross-database billing platform is required.
 
 Run configuration is a nonsecret snapshot derived from the ordinary installed settings. It includes model/provider route per supported purpose, requested model identity, effort and output settings, escalation policy, actual judgment/rubric/instruction identity, relevant context inclusion settings, prompt template identity, native seed/state origin, active capabilities and the run guards. Capture both requested and actual reported model/deployment identity where the adapter exposes them.
 
@@ -292,7 +317,7 @@ A serial A/B experiment restores the same full starting checkpoint before each v
 
 Preserve the native saved RNG continuation, simulation clock and current work state when cloning/restoring an origin. Reusing a seed alone does not prove equal state after different preceding events. Remote-model answers and completion ordering may vary despite identical captured inputs; comparisons show observed differences rather than claiming determinism or causal statistical significance from one pair.
 
-Expectation notes, quality tags and operator scores do not enter character inputs automatically. Episode evaluation may include repeated runs or an explicitly requested evaluator model as a separately budgeted/captured stage. No automatic extra paid judge is necessary for a single speech test or for opening a comparison.
+Expectation notes, quality tags and operator scores do not enter character inputs automatically. Episode evaluation can include explicit repeated runs and the existing evaluation project's separate qualification workflow. No automatic extra paid judge is dispatched for a single speech test or for opening a comparison.
 
 ## 9. Capture, causality and historical inspection
 
@@ -328,6 +353,144 @@ A run record retains its bounded exact request/response evidence independently o
 Unknown cost is not zero. Estimates retain their pricing basis. A cancelled display row does not erase a provider request that may have executed, and a rewind does not refund or redispatch it. A request comparison adds new cost to its own result and the current allowance, never to the old recorded run.
 
 Loading older evidence is read-only and free of model work. Annotation saves update only annotation records, not captured inputs/outcomes. Immutable evidence here means the app does not silently rewrite an experiment; it does not require a tamperproof archival subsystem or indefinite storage.
+
+## 10. HTTP, read projections and operation protocol
+
+### 10.1 Common transport rules
+
+Extend the existing authenticated HTTP/protocol conventions. The lab route requires current developer/creator authority and resolves that authority again after an asynchronous read or before a mutation. Reuse the existing human-private inspection checks and generation fences. Imported role labels, model text and client-supplied flags cannot confer authority.
+
+All writes carry an application-issued or client-generated opaque `commandId` and the expected lab runtime generation/revision. A repeated accepted command returns its existing receipt/status. Use the current native command/request receipts for native work and a small lab operation receipt for setup/control operations; do not build a general distributed command framework. A lost HTTP response never licenses the browser to issue a second new command ID automatically.
+
+A read projection has `workspaceId`, `worldId`, `timeline`, `runtimeGeneration`, `scenarioRevision`, a projection kind and its actual data. Captured records additionally identify run/root/stage. The server never resolves a historical ID by falling back to today's value with a similar name. A stale read returns a stale result or its explicitly captured historic scope.
+
+### 10.2 Endpoint surface
+
+The paths below are selected design contracts; `:id` means the server-issued exact identity. Reuse existing response/error conventions in `packages/protocol` rather than creating parallel HTTP machinery.
+
+| Method and path under `/api/cognition-lab` | Input | Result and side effects |
+| --- | --- | --- |
+| `GET /workspace` | Optional requested current actor/category | Current workspace/scenario/run summary, effective run policy, installed capability descriptors and stable collection counts. May initialize the configured lab on first authorized open; never executes a stimulus/model call. |
+| `GET /current/:actorId` | Category, optional search/cursor/page size | Current authorized category projection with native editor tokens; no whole-character/history hydration for an unrelated category. |
+| `GET /events` | Run/scenario, actor/kind filters, search, cursor/page size | Native and processing-event summaries in stable order; no full raw payloads. |
+| `GET /runs` and `GET /scenarios` | Kind/status/search/cursor/page size | Searchable saved/current record summaries, actual completeness and compatibility. |
+| `GET /runs/:id` | None | Root outcome summaries, immutable provenance, interventions, accounting and stage summaries. |
+| `GET /runs/:id/stages/:stageId` | Evidence section | Captured input/output/selection/admission/effects manifest and artifact references for that section. |
+| `GET /artifacts/:id` | Exact offset/chunk size or download | Exact stored bytes with identity, content type, length and continuation; permissions inherit the originating evidence. |
+| `GET /sources/:id` | Captured source reference or current-source selection explicitly identified | Full permitted source content with actual owner/time/revision and captured/current label; never a best-effort name lookup. |
+| `POST /operations` | Typed operation envelope below | Validated mutation/control receipt and updated workspace revision/state; executing operations clearly identify their incurred work. |
+| `POST /imports` | Current-format bundle stream and validate-only or install intention | Validates before replacement; installation follows the same admitted load operation. No automatic request execution. |
+| `GET /exports/:kind/:id` | Selected scenario/checkpoint/run kind | Current-format bundle stream assembled from exactly that record's dependencies; no global game backup. |
+| `GET /changes` | Last cursor using existing live-update transport conventions | Small revision/status/event notifications; no full payload or per-field subscriptions. A reconnect reads missed summaries before following. |
+
+If current HTTP conventions use POST for an existing scoped private read, preserve that convention. This table fixes resource meaning and side effects, not permission to weaken the established authentication/CSRF/private-read path.
+
+### 10.3 Operation envelope and variants
+
+The common shape is `{ commandId, expected: { runtimeGeneration, scenarioRevision }, operation }`. `operation` is a validated discriminated union; reject unknown fields and unsupported variants. Only operations that intentionally cross a timeline can replace the expected current generation after validating their selected source.
+
+| `operation.kind` | Required data | Contract |
+| --- | --- | --- |
+| `applyEdits` | Typed owner edits, owner concurrency tokens, optional held-field declarations | §7 transaction semantics; no inference. |
+| `submitStimulus` | §8 stimulus, explicit focal actor and requested run policy | One native source submission, ordinary preparation and bounded response. No override property. |
+| `prepareAndHold` | Same source and policy plus actual stage-purpose match | Explicit source submission and prior necessary work; returns progressing status, then a live prepared handle or genuine terminal disposition. |
+| `submitPrepared` | Opaque handle, replacement model-facing envelope, supported stage-setting changes | Validate and submit exactly once. Captures original and submitted inputs; current native parser/admission still run. |
+| `continueOriginal` | Opaque prepared handle | Consumes the unchanged original request once under its normal wrapper. |
+| `controlRun` | Run ID and typed action: continue, hold after boundary, step, run until, advance time, advanced native manual pause/resume, cancel attempt or stop | §5/§10.4 semantics. Target an attempt explicitly for cancellation; no ambiguous cancel-all disguised as one call. |
+| `saveScenario` | Name and actual current applied-state revision | Capture full reusable starting state and scenario settings; source/time returned. |
+| `saveCheckpoint` | Name, current run/boundary reference and applied-state revision | Coherent native continuation capture. A pending provider job itself is not a resumable saved promise. |
+| `loadScenario` / `restoreCheckpoint` | Saved source ID | Settle/cancel active lab work, fence stale publication, validate/install current-format state, return held; never alter game runtime. |
+| `importGameSnapshot` | Explicit current game save/capture selection | Read-only point-in-time export through game's checkpoint owner, validate and install in lab. No persistent live synchronization. |
+| `retainRun` | Run ID and optional name | Retain bounded evidence with truthful completeness; no world mutation/inference. |
+| `rerunRequest` | Captured stage ID, optional edited envelope/config variant, requested allowance | New request-only result; does not execute a character effect in today's world. |
+| `continueCheckpoint` | Actual captured checkpoint ID, stage binding and compatible requested variant | Fresh preparation/validation before new native continuation; unavailable without real checkpoint/bindings. |
+| `runComparison` | One saved origin, ordered named variants and authored episode, explicit guard/allowance policy | Serial restore/run under §8.4. Each variant has separate evidence; no hidden parallel runtime. |
+| `annotateRun` | Run/root/stage ID, annotation text/tags or expected-behavior note | Metadata only, excluded from every model input. |
+| `removeSaved` | Exact selected saved IDs/kinds | Remove only selected lab records after references/dependencies are shown. Active state is not replaced as an implicit side effect. |
+
+Hiding a payload modal or changing tabs needs no server dispatch operation. Its held handle persists until an explicit continuation, cancellation, invalidating edit or runtime close. A client may discard only its local override draft without destroying the original handle.
+
+### 10.4 Execution state machine
+
+A run consists of one or more explicit execution intervals. Each interval has the requested policy, guard counters and terminal disposition; Continue opens another interval without resetting the run's accumulated receipts. A finalized run's captured intervals are immutable. Ordinary submitted follow-up stimuli can extend the current held episode intentionally; starting a new experiment or loading another origin finalizes the previous episode.
+
+| State | Allowed transitions | Required publication |
+| --- | --- | --- |
+| Ready | Submit/Prepare/Run → Running; load/import/save/edit remain Ready | Current scenario, applied revision, no active dispatch. |
+| Running | Matching pre-call gate → Held before stage; response/guard/stop boundary → Settling; real failure → Settling | Actual progress with any currently in-flight requests and pending next boundary. |
+| Settling | All admitted work durably resolved/cancelled → Held or Ended; externally uncertain work → Held with uncertainty | Close new admission immediately. Do not wait forever or relabel an unknown external outcome as successful cancellation. |
+| Held | Continue/Step/Submit follow-up → Running; Save/Edit/Retain/Inspect remain Held; Stop/finalize/load → Ended | Exact stop reason, completed interval, pending native work, actual prepared handle if one exists. |
+| Ended | Read/retain/annotate; new experiment → new Run | Final disposition and actual completeness. No previously admitted result may change a replacement scenario. |
+
+A held pre-call stage is not a completed model call. A response boundary may complete useful work while leaving a physical action in progress. Advanced native manual pause invokes shared pause/cancellation semantics and results in an explicit held/cancelled disposition; Stop following is never a server-state transition.
+
+Known domain/validation errors are typed results with code, message, field path where relevant, current revision, and permitted next actions. Examples include stale draft, unsupported field/capability, invalid payload/schema, missing evidence/checkpoint, no perception/opportunity, unavailable provider, exhausted run/capture allowance, storage failure, cancelled and uncertain external completion. Preserve the original draft and accepted prior work. Unexpected exceptions keep a diagnostic identity and a concise UI error; they do not trigger a paid retry or return fabricated empty results.
+
+## 11. Persistence, loading and lifecycle
+
+### 11.1 Small current-format records
+
+Use native game tables for the active lab world. Add a small lab metadata schema/table group for scenario descriptors, runs/intervals, captured stages/artifact references, annotations and operation receipts. Keep lab metadata outside the native checkpoint table set so restoring a world cannot rewind spending, erase prior runs or revive a used handle.
+
+Use ordinary indexed SQL rows for summary/searchable fields and ordinary bounded files under the lab data directory for large exact request/response/checkpoint artifacts. Store artifact byte length/content type and an integrity identity provided by the current storage owner. A run refers to a single captured payload artifact rather than copying it into every event/section. Do not add content-addressed version trees, global deduplication services, event-sourced world reconstruction or an archival vault.
+
+Useful indexes are the exact workspace/scenario/run/time ordering, run/root/stage identity and actor/source identity already needed by the read paths. Search uses the relevant text fields under that scope before cursor paging. Add a specialized search service only after measured queries justify it; it is not a prerequisite.
+
+Retained evidence has explicit completeness. A failed artifact write means the call/run cannot be described as fully retained. [CLL07–CLL09](../limits/cognition-lab.md#cll07) owns byte allowances, reservation and payload-chunk values. No age-based cleanup silently removes saved scenarios or retained runs. Remove/export/increase allowance are deliberate developer operations.
+
+### 11.2 Whole-state save and restore
+
+`GameSaves`/checkpoint streaming owns a coherent native capture, including complete required cold event/memory rows and installed dependencies, with its existing consistency/admission controls. Do not save only the in-memory hot `World` JSON or just the selected person's form. Do not hold the world mutation lock while streaming a whole export.
+
+A scenario save captures a reusable starting state plus settings/sequence. A checkpoint captures a specific continuation state including native clock/RNG/work according to current save ownership. Retain run stores evidence and metadata; a run without a checkpoint cannot resume a world. One artifact may be referenced by more than one lab descriptor when it is genuinely the same capture; no generalized versioning system is needed.
+
+Load/import first validates the candidate's current format, structural integrity, installed definition/asset dependencies and native world invariants without destroying the active state. After explicit installation is accepted, close admission, settle/cancel native operations through their owner, rotate runtime/timeline authority and restore through the current service/save path. Existing save recovery behavior remains shared; the lab does not create another recovery framework. Return to a held state without automatic paid work.
+
+Historical captures preserve their own identities when the active world changes. Client selections referencing replaced current entities clear or re-resolve only through exact returned identity; they never bind to a namesake. Old prepared handles remain invalid permanently. Pending provider receipts retain their original operational identity and settlement outside the rewind.
+
+### 11.3 Game import and current-format bundles
+
+Import from game is explicit. The gameplay side supplies a coherent point-in-time snapshot through its existing capture owner; the lab validates/copies that artifact into its own storage. Record origin and native capture time. The game continues according to its normal capture semantics. Subsequent gameplay edits never synchronize to the lab, and lab writes never synchronize back.
+
+A bundle has a selected kind (scenario, checkpoint or run), current application format marker, metadata, native checkpoint/dependencies where that kind requires them, exact retained artifacts and completeness. Use the existing native format identifier and validation; do not invent independent backward-compatible versions for each field. Reject unknown/incompatible data with a direct reason and offer ordinary rebuild from the current initializer.
+
+Export omits credentials, access tokens, live request controllers, arbitrary server paths and unrelated gameplay data. Imported source authority is validated against the present authenticated installation; saved account/permission claims never grant current rights. Validate archive paths/sizes with the established file/save owner and stream bounded data. Do not add a special in-app migration or import-repair wizard.
+
+### 11.4 Browser and server lifecycle
+
+A browser reload reconnects to the existing active lab and reads its actual status. It never replays the composer submission. If the last lab connection disappears during a running interval, request a safe lab hold, close new admission and settle/cancel existing work through the normal owner. Preserve a held prepared original in memory while the runtime remains alive; reopening shows Held before stage with no automatic dispatch.
+
+Losing a browser does not pause the game runtime. A server restart loses process-local prepared handles; it restores only current supported saved/native state and captured evidence, returns held and labels interrupted work honestly. Existing receipt recovery may reconcile an uncertain paid call; this cannot automatically begin a new lab model request. There is no promise to resume arbitrary in-process callbacks from a saved file.
+
+Closing/replacing the lab runtime unregisters its clock, stream subscriptions, navigation jobs and hook instances and drains its own resources once. Shared host/provider facilities are closed only by their normal process owner. Do not close a shared network client merely because the lab tab closed.
+
+## 12. Client composition and stable interaction
+
+Use the existing client app, router, shared light-theme design system, form controls and diagnostic renderers. A direct `/cognition` URL opens the developer shell before any PlayCanvas/game-scene initialization. It still authenticates through the normal server session. Avoid embedding the full game in a hidden frame or mounting a second UI framework.
+
+The shell is a viewport-sized grid with fixed header/run strip and the feature specification's three columns. Each column separates fixed navigation/actions from a single primary scrolling content region. Use explicit grid/flex minimum sizing (`min-width: 0`, `min-height: 0`) so long content cannot expand its pane and push sibling controls away. Growing collections own their search and one list scroller; expanded detail replaces that region or opens the designated modal. A nested collection does not create a second embedded scroll well.
+
+Extract reusable structured content from `diagnostics.tsx` into shared renderer sections, accepting a read-only captured view and explicit navigation callbacks. The existing diagnostic accordion navigation is not copied wholesale. Right-side top-level sections open by direct command; a selected memory/source detail replaces the region with a short breadcrumb and Back action. Full payload editing/search uses the focused modal. Feature/CLL05 owns exact geometry, type sizes and navigation budgets.
+
+Keep state ownership explicit: current editor/drafts, composer drafts, run policy, current world subscription, captured selection/detail cache and comparison view are separate. Draft keys include workspace/scenario/timeline, subject ID and editor kind. Historical selection keys include run/stage/evidence identity. A shared generic selected-person object must not feed both current and historical values.
+
+Use revision/status notifications to invalidate or update the necessary projection; do not broadcast every meter/current field as its own subscription. Cancel an obsolete read when search/selection changes. A late response may enter the correctly scoped cache but cannot replace the visible selection. Search updates the list beneath its stable toolbar; selection and scroll anchors remain stable where the exact row still exists.
+
+Following live results is a view preference. Explicitly selecting history turns follow off. Incoming rows preserve the current scroll/focus and show a compact new-result indicator. Follow latest/jump is explicit. Streamed text may grow inside its content area but cannot resize header/navigation/composer controls. Long raw text must remain fully accessible via search/copy/export without mounting every payload simultaneously.
+
+Do not optimistically pretend an edit committed or an action executed. Retain the draft until a durable accepted result; show a compact pending state and returned error. Native events or receipts are the source of accepted outcomes. Keyboard/IME behavior, tooltips, focus return and icon names follow the feature specification and shared UI handbook. Opening a details panel cannot capture the next composer Enter press or change actor/control selection.
+
+## 13. Feelings, maintenance and extension boundaries
+
+The lab exposes installed capabilities in their actual categories: bodily condition/reaction, private interpretation/appraisal, externally observable expression, derived consequences and behavior. Similar labels do not establish identical variables. Qualitative grief can retain cause, target, source and lifetime without inventing a global numeric grief axis. Several current reactions can coexist; use the installed aggregation/selection owner instead of summing a dashboard's sliders.
+
+The separate [emotional-physiology feature proposal](https://github.com/Macrofold/OpenLegend/blob/codex/design-stealth-02-emotions/docs/projects/emotional-physiology-feature-spec.md) and [technical proposal](https://github.com/Macrofold/OpenLegend/blob/codex/design-stealth-02-emotions/docs/projects/emotional-physiology-tech-design.md) are external implementation dependencies. Their existence does not make all emotional mechanics installed on this baseline. The lab descriptor reports available, read-only, model-only or unavailable precisely. The directly controlled human-character interpretation decision SA-D01 remains that design's open decision; choosing an inspector/focal actor does not settle it.
+
+Reflection, recall maintenance, consolidation, higher cognition and existing harness work keep their native scheduling, context, time/cost and source validation. Provide explicit inspect/advance-to-boundary/run-maintenance controls only for supported owner operations. An existing native owner may already have a developer trigger; use it. Where none exists, add a bounded explicit request to that owner instead of calling its model directly from a lab route.
+
+A scheduled future operation is visible as pending and can be reached with bounded time/condition controls. A run ends without waiting for all recurring maintenance to become globally quiet. Effects that arise later link to the originating sources while preserving their actual later time. Restore/reset cannot leave a callback with the authority to publish into a new scenario.
+
+This capability approach also handles unusual repertoire ideas: different sensory bodies, alternate expression, shared senses, borrowed forms, object testimony and looping worlds require installed native rules. The lab can author clearly marked model-only premises to explore a voice, but those experiments do not qualify physical/sensing/memory-continuity mechanics. See the [all-catalogue review](cognition-lab-repertoire-review.md#catalogue-coverage) and [episode cards](cognition-lab-repertoire-review.md#repertoire-derived-episode-cards).
 
 ## Maintained records
 
