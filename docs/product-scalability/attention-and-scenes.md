@@ -123,6 +123,7 @@ Test a gist-only negotiation, an exact oath inside a coarse scene, a human joini
 
 ## Maintained records
 
+- Comparative evidence: [crowd and individual-simulation research](../../research/crowds-and-individual-simulation/README.md), with [hypothetical player opportunities](../../research/crowds-and-individual-simulation/open-legend-implications.md#what-larger-populations-could-add-to-play) and an [existing-owner map](../../research/crowds-and-individual-simulation/open-legend-implications.md#7-research-to-design-map). Retained intentions can improve coherence as well as cost; distinct identities alone do not prove that each participant chose their intention. The panel supplies cases for the selected contracts without changing source precision, independent interpretation or crowd policy.
 - Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
 - Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
 - Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).

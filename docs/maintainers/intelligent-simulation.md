@@ -13,6 +13,7 @@
 - [Product scalability feature](../projects/product-scalability-feature-spec.md) / [technical design](../projects/product-scalability-tech-design.md).
 - [Evaluation feature](../projects/intelligent-simulation-evaluation-feature-spec.md) / [technical design](../projects/intelligent-simulation-evaluation-tech-design.md).
 - [Constraint map](../limits/intelligent-simulation.md); [research inventory](../../archive/02-research/game-inspiration/research-progress-intelligent-simulation-2026-10-14.md).
+- [Crowd and individual-simulation panel](../../research/crowds-and-individual-simulation/README.md), including [gameplay opportunities](../../research/crowds-and-individual-simulation/open-legend-implications.md#what-larger-populations-could-add-to-play) and the [research-to-design map](../../research/crowds-and-individual-simulation/open-legend-implications.md#7-research-to-design-map). Use its shared-navigation, varied-cadence and individual-progress cases through IS01–IS09 and PF's existing comparisons. External population figures are scoped evidence, not completion of these exits or a new crowd implementation programme.
 
 ## Selected scope and readiness
 

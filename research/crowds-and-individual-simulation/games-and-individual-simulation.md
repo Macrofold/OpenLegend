@@ -63,7 +63,7 @@ Graham describes Sims choosing the next objective on a cadence from motives, tra
 
 Barák says the AI team added behavior levels of detail and could simulate more than 500 NPC brains in 10 milliseconds on PS4, separately mentioning thousands of smart/trigger areas and objects. AI runs on a separate thread; he says rendering was the bottleneck at that point. Elsewhere in the answers he describes AI, entities, and RPG work being parallelized while other operations remained serial.
 
-**Limits:** This is a developer-reported subsystem number in a 2018 development context. It is not a published controlled benchmark of 500 fully detailed, simultaneously visible, animated and physically interacting actors, and does not include a reproducible workload. It nevertheless directly challenges the assumption that hundreds of individually purposeful NPCs inherently require a modern GPU cluster.
+**Limits:** This is a developer-reported subsystem number in a 2018 development context. It is not a published controlled benchmark of 500 fully detailed, simultaneously visible, animated and physically interacting actors, and does not include a reproducible workload. It is relevant evidence for hundreds of conventional NPC routines on console hardware, while leaving the cost of Open Legend's cognition and complete actor workload unmeasured.
 
 ### Strong follow-up lead, limited access
 

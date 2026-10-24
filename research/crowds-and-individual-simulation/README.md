@@ -12,6 +12,8 @@ Ultimate Epic Battle Simulator 2 is a useful example of the first possibility. I
 
 The broader research is encouraging for Open Legend's ambition of hundreds of meaningful actors. It is not evidence that Open Legend already meets that capacity, or that hundreds of large-model characters can deliberate continuously at game-frame rates. Population, active interactions, decision cadence, hardware, and the behavioral promises being preserved all matter.
 
+The payoff is more than a larger visible crowd: individual animals can become recognizable inhabitants, established intentions can make people dependable, and different witnesses can make discovery and intervention worthwhile. These are [hypothetical gameplay opportunities](open-legend-implications.md#what-larger-populations-could-add-to-play), with evidence questions beyond speed. Sophistication can vary during the same individual's life; this research does not assume permanent classes of rich named characters and simple background characters. The [research-to-design map](open-legend-implications.md#7-research-to-design-map) routes the findings into existing completed designs and unfinished qualification without another architecture or backlog.
+
 ## Reading guide
 
 | Question                                                                                 | Research document                                                                  |
