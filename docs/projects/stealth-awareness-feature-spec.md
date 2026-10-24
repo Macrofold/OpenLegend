@@ -2,17 +2,17 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Shared and specialist design deliverables are complete; final integration, runtime delivery and play qualification remain open. | 2026-10-24 |
+| In progress | Integrated design is complete; runtime delivery and play qualification remain open. Controlled-character psychological policy remains SA-D01. | 2026-10-24 |
 
 ## Purpose and selected scope
 
 Stealth should make the same persistent world more interesting to inhabit: approach a wary animal, carry noisy salvage, recognize a companion in darkness, watch a camp, misdirect an enemy, escape a pursuit, or be betrayed by someone trusted. Success comes from understanding and changing circumstances. Crouching is one physical choice among many; it does not activate a separate hidden-character game mode.
 
-This project selects shared behavior and integration contracts for seven specialist designs. The [technical design](stealth-awareness-tech-design.md) is their authoritative shared contract. It composes the existing perception, identity, memory, action, emotion, encounter, time and projection owners. It does not replace those owners or claim that their documented future capabilities already execute.
+This project defines the integrated behavior and contracts of seven specialist designs. The [technical design](stealth-awareness-tech-design.md) is their authoritative shared contract. It composes the existing perception, identity, memory, action, emotion, encounter, time and projection owners. It does not replace those owners or claim that their documented future capabilities already execute.
 
 The selected scope covers posture and quiet movement; physical sound, hearing and footsteps; body orientation and independent looking; light, obstruction and concealment; uncertain observer-specific evidence and recognition; attention, investigation and finite watch commitments; immediate native startle, persistent interpreted emotion and mechanical fear; relevant preparation and surprise in combat; and player controls, historical information and camera disclosure. Specialist designs supply the detailed sensing laws, body/pose composition, tuning and interaction specifications within these shared boundaries.
 
-The design consumes concrete parts of [ND11](../maintainers/needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity), [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization), [ND16](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and [ND19](../maintainers/needs-design.md#nd19--older-memory-transformation-and-dream-reinterpretation). It completes only the shared design slice tracked by SA00. Broader conflict, controls, acoustics, memory transformation and their implementation are not completed by this document.
+The design consumes concrete parts of [ND11](../maintainers/needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity), [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization), [ND16](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and [ND19](../maintainers/needs-design.md#nd19--older-memory-transformation-and-dream-reinterpretation). SA00 and SAD-A–G/SAD-I complete the selected design slices; their focused trackers retain implementation and qualification. Broader conflict, controls, acoustics, memory transformation and their implementation are not completed by this document.
 
 ## What exists and what this design adds
 
@@ -20,7 +20,7 @@ Source inspection uses `Macrofold/OpenLegend` at `86a21ce50aa0633d81b38a430b7727
 
 The existing game has authoritative spatial bodies and movement, range/obstruction-based sight, listener-specific speech, private event evidence, continuous sighting associations, personal combat encounters, native animal response machinery, interpreted appraisals, status effects, prepared responses and observer-scoped player views. These are useful foundations. They do not establish delivered facing/light/concealment sensing, general non-speech acoustics, persistent learned voice recognition, mechanical surprise, native startle, adaptive emotional reconsideration, or complete historical-character disclosure. Current appraisal/contribution mechanisms also need explicit extensions before they can supply the selected accuracy/evasion effects.
 
-All behavior below is an **accepted shared target**, except the explicitly open controlled-character interpretation decision and unresolved integrated contracts. D's [general emotion feature](emotional-physiology-feature-spec.md), [technical design](emotional-physiology-tech-design.md) and [EP tracker](../maintainers/emotional-physiology.md) specify native bodily reactions, interpreted fear/joy/anger and persistent grief, maximum effective mechanics and bounded independent review; their numerical policy is owned by [base psychological reactions](../worlds/base/psychological-reactions.md). [The player-experience design](stealth-player-experience-feature-spec.md) and [SPX tracker](../maintainers/stealth-player-experience.md) own selected controls and permitted presentation. This is a design-only project stage: no new runtime feature, executable test, deployment, measured performance improvement or player-enjoyment result is claimed.
+All behavior below is an **accepted shared target**, except the explicitly open controlled-character psychological policy. D's [general emotion feature](emotional-physiology-feature-spec.md), [technical design](emotional-physiology-tech-design.md) and [EP tracker](../maintainers/emotional-physiology.md) specify native bodily reactions, interpreted fear/joy/anger and persistent grief, maximum effective mechanics and bounded independent review; their numerical policy is owned by [base psychological reactions](../worlds/base/psychological-reactions.md). [The player-experience design](stealth-player-experience-feature-spec.md) and [SPX tracker](../maintainers/stealth-player-experience.md) own selected controls and permitted presentation. This is a design-only project stage: no new runtime feature, executable test, deployment, measured performance improvement or player-enjoyment result is claimed.
 
 ## Gameplay goals
 
@@ -59,7 +59,7 @@ Watching can prepare a character for a plausible threat without revealing who is
 
 ### Startle, fear and control
 
-Startle is an immediate native bodily response to an eligible sudden cue. It requires no model result. The base-world starting duration is provisionally three **normal-speed real seconds**, reduced or otherwise modified only by supported personal traits, physiology and conditions under the authored policy. The exact bodily-effect and trait composition is specialist D work.
+Startle is an immediate native bodily response to an eligible sudden cue. It requires no model result. The base-world starting duration is provisionally three **normal-speed real seconds**, reduced or otherwise modified only by supported personal traits, physiology and conditions under the authored policy. The exact bodily-effect and trait composition is specified by D and the base psychological-reactions policy.
 
 Interpreted fear can outlast startle. It is a character's appraisal of supported causes, not an automatic assertion that an external situation is objectively dangerous. Compatible cognition may reconsider it without a new external event, including without a visible verbal thought. Reconsideration remains causally tied to the existing episode and cannot invent another frightening event or endlessly renew an unchanged feeling.
 
@@ -71,7 +71,7 @@ Surprise means an attack was relevantly unexpected and the victim was not genuin
 
 An attack's own readable preparation or projectile approach can provide warning if the victim actually acquires it early enough to prepare under the world rule. The blow's contact, injury and immediate startle cannot supply earlier warning for that same outcome. Every actual victim of a projectile receives an individual evaluation, including someone other than the intended target.
 
-The initial selected world may apply a tunable 2× surprise damage multiplier. It belongs to the world combat policy. It is not promised before the outcome, multiplied by a second backstab rule, or repeatedly awarded when someone steps behind an opponent during a continuously anticipated fight. Genuine disengagement and later loss of relevant preparation must satisfy the encounter owner's rules before another attack can qualify. Later attacks can use warning produced by earlier committed attacks.
+The selected world applies a tunable 2× surprise multiplier to nominal direct injury before ordinary protection and damage arithmetic. It belongs to the world combat policy. It is not promised before the outcome, multiplied by a second backstab rule, or repeatedly awarded when someone steps behind an opponent during a continuously anticipated fight. Genuine disengagement and later loss of relevant preparation must satisfy the encounter owner's rules before another attack can qualify. Later attacks can use warning produced by earlier committed attacks.
 
 ### The third-person view
 
@@ -107,13 +107,13 @@ At the shed, new sight or sound can narrow the search. Finding nothing supplies 
 
 A player crouches behind a low wall and walks toward a gap while deliberately looking sideways. The accepted body clears the wall and changes the available sensory origins. Body/head limits and competing physical work determine how far and how quickly looking can occur. The camera remains independently movable.
 
-A bright light or exposed movement can still reveal the character. Standing beneath a low beam refuses safely; repeated look requests do not reset movement costs or create extra work. Losing sight of a person removes current physical details immediately even if the exposure episode retains continuity. A later sighting may recover an identity without inheriting an unseen route.
+A bright light or exposed movement can still reveal the character. Standing beneath a low beam refuses safely; repeated look requests do not reset movement costs or create extra work. A provider-defined loss of sight removes current physical detail immediately even if the exposure episode retains continuity. Between B's due samples, presentation holds the latest permitted measured value; it never follows hidden motion. A later sighting may recover an identity without inheriting an unseen route.
 
 ### J05 — Prepare for an unseen threat
 
 A warning actually reaches a camp defender: movement or a credible warning suggests danger from an approach, without identifying an attacker. The defender accepts a relevant watch/guard response and has time and bodily capability to prepare. An attacker later strikes from concealment within that prepared threat context.
 
-The defender can avoid surprise without knowing the attacker's name or exact prior location. Success of the eventual defense is separate: the defender may still be struck. A warning that was never heard, stale coverage, an incompatible task, incapacitation, or a merely proposed guard cannot supply preparation. A general declaration of vigilance does not give permanent protection from every possible attack.
+The defender can avoid surprise without knowing the attacker's name or exact prior location. Success of the eventual defense is separate: the defender may still be struck. A warning that was never heard, stale coverage, an incompatible task, loss of required perception/life eligibility, or a merely proposed guard cannot supply deliberate preparation. An aware immobile body can still register warning; actual evasion or guard work must separately satisfy its physical requirements. A general declaration of vigilance does not give permanent protection from every possible attack.
 
 ### J06 — A trusted visitor betrays someone
 
@@ -131,7 +131,7 @@ If the pursuit genuinely ends, knowledge becomes historical and active preparati
 
 At normal speed, an eligible three-second startle subsides after three elapsed real seconds at 1×, corresponding to 180 simulation seconds at the selected 60:1 ratio. At 3× it takes one wall second; at 8×, 0.375 wall seconds. A pause partway through preserves the remaining simulation progress. Save/reopen resumes the same episode and never reapplies its onset.
 
-Supported longer-term fear may remain mechanically relevant after startle. The person can continue to flee at the applicable ordinary movement speed. A later private reconsideration can soften or otherwise validly alter their interpretation without inventing a new external cause; repeated unchanged reconsideration reaches a bounded native outcome rather than renewing fear forever. Unavailable AI leaves coherent native effects and the existing feeling's defined continuation. Controlled-player psychological acquisition and retained-appraisal applicability follow only the eventual SA-D01 selection.
+Supported longer-term fear may remain mechanically relevant after startle. The person can continue to flee at the applicable ordinary movement speed. A later private reconsideration can soften or otherwise validly alter their interpretation without inventing a new external cause; repeated unchanged reconsideration reaches a bounded native outcome rather than renewing fear forever. Unavailable AI leaves coherent native effects and the existing feeling's defined continuation. Controlled-player psychological creation/review, retained-appraisal applicability, disclosure, revocation and control transfer follow only the eventual SA-D01 selection.
 
 ### J09 — Hand off a watch and share incomplete information
 
@@ -155,16 +155,16 @@ The engine still separates physical signal, observer evidence, remembered knowle
 
 **SA-D01 remains open:** how directly controlled characters acquire longer-term psychologically interpreted fear, whether existing interpreted appraisals remain mechanically applicable during direct control, and the associated disclosure, revocation and control-transfer behavior, separate from universal eligible native startle. The [decision record](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) owns the alternatives, recommendation and adoption gate.
 
-The viable choices are deterministic authored appraisal from the character's permitted evidence, opt-in bounded AI interpretation, or native-body-only initial player scope that explicitly masks interpreted effects while preserving retained appraisal records and their lifetimes. The conditional recommendation is deterministic authored appraisal if persistent fear should affect ordinary players: it gives predictable mechanical behavior without a paid real-time dependency. That is a recommendation, not an accepted acquisition policy. All alternatives use the same appraisal/effect owners and preserve direct movement control.
+The viable choices are deterministic authored appraisal from the character's permitted evidence, opt-in bounded AI interpretation, or native-body-only initial player scope that explicitly masks interpreted effects while preserving retained appraisal records and their lifetimes. Recommend native-body-only initial player scope. If persistent interpreted fear should affect ordinary players, prefer deterministic authored appraisal for predictable mechanics without a paid real-time dependency. That is a recommendation, not an accepted acquisition policy. All alternatives use the same appraisal/effect owners and preserve direct movement control.
 
 Only controlled-player behavior dependent on that psychological policy and its specific acceptance journeys depend on this choice. Stopping new appraisal production alone does not settle the effect of retained appraisals. Native startle, NPC emotions, sensing, preparedness, surprise and ordinary player disclosure can be fully designed independently. No model may infer the real human's psychological condition from the fictional character's state.
 
 ## Cross-project acceptance
 
-The shared design is ready for specialist work when each specialist has one owner, known producer/consumer inputs, bounded failure semantics and a route through the journeys above. A later integrated implementation must satisfy all of the following; none is checked off by design completion:
+The integrated design assigns each responsibility one owner, exact producer/consumer inputs and bounded failure semantics. [A–U scenario traces](stealth-awareness-scenarios.md) exercise all twelve world-to-player/lifecycle aspects of the required gameplay cases. A later integrated implementation must satisfy all of the following; none is checked off by design completion:
 
 - Identical physical occurrences can create different observer accounts without a hidden-source or live-state leak. Recognition, names, location, kind and words remain independently absent or available.
-- Strong cues reach native sensing at their actual simulation boundary. Weak exposure is accumulated once from supported physical intervals, independently of render/publication frequency.
+- Strong cues reach native sensing at their channel's actual occurrence or due canonical sampling boundary. Weak exposure is accumulated once from supported physical intervals, independently of render/publication frequency.
 - Current perception, retained episode continuity and remembered facts remain distinct through movement, light changes, loss of sight, correction, forgetting, death, replacement bodies and restore.
 - Preparation requires relevant warning or deliberate anticipation plus an actually valid prepared state. Surprise does not arise merely from failed defense or disappear because the impact supplies new evidence.
 - Immediate startle runs without AI; persistent emotion changes affect the selected mechanics through one authoritative combination. Startle created by an impact cannot affect the defense or damage resolution of that same impact; pre-existing effects are sampled at the owning action/outcome boundary.
@@ -176,11 +176,11 @@ The shared design is ready for specialist work when each specialist has one owne
 
 ## Delivery boundaries
 
-Shared and independently completed A–G designs require final SAD-I reconciliation before their affected implementation slices, whole-journey integration and actual gameplay qualification. [The tracker](../maintainers/stealth-awareness.md) owns this dependency order and exact completion criteria.
+The shared and A–G designs are integrated under SAD-I. Their runtime slices, whole-journey integration and actual gameplay qualification remain open. [The tracker](../maintainers/stealth-awareness.md) owns this dependency order and exact completion criteria.
 
 This stage does not select a universal probability graph, a replacement event bus/database/scheduler/action system, a new renderer, unrestricted physical acoustics, scent or thermal simulation, complete disguise/impersonation mechanics, every body anatomy, compulsory verbalized emotion, an omniscient detection meter, a new surprise cooldown copied across combat systems, or an ordinary-player speed/creator power. Future supported variants must use the same evidence and authority boundaries; their existence in a repertoire does not install them.
 
-Only the final integration agent performs broad reconciliation of central repertoire indexes, coverage and gameplay priorities after A–G return. This shared stage improves directly relevant topical entries and supplies an explicit handoff for that final pass.
+The [repertoire assessment](stealth-awareness-repertoire-review.md) relates these capabilities to hunting, danger, inhabitants, discovery and settled places. It preserves the broader game's build order while selecting useful combinations of the same physical and personal-evidence mechanisms.
 
 ## Maintained records
 

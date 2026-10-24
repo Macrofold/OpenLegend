@@ -311,6 +311,8 @@ Saved internal feeling source version: **2,048 characters maximum**.
 
 **Overflow and lifecycle:** Required reaction work participates in the physical outcome's existing complete native-work admission. Incomplete preparation retains a coherent prefix; no synchronous impact performs SQL or drops a selected reaction. Active contributions use existing due/residency owners; terminal onset receipts remain canonical and exact-scoped. Source loss does not end a fixed effect, target-life end does. No additional arbitrary active-count truncation is selected. Qualification: EP02/EP07/EP09; no runtime evidence yet.
 
+The [abrupt-sound policy](../worlds/base/physical-sound.md#abrupt-acquired-sound-for-bodily-startle) owns the selected received-level, detection-margin and supported-onset/rise thresholds. They are provisional stimulus tuning, with quiet speech/ordinary footsteps and repeated confirmation excluded; they do not change the physiological peak or buy warning by themselves.
+
 ## FL26 — Complete effective emotion mechanics
 
 **Proposed — selected design, 2026-10-19 · Restrictiveness: Medium.** [EP-C06](../projects/emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution) owns one complete read-only maximum over applicable scaled fear and native shock. It is not an independently writable meter, sum, display prefix or target-distance filter. Independent directed fears retain their source/meaning; resolving one leaves others intact. Joy/anger/grief have no selected counteracting or direct stat factor.

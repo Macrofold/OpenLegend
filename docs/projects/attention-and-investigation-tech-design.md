@@ -256,7 +256,7 @@ Prune each slot independently at idleExpiry <= acquisition time; expiry itself s
 
 An active episode may retain the minimal immutable cue needed after optional sensory-cache expiry. That is existing operation continuation, not renewed observation. Hidden source disappearance gives no new knowledge. Capability loss, body replacement and control transfer end applicable native work; no automatic transfer to a person's mind. Sleep remains governed by existing eligibility; sound waking, distress calls, learned animal language, scent, packs, general flight curiosity and complex hunting search are outside this selected family.
 
-## 7. Exact preparedness-evidence interface for Prompt 6
+## 7. Exact preparedness-evidence interface
 
 ### 7.1 Boundary and types
 
@@ -587,7 +587,7 @@ Paper traces must cover AJ01–AJ13 and these precise cuts:
 
 Source/document review can establish contract coherence only. Later fixture/native/database/browser/live-model evidence must be labeled separately. Real autonomous alternatives and useful uncoached play remain required; a forced action cannot establish character judgment, and scripted correctness cannot establish fun.
 
-## 11. Open semantic questions and integration notes
+## 11. Implementation dependencies and open player choice
 
 **The selected attention semantics and shared technical choices are settled.** Runtime delivery depends on the following existing-owner extensions:
 

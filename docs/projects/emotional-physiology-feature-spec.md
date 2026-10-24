@@ -23,7 +23,7 @@ The inspected base is Macrofold/OpenLegend `a3d40b4d71e29d6504e9f3fcc21e76344a0a
 - [Directly controlled characters: SA-D01](#directly-controlled-characters-sa-d01)
 - [Six complete experience scenarios](#six-complete-experience-scenarios)
 - [Repertoire coverage and ownership](#repertoire-coverage-and-ownership)
-- [Acceptance and delivery handoff](#acceptance-and-delivery-handoff)
+- [Acceptance and delivery](#acceptance-and-delivery)
 
 ## The experience worth building
 
@@ -401,7 +401,7 @@ These 28 entries carry the focused selected emotion boundaries. Their useful sur
 
 The retained “same event, two appraisals” worked example in psychology supplies the complementary ordinary-life case: a host welcomes a visitor while a cook worries about supplies and can also welcome the company. Actual food arriving may support review of the worry while preparation continues. No single scene mood or forced preference is required.
 
-## Acceptance and delivery handoff
+## Acceptance and delivery
 
 ### Product acceptance cases
 
@@ -438,7 +438,7 @@ Native deterministic acceptance establishes actual state, ordering and effects. 
 
 ### Surprise designer contract
 
-Consume [EP-C05–EP-C07 and EP-C12](emotional-physiology-tech-design.md#ep-c12--implementation-and-specialist-handoff): exact shock cause/result and target life, body applicability, complete effective fear, parameter resolution, ordered timing and native animal support. The producer supplies committed evidence; it cannot assign private fear or duplicate onset through outcome wrappers. Newly caused shock affects later eligible checks, never its own impact.
+Consume [EP-C05–EP-C07 and EP-C12](emotional-physiology-tech-design.md#ep-c12--implementation-responsibilities): exact shock cause/result and target life, body applicability, complete effective fear, parameter resolution, ordered timing and native animal support. The producer supplies committed evidence; it cannot assign private fear or duplicate onset through outcome wrappers. Newly caused shock affects later eligible checks, never its own impact.
 
 Keep authored normal-play duration and unrestricted running speed. [EP-C06](emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution) owns the exact ranged integration and excludes the alternate target-danger heuristic from simultaneous generalized fear mapping; there is no unresolved stacking choice.
 
@@ -446,7 +446,7 @@ Keep authored normal-play duration and unrestricted running speed. [EP-C06](emot
 
 Reconcile this pair, world policy, limits, trackers, shared ND11/ND19 scope, existing cognition/continuing-life/threat consumers and the broader repertoire indexes. Preserve one private appraisal owner, one actor-work owner and one threat decision pipeline. New reassessment reuses exact sources, existing operations and durable authority.
 
-A later action-stage failure must preserve accepted emotion; emotion-only completion must preserve unrelated work. Keep SA-D01 blocked or explicitly selected and authorized through control transfer and restore. The producer-independent foundation can proceed separately. Detailed consumer responsibilities belong to [EP-C12](emotional-physiology-tech-design.md#ep-c12--implementation-and-specialist-handoff).
+A later action-stage failure must preserve accepted emotion; emotion-only completion must preserve unrelated work. Keep SA-D01 blocked or explicitly selected and authorized through control transfer and restore. The producer-independent foundation can proceed separately. Detailed consumer responsibilities belong to [EP-C12](emotional-physiology-tech-design.md#ep-c12--implementation-responsibilities).
 
 ### Maintained records and scope completion
 

@@ -8,7 +8,7 @@
 
 A warning, guarded entrance or companion's intervention should change a battle even when nobody identifies the attacker. Recognizing a familiar person should not make an unexpected betrayal harmless. Surprise occurs when a threat reaches a character before relevant anticipation or preparation exists, independently of whether their defense succeeds.
 
-This is specialist **F / Prompt 6** of [stealth and awareness](stealth-awareness-tech-design.md#threat-preparedness-and-surprise). It completes the selected preparedness/surprise design within [ND11](../maintainers/needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity), leaving wider recovery, rescue, indirect harm and afterlife work with their owners. [Base combat](../worlds/base/combat.md#preparedness-policy) owns world rules and tuning; the [technical design](preparedness-and-surprise-tech-design.md) owns contracts, algorithms, exact examples and acceptance coverage.
+This is specialist **F: preparedness and surprise** of [stealth and awareness](stealth-awareness-tech-design.md#threat-preparedness-and-surprise). It completes the selected preparedness/surprise design within [ND11](../maintainers/needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity), leaving wider recovery, rescue, indirect harm and afterlife work with their owners. [Base combat](../worlds/base/combat.md#preparedness-policy) owns world rules and tuning; the [technical design](preparedness-and-surprise-tech-design.md) owns contracts, algorithms, exact examples and acceptance coverage.
 
 **Design only.** This module qualifies surprise, applies its once-only damage consequence through existing combat and supplies a native startle cause. Perception, knowledge, emotion, chosen responses and physical combat retain their owners. The integrated documents establish the intended contracts. Runtime implementation, executable tests and balance/player evidence remain open; the technical design records the [existing owners and dependencies](preparedness-and-surprise-tech-design.md#source-baseline-and-specialist-dependencies).
 
@@ -86,7 +86,7 @@ Each supported attack's existing terminal outcome records its once-only conseque
 
 ### Startle and emotion
 
-A surprising actual body/own-shield contact supplies D's native unexpected-contact cause, including zero health loss. An entirely unperceived miss gives no private hint of an unseen attack. A perceived near miss can qualify through A/C's actual abrupt-cue route.
+A surprising actual body/own-shield contact supplies D's native unexpected-contact cause, including zero health loss. An entirely unperceived miss gives no private hint of an unseen attack. A near miss can separately cause startle only if its actual acquired sound satisfies the authored abrupt-cue qualifier; seeing an ordinary moving object alone does not invent a shock rule.
 
 D owns composure, reaction strength/duration, fear aggregation, accuracy and new-evasion-distance adjustments. F adds no second penalty. Fear does not automatically slow walking/running/flight or force a person to flee. The contact's new shock cannot affect that same contact; earlier real cues can already have caused shock. Distinct causes remain distinct, while repeated wrappers do not create new onsets.
 
@@ -135,9 +135,9 @@ Review covered all 42 repertoire file scopes and relevant entries, all 25 combin
 
 Use **The toll tower at dawn**, **The companion who changes sides**, **The quarry that learns**, **The wolf at the school gate**, and **The household after the victory** in [combinations](../repertoires/combinations.md). Their objectives/aftermath make preparation valuable beyond damage optimization. Materials, architecture, logistics, institutions, arts and optional realities provide context without becoming F requirements. The central [coverage](../repertoires/coverage.md) and [priorities](../repertoires/gameplay-priorities.md) retain the broader scope; these combinations need no additional numbered entry.
 
-## Prompt 7 and integration handoff
+## Player feedback and delivery
 
-Prompt 7 consumes the [semantic disclosure contract](preparedness-and-surprise-tech-design.md#prompt-7-interface): own accepted preparation, noticed/registered warning and permitted aftermath. Distinguish preparing, maintaining, ended, not enough information and actual caught-off-guard contact. Controls/accessible wording remain G's work. No enemy-readiness bar, guaranteed-surprise preview, hidden-source marker or automatic key binding is selected.
+The player-experience design consumes the [semantic disclosure contract](preparedness-and-surprise-tech-design.md#permitted-player-feedback): own accepted preparation, noticed/registered warning and permitted aftermath. Distinguish preparing, maintaining, ended, not enough information and actual caught-off-guard contact. Controls/accessible wording remain G's work. No enemy-readiness bar, guaranteed-surprise preview, hidden-source marker or automatic key binding is selected.
 
 A supplies exact acquired facts/correction; B/C actual physical cues/coverage; E complete current preparation; D native reactions and effective parameters. CTR retains encounters, contact, permissions and independent-character acceptance. Current readers/writers must agree before enabling the policy. Required B/A incoming-flight and A/SPK ordinary understood-warning producers need real end-to-end qualification.
 

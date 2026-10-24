@@ -582,12 +582,12 @@ These are requirements for later implementation and qualification, **not executa
 
 Qualification must preserve existing appraisal/social-continuity, combat/threat, speech/perception, action, save/load and authority acceptance that this extension touches. Add only meaningful later implementation checks tied to these concrete risks; passing pure helper arithmetic alone does not establish integration or fun. Numerical tuning remains provisional until those comparisons support it, while source/privacy/no-loop/clock/ownership contracts are invariants.
 
-## EP-C12 — Implementation and specialist handoff
+## EP-C12 — Implementation responsibilities
 
 | Consumer/owner | Required input from this design and precise responsibility |
 | --- | --- |
 | F: surprise/attack designer | Consume EP-C05's original physical cause/result and exact target life, EP-C06's complete fear/parameter query, and EP-C07/SC12's frozen cuts. F owns unexpected-contact eligibility, preparedness/surprise and damage/armor/rounding. Use one melee attempt resolver for both paths, ranged release steadiness and frozen newly admitted evasive reach. Never apply the new hit's shock to itself or retain an overlapping danger factor. |
-| A/C: perception/acoustics designers | Supply actual acquired abrupt cue/original exposure transition with exact receiver/life/order and body applicability. No named source or memory is required for native startle; unheard/unacquired facts cannot trigger it. D consumes their shared contracts without merging or prescribing their internal signal laws. |
+| A/C: perception/acoustics designers | Supply actual acquired abrupt cue/original exposure transition with exact receiver/life/order and body applicability. No named source or memory is required for native startle; unheard/unacquired facts cannot trigger it. D consumes their acquired-support contract and the authored acoustic qualifier; reaction strength and recovery remain with the body policy. |
 | E: attention/agency designer | Reuse one ActorWork ticket and its exact changed-actor/deadline inputs. Emotional review is an independent optional operation with operation-specific acknowledgement; threat/ordinary causes retain their own consumption and urgency. Native animal action selection remains its response controller. |
 | G: player-view designer | Show supported owner bodily feedback/effective action consequence and coherent normal-play durations. Preserve private appraisal/review/source information, full/patch symmetry and current controller authority. Respect the unresolved interpreted-player producer gate and accessible presentation. |
 | Appraisal/cognition implementer | Extend current owner/receipt/schema/index/preparation/execution seams in EP01–EP07. Preserve delivered create/reframe/resolve, target stacking, correction and complete source proof. Do not reuse a mandatory-thought reflection response as emotion-only review. |

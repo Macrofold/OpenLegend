@@ -139,7 +139,7 @@ Audio, non-audio cues, history and action descriptions must agree on uncertainty
 
 [ATI01–ATI08](../maintainers/attention-and-investigation.md) owns staged delivery and unperformed runtime/player qualification. Each slice includes ordinary discovery, admission, interruption, persistence and truthful results.
 
-**The attention design has no unresolved product choice.** The [implementation dependencies](attention-and-investigation-tech-design.md#11-open-semantic-questions-and-integration-notes) identify the required sensing, physical, animal, preparation and player-surface adapters. SA-D02/SA-D03 are resolved; SA-D01 remains open for controlled-player interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior. Initial tuning and useful, enjoyable play remain empirical qualification.
+**The attention design has no unresolved product choice.** The [implementation dependencies](attention-and-investigation-tech-design.md#11-implementation-dependencies-and-open-player-choice) identify the required sensing, physical, animal, preparation and player-surface adapters. SA-D02/SA-D03 are resolved; SA-D01 remains open for controlled-player interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior. Initial tuning and useful, enjoyable play remain empirical qualification.
 
 ## Repertoire coverage
 

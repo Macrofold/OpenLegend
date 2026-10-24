@@ -14,7 +14,7 @@ Parent: **SAD-E**; selected **DG02, ND13 and ND16**, with ND11/ND19 consumers.
 
 - [x] Specify useful actor-scoped journeys, voluntary alternatives, person versus region association and independent native choices.
 - [x] Select small accepted-work state, exact action composition, finite lifecycle, acquisition boundaries and no circular fear/surprise dependency.
-- [x] Publish typed E preparation evidence for Prompt 6 while preserving F's surprise decision and A's evidence authority.
+- [x] Publish typed E preparation evidence for preparedness and surprise while preserving F's surprise decision and A's evidence authority.
 - [x] Specify world methods, operational bounds, subscriptions, persistence and truthful failure.
 - [x] Resolve adversarial contract review findings and reconcile affected owners/repertoires/statuses.
 
@@ -80,7 +80,7 @@ Dependencies: ATI01 evaluator; completed C acoustic intake and existing CTR03–
 
 **Exit:** ignore, curiosity and escape differ physically; no ordinary animal uses human cognition, language, autobiographical memory or model calls.
 
-## ATI06 — Immutable preparation evidence for Prompt 6
+## ATI06 — Immutable preparation evidence
 
 Dependencies: ATI01–ATI02; A exact acquired cut, B physical values, C timing, existing guard/offense/native work; F owns consumer integration. Parent: **SAI-E/F, ND11**.
 
@@ -108,7 +108,7 @@ Dependencies: ATI01–ATI06; current save/load, authority/lifecycle and G presen
 
 ## ATI08 — Integration, performance and playable value
 
-Dependencies: ATI01–ATI07 and the required A/B/C/D/F/G slices; shared **SAD-I** reconciliation before claiming end-to-end readiness.
+Dependencies: ATI01–ATI07 and the required A/B/C/D/F/G slices; complete runtime integration and qualification before claiming end-to-end readiness.
 
 - [ ] Qualify AJ01–AJ13 and the technical adversarial cuts through real ordinary callers, including a contrasting body/native profile, direct-action and activity-owned facets, travel-relative rear watch through corners/stops, and meaningful failures.
 - [ ] Measure candidate work before selection, physical evaluations, resident/hydrated bytes, notifications, pending age and cold restore under dense live observers and relevant dependency changes.
@@ -121,11 +121,11 @@ Dependencies: ATI01–ATI07 and the required A/B/C/D/F/G slices; shared **SAD-I*
 
 ## Bounded external gates
 
-[Technical §11](../projects/attention-and-investigation-tech-design.md#11-open-semantic-questions-and-integration-notes) owns the required implementation dependencies. ATI01–ATI08 retains runtime and qualification work. SA-D02/SA-D03 are settled technical contracts; SA-D01 alone remains the separate controlled-player interpreted-emotion product choice.
+[Technical §11](../projects/attention-and-investigation-tech-design.md#11-implementation-dependencies-and-open-player-choice) owns the required implementation dependencies. ATI01–ATI08 retains runtime and qualification work. SA-D02/SA-D03 are settled technical contracts; SA-D01 alone remains the separate controlled-player interpreted-emotion product choice.
 
 ## Maintained records
 
 - [Feature and AJ01–AJ13](../projects/attention-and-investigation-feature-spec.md).
-- [Technical design and exact Prompt 6 interface](../projects/attention-and-investigation-tech-design.md#7-exact-preparedness-evidence-interface-for-prompt-6).
+- [Technical design and exact preparedness interface](../projects/attention-and-investigation-tech-design.md#7-exact-preparedness-evidence-interface).
 - [World policy](../worlds/base/attention-and-investigation.md) and [limits](../limits/attention-and-investigation.md).
 - [Shared SAD-E / SAI-E/F](stealth-awareness.md), [actions](action-capabilities.md), [agency](agent-agency.md) and [design register](needs-design.md).

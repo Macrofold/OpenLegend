@@ -15,7 +15,7 @@ The technical design records the integrated A–E contracts and existing-owner e
 - [x] Review actual combat/encounter/permission/flight/body/effect owners and full CTR design.
 - [x] Define warning versus defense, authored registration/lead, finite continuity, exact cuts and life/cause identities.
 - [x] Specify once-only damage, native startle, ordering, permission, current-format continuation and complete required work.
-- [x] Review repertoire scopes/combinations and provide exact chronology, adversarial acceptance and Prompt 7 semantics.
+- [x] Review repertoire scopes/combinations and provide exact chronology, adversarial acceptance and permitted player semantics.
 - [x] Map implementation to existing owners and settle exact evidence-family revisions and actual physical-method starts through the shared A/E contracts.
 - [x] Close only the selected F design gap; preserve SA-D01 and all runtime, integration and gameplay gates.
 
@@ -86,11 +86,11 @@ The technical design records the integrated A–E contracts and existing-owner e
 
 **Exit:** continuation cannot reroll, double damage, gain warning time or revive expired/sleep-retired preparedness. No migrations or compatibility schemas are needed.
 
-## SUR07 — Prompt 7 permitted feedback
+## SUR07 — Permitted player feedback
 
 **Not started.** Owners: G and existing server view/protocol/client action/history feedback. Dependencies: relevant SUR02–06 and SAD-G/SAI-G.
 
-- [ ] Map the [semantic disclosure interface](../projects/preparedness-and-surprise-tech-design.md#prompt-7-interface) through existing permitted identities: own preparing/maintaining/ended/incomplete work, noticed/registered warning and actual caught-off-guard aftermath.
+- [ ] Map the [semantic disclosure interface](../projects/preparedness-and-surprise-tech-design.md#permitted-player-feedback) through existing permitted identities: own preparing/maintaining/ended/incomplete work, noticed/registered warning and actual caught-off-guard aftermath.
 - [ ] Preserve anonymous source/historical location and physical-defense uncertainty. Do not expose private enemy readiness, timers, reasons, hidden geometry, guaranteed-2× previews or unperceived misses.
 - [ ] Reconcile full/patch/history/tooltips/audio/accessibility and reconnect/control/life/creator transitions, including stable maximum-harm consent when hidden readiness alone changes.
 

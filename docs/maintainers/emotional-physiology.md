@@ -10,7 +10,7 @@ The [feature specification](../projects/emotional-physiology-feature-spec.md) an
 
 - [x] Read the exact requested base, binding shared contracts and existing appraisal/cognition owners.
 - [x] Separate native bodily reactions, private interpretation and derived mechanical state.
-- [x] Complete policy schemas, reassessment algebra, operation scheduling, source/receipt integrity, lifecycle, acceptance scenarios and specialist handoffs.
+- [x] Complete policy schemas, reassessment algebra, operation scheduling, source/receipt integrity, lifecycle, acceptance scenarios and implementation responsibilities.
 - [x] Reconcile affected specifications, repertoires, limits and design TODOs; preserve the unresolved controlled-character interpretation decision.
 - [x] Review and push the complete documentation-only change.
 

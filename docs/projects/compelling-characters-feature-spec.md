@@ -46,7 +46,7 @@ An independently selectable **emotional-review** can reconsider supported feelin
 
 The [authored world policy](../worlds/base/psychological-reactions.md) defines the supported emotions and effects. Joy can make a discovery or reunion significant without a combat bonus; qualitative grief can coexist with enjoyment and ordinary competence without a fixed recovery deadline. Explicit composure and bodily susceptibility bindings can affect reactions; courage, temperament and coping influence personally grounded interpretation and choices. Descriptive personality text does not install mechanics or command conduct.
 
-How directly controlled characters acquire longer-lasting interpreted emotions remains [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters); native bodily conditions apply equally. [Emotion delivery](../maintainers/emotional-physiology.md) and [shared integration](../maintainers/stealth-awareness.md) retain implementation and qualification separately from this accepted design and existing PG02 evidence.
+Directly controlled interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior remain subject to [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters); native bodily conditions apply equally. [Emotion delivery](../maintainers/emotional-physiology.md) and [shared integration](../maintainers/stealth-awareness.md) retain implementation and qualification separately from this accepted design and existing PG02 evidence.
 
 ### Shared evidence and personal perspective
 

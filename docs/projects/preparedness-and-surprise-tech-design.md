@@ -64,7 +64,7 @@ No module installed means no surprise damage/reaction contribution from F. An in
 
 ## SUR-C02 — Producer and consumer contracts
 
-Shared SC02 ActorLifeRef, SimTime, OccurrenceRef, EvidenceRef, EvidenceCut, LocationEvidence and DefinitionPin retain their frozen meanings. A supplies FactKey, SupportedSensoryFact, CapturedCurrentFacet, permitted participants and exact acquisition. E supplies its complete [CapturedPreparationState / capturePreparation port](attention-and-investigation-tech-design.md#7-exact-preparedness-evidence-interface-for-prompt-6) unchanged. D supplies complete mechanics and its cause/receipt port. The following defines F-owned meanings; imported owner types are references to those contracts, not instructions to invent replacement schemas.
+Shared SC02 ActorLifeRef, SimTime, OccurrenceRef, EvidenceRef, EvidenceCut, LocationEvidence and DefinitionPin retain their frozen meanings. A supplies FactKey, SupportedSensoryFact, CapturedCurrentFacet, permitted participants and exact acquisition. E supplies its complete [CapturedPreparationState / capturePreparation port](attention-and-investigation-tech-design.md#7-exact-preparedness-evidence-interface) unchanged. D supplies complete mechanics and its cause/receipt port. The following defines F-owned meanings; imported owner types are references to those contracts, not instructions to invent replacement schemas.
 
 ### Acquired warning and coverage
 
@@ -366,7 +366,7 @@ F prepares a cause only for a real unexpected physical attack contact, including
 
 Call D's **admitBodilyReaction(world, preparedCause, preparedBody, at)** through its existing status/contribution mutation path. D returns admitted, replayed, inapplicable, incomplete or conflict and owns the resulting peak, duration, curve and exact receipt. F never chooses those values. Original cause + reaction pin + target life identifies onset; struck/guarded/body-effect/contact/awareness/memory/appraisal wrappers do not.
 
-A shield owned by someone else intercepting the projectile changes the actual victim; the protected intended person gets no phantom contact shock. Armor or zero-injury actual body/own-shield contact can still qualify. Miss, range expiry and an unseen environmental collision cannot be passed as unexpected-attack-contact. A/C may independently deliver a real personally acquired abrupt cue/near miss. No new noncontact F stimulus family is proposed.
+A shield owned by someone else intercepting the projectile changes the actual victim; the protected intended person gets no phantom contact shock. Armor or zero-injury actual body/own-shield contact can still qualify. Miss, range expiry and an unseen environmental collision cannot be passed as unexpected-attack-contact. A/C may independently deliver a real personally acquired abrupt sound from the near miss under the authored qualifier; a visual flight warning alone is not a bodily-startle producer. No new noncontact F stimulus family is proposed.
 
 ## SUR-C03 — Warning lifecycle and finite expectation
 
@@ -543,7 +543,7 @@ Extend existing owners together, preserving their save graph:
 | Existing owner                                   | Authoritative extension / restore rule                                                                                                                                                                                                                                                                                                                                                            |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PersonalEncounters known pair or anonymous entry | WarningKey, exact observer/source life where permitted, coverage, original acquisition boundary/time, current supporting revisions, registration phase/start/ready, lastQualifiedAt, continuous confirmation boundary, retention/settling, timing policy/clock/durations, reduced credited scope and consumed-root disposition. Full admission proof is transient. No parallel threat collection. |
-| Existing active action and its preparation owner | Actual current-method start/fulfillment/break per (work, physical family), admitted F policy/clock/lead, native identity and accepted orientation/plan revision. Persist or reconstruct only from committed authoritative work, never from a guessed action age. SA-D03 is required where the current port omits the start.                                                                       |
+| Existing active action and its preparation owner | Actual current-method start/fulfillment/break per (work, physical family), admitted F policy/clock/lead, native identity and accepted orientation/plan revision. Persist or reconstruct only from committed authoritative work, never from a guessed action age. The settled SA-D03 field is required in each applicable family adapter.                                                                       |
 | ProjectileFlight                                 | Existing release/collider permissions, source life and controller-at-release, attack policy pin, committedOrigin and existing terminal outcome/stage receipt. Keep trajectory, launchedAt/advancedAt, remaining range and all existing pins.                                                                                                                                                      |
 | Existing attack/contact outcome                  | Frozen decision, actual arithmetic, exact victim life, cause/outcome ordinal and spent-slot receipt. Terminal publication is derived from this committed result rather than another application.                                                                                                                                                                                                  |
 | D status/contribution/reaction receipt owner     | Its selected body effect and exact onset/no-effect receipt. F stores no duplicate fear value or timer.                                                                                                                                                                                                                                                                                            |
@@ -586,9 +586,9 @@ There is no new arbitrary top-N warning truncation or hard-coded combat capacity
 
 SUR08/SUR09 must record warmed and cold-path costs for one victim, many independent pairs, many attackers against one victim, crowded shared contacts, anonymous warnings, repeated correction, long-running retention and save/restore. Measure candidate warnings visited, active methods captured, source validation work, scheduled deadlines, serialized bytes and allocation/time distributions through the actual contact path. Verify no new random draw and no unbounded retained expired support. No benchmark, measured capacity, provider run or acceptance result is claimed by these paper designs.
 
-## Prompt 7 interface
+## Permitted player feedback
 
-Prompt 7 owns ordinary controls and presentation. F supplies permitted semantics; it does not prescribe a new key binding, HUD meter, alert color or client-side combat calculation.
+The player-experience design owns ordinary controls and presentation. F supplies permitted semantics; it does not prescribe a new key binding, HUD meter, alert color or client-side combat calculation.
 
 ```ts
 type OwnPreparationFeedback =
@@ -641,7 +641,7 @@ These are semantic DTO requirements composed from current projection families, n
 - The attacker's permitted aftermath can report their allowed actual contact/injury information. Private victim surprise/reason is withheld unless an existing explicit disclosure rule independently permits it. Lethal confirmation uses maximum authorized risk and never changes solely with hidden readiness.
 - Full view, patch, history, reconnect, tooltip, target discovery, combat log, audio and accessibility paths must follow the same boundary. Current preparation is cleared/reconciled on actual work/life/control change; saved history keeps its original time and permitted precision.
 
-Required UX paper cases: an entrance watch still preparing, the ready guarded entrance with unseen assailant, warning registered but arrow unavoidable, interrupted/expired guard with retained expectation, own unexpected zero-injury shield contact, a completely unperceived miss, ambiguous sound with no threat assertion, stale reconnect data and creator-to-player transition. Prompt 7 must show usefulness and limitation without teaching a hidden readiness score.
+Required UX paper cases: an entrance watch still preparing, the ready guarded entrance with unseen assailant, warning registered but arrow unavoidable, interrupted/expired guard with retained expectation, own unexpected zero-injury shield contact, a completely unperceived miss, ambiguous sound with no threat assertion, stale reconnect data and creator-to-player transition. Player qualification must show usefulness and limitation without teaching a hidden readiness score.
 
 ## Acceptance scenarios
 
@@ -745,9 +745,9 @@ Run **The toll tower at dawn**, **The companion who changes sides**, **The quarr
 
 ### Incoming-flight producer
 
-B/A must install a narrow **observed incoming-projectile detail** inside their existing observed-detail/perceived-feature families. This is a required F implementation dependency, not a claim that generic location facts or the current code already supply it. It uses B's existing coarse-motion quality/precision rules; F adds no second perception threshold.
+A's **observed-motion** detail carries B's two actually received location samples for one permitted exposure, its sampled correspondence result, original FactKeys and captured confirmation support. Each sample retains its LocationEvidence, observation frame and ordered measurement time; current-facet `valueAcquiredAt` and acquisition-boundary membership establish when the second value really became available. The active exposure keeps at most its latest two samples; this adds no trajectory log or projectile-knowledge store. B's ordinary active-local sampling law supplies those measurements; a surprise cut only captures existing received support.
 
-The native physical adapter needs two actually received positions at ordered measurement times under the same permitted exposure, or B's equivalent certified observed-motion interval. Preserve both location uncertainty volumes, original measurement/acquisition boundaries and the observer's own actual body poses. Require:
+The world danger adapter classifies a possible incoming physical-object threat from that acquired motion, then F admits its warning. It does not reinterpret generic location as a velocity, request an extra contact-time sample or read hidden flight state. Preserve both location uncertainty volumes and the observer's own corresponding body poses. Require:
 
 1. Valid received continuity without a gap, teleport or hidden canonical-identity join.
 2. Conservative closing: the greatest possible current separation under the received uncertainty is smaller than the least possible previous separation.
@@ -755,7 +755,7 @@ The native physical adapter needs two actually received positions at ordered mea
 
 This establishes a personally supported **possible incoming threat**, not a prediction that a collision will actually occur. Use only received displacement and existing spatial geometry; do not read hidden intendedTarget, private canonical velocity, future path/turns or the later collider. If uncertainty cannot establish closing/continuity, produce no automatic incoming-projectile warning; an actually chosen scoped E precaution can still use the ambiguous cue. Existing spatial comparisons own tolerances. Do not add an arbitrary confidence percentage, reaction distance or F-specific motion sampling cadence.
 
-A acquires the resulting typed detail with its real supporting FactKeys, original uncertainty and acquisition boundary. The warning's registration begins only when that complete permitted detail has actually been acquired. Fast/briefly seen flight may therefore be too late to prevent surprise. An arrow that later misses or strikes a wall can still have been a reasonable perceived threat; it does not create false hostility attribution.
+The danger adapter retains A's real supporting FactKeys, original uncertainty and acquisition boundary. Registration begins only when the complete permitted support has actually been acquired, never at the earlier measurement time or original exposure onset. Fast/briefly seen flight may therefore be too late to prevent surprise. An arrow that later misses or strikes a wall can still have been a reasonable perceived threat; it does not create false hostility attribution.
 
 Current ranged projectilePassage already stops at real visible pre-contact passage for eligible native animals and uses nearPassObservedLives for duplicate consumption. Reuse that producer/ordinal where it supplies the actual permitted support, but that map is not an A evidence cut or a human warning fact. Current event velocity components are not automatically fine observer knowledge. Earlier general human/animal flight warning requires this B/A adapter and complete integration.
 
@@ -763,11 +763,11 @@ Current ranged projectilePassage already stops at real visible pre-contact passa
 
 A/SPK's native ordinary-warning adapter consumes actually received and understood phrase spans. The initial installed language pattern supplies attributed testimony with `strength: possible`, `claim.kind: danger` and `presence: possible`; it does not assert physical truth. A scoped place resolves only through an exact unique match to the listener's existing permitted Known place/current received-place snapshot, retaining its bounded region and source revision. No hidden current place definition or new alias registry is consulted.
 
-The initial “now” meaning is an approximate stated interval of two normal seconds from the original utterance time, converted once through the admitted clock. Complete acquired meaning must arrive within that interval; late cognition, replay or re-publication cannot move it. F begins registration at that actual complete acquisition boundary, then applies its own finite retention. The A/SPK producer owns the pattern and time/place grounding; F never parses raw words.
+The initial “now” meaning is an approximate stated interval of two normal seconds from the original utterance time, converted once through the admitted clock. The interval is half-open: `utteranceAt <= acquiredAt < utteranceAt + convertedDuration`. At exact expiry the words remain testimony without current warning coverage. Complete acquired meaning must arrive within that interval; late cognition, replay or re-publication cannot move it. F begins registration at that actual complete acquisition boundary, then applies its own finite retention. The A/SPK producer owns the pattern and time/place grounding; F never parses raw words.
 
 Unknown words, an ambiguous/unlearned place, ungrounded “there”/“behind you”, bare “Look out!”, incomplete relevant fragments or an expired interval remain heard testimony without automatic F coverage. A complete scoped overheard warning can qualify without identifying its speaker or addressee. The person may also choose explicit E anticipation. Qualify the complete ordinary speak → hear/understand → acquired claim → registration journey; a hand-built native warning record alone is insufficient.
 
-### Other required handoffs
+### Required implementation dependencies
 
 | Dependency              | Required agreement / implementation gate                                                                                                                                                                                     |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -778,7 +778,7 @@ Unknown words, an ambiguous/unlearned place, ungrounded “there”/“behind yo
 | D and SC12              | Complete mechanics at existing sampling boundaries; exact unexpected-contact causes and no-effect receipts; selected conditionAdjustment none; local contact transaction fences nested acquisition, including fatal contact. |
 | Current combat          | Both melee paths, actual projectile collider, consent upper bound, one designated opportunity, immutable release origin, existing mitigation and recovery. Unsupported future contact families remain gated.                 |
 | Save/work               | Current authoritative readers/writers/validators and continuation indexes change together. Required incomplete work holds before harm. No compatibility schema or second scheduler.                                          |
-| G / Prompt 7            | Own method/received-warning/allowed aftermath semantics only, all full/patch/history surfaces and accessibility/reconnect. No private readiness oracle.                                                                      |
+| G / player experience            | Own method/received-warning/allowed aftermath semantics only, all full/patch/history surfaces and accessibility/reconnect. No private readiness oracle.                                                                      |
 
 ## Implementation decomposition and completion boundary
 
