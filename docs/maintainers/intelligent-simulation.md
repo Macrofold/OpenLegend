@@ -12,6 +12,7 @@
 - [Attention and scenes feature](../projects/attention-and-scenes-feature-spec.md) / [technical design](../projects/attention-and-scenes-tech-design.md).
 - [Product scalability feature](../projects/product-scalability-feature-spec.md) / [technical design](../projects/product-scalability-tech-design.md).
 - [Evaluation feature](../projects/intelligent-simulation-evaluation-feature-spec.md) / [technical design](../projects/intelligent-simulation-evaluation-tech-design.md).
+- [Current engine research and application](../engine-research-guide.md) informs IS06/IS09 comparisons of shared computation, timing and representation through complete activities. Existing design completion and runtime/player qualification states remain separate.
 - [Constraint map](../limits/intelligent-simulation.md); [research inventory](../../archive/02-research/game-inspiration/research-progress-intelligent-simulation-2026-10-14.md).
 
 ## Selected scope and readiness
