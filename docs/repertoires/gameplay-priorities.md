@@ -10,6 +10,8 @@ The world target's camp walls/entrance, four-or-five-person initially non-hostil
 
 A peaceful creation, beautiful place, performance or relationship may be valuable without a combat bonus. The whole survival-adventure still needs understandable opposition, usable weapons, exploration, rewards, progression and a worthwhile home. Interesting personality descriptions or domestic routines cannot substitute for those activities.
 
+The [engine-research application guide](../engine-research-guide.md) connects current simulation, presentation, authoring and persistence mechanisms to these ambitions. Use it to identify a concrete benefit and its existing design owner; the priority and first-playable scope here remain controlling.
+
 ## Priority
 
 Priority is an ordinal product judgment for the **whole current game**, not a measured fun score, an engineering estimate or the importance of a feature within its own subdomain. Lower numbers come first.

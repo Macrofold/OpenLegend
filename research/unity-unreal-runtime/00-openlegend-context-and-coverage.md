@@ -6,7 +6,7 @@ Research date: **23 October 2026**. Repository: **Macrofold/OpenLegend**. Ground
 
 This collection studies how current Unreal and Unity systems work, the work they perform, the guarantees they provide, and the tradeoffs they expose. It includes adjacent current research where that helps distinguish a shipping engine mechanism from an experimental capability. It does **not** select an engine, propose OpenLegend subsystem designs, authorize implementation, or revise the accepted product direction.
 
-The user's latest instruction to create a branch governs this task. The branch is `codex/unity-unreal-runtime-research-20261023`. The research is separate from the existing [engine/platform comparison](../game-engines/README.md), which answers broader platform-choice questions. This collection answers runtime-mechanism questions.
+The research is separate from the existing [engine/platform comparison](../game-engines/README.md), which answers broader platform-choice questions. This collection answers runtime-mechanism questions. The [application guide](../../docs/engine-research-guide.md) connects the findings to worthwhile experiences, existing design owners and remaining scoped questions.
 
 Three kinds of repository evidence are deliberately kept distinct:
 

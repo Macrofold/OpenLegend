@@ -124,6 +124,8 @@ Prefer a saved graph, editable material, export preset or narrow script when a r
 
 When comparing candidate routes, retain equivalent briefs, reference quality and delivery requirements. Measure useful output, manual correction, elapsed time, actual charges and the cost of a meaningful revision. Stop broadening a comparison when it has resolved the decision. [Evaluation and adoption](../../archive/02-research/ai-game-development/11-evaluation-and-adoption.md) owns the proposed comparison method; its trials remain unrun unless actual evidence says otherwise.
 
+The [engine-research application guide](../engine-research-guide.md) connects current animation, audio, rendering, content-lifetime and execution research to these production choices. Use the relevant mechanism to resolve a concrete iteration or presentation question, with actual platform and feature maturity retained.
+
 ## Judge the complete result
 
 Review technical usability and the intended experience separately. A correct object may still be forgettable. A faithful action can still lack weight. A character can obey every knowledge boundary and still have little personality. The production route is valuable when it helps improve both.

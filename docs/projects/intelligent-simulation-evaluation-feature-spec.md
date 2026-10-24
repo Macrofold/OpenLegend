@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                               | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The comparison design is prepared; implementation, live behavior and player-experience qualification are open. | 2026-10-16   |
+| In progress | The comparison design is prepared; implementation, live behavior and player-experience qualification are open. | 2026-10-24   |
 
 ## Purpose
 
@@ -55,14 +55,15 @@ A speech-free numerical reaction requires no written emotional explanation as ev
 
 ## What counts as success
 
-Keep four judgments separate:
+Keep five judgments separate:
 
 1. **Mechanical correctness:** supplies, time, damage, custody, consent, privacy, accepted actions and save/load outcomes match the installed rules.
 2. **Personal continuity:** the person's choice is intelligible from their authored background and available experience; the system preserves a meaningful exception, satisfaction or refusal instead of optimizing it away.
 3. **Social quality:** independent people can disagree, misunderstand, withdraw or cooperate without one person's generated account becoming another person's private truth.
 4. **Readable play:** an observer can understand preparation, progress, interruption and aftermath without access to private thoughts or an invented explanation.
+5. **Player value:** the intended player can find a worthwhile choice, expression, discovery, challenge or consequence in the activity, including a reason to continue or return where continued or repeated participation is intended. Record engineer-assessed potential separately from actual player understanding, enjoyment and voluntary behavior.
 
-Mechanical invariants are hard requirements. Personal, social and presentation judgments use a written scenario rubric, observed evidence and explicit uncertainty. They are not a new universal score for a person, a reward meter or an instruction to maximize productivity, friendliness or novelty.
+Mechanical invariants are hard requirements. Personal, social, presentation and player-value judgments use a written scenario rubric, observed evidence and explicit uncertainty. They are not a new universal score for a person, a reward meter or an instruction to maximize productivity, friendliness or novelty.
 
 Record positive, negative and indeterminate judgments with their evidence. A missing opportunity, preparation failure, unavailable provider or truncated observation is not a successful quiet choice. Equally, a deliberate refusal or satisfied rest is not a failure merely because no item was produced. Define the episode's completion condition before running it; do not retrospectively choose the stopping point that flatters one variant.
 
@@ -89,6 +90,12 @@ Profile repeated geometry, method validation, information preparation, queries, 
 Compare cold creation, warm reuse, meaningful invalidation, restore, burst changes and growing retained history. Count work visited before the returned shortlist. Permission-scoped private preparation must never be shared merely because two people stand near the same object. Share immutable public inputs where valid, then project each person's knowledge separately.
 
 Removing unnecessary computation must preserve native ordering, saved randomness, current action admission and the actual evidence each observer receives. Dropped observations, silently skipped consequences, reduced history or slower decision access are behavior changes, not free optimization. Any such proposal requires its own selected fidelity promise and owning design.
+
+### Apply engine mechanisms to a worthwhile activity
+
+The [engine-research application guide](../engine-research-guide.md) connects current mechanisms to this comparison. Begin with the activity and its intended benefit, then compare the existing route with the proposed change and a credible simpler option. A saving is useful when it improves the actual wait, interruption or operating cost while preserving the choices and consequences that give the activity value.
+
+For example, a **hypothetical** shared-geometry comparison can preserve residents' different knowledge and choices while measuring the wait before useful action. A presentation-quality comparison can ask whether intention, contact and completion remain understandable. A later-return comparison can establish both whether the earlier consequence survives and whether it still offers something the player recognizes or values, including the time and effort needed to resume. Use only the cases relevant to the selected change; these are applications of existing qualification, not new mandatory scenarios or adoption of the engines' implementations.
 
 ## Fair and independent evidence
 

@@ -38,6 +38,8 @@ The verified **6000.6.7f1** patch separately updates Input System to **1.20.1**,
 
 Separately inspected package documentation resolves NGO to **2.13.3** and Multiplayer Tools to **2.2.12**; Memory Profiler also has a newer **1.2.0-pre.1 preview**. Their dates and status are documented in [networking](07-networking-persistence-and-replay.md) and [profiling](10-profiling-and-verification.md). Project Auditor's release-matrix entry needs another qualification: the current editor manual says it is built in from **Unity 6.4**, while the separate package serves older editors. [Current Project Auditor](https://docs.unity3d.com/6000.6/Documentation/Manual/project-auditor/project-auditor-introduction.html).
 
+The newer compatible Addressables **4.1.1** release and its distinct content-directory workflow are examined in [content tooling](09-content-tools-ui-and-platforms.md#3-current-unity-addressables-changes-the-usual-bundle-only-account).
+
 ## Unreal Mass: composition and batches
 
 Mass represents data as **fragments**, associates fragments and zero-data tags with entities, and groups entities with the same composition into **archetypes**. Contiguous chunks make a processor's batch of relevant data available together. Processors perform operations over matching entities; chunk fragments hold information shared at that storage granularity. World-lifetime subsystems and the entity manager manage the surrounding lifecycle. Composition changes can relocate an entity, so `MassCommandBuffer` records changes for deferred application after a processing batch. A handle to an entity and a pointer into its current storage have different lifetimes. [Mass Entity overview](https://dev.epicgames.com/documentation/unreal-engine/overview-of-mass-entity-in-unreal-engine).

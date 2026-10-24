@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                               | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The comparison design is prepared; implementation, live behavior and player-experience qualification are open. | 2026-10-16   |
+| In progress | The comparison design is prepared; implementation, live behavior and player-experience qualification are open. | 2026-10-24   |
 
 ## Scope and guarantees
 
@@ -57,17 +57,17 @@ Compare defined short aliases with full labels using actual returned token usage
 
 Use a compact typed fixture manifest owned by the existing selected comparison tool, plus the existing diagnostic records. This describes required fields, not a new production schema or an instruction to repeat full world state in every row.
 
-| Information            | Required contents and reason                                                                                                                                                 |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Comparison identity    | Existing run identity, scenario family, variant, repetition and tuning/calibration/evaluation partition; prevents accidental mixing                                          |
-| Reproduction           | Source commit, installed definition/profile revisions, world seed, relevant initial accepted state and fixture version; distinguishes changed mechanics from changed routing |
-| Person and permission  | World/actor identity, generation, permitted source scope and current grants; keeps private comparisons independent                                                           |
-| Model and instructions | Actual requested and reported model revision, adapter, rubric/context versions, route availability and Jev-only setting; missing reported revisions stay unknown             |
-| Operating envelope     | Host/device/runtime, clock settings, actual elapsed/progress, concurrency, cold/warm state, retained history and local density; makes denominators interpretable             |
-| Episode rubric         | Initial opportunity, acceptable alternatives, relevant exception, completion/stop condition, later-return opportunity and observation window                                 |
-| Actual disposition     | Proposed, admitted, completed, refused, deferred, stale, cancelled, unavailable, invalid or uncertain, linked to existing outcome/receipt identities                         |
-| Judgment               | Separate mechanical, personal, social and presentation finding with source references, evaluator type, ambiguity and disagreement                                            |
-| Complete cost          | Existing child request identities and ledger/receipt links, attributable native/store/presentation work, unresolved exposure and excluded/unavailable measurement            |
+| Information            | Required contents and reason                                                                                                                                                     |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Comparison identity    | Existing run identity, scenario family, variant, repetition and tuning/calibration/evaluation partition; prevents accidental mixing                                              |
+| Reproduction           | Source commit, installed definition/profile revisions, world seed, relevant initial accepted state and fixture version; distinguishes changed mechanics from changed routing     |
+| Person and permission  | World/actor identity, generation, permitted source scope and current grants; keeps private comparisons independent                                                               |
+| Model and instructions | Actual requested and reported model revision, adapter, rubric/context versions, route availability and Jev-only setting; missing reported revisions stay unknown                 |
+| Operating envelope     | Host/device/runtime, clock settings, actual elapsed/progress, concurrency, cold/warm state, retained history and local density; makes denominators interpretable                 |
+| Episode rubric         | Intended player benefit and burden, initial opportunity, acceptable alternatives, relevant exception, completion/stop condition, later-return opportunity and observation window |
+| Actual disposition     | Proposed, admitted, completed, refused, deferred, stale, cancelled, unavailable, invalid or uncertain, linked to existing outcome/receipt identities                             |
+| Judgment               | Separate mechanical, personal, social, presentation and player-value findings with source references, evaluator type, ambiguity and disagreement                                 |
+| Complete cost          | Existing child request identities and ledger/receipt links, attributable native/store/presentation work, unresolved exposure and excluded/unavailable measurement                |
 
 Use exact stable IDs internally, scoped by world, actor, generation and record kind where those distinguish meaning. Composite keys follow [the identity contract](../identity-and-references.md#contract), not concatenated strings whose components may contain delimiters. Labels and names remain human display text. Model-facing context retains ordinary compact prose and allowed references; comparison metadata and internal IDs are not added to every prompt.
 
@@ -129,6 +129,8 @@ Shared preparation stays immutable or request-owned. Share only matching fields,
 Movement evidence separates route-search preparation/worker wait, local collision/avoidance, actual travel, sensory consequences, publication and rendered feedback. A faster route helper is not faster complete movement. Existing spatial owners choose any optimization; this design adds neither a navigation system nor a new process per person.
 
 Stop or revert an experimental optimization if constructing keys, copying results, tracking dependencies or rebuilding costs more than the eliminated work, if its complete-path benefit is inconclusive, or if it loses a required consequence. Record that negative result under the existing owner; no architecture change is required to declare a comparison complete.
+
+For a comparison informed by [current engine mechanisms](../engine-research-guide.md), identify which calculation or representation changes and carry the feature specification's [intended player benefit](intelligent-simulation-evaluation-feature-spec.md#apply-engine-mechanisms-to-a-worthwhile-activity) into the existing rubric. Reuse existing spans and permitted episode observations to connect that change to the actual wait, interruption, readable cue or later consequence. Distinguish an unavailable observation from a negative judgment. A smaller timing measurement cannot stand in for interest or enjoyment; human findings remain attributed to the observed participants and scope. This adds no separate telemetry store, universal fun score or blanket playtest requirement.
 
 ## Metrics, denominators and accounting
 
