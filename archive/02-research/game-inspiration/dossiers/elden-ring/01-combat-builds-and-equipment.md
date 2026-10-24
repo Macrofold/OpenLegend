@@ -8,7 +8,7 @@
 
 Elden Ring layers player execution, character statistics, equipment development, tactical preparation and access to allies. These do not form one interchangeable difficulty setting. A stronger weapon changes what happens when an attack lands; a different moveset changes which openings the player can exploit; a spirit changes whom an enemy attacks. Treating all three as simply “more power” conceals the decisions the game offers.
 
-Miyazaki's explanation supplies useful evidence of intent. In a translated account of his March 2022 Famitsu interview, he connects stance breaking, guard counters and jump attacks to adding depth to Souls melee. He describes Ashes of War as an expression of greater customization freedom, and spirits as both tactical choices and companions a player might simply like. He also says magic was consolidated into two broad disciplines because more catalyst divisions constrained builds. These are attributed design intentions; they do not prove every combination is equally viable or equally enjoyable. [C03](#c03)
+Miyazaki's Famitsu interview connects stance breaking, guard counters and jump attacks with deeper melee, Ashes of War with customization, and spirits with tactics and attachment. He also explains that reducing magic's catalyst divisions broadened builds. These are attributed intentions in a translated account, not proof that every resulting combination is equally viable or enjoyable. [C03](#c03)
 
 **Analysis:** the unusual achievement is the combination of a demanding execution test with many ways to reshape that test. A player can improve at a particular duel, make a different character, or arrive with different support. The corresponding design risk is attribution: when the game does not explain why a tactic failed, a player may not know whether to practice, change equipment, raise survivability, or leave. More options help only when a player can discover and understand enough of them.
 
@@ -48,14 +48,14 @@ The publisher's combat guide describes **input buffering**: an input can queue u
 
 For design analysis, the following terms should remain separate. Community discussions sometimes call several of them “poise,” making superficially similar advice incompatible.
 
-| Mechanism | What it concerns | Decision it makes important |
-| --- | --- | --- |
-| Ordinary hit interruption | Whether contact stops an action [C17](#c17) | Will this strike interrupt the enemy or trade hits? |
-| Armor poise | Equipped resistance to interruption [C12](#c12) | Is tolerating a hit worth additional weight? |
-| Hyperarmor | Action-dependent interruption resistance [C12](#c12) | Can this committed swing continue through contact? |
-| Enemy stance depletion | Pressure exposing a critical opening [C06](#c06) | Can pressure be maintained? |
-| Guard break | Stamina exhaustion while guarding [C47](#c47) | Can the next strike be blocked? |
-| Critical attack | Contextual backstab or riposte [C06](#c06) | Can the player reach the opening? |
+| Mechanism                 | What it concerns                                     | Decision it makes important                         |
+| ------------------------- | ---------------------------------------------------- | --------------------------------------------------- |
+| Ordinary hit interruption | Whether contact stops an action [C17](#c17)          | Will this strike interrupt the enemy or trade hits? |
+| Armor poise               | Equipped resistance to interruption [C12](#c12)      | Is tolerating a hit worth additional weight?        |
+| Hyperarmor                | Action-dependent interruption resistance [C12](#c12) | Can this committed swing continue through contact?  |
+| Enemy stance depletion    | Pressure exposing a critical opening [C06](#c06)     | Can pressure be maintained?                         |
+| Guard break               | Stamina exhaustion while guarding [C47](#c47)        | Can the next strike be blocked?                     |
+| Critical attack           | Contextual backstab or riposte [C06](#c06)           | Can the player reach the opening?                   |
 
 The table separates player-facing concepts; it does not assert six implementation modules. Community poise tables are versioned, so their weapon-specific PvP values must not become universal current-PvE thresholds. [C12](#c12)
 
@@ -67,7 +67,7 @@ Patch history makes that caution consequential. Update 1.10 explicitly separated
 
 The important comparison is not a hierarchy in which dodge always replaces block or parry always replaces dodge. Each defense buys something different. Blocking can preserve a close position while spending stamina. A dodge changes location and has timing commitments. A parry bets on an eligible move and a narrow timing opportunity. Simply standing outside a strike's reach can preserve resources and readiness, but requires reading its geometry. These are strategic interpretations of the action vocabulary, not measured success rates.
 
-Shield damage negation concerns damage passing through; guard boost concerns stamina lost blocking. Charged heavies, jumping heavies and guard counters create stance pressure beyond ordinary HP damage. Running, rolling and crouching also change available attacks, making movement part of move selection. [C06](#c06)
+Shield damage negation concerns damage passing through; guard boost concerns stamina lost blocking. Charged heavies, jumping heavies and guard counters create stance pressure beyond HP damage. Running, rolling and crouching change attacks. Rolling supplies invulnerability intervals; jumping or crouching can avoid particular attack geometry. [C06](#c06)
 
 **Constructed case 2 — the guard-counter trap.** A shield user blocks a soldier's first swing and immediately counters, but the continuation hits during the response. Next time, the player observes the combination, preserves stamina and counters its ending. Blocking has bought information and positioning; choosing the counter's timing remains essential. **Limit:** a different opponent, elemental chip, a grab or a larger stamina demand can invalidate the tactic. This illustrates the timing rule; it is not an observed session. [C18](#c18)
 
@@ -101,9 +101,9 @@ Affinities divide into Standard; physical-scaling Heavy, Keen and Quality; eleme
 
 **Analysis:** this is a powerful separation of a weapon's silhouette and basic moves from the character investment that makes it effective. The player can enjoy a familiar blade's timing without being permanently bound to its default skill. Conversely, restricted and unique weapons preserve distinctive authored identities. The tradeoff is a larger compatibility matrix: “I found the right ability” may still mean “I need the right armament and unlock to apply it.”
 
-Displayed attack rating is a useful comparison, but actual damage also depends on the move, the target's defenses and negation, and active effects. Tarnished.dev's author separates attack-rating and damage calculators for exactly these inputs; its documentation also accounts for PvP modifiers, incompatible buffs and selected movesets. This chapter uses that documentation as evidence of the required distinctions, not as a claim that its experimental calculations were reproduced. [C16](#c16)
+Attack rating does not specify actual damage without the move, target defenses/negation and active effects. Tarnished.dev separates these calculations and accounts for PvP modifiers and incompatible buffs. This is evidence of necessary distinctions, not a claim that its experimental calculations were reproduced. [C16](#c16)
 
-**Constructed case 4 — the larger menu number disappoints.** A player switches an otherwise comparable weapon to a split-damage affinity because the combined menu total rises. Against a particular enemy, the actual hit does not improve enough to justify the change. The player tests the same attack and target, checks the damage types, then compares a physical alternative. The productive lesson is to compare controlled outcomes rather than treating a summed rating as a universal ranking. **Limit:** this does not mean split damage is inherently worse. Target weakness, attribute distribution, reinforcement and the skill can make it the better choice. [C16](#c16)
+**Constructed case 4 — the larger menu number disappoints.** A split-damage affinity raises the displayed total, but its actual hit disappoints against a particular enemy. The player compares the same attack and target with a physical alternative. Controlled outcomes reveal more than the summed rating. **Limit:** split damage is not inherently worse; target weakness, attributes, reinforcement and the skill can make it preferable. [C16](#c16)
 
 ### Reinforcement creates commitment; bell bearings relax it
 
@@ -121,26 +121,28 @@ Sorceries normally use staves and incantations use sacred seals. A usable spell 
 
 Memory Stones expand the initial two spell slots, with eight stones bringing that capacity to ten before other effects. They are discoverable progression, including tower rewards and a Red Wolf of Radagon drop, rather than a direct benefit from buying more Mind. Mind's FP capacity and the number of different prepared spells therefore solve different problems. [C22](#c22)
 
+Catalysts determine how character investment supports spellcasting and can favor a tradition. Clawmark Seal allows Strength to contribute to incantations and enhances bestial spells; Dragon Communion Seal brings Arcane into incantation scaling and enhances its named tradition. Meteorite Staff supplies gravity specialization and strong initial scaling, but cannot be reinforced. These are distinct relationships among attributes, chosen spells and upgrade trajectory, rather than interchangeable magic handles. The item descriptions establish the distinctions; they do not imply that all damage, healing and buff spells use identical scaling rules. [C49](#c49)
+
 The major magical traditions supply distinct tactical shapes. This is a selective functional map, not a claim that every spell within a tradition behaves alike:
 
-| Tradition or example | Action it adds | Design question it poses |
-| --- | --- | --- |
-| Glintstone Arc | A widening horizontal magical attack | Are several targets aligned well enough to make one cast efficient? |
-| Carian Slicer / Adula's Moonblade | A magical blade; the latter also projects frost | Can a caster exploit a close opening, or overlap blade and projectile reach? |
-| Gravity, exemplified by Rock Sling | Projectiles with substantial stance utility | Is there enough time and space for the attack to connect? |
-| Night, exemplified by Ambush Shard | An attack originating behind the target | Can attack origin solve a defensive orientation problem? |
-| Dragon Communion | Breath attacks, including elemental and rot forms | Does the opportunity justify a long exposed cast? |
-| Dragon Cult | Lightning projectiles and spreading strikes | Does target size or positioning make the spread useful? |
-| Bestial | Fast stone attacks, claws and self-maintenance | Is a quick utility action better than a large damage commitment? |
-| Godskin black flame | Fire attacks with a continuing health-drain component | Can a brief successful application keep contributing while the player repositions? |
-| Two Fingers / Erdtree / Golden Order | Healing, protection, enhancements and specialized effects | Is the next resource best spent recovering, preventing harm or attacking? |
-| Frenzied Flame | Attacks associated with madness, sometimes with self-costs | Is the target susceptible to the secondary effect? |
+| Tradition or example                 | Action it adds                                             | Design question it poses                                                           |
+| ------------------------------------ | ---------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Glintstone Arc                       | A widening horizontal magical attack                       | Are several targets aligned well enough to make one cast efficient?                |
+| Carian Slicer / Adula's Moonblade    | A magical blade; the latter also projects frost            | Can a caster exploit a close opening, or overlap blade and projectile reach?       |
+| Gravity, exemplified by Rock Sling   | Projectiles with substantial stance utility                | Is there enough time and space for the attack to connect?                          |
+| Night, exemplified by Ambush Shard   | An attack originating behind the target                    | Can attack origin solve a defensive orientation problem?                           |
+| Dragon Communion                     | Breath attacks, including elemental and rot forms          | Does the opportunity justify a long exposed cast?                                  |
+| Dragon Cult                          | Lightning projectiles and spreading strikes                | Does target size or positioning make the spread useful?                            |
+| Bestial                              | Fast stone attacks, claws and self-maintenance             | Is a quick utility action better than a large damage commitment?                   |
+| Godskin black flame                  | Fire attacks with a continuing health-drain component      | Can a brief successful application keep contributing while the player repositions? |
+| Two Fingers / Erdtree / Golden Order | Healing, protection, enhancements and specialized effects  | Is the next resource best spent recovering, preventing harm or attacking?          |
+| Frenzied Flame                       | Attacks associated with madness, sometimes with self-costs | Is the target susceptible to the secondary effect?                                 |
 
 The spell descriptions support these broad distinctions; numerical advice and sweeping “best spell” rankings in third-party databases are not assumed current. Rock Sling and Carian Slicer are especially clear counterexamples to treating all sorcery as the same ranged projectile. [C23](#c23) [C45](#c45)
 
 **Analysis:** two broad casting interfaces lower handling friction without flattening all magic into one style. A player can develop a sorcerer who fights in melee, or a weapon specialist who equips a small set of utility incantations. Build identity emerges from a selected combination. The price is hidden dependency: a new spell may look available in inventory while one of several casting prerequisites is missing. Good onboarding must distinguish owning, preparing, equipping and being able to pay for an action.
 
-**Constructed case 5 — the mage's actual expedition budget.** A caster reaches a boss with abundant healing but no FP. Instead of assuming that the spell is weak, the player shifts one shared flask charge from Crimson to Cerulean at the next rest. This buys more casting, but reduces recovery from mistakes. Another option is to reserve magic for dangerous opponents and use a compatible melee answer against weaker ones. The next trial tests which resource runs out first. **Limit:** maximum theoretical damage per FP does not guarantee victory when the spell misses or leaves the caster exposed; reallocating every charge toward FP can make the character less robust. [C26](#c26)
+**Constructed case 5 — the mage's expedition budget.** A caster reaches a boss with healing left but no FP. Shifting one shared flask charge from Crimson to Cerulean buys casting at the cost of recovery. Alternatively, the player reserves magic for dangerous enemies and uses melee elsewhere. The next attempt tests which resource runs out first. **Limit:** theoretical damage per FP does not guarantee success if casts miss or expose the player; allocating every charge to FP can reduce survivability. [C26](#c26)
 
 ## 7. Damage, status and resistance must not be collapsed
 
@@ -174,7 +176,7 @@ The Physick is a separately refilled flask combining up to two crystal tears. Te
 
 The expansion's Deflecting Hardtear is unusually consequential. Its item description improves protection immediately after assuming a guard and rewards a successful timely guard with stronger counters. It changes the timing behavior the player is rewarded for, rather than merely enlarging an existing number. [C28](#c28)
 
-**Constructed case 6 — a different defensive rhythm for one attempt.** A player who normally holds a shield continuously prepares the Deflecting Hardtear and instead learns to raise the guard just before contact. A successful timely block creates a better counter opportunity. The next decision is whether to pursue that rhythm or return to the old defense when the temporary benefit is unavailable. **Limit:** this is not a universal parry, does not promise every attack is blockable, and does not remove the need to read follow-ups or manage stamina. The illustration follows the tear's described behavior without asserting a frame window or current numerical multiplier. [C28](#c28)
+**Constructed case 6 — another defensive rhythm.** A player who continuously holds a shield prepares Deflecting Hardtear and learns to raise the guard just before contact, improving the subsequent counter. The next decision is whether to pursue that rhythm while the temporary benefit lasts. **Limit:** this is not a universal parry; attack eligibility, follow-ups and stamina still matter. No exact frame window or multiplier is asserted. [C28](#c28)
 
 ### Great Runes and Rune Arcs
 
@@ -202,7 +204,7 @@ Remembrances convert particular major victories into a choice of associated equi
 
 ## 10. Spirit Ashes change the distribution of attention
 
-Spirit Ashes are reusable ally summons, enabled by the Spirit Calling Bell in areas with a rebirth monument. A screen icon signals availability. Only one type can be active, and they are unavailable during multiplayer; leaving the permitted area removes them. After an ash summon dies, the player must rest before summoning again. These constraints make them a prepared encounter resource, rather than a permanent party following every journey. [C34](#c34)
+Spirit Ashes are reusable ally summons, enabled by the Spirit Calling Bell near a rebirth monument. A screen icon signals availability. They are unavailable during multiplayer, and leaving the permitted area removes them. Resting restores spent summon availability. These constraints make them a prepared encounter resource, rather than a permanent party following every journey. [C34](#c34)
 
 Their functions differ. Lone Wolves supply several bodies, a Jellyfish offers a different ranged presence, and Skeletal Militiamen can reconstitute if enemies do not finish their fallen forms. Roderika strengthens ashes through a separate Glovewort economy: Grave Glovewort for ordinary ashes and Ghost Glovewort for renowned ones, with Great Ghost Glovewort providing the renowned +10 step. Upgrading improves a chosen ally; it does not generally turn a one-creature ash into a larger squad. [C35](#c35)
 
@@ -238,9 +240,9 @@ Malenia is an optional, two-phase encounter whose successful contacts heal her, 
 
 Consider a shield user who survives a sequence but sees the boss regain health. The defensive action protected the player while surrendering progress. The next experiment might prioritize evasive positioning for that sequence while preserving the shield for emergencies. This encounter makes “I did not lose HP” and “that was a favorable exchange” visibly different judgments.
 
-A second decision becomes available through a discovered interaction: a well-timed Freezing Pot can interrupt Waterfowl when it triggers frostbite. The original toxicBird7 thread and contemporaneous reporting describe the opportunity and its limits, including increased resistance after successive applications. The player's recipe, ingredients, container, selected item and readiness now matter to an execution problem. A previous frost application or an attack already underway can undermine the planned response. **Limit:** this is not an unlimited interruption button, and the dossier does not certify a current universal pot count or timing window. [C39](#c39)
+A discovered interaction adds another decision: a Freezing Pot can interrupt Waterfowl by triggering frostbite. The original toxicBird7 thread and contemporaneous report describe increasing resistance after successive applications. Recipe, ingredients, container, selected item and readiness now matter to execution. Earlier frost application or an action already underway can undermine the response. **Limit:** this is not unlimited interruption; no universal current pot count or timing window is certified here. [C39](#c39)
 
-Reception reveals both sides of that depth. Morgan Park wrote that he had largely ignored ritual pots for roughly 100 hours; discovering this use made an overlooked system relevant. In the original discussion, players welcomed the discovery, while others complained about reaching the pot on keyboard controls or argued that Waterfowl dominated an otherwise enjoyable encounter. One commenter described failing with other thrown items and abandoning the idea before learning the frost interaction. These accounts demonstrate distinct reactions and discoverability failures, not their prevalence. [C39](#c39)
+Reception reveals both sides. Morgan Park had largely ignored ritual pots for roughly 100 hours. Thread participants welcomed the discovery, criticized keyboard item access, or argued that Waterfowl dominated an otherwise enjoyable encounter. One described trying other thrown items unsuccessfully and abandoning the idea. These accounts identify reactions and discoverability failures without measuring their prevalence. [C39](#c39)
 
 **Analysis:** a surprising counter can create delight and community knowledge. If the visible action is simply “throw something,” however, a failed ordinary projectile may teach the wrong rule. The actual distinction is triggering an effect with the required interruption behavior. The design lesson is to preserve meaningful discovery while providing enough feedback that a failed experiment narrows the player's understanding instead of closing an entire avenue incorrectly.
 
@@ -278,7 +280,7 @@ Sources below were read as written bodies unless explicitly qualified. Official 
 
 <a id="c04"></a>**C04 — Attribute roles and resistance families.** [Bandai Namco / FightinCowboy, Introduction Part 1 — Stats](https://www.bandainamcoent.com/news/elden-ring-introduction-part-1-stats), July 19, 2023. Officially published creator guide. Broad Arcane wording requires compatibility qualifications; armor does not inherit weapon-stat requirements.
 
-<a id="c05"></a>**C05 — Diminishing returns and two-handing.** [Bandai Namco / FightinCowboy, Introduction Part 2 — Advanced Stats](https://www.bandainamcoent.com/news/elden-ring-introduction-part-2-advanced-stats), July 19, 2023. Officially published explanatory guide, not a universal numerical table for every weapon or later patch.
+<a id="c05"></a>**C05 — Advanced stats.** [Bandai Namco / FightinCowboy, Part 2](https://www.bandainamcoent.com/news/elden-ring-introduction-part-2-advanced-stats), July 19, 2023. Official creator guide; illustrative thresholds, not every weapon's scaling table.
 
 <a id="c06"></a>**C06 — Inputs and combat vocabulary.** [Bandai Namco / FightinCowboy, Introduction Part 4 — Combat Guide](https://www.bandainamcoent.com/news/elden-ring-introduction-part-4-combat-guide), July 19, 2023. Officially published creator guide. Its broad movement, poise and parry advice should not substitute for current attack-specific data.
 
@@ -322,7 +324,7 @@ Sources below were read as written bodies unless explicitly qualified. Official 
 
 <a id="c26"></a>**C26 — Flask allocation and upgrading.** [PowerPyx, How to Get More Flasks](https://www.powerpyx.com/elden-ring-how-to-get-more-flasks/), February 26, 2022. Original guide. Its all-HP/all-FP prescriptions are not adopted; allocation is a contextual tradeoff.
 
-<a id="c27"></a>**C27 — Physick effects and refill.** [Gamer Guides, Flask of Wondrous Physick](https://www.gamerguides.com/elden-ring/database/items/consumables/flask-of-wondrous-physick), undated, accessed October 24, 2026. Item-text transcription and effect index. Used qualitative effects, not an exhaustive contemporary numerical table.
+<a id="c27"></a>**C27 — Physick effects and refill.** Gamer Guides records for [Flask of Wondrous Physick](https://www.gamerguides.com/elden-ring/database/items/consumables/flask-of-wondrous-physick) and [Crystal Tears](https://www.gamerguides.com/elden-ring/database/items/crystal-tears), accessed October 24, 2026. Used item text and two-tear preparation rule, not stale durations or the index's mislabeled Cerulean entry.
 
 <a id="c28"></a>**C28 — Timing-based defensive customization.** [Gamer Guides, Deflecting Hardtear](https://www.gamerguides.com/elden-ring-shadow-of-the-erdtree/database/key-items/reusable/deflecting-hardtear), undated, accessed October 24, 2026. Item-text transcription is the basis; database multipliers and timing claims were not reproduced and are not asserted here.
 
@@ -336,7 +338,7 @@ Sources below were read as written bodies unless explicitly qualified. Official 
 
 <a id="c33"></a>**C33 — Discovery and victory rewards.** [Gamer Guides, Silver-Pickled Fowl Foot](https://www.gamerguides.com/elden-ring/database/items/consumables/silver-pickled-fowl-foot), undated; [PC Gamer / Sarah James, Remembrance duplication](https://www.pcgamer.com/elden-ring-remembrance-duplicate-wandering-mausoleum/), updated July 9, 2024. Item text and original guide; read duplication and base/DLC reward sections.
 
-<a id="c34"></a>**C34 — Spirit availability and reset.** [Bandai Namco, Starter Guide](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-starter-guide-tips-know-playing-the-game), November 10, 2021, for monument/area/multiplayer restrictions; [Push Square / Liam Croft, Summon Spirits](https://www.pushsquare.com/guides/elden-ring-how-to-summon-spirits-and-use-ashes-summons), displayed update August 26, 2026, for rest reset. Official early manual and original retail guide; FP exceptions are covered separately.
+<a id="c34"></a>**C34 — Spirit availability and reset.** [Push Square / Liam Croft, Summon Spirits](https://www.pushsquare.com/guides/elden-ring-how-to-summon-spirits-and-use-ashes-summons), displayed update August 26, 2026. Original retail guide, read independently: Bell, monument, icon, area/multiplayer restrictions and rest reset. Its general FP statement has exceptions, covered separately.
 
 <a id="c35"></a>**C35 — Ally types and reinforcement.** [GamesRadar / Joel Franey, Spirit and NPC summons](https://www.gamesradar.com/elden-ring-summons-ash-spirit-npcs/), accessed October 24, 2026; Gamer Guides item records for [Grave Glovewort 1](https://www.gamerguides.com/elden-ring/database/items/upgrade-materials/grave-glovewort-1) and [Great Ghost Glovewort](https://www.gamerguides.com/elden-ring/database/items/upgrade-materials/great-ghost-glovewort). Original guide and item text; the guide's claim that upgrades increase summoned creature count is excluded.
 
@@ -365,3 +367,5 @@ Sources below were read as written bodies unless explicitly qualified. Official 
 <a id="c47"></a>**C47 — Guard failure tutorial.** [EIP Gaming, About Guarding](https://eip.gg/elden-ring/db/about-guarding/), accessed October 24, 2026. Transcription of the in-game tutorial: guarding spends stamina and fails when it is exhausted.
 
 <a id="c48"></a>**C48 — Armor and tailoring boundary.** Push Square's [equipment upgrade guide](https://www.pushsquare.com/guides/elden-ring-how-to-upgrade-weapons-and-armour) and [Boc quest guide](https://www.pushsquare.com/guides/elden-ring-how-to-complete-boc-the-seamsters-quest-and-alter-garments-for-free), displayed updates August 26, 2026. Used explicit no-armor-reinforcement and tailoring-service passages; contradictory generic “weapons and armour” language and inaccurate Somber descriptions are excluded.
+
+<a id="c49"></a>**C49 — Catalyst identity and scaling.** Gamer Guides item transcriptions for [Clawmark Seal](https://www.gamerguides.com/elden-ring-shadow-of-the-erdtree/database/weapons/sacred-seal/clawmark-seal/), [Dragon Communion Seal](https://www.gamerguides.com/elden-ring-shadow-of-the-erdtree/database/weapons/sacred-seal/dragon-communion-seal/) and [Meteorite Staff](https://www.gamerguides.com/elden-ring/database/weapons/glintstone-staffs/meteorite-staff), accessed October 24, 2026. Used authored descriptions and passive identities; excluded arbitrary build rankings, stale numerical tables and the overbroad claim that Clawmark eliminates Faith investment.

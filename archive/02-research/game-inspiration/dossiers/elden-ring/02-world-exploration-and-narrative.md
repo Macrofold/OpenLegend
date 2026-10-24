@@ -2,7 +2,7 @@
 
 [Dossier](../elden-ring.md)
 
-**Scope:** the base game and *Shadow of the Erdtree*, with their edition boundaries retained in the parent dossier. **Major spoilers:** this chapter discusses hidden regions, NPC outcomes, endings and the expansion's revelations. The research distinguishes developer statements, documented game rules, transcribed in-game accounts and interpretation; a character's belief is not automatically the world's objective truth. These are research findings, not accepted OpenLegend designs.
+**Scope:** the base game and _Shadow of the Erdtree_, with their edition boundaries retained in the parent dossier. **Major spoilers:** this chapter discusses hidden regions, NPC outcomes, endings and the expansion's revelations. The research distinguishes developer statements, documented game rules, transcribed in-game accounts and interpretation; a character's belief is not automatically the world's objective truth. These are research findings, not accepted OpenLegend designs.
 
 ## 1. The central design achievement
 
@@ -14,14 +14,14 @@ The distinguishing combination is therefore not an invention claim about individ
 
 ### A useful model of its exploration loop
 
-| Step | Player's question | Design function | Failure risk |
-| --- | --- | --- | --- |
-| Notice | What is that enormous structure, light, ravine or moving creature? | Give a destination a recognizable physical identity. | Repeated silhouettes can stop implying something new. |
-| Commit | Do I investigate now or remember it for later? | Let intention arise before a formal objective. | A weak memory interface makes deferred curiosity disappear. |
-| Find access | How do I reach the place I can see? | Turn route-finding into play. | A clear-looking map can conceal a different elevation. |
-| Confront | Fight, sneak, retreat, prepare or choose another entrance? | Make geography change the available approach. | An opaque hard gate can look like personal failure. |
-| Reinterpret | What did this place, object or character teach me? | Reward understanding as well as acquisition. | A reward irrelevant to the current build can feel empty. |
-| Reorient | What can I attempt now? | Feed an earned capability or clue back into the world. | More territory without a worthwhile intention becomes fatigue. |
+| Step        | Player's question                                                  | Design function                                        | Failure risk                                                   |
+| ----------- | ------------------------------------------------------------------ | ------------------------------------------------------ | -------------------------------------------------------------- |
+| Notice      | What is that enormous structure, light, ravine or moving creature? | Give a destination a recognizable physical identity.   | Repeated silhouettes can stop implying something new.          |
+| Commit      | Do I investigate now or remember it for later?                     | Let intention arise before a formal objective.         | A weak memory interface makes deferred curiosity disappear.    |
+| Find access | How do I reach the place I can see?                                | Turn route-finding into play.                          | A clear-looking map can conceal a different elevation.         |
+| Confront    | Fight, sneak, retreat, prepare or choose another entrance?         | Make geography change the available approach.          | An opaque hard gate can look like personal failure.            |
+| Reinterpret | What did this place, object or character teach me?                 | Reward understanding as well as acquisition.           | A reward irrelevant to the current build can feel empty.       |
+| Reorient    | What can I attempt now?                                            | Feed an earned capability or clue back into the world. | More territory without a worthwhile intention becomes fatigue. |
 
 This table is analytical synthesis, not a disclosed FromSoftware production formula or measured retention model. Its useful feature is that every stage can be evaluated independently. A beautiful vista does not establish that its destination has useful rewards; an interesting dungeon does not establish that its entrance was legible.
 
@@ -31,7 +31,7 @@ In Famitsu's launch interview, Miyazaki described the Erdtree as both a visual e
 
 **Interpretation:** the world provides several kinds of guidance at different distances. A huge landmark supplies orientation; a road or terrain edge suggests a route; a nearby entrance proposes an activity; an object or conversation gives a more specific clue. Their different scales let the player feel directed without receiving a complete sequence of instructions. The tension is that players can mistake a broad invitation for a mandatory next step, or treat missing information as a failure to observe rather than a genuinely hidden condition.
 
-The official starter guide documents the basic support around that freedom: some Graces project directional guidance; the map supports player markers and discovered fast-travel points; combat prevents opening it. The player can crouch, use grass, climb ladders and jump. Torrent supplies rapid movement, a double jump and special Spirit Spring routes, while remaining unavailable in some areas. A slain Torrent can consume a Crimson Flask charge when resummoned. These constraints make exploration tools situational, rather than universal permission to ignore terrain or danger. [W05](#w05)
+The [main inventory](../elden-ring.md#movement-and-combat-grammar) retains the basic movement and mounting rules. Sony's firsthand preview independently records Grace guidance, map beacons, fast travel, mounted updraft routes and a Crimson Flask charge to resurrect a fallen mount. [W44](#w44) **Interpretation:** navigation assistance reduces friction while resurrection connects a failed ride to the character's recovery resources.
 
 The map and the landscape consequently do different jobs. The map is a planning aid and memory surface. The traversable space answers whether an apparent connection exists, which elevation matters, and what danger occupies it. **Interpretation:** this difference creates worthwhile discovery when the terrain explains the answer; it creates frustration when the player has no reasonable way to distinguish a concealed route from an impossible one.
 
@@ -41,14 +41,14 @@ Bandai Namco's gameplay overview distinguishes resource-rich caves, smithing-sto
 
 **Analysis of that division:** a player gradually learns an exploration vocabulary. A mine is a plausible answer to “my weapon is underpowered”; a catacomb can serve a spirit-focused build; a conspicuous arena invites a contained test. This makes some destinations intelligible without revealing their exact reward. The pattern also establishes expectations that later content must either satisfy or interestingly violate.
 
-| Spatial form | Main design work | Distinct risk to watch |
-| --- | --- | --- |
-| Open field | Give approach angles, visibility, retreat space and competing destinations. | Traversal becomes routine once surprise and threat have been exhausted. |
-| Major or “legacy” dungeon | Concentrate route decisions, encounter pressure, shortcuts and architectural identity. | Mandatory bottlenecks can overpower the freedom established outside. |
-| Small dungeon | Deliver an achievable expedition with a recognizable beginning and payoff. | Familiar rooms, boss families and reward types make another entrance feel predictable. |
-| Field encounter | Interrupt travel and let the surroundings become part of the fight. | An impressive creature becomes something players consistently ride past. |
-| Hidden or displaced region | Reframe how much of the world the player thought they understood. | Access becomes a clue hunt detached from the apparent geography. |
-| Safe conversation space | Change pace and convert discoveries into relationships or interpretation. | The player forgets to return, or cannot tell whether a conversation has advanced. |
+| Spatial form               | Main design work                                                                       | Distinct risk to watch                                                                 |
+| -------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Open field                 | Give approach angles, visibility, retreat space and competing destinations.            | Traversal becomes routine once surprise and threat have been exhausted.                |
+| Major or “legacy” dungeon  | Concentrate route decisions, encounter pressure, shortcuts and architectural identity. | Mandatory bottlenecks can overpower the freedom established outside.                   |
+| Small dungeon              | Deliver an achievable expedition with a recognizable beginning and payoff.             | Familiar rooms, boss families and reward types make another entrance feel predictable. |
+| Field encounter            | Interrupt travel and let the surroundings become part of the fight.                    | An impressive creature becomes something players consistently ride past.               |
+| Hidden or displaced region | Reframe how much of the world the player thought they understood.                      | Access becomes a clue hunt detached from the apparent geography.                       |
+| Safe conversation space    | Change pace and convert discoveries into relationships or interpretation.              | The player forgets to return, or cannot tell whether a conversation has advanced.      |
 
 The table describes functions and failure hypotheses, not the developer's internal level taxonomy. Reuse is not automatically poor design. Recognizing an enemy can let the player demonstrate learning under changed terrain, numbers or equipment. Reuse becomes weaker when neither the decision nor its meaning changes. Counting unique meshes or bosses alone cannot distinguish those cases.
 
@@ -78,7 +78,7 @@ The table describes functions and failure hypotheses, not the developer's intern
 
 ### 2.5 Secrets, traversal and the value of empty space
 
-The dedicated jump, Torrent and rapid travel alter how much friction an outdoor detour carries. Sony's early hands-on account describes unrestricted stamina outside combat, day/night changes, transient rain, ambient field music and the ability to return from a defeated small-dungeon boss to its entrance. These observations describe support for sustained exploration; they do not establish survival needs, a simulated climate economy or an entirely dynamic ecosystem. [W44](#w44)
+Sony's early hands-on account reports unrestricted stamina outside combat, day/night changes, transient rain, ambient field music and a return warp after a small-dungeon boss. [W44](#w44) **Interpretation:** these support sustained exploration without establishing survival needs or a simulated climate economy.
 
 **Interpretation:** removing repetitive travel costs frees attention for uncertainty about destinations. It also removes some danger from routine travel. The balance depends on what the intervening space contributes: anticipation, orientation, a resource decision, a change of mood, or an encounter whose outcome matters. More distance is not automatically more exploration.
 
@@ -90,17 +90,17 @@ Secrets vary in the kind of inference they demand. A blocked lift suggests a mis
 
 The small-dungeon vocabulary is more varied than “enter, defeat a boss, take loot.” Three concrete cases show why examining the local rule matters:
 
-| Place | Documented interaction | Design interpretation |
-| --- | --- | --- |
-| Fringefolk Hero's Grave | Two Stonesword Keys open the early entrance. A lethal chariot patrol forces timed movement between alcoves; the same chariot can kill enemies. [W51](#w51) | A visible early access cost need not imply an early-appropriate challenge. A hazard can become a tool once its route is understood. |
-| Sainted Hero's Grave | Shadow-coated enemies become vulnerable when drawn into circles of light; the approach also staggers them. [W52](#w52) | The key question shifts from damage output to controlling the encounter's location. Light is a rule with consequences rather than only atmosphere. |
-| Leyndell Catacombs | Several similar-looking areas are connected to disorient the explorer; fire-trap pillars can also become elevators. [W53](#w53) | Familiar architecture becomes the subject of the puzzle. The player must distinguish recognition from actually being in the same place. |
+| Place                   | Documented interaction                                                                                                                                     | Design interpretation                                                                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fringefolk Hero's Grave | Two Stonesword Keys open the early entrance. A lethal chariot patrol forces timed movement between alcoves; the same chariot can kill enemies. [W51](#w51) | A visible early access cost need not imply an early-appropriate challenge. A hazard can become a tool once its route is understood.                |
+| Sainted Hero's Grave    | Shadow-coated enemies become vulnerable when drawn into circles of light; the approach also staggers them. [W52](#w52)                                     | The key question shifts from damage output to controlling the encounter's location. Light is a rule with consequences rather than only atmosphere. |
+| Leyndell Catacombs      | Several similar-looking areas are connected to disorient the explorer; fire-trap pillars can also become elevators. [W53](#w53)                            | Familiar architecture becomes the subject of the puzzle. The player must distinguish recognition from actually being in the same place.            |
 
 These cases do not refute repetition complaints. They show that two different questions need answering: does an asset or layout recur, and does the recurrence produce a new decision? Conversely, a puzzle can be novel and still overstay its welcome. A useful review records the local rule, how it is taught, what the player can reasonably infer, and whether the final reward justifies the attention demanded.
 
 ## 3. The expansion's different spatial problem
 
-Miyazaki described *Shadow of the Erdtree* as blending open field and legacy-dungeon structure to create stronger verticality. PC Gamer's interview and preview describe visible plateaus that require indirect access, paths that reveal unexpected lower spaces, and intermediate spaces more elaborate than a basic outpost. The same article records the author's fatigue with some of the base game's spacing and repeated encounters, so its enthusiasm for the expansion is a comparative judgment from one experienced player, not a universal verdict. [W04](#w04)
+Miyazaki described _Shadow of the Erdtree_ as blending open field and legacy-dungeon structure to create stronger verticality. PC Gamer's interview and preview describe visible plateaus that require indirect access, paths that reveal unexpected lower spaces, and intermediate spaces more elaborate than a basic outpost. The same article records the author's fatigue with some of the base game's spacing and repeated encounters, so its enthusiasm for the expansion is a comparative judgment from one experienced player, not a universal verdict. [W04](#w04)
 
 **Interpretation:** the design moves some difficulty from "which distant objective should I choose?" to "how do these apparently nearby spaces connect?" This can renew discovery without requiring every region to introduce a new locomotion power. It also places more demand on elevation communication, memorable entrances and the ability to retain an unfinished route. A two-dimensional distance measurement is a poor predictor of travel effort in a layered world.
 
@@ -120,14 +120,14 @@ George R. R. Martin describes his contribution as the world's historical foundat
 
 **Analytical model:** Elden Ring distributes narrative work among several channels. Each has a different evidentiary and experiential role.
 
-| Channel | What it gives the player | What it cannot establish by itself |
-| --- | --- | --- |
-| Landmark, ruin, body or changed environment | Physical evidence and a question worth investigating. | A complete chronology or a perpetrator's exact intention. |
-| NPC conversation | A voice, allegiance, immediate request and account of events. | An omniscient account; speakers have knowledge limits and interests. |
-| Item description | Compact historical connections attached to an earned object. | That every metaphor or reported legend should be read as literal certainty. |
-| Enemy, equipment or faction placement | Patterns that can corroborate or complicate other evidence. | A single definitive explanation for every reused asset. |
-| Scripted encounter or cutscene | An event the player experiences and a concentrated dramatic reveal. | Everything that happened before or after it. |
-| Quest consequence | A relationship between the player's actions and a later state. | An unlimited simulation of society reacting to those actions. |
+| Channel                                     | What it gives the player                                            | What it cannot establish by itself                                          |
+| ------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Landmark, ruin, body or changed environment | Physical evidence and a question worth investigating.               | A complete chronology or a perpetrator's exact intention.                   |
+| NPC conversation                            | A voice, allegiance, immediate request and account of events.       | An omniscient account; speakers have knowledge limits and interests.        |
+| Item description                            | Compact historical connections attached to an earned object.        | That every metaphor or reported legend should be read as literal certainty. |
+| Enemy, equipment or faction placement       | Patterns that can corroborate or complicate other evidence.         | A single definitive explanation for every reused asset.                     |
+| Scripted encounter or cutscene              | An event the player experiences and a concentrated dramatic reveal. | Everything that happened before or after it.                                |
+| Quest consequence                           | A relationship between the player's actions and a later state.      | An unlimited simulation of society reacting to those actions.               |
 
 The result rewards several levels of engagement. A player can understand that a lord is brutal, fight through his castle and defeat him without reconstructing his genealogy. Another player can revisit the same journey as a study of inheritance, persecution and failed legitimacy. **Interpretation:** optional depth works because basic action remains possible before total comprehension. If understanding a hidden genealogy were required to navigate every ordinary encounter, the same fragmentation would obstruct play.
 
@@ -156,26 +156,28 @@ Community text archives were used for selected description/dialogue crosschecks.
 
 **The Shattering is both a rupture of the Ring and a war over its aftermath.** Marika breaks the Ring; her demigod family holds Great Runes and the ensuing conflict fails to establish a stable successor. The Tarnished return into this unresolved struggle. [W21](#w21) Marika and Radagon share an identity, revealed through the statue mystery and later transformation, while the hammer's history distinguishes her breaking from his attempted repair. The origin and exact temporal mechanics of that duality remain uncertain. [W31](#w31)
 
+The central family relationships help explain why these wars are also inheritance disputes. Godfrey and Marika's children include Godwyn, Morgott and Mohg; Radagon and Rennala's include Ranni, Radahn and Rykard; Marika and Radagon's twins are Miquella and Malenia. [W21](#w21) “Empyrean” is a different category from simply possessing a Great Rune: Ranni, Miquella and Malenia are identified as candidates for godhood. [W21](#w21) Keeping family, political office, divine candidacy and possession of a shard distinct makes the story substantially easier to follow.
+
 **The present-tense journey changes the player's apparent commission.** Reaching the capital and defeating its defender does not simply grant entry to the Erdtree: the thorns remain. [W26](#w26) Melina's proposed way forward involves the Giants' forbidden flame; the journey then requires confronting the keeper of Destined Death. [W27](#w27) [W30](#w30) The final Radagon and Elden Beast encounters turn restoration into confrontation with the order's own embodiment. [W31](#w31) **Interpretation:** the game destabilizes the simple task it initially gives the player. Obediently following an institution's instructions does not guarantee that the institution understands its own predicament.
 
 **Death needs a careful boundary.** The setting explicitly connects order, mortality, spirits and improper undeath. It does not provide an exception-free account in which every ordinary enemy respawn, permanent NPC death and boss disappearance follows one fully explained biological law. Treating all inhabitants as literally incapable of dying, or treating every reset as proof of a universal reincarnation timetable, makes the lore more definite than the evidence warrants.
 
 ### 4.3 Major figures: motives expressed through places and fights
 
-| Figure or relationship | Supported role and motivation | How it becomes playable / what remains uncertain |
-| --- | --- | --- |
-| Godrick | A diminished heir seeks legitimacy and strength through grafting others onto himself. | Stormveil's bodies and defensive posture lead to a boss who turns that practice into combat. Kenneth Haight's hostile account is character testimony, not neutral biography. [W22](#w22) |
-| Rennala and the Carians | Radagon's departure breaks the royal partnership; the Academy and Carian house become antagonistic powers. Rennala clings to rebirth through the amber egg. | A defeated boss remains a service character. Her Great Rune does not make her a demigod; family, office and shard possession are different categories. [W23](#w23) |
-| Radahn | A martial champion studies gravity magic, holds the stars and remains attached to his small horse. Rot devastates him after fighting Malenia. | The festival turns a once-great warrior's death into a collective ritual; releasing the stars alters geography and another quest. His precise reasons for every celestial action are not fully established. [W24](#w24) |
-| Rykard and Tanith | Rebellion against the established order becomes incorporation into a devouring serpent and a “family” of consumed champions. | Volcano Manor recruits the player to hunt Tarnished, while Prison Town exposes what its ideology permits. Opposition to an oppressive regime does not make this alternative benign. [W25](#w25) |
-| Morgott | An Omen excluded by the society he protects nevertheless defends Leyndell and the Erdtree. | His hidden identity, repeated obstruction and final defense dramatize loyalty without acceptance. The tragedy is institutional as well as personal. [W26](#w26) |
-| Mohg | Another rejected royal Omen embraces the Formless Mother and seeks a blood dynasty centered on Miquella. | His palace, blood rites and recruitment embody an alternative source of power. The DLC later changes the account of his relationship to Miquella; it does not erase every earlier action of his faction. [W29](#w29) [W40](#w40) |
-| Malenia | The afflicted twin resists scarlet rot and acts as Miquella's blade; her confrontation with Radahn catastrophically spreads that rot. | Her damaged body, prostheses, discipline and bloom connect vulnerability to overwhelming danger. The Haligtree's condition makes the cost of the supposed refuge visible. [W24](#w24) [W28](#w28) |
-| Miquella in the base game | Attempts to help Malenia lead beyond Golden Order fundamentalism toward Unalloyed Gold and the Haligtree. He attracts rejected peoples and possesses a troubling power to compel affection. | His absence makes him a goal assembled from traces and other people's devotion. Even the base material supports ambiguity; the expansion did not invent every warning sign. [W28](#w28) |
-| Ranni, Blaidd and Iji | Ranni pursues freedom from the authority selecting her divine role, with companions whose loyalty is costly. | Her optional campaign produces a different ending path; its completion also exposes the incompatibility between personal devotion and an imposed shadow's function. [W49](#w49) [W30](#w30) |
-| Marika and Radagon | The shared divine identity contains the opposed acts of breaking and repairing the Ring. | A discoverable theological secret becomes a late visual transformation. Complete explanations that reduce this to a simple disguise, a known merger date or a proven master plan go beyond the evidence. [W31](#w31) |
-| Melina | Offers an accord, helps the player's journey and seeks to fulfill her own purpose at the Erdtree. | Her willingness to act at the forge means the journey is also hers. The DLC's unnamed fire-vision sister adds evidence to identity theories without explicitly naming her in that description. [W27](#w27) [W35](#w35) |
-| Maliketh / Gurranq | Marika's shadow guards Destined Death and pursues the corruption associated with its theft. | A character who rewards Deathroot collection later becomes a necessary opponent. Prior help can deepen recognition without removing the conflict of purpose. [W30](#w30) |
+| Figure or relationship    | Supported role and motivation                                                                                                                                                               | How it becomes playable / what remains uncertain                                                                                                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Godrick                   | A diminished heir seeks legitimacy and strength through grafting others onto himself.                                                                                                       | Stormveil's bodies and defensive posture lead to a boss who turns that practice into combat. Kenneth Haight's hostile account is character testimony, not neutral biography. [W22](#w22)                                         |
+| Rennala and the Carians   | Radagon's departure breaks the royal partnership; the Academy and Carian house become antagonistic powers. Rennala clings to rebirth through the amber egg.                                 | A defeated boss remains a service character. Her Great Rune does not make her a demigod; family, office and shard possession are different categories. [W23](#w23)                                                               |
+| Radahn                    | A martial champion studies gravity magic, holds the stars and remains attached to his small horse. Rot devastates him after fighting Malenia.                                               | The festival turns a once-great warrior's death into a collective ritual; releasing the stars alters geography and another quest. His precise reasons for every celestial action are not fully established. [W24](#w24)          |
+| Rykard and Tanith         | Rebellion against the established order becomes incorporation into a devouring serpent and a “family” of consumed champions.                                                                | Volcano Manor recruits the player to hunt Tarnished, while Prison Town exposes what its ideology permits. Opposition to an oppressive regime does not make this alternative benign. [W25](#w25)                                  |
+| Morgott                   | An Omen excluded by the society he protects nevertheless defends Leyndell and the Erdtree.                                                                                                  | His hidden identity, repeated obstruction and final defense dramatize loyalty without acceptance. The tragedy is institutional as well as personal. [W26](#w26)                                                                  |
+| Mohg                      | Another rejected royal Omen embraces the Formless Mother and seeks a blood dynasty centered on Miquella.                                                                                    | His palace, blood rites and recruitment embody an alternative source of power. The DLC later changes the account of his relationship to Miquella; it does not erase every earlier action of his faction. [W29](#w29) [W40](#w40) |
+| Malenia                   | The afflicted twin resists scarlet rot and acts as Miquella's blade; her confrontation with Radahn catastrophically spreads that rot.                                                       | Her damaged body, prostheses, discipline and bloom connect vulnerability to overwhelming danger. The Haligtree's condition makes the cost of the supposed refuge visible. [W24](#w24) [W28](#w28)                                |
+| Miquella in the base game | Attempts to help Malenia lead beyond Golden Order fundamentalism toward Unalloyed Gold and the Haligtree. He attracts rejected peoples and possesses a troubling power to compel affection. | His absence makes him a goal assembled from traces and other people's devotion. Even the base material supports ambiguity; the expansion did not invent every warning sign. [W28](#w28)                                          |
+| Ranni, Blaidd and Iji     | Ranni pursues freedom from the authority selecting her divine role, with companions whose loyalty is costly.                                                                                | Her optional campaign produces a different ending path; its completion also exposes the incompatibility between personal devotion and an imposed shadow's function. [W49](#w49) [W30](#w30)                                      |
+| Marika and Radagon        | The shared divine identity contains the opposed acts of breaking and repairing the Ring.                                                                                                    | A discoverable theological secret becomes a late visual transformation. Complete explanations that reduce this to a simple disguise, a known merger date or a proven master plan go beyond the evidence. [W31](#w31)             |
+| Melina                    | Offers an accord, helps the player's journey and seeks to fulfill her own purpose at the Erdtree.                                                                                           | Her willingness to act at the forge means the journey is also hers. The DLC's unnamed fire-vision sister adds evidence to identity theories without explicitly naming her in that description. [W27](#w27) [W35](#w35)           |
+| Maliketh / Gurranq        | Marika's shadow guards Destined Death and pursues the corruption associated with its theft.                                                                                                 | A character who rewards Deathroot collection later becomes a necessary opponent. Prior help can deepen recognition without removing the conflict of purpose. [W30](#w30)                                                         |
 
 **Interpretation:** the strongest bosses are also arguments made bodily. Grafting seeks inherited grandeur by theft; devouring claims unity through consumption; a defender protects an order that excludes him; a warrior's sickness becomes a region's disaster. This is different from attaching a paragraph of background to an otherwise interchangeable fight. The setting, silhouette, available actions and aftermath carry related ideas.
 
@@ -183,20 +185,20 @@ Community text archives were used for selected description/dialogue crosschecks.
 
 The world is not a single church opposed by a single rebel faction. Its communities disagree about legitimate rule, bodies, death, knowledge and divine influence. The following distinctions prevent common flattening:
 
-| Community / tradition | Relevant distinction |
-| --- | --- |
-| Golden Order institutions | Royal power, fundamentalist study, battlefield service and undead hunting are related but not identical roles. Goldmask can criticize divine fallibility from within the tradition. [W17](#w17) [W26](#w26) |
-| Raya Lucaria and Carian royalty | Sorcerous practice does not imply a single political allegiance. Their conflict follows a broken earlier relationship; the Academy and the royal house occupy different strongholds. [W23](#w23) |
-| Omen | A category stigmatized by the ruling order; royal children and ordinary children undergo different forms of exclusion. Morgott and Mohg respond differently to related oppression. [W26](#w26) |
-| Albinaurics | Artificially made people, including visibly different generations, whose persecution and search for refuge are not explained away by their origin. Albus and Latenna turn that condition into personal requests. [W23](#w23) |
-| Nox and Eternal Cities | A separate subterranean civilization associated with opposition to the Greater Will, artificial life and a hoped-for alternative order. Its chronology relative to every later dynasty is uncertain. [W29](#w29) |
-| Ancestral Followers | A life/death tradition outside simple Erdtree orthodoxy. Their attire describes buds emerging from flesh and souls; it should not be collapsed into the Academy, Nox or hornsent simply because locations or motifs overlap. [W34](#w34) |
-| Dragon traditions | Ancient dragons, their beastman setting and later dragon worship complicate a history centered only on Marika. Dragon Communion's consumption of hearts is a distinct relationship to dragons, with transformation as a cost. [W30](#w30) [W25](#w25) |
-| Those Who Live in Death | Their existence is interpreted as a violation by hunters and as a condition deserving protection by Fia. The category is simultaneously an enemy type, a consequence of history and a moral dispute. [W29](#w29) [W16](#w16) |
-| Rot's adherents | The Kindred of Rot revere a force that devastates other lives. Malenia's afflicted condition and her followers' loyalty are not interchangeable with uncomplicated enthusiasm for the disease. [W24](#w24) |
-| Recusants and the blood dynasty | Both offer alternatives to the Tarnished's official mission and involve violence against Tarnished, but their patrons and ends differ: Rykard's serpent and Mohg's blood order should remain distinct. [W25](#w25) [W29](#w29) |
-| Hornsent and shamans | The expansion reveals persecution within the hornsent order as well as the later catastrophe inflicted on it. Horns signify divinity in some practices that the Erdtree's later institutions reject. Neither victimhood nor sacred status proves moral innocence. [W37](#w37) [W38](#w38) |
-| Living jars | Alexander and Jar-Bairn make jars personal and sympathetic; the expansion's gaols supply a much more disturbing jar-making context. A shared object category does not establish that every jar has the same origin or social function. [W14](#w14) [W15](#w15) [W37](#w37) |
+| Community / tradition           | Relevant distinction                                                                                                                                                                                                                                                                      |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Golden Order institutions       | Royal power, fundamentalist study, battlefield service and undead hunting are related but not identical roles. Goldmask can criticize divine fallibility from within the tradition. [W17](#w17) [W26](#w26)                                                                               |
+| Raya Lucaria and Carian royalty | Sorcerous practice does not imply a single political allegiance. Their conflict follows a broken earlier relationship; the Academy and the royal house occupy different strongholds. [W23](#w23)                                                                                          |
+| Omen                            | A category stigmatized by the ruling order; royal children and ordinary children undergo different forms of exclusion. Morgott and Mohg respond differently to related oppression. [W26](#w26)                                                                                            |
+| Albinaurics                     | Artificially made people, including visibly different generations, whose persecution and search for refuge are not explained away by their origin. Albus and Latenna turn that condition into personal requests. [W23](#w23)                                                              |
+| Nox and Eternal Cities          | A separate subterranean civilization associated with opposition to the Greater Will, artificial life and a hoped-for alternative order. Its chronology relative to every later dynasty is uncertain. [W29](#w29)                                                                          |
+| Ancestral Followers             | A life/death tradition outside simple Erdtree orthodoxy. Their attire describes buds emerging from flesh and souls; it should not be collapsed into the Academy, Nox or hornsent simply because locations or motifs overlap. [W34](#w34)                                                  |
+| Dragon traditions               | Ancient dragons, their beastman setting and later dragon worship complicate a history centered only on Marika. Dragon Communion's consumption of hearts is a distinct relationship to dragons, with transformation as a cost. [W30](#w30) [W25](#w25)                                     |
+| Those Who Live in Death         | Their existence is interpreted as a violation by hunters and as a condition deserving protection by Fia. The category is simultaneously an enemy type, a consequence of history and a moral dispute. [W29](#w29) [W16](#w16)                                                              |
+| Rot's adherents                 | The Kindred of Rot revere a force that devastates other lives. Malenia's afflicted condition and her followers' loyalty are not interchangeable with uncomplicated enthusiasm for the disease. [W24](#w24)                                                                                |
+| Recusants and the blood dynasty | Both offer alternatives to the Tarnished's official mission and involve violence against Tarnished, but their patrons and ends differ: Rykard's serpent and Mohg's blood order should remain distinct. [W25](#w25) [W29](#w29)                                                            |
+| Hornsent and shamans            | The expansion reveals persecution within the hornsent order as well as the later catastrophe inflicted on it. Horns signify divinity in some practices that the Erdtree's later institutions reject. Neither victimhood nor sacred status proves moral innocence. [W37](#w37) [W38](#w38) |
+| Living jars                     | Alexander and Jar-Bairn make jars personal and sympathetic; the expansion's gaols supply a much more disturbing jar-making context. A shared object category does not establish that every jar has the same origin or social function. [W14](#w14) [W15](#w15) [W37](#w37)                |
 
 The atlas above concentrates on communities needed to understand the main narrative and its alternatives. It is not a claim that every regional enemy culture, distant homeland or minor religious lineage has been given equal treatment. **Design interpretation:** recurring materials, body motifs and equipment connect local fights to larger institutions. A useful worldbuilding system needs those relationships to remain specific. Giving every faction the same behavior with different colors would lose much of this effect.
 
@@ -218,14 +220,14 @@ GameSpot's critique judges the revealed Miquella harshly, seeing benevolent ambi
 
 The base game has six named endings. Most relevant quest paths can be prepared before selecting one, while inheriting the Frenzied Flame normally blocks the alternatives until removed through the needle procedure. [W46](#w46)
 
-| Ending | Commitment expressed by the choice | Evidentiary limit |
-| --- | --- | --- |
-| Age of Fracture | Mend the Ring and take the lordship. | Restoration does not supply a detailed forecast of ordinary life. |
-| Age of Order | Apply Goldmask's Mending Rune of Perfect Order. | The rune's response to fallible gods is explicit; a complete political constitution is not. |
-| Age of Duskborn | Apply Fia's Mending Rune of the Death-Prince. | Life within Death enters the order; a full account of future mortality is not shown. |
-| Blessing of Despair | Apply the Dung Eater's Mending Rune of the Fell Curse. | Its hereditary curse is explicit; calling this uncomplicated emancipation would ignore its means. |
-| Lord of Frenzied Flame | Become the agent of a world-consuming flame. | It should not be softened into ordinary regime change. |
-| Age of Stars | Leave with Ranni and her new order. | The moral and practical consequences remain partly interpretive. |
+| Ending                 | Commitment expressed by the choice                     | Evidentiary limit                                                                                 |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Age of Fracture        | Mend the Ring and take the lordship.                   | Restoration does not supply a detailed forecast of ordinary life.                                 |
+| Age of Order           | Apply Goldmask's Mending Rune of Perfect Order.        | The rune's response to fallible gods is explicit; a complete political constitution is not.       |
+| Age of Duskborn        | Apply Fia's Mending Rune of the Death-Prince.          | Life within Death enters the order; a full account of future mortality is not shown.              |
+| Blessing of Despair    | Apply the Dung Eater's Mending Rune of the Fell Curse. | Its hereditary curse is explicit; calling this uncomplicated emancipation would ignore its means. |
+| Lord of Frenzied Flame | Become the agent of a world-consuming flame.           | It should not be softened into ordinary regime change.                                            |
+| Age of Stars           | Leave with Ranni and her new order.                    | The moral and practical consequences remain partly interpretive.                                  |
 
 The selection structure and names are documented in the ending guide; the Mending Rune descriptions provide the narrower wording about death and inherited curse. [W46](#w46) [W33](#w33) This table deliberately avoids presenting an author's favored ending as the game's objectively correct answer.
 
@@ -351,16 +353,16 @@ The case consequently argues for separating four questions: Can the player under
 
 ## 8. Inheritance, recombination and limits of the lesson
 
-| Element | What this study can reasonably credit | What it should not claim |
-| --- | --- | --- |
-| Souls-style dangerous exploration | Familiar combat and loss give open-field choices consequences. | Elden Ring invented hard enemies, optional routes or ambiguous stories. |
-| Jumping, crouching and a mount | These make a wider landscape more usable and create additional approach options. | Elden Ring invented jumping, stealth or mounted traversal. |
-| Authored legacy spaces inside an open map | Broad destination choice alternates with concentrated local route design. | Every square kilometer has equal density or every mandatory encounter is optional. |
-| Map fragments and landmarks | Incomplete information makes planning itself part of discovery. | Withholding information always improves exploration. |
-| Quests attached to objects and locations | A capability, a clue and a relationship can occupy the same object. | Every obscure quest trigger has a thematic justification. |
-| Fragmented historical narrative | Different kinds of evidence reward different levels of attention. | All interpretations are equally well supported or a complete chronology is known. |
-| Staged NPC agency | Clear desires and irreversible outcomes can create emotional independence. | A richly authored character proves a general social simulation. |
-| DLC's layered geography | Route topology can renew discovery without replacing core locomotion. | Greater size or elevation alone produces better exploration. |
+| Element                                   | What this study can reasonably credit                                            | What it should not claim                                                           |
+| ----------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Souls-style dangerous exploration         | Familiar combat and loss give open-field choices consequences.                   | Elden Ring invented hard enemies, optional routes or ambiguous stories.            |
+| Jumping, crouching and a mount            | These make a wider landscape more usable and create additional approach options. | Elden Ring invented jumping, stealth or mounted traversal.                         |
+| Authored legacy spaces inside an open map | Broad destination choice alternates with concentrated local route design.        | Every square kilometer has equal density or every mandatory encounter is optional. |
+| Map fragments and landmarks               | Incomplete information makes planning itself part of discovery.                  | Withholding information always improves exploration.                               |
+| Quests attached to objects and locations  | A capability, a clue and a relationship can occupy the same object.              | Every obscure quest trigger has a thematic justification.                          |
+| Fragmented historical narrative           | Different kinds of evidence reward different levels of attention.                | All interpretations are equally well supported or a complete chronology is known.  |
+| Staged NPC agency                         | Clear desires and irreversible outcomes can create emotional independence.       | A richly authored character proves a general social simulation.                    |
+| DLC's layered geography                   | Route topology can renew discovery without replacing core locomotion.            | Greater size or elevation alone produces better exploration.                       |
 
 These are evidence-informed distinctions, not a prescription to copy the game's content or adopt all of its tradeoffs. The strongest transferable question is whether the player can turn curiosity into a chosen action, learn something consequential from that action, and carry the resulting knowledge or relationship into a later decision. The strongest caution is that the same structure can demand more attention and memory than a particular player wants or can provide.
 
@@ -375,8 +377,6 @@ Research accessed **October 24, 2026**. Relevant written body sections below wer
 <a id="w03"></a>**W03.** [Famitsu — Launch interview with Hidetaka Miyazaki](https://www.famitsu.com/news/202202/25252631.html), February 25, 2022. Japanese primary interview; paraphrased in English. Used for the Erdtree's landmark role, map-fragment intent and non-universal progression gates.
 
 <a id="w04"></a>**W04.** [PC Gamer — Shadow of the Erdtree cover story](https://www.pcgamer.com/games/rpg/shadow-of-the-erdtree-miyazaki-interview-cover-story-preview/), June 2024. Original interview and hands-on preview; developer explanation separated from Wes Fenlon's experience. No claim that preview impressions describe every final encounter.
-
-<a id="w05"></a>**W05.** [Bandai Namco — Elden Ring Starter Guide](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-starter-guide-tips-know-playing-the-game), November 10, 2021. Official network-test-era controls/environment guide, used narrowly for stable navigation and movement rules; its erroneous armor-upgrade wording is not adopted.
 
 <a id="w06"></a>**W06.** [George R. R. Martin — Long Long Ago](https://georgerrmartin.com/notablog/2021/12/18/long-long-ago/), December 18, 2021. Primary account of the historical-worldbuilding commission and handoff. Embedded trailers were not watched as research evidence.
 
@@ -454,7 +454,7 @@ Research accessed **October 24, 2026**. Relevant written body sections below wer
 
 <a id="w43"></a>**W43.** [Can I Play That? — Accessibility Menu Deep Dive](https://caniplaythat.com/2022/02/28/elden-ring-accessibility-menu-deep-dive/), Ben Bayliss, February 28, updated May 14, 2022. PS5 launch-menu audit. Historical evidence; not a claim that every option is unchanged across current platforms.
 
-<a id="w44"></a>**W44.** [PlayStation Blog — Elden Ring's biggest innovations to the From Software formula](https://blog.playstation.com/?p=356505), Tim Turi, November 10, 2021. Firsthand network-test preview on an official platform blog. Used for stable exploration observations; its overly broad multiplayer and falling statements are not imported as current rules.
+<a id="w44"></a>**W44.** [PlayStation Blog — Elden Ring's biggest innovations to the From Software formula](https://blog.playstation.com/?p=356505), Tim Turi, November 10, 2021. Firsthand network-test account; navigation, mount, exploration and music passages read. Broad multiplayer/falling claims excluded.
 
 <a id="w45"></a>**W45.** [PC Gamer — Elden Ring's NPC quest markers are just a Band-Aid](https://www.pcgamer.com/elden-rings-npc-quest-markers-are-just-a-band-aid/), Rich Stanton, March 21, 2022. Original criticism read; its simultaneous defense of discovery and concern about scale are both represented. The patch note is preferred for the feature's exact scope.
 

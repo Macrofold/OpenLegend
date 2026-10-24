@@ -28,7 +28,7 @@ The character's starting package matters without being a permanent class prohibi
 
 ### Movement and combat grammar
 
-Walking, sprinting, jumping, crouching, rolling, backstepping, climbing ladders and riding support different approaches. Torrent adds speed, a double jump and Spirit Spring traversal, but not universal safe landings or dungeon access. Attacks include light/heavy, charged, jumping, running and critical actions. Blocking, parrying, guard counters and evasion are distinct defenses: a guard counter follows a block, not a successful parry. Compatible paired weapons offer another moveset. Health, FP and stamina constrain different actions. [E8](#e8)
+Walking, sprinting, jumping, crouching, rolling, backstepping, climbing ladders and riding support different approaches. Torrent adds speed, a double jump and Spirit Spring traversal, but not universal safe landings or dungeon access. Attacks include light/heavy, charged, jumping, running and critical actions. Blocking, parrying, guard counters and evasion are distinct defenses: a guard counter follows a block, not a successful parry. Powerstancing compatible weapons offers a combined moveset. Health, FP and stamina constrain different actions. [E8](#e8)
 
 **Interpretation:** naming these operations matters because “melee combat” conceals several independent decisions. A player can choose when to enter range, whether to spend a scarce resource, and whether to seek a stagger rather than immediately maximize damage. An experimental OpenLegend combat scene should preserve that decision structure before adding dozens of nominally different attacks.
 
@@ -45,7 +45,7 @@ while
 
 ### Status buildup and resistances
 
-Status effects are also **thresholded state changes**, not ordinary elemental damage with different colors. The interface shows buildup gauges; repeated compatible attacks/items/spells fill them until the effect triggers. Major families include Poison, Scarlet Rot, Blood Loss/Hemorrhage, Frostbite, Sleep, Madness and Death Blight. Their consequences differ: Poison/Rot deal damage over time, Blood Loss removes a burst of HP, Frostbite adds damage plus a temporary vulnerability, Sleep creates helplessness, Madness damages HP and FP, and Death Blight kills when fully triggered. [E28](#e28) [E30](#e30)
+Status effects are also **thresholded state changes**, not ordinary elemental damage with different colors. The interface shows buildup gauges; repeated compatible attacks/items/spells fill them until the effect triggers. Major families include Poison, Scarlet Rot, Blood Loss/Hemorrhage, Frostbite, Sleep, Madness and Death Blight. Their consequences differ: Poison/Rot deal damage over time, Blood Loss removes a burst of HP, Frostbite adds damage plus a temporary vulnerability, Sleep incapacitates or briefly disrupts depending on the target; Madness damages HP and FP on eligible Tarnished, and Death Blight kills susceptible Tarnished when fully triggered. [E28](#e28) [E30](#e30)
 
 The character sheet exposes matching resistance families—**Immunity** against Poison/Rot, **Robustness** against Blood Loss/Frostbite, **Focus** against Sleep/Madness and **Vitality** against Death Blight. Arcane can increase buildup for compatible weapons/effects rather than simply increasing every status's final damage. [E30](#e30)
 

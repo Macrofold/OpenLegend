@@ -2,7 +2,7 @@
 
 | Status | Current progress | Evidence cutoff |
 | --- | --- | --- |
-| In progress | All five substantive chapters and navigation are present; final lore, encounter and creator-workflow details plus integrated verification remain open. | 2026-10-24 |
+| In progress | All five chapters and requirement audits are complete; shared-source review, link/format verification and committed closure remain open. | 2026-10-24 |
 
 ## Scope and owners
 
@@ -14,10 +14,10 @@ Apply [R01–R14 and conditional R15](research-requirements.md), including the [
 
 | Owner | State | Remaining scope |
 | --- | --- | --- |
-| [Combat, builds and equipment](dossiers/elden-ring/01-combat-builds-and-equipment.md) | In progress | Complete final boss/spirit precision and source review; main systems and eleven worked cases are present. |
-| [World, exploration and narrative](dossiers/elden-ring/02-world-exploration-and-narrative.md) | In progress | Complete the concentrated lore/faction/ending atlas and final source review; regional design, ten worked interactions and presentation are present. |
-| [Reception and commercial analysis](dossiers/elden-ring/03-reception-commercial-and-cultural-impact.md) | In progress | All reception/economic dimensions are present; add the documented public testing/release step and finish integrated verification. |
-| [Native multiplayer and modding](dossiers/elden-ring/04-multiplayer-and-modding.md) | Draft complete | Complete precise mod/patch/collection/installer distinctions, appearance editing, distribution governance and update/removal/support workflow. |
+| [Combat, builds and equipment](dossiers/elden-ring/01-combat-builds-and-equipment.md) | In progress | Substantive review complete; final shared-source budget reconciliation and formatting. |
+| [World, exploration and narrative](dossiers/elden-ring/02-world-exploration-and-narrative.md) | In progress | Lore, factions, endings, quest studies and preservation review complete; final shared-source budget reconciliation and formatting. |
+| [Reception and commercial analysis](dossiers/elden-ring/03-reception-commercial-and-cultural-impact.md) | In progress | Reviewed: five base reviews, three DLC accounts, player/accessibility evidence, economics, production/testing and return/marketing analysis. |
+| [Native multiplayer and modding](dossiers/elden-ring/04-multiplayer-and-modding.md) | Draft complete | Reviewed: complete R15 workflow, representative creations, rights, incentives, distribution and support ownership. |
 | [Synthesis and OpenLegend implications](dossiers/elden-ring/05-design-synthesis-and-openlegend.md) | Draft complete | Integrated requirement map, preservation/content/link review and committed closure remain open. |
 
 **Next completion boundary:** all chapters substantively complete, integrated through the existing dossier/indexes, reviewed and committed. No runtime implementation or gameplay tests are part of this research assignment. Source-access gaps will be stated beside affected claims.

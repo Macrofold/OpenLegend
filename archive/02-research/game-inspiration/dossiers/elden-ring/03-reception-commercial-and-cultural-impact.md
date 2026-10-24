@@ -10,14 +10,14 @@ Mike's figure has an identifiable source. In an **October 22, 2026** article, Rh
 
 For financial interpretation, we would need explicit treatment of taxes, refunds, storefront fees, physical distribution and publisher/developer sharing. Adding an independently modeled DLC total before resolving overlap could double-count spending. The provider's platform labels also should not silently become a verified all-edition inventory.
 
-| Evidence | Product and measurement date | Metric actually supported | What it cannot establish |
-| --- | --- | --- | --- |
-| Publisher corporate history | Base game, March 14, 2022 | More than 12 million units, combining physical distribution and downloads | Twelve million distinct people who played or completed it |
-| Publisher corporate history | Base game, February 22, 2023 | More than 20 million units on the same broad definition | A per-player retention curve |
-| Bandai Namco, July 24, 2025 | Base Elden Ring, worldwide, cumulative | More than 30 million units | Current sell-through, unique players or net revenue |
-| Same publisher announcement | Shadow of the Erdtree, worldwide, cumulative | More than 10 million units | A synchronized cohort attach rate, or a separate disclosed dollar amount |
-| Bandai Namco, August 28, 2026 | Tarnished Edition launch and base-game context | Switch 2 edition released; original game remains described as more than 30 million units | Incremental Switch 2 sales or a new all-platform numerical total |
-| Alinea, October 22, 2026 | Elden Ring on its stated Steam/PS5/Xbox coverage | Estimated 36.4 million copies and $2 billion revenue | Audited receipts, profit, or a fully documented DLC/accounting perimeter |
+| Evidence                      | Product and measurement date                     | Metric actually supported                                                                | What it cannot establish                                                 |
+| ----------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Publisher corporate history   | Base game, March 14, 2022                        | More than 12 million units, combining physical distribution and downloads                | Twelve million distinct people who played or completed it                |
+| Publisher corporate history   | Base game, February 22, 2023                     | More than 20 million units on the same broad definition                                  | A per-player retention curve                                             |
+| Bandai Namco, July 24, 2025   | Base Elden Ring, worldwide, cumulative           | More than 30 million units                                                               | Current sell-through, unique players or net revenue                      |
+| Same publisher announcement   | Shadow of the Erdtree, worldwide, cumulative     | More than 10 million units                                                               | A synchronized cohort attach rate, or a separate disclosed dollar amount |
+| Bandai Namco, August 28, 2026 | Tarnished Edition launch and base-game context   | Switch 2 edition released; original game remains described as more than 30 million units | Incremental Switch 2 sales or a new all-platform numerical total         |
+| Alinea, October 22, 2026      | Elden Ring on its stated Steam/PS5/Xbox coverage | Estimated 36.4 million copies and $2 billion revenue                                     | Audited receipts, profit, or a fully documented DLC/accounting perimeter |
 
 Sources: early publisher milestones and measurement footnotes [R23](#r23), later milestone [R02](#r02), edition release [R03](#r03), analyst estimate [R01](#r01). The separate **Nightreign** product is excluded from Elden Ring's totals in this study. A franchise total that includes the spinoff answers a different question. Physical distribution plus digital sales also should not silently become an all-channel consumer sell-through estimate.
 
@@ -33,26 +33,26 @@ The commercial conclusion can nevertheless be strong at the right level: publish
 
 The following reviews were read as substantive written criticism, including their objections. They are individual accounts with different platforms, play histories and expectations; scores are not treated as votes in a representative survey.
 
-| Original review | What worked for that reviewer | What resisted or weakened the experience |
-| --- | --- | --- |
-| Tyler Colp, **PC Gamer**, February 23, 2022, PC | Demanding encounters could feel like outthinking an opponent; the Ancestor Spirit's restrained staging showed a different emotional register from spectacle | Familiar Souls material dominated too often; uncertain readiness signals and high-health late opponents could feel laborious; launch stuttering interrupted play. [R05](#r05) |
-| Chris Carter, **Destructoid**, February 23, 2022, PS5 | Self-directed routes, unusual discoveries, flexible loadouts and shorter retries; spirit assistance mattered to solo play independently of server population | Small dungeons repeated structures, late progression narrowed, onboarding remained esoteric, and missable NPC outcomes could frustrate. [R06](#r06) |
-| Liam Croft, **Push Square**, February 28, 2022 final review, PS5 | Distinct regions, major dungeons, new combat choices and mainline boss encounters | Minor bosses could feel like padding; repeated lever-door dungeons weakened discovery; frame-rate instability, pop-in and loading remained drawbacks. [R07](#r07) |
-| Joel Franey, **GamesRadar**, launch review, PS5 | Choosing when to confront threats made the demanding structure approachable; creatures and landscapes created fascination | Aimlessness, visually weaker close-ups and exploitable enemy behavior; he explicitly writes as a Souls veteran. [R08](#r08) |
-| Jerry Williams, **RPGFan**, March 8, 2022, PC | A convincing sense of place, emotional meaning without full plot comprehension, exploration as an alternative to repetitive grinding | Some reused content, graphical faults, limited personal need for crafting, and revisiting easy areas after outgrowing them. [R09](#r09) |
+| Original review                                                  | What worked for that reviewer                                                                                                                                | What resisted or weakened the experience                                                                                                                                      |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tyler Colp, **PC Gamer**, February 23, 2022, PC                  | Demanding encounters could feel like outthinking an opponent; the Ancestor Spirit's restrained staging showed a different emotional register from spectacle  | Familiar Souls material dominated too often; uncertain readiness signals and high-health late opponents could feel laborious; launch stuttering interrupted play. [R05](#r05) |
+| Chris Carter, **Destructoid**, February 23, 2022, PS5            | Self-directed routes, unusual discoveries, flexible loadouts and shorter retries; spirit assistance mattered to solo play independently of server population | Small dungeons repeated structures, late progression narrowed, onboarding remained esoteric, and missable NPC outcomes could frustrate. [R06](#r06)                           |
+| Liam Croft, **Push Square**, February 28, 2022 final review, PS5 | Distinct regions, major dungeons, new combat choices and mainline boss encounters                                                                            | Minor bosses could feel like padding; repeated lever-door dungeons weakened discovery; frame-rate instability, pop-in and loading remained drawbacks. [R07](#r07)             |
+| Joel Franey, **GamesRadar**, launch review, PS5                  | Choosing when to confront threats made the demanding structure approachable; creatures and landscapes created fascination                                    | Aimlessness, visually weaker close-ups and exploitable enemy behavior; he explicitly writes as a Souls veteran. [R08](#r08)                                                   |
+| Jerry Williams, **RPGFan**, March 8, 2022, PC                    | A convincing sense of place, emotional meaning without full plot comprehension, exploration as an alternative to repetitive grinding                         | Some reused content, graphical faults, limited personal need for crafting, and revisiting easy areas after outgrowing them. [R09](#r09)                                       |
 
-This is not unanimous approval of every mechanic. The clearest disagreement concerns **what freedom does after a defeat**. Williams found exploration a productive answer; Colp could not reliably tell whether an encounter wanted more practice or more power. These accounts can both be accurate. The design question is whether another route gives a player a *legible* way to improve, not merely whether another route exists. [R05](#r05) [R09](#r09)
+This is not unanimous approval of every mechanic. The clearest disagreement concerns **what freedom does after a defeat**. Williams found exploration a productive answer; Colp could not reliably tell whether an encounter wanted more practice or more power. These accounts can both be accurate. The design question is whether another route gives a player a _legible_ way to improve, not merely whether another route exists. [R05](#r05) [R09](#r09)
 
 ## 3. Current player testimony: recommendation is not the same as completion or approval
 
 Steam's accessible October 24 surface displayed **Most Helpful (Week), All, English**. All-time and negative-only query attempts failed; the default ordering changed between responses. These are qualitative samples, not a stable ranking or representative dataset. [R10](#r10)
 
-| Sampled account | Specific reaction | Interpretive use |
-| --- | --- | --- |
-| **fletcher**, recommended | Described a first Souls journey, difficult learning, landscapes, build experimentation and satisfaction from boss mastery | A novice can experience frustration as part of a valued journey |
-| **MrBoombastic**, recommended, October 19 | Praised much of the world but reported abandoning the final stretch over readability, camera and adaptation demands | A positive recommendation can coexist with failure to finish and major dissatisfaction |
-| **Hades VII**, recommended, October 21 | Valued navigation without an imposed itinerary and consequential upgrades | A direct example of autonomy and progression appeal |
-| **Leper**, not recommended, October 16 | Found quests obscure and repeated traversal too time-consuming despite appreciating the presentation | A negative verdict can recognize artistic achievement |
+| Sampled account                           | Specific reaction                                                                                                         | Interpretive use                                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **fletcher**, recommended                 | Described a first Souls journey, difficult learning, landscapes, build experimentation and satisfaction from boss mastery | A novice can experience frustration as part of a valued journey                        |
+| **MrBoombastic**, recommended, October 19 | Praised much of the world but reported abandoning the final stretch over readability, camera and adaptation demands       | A positive recommendation can coexist with failure to finish and major dissatisfaction |
+| **Hades VII**, recommended, October 21    | Valued navigation without an imposed itinerary and consequential upgrades                                                 | A direct example of autonomy and progression appeal                                    |
+| **Leper**, not recommended, October 16    | Found quests obscure and repeated traversal too time-consuming despite appreciating the presentation                      | A negative verdict can recognize artistic achievement                                  |
 
 These accounts do not establish prevalence. The useful evidence is each described interaction; a reviewer's assertion about what “most people” enjoy is not a population measurement.
 
@@ -72,7 +72,7 @@ For design research, the question after failure should be: **what changed in the
 
 Elden Ring makes retreat a meaningful decision. Carter describes self-directed route changes and discoveries; Franey emphasizes the ability to decide which threats to confront. [R06](#r06) [R08](#r08) This changes the emotional framing of a setback. A player who leaves a boss can still accomplish something valuable and return with a stronger build, a better understanding of the world or renewed motivation.
 
-Our inference is that the strongest effect comes from *preserving authorship*. A player can tell a personal story about finding another route or solving a problem in an unexpected way. However, autonomy requires understandable options. “You can go somewhere else” is insufficient when the player cannot tell which activity will help, whether their build is underperforming or whether a wall is an intended skill check. Freedom and guidance therefore belong in the same design discussion.
+Our inference is that the strongest effect comes from _preserving authorship_. A player can tell a personal story about finding another route or solving a problem in an unexpected way. However, autonomy requires understandable options. “You can go somewhere else” is insufficient when the player cannot tell which activity will help, whether their build is underperforming or whether a wall is an intended skill check. Freedom and guidance therefore belong in the same design discussion.
 
 ### Discovery: information itself becomes a reward
 
@@ -150,13 +150,13 @@ Our inference is that unreliable presentation directly weakens a game built arou
 
 The expansion should not be treated as simply more base-game reception. It was assessed by players with established characters, expectations and learned habits, and its early experience changed after release.
 
-| Account or update | What the evidence says | Design question it raises |
-| --- | --- | --- |
-| **Marcus Stewart, Game Informer**, June 18, 2024 | A level-165 starting character still found demanding fights; the fragment-based progression encouraged exploration, and new equipment and layered spaces justified the journey. The review was strongly positive. [R12](#r12) | Can a new progression layer renew growth for already powerful characters? |
-| **Tyler Colp, PC Gamer**, June 18, 2024 | Praised vertical world structure, thematic reinterpretation, expressive new weapons and encounters that challenged old habits. Switching away from his starting mace helped him find new favorites. [R14](#r14) | When does adaptation feel like renewed play rather than loss of a valued identity? |
-| **Ash Parrish, The Verge**, June 22, 2024 | Reported being stuck on Rellana despite using several assistance and build options. She found the scarcity/search burden of the expansion's upgrades less liberating than base-game leveling. [R13](#r13) | Does an alternative route actually produce usable relief for this player? |
-| **Calibration 1.12.2**, official page dated June 24, 2024 | Increased the benefit of early Scadutree Blessing levels and adjusted the later curve; also acknowledged an unintended ray-tracing setting issue. [R15](#r15) | Early progression friction and performance configuration require different remedies. |
-| **Patch 1.14**, official page dated September 10, 2024 | Changed final-boss behavior and some attacks, damage, range and effect visibility. [R16](#r16) | A difficult encounter can retain its identity while improving clarity and opportunity. |
+| Account or update                                         | What the evidence says                                                                                                                                                                                                        | Design question it raises                                                              |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Marcus Stewart, Game Informer**, June 18, 2024          | A level-165 starting character still found demanding fights; the fragment-based progression encouraged exploration, and new equipment and layered spaces justified the journey. The review was strongly positive. [R12](#r12) | Can a new progression layer renew growth for already powerful characters?              |
+| **Tyler Colp, PC Gamer**, June 18, 2024                   | Praised vertical world structure, thematic reinterpretation, expressive new weapons and encounters that challenged old habits. Switching away from his starting mace helped him find new favorites. [R14](#r14)               | When does adaptation feel like renewed play rather than loss of a valued identity?     |
+| **Ash Parrish, The Verge**, June 22, 2024                 | Reported being stuck on Rellana despite using several assistance and build options. She found the scarcity/search burden of the expansion's upgrades less liberating than base-game leveling. [R13](#r13)                     | Does an alternative route actually produce usable relief for this player?              |
+| **Calibration 1.12.2**, official page dated June 24, 2024 | Increased the benefit of early Scadutree Blessing levels and adjusted the later curve; also acknowledged an unintended ray-tracing setting issue. [R15](#r15)                                                                 | Early progression friction and performance configuration require different remedies.   |
+| **Patch 1.14**, official page dated September 10, 2024    | Changed final-boss behavior and some attacks, damage, range and effect visibility. [R16](#r16)                                                                                                                                | A difficult encounter can retain its identity while improving clarity and opportunity. |
 
 Parrish's headline should not be converted into a literal developer admission that the DLC was “too hard.” Her article combines her own frustration with an interview about intent. Likewise, highly positive reviews do not establish that all complaints came from players refusing to use available systems. [R13](#r13)
 
@@ -172,16 +172,16 @@ For a finite premium RPG, finishing a satisfying journey and moving on can be su
 
 The same Alinea article estimates **over 9.8 million players at 100-plus hours** and **nearly 3.5 million with all achievements/trophies**. Those are provider estimates with platform and observation definitions that must be preserved. They do not supply an all-platform cohort retention curve or explain why anyone stopped. [R01](#r01) The publisher's first-anniversary article reports **over 8.9 billion deaths**; repeated deaths are events, not unique dissatisfied players. [R25](#r25)
 
-| Player state | Plausible reason to stay or return — our interpretation | Plausible reason to leave — our interpretation |
-| --- | --- | --- |
-| New explorer | Another visible destination, a useful discovery, gradual familiarity | No intelligible next step, overwhelming menus or inaccessible information |
-| Developing combat learner | Clear improvement and a credible next attempt | Repeated failure without a useful explanation |
-| Established build player | A promising tool, complementary item or new tactical use | Rewards irrelevant to the chosen identity; expensive experimentation |
-| Completion-focused player | Story closure, remaining major encounters, a chosen ending | Repetition or a late gate outweighs the value of finishing |
-| Lore-oriented player | Another interpretation, item connection or community discussion | Ambiguity becomes unresolvable procedure rather than interesting meaning |
-| Social player | Helping friends, rescue, a recurring boss role, organized fights | Session friction, conflicting progression or unwanted social pressure |
-| Veteran replayer | A fresh build, self-imposed challenge, expansion, randomizer or overhaul | The route is solved and the remaining repetition lacks a new purpose |
-| Satisfied finisher | A new occasion genuinely renews curiosity | The original journey already delivered enough; leaving is a reasonable outcome |
+| Player state              | Plausible reason to stay or return — our interpretation                  | Plausible reason to leave — our interpretation                                 |
+| ------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| New explorer              | Another visible destination, a useful discovery, gradual familiarity     | No intelligible next step, overwhelming menus or inaccessible information      |
+| Developing combat learner | Clear improvement and a credible next attempt                            | Repeated failure without a useful explanation                                  |
+| Established build player  | A promising tool, complementary item or new tactical use                 | Rewards irrelevant to the chosen identity; expensive experimentation           |
+| Completion-focused player | Story closure, remaining major encounters, a chosen ending               | Repetition or a late gate outweighs the value of finishing                     |
+| Lore-oriented player      | Another interpretation, item connection or community discussion          | Ambiguity becomes unresolvable procedure rather than interesting meaning       |
+| Social player             | Helping friends, rescue, a recurring boss role, organized fights         | Session friction, conflicting progression or unwanted social pressure          |
+| Veteran replayer          | A fresh build, self-imposed challenge, expansion, randomizer or overhaul | The route is solved and the remaining repetition lacks a new purpose           |
+| Satisfied finisher        | A new occasion genuinely renews curiosity                                | The original journey already delivered enough; leaving is a reasonable outcome |
 
 These rows are hypotheses to evaluate in interviews and playtests, not demographic proportions inferred from a handful of reviews. They provide questions for distinguishing the motives behind an observable pause or departure.
 
@@ -198,6 +198,8 @@ The June 2019 announcement explicitly joined FromSoftware/Miyazaki's established
 Our inference is that the game entered the market with substantial accumulated attention. Its commercial outcome cannot be used to claim that any unknown studio could reproduce the result by adopting difficulty, opacity or open-world scale. Brand trust, distributor reach, recognizable collaborators, prior community expertise and the game itself are entangled. We have no controlled attribution separating them.
 
 Martin's role also deserves precision. Parkin's interview describes him supplying backstory rather than writing the entire playable script, preserving room for Miyazaki's game-directed narrative decisions. [R26](#r26) The marketing value of a literary name and the structural value of external mythmaking are related but distinct hypotheses. Neither requires pretending that the player experiences a conventionally authored novel on screen.
+
+**A documented test and schedule adjustment.** On October 18, 2021, Bandai Namco announced a closed network test for selected players on November 12–15 across PS4/PS5 and Xbox One/Series. Its stated purposes combined an opening-hours preview with testing online servers. The same announcement moved release to February 25, 2022, attributing extra adjustment time to greater-than-expected depth and strategic freedom. This is the publisher's explanation, not an independently audited production diagnosis. [R30](#r30) The test therefore supplies concrete evidence of pre-release validation and controlled public access. The announcement does not disclose participant counts, findings or which final design changes resulted; those details remain unknown.
 
 The 2019 public announcement and 2022 release establish a public timeline, **not the complete development duration**. The sources examined do not disclose a complete project labor accounting, final staffing distribution, outsourcing spend or marketing budget. Development cost should not be reverse-engineered from the number of credits or the size of the map without a credible model.
 
@@ -231,16 +233,16 @@ Likewise, the survival of a very large game does not establish that scale is the
 
 This chapter supports **hypotheses for investigation**, not a decision to import Elden Ring's rules wholesale.
 
-| Hypothesis | Why it follows from the case study | A useful falsifiable test |
-| --- | --- | --- |
-| Failure can sustain engagement when it teaches | Reviews distinguish mastery from laborious repetition | After a loss, ask players what they learned and what they intend to change; watch whether the next attempt applies it |
-| Autonomy needs comprehensible alternatives | Exploration helped some reviewers and left others unsure of readiness | Present a setback and see whether players can identify two credible next actions without external guidance |
-| Discovery needs meaningful uncertainty | Major revelations and repeated templates produce different responses | Track whether a destination changes the player's model, offers a new action or merely confirms a predicted pattern |
-| Loot value depends on usable possibility | Build variety excites; irrelevant or costly-to-test rewards can disappoint | Measure whether players understand and actually try a newly found alternative |
-| Accessibility should expose the intended challenge | Bayliss identifies barriers distinct from a desire to engage with the world | Test perception, input, memory support and combat decisions separately with varied players |
-| Long campaigns need a late-game purpose | Fatigue can coexist with appreciation and recommendation | Ask whether remaining goals feel newly interesting or merely necessary to finish |
-| Social roles can extend a finite game | Helping and recognizable expertise create new motivations | Observe whether players voluntarily return to assist others after their own objective is complete |
-| Completion should be evaluated as an outcome | Finishing, stopping satisfied and abandoning in frustration differ | Interview departing players by reason instead of labeling every inactivity event as churn |
+| Hypothesis                                         | Why it follows from the case study                                          | A useful falsifiable test                                                                                             |
+| -------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Failure can sustain engagement when it teaches     | Reviews distinguish mastery from laborious repetition                       | After a loss, ask players what they learned and what they intend to change; watch whether the next attempt applies it |
+| Autonomy needs comprehensible alternatives         | Exploration helped some reviewers and left others unsure of readiness       | Present a setback and see whether players can identify two credible next actions without external guidance            |
+| Discovery needs meaningful uncertainty             | Major revelations and repeated templates produce different responses        | Track whether a destination changes the player's model, offers a new action or merely confirms a predicted pattern    |
+| Loot value depends on usable possibility           | Build variety excites; irrelevant or costly-to-test rewards can disappoint  | Measure whether players understand and actually try a newly found alternative                                         |
+| Accessibility should expose the intended challenge | Bayliss identifies barriers distinct from a desire to engage with the world | Test perception, input, memory support and combat decisions separately with varied players                            |
+| Long campaigns need a late-game purpose            | Fatigue can coexist with appreciation and recommendation                    | Ask whether remaining goals feel newly interesting or merely necessary to finish                                      |
+| Social roles can extend a finite game              | Helping and recognizable expertise create new motivations                   | Observe whether players voluntarily return to assist others after their own objective is complete                     |
+| Completion should be evaluated as an outcome       | Finishing, stopping satisfied and abandoning in frustration differ          | Interview departing players by reason instead of labeling every inactivity event as churn                             |
 
 The evidence is strongest for the existence and nature of these responses. It is weaker for their prevalence and weakest for isolated commercial causality. A full case study can make those limits explicit while still producing actionable design questions. Elden Ring's achievement warrants close study precisely because it combines extraordinary appeal with identifiable friction; learning from both is more useful than treating acclaim as an instruction to reproduce every decision.
 
@@ -305,3 +307,5 @@ Written sources below were accessed October 24, 2026. Reviews describe the versi
 <a id="r28"></a>**R28.** The Game Awards, [2022 winners archive](https://thegameawards.com/rewind/year-2022). Primary award record.
 
 <a id="r29"></a>**R29.** Bandai Namco, [20-million-unit announcement](https://en.bandainamcoent.eu/elden-ring/news/award-winning-action-rpg-elden-ring-sold-20-million-units-worldwide), official page dated February 21, 2023. Primary launch date/platform list; corporate history supplies the separate measurement-date definition in the financial table.
+
+<a id="r30"></a>**R30.** Bandai Namco, [Closed Network Test announced, release date on February 25, 2022](https://en.bandainamcoent.eu/elden-ring/news/elden-ringtm-closed-network-test-announced-release-date-february-25-2022), October 18, 2021. Primary written announcement of test dates, selected participation, platform scope, server-testing purpose and delay rationale. Embedded video was not viewed; private test findings are not inferred.
