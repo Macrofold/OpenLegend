@@ -4,7 +4,7 @@
 
 ## Baseline and dependencies
 
-[The pinned baseline and source audit](../projects/attention-and-investigation-tech-design.md#1-authority-baseline-and-dependency-reads) records the exact contracts tip, remote A/B/C reads and existing owners. Recheck affected owners on the implementation base before ATI01; completed specialist design does not establish runtime delivery.
+[The authority and owner audit](../projects/attention-and-investigation-tech-design.md#1-authority-baseline-and-dependency-reads) records the integrated sensing dependencies and existing owners. Recheck affected owners on the implementation base before ATI01; completed specialist design does not establish runtime delivery.
 
 ## ATI00 — Complete specialist design
 
@@ -12,13 +12,11 @@
 
 Parent: **SAD-E**; selected **DG02, ND13 and ND16**, with ND11/ND19 consumers.
 
-- [x] Read root rules, actual owners and complete remote A/B/C feature/technical designs without merging them.
 - [x] Specify useful actor-scoped journeys, voluntary alternatives, person versus region association and independent native choices.
 - [x] Select small accepted-work state, exact action composition, finite lifecycle, acquisition boundaries and no circular fear/surprise dependency.
 - [x] Publish typed E preparation evidence for Prompt 6 while preserving F's surprise decision and A's evidence authority.
 - [x] Specify world methods, operational bounds, subscriptions, persistence and truthful failure.
 - [x] Resolve adversarial contract review findings and reconcile affected owners/repertoires/statuses.
-- [x] Verify changed Markdown targets/anchors, documentation-only diff and exact branch ancestry; commit/push all owned changes.
 
 **Exit:** feature/technical pair plus tasks and canonical summaries agree; all selected E semantics are executable without an implementer inventing product behavior. External gates below stay explicit. Design checks cannot satisfy ATI01–ATI08.
 
@@ -38,7 +36,7 @@ Dependencies: A acquired evidence/identity; B orientation; AC07; existing prospe
 
 Dependencies: ATI01; B/C reconciled pose/locomotion accounting; **AC08, SAI-B/C/E**.
 
-- [ ] Add the qualified observation facet to compatible movement/guard actions without a parallel activity combinator or second physical lane.
+- [ ] Add the qualified observation facet to compatible movement/guard actions without a parallel activity combinator or second physical lane. Admit an initial Walk while watching destination and finite terms atomically in the same review; preserve them through a compatible switch to direct steering without restarting released held input.
 - [ ] Preserve route, cooperative task, costs, original guard deadline and scoped orientation amendment. Bind exact E-installed versus borrowed B directives. Facet expiry removes only still-owned maintenance, preserving newer/borrowed directives and underlying move/guard work; a conflicting later look explicitly ends/replaces the old facet. Body assistance uses B/C exactly once.
 - [ ] Refuse incompatible precise tool/aim/body-facing requirements; explicit replacement and ordinary interruption preserve their actual consequences.
 - [ ] Support safe work-step/check/work-step sequences and truthful restart/lost-progress semantics.
@@ -86,6 +84,8 @@ Dependencies: ATI01 evaluator; completed C acoustic intake and existing CTR03–
 
 Dependencies: ATI01–ATI02; A exact acquired cut, B physical values, C timing, existing guard/offense/native work; F owns consumer integration. Parent: **SAI-E/F, ND11**.
 
+- [ ] Capture each family's actual `currentMethodStartedAt`, preserving preparing → maintaining and resetting genuine breaks/restarts. Do not substitute admission/approach time or add a second lead after native guard readiness.
+
 - [ ] Implement section 7's closed family adapters and read-only capturePreparation after the existing coordinator settles due physical/evidence work. Resolve current values once; preserve exact work/source and actual authored-method provenance without a capture-definition registry.
 - [ ] Capture original deadlines or existing-owner lifetimes, actual phases/active scope, uncertainty, continuous fulfillment/latest break, supported danger family and action-local physical requirements. Preserve guard recovery and ordinary unphased strikes.
 - [ ] Hold the dependent outcome when required preparation is incomplete. Complete empty and technical incomplete are different results.
@@ -121,7 +121,7 @@ Dependencies: ATI01–ATI07 and the required A/B/C/D/F/G slices; shared **SAD-I*
 
 ## Bounded external gates
 
-[Technical §11](../projects/attention-and-investigation-tech-design.md#11-open-semantic-questions-and-integration-notes) owns the bounded integration gates. ATI01–ATI08 identifies the affected work; shared decisions remain with their named owners. SAD-I retains central repertoire coverage, navigation, priorities and counts.
+[Technical §11](../projects/attention-and-investigation-tech-design.md#11-open-semantic-questions-and-integration-notes) owns the required implementation dependencies. ATI01–ATI08 retains runtime and qualification work. SA-D02/SA-D03 are settled technical contracts; SA-D01 alone remains the separate controlled-player interpreted-emotion product choice.
 
 ## Maintained records
 

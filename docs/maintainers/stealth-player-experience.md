@@ -2,33 +2,33 @@
 
 ## Status and ownership
 
-**Design: complete for SAD-G's selected scope; cross-specialist integration open. Implementation: not started by this work. UX, accessibility, performance and security qualification: not performed.** Updated 2026-10-24.
+**Design: integrated for SAD-G's selected scope. Implementation: not started by this work. UX, accessibility, performance and security qualification: not performed.** Updated 2026-10-24.
 
 [Feature behavior](../projects/stealth-player-experience-feature-spec.md) owns controls, feedback and all ten player journeys. [Technical design](../projects/stealth-player-experience-tech-design.md) owns projection, input, component boundaries, invalid states and G-AC acceptance. [Limits](../limits/stealth-player-experience.md) owns discretionary defaults and remaining capacity questions. [SA coordination](stealth-awareness.md) owns A–G/I integration; this tracker is the focused SAI-G implementation owner.
 
-The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`. All six specialist branches were fetched/read separately at the [recorded commits](../projects/stealth-player-experience-tech-design.md#source-manifest); none was merged. This work changes documentation only. Checked design boxes do not stand for shipped features, executed tests or observed enjoyment.
+The [source audit](../projects/stealth-player-experience-tech-design.md#contract-authority-and-source-inspection) records inspected current code separately from intended behavior. Checked design boxes do not stand for shipped features, executed tests or observed enjoyment.
 
 ## SPX00 — Source-grounded design
 
 **Status: Done — designed.** Scope: ordinary movement/posture/gaze, finite attention, honest current/history/sound projection, targeting, own warning/startle feedback, creator separation and basic remapping/accessibility behavior.
 
 - [x] Read root/applicable rules and inspect actual current client, server, protocol and native action/spatial owners; distinguish source findings from runtime verification.
-- [x] Read shared contracts and completed A–F designs; retain one world/mechanical owner per meaning and immutable source links.
+- [x] Read and reconcile the integrated A–F contracts; retain one world/mechanical owner per meaning and canonical local specification links.
 - [x] Resolve current W/Create and C/Crafting conflicts, camera versus physical gaze, release versus full Stop, text/IME/modal ownership and pointer alternatives.
 - [x] Specify accepted, pending, refused, interrupted, incomplete, stale and invalidated states without optimistic physical success.
 - [x] Specify per-fact current authorization, explicit history, approximate evidence-bound sound, source-safe assets and target reference roles.
 - [x] Specify all ten journeys, useful nonlethal outcomes, failed ambush/recovery and distinct human/animal behavior.
 - [x] Specify complete minimum interface, progressive polish, component ownership and developer acceptance.
-- [x] Review all repertoire scopes and full directly relevant entries; make focused presentation/control additions without closing final broad priority reconciliation.
-- [x] Record numerical defaults, remaining integration decisions, implementation tasks and evidence limits.
+- [x] Review all repertoire scopes and directly relevant entries; reconcile the selected presentation/control slice with the broader gameplay priorities.
+- [x] Record numerical defaults, the open player-emotion policy, implementation tasks and evidence limits.
 
-**Exit:** the selected product/interface design is explicit enough for implementation planning. SA-D01 remains a deliberately open controlled-player emotion policy; SA-D02/03 and G-I01–08 are integration gates, not permission to invent mechanics.
+**Exit:** the selected product/interface design and shared boundaries are explicit for implementation planning. SA-D01 remains the deliberately open controlled-player emotion policy; dependent implementation must not choose it implicitly.
 
 ## SPX01 — Integrate contracts and protect publication
 
 **Status: Not started.** Dependencies: SAD-I; A current/history/reference families; B visible patch/detail/illumination; C cue precision; existing server authority.
 
-- [ ] Reconcile SA-D02 revision-family types, A/B Perception scope and B/C motion composition. Preserve exact family types and one installed rule.
+- [ ] Consume canonical A evidence/reference families, B's frozen 50 ms visual samples and B/C movement composition. Preserve exact revision types and measurement times; do not derive fresh transforms between samples.
 - [ ] Replace whole-entity publication with permitted facet/contact records across full views, patches, descriptions, histories and all lazy reads.
 - [ ] Separate current body, historical/source association and anonymous cue references; bind action targeting only through eligible current body references.
 - [ ] Restrict map/dynamic geometry, appearance assets, animation, shadow, light, sound, DOM/accessibility and diagnostic metadata to the same audience.
@@ -54,10 +54,10 @@ The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a2
 
 ## SPX03 — Attention, history and sensory interaction
 
-**Status: Not started.** Dependencies: SPX01–02; E methods and own fulfillment; A/C original evidence; SA-D03/F readiness handoff where preparation is displayed.
+**Status: Not started.** Dependencies: SPX01–02; E methods, actual maintained-method start and own fulfillment; A/C original evidence; F's preparation qualification.
 
 - [ ] Expose installed finite Watch, Watch for danger, Listen, Scan, Inspect and Investigate through existing action discovery and Current work.
-- [ ] Reuse valid contextual scope/defaults directly in activity review with one Start. Offer the optional area/vantage selector only for missing/changed choices: keyboard/tap, offered extents, Confirm distinct from Start, Cancel, exact stale handling and no hidden-source defaults.
+- [ ] Reuse valid contextual scope/defaults directly in activity review with one Start. Offer Walk while watching as one atomic destination-plus-finite-attention admission, alongside attachment to a compatible current walk. Offer the optional area/vantage selector only for missing/changed choices: keyboard/tap, offered extents, Confirm distinct from Start, Cancel, exact stale handling and no hidden-source defaults.
 - [ ] Preserve default observation-only Watch; explicit danger anticipation and actual preparing/maintaining/unfulfilled/ended/incomplete feedback. Physically maintained coverage cannot substitute for F's completed preparation lead.
 - [ ] Preserve parent work and original deadlines across compatible amendments; expose exact Stop watching, end only owned gaze on stop/expiry and end the facet with parent work.
 - [ ] Investigate original region/bearing with a player-selected permitted vantage when range is unknown. Report partial/empty findings without proving absence or rebinding to the wrong person.
@@ -120,8 +120,8 @@ The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a2
 
 **Exit:** integrated behavior, information boundaries and the promised player decisions are observed and honestly bounded. Only then can the implementation rows close; enjoyable play requires its own evidence.
 
-## Integration handoff
+## Dependencies and remaining decision
 
-Keep the detailed [contradiction register](../projects/stealth-player-experience-tech-design.md#contradictions-and-integration-recommendations) canonical rather than duplicating its contract text here. SAD-I must reconcile SA-D01's full scope, SA-D02 typed evidence revisions, SA-D03 actual preparation start time, A/B detection policy, B/C movement, source-free light/daylight, E's opted-in curiosity contrast and F's warning producers. Broad repertoire/priority reconciliation remains with SAD-I.
+The [integrated dependency contract](../projects/stealth-player-experience-tech-design.md#integrated-dependencies-and-remaining-decision) points to the canonical A–F owners. Implement and qualify their admitted values through the existing native, server and client paths. SA-D01 remains open for controlled-player appraisal production, retained-appraisal applicability, disclosure, revocation and transfer; the native-body-only initial recommendation is not an adopted policy.
 
 This design narrows the **needs-design** work for controls, perspective and basic remapping; it does not close all ND13 recommendations/devices, SA implementation, FPV play qualification or unrelated repertoire ideas. Source inspection and documentation review are the only verification conducted here.

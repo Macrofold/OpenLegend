@@ -6,7 +6,7 @@
 
 **Delivery order:** connect and exercise one natural strike with real warning or entrance preparation through ordinary damage, native startle, current-format save and permitted feedback first. Complete the ranged path with actual flight/spoken warning and collateral/interception next, then broader supported methods and qualification. Run useful feedback/playability checks as each path becomes available. Before enabling a path, all of its installed required inputs must be complete; stages do not waive any agreed scope. Use existing owners, no speculative framework or legacy compatibility work.
 
-The technical design records the exact frozen base and A–E revisions studied without merging them. No runtime changes, executable tests, benchmark, provider/browser play or balance evidence is delivered by this design.
+The technical design records the integrated A–E contracts and existing-owner extensions. No runtime changes, executable tests, benchmark, provider/browser play or balance evidence is delivered by this design.
 
 ## SUR00 — Selected design
 
@@ -16,18 +16,18 @@ The technical design records the exact frozen base and A–E revisions studied w
 - [x] Define warning versus defense, authored registration/lead, finite continuity, exact cuts and life/cause identities.
 - [x] Specify once-only damage, native startle, ordering, permission, current-format continuation and complete required work.
 - [x] Review repertoire scopes/combinations and provide exact chronology, adversarial acceptance and Prompt 7 semantics.
-- [x] Map implementation to existing owners and record A/E amendment gates without changing frozen contracts.
+- [x] Map implementation to existing owners and settle exact evidence-family revisions and actual physical-method starts through the shared A/E contracts.
 - [x] Close only the selected F design gap; preserve SA-D01 and all runtime, integration and gameplay gates.
 
 **Exit:** selected behavior is specified for implementation subject to the bounded upstream dispositions below; this is not delivered/qualified gameplay.
 
 ## SUR01 — Authored policy and exact typed bindings
 
-**Not started.** Owners: existing domain body/combat policy, base-world definitions and shared reference owners. Dependencies: SAD-F; SAD-I disposition for affected contracts only.
+**Not started.** Owners: existing domain body/combat policy, base-world definitions and shared reference owners. Dependencies: SAD-F and the settled shared reference/preparation contracts.
 
 - [ ] Implement [SUR-C01/C02](../projects/preparedness-and-surprise-tech-design.md#sur-c01--world-policy-and-protected-mechanism) through existing validation/definition owners, with one authored source, supported danger mappings and explicit omission versus incomplete/invalid outcomes.
 - [ ] Bind exact source/life/cause identities and maximum permissible harm without querying private victim readiness.
-- [ ] Resolve SA-D02 before the evidence-revision adapter changes and SA-D03 before dependent preparation timing. Independent policy/contact work can proceed; neither is a blanket task blocker.
+- [ ] Implement SA-D02's exact family-owned revisions and SA-D03's actual method-start projection in their existing adapters. These choices are settled; current-format writers/readers/validation change together.
 
 **Exit:** supported worlds can enable/omit/tune the rule through one policy, with exact shared identities and no engine/client/prompt defaults.
 
@@ -44,7 +44,7 @@ The technical design records the exact frozen base and A–E revisions studied w
 
 ## SUR03 — Complete active preparation capture
 
-**Not started.** Owners: E and existing observation/guard/aim/strike/evasion/native-alert adapters. Dependencies: SUR01's policy, SAI-E, relevant B/C and SA-D03 for the start anchor.
+**Not started.** Owners: E and existing observation/guard/aim/strike/evasion/native-alert adapters. Dependencies: SUR01's policy, SAI-E and relevant B/C, including the settled actual method-start field.
 
 - [ ] Supply complete immutable capture for all six installed families under [active preparation](../projects/preparedness-and-surprise-tech-design.md#active-preparation-and-matching), including actual fulfillment, scopes, constraints and break times.
 - [ ] Bind method start/policy/clock/lead by exact work **and physical family**; a guard and head watch sharing one action must retain independent timing. Preserve starts across native phase transitions, not genuine breaks.
@@ -122,11 +122,11 @@ The technical design records the exact frozen base and A–E revisions studied w
 
 ## Explicit decisions and integration gates
 
-- **SA-D01 open:** D's controlled-character psychological producer; native warning/surprise/startle remains independent.
-- **SA-D02 proposed:** [exact evidence-family revisions](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation), blocking only affected reference adapters.
-- **SA-D03 proposed:** [actual method-start exposure](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition), blocking dependent timing consumers. Do not infer starts from action age or charge guard preparation twice.
+- **SA-D01 open:** controlled-character interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior; native warning/surprise/startle remains independent.
+- **SA-D02 resolved:** [exact evidence-family revisions](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation); implement the owning family's exact numeric or string representation.
+- **SA-D03 resolved:** [actual method-start exposure](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition); implement the field across all applicable existing owners. Do not infer starts from action age or charge guard preparation twice.
 - **Required producers/integration:** B/A incoming flight, A/SPK ordinary current scoped warning, E complete methods, D complete mechanics/terminal receipts and local contact publication fencing.
-- **SAD-I/SAI-F/SAI-I open:** combined interface adoption, actual integrated paths and central repertoire/navigation reconciliation. No frozen contract is silently amended here.
+- **SAI-F/SAI-I open:** deliver and qualify the complete integrated runtime paths. Design integration alone does not establish implementation, performance or player experience.
 
 ## Maintained records
 

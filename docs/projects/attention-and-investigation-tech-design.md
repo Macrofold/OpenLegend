@@ -8,15 +8,7 @@
 
 This is SAD-E. The [feature specification](attention-and-investigation-feature-spec.md) owns behavior and AJ01–AJ13. [ATI](../maintainers/attention-and-investigation.md) owns implementation, dependencies and unsatisfied acceptance; [world policy](../worlds/base/attention-and-investigation.md) owns methods/tuning; [limits](../limits/attention-and-investigation.md) owns restrictions. SC01–SC14 in the [shared technical design](stealth-awareness-tech-design.md#shared-contracts) remain authoritative. The notation below refines E-owned payloads in those contracts; it is design notation, not application code or a claim that the named proposed fields already exist.
 
-Repository: **Macrofold/OpenLegend**. Working branch: **codex/design-stealth-05-attention**, created from the exact pushed **codex/design-stealth-00-contracts** commit **a3d40b4d71e29d6504e9f3fcc21e76344a0a284e**. No sibling branch is merged. The complete feature/technical pairs were read through immutable remote refs before this design:
-
-| Responsibility | Remote branch and exact read commit | Authoritative design |
-| --- | --- | --- |
-| A: evidence/recognition | codex/design-stealth-01-perception — 40805523c4a19ab7c6cc455d49d51e4a122ecae0 | [Feature][a-feature] · [Technical][a-tech] |
-| B: vision/gaze | codex/design-stealth-03-vision — 5837c5b30c90dbb30bd26530d196197aa311b35d | [Feature][b-feature] · [Technical][b-tech] |
-| C: posture/acoustics | codex/design-stealth-04-acoustics — b242bee437f9e13801bfee77030efd309d88a35d | [Feature][c-feature] · [Technical][c-tech] |
-
-Pinned links are intentional: these files do not yet exist on this contracts-based branch. SAD-I can replace them with integrated local references after reconciling the selected contracts. Source inspection establishes owner placement, not execution quality. This assignment writes documentation only and runs no application or executable tests.
+The integrated [perspective](perspective-perception-tech-design.md), [vision and gaze](vision-and-gaze-tech-design.md), and [acoustic](acoustic-stealth-tech-design.md) contracts supply evidence, physical orientation and received sound. The owner audit below distinguishes existing foundations from the selected extensions; documentation integration does not establish runtime delivery.
 
 ### 1.1 Existing owners and required extensions
 
@@ -144,6 +136,8 @@ For several danger hypotheses, retain each original support and uncertainty in A
 5. Recheck changed authority/work/source/policy after waits. Commit the selected activity/action and B directive together, or refuse atomically. No costs, RNG, events, IDs or interruption occur during preview.
 6. Derive subscriptions from accepted work. Begin attention timing at actual admission; begin each method's **fulfilled physical interval** only when its required action phase/pose/senses are actually satisfied. Orientation/approach time is real but is not falsely reported as completed examination.
 7. Record ordinary action outcomes and optional response reasons through their owners. An actor may say something even when its proposed observation is refused; admission does not fabricate a successful watch.
+
+The same transaction admits an initial **Walk while watching** request: one permitted destination, finite watch/anticipation terms and the required compatible orientation bind one ordinary move with its inline attention control. The review shows the combined scope, deadline and movement/pose consequences before admission. A player need not first start walking or later restart released keyboard input. A later switch to direct steering follows the same compatible movement amendment and retains the watch's original deadline. If any required part is unsupported or incomplete, the combined request refuses or remains pending without partial movement/watch admission.
 
 A compatible orientation amendment uses B's scoped amendment revision; it must not advance whole-action replacement generation and accidentally cancel cooperation. E additionally binds changed attention terms through attentionRevision and the containing owner's exact action or plan/step/activity/episode identity. A truly replaced action uses ordinary generation/recovery rules.
 
@@ -433,6 +427,7 @@ type CapturedPreparationState = Readonly<{
     | 'observation' | 'anticipation' | 'defensive-action'
     | 'committed-combat-work' | 'native-alert';
   admittedAt: SimTime;
+  currentMethodStartedAt: SimTime | null;
   termination: PreparationTermination;
   fulfillment: PreparationFulfillment;
   lastBreak?: { at: SimTime; reason: PreparationBreakReason };
@@ -465,6 +460,8 @@ declare function capturePreparation(
 ~~~
 
 The synchronous producer query is **capturePreparation(actor, cut, admittedPreparationFamilies)**. Arguments contain no attacker to discover and no global threat search. admittedPreparationFamilies is the complete validated family set derived from the installed action/observation/native descriptors, not a caller-selected filter for omitting applicable required families. Reject a mismatched set through existing admission; missing required support cannot become an empty contribution. F can match the complete immutable contribution to its actual outcome under F's policy. An absent optional family yields a complete empty contribution; required physical/effect/evidence preparation still unfinished yields incomplete and holds the dependent outcome. Invalid current-format state fails through owning validation; never return empty to disguise it.
+
+`currentMethodStartedAt` is copied from the actual physical family on its existing owner. It is null until that method begins, is preserved across preparing → maintaining, and resets only after a genuine break, replacement or restart. A harmless plan revision does not reset it. Approach and general action admission are not method start; `maintainedFrom` separately records continuous current fulfillment. Each physical family has its own anchor even when a guard and head watch share one action. F combines this actual start with the family's own stricter readiness and its authored lead.
 
 **Identity and chronology rules.** physical.family selects trusted projection code; it is not a new authored world definition. Preserve actual method/profile/definition identity in each family arm, including EvasionState.profile's existing contentLabel string. Required adapters come from the existing installed family descriptors; no capture-definition registry is added. An Action has no general revision or admission timestamp; the new scoped attentionRevision is explicitly E-owned, and initial adapter implementation must record missing **admission, current-method start, continuous fulfillment and latest break timestamps within that existing action/preparation/native owner**. Reuse existing semantically identical times where present. Never derive elapsed preparation from Action duration, native episode.startedAt, navigation proposalGeneration or an arbitrary last tick. Native mode changes and physical loss/recovery establish real boundaries; current-format restore requires those selected fields rather than inventing a historical interval.
 
@@ -524,7 +521,7 @@ E selects exact physical lifetime behavior:
 - Repeated equivalent inputs preserve the chosen focus unless an actual accepted change or required physical invalidation occurs. Level predicates have their own authored enter/exit thresholds and dwell; unknown does not count as clear. No universal attention-switch cooldown is added.
 - E keeps no fading alertness meter. Physical preparation either remains supported, is preparing/unfulfilled or has ended. Historical warning/expectation can retain uncertainty and fade **only through F's PersonalEncounters policy**. A/EPR retention, acoustic pattern expiry, familiarity and shortcut grace are never reused as a surprise-immunity timer.
 
-F must select lead time, relevant method/type/approach matching, uncertainty treatment, disengagement hysteresis and any residual warning lifetime in Prompt 6. E supplies all actual start/end/gap/scope values needed for that choice. No F result is preselected here. Guard expiry does not erase memory, but memory alone cannot recreate active guard coverage.
+[Preparedness and surprise](preparedness-and-surprise-tech-design.md#active-preparation-and-matching) selects lead time, method/danger/approach matching, uncertainty treatment, disengagement hysteresis and finite warning lifetime. E supplies the actual start/end/gap/scope values for that policy; it does not calculate the surprise result. Guard expiry does not erase memory, but memory alone cannot recreate active guard coverage.
 
 ### 7.4 No emotional feedback around one hit
 
@@ -592,15 +589,15 @@ Source/document review can establish contract coherence only. Later fixture/nati
 
 ## 11. Open semantic questions and integration notes
 
-**E's selected semantics are complete; no unanswered E product question is delegated to the implementer.** These are bounded cross-project gates, with conservative behavior until their owners finish:
+**The selected attention semantics and shared technical choices are settled.** Runtime delivery depends on the following existing-owner extensions:
 
-1. **SA-D02 — exact evidence revision representation.** A proposes family-specific numeric native versus SHA-256 personal-source revisions; frozen SC02 illustrates number. This branch consumes EvidenceRef opaquely and does not adopt or redefine that proposal. Common owner/SAD-I must settle the representation before dependent PP01/ATI source adapters. Preserve the exact owning family and revision; never coerce a digest or add a universal attention counter.
-2. **B/C physical integration.** Use B's accepted orientation directive and C's posture/motion accounting. Reconcile B's side/back movement factors with C through their existing owners before ATI02; E adds no locomotion formula. Current unsupported combinations refuse.
-3. **F / Prompt 6.** Section 7 is the producer contract. F chooses which method/danger/approach matches, its minimum preparation lead time, scope uncertainty, continued-fight/disengagement hysteresis, warning lifetime and surprise/damage rules. Until implemented, no new runtime surprise result is claimed. E's actual expiration/interruptions and immutable intervals are already settled.
-4. **D / player fear.** SA-D01 still owns longer-term controlled-player psychological acquisition. E reads prior installed conditions only and does not choose that producer. Native body effects, NPC choice and this design can proceed independently.
-5. **Physical observability of preparation.** B's facets do not reveal private action-stage labels. Any NPC warning based on seeing an attack preparation requires actual admitted limb/weapon pose/trajectory and A-acquired evidence. Keep it unknown until the action producer supplies that physical support.
-6. **G ordinary surfaces.** Supply accepted/pending/refused work, actual scope/time and privacy-safe outcomes. G must finish input/accessibility/patch/history presentation; no camera or selection callback may create sensing or commitment.
-7. **Listening fidelity and animal scope.** Selected listening deliberately retains C's provider fidelity; stronger sampling is a future physical-family design, not a hidden E bonus. Curiosity here is E's narrow new native extension; C's alarm-only baseline remains accurately described.
+1. **Exact evidence revisions.** SC02 preserves each source family's exact numeric native or string personal-source revision. E compares that tagged value without digest coercion or another attention-wide counter; SA-D02 is resolved.
+2. **Physical composition.** B's orientation and C's posture/motion accounting supply actual compatible movement, costs and view. Unsupported combinations refuse through ordinary admission.
+3. **Preparation capture.** Section 7 supplies all six actual physical families, including `currentMethodStartedAt`. F owns matching, lead, warning continuation and surprise. SA-D03 is resolved; these adapters remain unimplemented.
+4. **Controlled-player interpreted emotion.** SA-D01 remains open for creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control transfer. E reads only effects authorized by the eventually selected policy. Native body effects, NPC choice and this design proceed independently.
+5. **Observable preparation and flight.** B measures actual visible pose/motion and A records acquired support. Their physical details, never private action-stage labels, feed the world's danger adapter.
+6. **Ordinary surfaces.** G presents accepted/pending/refused combined work, actual scope/time and permitted findings across full views, patches and history. Camera/selection callbacks create no sensing or commitment.
+7. **Listening and animals.** Listening retains C's provider fidelity. E's opt-in ground curiosity shares C's existing pattern/presence owner with independent alarm and curiosity slots; alarm eligibility has priority. No additional sensing gain or controller is implied.
 
 ## Maintained records
 
@@ -610,9 +607,9 @@ Source/document review can establish contract coherence only. Later fixture/nati
 - Limits and growth: [Attention inventory](../limits/attention-and-investigation.md).
 - Existing contracts: [Action capabilities](../action-capabilities.md), [action experience](../action-experience.md), [agency](../agent-agency.md), [memory](../memory-architecture.md), [EPR](../events-perception-and-reactions.md), [identity](../identity-and-references.md), [spatial](../spatial-world.md), [time](../simulation-time.md), [save/load](../save-and-load.md) and [attention/scenes](attention-and-scenes-tech-design.md).
 
-[a-feature]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-feature-spec.md
-[a-tech]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-tech-design.md
-[b-feature]: https://github.com/Macrofold/OpenLegend/blob/5837c5b30c90dbb30bd26530d196197aa311b35d/docs/projects/vision-and-gaze-feature-spec.md
-[b-tech]: https://github.com/Macrofold/OpenLegend/blob/5837c5b30c90dbb30bd26530d196197aa311b35d/docs/projects/vision-and-gaze-tech-design.md
-[c-feature]: https://github.com/Macrofold/OpenLegend/blob/b242bee437f9e13801bfee77030efd309d88a35d/docs/projects/acoustic-stealth-feature-spec.md
-[c-tech]: https://github.com/Macrofold/OpenLegend/blob/b242bee437f9e13801bfee77030efd309d88a35d/docs/projects/acoustic-stealth-tech-design.md
+[a-feature]: perspective-perception-feature-spec.md
+[a-tech]: perspective-perception-tech-design.md
+[b-feature]: vision-and-gaze-feature-spec.md
+[b-tech]: vision-and-gaze-tech-design.md
+[c-feature]: acoustic-stealth-feature-spec.md
+[c-tech]: acoustic-stealth-tech-design.md

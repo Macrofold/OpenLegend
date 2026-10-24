@@ -205,4 +205,4 @@ Acoustic precision and response values may be retuned after mechanical and uncoa
 - Numeric/behavioral limits and evidence: [Acoustic inventory](../../limits/acoustic-stealth.md).
 - Separate owners: [hearing/speech](../../hearing-and-speech.md), [animal response](animal-sound-responses.md), [A's familiarity/Perception rule][a-policy], [shared contracts](../../projects/stealth-awareness-tech-design.md).
 
-[a-policy]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/worlds/base/perception-recognition.md
+[a-policy]: perception-recognition.md

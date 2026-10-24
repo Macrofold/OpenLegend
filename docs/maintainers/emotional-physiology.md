@@ -108,7 +108,7 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 - [ ] Implement an explicit disabled-or-selected authority gate for directly controlled interpreted emotions. Adopt and qualify an SA-D01 option only after its real selection; native bodily effects apply independently.
 - [ ] Keep wider needs, dream transformation and permanent outlook/trait development under their existing open owners rather than enrolling another periodic process.
 
-**Exit:** fear, joy and grief behave differently through the complete source/context paths, with anger preserving threat autonomy. Player-specific psychological acquisition remains explicitly excluded until SA-D01 is chosen.
+**Exit:** fear, joy and grief behave differently through the complete source/context paths, with anger preserving threat autonomy. The controlled-player interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior slice remains blocked until SA-D01 is chosen.
 
 ## EP07 — Lifecycle, privacy, persistence and accounting recovery
 
@@ -130,7 +130,7 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 - [ ] Exercise exact attacker/actual-victim cuts, acquired-warning order, continuous contact, collateral impact and no same-impact shock feedback through actual melee/ranged defense.
 - [ ] Preserve E's native animal/ordinary attention routes, operation-specific cognition consumption and urgent threat capacity without an emotion-owned action pipeline.
 - [ ] Qualify G's owner feedback, full/patch/current/historical privacy, accessible presentation, action preview and control-transfer behavior under the chosen-or-blocked player gate.
-- [ ] Supply final integration with the feature's 42-file repertoire audit and refined stable rows; central index/coverage/priority reconciliation remains SAD-I's task.
+- [ ] Qualify the feature's selected repertoire scenarios through the integrated owners; retain optional broader possibilities and the central playable-scope boundary.
 
 **Exit:** shared journeys remain coherent across physical evidence, personal interpretation, effective mechanics, ordinary action and player information; no duplicate owner or missing specialist seam remains.
 
@@ -149,7 +149,7 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 
 ## Controlled-character dependency
 
-[SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) remains open for longer-term interpreted emotion in directly controlled characters. Native bodily startle, NPC interpretation, native animal response and complete mechanical queries do not depend on adopting that producer.
+[SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) remains open for longer-term interpreted emotion in directly controlled characters. Its scope includes creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior. Native bodily startle, NPC interpretation, native animal response and complete mechanical queries proceed independently.
 
 ## Maintained records
 

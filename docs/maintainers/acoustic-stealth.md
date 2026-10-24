@@ -192,9 +192,9 @@ Before implementing, read the paired design, installed physical-sound policy, ac
 - Cross-project work: [SAD-C / SAI-C / SAD-I](stealth-awareness.md), [PP00–PP07][a-work], [SPK](speech-and-social-perception.md), [HE](hearing-and-speech.md), [CTR](combat-and-threat-responses.md).
 - Shared representation dependency: [SA-D02][sa-d02].
 
-[a-feature]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-feature-spec.md
-[a-tech]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-tech-design.md
-[a-policy]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/worlds/base/perception-recognition.md
-[a-work]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/maintainers/perspective-perception.md
-[sa-d02]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation
+[a-feature]: ../projects/perspective-perception-feature-spec.md
+[a-tech]: ../projects/perspective-perception-tech-design.md
+[a-policy]: ../worlds/base/perception-recognition.md
+[a-work]: perspective-perception.md
+[sa-d02]: ../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation
 

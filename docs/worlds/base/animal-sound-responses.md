@@ -2,7 +2,7 @@
 
 **Selected acoustic design, runtime pending — 2026-10-21.** This is the bundled world's shared native response policy for [speech and social perception](../../projects/speech-and-social-perception-feature-spec.md) and the selected [general physical-sound design](../../projects/acoustic-stealth-feature-spec.md). Ordinary animals use native rules and saved randomness. They require no Decision API, thought, reflection, narration-generation or memory-consolidation calls.
 
-The completed [acoustic specialist design](https://github.com/Macrofold/OpenLegend/blob/b242bee437f9e13801bfee77030efd309d88a35d/docs/worlds/base/animal-sound-responses.md) owns the subsequent selected physical/onset policy. It was read through its remote ref without merging; the alarm details below are the contracts-branch baseline. E's narrow curiosity extension composes with that pinned C owner, and SAD-I must reconcile the files before runtime delivery.
+The completed [acoustic specialist design](animal-sound-responses.md) owns the subsequent selected physical/onset policy. It was read through its remote ref without merging; the alarm details below are the contracts-branch baseline. E's narrow curiosity extension composes with that pinned C owner, and SAD-I must reconcile the files before runtime delivery.
 
 ## One existing animal controller
 

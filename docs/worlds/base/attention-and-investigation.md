@@ -37,7 +37,7 @@ No fear, vigilance, curiosity or trust number grants a sense, a direction or pre
 
 ## Native policy and the curiosity contrast
 
-Ordinary installed animals retain [their existing alarm/escape controller](animal-responses.md) and C's [acoustic policy](https://github.com/Macrofold/OpenLegend/blob/b242bee437f9e13801bfee77030efd309d88a35d/docs/worlds/base/animal-sound-responses.md). This design does not retune shipped species' alarm thresholds or grant language, human memory, paid cognition, flight search, scent or sound waking.
+Ordinary installed animals retain [their existing alarm/escape controller](animal-responses.md) and C's [acoustic policy](animal-sound-responses.md). This design does not retune shipped species' alarm thresholds or grant language, human memory, paid cognition, flight search, scent or sound waking.
 
 Add a separately installed **ground-curious contrast profile** to qualify a materially different native choice. It requires actual ground navigation, a usable installed sense/rig and the existing native response controller. Author a concrete ground-curious contrast using the same existing hearing, alarm, body and locomotion pins as its selected ground-bird configuration, adding only curiosity. Qualify it against the corresponding non-curious configuration. No runtime profile inheritance or species-name fallback is introduced. Its creation/spawn/inspection/save paths bind the same profile pin; the engine never switches on a species name. Opted-in world authors may associate it with appropriate creatures. Existing hare/deer/bird/territorial/flight profiles do not acquire curiosity merely by having those names.
 

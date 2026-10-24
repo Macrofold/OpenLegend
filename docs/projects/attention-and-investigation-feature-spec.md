@@ -14,6 +14,8 @@ This pair completes the selected attention portions of [DG02](../maintainers/nee
 
 **Design only.** Finite activity execution, goals, action results, interruption, actor intake and native animal alarm already provide foundations. General observation actions, selected simultaneous work, the preparation projection and their complete integration remain implementation work in [ATI01–ATI08](../maintainers/attention-and-investigation.md). No application change, executable test, measured capacity, model-quality result or demonstrated enjoyment is claimed.
 
+A player may review **Walk while watching** once, selecting a permitted destination and finite watch or anticipation terms together. Acceptance starts one compatible walking action with the observation facet and actual orientation. The same facet can be added to an existing compatible move; its original deadline survives a later switch to direct steering. The review exposes movement and pose consequences, and refused/incomplete combinations leave current work intact.
+
 ## What should make it compelling
 
 The payoff is a useful choice under partial information, not an obligation to investigate every noise.
@@ -137,7 +139,7 @@ Audio, non-audio cues, history and action descriptions must agree on uncertainty
 
 [ATI01–ATI08](../maintainers/attention-and-investigation.md) owns staged delivery and unperformed runtime/player qualification. Each slice includes ordinary discovery, admission, interruption, persistence and truthful results.
 
-**No E product choice requires Mike's answer before handoff.** The [technical integration notes](attention-and-investigation-tech-design.md#11-open-semantic-questions-and-integration-notes) identify the bounded A/B/C/D/F/G dependencies, including unresolved SA-D01 and SA-D02. Initial tuning and useful, enjoyable play remain empirical qualification.
+**The attention design has no unresolved product choice.** The [implementation dependencies](attention-and-investigation-tech-design.md#11-open-semantic-questions-and-integration-notes) identify the required sensing, physical, animal, preparation and player-surface adapters. SA-D02/SA-D03 are resolved; SA-D01 remains open for controlled-player interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior. Initial tuning and useful, enjoyable play remain empirical qualification.
 
 ## Repertoire coverage
 
@@ -145,7 +147,7 @@ All 42 files under the pinned base's repertoire directory were audited for scope
 
 Selected reusable cases are OBS-04/05/06/12, PB-008/083, AP-229/245/261, RSH-146/338, WORK-101, MEC-095/230, AD-170 and ACR-051/054. They cover finite search, peaceful curiosity, intermittent checks, acknowledged relief, useful witnesses and machinery inquiry. Actions, psychology, traits, ecology, adventure, combat/rescue, relationships/cooperation and mechanical combinations received particular attention.
 
-The remaining body/species, needs, characters, work/materials/objects/technology, settlements/economy, language/arts/faith/history/politics/diplomacy, progression, automation/magic/unusual-realities and simulation catalogues supply contrasting uses without new required subsystems. Multi-eye bodies, remote sensors, magical sight, institutional rotations and collective minds remain separate supported-family work. Central priorities, coverage counts and research-reading ledgers remain with SAD-I; this module needs no new catalogue rows or increased rankings.
+The remaining body/species, needs, characters, work/materials/objects/technology, settlements/economy, language/arts/faith/history/politics/diplomacy, progression, automation/magic/unusual-realities and simulation catalogues supply contrasting uses without new required subsystems. Multi-eye bodies, remote sensors, magical sight, institutional rotations and collective minds remain separate supported-family work. The central [coverage](../repertoires/coverage.md) and [priorities](../repertoires/gameplay-priorities.md) locate this selected scope within the broader game; these examples introduce no additional required subsystem.
 
 ## Maintained records
 

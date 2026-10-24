@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | The selected physical-sound design is complete; implementation, integration and player qualification remain open in ACS01–ACS08. | 2026-10-21 |
+| In progress | The selected physical-sound design is complete; implementation, integration and player qualification remain open in ACS01–ACS08. | 2026-10-24 |
 
 ## Purpose and scope
 
@@ -131,5 +131,5 @@ Initial levels, gait speeds, feature precision and animal response thresholds ar
 - Limits, rationale and unqualified growth: [Acoustic inventory](../limits/acoustic-stealth.md).
 - Shared ownership and final integration: [Shared technical contract](stealth-awareness-tech-design.md), [SAD-C/SAI-C](../maintainers/stealth-awareness.md), [animal sound responses](../worlds/base/animal-sound-responses.md).
 
-[a-tech]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-tech-design.md
-[sa-d02]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation
+[a-tech]: perspective-perception-tech-design.md
+[sa-d02]: ../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation

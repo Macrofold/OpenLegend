@@ -224,7 +224,7 @@ Unconscious review needs no animation, thought bubble, speech turn or public act
 
 ## Directly controlled characters: SA-D01
 
-**Unresolved; requires Mike's product decision.** [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) covers longer-lasting interpreted fear during direct human control; the same authority question applies to other interpreted feelings. No option is adopted here.
+**Unresolved; requires Mike's product decision.** [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) covers interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior during direct human control; the same authority question applies to fear and other interpreted feelings. No option is adopted here.
 
 Native bodily startle and physical conditions apply equally to controlled and autonomous characters. A background model must not silently decide the human player's subjective fear, joy, anger, grief, desire or roleplay.
 
@@ -336,7 +336,7 @@ Repertoire anchors: [BSP-101/208/260](../repertoires/bodies-species.md), [TR-143
 
 The review covers the inventory and applicable content of all **42 repertoire Markdown files** at the source-reviewed baseline, with detailed focus on psychology/behavior, needs, traits, characters/personalities, relationships, bodies, combat and gameplay priorities. Cross-catalogue review identifies emotionally relevant entries and their actual owners. It is not a claim to revalidate every sentence of all proposals, repeat the bibliographic programme or measure player enjoyment.
 
-The repertoires remain proposal catalogues. A selected baseline emotion capability can support core independent people without promoting every grief ritual, alien inner law, personality detail or psychological example to a current implementation requirement. Central [README](../repertoires/README.md), [coverage](../repertoires/coverage.md) and [gameplay-priorities](../repertoires/gameplay-priorities.md) reconciliation belongs to final integration, including any broad selected-scope links; this specialist does not rerank the catalogues.
+The repertoires remain proposal catalogues. A selected baseline emotion capability can support core independent people without promoting every grief ritual, alien inner law, personality detail or psychological example to a current implementation requirement. The central [README](../repertoires/README.md), [coverage](../repertoires/coverage.md) and [gameplay-priorities](../repertoires/gameplay-priorities.md) locate the selected emotion foundation without promoting every related repertoire possibility.
 
 ### All-file relevance map
 

@@ -96,5 +96,5 @@ Reconsideration follows [limits audit](../maintainers/limits-audit.md) and the o
 [tech]: ../projects/acoustic-stealth-tech-design.md
 [policy]: ../worlds/base/physical-sound.md
 [work]: ../maintainers/acoustic-stealth.md
-[a-limits]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/limits/perspective-perception.md
+[a-limits]: perspective-perception.md
 

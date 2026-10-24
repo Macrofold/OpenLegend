@@ -131,6 +131,8 @@ The hare's choice to flee belongs to the [native animal response owner](animal-r
 
 The coefficients are selected initial tuning, not an assertion that the penalty is optimally fun. [EP acceptance](../../projects/emotional-physiology-tech-design.md#ep-c11--acceptance-design) must compare readable consequence, viable rescue/escape and fairness before release. Fear can remain mechanically high after startle fades; relief from one cause leaves other active fears intact.
 
+The `abrupt-acquired-cue` rule consumes the [physical-sound qualifier](physical-sound.md#abrupt-acquired-sound-for-bodily-startle): an actually acquired nonself impulse or supported abrupt exposure onset/rise with the authored received-level and detection-margin thresholds. C owns those acoustic numbers and original transition support; this policy owns the bodily peak, susceptibility and fixed recovery. Reconfirmation, sense/control bootstrap, restore, replay and movement resampling alone do not create another onset. Reuse the original occurrence/exposure receipt, without a second stimulus store.
+
 ## Adaptive review policy
 
 An eligible `emotional-review` can reconsider supported feelings while ordinary activity continues, without requiring thought, speech, goal selection or action. [EP-C08](../../projects/emotional-physiology-tech-design.md#ep-c08--independently-selectable-emotional-review) owns admission, finite attempts, shared scheduling, receipts and anti-loop rules. The authored selections follow.

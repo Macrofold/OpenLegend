@@ -2,13 +2,13 @@
 
 | Status      | Current progress                                                                                         | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PP00 design and independent review are complete; PP01–PP07 implementation and qualification remain open. | 2026-10-21   |
+| In progress | PP00 design and independent review are complete; PP01–PP07 implementation and qualification remain open. | 2026-10-24   |
 
 ## Authority, scope and implementation boundary
 
 This is the implementation design for [the feature specification](perspective-perception-feature-spec.md). [PP00–PP07](../maintainers/perspective-perception.md) own work, dependencies and delivery status. [SC01–SC14](stealth-awareness-tech-design.md#shared-contracts) remain the shared interface authority. This module supplies their concrete supported evidence families and observer recognition/retention policy; it does not replace those contracts. The [base-world policy](../worlds/base/perception-recognition.md) owns Perception, perceivable signatures, familiarity and detection tuning. The [limits inventory](../limits/perspective-perception.md) records restrictions, overflow and unqualified capacity.
 
-The source baseline is the exact `codex/design-stealth-00-contracts` tip, `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`, in `Macrofold/OpenLegend`. Source inspection establishes the delivered paths below. This documentation does not install new fields, an attribute, physical sounds, sight rules, a scheduler, a model prompt or a database change. All subsequent code and qualification are PP01–PP07 work. The [SC02 revision representation correction](#shared-contract-amendment-proposal) is proposed to the shared owner; the two shared specification files are unchanged.
+The source baseline is the exact `codex/design-stealth-00-contracts` tip, `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`, in `Macrofold/OpenLegend`. Source inspection establishes the delivered paths below. This documentation does not install new fields, an attribute, physical sounds, sight rules, a scheduler, a model prompt or a database change. All subsequent code and qualification are PP01–PP07 work. The [SC02 revision representation correction](#exact-shared-source-revisions) is proposed to the shared owner; the two shared specification files are unchanged.
 
 A owns acquisition of observer-permitted evidence, classification, association, individual recognition, per-fact retention and projections from those meanings. B owns geometric sight, occlusion, lighting and physically visible features. C owns emission, acoustic propagation, received sound features and physical hearing opportunities. E owns attention, investigation, action choice and native responses; D owns fear/startle and effective conditions; F owns preparedness and surprise; G owns input and authorized presentation. A never answers any of those owners' decisions by looking at a hidden entity or by equating detection with a behavioral response.
 
@@ -175,8 +175,19 @@ type InstalledVisibleOrFeltDetail =
       actionFamily: DefinitionPin;
       phase: 'ongoing' | 'outcome';
     }
+  | {
+      kind: 'observed-motion';
+      exposure: ExposureRef;
+      earlier: CapturedLocationSample;
+      later: CapturedLocationSample;
+      correspondence: 'unambiguous-received-continuity';
+    }
   | { kind: 'contact'; contact: ExposureRef; detail: 'present' | 'moving' }
   | { kind: 'impact'; contact: ExposureRef; feltOutcome: ExistingPermittedImpactDetail };
+
+type CapturedLocationSample = CapturedCurrentFacet & Readonly<{
+  value: Extract<SensoryFacet, { kind: 'location' }>;
+}>;
 
 type ClaimTime =
   | { kind: 'unspecified' }
@@ -364,6 +375,7 @@ type LiveFacetSupport = Readonly<{
   value: SensoryFacet; // Current permitted value; direct supported variant only.
   valueMeasuredFrom: SimTime;
   valueMeasuredThrough: SimTime;
+  valueAcquiredAt: SimTime; // When this resolved value actually entered native evidence.
   confirmedFrom: SimTime;
   confirmedThrough: SimTime;
   dependencies: ExistingPhysicalPolicyDependencies;
@@ -374,17 +386,18 @@ type CapturedCurrentFacet = Readonly<{
   value: SensoryFacet; // Only the supported direct detection/location/detail/feature variant.
   valueMeasuredFrom: SimTime;
   valueMeasuredThrough: SimTime;
+  valueAcquiredAt: SimTime; // When this resolved value actually entered native evidence.
   confirmedFrom: SimTime;
   confirmedThrough: SimTime;
   confirmation: EvidenceRef; // Existing native-exposure adapter, role: facet-confirmation.
 }>;
 ```
 
-Allocate a lease once through `nextId('perception-lease')` when that direct facet gains live support, with local revision `1`. Retain its original fact link and current permitted value from completed B/C input; never dereference today's hidden body to fill it. Advance `confirmedThrough` and the lease's working revision once only when B/C completes a new actual compatible supported interval/value. A repeated interval or projection poll changes neither. An actually changed semantic detail such as a carried item, real unsupported gap or incompatible physical dependency ends that lease; a later supported value/return has a new lease. Continuous support must be actual covered physical intervals, not an assumption that no departure event was recorded. Grace can preserve episode correlation while all relevant leases are already ended.
+Allocate a lease once through `nextId('perception-lease')` when that direct facet gains support, with local revision `1`. Retain its original fact link and current permitted value from completed B/C input; never dereference today's hidden body to fill it. Advance the working revision and covered support once only when B/C completes new uncovered provider-defined support or a value measurement. Repeated intervals and projection polls change neither. A changed semantic detail, provider-reported loss or incompatible dependency ends that lease; a later return has a new lease. B's explicitly sampled law holds availability between canonical samples; C's interval law holds received anchors. Neither claims continuously measured geometry. Episode grace preserves correlation only, after the affected live leases have ended.
 
-Keep availability coverage separate from the value's measurement interval. For an unchanged continuously observed detail, both intervals may extend together. For a moving visible body's point or a continuously varying received feature, update the bounded lease's latest permitted value and `valueMeasuredFrom/Through` without ending it or creating a durable fact for every physical evaluation. An instantaneous point uses equal measurement endpoints at its actual sample time. `confirmedFrom/Through` then describes continued ability to observe that facet, not a claim that today's point/feature value held throughout that duration. Retain a historical changing-value snapshot only at an actual meaningful acquisition/outcome, required captured cut or final support loss. B/C owns the canonical physical measurement/change boundaries supplied to A; renderer/server polling cannot invent them. A introduces no trajectory language or universal position-quantization rule.
+Keep provider-defined availability coverage separate from the value's measurement and actual acquisition. For unchanged dependency-proved facts, their supported intervals may extend together. For a changing received point or feature, keep only the latest permitted value, `valueMeasuredFrom/Through` and `valueAcquiredAt` in the bounded lease. An instantaneous point has equal measurement endpoints at the actual physical sample; a held cell does not move those endpoints. `confirmedFrom/Through` records completed provider-defined availability, not a claim that the point was stationary or remeasured throughout. Retain immutable snapshots at meaningful acquisition/outcome, a required captured cut or final loss. B/C alone select physical sample boundaries. A, a renderer, a server read and a cut do not introduce another sampling cadence.
 
-The `native-exposure` adapter distinguishes immutable `observation-contribution` from mutable `facet-confirmation` roles in its private source binding. A contribution revision changes only through its admitted correction; a lease revision records actual confirmation changes. They are not interchangeable. Capture copies the lease's resolved value, both actual intervals and current confirmation reference into `CapturedCurrentFacet`, without allocating a new ID, source event, acquisition or learning sample. Its `valueMeasuredThrough` supplies the value's semantic freshness in that snapshot, while `confirmedThrough` supplies last actual availability support; `original` identifies the unchanged earlier fact. The snapshot is not a rewritten historical fact under that key. Once a cut captures it, subsequent lease advancement cannot modify its value/time/support. No consumer may dereference the lease later to supplement that cut.
+The `native-exposure` adapter distinguishes immutable `observation-contribution` from mutable `facet-confirmation` roles in its private source binding. A contribution revision changes only through its admitted correction; a lease revision records actual confirmation changes. They are not interchangeable. Capture copies the lease's resolved value, both actual intervals and current confirmation reference into `CapturedCurrentFacet`, without allocating a new ID, source event, acquisition or learning sample. Its `valueMeasuredThrough` supplies the value's semantic freshness in that snapshot, while `confirmedThrough` supplies last actual availability support; `original` identifies the unchanged earlier fact. The snapshot is not a rewritten historical fact under that key. Its `valueAcquiredAt` records when that particular resolved value became available; the older original onset key cannot backdate it. Once a cut captures it, subsequent lease advancement cannot modify its value/time/support. No consumer may dereference the lease later to supplement that cut.
 
 The owning captured cut/continuation, association proof or retained final capsule stores the immutable confirmation payload and exact lease-ID/revision binding it captured. That binding resolves against this owning snapshot, not the lease's latest working revision. Later validation checks the captured original source eligibility and current correction/forgetting, privacy, timeline and authority fences; ordinary lease advancement, changed physical pose/dependency revision or support loss cannot invalidate an otherwise eligible historical snapshot merely because current sensing differs. A genuine correction/revocation of its captured supporting source still fences it. Current body/action authorization is separately revalidated for the operation and is never renewed by a valid historical cut. Restore reconstructs these bindings from saved owning snapshots/capsules, with their payloads already resolved; it does not require a per-frame lease-version store or a lookup of today's value. A summary retaining such a capsule preserves the same original binding as an exact source alias.
 
@@ -394,15 +407,31 @@ For example, a spear first seen at time 10 and continuously confirmed through ti
 
 `ObservationFrame` retains the original observer position and accepted orientation needed to interpret a bearing. The world direction/region is authoritative; “left” is relative to that saved observation pose. Turning does not rotate a historical ray. Moving cannot redraw the old bearing as though it originated at the current body. If G offers a present-relative reminder, it must derive it from the remembered permitted region/ray, visibly retain its age and uncertainty and not invent distance or a unique point. Store no hidden exact source position alongside an approximate location for UI convenience.
 
-Continuous availability is facet-specific. A body may remain visible while its face or hands become obscured. End only those live detail grants that lost support; retain what B still supplies. At full loss, expire live body/detail grants immediately even if episode correlation survives the configured gap. A later look creates newly acquired detail from B's new evaluation. The old spear fact is neither deleted merely by disappearance nor silently refreshed by a heard word.
+Continuous availability is facet-specific. A body may remain visible while its face or hands become obscured. End only those live detail grants that lost support; retain what B still supplies. At provider-reported full loss, expire live body/detail grants immediately even if episode correlation survives the configured gap. A later look creates newly acquired detail from B's new evaluation. The old spear fact is neither deleted merely by disappearance nor silently refreshed by a heard word.
 
 ### Claims, contradictions and non-omniscient subjects
 
-The initial `SupportedClaim` forms are attributed existence/danger in a permitted region, attributed person detail/activity/location with a stated time, attributed name/relationship statements and an explicitly unknown proposition preserved as heard words. A structured parser or model can propose a richer installed claim from understood speech, but its native result has `role: testimony` and exact quotation-source support. It cannot create an unobserved canonical participant from a name string. When the listener cannot bind “Ada,” retain that label as heard. If several already known people share the name, retain ambiguity.
+The initial `SupportedClaim` forms are attributed existence/danger in a permitted region, attributed person detail/activity/location with a stated time, attributed name/relationship statements and an unknown proposition preserved as heard words. The native ordinary-warning adapter below supplies the selected timely danger form without a model call. Other structured interpretation may propose installed claims from actually understood speech; its native result has `role: testimony` and exact quotation-source support. It cannot create an unobserved canonical participant from a name string. An unbound or ambiguous name remains a heard label.
 
 Directly hearing “Ada dropped the spear” is direct auditory experience of that utterance. The drop is testimony. Seeing Ada holding a spear earlier is separate direct visual evidence at another time. Store both with their own support and attributed time; do not use last-write-wins across them. A retraction is another attributed claim. A later direct event may support an inference that an earlier claim was false or outdated, but does not erase the fact that someone made it.
 
 Native classifications and identity matches use explicit `possible`, `supported` or `ambiguous` qualifiers where needed; a raw signal level, spread or similarity score is not a calibrated truth probability. Facts such as “I heard those words” need no artificial percentage. A knows neither whether a speaker lied nor their sincerity from private intent. E/cognition may form a supported belief; that remains a separate interpretation. Fear, hostility, trust and surprise eligibility are not A claim fields.
+
+### Received physical motion and configuration
+
+B's finite physical descriptor allowlist supplies coarse form, material/colour/pattern appearance, refined form, visible count/dimension, body/head direction, raised/lowered limb configuration and moving/stationary-within-precision descriptions. Bind `appearance.descriptorId` to those admitted fields and their finite producer values; size wording preserves its rounding uncertainty. These are physical observations, not `activity.actionFamily/phase` read from a private action. The activity variant remains available only where the existing event-disclosure owner actually admits that semantic activity. No mechanical consumer may parse descriptive wording into more precise geometry.
+
+`observed-motion` is the typed geometric exception. Its two `CapturedLocationSample` payloads preserve their original permitted location and observer frame, exact original fact and immutable confirmation binding, measurement endpoints and `valueAcquiredAt`. Both are completed point measurements at ordered distinct times of one unambiguously corresponding permitted exposure under B's sampled law. A real observed loss, teleport/replacement or ambiguous correspondence breaks the pair. Keep at most the latest two eligible samples in the existing active exposure working state; this is not a trajectory history. Materialize a durable motion contribution only for meaningful observed motion, warning support or a required captured result. Admit that contribution through the ordinary native receipt only when both samples are available, never at the earlier measurement time.
+
+F's world danger adapter can consume this support with separately acquired physical form/detail. It derives conservative closing and forward received-displacement intersection with the observer's own body from permitted locations/uncertainty and the saved observer poses. Bearing-only or insufficiently resolved motion cannot become a precise incoming-flight warning. B/A provide no hidden velocity, intended target, projectile identity or private action stage; F owns danger classification and its warning retention. Mere current target existence does not provide motion.
+
+### Native ordinary-warning testimony
+
+Ordinary understood speech can produce a timely warning through the existing speech/observation intake. The base-language adapter recognizes a complete understood clause of the form `look out at <place> now`, `watch out at <place> now` or `danger at <place> now`, ignoring case and clause punctuation. `<place>` must exactly and uniquely match a label in that listener's permitted current place evidence or retained Known places snapshots. Reuse the existing place owner and its exact source revision; no alias registry, hidden global name search or current unseen geometry lookup is allowed. A fixture called “the doorway” uses that ordinary authored/discovered place family. A heard gap within the clause, ambiguity or an unknown place leaves unparsed testimony and supplies no native F claim.
+
+Resolve `now` once to `[utteranceAt, utteranceAt + toSimulationTime(2 normal-speed seconds))`, with `ClaimTime.kind: stated-interval` and `precision: approximate`. The producer uses the original direct utterance time, not later cognition, storage, replay or publication. The actual claim admission time must lie inside that interval; at its exact end the warning is no longer current. Copy the place snapshot's bounded permitted location without narrowing it. Create `claim.kind: danger`, `presence: possible`, outer `strength: possible`, `role: testimony`, and the actual heard speaker participant. Retain the exact understood span and place fact as support. This records what was said, not that danger exists or the speaker is truthful.
+
+The complete heard/understood clause is acquired before the native warning adapter runs, and the resulting claim has its own ordinary actual acquisition receipt. A partial utterance cannot be retroactively repaired from hidden text; a replay cannot repeat admission. A bare “look out,” ungrounded “there,” future/past phrase or unsupported wording remains useful ordinary speech without the bounded current claim F requires. Other supported interpretation can form testimony later, with its own actual time. F receives this already grounded claim, does not parse speech or invent its interval, and applies its own warning lifetime after timely admission. SPK owns this producer integration and its actual freeform/player/NPC speech journey.
 
 ## Recognition, familiarity and association
 
@@ -474,7 +503,7 @@ Deterministic ordering uses existing transition and physical candidate order, so
 
 ### Accumulation, equivalent cues and gaps
 
-B/C supplies immediate-detection admission or the installed nonnegative weak-support rate/impulse, actual covered interval and physical dependencies. A applies the world threshold/integration rule exactly once. It does not reinterpret dB as a confidence percentage or invent a light model. A completed rate interval integrates duration, not number of publications. Split at physical changes, detection threshold crossings and eligible deadlines; solve the first crossing within the interval. A later large simulation step cannot reveal evidence before that solved instant.
+B/C supplies immediate-detection admission or an installed nonnegative weak-support rate/impulse, provider-defined covered interval and physical dependencies. B's canonical cells and C's held acoustic spans are explicit physical laws. A consumes each uncovered duration once, schedules the first threshold crossing in that held interval and acquires only at that actual native boundary. A host publication or evidence cut can settle the same prefix but creates no measurement or extra duration. A physical/provider change settles the preceding span and then installs its next rate or gap. A does not reinterpret dB as probability, infer continuous visibility between visual samples or invent a light model.
 
 For a continuous contribution, retain its admitted origin, last consumed through-time, detector/definition pin and residual progress. Only the uncovered part of a repeated or overlapping interval contributes. For a discrete contribution, consume the original observer/root/sample key once. Compatible sequential impulses can accumulate an anonymous regional pattern, using the world cadence/region rule. They need not have overlapping durations. A zero-rate interval is a gap and decays. Negative/nonfinite support is invalid family output; do not treat it as a permissive signal.
 
@@ -814,11 +843,9 @@ These are **future implementation/qualification requirements**, not executed tes
 
 PP07 also requires uncoached human use of the feature's ordinary scenarios: recognize an unnamed returning helper; make a worthwhile choice from a rough cue; compare partial witnesses; respond to an unseen voice; separate recent hearing from older equipment; and repair a mistaken attribution through actual social conduct. Record what the player understood and did, where information helped, and where it produced busywork or false certainty. Do not grade only avoidance of leaks. Partial knowledge should be useful without a detective interface, compulsory notes, constant confirmations or an AI thought for every ambient cue.
 
-## Shared contract amendment proposal
+## Exact shared source revisions
 
-**SA-D02 — proposed, not adopted; shared owner disposition required before dependent PP01 representation work.** SC02's conceptual `EvidenceRef.revision: number` cannot directly carry the existing personal-account / `CurrentMemorySource` / `RetrievedMemory` exact source revision, which is a SHA-256 **string**. `ExperienceSummary.revision`'s local integer is a different owner layer and cannot replace that stored-body digest. Coercing a hash, allocating a second universal counter or dropping source kind would break exact-source validation.
-
-Propose this precise correction to SC02's conceptual type, keeping its family names, time/cut meanings and ownership unchanged:
+SC02 preserves the exact representation of each existing source owner:
 
 ```ts
 type EvidenceRef = {
@@ -831,13 +858,9 @@ type EvidenceRef = {
 }[ExistingEvidenceFamily];
 ```
 
-`ExistingEvidenceRevisionByFamily` explains each adapter's real owning revision; it is not a new runtime registry or counter. Awareness/personal-memory adapters retain their exact string body revision and the underlying storage kind (`awareness`, `memory` or `summary`) in the bound source tuple. Native/action/condition adapters retain their owning native version; a new exposure contribution's local content revision belongs to that owner and is not an observation clock. A memory adapter's opaque ID binding preserves the underlying family/ID tuple even when the shared family is `memory`; a summary ID and memory ID cannot become one ambiguous lookup.
+`ExistingEvidenceRevisionByFamily` describes real adapter versions; it is not a runtime registry or counter. Stored personal-account, `CurrentMemorySource` and `RetrievedMemory` bodies use exact string digests. Other adapters retain their owning native representation; native versions are not universally numeric. `ExperienceSummary.revision` is a distinct local integer and cannot replace the personal body's digest. Preserve the underlying storage kind in the opaque adapter identity when shared `memory` covers both memory and summary. Equal bare IDs from those stores are not the same source.
 
-Proposed sentence immediately after the shared type:
-
-> Revisions retain their source owner's exact type and scope; stored personal bodies use their existing string digest, native state uses its owning version, and an adapter preserves underlying storage family. Revisions from different owners are not numerically comparable or interchangeable. A containing source revision is attached outside its canonical body, with local facet ordinals inside that body.
-
-This changes neither observation permission nor cut ordering. Module A specifies its adapter behavior but does not edit the frozen shared specification files or announce adoption. [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation) owns disposition and the narrow implementation gate. Shared integration must accept this correction or provide an equally exact existing-family representation before dependent code. Unaffected design/specialist work proceeds. SA-D01's controlled-player psychological acquisition remains separate and does not block A.
+Revisions from different owners are not numerically comparable or interchangeable. Attach the containing source revision outside its canonical body, with local facet ordinals inside. This integrated correction resolves SA-D02 without changing observation permission, acquisition ordering or cut membership. Dependent PP01 implementation remains unstarted; it no longer waits for a revision-representation design decision. SA-D01's controlled-player psychological policy remains separate.
 
 ## Implementation sequence and specialist handoffs
 
@@ -852,7 +875,7 @@ This changes neither observation permission nor cut ordering. Module A specifies
 | F — surprise/preparedness   | Actual-victim acquired cuts, separate fact times, anonymous region warning and current-body grants.                       | Warning/preparation relevance, expiry/generalization and surprise. No after-impact warning, hidden attacker or timestamp-only membership.                                                                                                                            |
 | G — player experience       | Audience-scoped facts/roles, original frame/time, live/remembered state and preview completeness.                         | Readable cue duration/layout, ambiguity, accessible presentation, stale-grant clearing and ordinary actions from allowed direction/region. Camera/admin truth and hidden source attachment remain unavailable.                                                       |
 | SPK / voice media           | Local/canonical participants, voice versus words/name, exact listener evidence and summary manifest.                      | Same subject union throughout speech/introductions/captions/memory. Local-contact directed calling, recording/relay and timed phrases need their actual selected command/physical contract. UI synthesis acquires nothing.                                           |
-| Final integration           | Required pair/tracker, world policy/limits, existing-doc reconciliation and repertoire scope.                             | Dispose/adopt SA-D02, reconcile other specialists and central navigation/priorities, keep unrelated open design/delivery gates. This module makes no broad central priority edits.                                                                                   |
+| Final integration           | Required pair/tracker, world policy/limits, existing-doc reconciliation and repertoire scope.                             | Dispose/use the adopted exact source adapters, reconcile other specialists and central navigation/priorities, keep unrelated open design/delivery gates. This module makes no broad central priority edits.                                                                                   |
 
 No in-scope product question is left for the implementer to guess: ordinary acquisition, familiarity, names, claims, fact freshness, current permission, retention and correction have selected rules. B/C's physical inputs and E/D/F/G choices are explicitly owned dependencies. Initial numerical tuning is selected and revisitable under PP07, not empirically qualified. Source-local directed calling, complete disguise/illusion, natural long-term memory decay, recording/magic media and broader NPC life continuation remain separately selected extensions; contrast examples do not make them A delivery commitments.
 
@@ -863,4 +886,4 @@ No in-scope product question is left for the implementer to guess: ordinary acqu
 - World choices and restrictions: [base perception/recognition](../worlds/base/perception-recognition.md), [A limits](../limits/perspective-perception.md), [policy review triggers](../maintainers/revisitable-policies.md).
 - Persistent ownership: [events/perception/reactions](../events-perception-and-reactions.md), [perceived events](../perceived-world-events.md), [memory](../memory-architecture.md), [identity/references](../identity-and-references.md), [knowledge](../knowledge.md), [hearing/speech](../hearing-and-speech.md), [base knowledge](../worlds/base/knowledge.md).
 - Speech integration: [SPK feature](speech-and-social-perception-feature-spec.md), [SPK technical design](speech-and-social-perception-tech-design.md), [SPK work](../maintainers/speech-and-social-perception.md).
-- Exact representation proposal: [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation); unrelated controlled-player psychology remains SA-D01.
+- Exact integrated representation: [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation); unrelated controlled-player psychology remains SA-D01.

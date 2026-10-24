@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Design complete; ACS01–ACS08 implementation/qualification and shared SA-D02 disposition remain open | 2026-10-21 |
+| In progress | Design complete; ACS01–ACS08 implementation/qualification and shared SA-D02 disposition remain open | 2026-10-24 |
 
 ## Authority and inspected baseline
 
@@ -404,8 +404,8 @@ This closes SAD-C and only the acoustic/quiet-posture slices of ND13/ND16 identi
 - Existing owners: [hearing/speech](../hearing-and-speech.md), [animal response](../worlds/base/animal-sound-responses.md), [spatial world](../spatial-world.md), [simulation time](../simulation-time.md), [events/perception/reactions](../events-perception-and-reactions.md).
 - Shared [stealth design](stealth-awareness-tech-design.md), [coordination](../maintainers/stealth-awareness.md), pinned [A technical contract][a-tech] and [A world law][a-policy].
 
-[a-feature]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-feature-spec.md
-[a-tech]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/projects/perspective-perception-tech-design.md
-[a-policy]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/worlds/base/perception-recognition.md
-[a-work]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/docs/maintainers/perspective-perception.md
-[sa-d02]: https://github.com/Macrofold/OpenLegend/blob/40805523c4a19ab7c6cc455d49d51e4a122ecae0/archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation
+[a-feature]: perspective-perception-feature-spec.md
+[a-tech]: perspective-perception-tech-design.md
+[a-policy]: ../worlds/base/perception-recognition.md
+[a-work]: ../maintainers/perspective-perception.md
+[sa-d02]: ../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation

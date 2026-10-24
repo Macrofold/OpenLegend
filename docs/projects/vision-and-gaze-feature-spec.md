@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Design complete and reviewed; VG01–VG08 implementation, runtime qualification and playtesting have not started. | 2026-10-22   |
+| In progress | Design complete and reviewed; VG01–VG08 implementation, runtime qualification and playtesting have not started. | 2026-10-24   |
 
 ## Purpose and ownership
 
