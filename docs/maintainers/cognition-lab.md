@@ -22,7 +22,7 @@ The design task does not authorize new automated tests. For implementation quali
 
 - [ ] Extract the narrow shared runtime factory described in the technical design and use it for both ordinary gameplay and one separate lab instance. Keep one host-owned execution pool with scoped store/runtime registrations, recovery and settlement; never multiply process capacity or reconcile one store's uncertain attempts against another.
 - [ ] Provision the dedicated lab PostgreSQL database and lab data directory in normal development setup. Initialize it with the same selected world's normal initializer; do not add an ordinary-use setup wizard or fall back to gameplay storage.
-- [ ] Add authenticated lab identity, explicit active scenario and revision checks. Keep gameplay pause, control, selected character, model settings, saves and live world independent.
+- [ ] Add authenticated lab identity and distinct runtime-generation, authoring-revision and native source/field freshness checks. Stop/Hold/cancel bind the current generation and exact target without failing on unrelated revision updates; historical metadata uses its selected record's authority. Keep gameplay state/settings independent.
 - [ ] Install the initial hold before any lab clock/director admission. Separate authorized driver liveness from explicit physical participation through the shared owner; the default speaker stays present without a game renderer, while real departure/removal retains its effects.
 
 **Dependencies:** existing server/repository/save ownership; no multitenancy rewrite. **Exit:** ordinary game and the renderer-free lab initialize through the same factory with separate stores, authority and native participation. Lab startup/routing cannot change game state or settings; replacement/import isolation is qualified with CL08. Shared provider/process capacity remains honestly visible.
@@ -42,7 +42,7 @@ The design task does not authorize new automated tests. For implementation quali
 - [ ] Provide compact forms, multiline expansion, search and focused detail editing; identify native, derived, narrative and model-only values with correct units and direction.
 - [ ] Preserve world truth, personal perceived/believed evidence and selected model context as separate scopes. Editing biography names must not imply a recognition binding; adding remembered inventory must not grant custody or capability.
 - [ ] Add explicitly model-only custom text, boolean, number and meter fields. Their values reach selected context according to the design, but do not install a trigger, body effect, action, memory retrieval algorithm or canonical emotional mechanic.
-- [ ] Apply coherent edit transactions with visible drafts/errors and expected revision; mark prepared input invalid after accepted relevant scenario edits. Preserve current values and actionable error messages on failed edits.
+- [ ] Expose named atomic Apply groups and elsewhere-dirty counts. Before current-world execution/save, review existing drafts explicitly without running cognition to guess relevance. Running Apply reaches safe Hold, rechecks native tokens and stays Held; unresolved grouped failures cannot execute a queued stimulus. Invalidate affected preparation after accepted edits and preserve actionable drafts/errors.
 
 **Exit:** a change's source, subject, native effects and model visibility are inspectable; hunger/fullness direction and qualitative feelings remain correct. The developer can author unusual individuals without secretly bypassing game rules.
 
@@ -69,6 +69,7 @@ The design task does not authorize new automated tests. For implementation quali
 ## CL06 — Run, step, hold, breakpoint and cancellation
 
 - [ ] Implement the explicit controller/state machine for One response, bounded Run for, Advance time, Continue, next-stage stepping and selected pre-dispatch breakpoints.
+- [ ] Supply the basic typed settings operation for run policy at Ready/Held, using existing validation and taking effect at the next explicit interval. CL09 extends this same owner for richer model/configuration variants.
 - [ ] Implement lab hold independently of ordinary game pause/cancel behavior across primary, higher-model, maintenance and other native dispatch owners. Gate scoped queue starts and every actual attempt; unsupported input editing never exempts a stage from Hold or guards.
 - [ ] Make held waits abort-aware and drainable on Stop/load/disposal. Suspend/re-arm each undispatched owner's actual deadlines, retain no scarce lease through human wait, and preserve any dispatched/uncertain attempt's capacity. Hold must not wait on `AiDirector.idle()` and its own held continuation.
 - [ ] Enforce visible run guards and existing provider/spending bounds; distinguish a run limit from a character decision. Renew guards only by explicit continuation.
@@ -102,6 +103,7 @@ The design task does not authorize new automated tests. For implementation quali
 ## CL09 — Comparisons, configurations and episode recipes
 
 - [ ] Provide searchable optional recipes and compact matched comparison setup: same starting checkpoint, explicit changed factor, named model/configuration variant and preserved output/effects.
+- [ ] Extend CL06's typed lab-local settings operation with supported model/stage configuration through native validation. Apply at Ready/Held for the next explicit interval, record an intervention and exact interval configuration, and invalidate affected preparation without changing game config, dispatched requests or current guard counters.
 - [ ] Execute new variants serially in the one active lab runtime; present retained summaries side by side without shifting the current editor or adding nested scrolling dashboards.
 - [ ] Keep human expected behavior, notes and evaluation rubric outside every model request. Distinguish stochastic variation, unmatched setup and missing evidence from causal conclusions.
 - [ ] Implement episode bookmarks/continuation and explicit outcome notes using the existing CE/IS/CTR expectations rather than a new universal score or verbosity leaderboard.
