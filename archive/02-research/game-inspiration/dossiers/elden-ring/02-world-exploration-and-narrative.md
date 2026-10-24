@@ -86,6 +86,18 @@ Paintings provide a different kind of spatial task. The player collects a pictur
 
 Secrets vary in the kind of inference they demand. A blocked lift suggests a missing access condition; a distant plateau suggests a route; a painting asks for viewpoint matching; a character's request supplies a social reason to explore. Those are not interchangeable experiences. For an exploratory game, a strong portfolio includes different information problems, not just different reward containers. A fair mystery gives the player some basis for forming and revising a hypothesis. A condition that becomes knowable only through an external checklist creates a different kind of participation.
 
+### 2.6 Repeated architecture can support different rules
+
+The small-dungeon vocabulary is more varied than “enter, defeat a boss, take loot.” Three concrete cases show why examining the local rule matters:
+
+| Place | Documented interaction | Design interpretation |
+| --- | --- | --- |
+| Fringefolk Hero's Grave | Two Stonesword Keys open the early entrance. A lethal chariot patrol forces timed movement between alcoves; the same chariot can kill enemies. [W51](#w51) | A visible early access cost need not imply an early-appropriate challenge. A hazard can become a tool once its route is understood. |
+| Sainted Hero's Grave | Shadow-coated enemies become vulnerable when drawn into circles of light; the approach also staggers them. [W52](#w52) | The key question shifts from damage output to controlling the encounter's location. Light is a rule with consequences rather than only atmosphere. |
+| Leyndell Catacombs | Several similar-looking areas are connected to disorient the explorer; fire-trap pillars can also become elevators. [W53](#w53) | Familiar architecture becomes the subject of the puzzle. The player must distinguish recognition from actually being in the same place. |
+
+These cases do not refute repetition complaints. They show that two different questions need answering: does an asset or layout recur, and does the recurrence produce a new decision? Conversely, a puzzle can be novel and still overstay its welcome. A useful review records the local rule, how it is taught, what the player can reasonably infer, and whether the final reward justifies the attention demanded.
+
 ## 3. The expansion's different spatial problem
 
 Miyazaki described *Shadow of the Erdtree* as blending open field and legacy-dungeon structure to create stronger verticality. PC Gamer's interview and preview describe visible plateaus that require indirect access, paths that reveal unexpected lower spaces, and intermediate spaces more elaborate than a basic outpost. The same article records the author's fatigue with some of the base game's spacing and repeated encounters, so its enthusiasm for the expansion is a comparative judgment from one experienced player, not a universal verdict. [W04](#w04)
@@ -98,7 +110,9 @@ Harvey Randall's post-release account illustrates both sides. He preferred the e
 
 **Interpretation:** first-discovery value and repeat-run value can pull in opposite directions. A spectacular region may justify its initial journey through atmosphere and revelation, while adding little to a later build experiment. A map that preserves every first-run secret can become a memory test on replay. Conversely, automatically revealing every route may erase the very discovery that made the first run powerful. The useful question is what the game should remember for a player who has already earned knowledge.
 
-The expansion's NPC trails add a second map over the physical one. Miquella's crosses, messages and followers make the journey a pursuit of an absent person. The crosses also state what he has abandoned. **Interpretation:** these waypoints do more than confirm forward movement; they make physical progress increasingly troubling. The player can become more certain of the route while becoming less certain that its promised destination is desirable. [W18](#w18) [W19](#w19) [W35](#w35)
+The expansion's NPC trails add a second map over the physical one. Miquella's crosses, messages and followers make the journey a pursuit of an absent person. The crosses also state what he has abandoned. [W18](#w18) [W19](#w19) **Interpretation:** these waypoints do more than confirm forward movement; they make physical progress increasingly troubling. The player can become more certain of the route while becoming less certain that its promised destination is desirable.
+
+The Abyssal Woods temporarily changes the player's relationship to enemies again. Grass conceals the crouching player, but noisy plants can reveal them. The principal stalkers initially resist ordinary attacks; successfully parrying makes them vulnerable. The route leads toward Midra's Manse. [W54](#w54) **Interpretation:** the region creates a horror interval by making avoidance and careful observation more valuable than familiar aggression. Its rules reuse stealth and parrying rather than introducing a separate game, but their relative importance changes sharply. A player who enjoys that disruption and a player who resents losing the usual pace can be responding to the same deliberate choice.
 
 ## 4. How the narrative is delivered
 
@@ -119,6 +133,106 @@ The result rewards several levels of engagement. A player can understand that a 
 
 The method also has a cost. Missing one line can obscure an NPC's next location; a large gap between encounters can erase emotional continuity; reading an object in a menu can interrupt a dramatic moment. Narrative ambiguity should therefore be evaluated separately from interaction ambiguity. Uncertainty about a god's motives can enrich a story. Uncertainty about whether to reload a room three times is a different design decision.
 
+### 4.1 Reading the lore without manufacturing certainty
+
+The useful research product is a map of supported relationships, not a purportedly complete ancient calendar. Four distinctions govern the account below:
+
+- **Explicit presentation:** an event, item description or revealed identity is directly documented in the released game.
+- **In-world account:** a character, religion or legend says something; the statement exists, but its speaker can be mistaken or interested.
+- **Interpretation:** several pieces of evidence support a reading without uniquely proving it.
+- **Unresolved:** the available material does not settle the question. A popular video, theory or chronological diagram does not change that status by being persuasive.
+
+Community text archives were used for selected description/dialogue crosschecks. They preserve game language, but can include unused material and do not automatically identify the live speaker or trigger. Only familiar released material corroborated by documented encounters is used here. No complete script dump is treated as a playable chronology. [W33](#w33) [W35](#w35) [W36](#w36)
+
+### 4.2 Cosmology, regime and rupture
+
+**The Elden Ring is order embodied.** Marika is its divine vessel; becoming Elden Lord concerns rulership and consortship within that order, rather than finding an ordinary piece of jewelry. The Golden Order combines metaphysical rules, religious authority and political institutions. Marika's removal and confinement of Destined Death is foundational to it. Godfrey served as her lord before his exile and the later return of the Tarnished. [W21](#w21) Elden Stars reports a golden star and beast sent by the Greater Will; the Elden Remembrance identifies the Beast as that power's vassal and an embodiment of order. [W33](#w33)
+
+**The Erdtree is not the beginning of all history.** Placidusax's remembrance places his lordship before the Erdtree and describes waiting for a departed god. Farum Azula and its beastmen make that older order physically visitable. The defeated Gloam-Eyed Queen belongs to another suppressed tradition. [W30](#w30) Godskin armor connects its wearers to god-slaying black flame, Destined Death and defeat by Maliketh. [W34](#w34) These facts do not identify the departed dragon god, settle every ancient war's order, or prove that one named character secretly is the Gloam-Eyed Queen.
+
+**The Crucible complicates later notions of purity.** Crucible Knight armor identifies a primordial form of the Erdtree and records how qualities once associated with strength later became objects of scorn. [W34](#w34) **Interpretation:** the setting's institutions convert bodily differences into moral rankings. This helps make apparently monstrous enemies legible as people with histories, without requiring every faction to become harmless or benevolent.
+
+**The Night of Black Knives fractures death itself.** Ranni's role in stealing and using a fragment of the death power is uncovered through the investigative story. [W30](#w30) The Cursemark of Death distinguishes Ranni's bodily death from Godwyn's death of soul. [W33](#w33) Godwyn's continuing corpse, Deathroot and Those Who Live in Death turn an assassination into a persistent environmental and religious problem. [W29](#w29) Black Knife armor calls their close connection with Marika a rumor about Numen women. [W34](#w34) Their further Eternal City associations create questions, not a complete, jointly agreed conspiracy among every implicated person. [W29](#w29)
+
+**The Shattering is both a rupture of the Ring and a war over its aftermath.** Marika breaks the Ring; her demigod family holds Great Runes and the ensuing conflict fails to establish a stable successor. The Tarnished return into this unresolved struggle. [W21](#w21) Marika and Radagon share an identity, revealed through the statue mystery and later transformation, while the hammer's history distinguishes her breaking from his attempted repair. The origin and exact temporal mechanics of that duality remain uncertain. [W31](#w31)
+
+**The present-tense journey changes the player's apparent commission.** Reaching the capital and defeating its defender does not simply grant entry to the Erdtree: the thorns remain. [W26](#w26) Melina's proposed way forward involves the Giants' forbidden flame; the journey then requires confronting the keeper of Destined Death. [W27](#w27) [W30](#w30) The final Radagon and Elden Beast encounters turn restoration into confrontation with the order's own embodiment. [W31](#w31) **Interpretation:** the game destabilizes the simple task it initially gives the player. Obediently following an institution's instructions does not guarantee that the institution understands its own predicament.
+
+**Death needs a careful boundary.** The setting explicitly connects order, mortality, spirits and improper undeath. It does not provide an exception-free account in which every ordinary enemy respawn, permanent NPC death and boss disappearance follows one fully explained biological law. Treating all inhabitants as literally incapable of dying, or treating every reset as proof of a universal reincarnation timetable, makes the lore more definite than the evidence warrants.
+
+### 4.3 Major figures: motives expressed through places and fights
+
+| Figure or relationship | Supported role and motivation | How it becomes playable / what remains uncertain |
+| --- | --- | --- |
+| Godrick | A diminished heir seeks legitimacy and strength through grafting others onto himself. | Stormveil's bodies and defensive posture lead to a boss who turns that practice into combat. Kenneth Haight's hostile account is character testimony, not neutral biography. [W22](#w22) |
+| Rennala and the Carians | Radagon's departure breaks the royal partnership; the Academy and Carian house become antagonistic powers. Rennala clings to rebirth through the amber egg. | A defeated boss remains a service character. Her Great Rune does not make her a demigod; family, office and shard possession are different categories. [W23](#w23) |
+| Radahn | A martial champion studies gravity magic, holds the stars and remains attached to his small horse. Rot devastates him after fighting Malenia. | The festival turns a once-great warrior's death into a collective ritual; releasing the stars alters geography and another quest. His precise reasons for every celestial action are not fully established. [W24](#w24) |
+| Rykard and Tanith | Rebellion against the established order becomes incorporation into a devouring serpent and a “family” of consumed champions. | Volcano Manor recruits the player to hunt Tarnished, while Prison Town exposes what its ideology permits. Opposition to an oppressive regime does not make this alternative benign. [W25](#w25) |
+| Morgott | An Omen excluded by the society he protects nevertheless defends Leyndell and the Erdtree. | His hidden identity, repeated obstruction and final defense dramatize loyalty without acceptance. The tragedy is institutional as well as personal. [W26](#w26) |
+| Mohg | Another rejected royal Omen embraces the Formless Mother and seeks a blood dynasty centered on Miquella. | His palace, blood rites and recruitment embody an alternative source of power. The DLC later changes the account of his relationship to Miquella; it does not erase every earlier action of his faction. [W29](#w29) [W40](#w40) |
+| Malenia | The afflicted twin resists scarlet rot and acts as Miquella's blade; her confrontation with Radahn catastrophically spreads that rot. | Her damaged body, prostheses, discipline and bloom connect vulnerability to overwhelming danger. The Haligtree's condition makes the cost of the supposed refuge visible. [W24](#w24) [W28](#w28) |
+| Miquella in the base game | Attempts to help Malenia lead beyond Golden Order fundamentalism toward Unalloyed Gold and the Haligtree. He attracts rejected peoples and possesses a troubling power to compel affection. | His absence makes him a goal assembled from traces and other people's devotion. Even the base material supports ambiguity; the expansion did not invent every warning sign. [W28](#w28) |
+| Ranni, Blaidd and Iji | Ranni pursues freedom from the authority selecting her divine role, with companions whose loyalty is costly. | Her optional campaign produces a different ending path; its completion also exposes the incompatibility between personal devotion and an imposed shadow's function. [W49](#w49) [W30](#w30) |
+| Marika and Radagon | The shared divine identity contains the opposed acts of breaking and repairing the Ring. | A discoverable theological secret becomes a late visual transformation. Complete explanations that reduce this to a simple disguise, a known merger date or a proven master plan go beyond the evidence. [W31](#w31) |
+| Melina | Offers an accord, helps the player's journey and seeks to fulfill her own purpose at the Erdtree. | Her willingness to act at the forge means the journey is also hers. The DLC's unnamed fire-vision sister adds evidence to identity theories without explicitly naming her in that description. [W27](#w27) [W35](#w35) |
+| Maliketh / Gurranq | Marika's shadow guards Destined Death and pursues the corruption associated with its theft. | A character who rewards Deathroot collection later becomes a necessary opponent. Prior help can deepen recognition without removing the conflict of purpose. [W30](#w30) |
+
+**Interpretation:** the strongest bosses are also arguments made bodily. Grafting seeks inherited grandeur by theft; devouring claims unity through consumption; a defender protects an order that excludes him; a warrior's sickness becomes a region's disaster. This is different from attaching a paragraph of background to an otherwise interchangeable fight. The setting, silhouette, available actions and aftermath carry related ideas.
+
+### 4.4 Factions, peoples and competing definitions of belonging
+
+The world is not a single church opposed by a single rebel faction. Its communities disagree about legitimate rule, bodies, death, knowledge and divine influence. The following distinctions prevent common flattening:
+
+| Community / tradition | Relevant distinction |
+| --- | --- |
+| Golden Order institutions | Royal power, fundamentalist study, battlefield service and undead hunting are related but not identical roles. Goldmask can criticize divine fallibility from within the tradition. [W17](#w17) [W26](#w26) |
+| Raya Lucaria and Carian royalty | Sorcerous practice does not imply a single political allegiance. Their conflict follows a broken earlier relationship; the Academy and the royal house occupy different strongholds. [W23](#w23) |
+| Omen | A category stigmatized by the ruling order; royal children and ordinary children undergo different forms of exclusion. Morgott and Mohg respond differently to related oppression. [W26](#w26) |
+| Albinaurics | Artificially made people, including visibly different generations, whose persecution and search for refuge are not explained away by their origin. Albus and Latenna turn that condition into personal requests. [W23](#w23) |
+| Nox and Eternal Cities | A separate subterranean civilization associated with opposition to the Greater Will, artificial life and a hoped-for alternative order. Its chronology relative to every later dynasty is uncertain. [W29](#w29) |
+| Ancestral Followers | A life/death tradition outside simple Erdtree orthodoxy. Their attire describes buds emerging from flesh and souls; it should not be collapsed into the Academy, Nox or hornsent simply because locations or motifs overlap. [W34](#w34) |
+| Dragon traditions | Ancient dragons, their beastman setting and later dragon worship complicate a history centered only on Marika. Dragon Communion's consumption of hearts is a distinct relationship to dragons, with transformation as a cost. [W30](#w30) [W25](#w25) |
+| Those Who Live in Death | Their existence is interpreted as a violation by hunters and as a condition deserving protection by Fia. The category is simultaneously an enemy type, a consequence of history and a moral dispute. [W29](#w29) [W16](#w16) |
+| Rot's adherents | The Kindred of Rot revere a force that devastates other lives. Malenia's afflicted condition and her followers' loyalty are not interchangeable with uncomplicated enthusiasm for the disease. [W24](#w24) |
+| Recusants and the blood dynasty | Both offer alternatives to the Tarnished's official mission and involve violence against Tarnished, but their patrons and ends differ: Rykard's serpent and Mohg's blood order should remain distinct. [W25](#w25) [W29](#w29) |
+| Hornsent and shamans | The expansion reveals persecution within the hornsent order as well as the later catastrophe inflicted on it. Horns signify divinity in some practices that the Erdtree's later institutions reject. Neither victimhood nor sacred status proves moral innocence. [W37](#w37) [W38](#w38) |
+| Living jars | Alexander and Jar-Bairn make jars personal and sympathetic; the expansion's gaols supply a much more disturbing jar-making context. A shared object category does not establish that every jar has the same origin or social function. [W14](#w14) [W15](#w15) [W37](#w37) |
+
+The atlas above concentrates on communities needed to understand the main narrative and its alternatives. It is not a claim that every regional enemy culture, distant homeland or minor religious lineage has been given equal treatment. **Design interpretation:** recurring materials, body motifs and equipment connect local fights to larger institutions. A useful worldbuilding system needs those relationships to remain specific. Giving every faction the same behavior with different colors would lose much of this effect.
+
+### 4.5 What the expansion reveals, and what it leaves open
+
+**Marika's history acquires a place the player can enter.** Shaman Village and the surrounding jar practices connect her origin to a persecuted people. Ted Litchfield's post-release interpretation reads her later actions through revenge; that is a supported thematic reading, not a complete explanation of every decision. [W38](#w38) Minor Erdtree's description gives a quieter, explicit fact: she brought healing gold home despite knowing no one remained to heal. [W35](#w35) **Interpretation:** an almost empty place can be a major reward when it changes how the player understands everything built in that character's name.
+
+**Messmer embodies the regime's violence and its rejection of its own instrument.** His remembrance describes Marika sealing the serpent within him and later concealing him out of fear. The Scadutree's description associates its distorted form with what does not belong within Order. [W35](#w35) His crusade and burned settlements connect personal abandonment to systematic atrocity. [W38](#w38) **Interpretation:** together, these support a reading of a concealed cost to the golden public world. They do not prove a complete mechanical account of how one realm was removed from another.
+
+**The Fingers' authority becomes more questionable.** Metyr's remembrance identifies her as a daughter of the Greater Will and mother of the Two Fingers and Fingercreepers. [W35](#w35) Count Ymir argues that the Fingers and their guidance were fundamentally defective. That is his diagnosis, not an impartial narrator's certified chronology of when divine communication stopped. [W36](#w36) The distinction matters because an NPC explaining an authority's corruption is also advancing his own position.
+
+**Miquella's pursuit makes compassion inseparable from the question of consent.** He divests aspects of himself, and the charm's breaking reveals incompatible wishes among his followers. Ansbach's testimony describes his and Mohg's subjection to Miquella's power. [W36](#w36) The Secret Rite Scroll and late encounters establish the use of Mohg's body as the vessel for Radahn's soul, with Radahn becoming Miquella's consort. [W39](#w39) The Young Lion armor explicitly connects Malenia's whisper at Aeonia to that intended consortship. [W37](#w37)
+
+**Important unresolved questions:** Miquella speaks of a vow, and the final memory records his request, but the presented scene does not supply Radahn's spoken answer. A willing pact requiring a glorious death and a coercive plan imposed on an unwilling Radahn are competing interpretations, not interchangeable facts. Windows Central favors the former possibility; GameSpot emphasizes the latter moral trajectory. [W39](#w39) [W40](#w40) Neither account proves the exact timing of Mohg's enchantment relative to every earlier act, that every follower's previous loyalty was coerced, or that Malenia had no agency whatsoever.
+
+GameSpot's critique judges the revealed Miquella harshly, seeing benevolent ambition transformed into domination. [W40](#w40) **Interpretation:** the stronger lesson is more precise than a twist from “good” to “evil.” The story asks what remains of kindness when its author discards parts of himself and can remove another person's ability to refuse it. Trina and Ansbach articulate different reasons to resist; Leda can continue to believe. The conflict becomes more legible when those differences are retained.
+
+### 4.6 Endings are political commitments with limited forecasts
+
+The base game has six named endings. Most relevant quest paths can be prepared before selecting one, while inheriting the Frenzied Flame normally blocks the alternatives until removed through the needle procedure. [W46](#w46)
+
+| Ending | Commitment expressed by the choice | Evidentiary limit |
+| --- | --- | --- |
+| Age of Fracture | Mend the Ring and take the lordship. | Restoration does not supply a detailed forecast of ordinary life. |
+| Age of Order | Apply Goldmask's Mending Rune of Perfect Order. | The rune's response to fallible gods is explicit; a complete political constitution is not. |
+| Age of Duskborn | Apply Fia's Mending Rune of the Death-Prince. | Life within Death enters the order; a full account of future mortality is not shown. |
+| Blessing of Despair | Apply the Dung Eater's Mending Rune of the Fell Curse. | Its hereditary curse is explicit; calling this uncomplicated emancipation would ignore its means. |
+| Lord of Frenzied Flame | Become the agent of a world-consuming flame. | It should not be softened into ordinary regime change. |
+| Age of Stars | Leave with Ranni and her new order. | The moral and practical consequences remain partly interpretive. |
+
+The selection structure and names are documented in the ending guide; the Mending Rune descriptions provide the narrower wording about death and inherited curse. [W46](#w46) [W33](#w33) This table deliberately avoids presenting an author's favored ending as the game's objectively correct answer.
+
+Ranni deserves particular care. Frontline Gaming Japan's comparison argues that her Japanese dialogue describes taking her order far from the land, and that parts of the English phrasing can imply a different relationship between the order, perception and the cold night. That is independent localization analysis, not an official developer erratum. [W32](#w32) A reasonable interpretation is distance from immediate divine rule; it does not establish that all suffering ends, that every cosmic influence disappears, or that Ranni's earlier actions become morally innocent.
+
+**Design interpretation:** ending preparation and ending selection are separated. This lets the player investigate incompatible projects before committing. The choices are also grounded in people and objects encountered during play, rather than being wholly introduced at the final menu. The tradeoff is a comparatively brief forecast: a player seeking detailed consequences for every community may find less closure than a player who values the remaining uncertainty.
+
 ## 5. Quest case studies: what the player actually does
 
 The following are designed-path studies, not a guarantee that every possible order, aggression state or patch-specific edge case is covered. Each separates the gameplay requirement from its emotional interpretation. Guides sometimes overstate optional encounters as mandatory, so only the dependency relevant to the case is asserted. Exact item names identify the studied game; they are not proposed OpenLegend content.
@@ -127,11 +241,11 @@ The following are designed-path studies, not a guarantee that every possible ord
 
 **Prerequisites and action:** meet Ranni beyond Caria Manor and enter her service. Defeating Radahn opens the crater route to Nokron, where the Fingerslayer Blade advances her plan. Her reward, the Carian Inverted Statue, opens another investigative route. Continuing through Renna's Rise leads to Ainsel, the miniature Ranni conversation, the Baleful Shadow, the locked chest in Rennala's library, the Lake of Rot and Astel. The Dark Moon Ring permits the final approach to Ranni beneath the Cathedral of Manus Celes. **Rewards and consequence:** the Dark Moon Greatsword and the option to summon Ranni for the Age of Stars ending after the main final battle. Her ending is an additional choice, not automatically selected when the quest finishes. [W12](#w12)
 
-**Why the chain matters:** it connects a social commitment to a major boss, changed terrain, an underground city, a transformed building, a miniature character, a return to an earlier boss room and a distant plateau. Its structural variety lets the relationship carry a substantial expedition rather than a sequence of similar errands. The player is allowed to pursue a competing account of the world's future alongside the publicly stated goal of becoming Elden Lord.
+**Why the chain matters:** its documented route connects a social commitment to a major boss, changed terrain, an underground city, a transformed building, a miniature character, a return to an earlier boss room and a distant plateau. [W49](#w49) **Interpretation:** this variety lets the relationship carry a substantial expedition rather than a sequence of similar errands. The player is allowed to pursue a competing account of the world's future alongside the publicly stated goal of becoming Elden Lord.
 
 The chain also changes the meaning of rewards. An object can be an access tool, a historical clue and proof of trust at once. The final weapon is a reminder of a relationship after the dialogue ends. Ranni's companions supply an emotional counterweight: completing her ambition does not produce a simple happy ending for everyone around her.
 
-**Limit / frustration mechanism:** repeatedly addressing an apparently unresponsive doll and revisiting an earlier locked chest are demanding memory and inference requirements. A player may have reached the correct place without knowing which interaction now matters. [W12](#w12) The design succeeds when accumulated clues make the eventual recognition feel earned; it fails for that player when the next step feels indistinguishable from a hidden flag. “The player can miss it” describes the rule, not whether the experience was satisfying.
+**Limit / frustration mechanism:** repeatedly addressing an apparently unresponsive doll and revisiting an earlier locked chest are demanding memory and inference requirements. [W49](#w49) A player may have reached the correct place without knowing which interaction now matters. The design succeeds when accumulated clues make the eventual recognition feel earned; it fails for that player when the next step feels indistinguishable from a hidden flag. “The player can miss it” describes the rule, not whether the experience was satisfying.
 
 ### 5.2 Worked interaction 5: Alexander and Jar-Bairn make inheritance playable
 
@@ -147,7 +261,7 @@ In Jarburg, repeated visits and conversations develop Jar-Bairn's aspirations al
 
 ### 5.3 Worked interaction 6: Millicent connects bodily agency, combat rewards and ending recovery
 
-**Prerequisites and action:** recover the broken Unalloyed Gold Needle for Gowry, have it repaired and bring it to Millicent at the Church of the Plague. Her travels subsequently involve the Valkyrie's Prosthesis, Altus, the Mountaintops and the Haligtree. After the local Ulcerated Tree Spirit encounter, the player chooses between helping her against her sisters and challenging her. **Consequences:** assisting yields the Rotten Winged Sword Insignia; the opposing branch gives Millicent's Prosthesis. The assistance route can recover the needle after her death; interacting with Malenia's post-battle bloom converts it to Miquella's Needle, which can remove the Frenzied Flame in the special Farum Azula location. [W13](#w13)
+**Prerequisites and action:** recover the broken Unalloyed Gold Needle for Gowry, have it repaired and bring it to Millicent at the Church of the Plague. Her travels subsequently involve the Valkyrie's Prosthesis, Altus, the Mountaintops and the Haligtree. After the local Ulcerated Tree Spirit encounter, the player chooses between helping her against her sisters and challenging her. **Consequences:** assisting yields the Rotten Winged Sword Insignia; the opposing branch gives Millicent's Prosthesis. [W13](#w13) The assistance route can recover the needle after her death; interacting with Malenia's post-battle bloom converts it to Miquella's Needle. It removes the inherited Frenzied Flame when used in **Dragonlord Placidusax's arena in Crumbling Farum Azula**. [W50](#w50)
 
 **Design interpretation:** the sequence links small acts of care to a much larger possibility of refusing an imposed destiny. The needle is an intervention with limits, not a universal cure. Millicent's stated desire to return something of Malenia's selfhood, and her refusal to become what another agent wants her to become, give the branching fight a meaning beyond acquiring one of two damage-related rewards. The relevant needle description explicitly associates her purpose with Malenia's dignity and resistance to the rot. [W33](#w33)
 
@@ -252,7 +366,7 @@ These are evidence-informed distinctions, not a prescription to copy the game's 
 
 ## Sources and access notes
 
-Research accessed **October 24, 2026**. Written bodies below were read. Source-specific factual summaries are bounded; interpretations are labeled. Embedded videos were not treated as watched evidence.
+Research accessed **October 24, 2026**. Relevant written body sections below were read. Source-specific factual summaries are bounded; interpretations are labeled. Embedded videos were not treated as watched evidence.
 
 <a id="w01"></a>**W01.** [PlayStation Blog — An interview with FromSoftware's Hidetaka Miyazaki](https://blog.playstation.com/2022/01/28/an-interview-with-fromsoftwares-hidetaka-miyazki/), January 28, 2022. Primary interview: freedom, pacing, difficulty aims and indirect Sekiro influence. Pre-release statements are intent, not outcome measurements.
 
@@ -344,6 +458,20 @@ Research accessed **October 24, 2026**. Written bodies below were read. Source-s
 
 <a id="w45"></a>**W45.** [PC Gamer — Elden Ring's NPC quest markers are just a Band-Aid](https://www.pcgamer.com/elden-rings-npc-quest-markers-are-just-a-band-aid/), Rich Stanton, March 21, 2022. Original criticism read; its simultaneous defense of discovery and concern about scale are both represented. The patch note is preferred for the feature's exact scope.
 
+<a id="w46"></a>**W46.** [GamesRadar — All Elden Ring endings explained](https://www.gamesradar.com/elden-ring-endings/). Full relevant ending sections read. Used for names, selection rules and route association; its “best ending” judgment, simplified cosmology and claim that Ranni becomes a new vessel for the Greater Will are not adopted.
+
 <a id="w47"></a>**W47.** [GamesRadar — Stormveil castle gate choice](https://www.gamesradar.com/elden-ring-stormveil-castle-main-gate-opening/), Leon Hurley with Joel Franey. Route comparison read; relative difficulty is contextual, not a universal ranking for all builds and levels.
 
 <a id="w48"></a>**W48.** [Push Square — All Painting Locations and Rewards](https://www.pushsquare.com/guides/elden-ring-all-painting-locations-and-rewards), Liam Croft, current body shows August 26, 2026. Opening explanation and examples read; used for the viewpoint-matching rule, not a claim that base-game counts include DLC paintings.
+
+<a id="w49"></a>**W49.** [GamesRadar — Ranni questline walkthrough](https://www.gamesradar.com/elden-ring-ranni-questline-secret-ending/), Joel Franey with Leon Hurley. Route body read as an independent check of the varied locations, doll interaction, library chest and ending selection. Its extra Cursemark detour serves Fia and is not asserted to be necessary for Ranni's own ending.
+
+<a id="w50"></a>**W50.** [RPG Site — Millicent questline, Unalloyed Gold Needle and Miquella's Needle](https://www.rpgsite.net/feature/12501-elden-ring-millicent-questline-walkthrough-millicents-location-the-unalloyed-gold-needle-and-miquellas-needle). Final quest/needle sections read; source identifies Dragonlord Placidusax's arena precisely. This chapter does not add an unsupported requirement to defeat that boss.
+
+<a id="w51"></a>**W51.** [Push Square — Fringefolk Hero's Grave](https://www.pushsquare.com/guides/elden-ring-how-to-complete-fringefolk-heros-grave). Relevant entrance/chariot sections read: access cost, alcoves, timing and the hazard's effect on enemies. Not a claim that every Hero's Grave contains the same hazard.
+
+<a id="w52"></a>**W52.** [EIP Gaming — Sainted Hero's Grave dungeon walkthrough](https://eip.gg/elden-ring/guides/sainted-heros-grave-dungeon-walkthrough/). Relevant light/shadow and enemy-luring sections read; used for the local vulnerability rule, not the guide's subjective gear rankings.
+
+<a id="w53"></a>**W53.** [EIP Gaming — Leyndell Catacombs dungeon walkthrough](https://eip.gg/elden-ring/guides/leyndell-catacombs-dungeon-walkthrough/), published June 17, 2022, updated March 9, 2024. Layout/route body read for similar-looking sections, fire-pillar traversal and the return to the boss door.
+
+<a id="w54"></a>**W54.** [GamesRadar — Abyssal Woods walkthrough](https://www.gamesradar.com/games/action-rpg/shadow-of-the-erdtree-abyssal-woods/), Joel Franey. Written stealth, noisy-plant, parry and destination sections read. The guide informally calls the stalkers “Winter Lanterns”; that nickname is not used as an official enemy identification here.

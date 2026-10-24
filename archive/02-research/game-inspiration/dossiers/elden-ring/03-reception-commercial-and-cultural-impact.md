@@ -6,7 +6,9 @@ Evidence cutoff: **October 24, 2026**. This chapter separates documented commerc
 
 ## 1. The $2 billion claim and what it establishes
 
-Mike's figure has an identifiable source. In an **October 22, 2026** article, Rhys Elliott of **Alinea Analytics** estimates Elden Ring at **36.4 million copies** and **$2 billion in revenue** across Steam, PlayStation and Xbox. This is an analyst's modeled result, not a disclosed Bandai Namco or FromSoftware income statement. The article does not specify whether the revenue total includes expansion purchases, nor its treatment of taxes, refunds, storefront fees, physical distribution or publisher/developer sharing. It therefore cannot safely be added to a separate modeled DLC total. Nintendo sales are outside the article's stated platform group. [R01](#r01)
+Mike's figure has an identifiable source. In an **October 22, 2026** article, Rhys Elliott of **Alinea Analytics** estimates Elden Ring at **36.4 million copies** and **$2 billion in revenue**, using its stated Steam/PS5/Xbox categories. This is an analyst's modeled result. Its public accounting definitions do not establish a publisher income statement, a separate DLC contribution or Nintendo inclusion. [R01](#r01)
+
+For financial interpretation, we would need explicit treatment of taxes, refunds, storefront fees, physical distribution and publisher/developer sharing. Adding an independently modeled DLC total before resolving overlap could double-count spending. The provider's platform labels also should not silently become a verified all-edition inventory.
 
 | Evidence | Product and measurement date | Metric actually supported | What it cannot establish |
 | --- | --- | --- | --- |
@@ -15,7 +17,7 @@ Mike's figure has an identifiable source. In an **October 22, 2026** article, Rh
 | Bandai Namco, July 24, 2025 | Base Elden Ring, worldwide, cumulative | More than 30 million units | Current sell-through, unique players or net revenue |
 | Same publisher announcement | Shadow of the Erdtree, worldwide, cumulative | More than 10 million units | A synchronized cohort attach rate, or a separate disclosed dollar amount |
 | Bandai Namco, August 28, 2026 | Tarnished Edition launch and base-game context | Switch 2 edition released; original game remains described as more than 30 million units | Incremental Switch 2 sales or a new all-platform numerical total |
-| Alinea, October 22, 2026 | Elden Ring on its stated Steam/PlayStation/Xbox coverage | Estimated 36.4 million copies and $2 billion revenue | Audited receipts, profit, or a fully documented DLC/accounting perimeter |
+| Alinea, October 22, 2026 | Elden Ring on its stated Steam/PS5/Xbox coverage | Estimated 36.4 million copies and $2 billion revenue | Audited receipts, profit, or a fully documented DLC/accounting perimeter |
 
 Sources: early publisher milestones and measurement footnotes [R23](#r23), later milestone [R02](#r02), edition release [R03](#r03), analyst estimate [R01](#r01). The separate **Nightreign** product is excluded from Elden Ring's totals in this study. A franchise total that includes the spinoff answers a different question. Physical distribution plus digital sales also should not silently become an all-channel consumer sell-through estimate.
 
@@ -43,7 +45,7 @@ This is not unanimous approval of every mechanic. The clearest disagreement conc
 
 ## 3. Current player testimony: recommendation is not the same as completion or approval
 
-The accessible Steam community surface on October 24 displayed **Most Helpful (Week), All, English**. Attempts to force all-time and negative-only query URLs did not return usable pages. The default page changed between cached and fresh responses, so these are dated qualitative samples rather than a stable ranking or counted dataset. Displayed play hours are observation-time values, not assumed publication-time values. [R10](#r10)
+Steam's accessible October 24 surface displayed **Most Helpful (Week), All, English**. All-time and negative-only query attempts failed; the default ordering changed between responses. These are qualitative samples, not a stable ranking or representative dataset. [R10](#r10)
 
 | Sampled account | Specific reaction | Interpretive use |
 | --- | --- | --- |
@@ -52,7 +54,7 @@ The accessible Steam community surface on October 24 displayed **Most Helpful (W
 | **Hades VII**, recommended, October 21 | Valued navigation without an imposed itinerary and consequential upgrades | A direct example of autonomy and progression appeal |
 | **Leper**, not recommended, October 16 | Found quests obscure and repeated traversal too time-consuming despite appreciating the presentation | A negative verdict can recognize artistic achievement |
 
-These accounts do not establish how common any response is. In particular, Leper's assertion about what “most people” would enjoy remains that reviewer's opinion. The useful evidence is the interaction each person identified, not their population claim. [R10](#r10)
+These accounts do not establish prevalence. The useful evidence is each described interaction; a reviewer's assertion about what “most people” enjoy is not a population measurement.
 
 ## 4. Why the experience resonated
 
@@ -108,7 +110,7 @@ The case study should therefore ask which uncertainty is carrying the intended e
 
 ### Late-game fatigue: a change in the player's relationship with the game
 
-Several base reviews criticize reused minor encounters or reduced novelty, even while strongly recommending the whole. [R06](#r06) [R07](#r07) The sampled Steam account that stopped near the end demonstrates a particularly useful warning: recommendation and continued participation can diverge. [R10](#r10)
+Several base reviews criticize reused minor encounters or reduced novelty, even while strongly recommending the whole. [R06](#r06) [R07](#r07) Recommendation and continued participation can diverge, as the sample in section 3 illustrates.
 
 Our interpretation is that fatigue can emerge even without a sudden objective decline in quality. Early in a game, the player is acquiring a vocabulary of places, rewards and dangers. Later, recognition may replace surprise. An enemy's return can be satisfying if it demonstrates growth, changes context or combines with a new constraint. It can become tiring if the player predicts the required work and expects little new insight in return.
 
@@ -181,7 +183,7 @@ The same Alinea article estimates **over 9.8 million players at 100-plus hours**
 | Veteran replayer | A fresh build, self-imposed challenge, expansion, randomizer or overhaul | The route is solved and the remaining repetition lacks a new purpose |
 | Satisfied finisher | A new occasion genuinely renews curiosity | The original journey already delivered enough; leaving is a reasonable outcome |
 
-These rows are hypotheses to evaluate in interviews and playtests, not demographic proportions inferred from a handful of reviews. The examples above establish that several of these paths occur: a novice can love the struggle, a positive recommender can stop near the end, and an interested player can refund over access barriers. [R10](#r10) [R11](#r11)
+These rows are hypotheses to evaluate in interviews and playtests, not demographic proportions inferred from a handful of reviews. They provide questions for distinguishing the motives behind an observable pause or departure.
 
 The 2026 return campaign is also concrete. Bandai Namco announced aggregate community quests running from September through December, with commemorative art and Twitch badges. At this research cutoff the October period is still ongoing; November and December are future scheduled periods. The announcement does not establish that any target has been met. This is evidence of a timed community marketing campaign, not evidence of a native battle pass or a recurring mandatory login system. [R22](#r22)
 

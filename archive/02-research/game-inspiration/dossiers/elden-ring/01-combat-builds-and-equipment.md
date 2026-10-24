@@ -14,9 +14,9 @@ Miyazaki's explanation supplies useful evidence of intent. In a translated accou
 
 ## 2. Character investment is a set of connected constraints
 
-The eight attributes divide into survivability/resources—Vigor, Mind and Endurance—and requirements/scaling involving Strength, Dexterity, Intelligence, Faith and Arcane. Vigor increases health; Mind increases the FP used by many abilities; Endurance affects stamina and equipped weight capacity. Offensive attributes matter in relation to the weapon or catalyst actually used, rather than granting equal benefits to every attack. Arcane's item-discovery role is distinct from its role in compatible status builds. [C04](#c04)
+Vigor supplies HP, Mind supplies FP, and Endurance affects stamina and equipped weight capacity. Strength, Dexterity, Intelligence, Faith and Arcane support requirements and scaling according to the chosen armament. Arcane also affects item discovery. The benefit of an offensive attribute depends on the weapon or catalyst using it. [C04](#c04)
 
-A **soft cap** is a point where another invested level returns less benefit, not a prohibition on further investment. The official advanced-stats guide uses Vigor's 40 and 60 breakpoints to illustrate diminishing returns. Two-handing gives an effective Strength multiplier of 1.5 for supported weapon requirements/scaling; it does not grant the same multiplier to Dexterity or every component of damage. Thus changing how a weapon is held can make it usable before buying more levels. [C05](#c05)
+A **soft cap** marks diminishing returns rather than a prohibition on investment. The official advanced-stats guide illustrates this with Vigor's 40 and 60 breakpoints. Two-handing also changes effective Strength for eligible requirements and scaling, as case 3 demonstrates. [C05](#c05)
 
 **Analysis:** these constraints create opportunity costs. Spending on health can buy another mistake and more learning time. Spending on a new spell's requirement buys access, but may leave too little FP to use it comfortably or too little health to survive its casting commitment. A displayed character level therefore says much less about practical readiness than the distribution of that investment and the equipment it supports.
 
@@ -28,17 +28,19 @@ The opening contrasts are instructive. Vagabond starts with sword, shield and ha
 
 Rebirth at Rennala reallocates earned attribute points in exchange for a Larval Tear, after the player defeats her. It cannot reduce an attribute below the chosen class's initial value. Appearance changes are a separate option; changing a face is not the same transaction as rebuilding attributes. This is substantial reversibility with a cost and an unlock gate, rather than unrestricted experimentation from the first minute. [C09](#c09)
 
-**Constructed case 1 — a heavy-feeling starting knight.** A newcomer chooses Vagabond, equips its supplied sword, halberd and shield, and finds the roll cumbersome. The class guide identifies this starting load as heavy. Removing the unused halberd changes the equipped burden without discarding it or earning a level. The immediate lesson is that possession and readiness are different: the player can keep options in inventory without paying their equipped weight. The next decision is whether to trade protection for mobility or invest in capacity. **Limit:** this does not fix poor dodge timing or every dangerous attack, and the lighter load does not itself teach why an attack connected. [C08](#c08)
+**Constructed case 1 — a heavy-feeling starting knight.** A Vagabond equips its supplied sword, halberd and shield, and rolls cumbersomely. The class guide identifies this load as heavy. Unequipping the unused halberd reduces burden without discarding it or earning a level: owning an option differs from keeping it ready. The next decision is whether to trade protection for mobility or invest in capacity. **Limit:** lighter equipment does not fix poor timing or explain every connected attack. [C08](#c08)
 
 ### Loadouts are a constrained portfolio
 
-Equipped weight is evaluated as a proportion of capacity: below 30% is light, below 70% is medium, below 100% is heavy, and 100% or more is overloaded. These are discontinuities; a small equipment change can cross a category boundary. Scaling grades from E to S summarize a contribution rather than specifying final damage by themselves. Weapon reinforcement, attributes and affinity interact, so the attractive letter is only one input to the decision. [C05](#c05)
+Weight categories use capacity percentages: light below 30%, medium from 30% to below 70%, heavy from 70% to below 100%, overloaded at 100% or more. A small change can cross a boundary. Scaling grades E–S summarize contributions; reinforcement, attributes and affinity also affect the result. [C05](#c05)
+
+Armor does not follow weapon reinforcement levels. Tailoring changes eligible garments, and Boc can provide alterations without the usual charge after receiving his needle. These are different systems from upgrading a sword or shield. **Analysis:** preserving outfit choice without a separate armor-stone economy reduces one layer of replacement investment, while weight and defensive properties still make appearance a practical decision. [C48](#c48)
 
 **Analysis:** a class establishes an initial lesson; equipment determines the practiced lesson. A shield start invites observation through blocking, whereas a ranged start introduces spacing and resource expenditure. The ability to migrate between them broadens ownership of the character. But the cost of a change is distributed across attributes, upgrades, unfamiliar timing and resource supply. A respec interface can refund levels while the player still feels economically or psychologically committed to an old weapon.
 
 ## 3. Combat commitment and defensive choices
 
-The publisher's combat guide explicitly describes **input buffering**: a pressed action can queue until it becomes executable. Repeated panic inputs can therefore produce an unwanted later dodge, while an attack already underway prevents an immediate evasive response. The same guide distinguishes blocking, parrying and guard counters. Blocking spends stamina and mitigates damage according to the guard; a parry is a timed deflection; a guard counter is an attack after a block and can still be interrupted by the enemy's next strike. [C06](#c06)
+The publisher's combat guide describes **input buffering**: an input can queue until executable, producing unwanted actions after panic presses. An attack already underway can prevent immediate evasion. Blocking mitigates damage while spending stamina; parrying times a deflection; a guard counter attacks after blocking and remains vulnerable to an enemy's continuation. [C06](#c06)
 
 **Analysis:** the player is managing future vulnerability, not merely selecting damage. The important question is not “Can I hit now?” but “Can I finish this action, survive the response and still have resources for the next decision?” A slow move can be excellent when it creates an interruption or finishes the fight, and disastrous when its recovery overlaps an enemy continuation. This gives spacing, anticipation and restraint intrinsic value.
 
@@ -48,14 +50,14 @@ For design analysis, the following terms should remain separate. Community discu
 
 | Mechanism | What it concerns | Decision it makes important |
 | --- | --- | --- |
-| Ordinary hit interruption | Whether a hit prevents an actor continuing its current action | Can a light strike safely stop this opponent, or will it trade into the player's attack? |
-| Armor poise | Resistance supplied by the equipped character configuration | Is additional weight worth tolerating a particular hit? |
-| Hyperarmor | Action-dependent resistance to interruption during parts of an attack | Can this particular committed swing continue through contact? |
-| Enemy stance depletion | Accumulated pressure that can expose a critical opening | Can the player maintain pressure long enough to earn a larger opening? |
-| Guard break | A defensive guard failing under resource pressure | Is there enough stamina left to block the next strike? |
-| Critical attack | A contextual high-damage response to an opening, including eligible backstabs and ripostes | Can the player reach and activate the appropriate position before the opening ends? |
+| Ordinary hit interruption | Whether contact stops an action [C17](#c17) | Will this strike interrupt the enemy or trade hits? |
+| Armor poise | Equipped resistance to interruption [C12](#c12) | Is tolerating a hit worth additional weight? |
+| Hyperarmor | Action-dependent interruption resistance [C12](#c12) | Can this committed swing continue through contact? |
+| Enemy stance depletion | Pressure exposing a critical opening [C06](#c06) | Can pressure be maintained? |
+| Guard break | Stamina exhaustion while guarding [C47](#c47) | Can the next strike be blocked? |
+| Critical attack | Contextual backstab or riposte [C06](#c06) | Can the player reach the opening? |
 
-The table is an analytical separation, not a claim that the implementation uses these exact six modules. The publisher guide describes stance breaks and critical opportunities; community poise work distinguishes passive armor contributions from weapon/action-dependent hyperarmor. The latter's numerical tables are explicitly versioned, and are not universal current-PvE thresholds. [C06](#c06) [C12](#c12)
+The table separates player-facing concepts; it does not assert six implementation modules. Community poise tables are versioned, so their weapon-specific PvP values must not become universal current-PvE thresholds. [C12](#c12)
 
 Patch history makes that caution consequential. Update 1.10 explicitly separated PvP-only adjustments to poise damage, attack poise and evasive skills from general critical-hit changes. A dueling breakpoint or a particular patch's two-handed trade does not automatically describe a knight in a single-player dungeon. [C13](#c13)
 
@@ -65,9 +67,9 @@ Patch history makes that caution consequential. Update 1.10 explicitly separated
 
 The important comparison is not a hierarchy in which dodge always replaces block or parry always replaces dodge. Each defense buys something different. Blocking can preserve a close position while spending stamina. A dodge changes location and has timing commitments. A parry bets on an eligible move and a narrow timing opportunity. Simply standing outside a strike's reach can preserve resources and readiness, but requires reading its geometry. These are strategic interpretations of the action vocabulary, not measured success rates.
 
-The combat guide differentiates a shield's damage negation from its guard boost: one concerns damage passing through; the other concerns stamina lost while blocking. It also emphasizes that charging heavy attacks, jumping heavies and guard counters can create stance pressure. A weapon's ordinary hit damage therefore cannot fully describe the value of an opening. [C06](#c06)
+Shield damage negation concerns damage passing through; guard boost concerns stamina lost blocking. Charged heavies, jumping heavies and guard counters create stance pressure beyond ordinary HP damage. Running, rolling and crouching also change available attacks, making movement part of move selection. [C06](#c06)
 
-**Constructed case 2 — the guard-counter trap.** A shield user wants to punish a soldier safely. After blocking the first swing, the player immediately starts the counter, but the soldier's continuation lands during the response. On the next attempt, the player observes the combination, preserves enough stamina to finish defending, and counters its ending. The interaction has changed from “block enables free damage” to “block buys information and positioning.” **Limit:** a different opponent, elemental chip damage, a grab or a much larger stamina demand can invalidate the tactic. The example illustrates the timing rule; it is not a transcript of an observed session. [C06](#c06)
+**Constructed case 2 — the guard-counter trap.** A shield user blocks a soldier's first swing and immediately counters, but the continuation hits during the response. Next time, the player observes the combination, preserves stamina and counters its ending. Blocking has bought information and positioning; choosing the counter's timing remains essential. **Limit:** a different opponent, elemental chip, a grab or a larger stamina demand can invalidate the tactic. This illustrates the timing rule; it is not an observed session. [C18](#c18)
 
 ## 4. The weapon is an action vocabulary
 
@@ -79,11 +81,13 @@ An armament changes reach, direction, speed, recovery, contact frequency and acc
 
 Two-handing one armament makes its two-handed actions available while setting aside the other hand's active tool. A weapon can still block, but it does not inherit a dedicated shield's protection. Powerstancing uses a compatible weapon in each hand to gain combined attacks; ordinary right-hand actions remain available. The right comparison includes the loss of an actively usable shield or catalyst, the second weapon's weight, and the investment in developing both weapons. [C11](#c11)
 
-**Constructed case 3 — meeting a requirement is not doubling a build.** Suppose a hypothetical supported weapon requires 30 Strength and the character has 20. The 1.5 effective-Strength rule makes it eligible when two-handed; this arithmetic is an illustration of the published rule, not a measured damage calculation for a named weapon. One-handing it to regain a shield reintroduces the unmet requirement. A Dexterity shortfall remains a shortfall. The next decision is whether the chosen stance is reliable enough for the intended encounters or whether permanent attribute investment is worthwhile. **Limit:** the example does not establish a 50% total-damage increase; scaling, damage components and the selected attack still matter. [C05](#c05)
+Paired equipment is a separate case: Hookclaws' item description explains that two-handing equips a claw on each hand. It supplies that paired identity from one item. Thus two visible weapons do not always mean two separately acquired and reinforced armaments. [C46](#c46)
+
+**Constructed case 3 — meeting a requirement.** A hypothetical weapon requires 30 Strength; its user has 20. Two-handing's 1.5 effective-Strength multiplier satisfies that requirement. Returning to one hand for a shield loses eligibility; a Dexterity deficit would remain. The choice is between this handling constraint and further investment. **Limit:** the arithmetic does not establish 50% more total damage. [C05](#c05)
 
 ### Shadow of the Erdtree expands movement expression
 
-The expansion's additions include light greatswords, great katanas, backhand blades, beast claws, hand-to-hand arts, throwing blades, perfume bottles and thrusting shields. These matter because they change the physical performance available to a mature character. In Sarah James's first-person guide, Beast Claw is an acrobatic assault, Backhand Blade's skill combines evasion and an attack, Milady mixes thrusts with sweeping follow-ups, and Dryleaf Arts makes punches and kicks a primary style. Her reactions are a named player's judgments, not a popularity poll. [C10](#c10)
+The expansion adds light greatswords, great katanas, backhand blades, beast claws, hand-to-hand arts, throwing blades and perfume bottles, alongside thrusting shields documented in the patch notes. In Sarah James's first-person guide, Beast Claw supplies acrobatic assaults, Backhand Blade combines evasion and attack, Milady mixes thrusts and sweeps, and Dryleaf Arts centers punches and kicks. These are a named player's impressions, not a popularity poll. [C10](#c10) [C37](#c37)
 
 Perfume-bottle weapons also differ from consumable perfumes: the weapon's ordinary attacks do not spend a crafted bottle or FP. Smithscript Dagger provides repeatable throwing attacks rather than a stock of disposable knives, with range still a constraint. These are useful examples of turning an occasional utility action into a sustained character identity. [C10](#c10)
 
@@ -93,7 +97,7 @@ Perfume-bottle weapons also differ from consumable perfumes: the weapon's ordina
 
 Ashes of War associate a skill with compatible equipment and allow affinity choices. They can be reassigned at a Site of Grace without being consumed by the swap. Compatibility is constrained; possessing an Ash does not mean every weapon can use it. A shield's skill can take precedence over a right-hand skill, making the currently active skill and hand configuration important parts of the interface. Whetblades expand affinity access, subject to the weapon and skill combination. [C14](#c14)
 
-Affinities form several broad choices: Standard retains a baseline; Heavy, Keen and Quality emphasize physical scaling; Magic, Fire, Flame Art, Lightning and Sacred alter elemental/scaling relationships; Cold, Blood and Poison introduce or emphasize buildup; Occult emphasizes Arcane scaling. Fire and Flame Art are different choices, despite sharing a damage type. The guide's claim that Occult universally prevents undead revival is not reliable and is deliberately not adopted here. [C14](#c14)
+Affinities divide into Standard; physical-scaling Heavy, Keen and Quality; elemental/scaling choices Magic, Fire, Flame Art, Lightning and Sacred; buildup choices Cold, Blood and Poison; and Arcane-oriented Occult. Fire and Flame Art differ despite sharing a damage type. [C14](#c14)
 
 **Analysis:** this is a powerful separation of a weapon's silhouette and basic moves from the character investment that makes it effective. The player can enjoy a familiar blade's timing without being permanently bound to its default skill. Conversely, restricted and unique weapons preserve distinctive authored identities. The tradeoff is a larger compatibility matrix: “I found the right ability” may still mean “I need the right armament and unlock to apply it.”
 
@@ -113,7 +117,7 @@ A weapon's reinforcement is also distinct from the player's investment. Finding 
 
 ## 6. Magic is a loadout and timing system
 
-Sorceries normally use staves and incantations use sacred seals. A usable spell requires possession, a memorized slot, its attributes, a suitable equipped catalyst and sufficient FP. Incantations include attacks, recovery and enhancements; several require Intelligence or Arcane as well as, or instead of, the simple expectation that Faith alone defines all incantations. The input for a catalyst's hand casts the selected spell, while spell selection cycles separately. Many spells permit charging, trading additional commitment for an altered result. [C21](#c21)
+Sorceries normally use staves and incantations use sacred seals. A usable spell requires possession, a memorized slot, its attributes, a suitable equipped catalyst and sufficient FP. Incantations include attacks, recovery and enhancements; several add Intelligence or Arcane requirements, so Faith alone is an insufficient description. The input for a catalyst's hand casts the selected spell, while spell selection cycles separately. Many spells permit charging, trading additional commitment for an altered result. [C21](#c21)
 
 Memory Stones expand the initial two spell slots, with eight stones bringing that capacity to ten before other effects. They are discoverable progression, including tower rewards and a Red Wolf of Radagon drop, rather than a direct benefit from buying more Mind. Mind's FP capacity and the number of different prepared spells therefore solve different problems. [C22](#c22)
 
@@ -166,7 +170,7 @@ The main flasks share an allocation of charges: Crimson restores HP, Cerulean re
 
 ### Wondrous Physick
 
-The Physick is a separately refilled, customizable flask. Crystal tears define its effects, including recovery, stamina support, damage enhancement, protection and specialized counters; Golden Seeds and Sacred Tears do not simply upgrade it like the ordinary flasks. The resulting design adds a planned temporary window to an otherwise persistent equipment setup. [C27](#c27)
+The Physick is a separately refilled flask combining up to two crystal tears. Tears define effects including recovery, stamina support, damage enhancement, protection and specialized counters; Golden Seeds and Sacred Tears do not upgrade it like the ordinary flasks. The design adds a planned temporary window to a persistent equipment setup. [C27](#c27)
 
 The expansion's Deflecting Hardtear is unusually consequential. Its item description improves protection immediately after assuming a guard and rewards a successful timely guard with stronger counters. It changes the timing behavior the player is rewarded for, rather than merely enlarging an existing number. [C28](#c28)
 
@@ -182,9 +186,9 @@ Great Runes connect major victories, restoration at Divine Towers, equipped sele
 
 The Crafting Kit, sold by Kalé, allows consumable production outside combat. Cookbooks add recipes. The vocabulary includes projectile ammunition, throwing items, weapon greases, boluses, resistance food and perfumes. Ingredients turn travel and enemy hunting into options for the next encounter; recipes create knowledge-based unlocks. Crafting does not replace the separate armament reinforcement economy. [C30](#c30)
 
-Cracked Pots are reusable containers: using their crafted contents releases a vessel for further crafting. Ritual Pots and Perfume Bottles serve related but distinct recipes. Thus ingredient supply and simultaneous prepared capacity are different constraints. The item database also describes storage behavior: stocked throwing items can supply future rest refills while containers are available for further preparation. A consumable's carried cap and stored stock are not the same as the player's weight limit. [C31](#c31)
+Cracked Pots are reusable containers: using their contents releases a vessel for further crafting. Stored throwing items can supply later rest refills while containers remain available for preparation. Carried quantity, storage and equipped weight are different constraints. [C31](#c31) Ritual Pots and Perfume Bottles serve distinct recipes, further separating ingredient supply from prepared capacity. [C30](#c30)
 
-**Constructed case 7 — a small portable arsenal.** A player with a few cracked pots wants both fire damage and sleep utility. Filling every vessel with one recipe commits the immediate loadout even if ingredients for the other exist. After using a pot, the vessel returns, but recrafting must wait until combat ends. The player therefore prepares a mixed allocation before the encounter and revises it after observing what mattered. **Limit:** a recipe requires its own ingredients and compatibility; owning a reusable vessel does not make all ammunition free or all enemies vulnerable. This is a rules-based illustration of capacity allocation, not a claim about a specific optimal recipe count. [C31](#c31)
+**Constructed case 7 — a small portable arsenal.** A player wants fire and sleep pots. Filling every vessel with one recipe commits the immediate allocation, even with ingredients for both. Used vessels return, but crafting waits until combat ends. The player prepares a mixed selection and revises it after seeing what matters. **Limit:** containers do not supply ingredients or make every enemy susceptible; no optimal recipe count is asserted. [C30](#c30) [C31](#c31)
 
 **Analysis:** this system provides temporary access to effects without demanding an attribute respec. That makes side resources potentially meaningful to many builds. It also creates a familiar hoarding trap: when replenishment is uncertain and the player is still learning, spending a rare ingredient on a failed attempt can feel like losing future permission to experiment. The reusable-container rule softens one cost, but it cannot eliminate ingredient scarcity or the inconvenience of rebuilding a stock.
 
@@ -195,6 +199,72 @@ Loot comes through placed treasure, merchant transactions, enemy drops and autho
 Remembrances convert particular major victories into a choice of associated equipment or spells, or runes. Wandering Mausoleums allow limited duplication, even after a Remembrance was consumed; the expansion provides additional duplication coffins. This is a second decision about the identity inherited from a boss, rather than a random roll for an unrelated prize. [C33](#c33)
 
 **Analysis:** the reward's action is part of the encounter's memory. Learning to fear an enemy's spectacular move and then gaining an associated tool turns victory into imitation and appropriation. Conversely, a reward the current build cannot use may communicate future possibility or immediate disappointment. A generous respec and catch-up economy determines which interpretation wins. Catalog size alone is an incomplete measure of reward quality.
+
+## 10. Spirit Ashes change the distribution of attention
+
+Spirit Ashes are reusable ally summons, enabled by the Spirit Calling Bell in areas with a rebirth monument. A screen icon signals availability. Only one type can be active, and they are unavailable during multiplayer; leaving the permitted area removes them. After an ash summon dies, the player must rest before summoning again. These constraints make them a prepared encounter resource, rather than a permanent party following every journey. [C34](#c34)
+
+Their functions differ. Lone Wolves supply several bodies, a Jellyfish offers a different ranged presence, and Skeletal Militiamen can reconstitute if enemies do not finish their fallen forms. Roderika strengthens ashes through a separate Glovewort economy: Grave Glovewort for ordinary ashes and Ghost Glovewort for renowned ones, with Great Ghost Glovewort providing the renowned +10 step. Upgrading improves a chosen ally; it does not generally turn a one-creature ash into a larger squad. [C35](#c35)
+
+The Mimic Tear is a particularly consequential composition tool. It uses HP to summon instead of the usual FP, and takes its equipment configuration from the player at the moment of summoning. Changing the player's equipment afterward does not change the copy. Its health is governed differently from the player's and depends on its own reinforcement. The ash is obtained from a chest in Night's Sacred Ground, not automatically as the reward for defeating the similarly named boss. [C36](#c36)
+
+**Analysis:** summoning changes more than damage output. When an enemy attends to an ally, the player may gain a heal, a long cast, room to reposition, or a chance to attack from another direction. A companion that survives longer can therefore enable more damage than its own attacks suggest. Conversely, dividing attention can make turn-taking less predictable, and a companion can die before the player has learned the encounter's rhythm. This is why “summon strength” needs several measures: survival, interruption, targeting behavior, positioning, attack contribution and compatibility with the player's intended actions.
+
+The system also extends the build into AI behavior. A Mimic equipped with a focused selection of tools has a different action menu from one copying an eclectic loadout. **Analysis:** this creates an accessible form of indirect party design. It can also produce disappointment if the companion has the right equipment but chooses the wrong moment. The player controls preparation much more directly than execution; the interface should make that boundary understandable.
+
+Update 1.13 demonstrates that support balance was actively differentiated. It improved the attack and defensive performance of non-Mimic spirits at higher ordinary upgrades and higher Revered Spirit Ash Blessing levels, explicitly excluding the Mimic. Thus launch-era declarations that one ash makes all others obsolete are not a sufficient description of later tuning. The official notes establish the intervention; they do not establish that the resulting roster became equally popular or equally effective. [C37](#c37)
+
+## 11. Four encounters show what the systems actually ask of players
+
+These are constructed decision walkthroughs grounded in documented rules and named player accounts. They illustrate different problems; they are not reports of new playtests or universal boss instructions.
+
+### Constructed case 8 — Margit as a preparation and timing test
+
+A player reaches Margit using repeated attacks after the first apparent opening. The combination of staff reach, magical daggers and a later hammer punishes the assumption that an enemy has only one cadence. Liam Croft's guide recommends reading full sequences, retaining stamina and using the openings after committed moves; it also describes Spirit Ashes and Rogier drawing attention. [C40](#c40)
+
+The player now has several independent decisions: learn the attack ending, change the defensive tool, increase practical durability, or introduce an ally. Suppose the next attempt uses a spirit to create space but still attacks too many times when Margit turns back. The assistance has improved opportunity without fixing the player's commitment problem. **Analysis:** this makes Margit a useful diagnostic encounter: the same loss can reveal a timing problem or a preparation gap, and the player can choose which to address first. **Limit:** his role at Stormveil's entrance does not mean the whole open world must be solved through this fight immediately; nor does summoning promise a safe window whenever desired.
+
+### Constructed case 9 — Starscourge Radahn as a battlefield
+
+The Radahn Festival places summon signs across a large battlefield and permits Torrent. The opening ranged barrage, enormous melee reach and spectacular return from the sky change the relevant scale of movement. Fallen festival allies can become available through further signs, creating a support-management loop unlike an ordinary single ash summon. These are special encounter rules; they should not be generalized to every boss. [C41](#c41)
+
+A player can ride between signs, restore pressure with allies and approach when attention shifts, or commit to a closer personal duel. The next decision changes with the battlefield state: attack, heal, reposition or recruit again. **Analysis:** the fiction of a festival becomes an action structure. The encounter's scale is communicated through participation and traversal, rather than just an enlarged health bar. **Limit:** using the available army is a choice, and surviving a large attack still requires recognizing its cue. An ally does not make the player immune to an attack covering their position.
+
+Patch interpretation matters here. The April 4, 2022 regulation update restored attack power unintentionally reduced during the 1.03 balance adjustment. “Pre-nerf Radahn” therefore refers to a historical configuration, not a stable category explaining all later experiences. The official correction concerns particular attack power, not a declaration that every earlier change was reversed. [C42](#c42)
+
+### Constructed case 10 — Malenia exposes the limits of generic safety
+
+Malenia is an optional, two-phase encounter whose successful contacts heal her, including contacts against a shield. Waterfowl Dance combines rapid repeated attacks; the later phase adds rot-associated threats and a diving bloom. Sean Martin's first-person account describes heavy-weapon cooperation as productive while warning that an ally absorbing hits can feed her recovery. That is a documented tactical experience, not evidence that all spirits are useless or that shields never work. [C38](#c38)
+
+Consider a shield user who survives a sequence but sees the boss regain health. The defensive action protected the player while surrendering progress. The next experiment might prioritize evasive positioning for that sequence while preserving the shield for emergencies. This encounter makes “I did not lose HP” and “that was a favorable exchange” visibly different judgments.
+
+A second decision becomes available through a discovered interaction: a well-timed Freezing Pot can interrupt Waterfowl when it triggers frostbite. The original toxicBird7 thread and contemporaneous reporting describe the opportunity and its limits, including increased resistance after successive applications. The player's recipe, ingredients, container, selected item and readiness now matter to an execution problem. A previous frost application or an attack already underway can undermine the planned response. **Limit:** this is not an unlimited interruption button, and the dossier does not certify a current universal pot count or timing window. [C39](#c39)
+
+Reception reveals both sides of that depth. Morgan Park wrote that he had largely ignored ritual pots for roughly 100 hours; discovering this use made an overlooked system relevant. In the original discussion, players welcomed the discovery, while others complained about reaching the pot on keyboard controls or argued that Waterfowl dominated an otherwise enjoyable encounter. One commenter described failing with other thrown items and abandoning the idea before learning the frost interaction. These accounts demonstrate distinct reactions and discoverability failures, not their prevalence. [C39](#c39)
+
+**Analysis:** a surprising counter can create delight and community knowledge. If the visible action is simply “throw something,” however, a failed ordinary projectile may teach the wrong rule. The actual distinction is triggering an effect with the required interruption behavior. The design lesson is to preserve meaningful discovery while providing enough feedback that a failed experiment narrows the player's understanding instead of closing an entire avenue incorrectly.
+
+### Constructed case 11 — Promised Consort Radahn and readable difficulty
+
+The expansion's final encounter supplies a particularly useful versioned case. Update 1.14 changed the opening behavior and some moves, reduced selected HP and stamina damage, reduced the reach of some non-weapon attacks, and improved attack-effect visibility. These are several different interventions: numerical tolerance, spatial demand, action sequence and perceptual clarity. [C43](#c43)
+
+Suppose a player could survive a sequence only by keeping a greatshield raised and could not reliably identify its next strike through the visual effects. Lower damage alone might permit more failed readings; clearer effects can instead improve the information needed for learning. More recovery after a move can create a counterattack opportunity without requiring that all player attacks become stronger. **Analysis:** these distinctions let designers ask which part of difficulty is producing satisfaction and which part is merely obstructing comprehension.
+
+Austin Wood's September 2024 first-person assessment welcomed the clearer effects, described more opportunities to retaliate, and said parrying could make the fight feel rhythmic. He also recognized that some players would miss the previous challenge. His account is useful evidence of a skilled player's evaluation; it is not a representative survey of pre- and post-update satisfaction. **Limit:** this constructed comparison isolates design questions, not controlled telemetry proving that any one patch element caused a change in completion or enjoyment. [C44](#c44)
+
+## 12. What this combat design teaches, and where inference stops
+
+The chapter's strongest transferable finding is **composition across several kinds of agency**. Equipment changes available actions; reinforcement changes their payoff; attributes govern requirements and resources; consumables introduce temporary answers; spirits change attention; encounter geometry changes which answers are practical. The meaningful unit of design is the resulting decision, not an isolated count of weapons, spells or bosses.
+
+Five implications follow from the documented mechanisms and cases above. These are analytical proposals for evaluating another game's design, not claims that Elden Ring's sales prove each system caused success:
+
+1. **Separate discovering an option from making it usable.** A new spell, weapon or companion needs comprehensible prerequisites and a reasonable path to practical readiness. Otherwise, collection can outpace meaningful choice.
+2. **Give defensive success an understandable consequence.** Blocking, evading, interrupting and creating distance should expose different opportunities and costs. Malenia shows how strongly a boss-specific rule can overturn the normal value of an action.
+3. **Let preparation alter the problem.** A companion or specialized consumable can change encounter structure, giving players reasons to explore, craft and experiment beyond raising damage.
+4. **Make failure informative across layers.** The player needs enough evidence to distinguish bad timing, insufficient resources, an incompatible effect and a poorly chosen tool. Hidden breadth without feedback becomes dependence on external explanation.
+5. **Treat readable action and numerical challenge as separate tuning controls.** Version 1.14 shows why visual clarity, recovery, stamina pressure and damage deserve distinct review. The reaction to one cannot be inferred from an aggregate “difficulty” label.
+
+The evidence also places limits on imitation. This chapter supports a design hypothesis that expressive preparation can coexist with demanding execution. It does not show that every game should organize its whole progression around compulsory boss mastery. OpenLegend's broader survival-adventure and life activities require their own treatment of failure cost, voluntary challenge and time spent away from combat. The dossier's synthesis should evaluate these mechanisms against that intended experience.
 
 ## Sources and access
 
@@ -266,4 +336,32 @@ Sources below were read as written bodies unless explicitly qualified. Official 
 
 <a id="c33"></a>**C33 — Discovery and victory rewards.** [Gamer Guides, Silver-Pickled Fowl Foot](https://www.gamerguides.com/elden-ring/database/items/consumables/silver-pickled-fowl-foot), undated; [PC Gamer / Sarah James, Remembrance duplication](https://www.pcgamer.com/elden-ring-remembrance-duplicate-wandering-mausoleum/), updated July 9, 2024. Item text and original guide; read duplication and base/DLC reward sections.
 
+<a id="c34"></a>**C34 — Spirit availability and reset.** [Bandai Namco, Starter Guide](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-starter-guide-tips-know-playing-the-game), November 10, 2021, for monument/area/multiplayer restrictions; [Push Square / Liam Croft, Summon Spirits](https://www.pushsquare.com/guides/elden-ring-how-to-summon-spirits-and-use-ashes-summons), displayed update August 26, 2026, for rest reset. Official early manual and original retail guide; FP exceptions are covered separately.
+
+<a id="c35"></a>**C35 — Ally types and reinforcement.** [GamesRadar / Joel Franey, Spirit and NPC summons](https://www.gamesradar.com/elden-ring-summons-ash-spirit-npcs/), accessed October 24, 2026; Gamer Guides item records for [Grave Glovewort 1](https://www.gamerguides.com/elden-ring/database/items/upgrade-materials/grave-glovewort-1) and [Great Ghost Glovewort](https://www.gamerguides.com/elden-ring/database/items/upgrade-materials/great-ghost-glovewort). Original guide and item text; the guide's claim that upgrades increase summoned creature count is excluded.
+
+<a id="c36"></a>**C36 — Mimic configuration.** [GamesRadar / Joel Franey, Mimic Tear Ashes](https://www.gamesradar.com/elden-ring-mimic-tear-ashes-summon-boss-fight/), accessed October 24, 2026. Original guide, written equipment-snapshot, HP-cost and acquisition sections. “Perfect copy” is qualified by the guide's own health differences; uncertain AI/resource details are not universalized.
+
+<a id="c37"></a>**C37 — Differentiated spirit and weapon tuning.** [Bandai Namco, Patch 1.13](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-patch-notes-version-113), page dated July 29, 2024. Official notes: non-Mimic spirit improvements, separate PvP adjustments and thrusting-shield fixes.
+
+<a id="c38"></a>**C38 — Malenia's encounter and a player's tactics.** [PC Gamer / Sean Martin, with later updates, Malenia boss guide](https://www.pcgamer.com/hand-of-malenia-elden-ring-location-miquella/), displayed update May 21, 2025. First-person tactics and phases. Its earlier sentence implying shields stop her healing conflicts with its detailed explanation and is excluded; broad “useless” judgments are not statistics.
+
+<a id="c39"></a>**C39 — Freezing Pot discovery and reactions.** [u/toxicBird7, original Waterfowl counter thread](https://www.reddit.com/r/Eldenring/comments/twhe86/simple_accessible_counter_for_malenias_waterfowl/), April 2022; [PC Gamer / Morgan Park, Malenia counter report](https://www.pcgamer.com/elden-ring-malenia-cheese-strategy/), April 6, 2022. Read original written comments, including consumables-only player falcon_punch123987, and Park's written account; did not claim independent video measurement. Thread samples are qualitative and self-selected.
+
+<a id="c40"></a>**C40 — Margit action structure.** [Push Square / Liam Croft, Margit guide](https://www.pushsquare.com/guides/elden-ring-how-to-beat-margit-the-fell-omen), displayed update August 26, 2026. Original encounter guide; used moves, openings and available help. Recommended level and obsolete rune-reward figure are not adopted.
+
+<a id="c41"></a>**C41 — Festival battle rules.** [GamesRadar / Joel Franey, Radahn boss fight](https://www.gamesradar.com/elden-ring-radahn-boss-fight/), accessed October 24, 2026. Original guide; read approach, NPC signs, resummoning and both phases. Subjective priority rankings and exact simultaneous-summon counts are not adopted.
+
+<a id="c42"></a>**C42 — Historical Radahn correction.** [Bandai Namco, Update Notes 1.03](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-update-notes-103), page March 31, 2022, announcing April 4 distribution. Official App 1.03.2 / Regulation 1.03.3 correction of unintentionally reduced attack power.
+
+<a id="c43"></a>**C43 — Expansion final-boss intervention.** [Bandai Namco, Patch 1.14](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-patch-notes-version-114), page dated September 10, 2024. Official qualitative changes; no numerical reductions invented.
+
+<a id="c44"></a>**C44 — Post-update first-person assessment.** [GamesRadar / Austin Wood, Consort Radahn after the nerf](https://www.gamesradar.com/games/action-rpg/2-years-later-elden-ring-players-dig-out-their-i-beat-radahn-before-the-nerf-stickers-as-early-runs-show-fromsoftware-really-took-a-bat-to-shadow-of-the-erdtrees-final-boss/), September 2024. Written appraisal by an experienced player. Used his observations and opinions; linked runs were not independently analyzed frame by frame.
+
 <a id="c45"></a>**C45 — Magic traditions and representative spell shapes.** Gamer Guides [Sorceries](https://www.gamerguides.com/elden-ring/database/magic-spells/sorceries) and [Incantations](https://www.gamerguides.com/elden-ring/database/magic-spells/incantations), accessed October 24, 2026. Read relevant item-text entries for glintstone, night, cold, dragon, bestial, black-flame, protection and frenzy examples. These are qualitative selections; database-wide counts and stale numerical recommendations are excluded.
+
+<a id="c46"></a>**C46 — Paired weapon text.** [Gamer Guides, Claws](https://www.gamerguides.com/elden-ring/database/weapons/claws), accessed October 24, 2026. Hookclaws' transcribed item description explicitly states that two-handing equips a claw on each hand.
+
+<a id="c47"></a>**C47 — Guard failure tutorial.** [EIP Gaming, About Guarding](https://eip.gg/elden-ring/db/about-guarding/), accessed October 24, 2026. Transcription of the in-game tutorial: guarding spends stamina and fails when it is exhausted.
+
+<a id="c48"></a>**C48 — Armor and tailoring boundary.** Push Square's [equipment upgrade guide](https://www.pushsquare.com/guides/elden-ring-how-to-upgrade-weapons-and-armour) and [Boc quest guide](https://www.pushsquare.com/guides/elden-ring-how-to-complete-boc-the-seamsters-quest-and-alter-garments-for-free), displayed updates August 26, 2026. Used explicit no-armor-reinforcement and tailoring-service passages; contradictory generic “weapons and armour” language and inaccurate Somber descriptions are excluded.
