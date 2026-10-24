@@ -2,7 +2,19 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Full research pass, September 26, 2026.** Scope: the February 25, 2022 game, Shadow of the Erdtree, and the released 2026 Tarnished Edition/Pack. Nightreign is a separate game. Five original base-game reviews, an expansion review, a developer interview and contrasting Steam accounts were read. Earlier checkpoint observations and edition corrections are incorporated below. This is a standalone expansion-roster owner; no original packet/chapter/mechanics passage is replaced. Global preservation gates remain separate. Research is not an accepted OpenLegend feature or implementation plan.
+**Deep case study in progress; evidence cutoff October 24, 2026.** Scope: the February 25, 2022 base game, Shadow of the Erdtree, and the released Tarnished Edition/Pack. Nightreign is a separate game. The original September research remains here with its dated evidence; the chapters below provide the detailed systems, lore, reception, economics and modding study. Research is not an accepted OpenLegend feature or implementation plan. The [scoped completion record](../research-progress-elden-ring-2026-10-24.md) owns coverage and evidence limits; whole-library preservation gates remain separate.
+
+## Read by question
+
+| Study | What it explains |
+| --- | --- |
+| [Combat, builds and equipment](elden-ring/01-combat-builds-and-equipment.md) | Actions and defensive decisions, damage/stance/status, weapons and skills, magic, equipment composition, loot, crafting, progression and worked encounters. |
+| [World, exploration and narrative](elden-ring/02-world-exploration-and-narrative.md) | Regions and route structure, dungeons, traversal, history and cosmology, NPC quest studies, endings, environmental storytelling, presentation and production. **Major spoilers.** |
+| [Reception, commercial and cultural impact](elden-ring/03-reception-commercial-and-cultural-impact.md) | What different players valued or disliked, base game versus expansion, replay/abandonment, independent reviews, direct player accounts, reported sales and the attributed $2 billion estimate. |
+| [Native multiplayer and modding](elden-ring/04-multiplayer-and-modding.md) | Messages, co-op, invasions, arenas, native limits, community tools, major mods, authoring/distribution workflows and compatibility boundaries. |
+| [Design synthesis and OpenLegend implications](elden-ring/05-design-synthesis-and-openlegend.md) | Connected gameplay loops, inherited versus distinctive choices, dated patch decisions, transferable hypotheses, counterexamples and links to existing OpenLegend direction. |
+
+The study covers all major system families and required research dimensions. It is not an item-by-item statistical database, a claim to resolve every lore ambiguity, or a firsthand playtest. Older player accounts remain dated; detailed chapters identify patch and platform boundaries.
 
 ## 1. Identity, player promise and the first session
 
@@ -22,7 +34,7 @@ Walking, sprinting, jumping, crouching, rolling, backstepping, climbing ladders 
 
 ### Stance, poise and critical openings
 
-The original pass named stagger/critical attacks but did not close the rules relationship. Elden Ring distinguishes the **enemy stance-break loop** from the player's **Poise** resistance. Heavy, charged, jumping and guard-counter attacks are especially effective at breaking enemy stance; a broken/exposed enemy can then accept a high-damage critical at the appropriate position, and parries can create the same kind of opening. Some enemies require more than one parry before they become vulnerable. [E28](#e28)
+Elden Ring distinguishes the **enemy stance-break loop** from the player's **Poise** resistance. Heavy, charged, jumping and guard-counter attacks are especially effective at breaking enemy stance; a broken/exposed enemy can then accept a high-damage critical at the appropriate position, and parries can create the same kind of opening. Some enemies require more than one parry before they become vulnerable. [E28](#e28)
 
 For the player, **Poise** is an equipment-derived resistance to being staggered out of actions. Heavier armor tends to provide more Poise, but its weight can push the character into a slower/heavier dodge state. [E29](#e29) This creates a real build tradeoff between maintaining action under pressure and preserving mobility rather than reducing “defense” to damage resistance alone.
 
@@ -82,6 +94,8 @@ Enemy patrols, detection, attacks and clashes can make places feel occupied inde
 
 Native online features include cooperative assistance and competitive encounters; the official site separately lists arena participation. Messages, signs and traces create a sense of other travelers without making the world a permanent shared MMO. Seamless campaign-co-op mods must not be treated as the native experience. The publisher's displayed co-op count is not a universal total for every mode. [E20](#e20) [E16](#e16)
 
+The [multiplayer and modding chapter](elden-ring/04-multiplayer-and-modding.md) distinguishes native messages, co-op, invasions and arenas from community campaign modifications, including their progression and session boundaries.
+
 The August 2026 patch supplies a particularly concrete persistence boundary: a newly added Leyndell NPC invasion is unavailable once the city has become Ashen Capital. A story-state change can therefore close access to an encounter. Calling the game open-ended does not imply that all opportunities remain available forever. [E10](#e10)
 
 ## 5. Shadow of the Erdtree as a distinct progression experiment
@@ -93,6 +107,8 @@ Entry requires defeating Radahn and Mohg. In the new region, Scadutree Fragments
 Marcus Stewart's review praises the blessing system for letting an established character progress without relying solely on expensive levels. He also notes abundant smithing materials that encourage trying new equipment, vertically layered routes and striking optional places. He finds the experience less wholly surprising than the original but still compelling. This is not interchangeable with a newcomer starting the base game: he began with an endgame character. [E18](#e18)
 
 Miyazaki told Ash Parrish that freedom was intended to offset the demanding difficulty and that feedback about enjoyable versus stressful encounters informed the expansion. Parrish's own experience was substantially more frustrated. The developer's aim and the player's result should be recorded separately. Neither the provocative headline nor an enthusiastic review establishes that every audience experiences the intended balance. [E19](#e19)
+
+The [deep world study](elden-ring/02-world-exploration-and-narrative.md) traces the expansion's geography, character conflicts and ending; the [combat chapter](elden-ring/01-combat-builds-and-equipment.md) explains its equipment and encounter systems. The [dated patch comparison](elden-ring/05-design-synthesis-and-openlegend.md#4-post-launch-decisions-reveal-what-the-design-can-change) distinguishes launch balance from subsequent blessing, boss-visibility and reward changes.
 
 ## 6. Worked interactions
 
@@ -124,9 +140,11 @@ George R. R. Martin's own December 2021 account describes a bounded collaboratio
 
 The expansion interview adds evidence of iteration rather than a claim to have reverse-engineered production. Miyazaki connected Miquella's story to completing the mythology already supplied and described using player feedback when shaping difficulty. Patch 1.17 documents later content support and encounter conditions. Neither source supplies an audited budget, headcount allocation or implementation architecture; those remain unverified. [E19](#e19) [E10](#e10)
 
+The [commercial analysis](elden-ring/03-reception-commercial-and-cultural-impact.md) separates publisher-reported milestones from Alinea Analytics' October 22, 2026 estimates, explains the reported $2 billion figure and its accounting limits, and models price sensitivity without claiming profit.
+
 The distribution model is premium software with separately purchasable expansion/pack content and bundles. FromSoftware's corporate history records **five million Shadow of the Erdtree units within three days** and a **ten-million milestone in July 2025**. Bandai Namco's August 28, 2026 release announcement describes the original game as exceeding **30 million units**. These differently dated publisher/developer figures do not establish current unique players, revenue, profit or a synchronized expansion attach rate. Nightreign's figures are excluded. [E12](#e12) [E1](#e1)
 
-Martin's blog links a story trailer and gameplay reveal; Bandai Namco's 2024 announcement pairs the expansion reveal with platform and bundle information. The September 2026 Community Quests promotion additionally sets collective in-game targets with artwork and Twitch-badge rewards. Its September 1–28 period is still underway on the research date; participation goals are not completed-result claims. [E13](#e13) [E11](#e11) [E21](#e21)
+Martin's blog links a story trailer and gameplay reveal; Bandai Namco's 2024 announcement pairs the expansion reveal with platform and bundle information. The September 2026 Community Quests promotion additionally sets collective in-game targets with artwork and Twitch-badge rewards. Its announced September 1–28, 2026 window is historical; that announcement establishes participation goals and rewards, not verified campaign outcomes. [E13](#e13) [E11](#e11) [E21](#e21)
 
 **Interpretation:** a surprising vista, an unusual victory, a build explanation and a lore reconstruction are different word-of-mouth units. The game gives audiences several reasons to share beyond a plot summary. The existence of such sharing opportunities does not quantify their contribution to sales, and a celebrated developer plus an internationally known author is not a reproducible marketing baseline for OpenLegend.
 
@@ -164,26 +182,27 @@ An additional direct Steam discussion about expansion blessings contains a subst
 
 ## 11. Coverage and preservation
 
-| Requirement | Owner |
+| Requirement | Substantive coverage |
 | --- | --- |
-| R01 | §1, edition boundaries and §5 |
-| R02 | §2 and native social modes in §4 |
-| R03 | §2 equipment/recipe inventory, §3 upgrade access |
-| R04 | §3 and expansion progression in §5 |
-| R05 | Six constructed situations in §6 |
-| R06 | §4, authored NPC and multiplayer boundaries |
-| R07 | §7 and explicit interface consequences |
-| R08 | Spoiler-marked §4 and expansion premise |
-| R09 | §8, Martin handoff, Miyazaki interview and patch evidence |
-| R10 | §8, reveal routes and current collective promotion |
-| R11 | §8, dated units and definition limits |
-| R12 | §9, five base-game reviews plus expansion/player comparisons |
-| R13 | §10, dependencies, alternatives and failure modes |
-| R14 | This map, annotated sources and preserved checkpoint material |
+| R01 | §§1/5 and [edition/version boundaries](elden-ring/01-combat-builds-and-equipment.md) |
+| R02 | §2 and the complete [combat/actions](elden-ring/01-combat-builds-and-equipment.md), [world/traversal](elden-ring/02-world-exploration-and-narrative.md), and [online systems](elden-ring/04-multiplayer-and-modding.md) studies |
+| R03 | §§2–3 and [equipment, magic, crafting and item composition](elden-ring/01-combat-builds-and-equipment.md) |
+| R04 | §§3/5 and [progression/resources/reset rules](elden-ring/01-combat-builds-and-equipment.md), [return and abandonment](elden-ring/03-reception-commercial-and-cultural-impact.md) |
+| R05 | Six retained situations in §6 plus varied constructed cases in the [combat](elden-ring/01-combat-builds-and-equipment.md), [world](elden-ring/02-world-exploration-and-narrative.md) and [modding](elden-ring/04-multiplayer-and-modding.md) chapters |
+| R06 | §4 and detailed [NPC/quest/faction boundaries](elden-ring/02-world-exploration-and-narrative.md), [co-op/invasion/asynchronous participation](elden-ring/04-multiplayer-and-modding.md) |
+| R07 | §7 and [presentation/audio/interface](elden-ring/02-world-exploration-and-narrative.md), [accessibility/readability reactions](elden-ring/03-reception-commercial-and-cultural-impact.md) |
+| R08 | §4 and spoiler-marked [cosmology, history, people, quests, endings and narrative delivery](elden-ring/02-world-exploration-and-narrative.md) |
+| R09 | §8 and [documented production](elden-ring/02-world-exploration-and-narrative.md), [creator workflows](elden-ring/04-multiplayer-and-modding.md) |
+| R10 | §8 and [distribution, marketing and cultural circulation](elden-ring/03-reception-commercial-and-cultural-impact.md) |
+| R11 | §8 and [dated commercial evidence, estimated spending, costs and causal limits](elden-ring/03-reception-commercial-and-cultural-impact.md) |
+| R12 | §9 and [substantive independent criticism, Steam accounts, enjoyment/return/abandonment](elden-ring/03-reception-commercial-and-cultural-impact.md) |
+| R13 | §10 and [comparative synthesis, tradeoffs and OpenLegend hypotheses](elden-ring/05-design-synthesis-and-openlegend.md) |
+| R14 | This map, preserved examples/source register, each chapter's adjacent citations and source-access qualifications, [completion evidence](../research-progress-elden-ring-2026-10-24.md) |
+| R15 | **Applicable: yes, PC community modding.** [Tools, representative projects, workflow, distribution, conflicts, incentives and limits](elden-ring/04-multiplayer-and-modding.md). Native construction and official source-code access are not implied. |
 
 ### Mechanics inventory completeness check
 
-This closes the assignment's explicit mechanics inventory against the sourced sections above.
+The following inventory routes the original overview; the detailed chapter map above covers the deeper study.
 
 - **Identity, attributes, progression, jobs/trees:** character creation, starting classes, attributes, leveling and build revision are covered in §§1–3. Starting class is an initial package rather than a permanent profession; there is no separate conventional perk tree.
 - **Items, inventory, weapons/armor, crafting/upgrading, magic/powers:** §2 covers weapons, shields, armor, talismans, Ashes of War, Spirit Ashes, sorceries/incantations and consumables; §3 covers smithing access and Rebirth. Cookbooks/materials support bounded item crafting rather than settlement production.
@@ -191,13 +210,13 @@ This closes the assignment's explicit mechanics inventory against the sourced se
 - **Combat, stealth, loot/rewards, death/failure/recovery:** §2 covers melee/ranged/magic combat, guarding, parrying, dodging, enemy stance breaks/critical openings, player Poise, status buildup/resistances and critical actions. Crouching and enemy detection support stealthy approaches without a separate stealth skill tree. Loot/merchant/encounter rewards and rune loss/recovery, Grace and Stakes of Marika are covered in §§2–3.
 - **Economy/trading, story, relationships/romance/reputation, party/companions:** runes, merchants and upgrade access are in §3; story/NPC relationships are in §4. Ranni's route is authored narrative rather than a general approval/romance system. Spirit Ashes and summons are bounded assistance, not a persistent controllable party.
 - **NPC/AI/schedules, factions, world map/environment, quests/events:** §4 covers NPC quest state, enemy patrol/detection behavior and world-state closures. The world has political/lore factions but no general player faction-reputation economy. NPC opportunity is authored and stateful rather than a universal schedule simulation.
-- **Building/settlements/management, multiplayer/social, endgame/return loops:** settlement construction and household management are absent (§3). Native co-op, invasions, messages and arena play are covered in §4. §3 now closes the base game's Journey 2/New Game Plus retention/reset boundary; §5 separately covers Shadow of the Erdtree progression.
+- **Building/settlements/management, multiplayer/social, endgame/return loops:** settlement construction and household management are absent (§3). Native co-op, invasions, messages and arena play are covered in §4. §3 explains the base game's Journey 2/New Game Plus retention/reset boundary; §5 separately covers Shadow of the Erdtree progression.
 
-Suggested study sequence: compare a failed early encounter with the route chosen afterward; inspect one weapon/skill compatibility change; compare a stance-break/critical sequence with a status-buildup sequence; follow a bearing from dungeon to shop; then examine Rebirth and an expansion blessing. **E28–E30** are the compact first-party reading route for the combat-state distinctions added in the audit. Narrative study can follow Ranni only after accepting major spoilers. These are proposed observations, not playtests performed in this pass. Martin's linked reveals and Bandai Namco's edition/gameplay videos are **unwatched viewing routes**, without invented timestamps. The earlier packet and selective mechanics studies remain unchanged.
+Suggested study sequence: compare a failed early encounter with the route chosen afterward; inspect one weapon/skill compatibility change; compare a stance-break/critical sequence with a status-buildup sequence; follow a bearing from dungeon to shop; then examine Rebirth and an expansion blessing. **E28–E30** are a compact first-party reading route for the combat-state distinctions. Narrative study can follow Ranni only after accepting major spoilers. These are proposed observations, not playtests performed in this pass. Martin's linked reveals and Bandai Namco's edition/gameplay videos are **unwatched viewing routes**, without invented timestamps. The earlier packet and selective mechanics studies remain unchanged.
 
 ## Sources and access notes
 
-Accessed September 26, 2026. Relevant written bodies were read unless described as a discovery route. Guides document observed play, not proprietary implementation. Failed guessed URLs, inaccessible Fextralife/Fandom bodies and an inaccessible Xbox interview are not counted as evidence. No code, unseen video or current platform benchmark was inspected.
+**Original source register, September 26–27, 2026.** The deep chapters have their own October 24 source registers. Relevant written bodies were read unless described as a discovery route. Guides document observed play, not proprietary implementation. Failed guessed URLs, inaccessible Fextralife/Fandom bodies and an inaccessible Xbox interview are not counted as evidence. No code, unseen video or current platform benchmark was inspected.
 
 <a id="e1"></a>**E1.** [Bandai Namco: Tarnished Edition released](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-tarnished-edition-and-new-content-elden-ring-beckon-back-players-the), August 28, 2026. Primary content, release and original-game unit milestone.
 
