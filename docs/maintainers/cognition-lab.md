@@ -63,7 +63,7 @@ The design task does not authorize new automated tests. For implementation quali
 - [ ] Build an immediately readable result summary, flat stage list, direct evidence links and replacement subpanels with breadcrumbs. Preserve capture availability/completeness, chronology and record identity across selection and streaming.
 - [ ] Explain not perceived, no opportunity, native-only, continued activity, combined/deferred, cancelled, stale, rejected, unsupported, failed, service/budget unavailable and missing-capture outcomes from actual records.
 - [ ] Show memory candidates/selection/exclusion when captured by the owner, exact recognition/reference bindings, known/unknown evidence, questions/options, output, effect changes and request timing/cost where available.
-- [ ] Load large payloads/details only on request; preserve complete captured contents through paging, find and export without a recursively expanded object tree.
+- [ ] Page run children and stage evidence through scoped indexed summary rows; keep workspace/run/stage headers bounded, maintain derived totals at their source changes and load exact payloads/details only on request. Preserve complete captured contents through paging, find and export without repeatedly parsing full manifests.
 
 **Exit:** selecting an old decision displays what that decision actually used exclusively in the right inspector. It never reconstructs historical input from the current left state or invents an explanation where instrumentation is absent. Existing rolling diagnostic eviction cannot silently destroy a deliberately retained run.
 
@@ -92,7 +92,9 @@ The design task does not authorize new automated tests. For implementation quali
 - [ ] Capture one exact current applied origin automatically when a new run starts, including unsaved applied edits, without a naming dialog; reuse it for subsequent intervals and record ordered stimuli/interventions. Reset identifies its origin; New uses the normal initializer.
 - [ ] Use current-format native world save/restore for scenario/checkpoint content, including required body, action, memory, recognition and queue continuation state according to native ownership.
 - [ ] Retain exact experiment evidence separately from mutable current state, with explicit annotations, names, provenance, import/export and deliberate removal.
-- [ ] Implement bounded capture/storage admission and honest partial/error states. Never silently evict pinned work or imply that a capture-only run can resume a world.
+- [ ] Apply one retention allowance to serialized lab metadata, native-only run records, artifacts/checkpoints and pending writes, with reserved terminal receipt space and incremental accounting. Remove shared artifact bytes only after the last eligible lab reference; preserve other runs when removing a descriptor.
+- [ ] Reuse the shared load/recovery owner and qualify complete candidate construction, install and pre-load recovery cost. Correct demonstrated blocking preparation there, rather than implementing a lab loader or assuming streamed saving makes restoration nonblocking.
+- [ ] Preserve honest partial/error states. Never silently evict pinned work or imply that a capture-only run can resume a world.
 
 **Exit:** repeat from starting conditions, continue interrupted work and read prior evidence are separately reliable. Same-version development data is sufficient; no old-format migration, compatibility matrix, event-sourcing platform or per-call full-world snapshot system is introduced.
 
@@ -118,7 +120,8 @@ The design task does not authorize new automated tests. For implementation quali
 
 - [ ] Complete the feature specification's acceptance journeys using actual native state and inspect the same request/effect path in game and lab; record source revision, configuration and any provider substitution.
 - [ ] Qualify full desktop journeys, stable scroll/focus, keyboard controls, long lists/text, streaming, error recovery, historical/current separation and ordinary speech setup comprehension with Mike.
-- [ ] Measure initial readiness, interaction latency, captured/detail payload sizes and bounded query/DOM work. Verify pagination before hydration and fair shared-process capacity; tune proposed bounds from evidence.
+- [ ] Measure initial readiness, interaction latency and query/DOM work with growing unrelated fields/choices, many intervals in one run and large stage evidence collections. Verify bounded bootstrap/detail projections and paging before hydration through actual production query plans.
+- [ ] Measure first origin capture, import and repeated comparison restores with growing cold history while the game runs, including full-operation latency, peak memory and native-lane/event-loop delays. Qualify mixed native-only/model capture admission and shared-reference deletion; tune proposed bounds from evidence.
 - [ ] Evaluate meaningful episodes through CE05/IS and the exact CTR10 baseline. Report implemented capability, observed behavior and enjoyable/player-useful evidence separately.
 - [ ] Reconcile the final implemented architecture, limits statuses, focused trackers and qualification report without retroactively presenting this design as runtime evidence.
 
