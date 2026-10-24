@@ -1,4 +1,4 @@
 interface:
-  display_name: "OpenLegend Art Flows"
-  short_description: "Run Standard or Higgsfield art studies and production"
-  default_prompt: "Use $openlegend-art with the Higgsfield flow for a UI style study using my references."
+  display_name: 'OpenLegend Art Flows'
+  short_description: 'Run Standard or Higgsfield art studies and production'
+  default_prompt: 'Use $openlegend-art with the Higgsfield flow for a UI style study using my references.'

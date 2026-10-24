@@ -28,22 +28,22 @@ parchment-book interface, or change the world's rendering style.
 The following are observations of the supplied images, not verified attribution of every
 game or permission to reuse its assets.
 
-| Supplied filename | Treatment to study |
-| --- | --- |
-| `ytmrpv8jgs5d1.png` | Rough ink-like outer edges, inset grey material and a quieter inner frame. |
-| `700757-1495151718.webp` | Aged paper centers, book-like structure, metal corners, inset frames and ornamental rail ends. |
-| `dragon-tooth-in-runescape-dragonwilds.jpg` | Dark grain, nested fine brass borders, recessed slots and diamond-ended dividers. |
-| `08dcc251-0fcc-4dc2-a249-005781b63f2d.webp` | Worn parchment, a wax-seal attachment, dark card framing and restrained luminous selection. |
-| `ad1d68e7-255a-4ea4-8be7-c9ad4b99b617.webp` | Rough rails, pointed circular frames, patterned bands and consistent selected accents. |
-| `a0ffb8fe-dd46-4d6b-99e7-c094e812cef9.webp` | Inset rings, small attachment sockets and empty versus occupied frame treatment. |
-| `4b3a7f86-485d-4c87-8c27-cb1ef1c1cfa4.webp` | Segmented metal edges, endpoint caps, medallions and a framework connecting circular elements. |
-| `3r5Q+7.jpg` | Fine gold outlines, curling corner filigree, diamond frames and quiet dark fields. |
-| `esVTC_.jpg` | Repeated diamond frames, connecting lines, geometric guides and distinct line emphasis. |
-| `1_iUbda4f2ZAVcnbc2TuJoFg.webp` | Clipped corners, nested outlines, header brackets and a consistent connector vocabulary. |
-| `aecb2d75307025.5c48cdc5e4e61.jpg` | Restrained double frames, inset backgrounds and focused selection glow. |
-| `rjdC2Ls.png`, `game-ux-design-img-2.png` | Fine geometric frames and restrained backing; exclude the colored analysis guides in the former. |
-| `b8zip4ablwjh1.jpeg`, `i-am-personally-really-loving-the-new-ui-v0-uopkpq5y3peg1.webp` | Bevels, recessed cells, thin metallic boundaries, title rails and modular joins. |
-| `assassins-creed-odyssey-ui.jpg`, `1374490_20.webp` | Restraint over a visually busy world; decorative weight can vary with context. |
+| Supplied filename                                                                      | Treatment to study                                                                               |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `ytmrpv8jgs5d1.png`                                                                    | Rough ink-like outer edges, inset grey material and a quieter inner frame.                       |
+| `700757-1495151718.webp`                                                               | Aged paper centers, book-like structure, metal corners, inset frames and ornamental rail ends.   |
+| `dragon-tooth-in-runescape-dragonwilds.jpg`                                            | Dark grain, nested fine brass borders, recessed slots and diamond-ended dividers.                |
+| `08dcc251-0fcc-4dc2-a249-005781b63f2d.webp`                                            | Worn parchment, a wax-seal attachment, dark card framing and restrained luminous selection.      |
+| `ad1d68e7-255a-4ea4-8be7-c9ad4b99b617.webp`                                            | Rough rails, pointed circular frames, patterned bands and consistent selected accents.           |
+| `a0ffb8fe-dd46-4d6b-99e7-c094e812cef9.webp`                                            | Inset rings, small attachment sockets and empty versus occupied frame treatment.                 |
+| `4b3a7f86-485d-4c87-8c27-cb1ef1c1cfa4.webp`                                            | Segmented metal edges, endpoint caps, medallions and a framework connecting circular elements.   |
+| `3r5Q+7.jpg`                                                                           | Fine gold outlines, curling corner filigree, diamond frames and quiet dark fields.               |
+| `esVTC_.jpg`                                                                           | Repeated diamond frames, connecting lines, geometric guides and distinct line emphasis.          |
+| `1_iUbda4f2ZAVcnbc2TuJoFg.webp`                                                        | Clipped corners, nested outlines, header brackets and a consistent connector vocabulary.         |
+| `aecb2d75307025.5c48cdc5e4e61.jpg`                                                     | Restrained double frames, inset backgrounds and focused selection glow.                          |
+| `rjdC2Ls.png`, `game-ux-design-img-2.png`                                              | Fine geometric frames and restrained backing; exclude the colored analysis guides in the former. |
+| `b8zip4ablwjh1.jpeg`, `i-am-personally-really-loving-the-new-ui-v0-uopkpq5y3peg1.webp` | Bevels, recessed cells, thin metallic boundaries, title rails and modular joins.                 |
+| `assassins-creed-odyssey-ui.jpg`, `1374490_20.webp`                                    | Restraint over a visually busy world; decorative weight can vary with context.                   |
 
 Borrow specific qualities, not copied game art or full layouts. Do not mix all material
 families indiscriminately. The science-fiction geometry example informs construction, not

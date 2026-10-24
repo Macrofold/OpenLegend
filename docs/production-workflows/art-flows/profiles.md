@@ -6,16 +6,16 @@ result useful; they do not prescribe one model or repeat the tool routes.
 
 ## Profile map
 
-| Request | Profile | Main question |
-| --- | --- | --- |
-| Borders, panel textures, ornament, UI “scaffolding” | [UI style](#ui-style) | What material and construction language ties the interface together? |
-| Overall visual direction or a new art family | [General style](#general-style) | Which coherent direction fits the intended experience? |
-| Item, prop, icon, sprite or related asset family | [Assets and icons](#assets-and-icons) | Does it read and remain consistent at its actual use size? |
-| Person, creature, outfit or portrait family | [Character appearance](#character-appearance) | Does the identity survive different views and expressions? |
-| Surface, landscape, place or lighting study | [Materials and environments](#materials-and-environments) | Do form, surface and light work in the intended context? |
-| Animation, motion, VFX or sound | [Motion and feedback](#motion-and-feedback) | Does it communicate the intended action or feeling in time? |
-| A full visual UI system or working interface | [UI system](#ui-system) | Can the chosen appearance cover real content, states and interactions? |
-| Something else | [Custom](#custom) | What output and inspection would answer this request? |
+| Request                                             | Profile                                                   | Main question                                                          |
+| --------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Borders, panel textures, ornament, UI “scaffolding” | [UI style](#ui-style)                                     | What material and construction language ties the interface together?   |
+| Overall visual direction or a new art family        | [General style](#general-style)                           | Which coherent direction fits the intended experience?                 |
+| Item, prop, icon, sprite or related asset family    | [Assets and icons](#assets-and-icons)                     | Does it read and remain consistent at its actual use size?             |
+| Person, creature, outfit or portrait family         | [Character appearance](#character-appearance)             | Does the identity survive different views and expressions?             |
+| Surface, landscape, place or lighting study         | [Materials and environments](#materials-and-environments) | Do form, surface and light work in the intended context?               |
+| Animation, motion, VFX or sound                     | [Motion and feedback](#motion-and-feedback)               | Does it communicate the intended action or feeling in time?            |
+| A full visual UI system or working interface        | [UI system](#ui-system)                                   | Can the chosen appearance cover real content, states and interactions? |
+| Something else                                      | [Custom](#custom)                                         | What output and inspection would answer this request?                  |
 
 ## UI style
 

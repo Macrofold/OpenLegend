@@ -27,17 +27,17 @@ every production stage for every art request.
 
 Only the wanted result is required. Interpret optional parameters from ordinary language:
 
-| Parameter | Meaning and default |
-| --- | --- |
-| Flow | `standard`, `higgsfield`, or `both`. “Regular/manual” means Standard. With no preference, use Standard and say so. |
-| Purpose | Infer the matching profile: UI style, general style, asset/icon, character, material/environment, motion, UI system, or custom. |
-| Finish | `study`, `production`, or `integrate`, inferred from the requested outcome as described below. |
-| References | Attachments, exact saved study/candidate IDs, existing approved art, and supplied links; identify the role of each. |
-| Candidates | Honor the requested number. For unresolved direction, three distinct candidates is a useful adjustable starting point; an edit or selected-direction expansion normally needs one. |
-| Selection | Present alternatives unless Mike delegates choosing. An agent recommendation is not owner approval of the project's permanent direction. |
-| Constraints | Preserve identity/style anchors, output format and scale, supported behavior, deadlines and any “do not” scope. |
-| Budget | Apply the current [spending policy](../../../.agents/rules/verification.md#spending) and task authorization. Both flows, delegates, refinements and upscales share the same task allowance unless Mike explicitly allocates otherwise. |
-| Resume | An exact study/candidate/revision or handoff link. Reopen that work and continue the requested stage rather than regenerate the whole pipeline. |
+| Parameter   | Meaning and default                                                                                                                                                                                                                    |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flow        | `standard`, `higgsfield`, or `both`. “Regular/manual” means Standard. With no preference, use Standard and say so.                                                                                                                     |
+| Purpose     | Infer the matching profile: UI style, general style, asset/icon, character, material/environment, motion, UI system, or custom.                                                                                                        |
+| Finish      | `study`, `production`, or `integrate`, inferred from the requested outcome as described below.                                                                                                                                         |
+| References  | Attachments, exact saved study/candidate IDs, existing approved art, and supplied links; identify the role of each.                                                                                                                    |
+| Candidates  | Honor the requested number. For unresolved direction, three distinct candidates is a useful adjustable starting point; an edit or selected-direction expansion normally needs one.                                                     |
+| Selection   | Present alternatives unless Mike delegates choosing. An agent recommendation is not owner approval of the project's permanent direction.                                                                                               |
+| Constraints | Preserve identity/style anchors, output format and scale, supported behavior, deadlines and any “do not” scope.                                                                                                                        |
+| Budget      | Apply the current [spending policy](../../../.agents/rules/verification.md#spending) and task authorization. Both flows, delegates, refinements and upscales share the same task allowance unless Mike explicitly allocates otherwise. |
+| Resume      | An exact study/candidate/revision or handoff link. Reopen that work and continue the requested stage rather than regenerate the whole pipeline.                                                                                        |
 
 “Style study”, “explore”, “concept” and “compare” end at **study**: reviewable alternatives
 with saved sources and construction notes. “Production kit”, “export these assets” or

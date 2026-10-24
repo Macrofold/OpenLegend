@@ -17,9 +17,9 @@ than a new schema invented for these flows.
 
 ### Candidates
 
-| ID / original name | Direction and useful differences | Exact preview/source references | Coverage and limitations | Selection |
-| --- | --- | --- | --- | --- |
-| Stable study-scoped ID | Short description | Verified manifest/revision and durable access location | What actually exists and what was checked | Unselected, agent-recommended or owner-selected |
+| ID / original name     | Direction and useful differences | Exact preview/source references                        | Coverage and limitations                  | Selection                                       |
+| ---------------------- | -------------------------------- | ------------------------------------------------------ | ----------------------------------------- | ----------------------------------------------- |
+| Stable study-scoped ID | Short description                | Verified manifest/revision and durable access location | What actually exists and what was checked | Unselected, agent-recommended or owner-selected |
 
 Keep every requested contender. For comparisons, record shared inputs once and link the
 Standard and Higgsfield results. Do not renumber old candidates after one is removed from

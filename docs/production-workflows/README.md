@@ -93,7 +93,7 @@ Each stage delivers enough for the next contributor to act without guessing. The
 
 For example, “model complete” is insufficient when the consumer needs a movable lid. A useful handoff says whether the lid is separated, where it pivots, which opening is present, what the export contains and which gameplay behavior remains to be integrated. Name illustrative or fixture behavior explicitly; do not present it as current world content.
 
-Keep the editable sources in the established art workspace or repository location appropriate to the asset. The [art-direction tracker](../maintainers/art-direction.md) owns source locations and study milestones. Keep approved runtime artifacts in the actual game-delivery path. Provider URLs, temporary execution directories and a remembered prompt are not durable substitutes for accepted source and output files.
+Keep editable source payloads in the established external art workspace and preserve exact revisions through the [art-flow storage procedure](art-flows/README.md#preserve-and-resume). The [art-direction tracker](../maintainers/art-direction.md) owns ongoing art work and study milestones; Git holds notes, recipes and exact references. Approved runtime artifacts enter the selected game-delivery collection through the asset workflow. Provider URLs, temporary execution directories and a remembered prompt are not durable substitutes for preserved source and output files.
 
 ## Revise the responsible source
 
