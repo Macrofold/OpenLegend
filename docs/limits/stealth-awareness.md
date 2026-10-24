@@ -36,9 +36,9 @@ The reason is to permit quiet reconsideration without per-frame AI calls or infi
 
 ## SA-L06 — Bounded watch and preparedness scope
 
-**Status: Proposed — finite authored commitments and threat relevance selected; detailed predicates assigned to SAD-E/F. Restrictiveness: Medium.** Watch/guard/investigation must have actual active work, meaningful coverage, interruption and ending/review conditions. Warnings can cover unknown or regional threats without exact attacker identity; a generic intention to remain alert does not grant perpetual all-direction preparation.
+**Status: Proposed — E's finite work design is complete; F's final surprise predicates remain assigned. Restrictiveness: Medium.** Watch/guard/investigation must have actual active work, meaningful coverage, interruption and ending/review conditions. Warnings can cover unknown or regional threats without exact attacker identity; a generic intention to remain alert does not grant perpetual all-direction preparation.
 
-Finite scope gives positioning, warnings and watch handoffs practical meaning while avoiding a global awareness score. Existing combat shortcut grace is not a new surprise-immunity duration. E/F choose lead time, readiness and disengagement rules through agency/actions/personal encounters, inventory their selected numbers once, and qualify ordinary useful play. [Combat limits](combat-and-threat-responses.md) retains its existing world rules.
+Finite scope gives positioning, warnings and watch handoffs practical meaning while avoiding a global awareness score. Existing combat shortcut grace is not a new surprise-immunity duration. [ATI-L01–ATI-L07](attention-and-investigation.md) inventories E's finite methods, physical scope, bounded search and native curiosity. F chooses surprise matching, lead time and disengagement/retained-warning rules through personal encounters; neither design turns a warning alone into actual work. Runtime and ordinary useful play remain unqualified. [Combat limits](combat-and-threat-responses.md) retains its existing world rules.
 
 ## SA-L07 — Operational bounds and overload
 

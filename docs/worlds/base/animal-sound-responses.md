@@ -2,6 +2,8 @@
 
 **Selected acoustic design, runtime pending — 2026-10-21.** This is the bundled world's shared native response policy for [speech and social perception](../../projects/speech-and-social-perception-feature-spec.md) and the selected [general physical-sound design](../../projects/acoustic-stealth-feature-spec.md). Ordinary animals use native rules and saved randomness. They require no Decision API, thought, reflection, narration-generation or memory-consolidation calls.
 
+The completed [acoustic specialist design](https://github.com/Macrofold/OpenLegend/blob/b242bee437f9e13801bfee77030efd309d88a35d/docs/worlds/base/animal-sound-responses.md) owns the subsequent selected physical/onset policy. It was read through its remote ref without merging; the alarm details below are the contracts-branch baseline. E's narrow curiosity extension composes with that pinned C owner, and SAD-I must reconcile the files before runtime delivery.
+
 ## One existing animal controller
 
 This extends the selected [native animal response owner](animal-responses.md) and its [CTR03–CTR04 execution design](../../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04). Native alarm/escape, blocked/settling behavior and ordinary movement admission already exist in part; acoustic intake, its profile/pattern additions and remaining integration/qualification are pending. The existing voice response bands apply only when A actually acquires a voice-like classification or understood speech facts. Other received cues, including masked or unclassified utterances, use the [general physical-sound response filter](physical-sound.md). A private occurrence type or hidden lexical payload cannot select the voice rule. Every sound still requires an actual admitted emitter; this target does not claim that footsteps or impact sound already run.
@@ -14,18 +16,18 @@ The installed native response profile remains the single policy selection. Its c
 
 An animal either continues its current behavior or enters/updates that shared alarm. Alarm produces actual escape movement, alert settling or a truthful blocked condition. A skittish deer can flee when it hears a qualifying cue; a calmer animal can continue. Detecting a routine physical noise does not by itself establish alarm eligibility. Sound does not automatically classify its speaker as an attacker, change relationships or supply a psychological feeling.
 
-Distinct curiosity approaches, deliberate listening holds, hiding, richer instincts and exceptional cognitive creatures remain future repertoire. Ordinary alert settling provides a stationary aftermath without another timed hold action. Continued activity must not be described as an investigation that never happened.
+The [attention design](../../projects/attention-and-investigation-tech-design.md#6-native-animal-methods) selects an opt-in finite observation/ground-curiosity extension under this same controller, with independent alarm/curiosity dispositions and no hidden source pursuit; [ATI05](../../maintainers/attention-and-investigation.md#ati05--native-choices-through-one-controller) owns its unimplemented delivery. Hiding, richer instincts and exceptional cognitive creatures remain future repertoire. Ordinary alert settling provides a stationary aftermath without another timed hold action. Continued activity must not be described as an investigation that never happened.
 
 ## Profile values and consumers
 
 Extend the animal's existing installed response profile with `soundAlarmMinimumBand`, a nonnegative integer or null. Null means the animal can hear but this acoustic policy does not initiate alarm. The table below preserves voice-policy reaction bindings; the installed hearing sense independently determines detection. Use those bands only for an actually acquired A voice-like classification or understood speech facts. Ordinary language-disabled animals cannot supply the latter and rely on the acquired classification. All other received cues use the eligibility rule owned by [physical sound](physical-sound.md), through this same response-pattern/alarm intake.
 
-| Authored binding                      | Initial value | Meaning                                                                               |
-| ------------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
-| Ordinary hare, deer and bird          | 0             | An acquired voice-like cue or understood speech can qualify from band 0.                   |
-| Ordinary wolf and bear                | 2             | A sufficiently strong acquired voice/speech cue can qualify from band 2.        |
-| Territorial stag                      | null          | Hearing does not replace the existing territorial warning/attack/withdrawal decision. |
-| Explicit nonreactive contrast fixture | null          | Detection remains independent of whether a native response is installed.              |
+| Authored binding | Initial value | Meaning |
+| --- | --- | --- |
+| Ordinary hare, deer and bird | 0 | An acquired voice-like cue or understood speech can qualify from band 0. |
+| Ordinary wolf and bear | 2 | A sufficiently strong acquired voice/speech cue can qualify from band 2. |
+| Territorial stag | null | Hearing does not replace the existing territorial warning/attack/withdrawal decision. |
+| Explicit nonreactive contrast fixture | null | Detection remains independent of whether a native response is installed. |
 
 Other received cues—including masked/unclassified utterances, quiet routine locomotion and low rough rustle—do not automatically alarm the animal. Sufficiently intense abrupt impacts and received sharp/ringing patterns can qualify under the physical-sound policy. Its filter uses the listener's permitted acoustic evidence, never private emitter species IDs, occurrence type or unheard words. Nearby animals acquire actual emitted sounds independently; no group-alarm broadcast or automatic shared knowledge is introduced. Received voice/speech evidence retains the bands above; an indistinct sound does not acquire that exception from its source's private speech payload.
 
@@ -101,7 +103,7 @@ Provider availability has no bearing on native reactions to already committed so
 
 SPK07–SPK08 must show actual acoustic acquisition, both threshold outcomes, acquired voice versus indistinct/masked speech, strong versus weak-band bookkeeping, and identical outcomes for identical permitted cues despite different private speech/physical occurrence types or unheard words/addressees, unseen/null-bearing privacy, real away preference with second-human safety, repeat/expiry behavior, movement/flight/territorial priority, safe-duration completion, trapped behavior and save/load with unchanged RNG. Measure detection/recording and native route preparation through dense real callers; no audible recipient may be dropped to make a benchmark pass. Zero animal model calls is a required result, not a native CPU capacity claim.
 
-Distinct listening/curiosity/hiding choices, richer animal recognition, learning, offspring, packs, scent, tone and language remain future native repertoire. A rare deliberately selected cognitive creature would require separate capability design and spending admission; naming an ordinary animal does not enable it.
+Beyond the selected finite ATI05 method, hiding, richer animal recognition, learning, offspring, packs, scent, tone and language remain future native repertoire. A rare deliberately selected cognitive creature would require separate capability design and spending admission; naming an ordinary animal does not enable it.
 
 ## Maintained records
 

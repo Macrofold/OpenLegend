@@ -1,6 +1,6 @@
 # Native animal responses
 
-**Selected design, runtime pending — 2026-10-17.** This is the bundled world's authored animal policy for [combat and threat responses](../../projects/combat-and-threat-responses-feature-spec.md). Current ordinary animals still use the single remembered threat and short local steering described in [survival](survival.md#animal-escape). Completing this document does not claim that the replacement is running.
+**Selected policy; native controller foundation present, broader delivery and qualification remain open — 2026-10-22.** This is the bundled world's authored animal policy for [combat and threat responses](../../projects/combat-and-threat-responses-feature-spec.md). The inspected contracts source contains the single alarm/escape/settling/blocked controller. [Attention's source audit](../../projects/attention-and-investigation-tech-design.md#11-existing-owners-and-required-extensions) distinguishes that foundation from pending acoustic and curiosity integration; it does not claim every policy or playability gate here is qualified.
 
 ## Playable purpose
 

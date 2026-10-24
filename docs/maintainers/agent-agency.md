@@ -117,6 +117,8 @@ PW03/PW10 preserve AG04's existing admission owner: explicit activity parameters
 
 ### AG06 — Goal/plan-aware context and derived interests
 
+[ATI04](attention-and-investigation.md#ati04--intake-initiative-and-meaningful-opportunities) is the designed, unimplemented attention consumer: exact current work/purpose, acquired cue/result subscriptions and quiet semantic opportunities through existing context/intake. It adds no private awareness table, per-tick model loop or complete semantic-attention claim.
+
 - [x] PX04 supplies exact own outing terms/progress and permitted companion visibility in ordinary decision/activity context, without the companion’s private work or hidden location. Current reply candidates share native prerequisites.
 - [x] [Batch 08 (`MY02`/`MY03`)](parallel-batch-08-the-missing-belonging.md) supplies observer-permitted inspection place/holder/readable-text facts, source-labeled subject/general knowledge notes (`prepareKnowledgeContext`), and whole-bag gift offer/outcome evidence in ordinary decision and conversation context ([verification](../verification/parallel-batch-08-the-missing-belonging.md)).
 
@@ -142,6 +144,8 @@ PW03/PW10 add a narrow AG06 inspection consumer: one currently accessible select
 ### AG07 — Meaningful feedback, survival and bounded reconsideration
 
 **Selected emotional-review integration — design specified; implementation and qualification open.** The [emotion design](../projects/emotional-physiology-tech-design.md) selects an independently admitted private operation before full action preparation and keeps existing native work running. `ActorWork` carries one coalesced per-character ticket; review-only completion acknowledges captured emotional opportunities without advancing the ordinary evidence cursor. Exact appraisal/source/context dependencies protect publication, while unrelated action progress and operational review bookkeeping do not invalidate an otherwise applicable answer. Existing fear/anger threat judgments may carry due reviews in their first stage without another threat pipeline or third call. The [emotional physiology tracker](emotional-physiology.md) owns finite epochs, adaptive intervals, anti-loop provenance, shared capacity/budget admission, no-change dormancy and replay/load acceptance. AG07 retains broader intake integration and actual voluntary behavior qualification.
+
+The [attention design](../projects/attention-and-investigation-tech-design.md#5-decision-opportunities-and-personality) and [ATI04/ATI07](attention-and-investigation.md) specify voluntary inquiry/watch outcomes, unchanged-cue dispositions, ordinary continuation and original deadlines. Runtime integration remains open; blocked, unavailable and deliberately declined work retain different meanings.
 
 **October 17 selected combat consumer — design complete, runtime/qualification open:** [CTR05–CTR08](combat-and-threat-responses.md) reuse AG03/AG06/AG07's actual plan/frontier, prospective work transitions and intake. A personally chosen purpose is metadata on admitted work, not a second combat goal or global aggression state. The [world catalogue](../worlds/base/threat-response-options.md) selects one-strike responses, finite pursuit/last-seen/hold commitments, explicit limits and independent reconsideration after real results, withdrawal, lost sight and changed conditions. No hidden repeat attack, automatic pursuit, cost refund or unsupported pause may repair delayed cognition. Required context and relevant choices survive ongoing work; exact native outcomes remain distinct from the pipeline's own appraisal notifications. Implementation and behavioral qualification stay in CTR and retain this tracker's wider exits. The canonical [shared deliberation contract](../../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) extends AG01/AG06/AG07 for compatible task, speech and threat decisions. CTR delivers this shared extension and its [noncombat consumer checks](combat-and-threat-responses.md#shared-contract-qualification); it does not own a second planner or impose its two-call strategy on ordinary decisions.
 
@@ -220,26 +224,26 @@ PW03/PW10's AG10 consumer keeps ordinary review/Stop/plain own-request results s
 
 The [October 2 Engineer 3 report](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026) contributes current family/watch native checks, final PostgreSQL restarts, scoped-page/access cases and six actual injected-director scenarios to AG11, alongside the historical baseline. Scripted ordinary card/craft/custody checks passed; the historical shared TypeScript/picker blockers have been repaired and NP04 supplies the shared ordinary picker. Uncoached player observation, actual voluntary model choices and the broader combined PW06 acceptance remain separately tracked. AG12/AG13 and the full deterministic/adversarial matrix below are not closed; settled/reserved/outstanding/uncertain Engineer 3 Jev exposure remains $0.
 
-| Scenario                              | Required observation                                                                                                                                          |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| No response during valid work         | No new thought, goal, event or cancellation; native work progresses                                                                                           |
-| Hunger during long-running work       | Supported long work can be interrupted for food; the prior goal survives, progress/resources obey native rules, and resumption revalidates current conditions |
-| Combined decision                     | Several optional components admitted with distinct outcomes; no forced category                                                                               |
-| Same known action, different wording  | Equivalent native effect without a new definition                                                                                                             |
-| Bow discovery and production          | Private actor-authored method, admitted recipe, separate gathering/preparation/crafting, actual ammunition/use prerequisites                                  |
-| Invention without construction        | Knowledge may persist; no item, material consumption or forced goal                                                                                           |
-| Inadequate or unknown method          | Neutral scoped clarification or honest limitation; no concealed engine-supplied conceptual solution                                                           |
-| An easier food source appears         | An eligible opportunity to reassess; old plan not forced or silently erased                                                                                   |
-| Unreachable prey or missing material  | Dependent work blocks without fabricated success; unchanged failure does not loop                                                                             |
-| A social/epistemic goal               | Persists without a fake objective success predicate or control over another actor                                                                             |
-| Nonhuman actor                        | Granted cognition works within its embodiment; no automatic speech or human hand capability                                                                   |
-| Goal abandoned during invention       | Result does not restart the canceled plan or spend crafting inputs                                                                                            |
-| Two actors, one final resource        | Single authoritative consumption; loser gets grounded feedback                                                                                                |
-| Private invention near another actor  | No recipe/method/goal leakage through events, metadata, diagnostics or retrieval                                                                              |
-| Duplicate/late/conflicting completion | Exactly one effect; conflicts and retired identities cannot be re-admitted                                                                                    |
-| Restart/restore/pause/zero budget     | Correct scoped recovery, no new paid dispatch, native fallback preserves actual state                                                                         |
-| Injection and malformed references    | Untrusted speech/goal text, prototype IDs, alias cycles and forged result refs cannot acquire authority                                                       |
-| Crowded scene and long history        | Bounded candidates and diagnostics; relevant protected evidence and fair admission survive                                                                    |
+| Scenario | Required observation |
+| --- | --- |
+| No response during valid work | No new thought, goal, event or cancellation; native work progresses |
+| Hunger during long-running work | Supported long work can be interrupted for food; the prior goal survives, progress/resources obey native rules, and resumption revalidates current conditions |
+| Combined decision | Several optional components admitted with distinct outcomes; no forced category |
+| Same known action, different wording | Equivalent native effect without a new definition |
+| Bow discovery and production | Private actor-authored method, admitted recipe, separate gathering/preparation/crafting, actual ammunition/use prerequisites |
+| Invention without construction | Knowledge may persist; no item, material consumption or forced goal |
+| Inadequate or unknown method | Neutral scoped clarification or honest limitation; no concealed engine-supplied conceptual solution |
+| An easier food source appears | An eligible opportunity to reassess; old plan not forced or silently erased |
+| Unreachable prey or missing material | Dependent work blocks without fabricated success; unchanged failure does not loop |
+| A social/epistemic goal | Persists without a fake objective success predicate or control over another actor |
+| Nonhuman actor | Granted cognition works within its embodiment; no automatic speech or human hand capability |
+| Goal abandoned during invention | Result does not restart the canceled plan or spend crafting inputs |
+| Two actors, one final resource | Single authoritative consumption; loser gets grounded feedback |
+| Private invention near another actor | No recipe/method/goal leakage through events, metadata, diagnostics or retrieval |
+| Duplicate/late/conflicting completion | Exactly one effect; conflicts and retired identities cannot be re-admitted |
+| Restart/restore/pause/zero budget | Correct scoped recovery, no new paid dispatch, native fallback preserves actual state |
+| Injection and malformed references | Untrusted speech/goal text, prototype IDs, alias cycles and forged result refs cannot acquire authority |
+| Crowded scene and long history | Bounded candidates and diagnostics; relevant protected evidence and fair admission survive |
 
 ### AG12 — Behavioral value and cost, separately authorized
 

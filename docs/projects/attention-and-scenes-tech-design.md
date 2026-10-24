@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                             | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Exact attended activity and compact background meaning are designed through existing owners; runtime delivery and qualification remain open. | 2026-10-17   |
+| In progress | Exact attended activity and compact background meaning are designed through existing owners; runtime delivery and qualification remain open. | 2026-10-22   |
 
 **Selected design, not runtime delivery or implementation approval.** This is the counterpart to the [feature specification](attention-and-scenes-feature-spec.md), particularly its [compact background family](attention-and-scenes-feature-spec.md#173-selected-compact-expressive-background-exchanges) and [shared-activity refinement](attention-and-scenes-feature-spec.md#18-research-refinement--independent-shared-activity-that-people-can-understand). It resolves the exact encounter and two-NPC compact meaning design under DG06/DG18 and PS04. Aggregate vocal activity, crowds, timed speech and broader ND13/ND15/ND16 scope remain separate. The psychological mechanism has its own [continuing-life owner](continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose).
 
@@ -12,7 +12,7 @@
 
 The [shared architecture](stealth-awareness-tech-design.md#shared-contracts) owns evidence layers, recognition and current-versus-remembered precision; [time and lifecycle](stealth-awareness-tech-design.md#time-and-lifecycle) owns new simulation deadlines and continuation. This design supplies attention and scene consumers only. Required physical detection and native protection precede optional interpretation, while perceived detail never comes from camera visibility or hidden current source state.
 
-SAD-E extends existing actor-local intake, finite agency commitments and ordinary action admission for active investigation and watch behavior. Those commitments select relevant permitted evidence; they are not another perception store, threat tracker or scheduler. A hearing cue offers reconsideration without automatically rotating a reasoning-capable person. Independent look/turn while walking requires the shared active-pose owner and physical compatibility, not a renderer-only gaze or a second locomotion command. Native animals consume their existing alarm/controller path and directly controlled people choose through ordinary controls.
+The [attention and investigation technical design](attention-and-investigation-tech-design.md) extends existing actor-local intake, finite agency commitments and ordinary action admission for active investigation and watch behavior; [ATI01–ATI08](../maintainers/attention-and-investigation.md) owns that unimplemented slice. Those commitments select relevant permitted evidence; they are not another perception store, threat tracker or scheduler. A hearing cue offers reconsideration without automatically rotating a reasoning-capable person. Independent look/turn while walking requires the shared active-pose owner and physical compatibility, not a renderer-only gaze or a second locomotion command. Native animals consume their existing alarm/controller path and directly controlled people choose through ordinary controls.
 
 ## 1. Outcome and first delivery boundary
 

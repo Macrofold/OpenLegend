@@ -163,6 +163,8 @@ PW10 extends delivered AC06.1/6.2 and contributes a bounded AC06.3–6.5 consume
 
 ## AC07 — Scoped inspection, search and monitoring
 
+**Selected attention consumer — design complete, runtime open:** [ATI01/ATI03–ATI04](attention-and-investigation.md) supplies finite inspection/monitoring, bounded physical search and source-linked results through the [feature/technical pair](../projects/attention-and-investigation-feature-spec.md). It preserves this tracker's broader observation families and unchecked exits.
+
 The [embodied-survival implementation](../projects/embodied-survival-tech-design.md#required-versus-selected-information) delivers a narrow AC07.1–AC07.2 consumer: ordinary `inspect-inventory` reads only accessible own possessions, retains exact page IDs and revision-bound continuation, and discloses remaining coverage under [CG04](../limits/cognition.md#cg04). Native checks cover explicit second-page access and stale-cursor refusal; oversized cognition retains the inspection route. No automatic paid pagination or god query is used. Broader search/filter/measurement capabilities remain open; this does not complete AC07.
 
 [PW04](parallel-batch-01-playable-week.md#pw04--inventory-for-exact-camp-tasks) adds a second concrete AC07.1–AC07.2 consumer: permitted current-container search and lazy storage-destination discovery through existing indexes, with continuation and honest incomplete results. [Engineer 4's evidence](../verification/parallel-batch-01-playable-week-engineer-4.md#pw04--native-inventory-and-partial-browser-checks) separates 250-owned/230-private-granted native scenarios from actual 44-bag browser paging, full-bag refusal and a permitted Half-filled transfer into an explicitly granted NPC bag. A filtered page cannot prove an omitted selected item was removed; its last-inspected quantity stays explicitly uncertain until a fresh certified read. This extends the scoped consumer without closing broader measurement/search, the complete PW04 browser matrix or AC07's exit criteria.
@@ -181,6 +183,8 @@ The PW03/PW10 AC07.1/7.2 slice inspects one exact currently accessible container
 **NP04 contribution to AC07.1/7.2:** ordinary camp role search and the shared source-free storage picker now connect visible distant appearance to explicit movement, then native paged inspection. Exact revalidation, unavailable/stale recovery and unopened-descendant privacy preserve the discovery/character-knowledge boundary. The selected UI consumer is delivered; general measurement/search and broader monitoring remain open. [Evidence](../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026).
 
 ## AC08 — Lifecycle, channels and participation integration
+
+[ATI02/ATI07](attention-and-investigation.md) specifies qualified walking/guard observation, actual work interruption and independently accepted watch relief. Its [composition contract](../projects/attention-and-investigation-tech-design.md#32-narrow-simultaneous-combinations) preserves one physical lane and original guard/work accounting; implementation and qualification remain open.
 
 **Owner:** AG03/AG07 with NC and relevant family owners. **Depends on:** AC02, AC05/AC06 as used. **Touchpoints:** action lifecycle, goal/plan revision handling, family cancellation, conversation/request adapters.
 
