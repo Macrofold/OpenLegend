@@ -29,6 +29,5 @@ candidates; it does not implement them or change the accepted project style. A r
 edit this workflow is documentation work, not authorization to execute it. Existing chat
 authorization remains sufficient for the steps it actually covers.
 
-For the owner's supplied UI-border/material references, the
-[UI surface study brief](../../../art-direction/studies/ui-surface-language/brief.md)
-provides a reusable starting point. It is a brief, not a completed study or asset archive.
+The selected profile owns subject-specific starting briefs and quality checks; load only
+what the request needs.

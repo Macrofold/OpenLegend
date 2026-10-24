@@ -33,7 +33,11 @@ Current official guidance documents MCP at `https://mcp.higgsfield.ai/mcp`, acco
 authorization, the official ChatGPT plugin and CLI options. Use the executing host's
 current supported setup, not copied button coordinates or an unreviewed install command.
 Review/pin any [first-party skill](https://github.com/higgsfield-ai/skills) before installing;
-load only capabilities needed for the art task.
+load only capabilities needed for the art task. If the CLI is the appropriate route, follow
+its [official setup and command reference](https://github.com/higgsfield-ai/cli): inspect the
+installer/version, authenticate in the actual execution environment, inspect account status,
+and read current model schemas/help before constructing commands. A browser login elsewhere
+does not authenticate that runtime; a working integration does not require a second one.
 
 ## Produce a coherent result
 
@@ -47,7 +51,10 @@ load only capabilities needed for the art task.
    connector together. Check whether the tool interprets a reference as style, identity,
    source image or start frame. For example, the current Soul help describes direct-reference
    and prompt controls differently from its Moodboard controls; do not assume every mode
-   accepts the same prompt-plus-reference operation.
+   accepts the same prompt-plus-reference operation. If model choice is unresolved, audition
+   credible options on this same useful specimen within the budget. Select model/mode,
+   quality, resolution and aspect explicitly; catalog labels and defaults can differ from
+   website marketing names. Inspect current schemas rather than copy an old model ID.
 
 3. **Create distinct direction anchors.** Use the shared brief and requested number of
    candidates. Record actual model, mode, prompt, reference inputs and available settings.
@@ -66,12 +73,19 @@ load only capabilities needed for the art task.
    removal is available, inspect the result and actual export format. A Layers operation
    does not by itself prove a native editable document, clean alpha or production-ready parts.
 
-6. **Download and preserve.** Retrieve originals and meaningful revisions from the completed
+6. **Compose when the deliverable needs it.** Use the shared
+   [editable UI-composition procedure](profiles.md#editable-composition) for typography,
+   layout and design-system work. Feed actual Higgsfield artwork into the composition and
+   return precise art defects to this route. A separate design tool does not turn an image
+   study into implementation.
+
+7. **Download and preserve.** Retrieve originals and meaningful revisions from the completed
    operation or Assets, with available generation details. Distinguish flattened images,
    transparent exports, reconstructed layers and editable originals. Keep private operational
    receipts separate from public provenance. Save through the shared S3 procedure before
    provider links expire. Publishing to a public Higgsfield profile is a separate action
-   and is not required to archive the study.
+   and is not required to archive the study. After timeouts, use the current operation
+   status/wait controls to recover the same submitted work before any replacement request.
 
 If the required production format is not supported, retain the concept and use an authorized
 finishing tool with that limitation recorded. Label a mixed route honestly in comparisons;
@@ -103,6 +117,7 @@ Checked 2026-10-24 against primary documentation; verify volatile controls and a
 availability at execution time. These sources document capabilities, not an OpenLegend
 quality benchmark or a completed account setup.
 
+- [CLI setup, job recovery and current model catalog](https://github.com/higgsfield-ai/cli)
 - [Agent connection and setup](https://higgsfield.ai/creator-hub/help-center/integrations/how-do-i-connect-higgsfield-to-ai-agent)
 - [Account creation](https://higgsfield.ai/creator-hub/help-center/getting-started/create-an-account-and-sign-in)
 - [MCP and automated-generation billing](https://higgsfield.ai/creator-hub/help-center/integrations/what-is-higgsfield-mcp)

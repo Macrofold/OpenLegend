@@ -41,13 +41,16 @@ An export with reconstructed layers must not be described as an original layered
 
 State observed strengths, defects, fit with the brief, and specific checks performed.
 Distinguish visual judgment, export checks and runtime evidence. Record measured cost/time
-when available and label unknowns. Preserve current feedback and decisions without narrating
+and Mike's manual involvement when available and label unknowns. Preserve current feedback and decisions without narrating
 every editing pass.
 
 ### Resume
 
 Name the exact candidate/revision, available files, unresolved choice and next requested
-stage. Include the instructions needed to retrieve the private/public files through existing
+stage. For interrupted work, retain the current working location, completed/remaining outputs
+and a permitted reference to outstanding operations and spending commitments; recover them
+before starting replacement work. Record the shared input/code/world baseline when relevant.
+Include the instructions needed to retrieve the private/public files through existing
 tooling. A temporary workstation path may help locate unsaved work but cannot stand in for
 the archive. Do not store expiring signed URLs as permanent references.
 

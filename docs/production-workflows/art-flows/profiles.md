@@ -2,7 +2,10 @@
 
 Apply only the profile matching the request, plus the common
 [finish level](README.md#request-and-stopping-point). These profiles define what makes the
-result useful; they do not prescribe one model or repeat the tool routes.
+result useful; they do not prescribe one model or repeat the tool routes. Scale their
+coverage to the requested scope: a broad study may need the whole relevant family, while
+a focused revision delivers only the requested pieces and checks affected dependents.
+Preserve accepted unrelated work instead of rebuilding a full kit for a single texture edit.
 
 ## Profile map
 
@@ -132,7 +135,11 @@ or an interruptible in-game action. Use [animation](../assets-and-animation.md) 
 
 ## UI system
 
-Read current product tasks and the [UI brief](../../ui-design-brief.md). This profile adds
+Read current product tasks, the [UI brief](../../ui-design-brief.md) and the relevant
+[current surface/state coverage](../../ui-ux/interface-coverage.md). Use the existing
+[reference atlas](../../ui-ux/games/README.md) before filling specific visual gaps with web
+research. For a full overhaul, account for every requested surface and state; a few strong
+inventory screens do not establish whole-interface coverage. This profile adds
 layout, typography, component hierarchy, tokens, state treatment and representative screen
 coverage to the chosen style. Start from a selected style study when available, not a new
 round of unrelated themes.
@@ -145,8 +152,28 @@ art from reusable interaction machinery.
 Production delivers the requested design-system specifications and actual reusable artwork.
 Only an integration request continues through existing React/React Aria owners, real actions
 and live state, keyboard/focus, responsive layout and browser verification. Follow
-[working interfaces](../scenes-and-interfaces.md#art-directed-working-interfaces); a giant
-background image or static imitation does not complete implementation.
+[working interfaces](../scenes-and-interfaces.md#art-directed-working-interfaces) and the
+existing [UI verification matrix](../../ui-ux/verification.md) for viewports, text scaling,
+input, recovery and theme checks; a giant background image or static imitation does not
+complete implementation.
+
+### Editable composition
+
+When typography, hierarchy or layout is part of a UI study or system, combine either image
+route with an editable composition tool and visual critique. [Claude Design](https://support.claude.com/en/articles/14604416-get-started-with-claude-design)
+is a concrete option from the UI workflow; a suitable native layout/vector tool or source
+preview may serve the same role. This is a task-specific tool choice, not a provider-quality
+ranking or an account requirement for every art request.
+
+Give the specialist the focused brief, actual permitted content/captures, relevant component
+constraints, references and that contender's artwork. Inspect the current Design entry and
+[design-system setup](https://support.claude.com/en/articles/14604397-set-up-your-design-system-in-claude-design)
+when using Claude. Keep exploratory systems scoped to the study; do not replace an
+organization's defaults. Iterate composition and artwork together, use real text, inspect
+at intended size over the relevant background, and send concrete defects back to their owner.
+The coordinator retrieves supported editable exports plus review images, rendering source
+previews when needed. Record actual formats; a service URL or flattened screenshot alone
+is not an editable design system. Verify current capabilities at execution time.
 
 ## Custom
 

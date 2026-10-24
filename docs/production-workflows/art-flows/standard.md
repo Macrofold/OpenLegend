@@ -1,7 +1,10 @@
 # Standard art flow
 
 Use this route for “Standard”, “regular” or “manual” art requests. “Manual” names the direct
-multi-tool route; the agent performs the orchestration and file handling.
+multi-tool route; the agent performs the orchestration and file handling. Generation uses
+direct tools/providers outside Higgsfield. Shared composition and finishing tools are fine;
+label a deliberately mixed generation route instead of counting it as an independent
+Standard result.
 
 Apply the [shared procedure](README.md) and selected [profile](profiles.md). This file owns
 only tool-specific execution choices. It does not add new stages or broaden a study into
@@ -41,42 +44,22 @@ implementation.
    scratch. Use the image tool for image edits when the host requires it.
 
 6. **Assemble a reviewable specimen.** Put real text and labels over the artwork using a
-   layout/vector tool or a lightweight source-native preview when relevant. This avoids
-   judging typography from generator lettering. Use the same sample arrangement across
+   layout/vector tool or a lightweight source-native preview when relevant. For UI work,
+   use the shared [editable-composition procedure](profiles.md#editable-composition).
+   This avoids judging typography from generator lettering. Use the same sample arrangement across
    contenders. A style specimen is not a rebuilt application or a new UI framework.
 
-7. **Review and refine.** Compare the actual files at intended size and in their target
-   visual context. An independent visual critique can help identify inconsistent materials,
-   weak hierarchy or identity drift; it does not replace inspection. Fix concrete failures
-   and recheck their dependents. Preserve the strongest earlier result when an edit regresses.
+7. **Review and refine.** Apply the shared visual and independent-review checks. Fix concrete
+   failures and recheck their dependents. Preserve the strongest earlier result when an
+   edit regresses.
 
 8. **Finish at the requested boundary.** Studies need coherent plates and construction notes.
    Production requests need the real separated files/source and profile-specific checks.
    Integration follows the existing production handbook and product owners. Archive through
    the common S3 procedure and return the exact study handoff.
 
-## Delegate without making Mike carry files
-
-One coordinator owns the brief and outcome. Give each specialist the relevant brief,
-exact references, output location, required format, stopping point and shared task budget.
-The coordinator retrieves results, inspects them and passes accepted outputs onward. It does
-not tell Mike to start another conversation or upload intermediate files that it can transfer.
-
-Parallelize independent concepts and review. Keep dependent identity, geometry, rigging and
-export work in order. Assign one writer to each source. A specialist's broad “make a game”
-skill must not override the narrower art request.
-
-## Reusable task instruction
-
-Adapt this internally for the selected tool; Mike does not need to paste it:
-
-> Produce the specified deliverable for this OpenLegend brief. Use each attached reference
-> only for its stated role. Preserve the listed invariants and intended viewing scale.
-> Explore the requested number of genuinely distinct directions, then develop each into
-> the required related outputs using its own anchor. Keep actual text and controls separate
-> from decorative imagery. Inspect and correct concrete defects. Return original files,
-> actual available editable sources, settings and limitations. Stop at the requested finish
-> level and save through the project's asset workflow.
+Shared execution owns delegation, specialist prompts, file transport and review; apply it
+without introducing another manual handoff.
 
 For material recipes or articulated entities, use the existing
 [asset/animation](../assets-and-animation.md) and [scene/material](../scenes-and-interfaces.md)
