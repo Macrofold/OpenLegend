@@ -85,17 +85,11 @@ The client consumes the same world-owned clock/light meanings and only authorize
 
 ## Time, weak evidence and fair failure
 
-An immediately obvious exposure is offered at its actual native visibility boundary. Weaker supported exposure supplies a rate over its real duration for A to accumulate once. Camera refresh, repeated network publication and duplicate queries cannot strengthen it. Turning away, darkness, obstruction and loss of a particular part end that part's current support at the correct time even if A retains a correlated episode or a memory.
+Changing local visual scopes use canonical **50 ms normal-time cells** through the existing native motion/sensory owner. Dependency-complete static scenes do not acquire a high-frequency poll. Actual impulses, contacts and physical discontinuities retain their native times; existing supported analytic sweeps can add a measurement inside a narrow geometric opening. A shorter unrepresented optical flash or gap can be missed or held through under this explicit sampled law. Slow daylight coefficients use a separate one-normal-second shared update. These provisional values require useful-glance, fast-turn, moving-light and projectile-warning qualification.
 
-The same rules apply to a moving observer and moving target, a stationary observer turning their head, a source being lit or extinguished, and a brief opening between otherwise coarse movement checks. The engine must evaluate the actual path and meaningful crossing times before passing a dependent outcome. A short crossing can be truly below the selected detection threshold; it cannot be missed merely because neither coarse endpoint showed it.
+A strong cue is acquired at its actual canonical measurement or occurrence. Weak-cue progress consumes elapsed provider-held support once, never redraw count. A sampled/actual reported loss ends the affected live facet while correlation or historical knowledge can remain. Current presentation holds the last permitted measured value and precision; it cannot follow hidden live transforms or interpolate an observed path between two endpoints. Two actual received measurements can establish a motion fact only after the second is acquired; a fleeting shot can still arrive without enough warning.
 
-All rates and turn durations use the shared simulation clock. Pause freezes them; 3×/8× changes elapsed wall time without changing the outcome for the same simulated inputs. Saving halfway through a turn or weak exposure resumes that same progress. Incomplete required geometry or light calculation holds the dependent transition through the existing work owner; it is not darkness, invisibility, empty space or a surprise bonus.
-
-## Temporal fidelity and measured presentation
-
-Changing local visual scopes are measured on canonical 50 ms normal-time cells through existing native motion/sensory work; static dependency-complete scenes do not acquire a high-frequency poll. Actual impulses, contacts and physical discontinuities keep their native times. Existing supported sweeps can add a measurement inside a narrow geometric opening, while shorter unrepresented optical flashes may be missed or held through. Slow daylight coefficients have a separate one-normal-second shared update. These are explicit provisional physical approximations, with ordinary/accelerated-clock, save and useful-glance qualification still required.
-
-Weak-cue progress comes from elapsed provider-held support once, never redraw count. Current presentation holds the last permitted measured value and its precision; it does not follow hidden live transforms or interpolate a path between two endpoints. Surprise captures already acquired evidence without taking an extra sight sample. A two-sample received-motion fact can support an incoming-danger interpretation only after the second measurement is actually received; a fleeting shot can still arrive without enough warning.
+Pause freezes progress and 3×/8× changes wall time without changing the same simulated samples. Host partitions, network publication and restoration preserve the original grid, control anchors and uncovered progress. Incomplete required work holds the coherent prefix through the existing continuation; it is never absence or a surprise bonus. F captures only evidence already acquired before its outcome cut, without triggering an extra sight measurement. Real contact consequences follow that cut.
 
 ## Required gameplay scenarios
 
@@ -130,7 +124,7 @@ Vision supports the existing priorities of survival, a defensible home, differen
 
 ## Decisions and handoff
 
-No new player-product decision is required to specify module B. The world's numeric defaults are authored provisional choices for implementation and later playtesting, not biological measurements or demonstrated balance. Shared-contract conflicts and any upstream proposal are recorded explicitly in the technical design and tracker; the shared interface is not silently redefined.
+No new player-product decision is required to specify module B. The world's numeric defaults are authored provisional choices for implementation and later playtesting, not biological measurements or demonstrated balance. The technical design and tracker record the integrated source, Perception, movement/posture and temporal contracts. Runtime and play qualification remain open; SA-D01 is the separate controlled-player psychological policy decision.
 
 E receives physical goals, achieved/limited pose, current supported regions, action compatibility and exact ending/loss semantics, and chooses watch/investigation behavior. F receives A's acquired evidence and accepted orientation/work at its own cut, and owns eligibility. G receives safe physical/presentation facts through A, and owns inputs, camera/privacy and accessibility. Detailed matching, storage and freshness stay with A; actual posture and sound stay with C.
 

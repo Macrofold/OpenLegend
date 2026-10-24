@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Specialist design and documentation review are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-10-22 |
+| In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-10-24 |
 
 ## Purpose and scope
 

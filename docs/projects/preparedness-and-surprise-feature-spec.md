@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                          | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Specialist design is complete; SUR01–SUR09 retain implementation, integration and gameplay qualification. | 2026-10-23   |
+| In progress | Integrated design is complete; SUR01–SUR09 implementation, performance and gameplay qualification remain open. | 2026-10-24 |
 
 ## Purpose and scope
 

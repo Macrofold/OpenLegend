@@ -273,7 +273,7 @@ The worthwhile additions are small and reusable: a clear historical inspection r
 ## Maintained records
 
 - Implementation and design completion: [Stealth player experience tasks](../maintainers/stealth-player-experience.md), linked from [SAD-G / SAI-G](../maintainers/stealth-awareness.md).
-- Limits and constraints: [Player-experience inventory](../limits/stealth-player-experience.md); specialist laws remain with their [source owners](stealth-player-experience-tech-design.md#source-manifest).
+- Limits and constraints: [Player-experience inventory](../limits/stealth-player-experience.md); specialist laws remain with their [canonical owners](stealth-player-experience-tech-design.md#contract-authority-and-source-inspection).
 - Technical design and acceptance: [Technical design](stealth-player-experience-tech-design.md).
 - Shared contracts: [Stealth awareness](stealth-awareness-tech-design.md).
 - Existing conventions: [World interaction](../ui-ux/world-interaction.md), [world presentation](../world-presentation.md), [UI brief](../ui-design-brief.md) and [gameplay priorities](../repertoires/gameplay-priorities.md).

@@ -4,9 +4,9 @@
 
 This tracker owns the detailed work for [physical vision and independent gaze](../projects/vision-and-gaze-feature-spec.md) and its [technical design](../projects/vision-and-gaze-tech-design.md), specialist **B** under [SAD-B / SAI-B](stealth-awareness.md). The selected design lets a character walk while looking elsewhere, see only physically exposed detail, use light and cover, and notice a fleeting opportunity through actual simulation time. It does not own remembered knowledge or recognition (A), voluntary attention (E), surprise eligibility (F), psychological feelings (D), or player controls and disclosure (G).
 
-**Design complete and reviewed (VG00). Implementation and qualification have not started.** This branch is documentation only. Every implementation and runtime-acceptance item below remains unchecked. A completed specification is not evidence that current radius-and-obstruction sight has changed.
+**Design complete and reviewed (VG00). Implementation and qualification have not started.** The integrated work is documentation only. Every implementation and runtime-acceptance item below remains unchecked. A completed specification is not evidence that current radius-and-obstruction sight has changed.
 
-The [technical dependency record](../projects/vision-and-gaze-tech-design.md#1-authority-dependencies-and-completion-boundary) pins the inspected contracts baseline and completed A design. A's branch is a reference dependency, not merged content or delivered runtime.
+The [technical dependency record](../projects/vision-and-gaze-tech-design.md#1-authority-dependencies-and-completion-boundary) preserves the inspected contracts source. Current A/C/E/F/G links resolve to the integrated canonical design. Design integration was reviewed through 2026-10-24; implementation and runtime qualification remain open.
 
 ## VG00 — Complete the physical-vision design
 
@@ -17,9 +17,9 @@ The [technical dependency record](../projects/vision-and-gaze-tech-design.md#1-a
 - [x] Review the complete repertoire collection for applicable ideas and preserve useful existing entries, priorities and optional scope.
 - [x] Assign implementation slices, dependency exits and specialist handoffs without closing runtime work.
 - [x] Complete the full design diff, source-reference, link, status and cross-owner review; reconcile the selected world values and limits with the technical model.
-- [x] Commit and push all task-owned documentation; confirm the final branch contains documentation only and preserves the exact contracts base without merging A.
+- [x] Preserve source provenance and reconcile current canonical links, exact source revisions, sampled temporal support and producer/consumer ownership through the integrated documentation review.
 
-**Exit:** B's internal design is complete and reviewable; its physical input/output and temporal guarantees match the unchanged shared contracts or identify an explicit amendment. The bounded A source-revision proposal below remains a named integration dependency, not an implicit contract change. No runtime or human-play qualification is inferred.
+**Exit:** B’s selected physical inputs, sampled fidelity and consumer contracts agree with the integrated shared design. Exact source revisions, Perception and C movement/posture are settled technical decisions. No runtime, capacity or player qualification is inferred.
 
 ## Implementation sequence
 
@@ -28,10 +28,10 @@ Implement through the existing spatial, action, observation, clock and view owne
 | Task | Dependencies                                                     | Required outcome before dependent work                                                           |
 | ---- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | VG01 | VG00; installed body/sense owners                                | Valid installed body/sense policies and one authoritative physical orientation.                  |
-| VG02 | VG01; action/spatial owners; C's supported posture agreement     | Looking, moving and interruption share actual admitted work and body constraints.                |
+| VG02 | VG01; action/spatial owners; C’s selected posture/movement contract     | Looking, moving and interruption share actual admitted work and body constraints.                |
 | VG03 | VG01; spatial/material/body owners                               | One current-query geometry model for exposed parts and independent optical/collision properties. |
 | VG04 | VG03; installed clock/light definitions; FPW03 and G             | World light determines physical evidence and permitted rendered meaning.                         |
-| VG05 | VG01–VG04; A producer/accumulation interface; SA-D02 disposition | Every promised interval and facet reaches A with correct timing and precision.                   |
+| VG05 | VG01–VG04; integrated A producer/accumulation adapters | Every canonical sample/held interval reaches A with measured/acquired timing and precision.                   |
 | VG06 | VG03–VG05; spatial index/native-work owners                      | Bounded complete candidate and temporal work with correct invalidation and explicit overload.    |
 | VG07 | VG01–VG06; save/authoring/action lifecycle owners                | Current-format restore and installed definitions preserve the same future outcome.               |
 | VG08 | VG01–VG07; applicable SAI-A/C/E/F/G integration                  | Complete native/server/client journeys and measured operational and play acceptance.             |
@@ -64,6 +64,7 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 - [ ] Replace coarse exposed-height assumptions for the selected visual model with the specified receiver and target part/surface geometry, projected exposure, range, motion and detail precision. Use the same predicate in current queries and future interval preparation. Compile the selected finite same-surface bridges so an unobstructed rotating body keeps its binding when adjacent samples take over, without requiring fine contact detail. Distinct-part handoffs still require actually visible authored seams.
 - [ ] Add independent authored vision/light transmission, physical collision and attack-obstruction properties through existing geometry/material definitions. Validate walls, foliage, slopes, low roofs and small openings without inferring solidity from opacity.
+- [ ] Install the selected crouched optical fixture together with C’s 1.05 m body/.869 m receptor anchor, retaining 52 samples and unchanged face proportions. Compose direction/quiet/posture speed caps by minimum through the single movement owner.
 - [ ] Require actual action/part-owned preparation transforms before exposing a visual weapon/limb preparation cue; a hidden action stage is not a physical pose.
 - [ ] Resolve each visible facet independently: body location, face, hands, markings, clothing and equipment cannot inherit one another's permission. A protruding object can be visible without proving its hidden carrier's identity or held relation. Remove the self-ID shortcut from optical evidence while preserving separately authorized self-knowledge and presentation.
 - [ ] Admit supported pose changes only after support and resulting body/equipment clearance. Sample the actual physical part and height, never the client's animation or an unsupported posture intention.
@@ -74,6 +75,7 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 **Status: Not started.** Coordinate [base-world vision](../worlds/base/vision-and-gaze.md), [FPW03](first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness), and G's projection.
 
+- [ ] Install the shared one-normal-second epoch daylight coefficient samples and local light native/cell boundaries, without a global 20 Hz stationary scan.
 - [ ] Install the selected day/night, ambient, direct-light and finite local-source policies under the world clock and geometry owner. Evaluate light transmission, exposed surface illumination and local background contrast independently of GPU shadows or client quality settings.
 - [ ] Distinguish seeing a light source, seeing an illuminated surface and seeing a silhouette. Install the finite emissive flame shape and background-radiance rules, including non-occluding emitters, intervening blockers and a source coinciding with a surface sample. An unseen lamp may light a wall without disclosing the lamp's entity, coordinates, holder or hidden movement.
 - [ ] Supply G with the permitted physical lighting meaning and source-free visible effects needed to render consistently. Keep remembered/nearest-rendered-fire approximations out of detection and replace conflicting rendered-light behavior through G; preserve actual current behavior until the complete replacement is delivered.
@@ -81,18 +83,18 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 **Exit:** moving a lamp or screen produces the same material visibility consequence for native sensing and ordinary presentation, within the authored approximation; graphics settings and camera cutaways cannot change observation.
 
-### VG05 — A's visual producer and complete temporal coverage
+### VG05 — A's visual producer and bounded temporal sensing
 
-**Status: Not started.** Depends on A's adopted physical-input shapes, evidence-accumulation semantics and SA-D02 disposition.
+**Status: Not started.** Depends on A’s integrated physical-input, exact-source and acquisition contracts.
 
-- [ ] Produce only actual visual evidence at the supported feature/facet precision, quality and time. Supply A's source/life/receiver provenance, identity fidelity and the technical design's unique-witness continuity certificate; overlapping figures cannot retain tracking by private ID. Leave recognition, weak-evidence storage, decay, episode ownership and remembered facts with A.
-- [ ] Implement the technical design's complete interval preparation for moving observer and target, head/body turns, changing posture, light/source motion and changing occlusion. Derive it from the same current-query model, using actual admitted paths and canonical time anchors.
-- [ ] Partition at all required field, geometry, range, light, quality and action boundaries. Deliver obvious evidence promptly and weak evidence over its real duration; let A calculate its first threshold crossing. Equal endpoint samples or a midpoint alone cannot prove that a narrow opening was never visible.
+- [ ] Produce only actual visual evidence at the supported feature/facet precision, quality and time. Supply A's source/life/receiver provenance, identity fidelity and the technical design's sampled received-witness correspondence; overlapping figures cannot retain tracking by private ID. Leave recognition, weak-evidence storage, decay, episode ownership and remembered facts with A.
+- [ ] Implement canonical 50 ms normal-time active-scope cells through the existing native boundary queue, with complete swept candidates and shared batches. Preserve original epoch/cell ordinals and actual motion; static dependency-complete scopes reuse their sample.
+- [ ] Hold completed sample rates/facet availability until the next due sample or earlier actual invalidation; let A consume each uncovered span and solve its threshold. Actual source/pose/material changes and impulses remain native boundaries. Existing supported narrow-window sweeps add deterministic measurements; explicitly qualify missed/held shorter unrepresented optical intervals.
 - [ ] Reconcile all currently sampled motion families, including target/resource/item approaches, falls and wandering impulses. Required trajectory changes are source work; do not infer an unadmitted continuous path through an old instantaneous move.
 - [ ] Keep the experimental four-metre displacement bound honest: it remains the current broader sampling policy, not a sight radius or proof of continuous vision. Pause, speed changes, interval splitting and restore must preserve B/A outcomes under the new selected temporal contract.
-- [ ] At unresolved required preparation, retain the last coherent simulation boundary and report the specified incomplete/failure condition. Do not synthesize no exposure, surprise eligibility or an unmeasured observation time.
+- [ ] Yield required unfinished due-cohort preparation at one coherent native prefix; invalid/unsupported installed inputs fail explicitly. Do not introduce a certified optical root solver or terminal near-tangency stall. F cuts remain capture-only, and dynamic learning waits for canonical physical samples.
 
-**Exit:** a target can pass through a narrow gap between coarse movement endpoints and receive exactly its supported opportunity, with no fabricated unseen updates. A's accumulated result and F's immutable evidence cut are invariant to publication frequency and supported clock speed.
+**Exit:** canonical samples, held support and existing supported narrow-window measurements produce the same actual A evidence across speed/host/save partitions. Current projection keeps measured times, typed motion uses two actually received samples, and F captures no extra contact-time observation.
 
 ### VG06 — Complete candidates, caches and operational bounds
 
@@ -101,10 +103,10 @@ Implement through the existing spatial, action, observation, clock and view owne
 - [ ] Select candidates using finite installed ranges, actual receiver/target extents and conservative swept bounds; query relevant neighborhoods rather than every observer against every entity each frame.
 - [ ] Invalidate current and prepared results on relevant old/new movement bounds, body/head orientation, posture, equipment, sense/stat policy, illumination, geometry, source/life and definition changes. Include direct-light and emissive-surface/background dependencies separately: an output-only change or distant flame must update affected sight/silhouettes beyond its lighting radius. Staying in one spatial cell is not sufficient cache validity.
 - [ ] Implement the specified cache keys, dependency revisions, work allowances and resumable preparation. Capacity eviction changes reuse only; it cannot drop legitimate actors, lights, contributors or temporal events from the physical result.
-- [ ] Handle dense/coincident scenes and rapidly changing light/geometry with explicit bounded continuation and terminal diagnostic failure. Repeated retries cannot advance an incoherent world or hide permanent failure.
+- [ ] Handle dense/coincident scenes and rapidly changing light/geometry with coherent metered continuation and explicit invalid-input failure; numerical near-tangency is not a terminal failure. Repeated retries cannot advance an incoherent world or hide permanent failure.
 - [ ] Measure ordinary and adversarial workloads after implementation; record memory, work, latency and supported scale in the owning evidence report. Source inspection or an algorithmic bound alone does not qualify performance.
 
-**Exit:** correctness does not depend on nearest-N selection, render-frame rate or unbounded synchronous pair scans, and every admitted scene either progresses with complete physical preparation or exposes the declared bounded failure.
+**Exit:** correctness does not depend on nearest-N selection, render-frame rate or unbounded synchronous pair scans, and required physical work resumes without semantic omission; unsupported installed data fails explicitly and total supported scene capacity remains unqualified.
 
 ### VG07 — Save, authoring and lifecycle integration
 
@@ -130,17 +132,13 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 **Exit:** the selected feature works through ordinary play and all disclosure paths, with measured limits and separately reported usability/enjoyment evidence. Surprise, psychology and broader optional sense families are not marked complete by B's acceptance.
 
-## Specialist dependencies
+## Integrated specialist dependencies
 
-The [technical handoff contract](../projects/vision-and-gaze-tech-design.md#15-shared-contract-compatibility-decisions-and-handoff) owns the detailed A/C/E/F/G boundaries and explicit source-revision proposal.
-
-- **SA-D02 remains open:** SAD-I and A must adopt or reject the proposed source-revision representation before VG05's dependent mapping. Earlier physical-definition and geometry work does not require that disposition.
-- **C/E/G coordination remains required:** C owns supported posture/locomotion agreement; E and G retain attention and ordinary-player controls/disclosure. Their pending design handoffs do not imply completed integration. F owns warning/preparedness and consumes only timely A evidence.
-- **SAD-I owns final integration:** reconcile specialist interfaces and central repertoire navigation, priorities and counts once across the combined design.
+The [technical integration contract](../projects/vision-and-gaze-tech-design.md#15-shared-contract-compatibility-decisions-and-handoff) fixes A’s exact source adapters and measured/acquired semantics, C’s posture/minimum locomotion caps, E’s voluntary work, F’s capture-only warning/preparedness use and G’s frozen measured projection. These are implementation dependencies, not pending shared technical choices. No consumer can substitute hidden live values for a sampled facet. SA-D01 remains the separate controlled-player psychological policy decision.
 
 ## Complete repertoire review coverage
 
-VG00 covers all **42 repertoire files**: 28 topical catalogues, six navigation/planning records, four research/provenance records and four world profiles. The review includes every scope and entry's applicability, plus full relevant rows and surrounding context; it does not claim a new external-source research pass or redesign of unrelated proposals. Existing catalogue IDs, priorities and optional scope remain intact. SAD-I retains the central reconciliation dependency above.
+VG00 covers all **42 repertoire files**: 28 topical catalogues, six navigation/planning records, four research/provenance records and four world profiles. The review includes every scope and entry's applicability, plus full relevant rows and surrounding context; it does not claim a new external-source research pass or redesign of unrelated proposals. Existing catalogue IDs, priorities and optional scope remain intact. The shared repertoire owner retains central priorities and broader optional scope.
 
 ## Maintained records
 

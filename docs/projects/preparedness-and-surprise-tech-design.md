@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                   | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | F's contracts, algorithms and paper acceptance are designed; SUR01–SUR09 implementation and integration qualification remain open. | 2026-10-23   |
+| In progress | Integrated design is complete; SUR01–SUR09 implementation, performance and gameplay qualification remain open. | 2026-10-24 |
 
 ## Authority and delivery boundary
 
@@ -64,7 +64,7 @@ No module installed means no surprise damage/reaction contribution from F. An in
 
 ## SUR-C02 — Producer and consumer contracts
 
-Shared SC02 ActorLifeRef, SimTime, OccurrenceRef, EvidenceRef, EvidenceCut, LocationEvidence and DefinitionPin retain their frozen meanings. A supplies FactKey, SupportedSensoryFact, CapturedCurrentFacet, permitted participants and exact acquisition. E supplies its complete [CapturedPreparationState / capturePreparation port](attention-and-investigation-tech-design.md#7-exact-preparedness-evidence-interface) unchanged. D supplies complete mechanics and its cause/receipt port. The following defines F-owned meanings; imported owner types are references to those contracts, not instructions to invent replacement schemas.
+Shared SC02 ActorLifeRef, SimTime, OccurrenceRef, EvidenceRef, EvidenceCut, LocationEvidence and DefinitionPin retain their shared meanings. A supplies FactKey, SupportedSensoryFact, CapturedCurrentFacet, permitted participants and exact acquisition. E supplies its complete [CapturedPreparationState / capturePreparation port](attention-and-investigation-tech-design.md#7-exact-preparedness-evidence-interface). D supplies complete mechanics and its cause/receipt port. The following defines F-owned meanings; imported owner types are references to those contracts, not instructions to invent replacement schemas.
 
 ### Acquired warning and coverage
 
@@ -784,7 +784,7 @@ Unknown words, an ambiguous/unlearned place, ungrounded “there”/“behind yo
 
 [SUR01–SUR09](../maintainers/preparedness-and-surprise.md) owns all task bodies, dependencies and exit criteria. Deliver one complete melee interaction, then the actual ranged/warning path, before wider qualification. Each includes acquisition, preparation, permission, contact, native startle, current-format save and permitted feedback. Complete installed inputs before enabling a path; stages do not waive scope.
 
-Recheck affected owners against the pinned baseline before coding. No unresolved F product choice remains. SA-D01 is D's separate controlled-character psychological choice. SA-D02/SA-D03 are resolved: source revisions retain their family-owned exact values, and E captures the actual current-method start. Their runtime adapters remain required implementation work. Tuning and enjoyment remain open qualification work.
+Recheck affected owners on the implementation base before coding. No unresolved F product choice remains. SA-D01 is D's separate controlled-character psychological choice. SA-D02/SA-D03 are resolved: source revisions retain their family-owned exact values, and E captures the actual current-method start. Their runtime adapters remain required implementation work. Tuning and enjoyment remain open qualification work.
 
 ## Maintained records
 

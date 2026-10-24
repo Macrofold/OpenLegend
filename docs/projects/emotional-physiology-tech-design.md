@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Technical design is complete; EP01–EP09 implementation and qualification remain open, with SA-D01 explicitly unresolved. | 2026-10-20 |
+| In progress | Integrated design is complete; EP01–EP09 implementation and qualification remain open, with SA-D01 explicitly unapproved. | 2026-10-24 |
 
 ## Authority and delivery boundary
 

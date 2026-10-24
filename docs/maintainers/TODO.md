@@ -102,6 +102,8 @@ The Worktree-bound Sandbox caller is superseded by [MW01–MW04](macrofold-worke
 
 This file contains miscellaneous and cross-cutting deferred validation, integration blockers, documentation gaps and small follow-ups that do not belong to a focused feature tracker. Feature task state belongs in the focused trackers listed in the [maintainer work index](README.md).
 
+[Stealth and awareness](stealth-awareness.md) owns the integrated A–G design and remaining implementation/qualification through PP, VG, ACS, EP, ATI, SUR and SPX. The selected design overlaps in ND03/ND11/ND13/ND16/ND19 are complete; the full controlled-player emotion choice remains open in SA-D01. Focused trackers retain the runtime work rather than duplicating it here.
+
 Runtime latency, database scheduling, native CPU, buffering and long-session optimization are tracked in [PF00–PF11](performance.md). Existing feature correctness checks below remain open; performance work does not complete them.
 
 [Agent agency](agent-agency.md) owns the new decision/goal/plan work; [EPR](events-perception-and-reactions.md) owns shared reaction intake. Their tasks and acceptance stay in those focused trackers.

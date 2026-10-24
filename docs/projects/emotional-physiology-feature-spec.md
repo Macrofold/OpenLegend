@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Feature design is complete; EP01–EP09 implementation and qualification remain open, with SA-D01 explicitly unresolved. | 2026-10-20 |
+| In progress | Integrated design is complete; EP01–EP09 implementation and qualification remain open, with SA-D01 explicitly unapproved. | 2026-10-24 |
 
 ## Purpose and scope
 
@@ -334,11 +334,11 @@ Repertoire anchors: [BSP-101/208/260](../repertoires/bodies-species.md), [TR-143
 
 ## Repertoire coverage and ownership
 
-The review covers the inventory and applicable content of all **42 repertoire Markdown files** at the source-reviewed baseline, with detailed focus on psychology/behavior, needs, traits, characters/personalities, relationships, bodies, combat and gameplay priorities. Cross-catalogue review identifies emotionally relevant entries and their actual owners. It is not a claim to revalidate every sentence of all proposals, repeat the bibliographic programme or measure player enjoyment.
+The following map locates emotionally relevant repertoire possibilities with their existing owners. The selected foundation supports several kinds of character experience without turning every psychological example into required implementation.
 
 The repertoires remain proposal catalogues. A selected baseline emotion capability can support core independent people without promoting every grief ritual, alien inner law, personality detail or psychological example to a current implementation requirement. The central [README](../repertoires/README.md), [coverage](../repertoires/coverage.md) and [gameplay-priorities](../repertoires/gameplay-priorities.md) locate the selected emotion foundation without promoting every related repertoire possibility.
 
-### All-file relevance map
+### Repertoire responsibilities
 
 | Repertoire file | Applicable coverage | Selected boundary or existing owner |
 | --- | --- | --- |
@@ -436,7 +436,7 @@ Use the scenarios' same producer and permission preconditions: autonomous eligib
 
 Native deterministic acceptance establishes actual state, ordering and effects. Bound provider fixtures establish request/admission behavior, not natural interpretation quality. Controlled live evidence must establish that different characters select coherent different meanings and can continue useful activity without scripted outcomes. Human play evidence must separately establish understandable controls, worthwhile choices and acceptable interruption/operating burden. None is substituted by fluent narration.
 
-### Surprise designer contract
+### Combat and sensing integration
 
 Consume [EP-C05–EP-C07 and EP-C12](emotional-physiology-tech-design.md#ep-c12--implementation-responsibilities): exact shock cause/result and target life, body applicability, complete effective fear, parameter resolution, ordered timing and native animal support. The producer supplies committed evidence; it cannot assign private fear or duplicate onset through outcome wrappers. Newly caused shock affects later eligible checks, never its own impact.
 
@@ -444,7 +444,7 @@ Keep authored normal-play duration and unrestricted running speed. [EP-C06](emot
 
 ### Integration agent contract
 
-Reconcile this pair, world policy, limits, trackers, shared ND11/ND19 scope, existing cognition/continuing-life/threat consumers and the broader repertoire indexes. Preserve one private appraisal owner, one actor-work owner and one threat decision pipeline. New reassessment reuses exact sources, existing operations and durable authority.
+The integrated world policy, implementation tasks and cognition/continuing-life/threat consumers preserve one private appraisal owner, one actor-work owner and one threat decision pipeline. New reassessment reuses exact sources, existing operations and durable authority.
 
 A later action-stage failure must preserve accepted emotion; emotion-only completion must preserve unrelated work. Keep SA-D01 blocked or explicitly selected and authorized through control transfer and restore. The producer-independent foundation can proceed separately. Detailed consumer responsibilities belong to [EP-C12](emotional-physiology-tech-design.md#ep-c12--implementation-responsibilities).
 

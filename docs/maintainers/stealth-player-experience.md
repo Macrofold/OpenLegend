@@ -26,7 +26,7 @@ The [source audit](../projects/stealth-player-experience-tech-design.md#contract
 
 ## SPX01 — Integrate contracts and protect publication
 
-**Status: Not started.** Dependencies: SAD-I; A current/history/reference families; B visible patch/detail/illumination; C cue precision; existing server authority.
+**Status: Not started.** Dependencies: integrated shared schema; A current/history/reference families; B visible patch/detail/illumination; C cue precision; existing server authority.
 
 - [ ] Consume canonical A evidence/reference families, B's frozen 50 ms visual samples and B/C movement composition. Preserve exact revision types and measurement times; do not derive fresh transforms between samples.
 - [ ] Replace whole-entity publication with permitted facet/contact records across full views, patches, descriptions, histories and all lazy reads.

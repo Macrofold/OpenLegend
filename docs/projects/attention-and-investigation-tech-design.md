@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | Specialist design and preparation interfaces are complete; implementation and the named cross-project integration gates remain open. | 2026-10-22 |
+| In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-10-24 |
 
 ## 1. Authority, baseline and dependency reads
 
@@ -606,10 +606,3 @@ Source/document review can establish contract coherence only. Later fixture/nati
 - Methods/timing/curiosity choices: [World profile](../worlds/base/attention-and-investigation.md).
 - Limits and growth: [Attention inventory](../limits/attention-and-investigation.md).
 - Existing contracts: [Action capabilities](../action-capabilities.md), [action experience](../action-experience.md), [agency](../agent-agency.md), [memory](../memory-architecture.md), [EPR](../events-perception-and-reactions.md), [identity](../identity-and-references.md), [spatial](../spatial-world.md), [time](../simulation-time.md), [save/load](../save-and-load.md) and [attention/scenes](attention-and-scenes-tech-design.md).
-
-[a-feature]: perspective-perception-feature-spec.md
-[a-tech]: perspective-perception-tech-design.md
-[b-feature]: vision-and-gaze-feature-spec.md
-[b-tech]: vision-and-gaze-tech-design.md
-[c-feature]: acoustic-stealth-feature-spec.md
-[c-tech]: acoustic-stealth-tech-design.md

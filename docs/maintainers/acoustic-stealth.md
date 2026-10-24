@@ -12,9 +12,9 @@ The shared [SC01–SC14 contracts](../projects/stealth-awareness-tech-design.md#
 
 The [technical baseline](../projects/acoustic-stealth-tech-design.md#authority-and-inspected-baseline) records the exact common-contract and completed A branch pins used by `codex/design-stealth-04-acoustics`. A's [feature][a-feature], [technical contract][a-tech], [world policy][a-policy] and [PP tracker][a-work] are design dependencies; their runtime/history is not merged here.
 
-The available vision boundary is [SC06](../projects/stealth-awareness-tech-design.md#sc06--one-accepted-pose-and-physical-action-owner) and [SC07](../projects/stealth-awareness-tech-design.md#sc07--physical-channels-and-prompt-cues). Specialist vision work is neither awaited nor merged. Before implementation, reconcile any subsequently completed B design against those shared physical pose, receiver-transform, clearance and temporal-invalidation meanings. Recheck callers that changed after the pinned source; a later implementation base must not be assumed identical.
+The integrated [vision design](../projects/vision-and-gaze-tech-design.md) supplies the shared physical pose, explicit crouched optical fixture, minimum direction/quiet/posture speed caps and canonical visual sampling. C retains its independent .5 m acoustic anchor law and exact impulses. Recheck changed code at implementation time without reopening these settled design contracts.
 
-**SA-D02 is an implementation gate, not an unresolved acoustic product choice.** Module A's [source-revision proposal][sa-d02] identifies SC02's conceptual numeric revision versus existing personal-source string digests. The shared owner must adopt an exact family-specific representation or provide an equally exact alternative before dependent representation work in PP01 and ACS01/ACS04/ACS06. Preserve the source kind and its real owning revision; do not coerce a digest, invent a universal counter or announce adoption from this specialist branch. Independent design and unaffected work do not wait for the gate. SA-D01's controlled-character psychological fear producer is outside this feature.
+**Exact source revisions are adopted.** SC02/A preserve each source owner’s actual version and storage role, including personal string digests; there is no universal numeric-native assumption or additional acoustic counter. ACS01/04/06 implement those adapters. SA-D01 remains the separate controlled-player psychological policy, including creation/review, retained-appraisal applicability, disclosure and control transfer.
 
 This design completes only the physical-sound/quiet-movement and generalized-hearing portions of [ND13](needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization), [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and SAD-C. Broader controls, communication, attention, emotional behavior, surprise, hearing media and final shared integration retain their open owners.
 
@@ -31,7 +31,7 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 | Work | Status | Dependencies | Completion boundary |
 | --- | --- | --- | --- |
 | ACS00 | Completed — design only | Exact common source; completed A design; shared B/C boundaries | Selected pair, policy, limits, source/scenario/repertoire review and scoped handoffs. |
-| ACS01 | Not started | ACS00; SAI-C interface review; PP01–PP02 acquisition contract; SA-D02 for dependent representation | One physical occurrence/hearing path with memory-independent receiver eligibility and exact owner revisions. |
+| ACS01 | Not started | ACS00; SAI-C interface review; PP01–PP02 acquisition contract; integrated exact source adapters | One physical occurrence/hearing path with memory-independent receiver eligibility and exact owner revisions. |
 | ACS02 | Not started | ACS01; joint B/C SC06–SC07 pose contract; existing action/motion owners | Admitted quiet gait/posture and body-appropriate contact emissions from actual traversal. |
 | ACS03 | Not started | ACS01; each supported activity's real occurrence/lifecycle owner | Other physical producers, persistent intervals and simultaneous sound/masking without synthetic duration. |
 | ACS04 | Not started | ACS01–ACS03 supported inputs; PP01–PP04; relevant SPK interfaces | Received features, location uncertainty, classification/recognition and speech semantics compose end to end. |
@@ -49,7 +49,7 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 - [x] Define one reusable source/reception path, body-aware physical contacts, permitted C→A evidence, deterministic ordering, meaningful invalidation and bounded complete work.
 - [x] Compare quiet hare approach, armored pursuit, sound behind a wall, mistaken footsteps, a familiar unseen voice, simultaneous sources, dense animals and fleeing prey on noisy terrain.
 - [x] Review all 42 repertoire files in context and improve the focused opportunities linked below while preserving existing IDs, priority metadata and source provenance.
-- [x] Record implementation slices, future verification, current-format lifecycle, cross-module interfaces, selected limits and the SA-D02 implementation dependency.
+- [x] Record implementation slices, future verification, current-format lifecycle, cross-module interfaces, selected limits and the adopted exact source adapters.
 
 **Exit:** the selected acoustic design is concrete enough for implementation against its owning contracts. None of these checks establishes runtime correctness, physiological calibration, capacity, usability or enjoyment. Final branch/doc/link review and the pushed commit are delivery evidence for this documentation assignment; ACS01–ACS08 remain open.
 
@@ -62,7 +62,7 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 - [ ] Decouple physical receiver discovery and compact native acquisition from autobiographical memory. Apply exact body life, participation, hearing capability and current awake/alive eligibility before acquisition; do not enable separately deferred sound waking accidentally.
 - [ ] Prepare conservative source/receiver indexes once per valid phase, with exact fallback on cache overflow. Key geometric transfer by the actual emitted origin and receiver geometry, not merely a causal entity ID.
 - [ ] Admit detached impacts through their actual surviving physical source even if the performer died or left. Keep private source/cause/position proof outside recipient-facing evidence.
-- [ ] Route completed physical samples into A's single acquisition boundary and distinguish completed negative, unsupported and incomplete results. Resolve SA-D02 before dependent revision adapters; never use later storage insertion as the original hearing time.
+- [ ] Route completed physical samples into A's single acquisition boundary and distinguish completed negative, unsupported and incomplete results. Use the integrated exact source-revision adapters; never use later storage insertion as the original hearing time.
 
 **Exit:** an existing utterance and a supported nonlinguistic occurrence reach eligible humans and memoryless native animals through the same physical owner, with exact provenance and no duplicated observation.
 
@@ -71,7 +71,7 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 **Primary integration:** `spatial-state.ts`, `kernel.ts` movement/action owners, base action/body definitions, `motion-boundaries.ts`, `temporal-boundaries.ts` and B's accepted pose.
 
 - [ ] Install the selected supported posture/gait definitions through ordinary action admission. Validate the resulting body/support and actually supported equipment compatibility before a posture transition; refused admission changes no pose, resources, contact phase or random state. Revalidate at completion, preserve body capability identity, and keep committed evasion speed/end pinned. Accurate long-equipment extension clearance is outside current port geometry.
-- [ ] Reconcile movement speed, route availability, body/receiver origins, prediction and held-action constraints through one owner. Independent supported looking and posture compose with movement; camera or animation updates are not physical writers.
+- [ ] Implement B/C’s minimum direction/quiet/posture caps and explicit standing/crouched optical/receptor fixtures together with body, route, prediction and held-action constraints through one owner. Independent supported looking and posture compose with movement; camera or animation updates are not physical writers.
 - [ ] Generate contacts from accepted path segments, their actual distance/time and support/material crossings. Cover ordinary travel, follow, evasion, native wander/escape and supported landings. Attempted budget, blocked remainder, editor relocation, teleportation, endpoint chord distance and render ticks create no steps.
 - [ ] Retain gait/contact phase and partial-contact peak/all-quiet fields by exact body life across compatible interruptions, pace/posture switches, partitioned native intervals and save/reload; last-moment quiet toggles cannot erase prior movement. Preserve existing movement-fidelity progress as a separate quantity.
 - [ ] Resolve species/body contact patterns, actual posture/gait, terrain/material and equipment contributions from authored supported data. Prepare carrier equipment through custody/attachment invalidation rather than scanning inventories or world objects for every contact.
@@ -113,6 +113,8 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 - [ ] Add the compact permitted acoustic intake to the existing native controller and selected species bindings. Keep independent recipients, current eligibility, cause/repetition support and actual route/refuge constraints; no human memory or provider call is required for the animal.
 - [ ] Select voice response bands only from A-acquired voice-like classification or understood speech; route indistinct utterances through the same general filter as other identical received sounds. Apply the physical-sound-specific eligibility policy so ordinary herd contacts do not automatically create a self-sustaining universal alarm cascade. Any secondary alarm/movement is a new actual producer that other bodies must independently receive.
 - [ ] Preserve blocked/proposal truth and nonwaking semantics in the shared alarm helper. Save the single pending acoustic refuge-leg obligation and retire it only through actual bound arrival/cancellation; empty known danger alone cannot settle the animal. Keep presence/rise baselines outside the optional alarm episode.
+- [ ] Implement one permitted pattern map with independent alarm/curiosity slots and per-slot expiry. Evaluate alarm eligibility first even for suppressed repeats; retain consumed curiosity onset in the existing per-exposure record. Jointly qualify only E’s explicitly installed ground-bird contrast, with no blanket species curiosity.
+- [ ] Supply D’s actual abrupt acquired cue qualifier/receipt through existing A/C state; distinguish real loud impulse/onset/rise from ordinary strong detection, coarse anchor resampling, bootstrap and restored confirmation.
 - [ ] Suppress redundant response/intake work by the exact permitted cause/pattern and meaningful change rules while preserving distinct consequences and occurrences. Expired or invalid support cannot keep a response eligible after restore.
 - [ ] Hand E a permitted historical bearing/region, quality and relevant change, allowing ignore, listen, investigate or another ordinary choice. Do not force every person to turn or route them to a live hidden entity.
 - [ ] Hand F already-acquired facts and immutable support before its dependent cut. Preserve warning just before an attack, incomplete required work, nested callbacks and the exclusion of the same impact as its own advance warning.
@@ -181,7 +183,7 @@ SAD-I owns the broader repertoire navigation, coverage and priority synthesis wh
 
 ACS00 evidence consists of pinned source/design reading, documented scenario comparisons and static documentation review. **Executable tests, runtime play, performance, browser/provider behavior, balance and uncoached enjoyment were not exercised.** Every corresponding task above remains unchecked.
 
-Before implementing, read the paired design, installed physical-sound policy, acoustic inventory and pinned A contracts together; recheck the actual code base and shared SA-D02 disposition. Implement a useful complete producer→physical reception→A evidence→consumer→safe projection slice. Record later results with the real revision, workload, source/receiver populations, clock settings and evidence limitations. Do not infer full delivery from new types, helpers or a single scripted hare encounter.
+Before implementing, read the paired design, installed physical-sound policy, acoustic inventory and integrated A/B/E/F/D contracts together; recheck the actual implementation base. Implement a useful complete producer→physical reception→A evidence→consumer→safe projection slice. Record later results with the real revision, workload, source/receiver populations, clock settings and evidence limitations. Do not infer full delivery from new types, helpers or a single scripted hare encounter.
 
 ## Maintained records
 
@@ -190,7 +192,7 @@ Before implementing, read the paired design, installed physical-sound policy, ac
 - Selected world behavior: [physical sound](../worlds/base/physical-sound.md), [animal sound responses](../worlds/base/animal-sound-responses.md), [A recognition policy][a-policy].
 - Limits: [acoustic inventory](../limits/acoustic-stealth.md), existing [hearing inventory](../limits/hearing-and-speech.md), shared [stealth inventory](../limits/stealth-awareness.md).
 - Cross-project work: [SAD-C / SAI-C / SAD-I](stealth-awareness.md), [PP00–PP07][a-work], [SPK](speech-and-social-perception.md), [HE](hearing-and-speech.md), [CTR](combat-and-threat-responses.md).
-- Shared representation dependency: [SA-D02][sa-d02].
+- Adopted shared representation: [SA-D02][sa-d02].
 
 [a-feature]: ../projects/perspective-perception-feature-spec.md
 [a-tech]: ../projects/perspective-perception-tech-design.md

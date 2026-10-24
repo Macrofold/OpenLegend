@@ -4,17 +4,17 @@ Use this page to find the owner of work. Focused trackers own task status; speci
 
 ## First playable: survival, a defensible home and independent encounters
 
-[Stealth, awareness and surprise](stealth-awareness.md) owns the completed shared-contract design and the separate A–G specialist design/implementation dependencies. The [feature](../projects/stealth-awareness-feature-spec.md), [architecture](../projects/stealth-awareness-tech-design.md) and [repertoire review](../projects/stealth-awareness-repertoire-review.md) preserve perceived evidence, native startle, preparation and ordinary-player disclosure without marking runtime delivery complete. A–G design deliverables are merged; final integration and runtime delivery remain open. [Playable stealth controls and honest perspective (SPX01–SPX07)](stealth-player-experience.md) owns the selected player-interface delivery and qualification. Controlled-player psychological fear retains one [open policy choice](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters), including retained-appraisal applicability during direct control. Detailed F delivery: [Preparedness and surprise (SUR01–SUR09)](preparedness-and-surprise.md).
-
-[Vision and gaze (VG00–VG08)](vision-and-gaze.md) owns specialist B's [feature specification](../projects/vision-and-gaze-feature-spec.md), [technical design](../projects/vision-and-gaze-tech-design.md), [world policy](../worlds/base/vision-and-gaze.md) and [limits](../limits/vision-and-gaze.md): physical looking while moving, exposed visual detail, world light and complete temporal evidence. Implementation, qualification and the A/E/F/G handoffs remain explicit in that tracker.
-
-[Attention and investigation](attention-and-investigation.md) owns finite observation/watch/search, compatible work, native curiosity and the preparation-evidence producer. Its specialist design is complete; ATI01–ATI08 remain runtime work.
-
 Start with [first-playable delivery and validation (FPV01–FPV09)](first-playable-validation.md). The [world specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the required survival, camp, character, invention and conflict experience; [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection; the [playtest plan](../projects/first-playable-playtest-plan.md) owns participant-learning procedure. FPV routes missing mechanics to existing subsystem owners and distinguishes useful partial tests from complete acceptance.
 
 [Commercial offers](commercial-offers.md) and the [initial-offer decision brief](../projects/initial-commercial-offer-decision-brief.md) own browser-feasible offer comparison and adoption. Payment is not a prerequisite for ordinary game learning.
 
 The complete selected design is now in the [integrated pair](../projects/first-playable-world-feature-spec.md). Implementation owners are [FPW shared integration](first-playable-world.md), [SV survival/making](first-playable-survival.md), [SH natural camp](editable-shelters.md), [CP people/cooperation](first-playable-cooperation.md) and [RW wildlife/roaming](first-playable-roaming.md). Required CTR/SPK and existing foundation tasks retain their owners. All runtime and player acceptance remains explicit in those trackers and FPV.
+
+[Stealth, awareness and surprise](stealth-awareness.md) owns the completed integrated A–G design and its implementation dependencies. The [feature](../projects/stealth-awareness-feature-spec.md), [architecture](../projects/stealth-awareness-tech-design.md) and [repertoire review](../projects/stealth-awareness-repertoire-review.md) preserve perceived evidence, native startle, preparation and ordinary-player disclosure without marking runtime delivery complete. Shared and specialist design boundaries are reconciled; runtime delivery and qualification remain open. [Playable stealth controls and honest perspective (SPX01–SPX07)](stealth-player-experience.md) owns the selected player-interface delivery and qualification. Controlled-player psychological fear retains one [open policy choice](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters), including retained-appraisal applicability during direct control. Detailed F delivery: [Preparedness and surprise (SUR01–SUR09)](preparedness-and-surprise.md).
+
+[Vision and gaze (VG00–VG08)](vision-and-gaze.md) owns specialist B's [feature specification](../projects/vision-and-gaze-feature-spec.md), [technical design](../projects/vision-and-gaze-tech-design.md), [world policy](../worlds/base/vision-and-gaze.md) and [limits](../limits/vision-and-gaze.md): physical looking while moving, exposed visual detail, world light, canonical sampled values and their declared temporal limits. Implementation and qualification of the integrated A/E/F/G interfaces remain explicit in that tracker.
+
+[Attention and investigation](attention-and-investigation.md) owns finite observation/watch/search, compatible work, native curiosity and the preparation-evidence producer. Its specialist design is complete; ATI01–ATI08 remain runtime work.
 
 ## Game production methods
 
@@ -22,7 +22,7 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 ## General emotions, bodily reactions and adaptive review
 
-[Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) are complete; implementation/qualification remain open. [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) retains the controlled-character interpretation choice.
+[Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) are complete; implementation/qualification remain open. [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) retains the controlled-player production, retained-appraisal applicability, disclosure, revocation and transfer choice.
 
 ## Combat and immediate threat responses
 
