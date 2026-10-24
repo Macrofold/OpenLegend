@@ -1,8 +1,8 @@
 # Cognition Lab — feature specification
 
-| Status      | Current progress                                                                                           | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Product design is specified; runtime implementation and usability/behavior qualification have not started. | 2026-10-24   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Design complete; runtime implementation and usability/behavior qualification remain open under CL01–CL11. | 2026-10-24   |
 
 ## 1. Purpose and product outcome
 

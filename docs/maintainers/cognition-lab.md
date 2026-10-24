@@ -1,6 +1,6 @@
 # Cognition Lab — implementation and acceptance
 
-The [feature specification](../projects/cognition-lab-feature-spec.md) owns the selected experience; the [technical design](../projects/cognition-lab-tech-design.md) owns contracts; the [repertoire map](../projects/cognition-lab-repertoire-review.md) connects all 28 catalogues to worthwhile experiments. [CLL01–CLL09](../limits/cognition-lab.md) owns lab-specific constraints. Design baseline: `795dae71d1cf6a2e846ebfaaeb7c70342bc01f66`, October 24, 2026. This work is documentation only; no laboratory runtime or qualification is delivered by a design checkbox.
+The [feature specification](../projects/cognition-lab-feature-spec.md) owns the selected experience; the [technical design](../projects/cognition-lab-tech-design.md) owns contracts; the [repertoire map](../projects/cognition-lab-repertoire-review.md) connects all 28 catalogues to worthwhile experiments. [CLL01–CLL09](../limits/cognition-lab.md) owns lab-specific constraints. Design baseline: `795dae71d1cf6a2e846ebfaaeb7c70342bc01f66`, October 24, 2026. **CL00: Done — designed and reviewed; CL01–CL11 implementation and qualification open.** This work is documentation only; no laboratory runtime or qualification is delivered by a design checkbox.
 
 ## Delivery order and ownership
 
@@ -12,9 +12,9 @@ The design task does not authorize new automated tests. For implementation quali
 
 ## CL00 — Complete the selected design and reconciliation
 
-- [ ] Finish and review the paired specifications, conversation coverage, all-catalogue repertoire map, discretionary bounds and implementation breakdown.
-- [ ] Reconcile overlapping design-register leaves, focused cognition/character/UI owners and production/repertoire navigation without closing broader implementation or empirical work.
-- [ ] Verify changed-document formatting, links, identifiers and complete affected diff; record actual verification scope.
+- [x] Finish and review the paired specifications, conversation coverage, all-catalogue repertoire map, discretionary bounds and implementation breakdown.
+- [x] Reconcile overlapping design-register leaves, focused cognition/character/UI owners and production/repertoire navigation without closing broader implementation or empirical work.
+- [x] Verify changed-document formatting, links, identifiers and complete affected diff; record actual verification scope.
 
 **Exit:** every accepted behavior has an observable contract and implementation owner; unresolved dependencies and qualification are explicit. This closes only the selected developer-laboratory design, not DG02/DG04, ND04/ND19/ND20 or broader character quality.
 

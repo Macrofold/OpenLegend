@@ -1,8 +1,8 @@
 # Cognition Lab — design delivery plan
 
-| Status      | Current progress                                                                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The feature, technical contracts, repertoire coverage and linked implementation work are being specified; runtime implementation is not authorized by this design task. | 2026-10-24   |
+| Status      | Current progress                                                                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Design complete and reviewed; requirements, paired specifications, repertoire coverage, limits and maintainer reconciliation are recorded. Runtime implementation remains open. | 2026-10-24   |
 
 ## Agreed scope and completion
 
@@ -74,6 +74,10 @@ The [feature specification](cognition-lab-feature-spec.md), [technical design](c
 - Check stable work IDs, counterpart/status/limits links, repertoire identifiers and conversation coverage.
 - Run the existing pinned formatter on changed Markdown where available; otherwise disclose the formatting-tool limit and perform the available structural review.
 - Do not claim runtime, browser, model-quality, throughput or player-enjoyment evidence from this design. Runtime acceptance remains in the implementation tracker. No game services, browser trials or paid model calls are required for document verification.
+
+## Design verification status
+
+The complete new design and affected documentation diff received source/contract review and independent product/technical review. The review resolved focal selection, actual-call payload identity, direct memory access, per-request actor context, required versus optional capture, safe dispatch/settling boundaries, actual run origins, New/Reset operations and source-owned deadline timers. All changed Markdown passes the repository-pinned Prettier 3.6.2 formatter; new and changed relative file links/anchors and selected repertoire IDs are checked against the exact source tree and authored documents. Only documentation is delivered. No runtime, browser, paid provider, autonomous-character, throughput or player-enjoyment qualification was performed; those gates remain explicit in CL01–CL11 and their existing owners.
 
 ## Maintained records
 

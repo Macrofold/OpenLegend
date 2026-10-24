@@ -1,8 +1,8 @@
 # Cognition Lab — repertoire coverage and playable experiments
 
-| Status      | Current progress                                                                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The laboratory design and coverage map for all 28 repertoires are specified; implementation and gameplay qualification remain open in the linked tracker. | 2026-10-24   |
+| Status      | Current progress                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Design complete; all 28 repertoires are mapped to selected experiments; runtime and gameplay qualification remain open. | 2026-10-24   |
 
 ## Purpose and authority
 
@@ -86,7 +86,7 @@ The catalogues retain 385 action examples plus 7,872 entries in the other 27 cat
 
 ## Episode design rules
 
-The starter set is small enough to navigate as a searchable collection. A card opens a runnable setup, not another nested editor. It names the activity and the character question first; exact source IDs and technical prerequisites belong in its details. The feature specification owns the collection's controls and layout.
+The reference bank is small enough to navigate as a searchable collection. A materialized card with installed prerequisites opens its runnable setup directly; a reference-only recipe opens its concise authoring guidance and names unavailable prerequisites. Neither path opens another nested editor. It names the activity and the character question first; exact source IDs and technical prerequisites belong in its details. The feature specification owns the collection's controls and layout.
 
 Each card records the starting actors and selected definitions, each actor's evidence, the input or event to submit, any matched change, the native actions it needs, the condition that ends observation, and the intended human review question. Keep those review expectations outside model inputs. Copying a card into a scenario can change its content without changing the canonical example.
 
@@ -96,7 +96,7 @@ Separate three judgments: did the engine admit and perform a valid action; did t
 
 ## Repertoire-derived episode cards
 
-These are reusable authoring recipes and a coverage bank. The feature specification selects the initial shipped presets; this list does not require twelve separate polished scenarios, new game mechanics, or a mandatory tour. An implementer uses the recipe only after its required native operations are available. The existing [complete character flows](compelling-characters-feature-spec.md#complete-behavioral-flows) and [episode evaluation](intelligent-simulation-evaluation-feature-spec.md#the-episode-not-the-preferred-answer) retain their acceptance criteria.
+These are reusable authoring recipes and a coverage bank. The initial usable preset is the normal world opening specified by the feature document; this list does not require twelve separate polished scenarios, new game mechanics, or a mandatory tour. An implementer uses the recipe only after its required native operations are available. The existing [complete character flows](compelling-characters-feature-spec.md#complete-behavioral-flows) and [episode evaluation](intelligent-simulation-evaluation-feature-spec.md#the-episode-not-the-preferred-answer) retain their acceptance criteria.
 
 ### E01 — One invitation, different people
 
