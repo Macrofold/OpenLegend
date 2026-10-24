@@ -1,0 +1,70 @@
+# Stealth player experience — limits and constraints
+
+[Feature](../projects/stealth-player-experience-feature-spec.md) · [Technical contract](../projects/stealth-player-experience-tech-design.md) · [SPX delivery](../maintainers/stealth-player-experience.md) · [Inventory rules](README.md)
+
+These are **selected design proposals, not implemented or measured optimums**. Updated 2026-10-24. Existing specialist inventories remain the sole owners of movement, sound, gaze, attention, startle and surprise laws. Information authorization, exact life/control binding, current-versus-history separation and atomic admission are correctness obligations, not tunable limits.
+
+## SPX-L01 — Replaceable input traffic and freshness
+
+**Status: Proposed. Restrictiveness: Medium; latency qualification open.** Send direction/gaze changes promptly with at most **20 replaceable updates per real second per controlled input owner**, sharing that allowance rather than allocating 20 independently to each key. Keep **one in-flight replaceable update and two fixed latest pending slots: direction and gaze**, under one dispatch owner. Updating one cannot erase the other; alternate eligible slots when both remain pending. Movement uses its exact gesture sequence; gaze keeps B's independent ordering. Discrete actions and prioritized neutral/cancel do not wait behind this gate.
+
+A held direction is renewed at a **100 ms heartbeat interval**, at most **10 priority renewals per real second** in addition to the shared change allowance; meaningful accepted direction updates also renew it. Each positive movement packet carries the latest complete desired direction with a sequence allocated when sent, so an overtaking renewal cannot preserve obsolete motion. Allow only one outstanding renewal and retain the latest intention in the existing controller; a stalled request must not create a backlog. Cancellation bypasses both update and renewal waits. The server expires held movement after **300 ms without a fresh valid renewal**, using its monotonic transport clock and the next native input boundary. A rejected/old packet never renews freshness. Input-session/gesture sequencing handles release before start acknowledgement or processing; the watchdog is not the primary release mechanism.
+
+**Reason/tradeoff:** twenty changes per second bounds redundant requests and happens to match the inspected publication ceiling; that ceiling does not establish command capacity or latency. The short watchdog limits uncontrolled travel after input loss, but high latency/jitter can interrupt legitimate holding. Heartbeat/release use priority delivery independently of the replaceable-update acknowledgement wait. Check expiry before positive native advance after a stall; do not replay stalled wall time as held travel. Measure end-to-end control and stop distance at actual pace before accepting it. Increasing the window needs evidence and a clear travel-risk tradeoff; do not hide bad control using client physics, browser timestamp backdating or automatic retry.
+
+Using C's proposed ordinary human pace of 6.6 m per normal-play second, 300 ms corresponds to about **1.98 m at 1×** or **15.84 m at 8×**, before native-boundary/processing delay. These are calculated illustrations from the proposed policy, not runtime measurements or guaranteed maximum stopping distances. Debug speeds therefore require explicit qualification and remain unsuitable as evidence of ordinary reaction fairness.
+
+One unresolved movement Start can hold **one visibly pending, unsent posture intention** in the existing input controller until its exact receipt establishes current work. Stop/scope loss/supersession clears it; this is not a general command queue or a retry after refusal.
+
+This is operational liveness, not a simulation duration. It grants no progress, pause exception or autonomous movement. One active gesture/session per current control owner and a monotonic cancelled-gesture high-water mark bound metadata; no unbounded tombstone history is required. Restore/transfer starts a new scope.
+
+## SPX-L02 — Look steps and supported control scope
+
+**Status: Proposed. Restrictiveness: Medium.** Q/E requests a **15-degree** horizontal orient-once step relative to the accepted physical gaze, through the installed gaze group's constraints. The focused Look selector uses that same step for yaw and pitch. Key repeat is coalesced under SPX-L01, never converted into an extra physical turning rate. On a pending step, further repeat updates the one latest requested direction relative to the gesture's captured accepted pose; it does not queue many future turns. Visible direction controls offer the same step plus an exact permitted point choice.
+
+**Reason/tradeoff:** a modest coarse step supports keyboard-only exploration while pointer/point selection permits precision. Actual turn rate/range, sensory coverage, body-assisted costs and completion belong to B. The preview distinguishes requested and actual gaze; an out-of-range request does not silently turn the body.
+
+The focused area/vantage selector uses **0.25 m** arrow-key translation and **1 m** with Shift in its captured camera-ground basis. Those keys belong to the selector while focused. They adjust only a permitted draft point; they do not move the body, enumerate a search grid or change E's supported region shapes/coverage. Region extents come from the installed method adapter or an already permitted known region, not a new client radius rule. Confirm returns to review and a separate Start admits work. These proposed fine/coarse placement steps need keyboard/touch usability qualification; non-ground bodies require their installed adapter or permitted named choices.
+
+The minimum interface covers desktop keyboard/mouse and responsive visible controls. Touch selection/click-to-move and explicit Look/Watch remain possible. Full gamepad profiles, virtual sticks and arbitrary assistive hardware qualification are not selected by this scope; essential decisions still need non-drag/non-hold alternatives.
+
+## SPX-L03 — Historical scene decorations
+
+**Status: Proposed replacement of current implicit faint memory. Restrictiveness: Medium.** Reuse the existing **128-entry maximum** for disposable remembered scene entries ([LA222](interface.md#la222)). A newly demoted eligible marker remains in the active scene for **5 normal-play seconds**, then leaves that scene layer; a pause freezes this simulation-derived age. Opening/pinning historical inspection keeps the record readable independently. Historical inspection and eligible source access follow actual retained knowledge, not this renderer lifetime; acquired occurrences use Events (J), separately from Character records.
+
+Use hollow labeled location markers by default. Optional frozen silhouettes share the same authorization and bound. No remembered decoration emits light, sound, shadow, animation, collision or current-target data. Entries expire/evict without asserting death, absence or forgetting. Re-observation comes from a new current permission, not renewing a decoration through hidden state.
+
+**Reason/tradeoff:** five seconds gives a short visual handoff from live contact to history without filling the world with apparently present inhabitants. Large bursts can evict old decorations before that interval; preserve a history route. The number and duration need player/readability measurement; neither limits canonical knowledge or permits discarding a required cue. Late packets and corrections use original observation/correction times, never arrival-time freshness.
+
+## SPX-L04 — Cue reading, overflow and retained history
+
+**Status: Proposed integration; reuse existing canonical cue/history owners. Restrictiveness: Medium.** Noticed is a placement within the existing speech/cue scheduler, not a second pending queue or occurrence store. [HR04](hearing-and-speech.md#hr04--caption-density-and-lifetime) owns active/pending and per-speaker bounds, chunking, reading duration, deferred expiry and deduplication. [HR06](hearing-and-speech.md#hr06--history-paging-and-growth) owns history paging/growth; [timed UI](../timed-ui.md) owns the presentation clock. Consume those owners directly rather than copying their constants here.
+
+Show at most **3 active Noticed rows**, counted within the shared scheduler's active allowance. Each occurrence has one primary reading placement at a time, one pending reference, one priority and one unread identity. Begin reading duration only when displayed; changing placement does not restart it. There is no separate Noticed pending limit or copied event history.
+
+**Reason/tradeoff:** three rows keep the world usable; sharing the existing queue removes duplicate retention, priority, age and overflow handling. Authorized acquired injury/danger/urgent warnings may displace routine self/direct speech; equal-priority cues keep original occurrence/acquisition order. Hidden attack classification cannot set priority. Reuse the existing missed-notice and permitted history route. Preserve its honest unknown-count behavior when the live window turns over; do not claim all captions were displayed. Distinct urgent occurrences remain individually reviewable and cannot lose their unread indication in routine overflow. Current own effects/work remain available outside transient captions.
+
+Apply per-speaker caps only to permitted learned/recognized associations, never native hidden source IDs. Routine contact patterns may group through C's policy without creating a narrative event for every footstep. Distinct attacks, committed outcomes and meaningful acquired evidence preserve their required identity/order. Do not concatenate incompatible sources or assert exact hidden actor counts. The separate three-overhead-notice LA223 limit and proposed optional audio playback VO-L02 are not substitutes for these caption/history rules.
+
+Reading time is real UI time under existing caption policy, independent of simulation speed and the cue's live/historical state. Reduced motion changes animation, not semantic availability. Screen-reader announcements are queued/coalesced under the same authorized meaning with a reachable full history. Never prolong current-source authority merely to finish reading.
+
+## SPX-L05 — Existing limits retained without new mechanics
+
+**Status: Current owners reused; new integration unqualified. Restrictiveness: As rated by each owner.**
+
+| Existing constraint                                                                                                  | G treatment                                                                                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Current server stream ceiling of 20 Hz                                                                               | Publication pacing only. Native senses, gaze, motion, preparation and effects keep their own ordered simulation boundaries. Short acquired cues still reach history.               |
+| Existing caption listener-origin displacement fallback (0.5 m in inspected scene code)                               | Retain neutral historical placement once its old directional screen anchor is misleading; no recalculation from hidden source position. Reconcile future C precision in its owner. |
+| Hover's 200 ms delay / 80 ms fade ([interface](interface.md))                                                        | Reuse ordinary pointer presentation; loss of permission bypasses fade for live targeting. Reduced motion removes animation.                                                        |
+| Existing graphics budgets, including 2/8 local light slots                                                           | Aesthetic only. Select from current permitted appearance; historical emitters are removed under the new target. No graphics tier changes detection.                                |
+| E's finite method durations/check allowances; B's actual turn rates; C's pace/posture; D/F's effect/preparation laws | Read installed descriptors and current feedback. No duplicate constants or client calculations.                                                                                    |
+| Existing ordered event, knowledge/history, caption and native continuation bounds                                    | Retain their semantic owners and truthful partial/incomplete outcomes. No whole-history scan per input or new nearest-N perception cap.                                            |
+
+## SPX-L06 — Remaining workload and qualification limits
+
+**Status: Unqualified. Restrictiveness: Too liberal to claim scale readiness.** No new global population, live-contact or history-retention ceiling is selected. Cost can still grow with genuinely current observer/contact facets, dense acquired events, changing permitted appearance, recipients, baseline size and indexed history pages.
+
+SPX07 must measure complete cold/warm publication, dense change, reconnection, partial visibility, delayed inputs, correction and creator downgrade. Count selected/scanned/hydrated facts, transferred bytes, native work, queue age, retained render resources and cue-to-action latency. Reuse prepared current facts and actual invalidation; page optional reads before hydration. Preserve required observations and coherent native continuation under overload. A bounded caption list or 128 history decorations does not prove bounded upstream work or acceptable frame time.
+
+No latency budget, optimal cue lifetime, supported machine scale or verified accessibility/fun result is asserted. Concrete measured failures should lead to focused adjustments here or in the actual owner, not an untracked “temporary” cap or a new framework.

@@ -182,6 +182,8 @@ The browser retains visual entries for only 128 remembered beings or objects.
 
 **Reason / tradeoff:** Keep visual memory manageable while ensuring rendering cleanup does not imply that the character forgot the corresponding game information. Remembered fire imagery now also retains its last-permitted illumination; the same eviction removes that remembered light. Fresh observation replaces its remembered state, and scope/timeline changes clear it. No hidden live source data is sent. [Presentation](../world-presentation.md#motion-and-depth).
 
+**Selected replacement; implementation open:** [SPX-L03](stealth-player-experience.md#spx-l03--historical-scene-decorations) reuses the 128-entry display ceiling but requires explicit eligible historical records, clear age/uncertainty, no live target authority and no remembered illumination, shadow, sound or motion. [SPX01/SPX03/SPX07](../maintainers/stealth-player-experience.md) owns delivery and qualification. The retained-light behavior above is the current baseline, not the selected honest-perspective target.
+
 [Visual-memory owner](../../apps/client/src/scene.ts) · [Light selection](../../apps/client/src/world-presentation.ts).
 
 Original recommendation: **Review**.
