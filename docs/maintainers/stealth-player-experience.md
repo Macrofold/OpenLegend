@@ -28,7 +28,7 @@ The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a2
 
 **Status: Not started.** Dependencies: SAD-I; A current/history/reference families; B visible patch/detail/illumination; C cue precision; existing server authority.
 
-- [ ] Reconcile SA-D02 revision-family types, A/B Perception scope, B/C motion composition and actual document filenames. Preserve exact family types and one installed rule.
+- [ ] Reconcile SA-D02 revision-family types, A/B Perception scope and B/C motion composition. Preserve exact family types and one installed rule.
 - [ ] Replace whole-entity publication with permitted facet/contact records across full views, patches, descriptions, histories and all lazy reads.
 - [ ] Separate current body, historical/source association and anonymous cue references; bind action targeting only through eligible current body references.
 - [ ] Restrict map/dynamic geometry, appearance assets, animation, shadow, light, sound, DOM/accessibility and diagnostic metadata to the same audience.
@@ -42,11 +42,11 @@ The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a2
 
 **Status: Not started.** Dependencies: SPX01; B/C installed supported bodies/actions; ordinary command/control and spatial movement owners.
 
-- [ ] Add the narrow direction variant and same-action amendments inside ordinary move; preserve identity, distance progress, costs, gaze/watch compatibility and actual native obstruction handling.
-- [ ] Implement scoped gesture/session sequencing, cancel-before-start handling, prioritized neutral delivery, bounded latest-value traffic and server freshness expiry. Do not add a parallel movement lane or client physics.
+- [ ] Add direction steering and the supported standalone destination-to-direction amendment inside ordinary move. Preserve earned progress/costs and compatible gaze/watch deadlines; discard the old destination without false arrival/resume. Owned-purpose travel retains its existing rules.
+- [ ] Implement scoped movement sequencing, separate gaze ordering, independent latest direction/gaze slots, bounded latest-direction renewals, cancel-before-start and freshness expiry through the existing control owner. No parallel movement lane or client physics.
 - [ ] Extend existing input routing for WASD, X, Z, F, Q/E and Shift+W; update all affected hints/help. Preserve text/IME, construction, camera, Speak/Act, selection, targeting and pause ownership.
 - [ ] Distinguish released held movement, action cancellation and full Stop including waiting/queued work.
-- [ ] Show requested versus actual pose/gaze and exact pending/refused/interrupted consequences. No automatic standing to evade; no fake crouch on clearance failure.
+- [ ] Show requested versus actual pose/gaze and pending/refused/interrupted consequences. Pending movement admission may retain one visible unsent posture request; refusal preserves walking. Successful stationary replacement/blockage requires fresh direction input without replaying held keys. No automatic stand-to-evade or fake crouch.
 - [ ] Implement B orient-once controls and button/keyboard alternatives; do not turn the body/shield or grant sensing because the camera moved.
 - [ ] Qualify direct steering/clearance, input races, crouch/evasion, camera-orbit basis and all applicable G-AC controls/time cases.
 
@@ -57,11 +57,11 @@ The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a2
 **Status: Not started.** Dependencies: SPX01–02; E methods and own fulfillment; A/C original evidence; SA-D03/F readiness handoff where preparation is displayed.
 
 - [ ] Expose installed finite Watch, Watch for danger, Listen, Scan, Inspect and Investigate through existing action discovery and Current work.
-- [ ] Implement the scoped area/vantage selector through existing placement/known-place/activity owners: keyboard and tap choices, offered region extents, Confirm distinct from Start, Cancel restoring the draft, exact stale-input handling and no hidden-source defaults.
+- [ ] Reuse valid contextual scope/defaults directly in activity review with one Start. Offer the optional area/vantage selector only for missing/changed choices: keyboard/tap, offered extents, Confirm distinct from Start, Cancel, exact stale handling and no hidden-source defaults.
 - [ ] Preserve default observation-only Watch; explicit danger anticipation and actual preparing/maintaining/unfulfilled/ended/incomplete feedback. Physically maintained coverage cannot substitute for F's completed preparation lead.
 - [ ] Preserve parent work and original deadlines across compatible amendments; expose exact Stop watching, end only owned gaze on stop/expiry and end the facet with parent work.
 - [ ] Investigate original region/bearing with a player-selected permitted vantage when range is unknown. Report partial/empty findings without proving absence or rebinding to the wrong person.
-- [ ] Extend current captions/Noticed and Events (J) readers using original listener frame, acquired time, precision and permitted wording. Historical inspection opens exact eligible records; Character records keeps its separate purpose. Retain critical acquired cues through reading overflow.
+- [ ] Place Noticed within the existing caption scheduler and shared pending/priority/unread bounds; start reading time on display. Reuse original listener frame, time, precision and Events (J). Historical inspection opens exact eligible records; Character records stays separate. Preserve urgent cues through overflow.
 - [ ] Deliver explicit Last seen/heard/Suspected inspection, independent facet ages, hollow markers and safe selection demotion.
 - [ ] Qualify G-J01–05/J09 and relevant G-AC sensory/history cases; verify a learned voice never becomes a body target.
 
