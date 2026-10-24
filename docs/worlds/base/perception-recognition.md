@@ -103,6 +103,12 @@ The ordinary native classifier can label an acoustic pattern as footstep-like or
 
 A received warning can support a belief that an area is dangerous without identifying the danger. Whether to trust it, investigate or prepare belongs to existing knowledge, attention and encounter owners. A does not assign fear, hostility or surprise. False testimony remains attributed even when several people repeat it; absent a supported transmission link, the listener does not magically know that two accounts share an origin.
 
+## Ordinary spoken warning policy
+
+The selected native language family recognizes a complete understood clause `look out at <place> now`, `watch out at <place> now` or `danger at <place> now`, ignoring case and clause punctuation. `<place>` must exactly and uniquely match a label in the listener’s permitted current place evidence or eligible retained Known-place snapshots. “The doorway” is an ordinary authored/discovered place label. No alias registry, global place-name search or current hidden geometry lookup is selected. Missing words, unsupported wording, unknown labels and genuinely ambiguous labels do not produce the native current danger claim; they retain their ordinary speech meaning. Required incomplete place preparation holds before dependent mutation and cannot be reported as an unknown place.
+
+Resolve `now` to the approximate half-open interval `[utteranceAt, utteranceAt + 2 normal-speed seconds)`, using the original direct utterance time and the shared clock conversion. Require `from <= acquiredAt < through` for the actual completed claim admission. Preserve the place snapshot’s original bounded location/precision; point-only support stays point-only. The native result is attributed testimony with danger `presence: possible` and outer `strength: possible`, actual permitted speaker, and exact heard-span/place support. F owns subsequent warning retention and relevance. A/SPK owns the [source-complete native adapter](../../projects/perspective-perception-tech-design.md#native-ordinary-warning-testimony); no model call or hand-built warning record is necessary. A later history/audio replay neither reinterprets `now` nor supplies a fresh warning.
+
 ## Maintained records
 
 - Implementation: [PP00–PP07](../../maintainers/perspective-perception.md), coordinated with SPK, EPR and SAI-A.

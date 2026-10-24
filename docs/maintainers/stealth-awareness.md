@@ -6,7 +6,7 @@
 
 The shared design base is `codex/design-stealth-00-contracts` at `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`. All seven specialist branches are integrated in `codex/design-stealth-08-integration` with normal history. Design completion does not deliver runtime features, executable tests, deployment, measured capacity or play acceptance.
 
-The selected portions of [ND11](needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity), [ND13](needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization), [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and [ND19](needs-design.md#nd19--older-memory-transformation-and-dream-reinterpretation) are designed. Broader work remains with those owners. SA-D01 blocks only the explicitly identified controlled-character psychological policy.
+The selected portions of [ND03](needs-design.md#nd03--world-authored-stats-checks-and-their-effects), [ND11](needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity), [ND13](needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization), [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and [ND19](needs-design.md#nd19--older-memory-transformation-and-dream-reinterpretation) are designed. Broader work remains with those owners. SA-D01 blocks only the explicitly identified controlled-character psychological policy.
 
 ## SA00 — Shared contracts and source-grounded feature design
 

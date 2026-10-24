@@ -62,7 +62,9 @@ Required incomplete work holds a coherent native prefix before a dependent outco
 
 Keep compact active state, actor-scoped indexes, conservative candidate preparation and resumable complete queries. Prepare required cold state before a native boundary; never scan or hydrate all historical events for each cue. Existing native/save/admission envelopes still apply and can produce an explicit hold/preparation failure. Optional context has its own bounded input selection. If a future recording family can replay arbitrarily old learning roots, its existing source-lineage adapter must prepare exact root-receipt eligibility before required learning; no forever-growing duplicate global seen-ID set is selected. True forgetting and source compaction retain distinct behavior.
 
-PP07 must measure retained bytes, pending work/age and real producer-driven growth under the technical workloads. A total cap would require an explicit supported eviction or overload contract and acceptance; do not silently invent one during implementation. This entry records deliberate completeness and its unqualified cost, not infinite scale.
+Known-place capsules and their exact-label index add active-actor retained-place count/bytes, source-completeness metadata and complete activation/dirty work to that same inventory. No independent total-place cap or top-N truncation is selected. Build/rebuild through bounded existing preparation before native warning intake, update only affected entries, and never query full historical accounts inside hearing or a cut. Incomplete required preparation holds; it does not mean an unknown place.
+
+PP07 must measure retained bytes, place count/index bytes, activation/dirty work, pending work/age and real producer-driven growth under the technical workloads. A total cap would require an explicit supported eviction or overload contract and acceptance; do not silently invent one during implementation. This entry records deliberate completeness and its unqualified cost, not infinite scale.
 
 ## PP-L10 — Acquaintance lifetime and correction scope
 

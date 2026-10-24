@@ -129,6 +129,8 @@ The proposed native port is `admitBodilyReaction(world, preparedCause, preparedB
 | Physical support | Existing authoritative committed contact/acquisition facts and the prepared reaction/body rule pins. No named attacker, autobiographical memory, full enclosing world event, speech interpretation or model call is required. |
 | Freshness proof | An owner-issued still-unconsumed native producer stage, or an exact retained prior outcome prepared through the canonical contribution receipt owner. A caller-provided `fresh: true` is not proof. |
 
+For contact-derived sound, the A/C adapter preserves the underlying physical outcome as the reaction cause; the acquired-sound wrapper is not a second cause for the same receiving life and startle definition. If that contact already has a recorded reaction result, return its original receipt rather than selecting the abrupt-cue rule again or reshaping the effect. This also preserves a terminal no-effect result. A different listener has its own target-life key, and qualifying sound can admit a reaction when no earlier reaction result exists, such as after an expected contact with no contact-shock admission. Sound eligibility still begins at actual reception after the contact; shared cause identity never backdates acquisition or warns against that outcome.
+
 The initial reaction declines linearly from admitted peak to zero over a fixed duration. Resolve installed body/species, susceptibility, recovery/composure and applicable physical-condition bindings once at onset; retain values/pins. Later trait or prose edits do not reshape that curve. Independent bodily effects keep their own parameters; this profile provides no shock-curve editing operation.
 
 ### One canonical contribution record

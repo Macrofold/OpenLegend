@@ -101,6 +101,10 @@ Rooms/portals, frequency bands, physical speech duration/overlap, physical voice
 
 **Exit:** people can repair a misunderstanding through actual new communication and understand its limits; the optional shortcut adds useful readability without changing the past. HE06 is independent of SL10 and does not require a retained checkpoint. Every prior HE acceptance state remains unchanged.
 
+## Selected observer and native sound integration
+
+Runtime delivery remains in PP, ACS and SPK. Their integrated design separates actual measurement/acquisition from held availability and freezes another subject’s permitted values between provider measurements. Capture, redraw and media playback create no sensory sample or weak-cue credit. SPK01/02 must carry ordinary understood warning speech through A’s [source-complete place adapter](../projects/perspective-perception-tech-design.md#native-ordinary-warning-testimony) into F at actual admission. HE qualification covers original-time expiry, cold preparation, correction and replay. C supplies the [exact abrupt acquired-sound qualifier](../worlds/base/physical-sound.md#abrupt-acquired-sound-for-bodily-startle) to D using original physical roots; strong hearing alone is not startle. Native animal repeat state retains independent alarm/curiosity slots with separate expiry and shared source/life ownership.
+
 ## HE07 — Optional speech media and selected hearing extensions
 
 **DG26 product proposal; adoption, technical design, runtime and qualification remain open.** [Voice and calls](../projects/voice-and-calls-feature-spec.md) owns behavior; [VO limits](../limits/hearing-and-speech.md#vo-l01--optional-committed-speech-playback) records proposed boundaries. Existing HE01–HE06, PS04, NC23 and MP/CR/spending owners remain controlling.

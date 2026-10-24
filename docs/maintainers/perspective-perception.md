@@ -160,6 +160,12 @@ PP04 can proceed against PP01's stable records while PP02–PP03 finish policy w
 
 The technical integration table records each producer/consumer boundary. B supplies sampled visual support and received motion; C supplies real acoustic/onset records; SPK supplies ordinary grounded warning testimony. These are settled design dependencies with implementation still open. The controlled-player psychological policy remains the separate [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) decision, including production/review, retained-appraisal applicability, disclosure and control-transfer/revocation behavior.
 
+## Native warning integration acceptance
+
+- [ ] PP01/PP02 and SPK01/02 produce the world’s ordinary “Look out at the doorway now” claim from the actual committed freeform utterance, received words and eligible Known-place support; F consumes the resulting testimony at its actual acquisition time. Missing words, ambiguous/unknown place and exact interval expiry must retain speech without a current warning.
+- [ ] PP04/PP06 retain minimal source-owned Known-place capsules and prepare a complete exact-label index before active native intake, preserving original location precision and exact source revisions. Qualify activation and affected-entry invalidation in bounded existing work, with explicit preparation failure, no full-history SQL in hearing/cuts and no incomplete-index-as-unknown fallback.
+- [ ] PP07 records active-actor retained-place count/bytes, index bytes, activation/dirty work and warning-to-F behavior across cold activation, correction/forgetting and restore. No runtime delivery is claimed by this design acceptance.
+
 ## Maintained records
 
 - Behavior and worked journeys: [Feature specification](../projects/perspective-perception-feature-spec.md).

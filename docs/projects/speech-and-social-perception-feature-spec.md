@@ -203,6 +203,7 @@ The scenarios below are the feature acceptance owner. The implementation tracker
 | SP-A26 | Save/restore recalled speech, summaries, sound-only rows and expiry, native patterns and pending alarm/refuge work. | Exact identities, observer scope, current profile/life and one movement relationship remain valid; no speech replay, renewed safe time, extra RNG, legacy alias or ordinary Conversation membership is required. |
 | SP-A27 | Inspect World Agent/provider conversations and a separately accepted cooperative commitment after ordinary dialogue removal. | Their independent functionality, authority and useful source evidence remain intact; UI grouping grants no social or execution permission. |
 | SP-A28 | Compare player logs with two NPCs that heard different words and knew different names. | Each sees its own permitted experience, naturally rendered; presentation, memory preparation and recall never combine private perspectives into an omniscient transcript. |
+| SP-A29 | A player or NPC says “Look out at the doorway now” to a listener with that uniquely known place; compare masked words, duplicate labels, cold preparation and delayed acquisition. | The actual speech producer supplies possible attributed danger only from the complete understood clause and eligible original place support, acquired within the world’s approximate interval. Required incomplete preparation holds; unknown/ambiguous/late speech remains ordinary testimony. No model call, raw text repair, hidden place lookup or hand-built F record is required. |
 
 ## Staged capabilities
 
