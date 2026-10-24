@@ -4,7 +4,7 @@ The [feature specification](../projects/cognition-lab-feature-spec.md) owns the 
 
 ## Delivery order and ownership
 
-Implement a complete ordinary speech slice through CL01, the minimal CL02/CL04 intake and CL05 summary, then extend the same owners. Do not build every editor or an elaborate comparison framework before one real speech reaction is useful. CL03 and CL05 detail may proceed in parallel after their shared contracts exist. CL06 precedes live CL07 interception; CL08 supplies the checkpoint required for continued replay; CL09 uses retained captures and does not require parallel world instances. CL10 exposes installed integrations only. CL11 qualifies each completed slice and the complete workspace.
+Implement a complete ordinary speech slice through CL01, CL02 and the minimum CL04 directed-speech intake, CL05 result view, CL06 finite One response/hold controller and CL08 actual applied-origin capture. Advanced stepping/breakpoints, the complete saved-work manager, import/export and comparisons are not first-slice dependencies. Extend these same owners afterward; do not build every editor before one real speech reaction is useful. CL03 and CL05 detail may proceed in parallel after their shared contracts exist. CL06 precedes live CL07 interception; full CL08 supplies continued replay and saved-work management; CL09 uses retained captures and does not require parallel world instances. CL10 exposes installed integrations only. CL11 qualifies each completed slice and the complete workspace.
 
 Use the same ordinary game runtime and semantic owners. CR/SC own cognition/context selection; CE owns character experience; SPK/NST own speech; CTR owns combat; ACT/BW/AG own native action and activity; save/load owners retain continuation semantics. UIUX owns shared controls and accessibility. A missing owner capability is an honest dependency, never a lab-only approximation. The lab does not require the entire backlog of any linked owner before its first useful slice.
 
@@ -23,6 +23,7 @@ The design task does not authorize new automated tests. For implementation quali
 - [ ] Extract the narrow shared runtime factory described in the technical design and use it for both ordinary gameplay and one separate lab instance in the existing server process.
 - [ ] Provision the dedicated lab PostgreSQL database and lab data directory in normal development setup. Initialize it with the same selected world's normal initializer; do not add an ordinary-use setup wizard or fall back to gameplay storage.
 - [ ] Add authenticated lab identity, explicit active scenario and revision checks. Keep gameplay pause, control, selected character, model settings, saves and live world independent.
+- [ ] Install the initial hold before any lab clock/director admission. Separate authorized driver liveness from explicit physical participation through the shared owner; the default speaker stays present without a game renderer, while real departure/removal retains its effects.
 - [ ] Provide the explicit current-format, point-in-time game-to-lab import; report source and time and then break all synchronization.
 
 **Dependencies:** existing server/repository/save ownership; no multitenancy rewrite. **Exit:** the lab and game can run in two tabs; edits, new/reset/import, hold, cancellation and load in one cannot alter the other's world or settings. Shared provider/process capacity remains honestly visible. Ordinary game startup still uses the same implementation.
@@ -31,7 +32,7 @@ The design task does not authorize new automated tests. For implementation quali
 
 - [ ] Build the fixed header/run strip and three panes with the feature specification's exact geometry, fixed controls, one primary scroller per pane, searchable long collections and shallow replacement views.
 - [ ] Keep current inspected character, speaker/actor, target and historical record as independent selections, with focal response actor and autonomous participants explicitly separate in run policy. Historical inspection never rewrites or locks the current left editor.
-- [ ] Deliver the opening flow: normal initialized scene, selected character, Say composer ready, Submit, one immediate response and readable result summary without opening settings or raw JSON.
+- [ ] Deliver the opening flow: normal initialized scene, selected character, Say composer ready, Submit, one immediate response and automatically selected Overview without opening settings or raw JSON. Keep the fixed strip compact and show full accepted words/action status and causal facts in the existing body.
 - [ ] Use shared light-theme primitives, compact meaningful icons, hover/focus descriptions, visible primary action labels, keyboard focus and readable statuses. Keep controls stable during streaming, long content and empty/error states.
 
 **Exit:** at 1920×1080 and 2560×1440 the selected person, category navigation, timeline filters, composer, run controls and inspector navigation remain visible. A user can identify who spoke, who reacted and what happened without drilling. Common evidence is one direct action away and a full memory at most one more, with only CLL05's explicit actual-call choice exception for a multi-call root without a unique primary. Browser zoom/reduced viewport preserves access without turning the target into a phone-first design.
@@ -48,10 +49,11 @@ The design task does not authorize new automated tests. For implementation quali
 
 ## CL04 — Say, Act and Event through actual intake
 
-- [ ] Route Say through real speech/hearing with exact speaker, target, content and installed volume semantics; show actual listeners rather than assuming the focal person heard it.
-- [ ] Support installed-action selection and ordinary freeform action requests, preserving chosen actor, available options, targets, admission and execution.
+- [ ] Route ordinary directed player Say through the shared interactive conversation intake, preserving its single speech occurrence, exact target/job association, hearing, duplicate suppression and native retry rules. Ambient/operator-authored speech retains its actual event/opportunity path; focal selection creates no extra decision.
+- [ ] Support installed-action selection and ordinary freeform requests through the shared binding/admission owners. Add the explicit operator-authored actor intention where required; never fake a player scope, change a controller or treat `godAct` as a general executor.
 - [ ] Expose scenario/world/perception events through explicit authored source modes. A model-only assertion must not be presented as an occurrence in the world.
 - [ ] Record admitted event identity, perception, candidate decision opportunities and actual native outcomes in the center timeline, including pending, no-op, rejected and failed cases.
+- [ ] Separate source acceptance from subsequent response/action success in receipts and draft clearing. Reconcile uncertain source submission under its original command ID; a failed response cannot make accepted speech look unsent.
 
 **Exit:** the same input has the same native interpretation in game and lab. The screen distinguishes offered, proposed, admitted, started and completed actions and never uses generated narration as proof of effect.
 
@@ -78,6 +80,7 @@ The design task does not authorize new automated tests. For implementation quali
 
 - [ ] Add the shared typed pre-dispatch seam after complete preparation and before the exact provider call, with immutable original envelope, editable provider-visible fields and protected routing/authority/accounting.
 - [ ] Implement one-shot prepared handles, freshness, consumption/idempotency and relevant edit invalidation. Only Submit inside the prepared-input modal consumes its edited request; ordinary Submit always prepares from the current scenario.
+- [ ] Close/reopen the same valid held handle without dispatch, with normal modal focus isolation. After invalidation, expose same-source Retry response only when its native owner reports eligibility; otherwise offer explicit origin rerun or a new stimulus without repeating the source silently.
 - [ ] Route valid edited results through the same schema validation, output admission and native effect owners. Preserve exact original, submitted and resulting evidence.
 - [ ] Support historical captured-call rerun as clearly labeled request-only comparison. It may validate a response but does not execute it in today's world. Continuing an alternative requires an actual compatible checkpoint at that breakpoint; otherwise offer a full scenario rerun.
 

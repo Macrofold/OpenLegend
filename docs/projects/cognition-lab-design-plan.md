@@ -10,6 +10,14 @@ Design a compact developer workspace at `/cognition` for editing isolated charac
 
 This task changes documentation only: zero executable logic lines. The material design risks are duplicated game behavior, misleading request previews, accidental gameplay-data coupling, inconsistent edit/stop semantics, overwhelming navigation, and marking research or runtime work complete merely because a tool is designed.
 
+## Review scope and completion criteria
+
+The requested review covers the complete Cognition Lab design against the existing runtime, the ordinary speech journey, engine/world ownership, shared mutation and request owners, growing-history costs and implementation dependencies. It changes zero executable logic lines. Corrections belong in the existing feature/technical specifications, limits and focused tasks; implementation and measured acceptance remain open.
+
+Prioritize defects that can break an ordinary experiment: independent lab participation, the game's actual directed-conversation intake, single acceptance of a stimulus, safe recovery from an invalidated prepared call, readable results in the fixed desktop layout, bounded run projections and complete saved-record ownership. Keep runtime corrections universal at their existing owners when they are needed by both game and lab; do not design a parallel loader, provider path or cognition engine.
+
+Complete the review by reconciling the first usable slice with its actual run-control and origin-capture dependencies, inspecting every changed hunk, checking links and task/limit status, and formatting the affected Markdown. Source review establishes design constraints only; runtime behavior, performance and browser usability require the implementation qualification already owned by CL11.
+
 ## Delivery sequence
 
 1. Establish the exact source baseline and applicable instructions; reuse unchanged source evidence and inspect changed owners.
