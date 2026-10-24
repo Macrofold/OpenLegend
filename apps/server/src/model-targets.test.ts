@@ -132,6 +132,101 @@ describe('configured native and chat model targets', () => {
       ).rejects.toMatchObject({ code: 'deployment_not_ready' });
     },
   );
+
+  it.each([
+    { retryAfter: '5', cooldownMs: 30_000 },
+    { retryAfter: '60', cooldownMs: 60_000 },
+  ])('honors the greater of the metadata cooldown and Retry-After: %j', async (timing) => {
+    let now = 0;
+    let available = false;
+    const fetcher = vi.fn(async () =>
+      available
+        ? Response.json(descriptor)
+        : Response.json(
+            { error: { code: 'rate_limited' } },
+            { status: 429, headers: { 'Retry-After': timing.retryAfter } },
+          ),
+    );
+    vi.stubGlobal('fetch', fetcher);
+    const api = new MacrofoldTransport('https://macrofold.fixture.invalid', 'fixture');
+    const preparation = new ModelTargetPreparation(
+      (selected, operation) => describeMacrofoldDeployment(api, selected, operation),
+      () => now,
+    );
+    const prepare = () =>
+      api.run({ timeoutMs: 1000 }, (operation) =>
+        preparation.prepareJudgment({ target, maxOutputTokens: 512, operation }),
+      );
+    await expect(prepare()).rejects.toMatchObject({
+      code: 'rate_limited',
+      httpStatus: 429,
+      retryAfterMs: Number(timing.retryAfter) * 1000,
+    });
+    available = true;
+    for (const elapsed of [29_999, timing.cooldownMs - 1]) {
+      now = elapsed;
+      await expect(prepare()).rejects.toMatchObject({ code: 'rate_limited' });
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    }
+    now = timing.cooldownMs;
+    await expect(prepare()).resolves.toMatchObject({ maxOutputTokens: 512 });
+    await prepare();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it('retains a metadata Retry-After when an earlier inference reports a new revision', async () => {
+    let now = 0;
+    let throttled = false;
+    let servingRevision = revision;
+    const fetcher = vi.fn(async () =>
+      throttled
+        ? Response.json(
+            { error: { code: 'rate_limited' } },
+            { status: 429, headers: { 'Retry-After': '60' } },
+          )
+        : Response.json({ ...descriptor, serving_revision_id: servingRevision }),
+    );
+    vi.stubGlobal('fetch', fetcher);
+    const api = new MacrofoldTransport('https://macrofold.fixture.invalid', 'fixture');
+    const preparation = new ModelTargetPreparation(
+      (selected, operation) => describeMacrofoldDeployment(api, selected, operation),
+      () => now,
+    );
+    const prepare = () =>
+      api.run({ timeoutMs: 1000 }, (operation) =>
+        preparation.prepareJudgment({ target, maxOutputTokens: 512, operation }),
+      );
+    await prepare();
+    preparation.invalidate(target);
+    now = 30_000;
+    throttled = true;
+    await expect(prepare()).rejects.toMatchObject({ code: 'rate_limited' });
+    now = 45_000;
+    servingRevision = workspace;
+    preparation.observeReceipt(target, {
+      requestId: 'in-flight-native-fixture',
+      provider: 'macrofold',
+      requestedModel: `deployment:${deployment}`,
+      model: `deployment:${deployment}`,
+      modelVersionStatus: 'reported',
+      macrofoldDeployment: { deploymentId: deployment, deploymentRevisionId: servingRevision },
+      contextDigest: 'fixture',
+      startedAt: '2026-10-24T00:00:00.000Z',
+      completedAt: '2026-10-24T00:00:45.000Z',
+      latencyMs: 45_000,
+      dispatched: true,
+      completionUncertain: false,
+    });
+    throttled = false;
+    for (const elapsed of [45_000, 89_999]) {
+      now = elapsed;
+      await expect(prepare()).resolves.toMatchObject({ maxOutputTokens: 512 });
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    }
+    now = 90_000;
+    await prepare();
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
 });
 
 describe('native decisions through the actual server adapter and durable journal', () => {

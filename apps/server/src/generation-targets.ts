@@ -66,6 +66,7 @@ export class ModelTargetPreparationError extends Error {
     readonly code: string,
     message: string,
     readonly httpStatus?: number,
+    readonly retryAfterMs?: number,
   ) {
     super(message);
   }
@@ -91,6 +92,7 @@ export async function describeMacrofoldDeployment(
     );
   } catch (error) {
     operation.throwIfStopped();
+    const retryAfterMs = error instanceof MacrofoldHttpError ? error.retryAfterMs : undefined;
     throw new ModelTargetPreparationError(
       'resource-unavailable',
       error instanceof MacrofoldHttpError && /^[\w.:-]{1,128}$/.test(error.code)
@@ -98,6 +100,9 @@ export async function describeMacrofoldDeployment(
         : 'deployment_unavailable',
       'The selected deployment capabilities could not be read. No inference was submitted.',
       error instanceof MacrofoldHttpError ? error.status : undefined,
+      retryAfterMs !== undefined && Number.isFinite(retryAfterMs) && retryAfterMs >= 0
+        ? retryAfterMs
+        : undefined,
     );
   }
   operation.throwIfStopped();
@@ -153,6 +158,7 @@ type Entry = {
   stale: boolean;
   generation: number;
   retryAfterMs: number;
+  serverRetryAt: number;
   failure?: unknown;
 };
 type Preparation = {
@@ -245,7 +251,7 @@ export class ModelTargetPreparation {
     const key = targetKey(target);
     let entry = this.entries.get(key);
     if (!entry) {
-      entry = { stale: false, retryAfterMs: 0, generation: 0 };
+      entry = { stale: false, retryAfterMs: 0, serverRetryAt: 0, generation: 0 };
       this.entries.set(key, entry);
     }
     return entry;
@@ -267,12 +273,20 @@ export class ModelTargetPreparation {
             entry.stale = entry.generation !== generation;
             entry.failure = undefined;
             entry.retryAfterMs = 0;
+            entry.serverRetryAt = 0;
             return description;
           },
           (error: unknown) => {
             entry.failure = error;
             // One caller cancelling its metadata read is not evidence of a service outage.
-            entry.retryAfterMs = operation.signal.aborted ? 0 : this.now() + 30_000;
+            // Later real work must also respect a longer server-requested wait.
+            const now = this.now();
+            const cancelled = operation.signal.aborted;
+            entry.serverRetryAt = cancelled
+              ? 0
+              : now +
+                (error instanceof ModelTargetPreparationError ? (error.retryAfterMs ?? 0) : 0);
+            entry.retryAfterMs = cancelled ? 0 : Math.max(now + 30_000, entry.serverRetryAt);
             throw error;
           },
         )
@@ -484,7 +498,9 @@ export class ModelTargetPreparation {
       actual.deploymentRevisionId !== entry.description?.revisionId
     ) {
       this.invalidate(target);
-      entry.retryAfterMs = 0;
+      // A serving revision observed by an earlier inference invalidates capability hints,
+      // but is not permission to bypass a metadata server's active Retry-After minimum.
+      entry.retryAfterMs = entry.serverRetryAt;
       entry.failure = undefined;
     }
   }

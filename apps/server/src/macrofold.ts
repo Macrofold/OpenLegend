@@ -402,7 +402,6 @@ export class MacrofoldBackend implements AiClient {
     preparation?: {
       inputFingerprint: string;
       prepareBody: () => Promise<unknown>;
-      onReplay: (request: unknown) => void;
     },
   ): Promise<Record<string, unknown>> {
     // Ordinary callers capture before the journal wait. Capability-dependent callers
@@ -431,7 +430,6 @@ export class MacrofoldBackend implements AiClient {
         throw new Error('Macrofold operation ID conflicts with earlier input.');
       this.api.currentOperation()?.throwIfStopped();
       if (previous.response) {
-        preparation?.onReplay(previous.request);
         onDispatch?.();
         return previous.response;
       }
@@ -439,7 +437,6 @@ export class MacrofoldBackend implements AiClient {
         if (previous.status) throw new MacrofoldHttpError(previous.status, previous.code ?? '');
         throw new MacrofoldAdmissionStopped('The original request was not dispatched.');
       }
-      preparation?.onReplay(previous.request);
       onDispatch?.();
       throw new Error(
         'World Agent could not confirm whether its earlier request started. No duplicate was sent.',
@@ -1728,7 +1725,7 @@ export class MacrofoldBackend implements AiClient {
   ): Promise<AiResult<T>> {
     const config = this.service.config;
     const provider = 'openrouter';
-    const target = request.macrofoldDeployment;
+    const target = receipt.macrofoldRequestedDeployment;
     if (Boolean(target) !== Boolean(request.macrofoldOutputMode))
       throw new InvalidData('invalid_deployment_output_mode');
     const model = target
@@ -1739,48 +1736,43 @@ export class MacrofoldBackend implements AiClient {
     const limits = {
       max_cost_micro_usd: microdollarLimit(config.macrofoldRunUsd),
       max_output_tokens: request.maxOutputTokens ?? cognitionOutputTokens(request.execution),
-      timeout_seconds: Math.min(
-        240,
-        Math.max(
-          1,
-          Math.ceil(((request.deadlineMs ?? Date.now() + config.aiTimeoutMs) - Date.now()) / 1000),
+      timeout_seconds: Math.min(240, Math.ceil(config.aiTimeoutMs / 1000)),
+    };
+    const logicalBody = {
+      ...(target
+        ? macrofoldDeploymentRequestFields(target)
+        : {
+            model_binding: {
+              provider,
+              model,
+              billing_mode: receipt.macrofoldBillingMode,
+              ...(config.macrofoldProviderConnectionId
+                ? { provider_connection_id: config.macrofoldProviderConnectionId }
+                : {}),
+            },
+          }),
+      // Capture the exact chat input before journal I/O, including caller-owned context.
+      input: {
+        ...(!target ? macrofoldModelParameters(request.execution) : {}),
+        ...prepareMacrofoldGenerationInput(
+          {
+            ...request,
+            macrofoldDeployment: target,
+            schemaName: request.schemaName ?? 'decision',
+            maxOutputTokens: limits.max_output_tokens,
+          },
+          preparedSchema,
+          request.macrofoldOutputMode,
         ),
-      ),
+      },
+      limits,
+      ...(request.onProgress ? { stream: true } : {}),
     };
     signal.throwIfAborted();
     const accepted = await this.mutation(
       `single:${request.requestId}`,
       '/v1/inferences',
-      {
-        ...(target
-          ? macrofoldDeploymentRequestFields(target)
-          : {
-              model_binding: {
-                provider,
-                model,
-                billing_mode: receipt.macrofoldBillingMode,
-                ...(config.macrofoldProviderConnectionId
-                  ? { provider_connection_id: config.macrofoldProviderConnectionId }
-                  : {}),
-              },
-            }),
-        // Macrofold forwards the native chat body. Instructions and actor
-        // evidence occupy distinct messages; authority bindings never enter either.
-        input: {
-          ...(!target ? macrofoldModelParameters(request.execution) : {}),
-          ...prepareMacrofoldGenerationInput(
-            {
-              ...request,
-              schemaName: request.schemaName ?? 'decision',
-              maxOutputTokens: limits.max_output_tokens,
-            },
-            preparedSchema,
-            request.macrofoldOutputMode,
-          ),
-        },
-        limits,
-        ...(request.onProgress ? { stream: true } : {}),
-      },
+      undefined,
       signal,
       undefined,
       false,
@@ -1790,6 +1782,24 @@ export class MacrofoldBackend implements AiClient {
         receipt.completionUncertain = true;
       },
       request.onProgress,
+      {
+        inputFingerprint: digest(logicalBody),
+        prepareBody: async () => {
+          const operation = this.api.currentOperation();
+          if (!operation) throw new InvalidData('missing_inference_operation');
+          operation.throwIfStopped();
+          return {
+            ...logicalBody,
+            limits: {
+              ...limits,
+              timeout_seconds: Math.min(
+                limits.timeout_seconds,
+                Math.max(1, Math.ceil(operation.remainingMs() / 1000)),
+              ),
+            },
+          };
+        },
+      },
     );
     const run = string(accepted['run_id']);
     try {
@@ -1916,29 +1926,6 @@ export class MacrofoldBackend implements AiClient {
                       : logicalBody.limits.timeout_seconds,
                   },
                 };
-              },
-              onReplay: (original) => {
-                const retained = object(original);
-                const binding = object(retained['model_binding']);
-                if (target) {
-                  receipt.macrofoldRequestedDeployment = captureMacrofoldDeploymentTarget({
-                    workspaceId: string(retained['workspace_id']),
-                    modelBinding: {
-                      deployment_id: string(binding['deployment_id']),
-                      ...(binding['deployment_revision_id'] === undefined
-                        ? {}
-                        : { deployment_revision_id: string(binding['deployment_revision_id']) }),
-                    },
-                  });
-                  receipt.requestedModel =
-                    receipt.model = `deployment:${receipt.macrofoldRequestedDeployment.modelBinding.deployment_id}`;
-                  receipt.macrofoldBillingMode = 'byok';
-                } else {
-                  receipt.requestedModel = receipt.model = string(binding['model']);
-                  if (binding['billing_mode'] !== 'byok' && binding['billing_mode'] !== 'managed')
-                    throw new InvalidData('invalid_original_billing_mode');
-                  receipt.macrofoldBillingMode = binding['billing_mode'];
-                }
               },
             },
           );

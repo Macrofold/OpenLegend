@@ -2373,6 +2373,23 @@ export class WorldService {
           entityGet(this.world.entities, batch.actorId)?.actor?.agency.plan?.status === 'active')
       )
         return false;
+      const completedIds = new Set(batch.rows.map((row) => row.entry.id));
+      const cursor = this.world.actionExperience.learning[batch.actorId];
+      if (dispatched && cursor) {
+        const assessed = new Set(cursor.assessed);
+        const examined = new Set(cursor.examined ?? []);
+        // Rechecking a recorded dispatch claim still validates current sources above;
+        // it does not need another world commit or repeat its cursor writes.
+        if (
+          batch.candidates.every((candidate) => assessed.has(candidate.signature)) &&
+          (batch.more
+            ? batch.examined.every((id) => examined.has(id))
+            : cursor.position === batch.through &&
+              examined.size === 0 &&
+              cursor.pending.every((id) => !completedIds.has(id)))
+        )
+          return true;
+      }
       if (this.store.records && this.store.adoptHistory) {
         const prepared = this.store.records.withActivityPage(this.saved, batch.actorId, rows);
         this.store.adoptHistory(this.saved, prepared);
@@ -2416,10 +2433,7 @@ export class WorldService {
           cursor.position = batch.through;
           cursor.examined = [];
         }
-        if (!batch.more)
-          cursor.pending = cursor.pending.filter(
-            (id) => !batch.rows.some((row) => row.entry.id === id),
-          );
+        if (!batch.more) cursor.pending = cursor.pending.filter((id) => !completedIds.has(id));
       });
       return this.commit({ ...this.saved, world }, undefined, 'unchanged');
     });

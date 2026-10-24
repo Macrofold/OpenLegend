@@ -164,12 +164,12 @@ function client(
 
 describe('standalone Macrofold native decisions', () => {
   it.each([
-    { recovery: false, truncated: false, maxCostUsd: 0 },
-    { recovery: true, truncated: false, maxCostUsd: 0.02 },
-    { recovery: false, truncated: true, maxCostUsd: 0 },
+    { recovery: false, truncated: false, maxCostUsd: 0, maxOutputTokens: 512 },
+    { recovery: true, truncated: false, maxCostUsd: 0.02, maxOutputTokens: undefined },
+    { recovery: false, truncated: true, maxCostUsd: 0, maxOutputTokens: undefined },
   ])(
     'uses native state/questions and retains deployment scoring evidence: %j',
-    async ({ recovery, truncated, maxCostUsd }) => {
+    async ({ recovery, truncated, maxCostUsd, maxOutputTokens }) => {
       const target = {
         workspaceId: '11111111-1111-4111-8111-111111111111',
         modelBinding: {
@@ -209,7 +209,7 @@ describe('standalone Macrofold native decisions', () => {
       });
       target.workspaceId = '44444444-4444-4444-8444-444444444444';
       target.modelBinding.deployment_revision_id = '55555555-5555-4555-8555-555555555555';
-      const result = await scorer.judge(request);
+      const result = await scorer.judge({ ...request, maxOutputTokens });
       expect(result).toMatchObject({
         outcome: truncated ? 'invalid' : 'value',
         receipt: {
@@ -240,7 +240,7 @@ describe('standalone Macrofold native decisions', () => {
           input: { state: request.state, questions: request.questions },
           limits: {
             max_cost_micro_usd: maxCostUsd === 0 ? '0' : '20000',
-            max_output_tokens: 1024,
+            max_output_tokens: maxOutputTokens ?? 1024,
             timeout_seconds: 120,
           },
         },
@@ -281,6 +281,17 @@ describe('standalone Macrofold native decisions', () => {
         maxCostUsd: 0,
       }),
     ).toThrow();
+  });
+
+  it('rejects unusable native output allowances before dispatch', async () => {
+    const f = fixture();
+    for (const maxOutputTokens of [0, -1, 1.5, 16_385, Infinity, NaN])
+      expect(await client(f.fetcher).judge({ ...request, maxOutputTokens })).toMatchObject({
+        outcome: 'invalid',
+        reason: 'output_limit_exceeded',
+        receipt: { dispatched: false, completionUncertain: false },
+      });
+    expect(f.fetcher).not.toHaveBeenCalled();
   });
 
   it('honors accepted/status/result Retry-After while recovering only the original Run', async () => {
@@ -489,17 +500,21 @@ describe('standalone Macrofold native decisions', () => {
     },
   );
 
-  it('retains uncertainty when finalized inference execution contradicts its Run', async () => {
-    const f = fixture();
-    f.terminalReceipt.result.execution_outcome = 'failure';
-    const result = await client(f.fetcher).judge(request);
-    expect(result).toMatchObject({
-      outcome: 'uncertain',
-      reason: 'provider_completion_unknown',
-      receipt: { dispatched: true, completionUncertain: true, estimatedCostUsd: 0.000005 },
-    });
-    expect(f.paths).toEqual(['/v1/inferences']);
-  });
+  it.each(['execution', 'provider'])(
+    'retains uncertainty when finalized inference %s evidence contradicts its Run',
+    async (evidence) => {
+      const f = fixture();
+      if (evidence === 'execution') f.terminalReceipt.result.execution_outcome = 'failure';
+      else f.terminalReceipt.result.inference.provider_outcome = 'not_invoked';
+      const result = await client(f.fetcher).judge(request);
+      expect(result).toMatchObject({
+        outcome: 'uncertain',
+        reason: 'provider_completion_unknown',
+        receipt: { dispatched: true, completionUncertain: true, estimatedCostUsd: 0.000005 },
+      });
+      expect(f.paths).toEqual(['/v1/inferences']);
+    },
+  );
 
   it('refuses streaming before any provider request', async () => {
     const f = fixture();

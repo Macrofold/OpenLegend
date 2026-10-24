@@ -90,6 +90,8 @@ export interface MacrofoldGenerationRequest extends GenerateRequest {
 
 export interface MacrofoldDecisionRequest extends JudgeRequest {
   stream?: false;
+  /** Optional reduction from the normal answer allowance, such as a prepared deployment cap. */
+  maxOutputTokens?: number;
   /** Persist this identity before observation; a failed callback never resubmits admission. */
   onAccepted?: (runId: string) => Promise<void>;
 }
@@ -218,6 +220,7 @@ export function macrofoldInferenceEvidence(
   const completionUncertain =
     outcome === 'uncertain' ||
     providerOutcome === 'uncertain' ||
+    (outcome === 'value' && providerOutcome === 'not_invoked') ||
     result['execution_outcome'] !==
       (status['status'] === 'succeeded'
         ? 'success'
@@ -434,6 +437,12 @@ interface PreparedInference<T> {
   input: Record<string, unknown>;
   maxOutputTokens: number;
   decode(raw: unknown): { value: T } | { refused: true };
+}
+
+function outputTokenLimit(value: number): number {
+  if (!Number.isSafeInteger(value) || value < 1 || value > 16_384)
+    throw new InvalidData('output_limit_exceeded');
+  return value;
 }
 
 type InferenceRequest = RequestControl & {
@@ -739,6 +748,7 @@ export function createMacrofoldDecisionClient(configuration: MacrofoldDecisionCo
   return {
     judge: (request) =>
       execute(request, () => {
+        const maxOutputTokens = outputTokenLimit(request.maxOutputTokens ?? 16_384);
         const input = {
           state: JSON.parse(serialize(request.state, 500_000)) as unknown,
           questions: prepareQuestions(request.questions, 500_000),
@@ -746,7 +756,7 @@ export function createMacrofoldDecisionClient(configuration: MacrofoldDecisionCo
         return {
           input,
           maxOutputTokens: Math.min(
-            16_384,
+            maxOutputTokens,
             Math.max(1024, Object.keys(input.questions).length * 64),
           ),
           decode: (raw) => ({ value: decodeJudge(raw, input.questions) }),
@@ -798,13 +808,7 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
             throw new InvalidData('model_not_authorized');
         }
         const preparedSchema = prepareSchema(request.schema, 500_000);
-        const maxOutputTokens = request.maxOutputTokens ?? 4096;
-        if (
-          !Number.isSafeInteger(maxOutputTokens) ||
-          maxOutputTokens < 1 ||
-          maxOutputTokens > 16_384
-        )
-          throw new InvalidData('output_limit_exceeded');
+        const maxOutputTokens = outputTokenLimit(request.maxOutputTokens ?? 4096);
         return {
           maxOutputTokens,
           input: prepareMacrofoldGenerationInput(
