@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 24, 2026 — Direct development resets and routine merge scope
+
+Mike clarified that local development sign-in/access records and historical AI spending/attempt bookkeeping are disposable. The [root development policy](../AGENTS.md#development-save-policy) now permits direct incompatible-data replacement without backup or selective transfer; external credentials, cloud permissions, asset libraries and unrelated data remain protected. Same-format correctness, privacy, the task spending ceiling and the prohibition on duplicate paid execution remain unchanged. The [merge workflow](../.agents/skills/merge-branch/SKILL.md#default-path) defaults to one incoming/overlap review, reused source evidence, necessary local checks, one squash and push. Actual database readiness reuses one native startup/persist/reopen pass where needed; it does not reopen bookkeeping-preservation, browser, full-suite or provider qualification.
+
 ## October 24, 2026 — Local verification only
 
 Mike requires repository checks to run locally and prohibits GitHub CI. The Code checks and Spatial world checks workflows are disabled, and their repository definitions are removed. The [verification policy](../.agents/rules/verification.md#local-verification-only) retains impact-based check selection, disposable local PostgreSQL databases and explicit authorization for full validation. Historical CI references do not authorize another hosted run or an automatic full-suite rerun. This replaces the previous automatic push/pull-request workflow; runtime correctness, privacy, accounting and existing acceptance requirements remain unchanged.

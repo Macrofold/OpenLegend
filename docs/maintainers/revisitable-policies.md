@@ -14,7 +14,7 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 ## RP02 — Development-state compatibility
 
-**Current policy:** [AGENTS.md — Development save policy](../../AGENTS.md#development-save-policy), the sole binding text. Mike's October 14 decision permits replacement of incompatible development data and requires coherent reconciliation of meaningful in-scope content; it does not introduce legacy-format support or promise preservation of development progress.
+**Current policy:** [AGENTS.md — Development save policy](../../AGENTS.md#development-save-policy), the sole binding text. Mike permits direct replacement of incompatible development data and requires coherent reconciliation of meaningful in-scope content. His October 24 clarification also makes local sign-in/access and historical AI bookkeeping disposable; external credentials, actual asset libraries and unrelated data remain outside that reset. This introduces no legacy-format support or promise to preserve development progress.
 
 **Why revisit:** Development currently permits automatic replacement of incompatible development state under the linked rule. A future real-player release may need declared compatibility windows for saves, APIs and other supported contracts. This is a review candidate, not a commitment to implement compatibility now. Preserving the intended scenarios and characters when rebuilding a development world is distinct from supporting an earlier storage format.
 
