@@ -19,7 +19,7 @@ The technical design records the integrated A–E contracts and existing-owner e
 - [x] Map implementation to existing owners and settle exact evidence-family revisions and actual physical-method starts through the shared A/E contracts.
 - [x] Close only the selected F design gap; preserve SA-D01 and all runtime, integration and gameplay gates.
 
-**Exit:** selected behavior is specified for implementation subject to the bounded upstream dispositions below; this is not delivered/qualified gameplay.
+**Exit:** selected behavior and shared technical choices are specified; the existing-owner implementation dependencies below remain open. This is not delivered or qualified gameplay.
 
 ## SUR01 — Authored policy and exact typed bindings
 

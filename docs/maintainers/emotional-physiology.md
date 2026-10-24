@@ -126,7 +126,7 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 
 **Status: Not started.** Dependencies: applicable EP02–EP07 and A/C/E/F/G implementations. Owner: SAI-D with SAI-I and existing CTR/EPR/SPK/agency/player-view owners. Contract: EP-C12 and SC01–SC14.
 
-- [ ] Reconcile A/C original acquisition/physical transition shapes and F's unexpected-contact result without requiring another branch's private internals or a fully formed enclosing memory event.
+- [ ] Implement the settled A/C acquired occurrence/exposure-transition adapters and F's unexpected-contact result through their owning interfaces. Preserve exact original support without private source metadata or a fully formed enclosing memory event.
 - [ ] Exercise exact attacker/actual-victim cuts, acquired-warning order, continuous contact, collateral impact and no same-impact shock feedback through actual melee/ranged defense.
 - [ ] Preserve E's native animal/ordinary attention routes, operation-specific cognition consumption and urgent threat capacity without an emotion-owned action pipeline.
 - [ ] Qualify G's owner feedback, full/patch/current/historical privacy, accessible presentation, action preview and control-transfer behavior under the chosen-or-blocked player gate.
