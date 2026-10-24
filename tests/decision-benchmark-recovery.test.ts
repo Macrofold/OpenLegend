@@ -83,6 +83,7 @@ function proof(): MacrofoldRecoveryProof {
     result: {
       run_id: originalRun,
       final: true,
+      execution_outcome: 'failure',
       inference: {
         model,
         outcome: 'failed',

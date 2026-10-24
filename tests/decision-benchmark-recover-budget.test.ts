@@ -125,6 +125,7 @@ beforeEach(async () => {
         ? {
             run_id: acceptedRun,
             final: true,
+            execution_outcome: 'failure',
             inference: {
               model,
               outcome: 'failed',
