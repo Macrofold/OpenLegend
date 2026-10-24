@@ -44,7 +44,7 @@ The [source audit](../projects/stealth-player-experience-tech-design.md#contract
 
 - [ ] Add direction steering and the supported standalone destination-to-direction amendment inside ordinary move. Preserve earned progress/costs and compatible gaze/watch deadlines; discard the old destination without false arrival/resume. Owned-purpose travel retains its existing rules.
 - [ ] Implement scoped movement sequencing, separate gaze ordering, independent latest direction/gaze slots, bounded latest-direction renewals, cancel-before-start and freshness expiry through the existing control owner. No parallel movement lane or client physics.
-- [ ] Extend existing input routing for WASD, X, Z, F, Q/E and Shift+W; update all affected hints/help. Preserve text/IME, construction, camera, Speak/Act, selection, targeting and pause ownership.
+- [ ] Extend existing input routing for WASD, X, Z, F, Q/E and Shift+W through the shared canvas/direct movement/posture/pace focus scope; update all affected hints/help. Preserve focused-control keys and text/IME, construction, camera, Speak/Act, selection, targeting and pause ownership.
 - [ ] Distinguish released held movement, action cancellation and full Stop including waiting/queued work.
 - [ ] Show requested versus actual pose/gaze and pending/refused/interrupted consequences. Pending movement admission may retain one visible unsent posture request; refusal preserves walking. Successful stationary replacement/blockage requires fresh direction input without replaying held keys. No automatic stand-to-evade or fake crouch.
 - [ ] Implement B orient-once controls and button/keyboard alternatives; do not turn the body/shield or grant sensing because the camera moved.

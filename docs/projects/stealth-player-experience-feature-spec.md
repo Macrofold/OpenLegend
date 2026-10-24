@@ -63,7 +63,7 @@ The default marker does not fade toward an assertion of absence. It leaves the a
 
 ### Default desktop bindings
 
-These bindings are a selected future profile, not a claim about current code. World movement requires canvas/game-surface focus. Text entry, IME, menus, modal controls, construction placement and captured UI gestures take priority. Every essential action also has a visible, keyboard-reachable control.
+These bindings are a selected future profile, not a claim about current code. The canvas/game surface and immediate movement, posture and pace HUD controls share world-input focus; moving between them preserves held movement. Focused controls own their activation/navigation keys; text entry, IME, menus, modal controls, construction/target selection and captured UI gestures take priority. Leaving this focus scope releases held movement. Every essential action also has a visible, keyboard-reachable control.
 
 | Intent                        | Default input                                                                                                                       | Actual behavior                                                                                                                                                                                                                                        |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
