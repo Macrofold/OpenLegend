@@ -1,5 +1,20 @@
 # Network request lifetimes — verification
 
+## Linux fixture portability and CI — October 24, 2026
+
+The documentation-only engine-research review exposed an existing Linux fixture failure in the required GitHub Actions gate. This is native CI evidence using `ubuntu-latest`, Node 22, the workflow's disposable PostgreSQL service and `AI_BUDGET_USD=0`; it is not a new gameplay, browser, engine-performance or live-provider experiment.
+
+| Revision and run                                                                                                                                                                                                                | Observed result                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `Macrofold/OpenLegend` `main` at `d1299aaf7cd834efbc9937e31c81efa3773b8418`; [baseline run 40040515964](https://github.com/Macrofold/OpenLegend/actions/runs/40040515964/job/120710233264), completed October 23                | 71 test files passed, two failed; 949 tests passed, seven failed.                                |
+| `codex/unity-unreal-runtime-research-20261023` at `2271d1663fd2642eb85664e108e6bb17f5446494`; [review run 40045497524](https://github.com/Macrofold/OpenLegend/actions/runs/40045497524/job/120726146164), completed October 24 | The same two files and seven tests failed with the same temporary-path errors; 949 tests passed. |
+
+`apps/server/src/network-asset-delivery.test.ts` and `apps/server/src/network-assets.test.ts` construct hard-coded `/private/tmp/openlegend-network-*` directories. On the Ubuntu runner, direct creation fails with `ENOENT`; the cache initialization path also reports `EACCES` while trying to create `/private`. One cancellation assertion therefore receives a filesystem error instead of the expected cancellation outcome. These failures occur during fixture setup before the intended asset-transfer observations. The two test files and `apps/server/src/asset-cache.ts` have identical Git blob hashes at both revisions. The branch diff contains only documentation and research, with no workflow or dependency change. The matching baseline run establishes that this blocker was not introduced by the research review.
+
+In the review run, the frozen dependency install, anonymous public-asset fixture, guidance/network/asset/config checks, full formatting and strict typecheck passed. The test failure stopped the required check chain before production build. It is therefore incorrect to call this branch green or reuse the October 18 macOS pass as current Linux qualification. The earlier environment-specific results below remain useful evidence for their recorded scope; the fixture failure alone does not establish a production asset-delivery defect.
+
+[NET11](../maintainers/bounded-network-requests.md#net11--integrated-qualification-and-current-truth-handoff) owns the focused portability repair and current CI qualification. No runtime code, test assertions or CI gates were changed during the research review. No paid model calls were made.
+
 ## Scope and baseline — October 18, 2026
 
 The design investigation inspected `4d57c3074015e97440bdd09bf39502819ad43a0f` on `codex/macrofold-receipt-review`. Source inspection covered browser API/subscription callers, AI/Macrofold transports, server authentication and world-host requests, exact asset delivery/cache/SDK preparation, tooling and generated cloud source. The [technical migration inventory](../projects/completed/bounded-network-requests-tech-design.md#13-implementation-sequence-and-migration-inventory) records the affected owners. This section describes the pre-migration source; implementation evidence is recorded separately below.
