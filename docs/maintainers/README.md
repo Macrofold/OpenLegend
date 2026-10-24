@@ -16,6 +16,10 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 [Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
 
+## General emotions, bodily reactions and adaptive review
+
+[Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) are complete; implementation/qualification remain open. [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) retains the controlled-character interpretation choice.
+
 ## Combat and immediate threat responses
 
 [Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). Selected ND11/ND13 design is complete; runtime and independent acceptance remain open in CTR.
@@ -178,3 +182,4 @@ Actual evidence: [continuation](../verification/workshop-continuation.md), [tran
 | Integration and art         | [Macrofold handoff](../macrofold-world-agent-handoff.md), [hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)                                                                                                                             |
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).
+

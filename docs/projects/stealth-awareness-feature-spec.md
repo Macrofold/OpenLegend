@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                      | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared design is complete; specialist designs, implementation and gameplay qualification remain open. | 2026-10-19   |
+| In progress | Shared design is complete; specialist designs, implementation and gameplay qualification remain open. | 2026-10-20   |
 
 ## Purpose and selected scope
 
@@ -20,7 +20,7 @@ Source inspection uses `Macrofold/OpenLegend` at `86a21ce50aa0633d81b38a430b7727
 
 The existing game has authoritative spatial bodies and movement, range/obstruction-based sight, listener-specific speech, private event evidence, continuous sighting associations, personal combat encounters, native animal response machinery, interpreted appraisals, status effects, prepared responses and observer-scoped player views. These are useful foundations. They do not establish delivered facing/light/concealment sensing, general non-speech acoustics, persistent learned voice recognition, mechanical surprise, native startle, adaptive emotional reconsideration, or complete historical-character disclosure. Current appraisal/contribution mechanisms also need explicit extensions before they can supply the selected accuracy/evasion effects.
 
-All behavior below is an **accepted shared target**, except the explicitly open player-fear decision and specialist tuning. This is a design-only project stage: no new runtime feature, executable test, deployment, measured performance improvement or player-enjoyment result is claimed.
+All behavior below is an **accepted shared target**, except the explicitly open controlled-character interpretation decision and remaining specialist tuning. D's [general emotion feature](emotional-physiology-feature-spec.md), [technical design](emotional-physiology-tech-design.md) and [EP tracker](../maintainers/emotional-physiology.md) specify native bodily reactions, interpreted fear/joy/anger and persistent grief, maximum effective mechanics and bounded independent review; their numerical policy is owned by [base psychological reactions](../worlds/base/psychological-reactions.md). This is a design-only project stage: no new runtime feature, executable test, deployment, measured performance improvement or player-enjoyment result is claimed.
 
 ## Gameplay goals
 
@@ -153,7 +153,7 @@ The engine still separates physical signal, observer evidence, remembered knowle
 
 ## Player fear decision
 
-**SA-D01 remains open:** how directly controlled characters acquire longer-term psychologically interpreted fear, separate from universal eligible native startle. The [decision record](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) owns the alternatives, recommendation and adoption gate.
+**SA-D01 remains open:** whether and how directly controlled characters acquire/apply longer-term interpreted emotions, including the original fear question, separate from universal eligible native startle. The [decision record](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) owns the alternatives, recommendation and adoption gate.
 
 The viable choices are deterministic authored appraisal from the character's permitted evidence, opt-in bounded AI interpretation, or native startle only for the initial controlled-player release. The conditional recommendation is deterministic authored appraisal if persistent fear should affect ordinary players: it gives predictable mechanical behavior without a paid real-time dependency. That is a recommendation, not an accepted acquisition policy. All alternatives use the same appraisal/effect owners and preserve direct movement control.
 
@@ -188,3 +188,4 @@ Only the final integration agent performs broad reconciliation of central repert
 - Limits and constraints: [Shared inventory](../limits/stealth-awareness.md), with links to existing hearing, memory, cognition, combat and native-work inventories.
 - Shared contracts and source audit: [Technical design](stealth-awareness-tech-design.md).
 - World behavior: [Psychological reactions](../worlds/base/psychological-reactions.md), [combat](../worlds/base/combat.md), [time](../worlds/base/time.md) and the selected world's sense/identity policy owners identified in the technical design.
+

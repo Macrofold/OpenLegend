@@ -2,11 +2,13 @@
 
 | Status    | Current progress                                                                                                                              | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Persistent appraisals and character-owned relationship notes were delivered on 2026-09-26; broader actor and cognition work remains separate. | 2026-10-16   |
+| Completed | Persistent appraisals and character-owned relationship notes were delivered on 2026-10-20; broader actor and cognition work remains separate. | 2026-10-20   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](appraisal-social-continuity-feature-spec.md) owns behavior; [ACT07/ACT08 delivery slices](../../maintainers/actor-model.md#priority-5-implementation-slices) own implementation and evidence. CR owns accepted mind/knowledge publication, EPR owns intake, P1 provides typed owner conventions and P4 bounded dependencies. This project does not replace any of those authorities.
 
 The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+
+**Selected general emotion extension:** [Emotional physiology feature](../emotional-physiology-feature-spec.md), [technical design](../emotional-physiology-tech-design.md) and [EP00–EP09](../../maintainers/emotional-physiology.md) preserve this delivered appraisal/social-continuity owner while specifying native bodily reactions, derived effective fear and independently admitted same-cause reassessment. The existing decaying reframe restriction remains intact. Source-linked persistent grief and separate authored grief retain their own creation permissions; review permission is explicit. This extension is designed, with implementation and qualification open; it does not reopen completed ACT07/ACT08 or create another relationship store.
 
 **Implemented 2026-09-26.** The [foundation verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records the agreed slice. Source-audit tables and conversion stages below describe the pre-implementation design. Historical SQLite and migration portions were superseded by the PostgreSQL-only runtime on 2026-09-27 and the controlling [development policy](../../../AGENTS.md#development-save-policy); they do not authorize compatibility work. Current feature contracts and focused trackers own later extensions.
 
@@ -26,7 +28,7 @@ The [memory architecture](../../memory-architecture.md) now explicitly places as
 
 ## 2. Ownership and code structure
 
-Native appraisal state, validation and public views live in [appraisals.ts](../../../packages/domain/src/appraisals.ts). The bundled damage-to-feeling mapping, labels and decay policy live in [worlds/base/appraisals.ts](../../../packages/domain/src/worlds/base/appraisals.ts), installed through the existing manifest. The old combined `social.ts` is removed; it is not an API or re-export to preserve. Core code owns stable identity, valid references, revisions, lifecycle and protected disclosure—not a fixed universal emotion list.
+Native appraisal state, validation and public views live in [appraisals.ts](../../../packages/domain/src/appraisals.ts). The bundled appraisal definitions, supported causes, labels and lifetime policy live in [worlds/base/appraisals.ts](../../../packages/domain/src/worlds/base/appraisals.ts), installed through the existing manifest. The old combined `social.ts` is removed; it is not an API or re-export to preserve. Core code owns stable identity, valid references, revisions, lifecycle and protected disclosure—not a fixed universal emotion list.
 
 `knowledge.ts` remains the only writer for external subject notes. Objective ancestry now uses the bundled [family owner](../../../packages/domain/src/worlds/base/family.ts) and its revisioned parent links under the completed [family-authoring design](family-authoring-tech-design.md); neither appraisal nor subject-note changes write that tree. Operational obligations remain the current commitments/agency owners. A relationship view is a read projection with an exact document revision, never a stored independent biography, sentiment field or graph edge that can be edited separately.
 
@@ -172,3 +174,4 @@ The accepted and delivered foundation uses one extended appraisal owner with sta
 
 - Implementation: [ACT07/ACT08 delivery and remaining actor work](../../maintainers/actor-model.md#priority-5-implementation-slices).
 - Limits and constraints: [Feelings and social continuity inventory](../../limits/feelings.md).
+

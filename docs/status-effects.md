@@ -70,13 +70,11 @@ before validating exact pins, including ended contributions.
 
 ### Selected bodily shock and effective emotion extension
 
-**Shared design target; the numerical modifier and native startle are not current operations.** [D/F's shared contract](projects/stealth-awareness-tech-design.md#emotions-and-reconsideration) extends this status/contribution owner for life-bound bodily shock and reads applicable private feelings from the existing appraisal owner. The current independent contribution branch supports capability restrictions only; numeric rates/transfers elsewhere do not already supply an effective accuracy/evasion parameter. [The shared tracker](maintainers/stealth-awareness.md) owns specialist design and later delivery.
+**Designed; native startle and numeric parameter contributions remain unimplemented under [EP](maintainers/emotional-physiology.md).** [EP-C05](projects/emotional-physiology-tech-design.md#ep-c05--native-bodily-reaction-admission-and-receipts) extends the existing saved contribution with a discriminated native-body origin: exact affected life, original committed cause, definition pins, frozen onset/curve and immutable result receipt. It has no required live `$source`; historical attribution does not prevent source retirement. Existing source-bound attach/refresh rules remain distinct.
 
-The extension must retain one status/contribution store and one appraisal store. D supplies a read-only composition from the complete eligible active mechanical set, with exact definitions, source/cause and affected-life references; F consumes it at the declared action/contact boundaries. Missing required preparation is incomplete, not zero fear, and a bounded hot history page is not complete active state. No synchronous impact waits for SQL or AI. The selected base fear rule affects accuracy/evasion without automatically slowing running/fleeing or choosing movement; D/F explicitly reconcile existing combat condition factors before adding another influence.
+Trusted physical or personally acquired causes admit onset without memory or AI. Wrappers of the same original cause cannot repeat it. Active and terminal receipts stay in the existing status/contribution records, with bounded prepared replay lookup before physical mutation; missing required preparation is incomplete rather than no effect. Fixed reactions can outlive their source, end with the affected physical life and never transfer to a new body. [Simulation time](simulation-time.md#selected-stealth-and-emotion-timing) preserves admitted normal-play duration and paused/restored progress.
 
-A trusted actual physical cause can admit bodily startle without memory, identification of the source or AI. Duplicate consequences of that cause on the same life cannot restart onset or duration. Read prior effects before outcome resolution; startle created by the impact cannot affect that impact's own defense or damage. [Normal-speed duration admission](simulation-time.md#selected-stealth-and-emotion-timing) uses the simulation clock once. Fixed shock may outlive its source, while the target's physical-life ending retires its bodily effect. Ending removes only its own contribution, with no inverse delta or old-body restoration.
-
-Private psychological interpretation and bounded reconsideration remain with appraisals and their existing cognition intake, cause revisions and lifetime. A feeling alone grants no public expression or human-controlled AI permission. [Current-format save/restore](save-and-load.md) retains each owner's actual continuation and source eligibility without replay; the implemented operations and qualification below remain the baseline until the new family is delivered.
+[EP-C06–EP-C07](projects/emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution) define the complete read-only emotional query, narrow numeric parameter family and ordered combat consumers. They add no writable fear total or inverse-delta cleanup; newly caused shock cannot affect its own impact. [Base psychological reactions](worlds/base/psychological-reactions.md) owns mappings and tuning. Private interpretation/reassessment remains with appraisals and cognition, including the unresolved [SA-D01](../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) control policy.
 
 ## Transitions
 
@@ -137,6 +135,7 @@ Policy, instances, elapsed time and bindings serialize with the world. Periodic 
 
 ## Maintained records
 
-- Implementation: [Feature tasks](maintainers/state-contributions.md).
+- Implementation: [Feature tasks](maintainers/state-contributions.md), with the selected bodily/numeric extension in [emotional physiology](maintainers/emotional-physiology.md).
 - Reviewed removal: [RD01–RD05](maintainers/parallel-batch-09-reviewed-content-removal.md), under [CE01](maintainers/creator-edits.md#ce01--reviewed-explicit-dependency-cascades).
 - Limits and constraints: [Shared state, resources and effects inventory](limits/state-effects.md).
+
