@@ -1217,7 +1217,9 @@ async function initializeGameServer(
             });
           const transportId = randomBytes(16).toString('hex');
           let connected = false;
-          let closed = false;
+          // Authentication may have awaited after this socket already closed.
+          // Such a request must never install a connection that cannot release.
+          let closed = response.destroyed;
           let released = false;
           const release = async () => {
             if (!connected || released || disposed) return;
@@ -1248,6 +1250,7 @@ async function initializeGameServer(
           // Keep admission reserved across the initial asynchronous private projection.
           pendingStreams++;
           try {
+            if (closed) return;
             await service.setConnection(transportId, true, scope);
             connected = true;
             if (closed) {
@@ -1256,7 +1259,10 @@ async function initializeGameServer(
             }
             await currentView(scope);
             service.assertScope(scope);
-            if (response.destroyed) return;
+            if (response.destroyed) {
+              await release();
+              return;
+            }
             response.writeHead(200, {
               'Content-Type': 'text/event-stream',
               'Cache-Control': 'no-store',

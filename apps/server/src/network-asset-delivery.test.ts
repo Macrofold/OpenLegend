@@ -1,5 +1,7 @@
-import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeOwned } from '@open-legend/network/node';
 import { AssetCache } from './asset-cache.js';
@@ -78,7 +80,7 @@ it('releases a resolver lease arriving after HTTP cancellation and retains shutd
     await expect(delivery.close({ timeoutMs: 25 })).rejects.toThrow('unsettled');
     pins++;
     offer({
-      path: '/private/tmp/late-lease-is-never-opened',
+      path: join(tmpdir(), 'late-lease-is-never-opened'),
       reference,
       release: async () => {
         releases++;
@@ -103,9 +105,8 @@ it('releases a resolver lease arriving after HTTP cancellation and retains shutd
 });
 
 it('serves a range through the real HTTP caller and retires its source pin before resolver shutdown', async () => {
-  const root = '/private/tmp/openlegend-network-delivery-' + randomUUID();
+  const root = await mkdtemp(join(tmpdir(), 'openlegend-network-delivery-'));
   roots.push(root);
-  await mkdir(root, { mode: 0o700 });
   await writeFile(root + '/asset', bytes);
   let pins = 0;
   let releases = 0;
@@ -165,9 +166,8 @@ it('serves a range through the real HTTP caller and retires its source pin befor
 });
 
 it('streams a complete 16 MiB exact asset through cache and HTTP while retaining its read pin', async () => {
-  const root = '/private/tmp/openlegend-network-large-asset-' + randomUUID();
+  const root = await mkdtemp(join(tmpdir(), 'openlegend-network-large-asset-'));
   roots.push(root);
-  await mkdir(root, { mode: 0o700 });
   const chunk = Buffer.alloc(64 * 1024, 0x5a);
   const hash = createHash('sha256');
   for (let i = 0; i < 256; i++) hash.update(chunk);

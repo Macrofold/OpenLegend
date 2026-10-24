@@ -25,6 +25,7 @@ import {
   reviewedReferenceScenes,
 } from './reference-review.js';
 import { armById, resolveArm } from './arms.js';
+import { PRIVATE_BENCHMARK_EVIDENCE_BYTES } from './evidence-limits.js';
 import { compileQualityPolicy, summarizeQuality } from './quality.js';
 import { readQualityRecords } from './quality-records.js';
 import { summarize } from './evaluate.js';
@@ -59,12 +60,19 @@ for (const key of options.keys())
       'workers',
       'source',
       'prior-commitment-usd',
+      'model-experiment',
+      'online-preflight',
+      'max-output-tokens',
     ].includes(key)
   )
     throw new Error(`Unknown argument: --${key}`);
 for (const flag of ['live', 'generation', 'stream-generation'])
   if (options.has(flag) && !['true', 'false'].includes(options.get(flag)!))
     throw new Error(`--${flag} must be true or false.`);
+if (options.has('model-experiment') && !['prepare', 'run', 'report'].includes(command))
+  throw new Error('--model-experiment supports prepare, run and report.');
+if (options.has('max-output-tokens') && !options.has('model-experiment'))
+  throw new Error('--max-output-tokens belongs in an explicit model experiment.');
 if (
   options.has('max-new') &&
   (!Number.isSafeInteger(Number(options.get('max-new'))) || Number(options.get('max-new')) < 0)
@@ -302,7 +310,8 @@ if (command === 'validate' || command === 'audit') {
     if (!input || !isAbsolute(input))
       throw new Error('--input=/absolute/submissions.json is required.');
     const text = await readFile(input, 'utf8');
-    if (Buffer.byteLength(text) > 20_000_000) throw new Error('Generation submissions exceed20MB.');
+    if (Buffer.byteLength(text) > PRIVATE_BENCHMARK_EVIDENCE_BYTES)
+      throw new Error('Generation submissions exceed20MB.');
     const parsed: unknown = JSON.parse(text);
     if (!Array.isArray(parsed)) throw new Error('Generation submissions must be an array.');
     const known = new Map(generationCases.map((c) => [c.id, c]));
@@ -391,7 +400,7 @@ if (command === 'validate' || command === 'audit') {
       mode: 0o600,
     });
     console.log(json(output));
-  } else if (command === 'report' || command === 'run') {
+  } else if (command === 'report' || command === 'run' || command === 'prepare') {
     await runBenchmark(command, directory, options, scenes, describe);
   } else if (command === 'recover-budget') {
     await recoverBudgetAdmissions(directory, options, scenes, describe);

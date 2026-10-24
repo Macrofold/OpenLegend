@@ -35,21 +35,39 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     if (request.url().endsWith('/api/command')) commands.push(request.postDataJSON());
   });
   try {
+    // Keep this exact-picking fixture independent of the ordinary starting zoom/pitch.
+    // These are existing camera preferences, followed by the normal recenter control.
+    const camera = { zoom: 12, pitch: 0.88 };
+    await page.addInitScript((camera) => {
+      if (localStorage.getItem('open-legend:camera-v1') === null)
+        localStorage.setItem('open-legend:camera-v1', JSON.stringify(camera));
+    }, camera);
     await page.goto(`http://127.0.0.1:${address.port}/auth/login`);
     await enterGame(page);
     const canvas = page.locator('#world');
     await expect(canvas).toHaveAttribute('data-ready', 'true');
+    await page.getByRole('button', { name: 'Center on player', exact: true }).click();
+    await expect(canvas).toHaveAttribute('data-camera-pitch', String(camera.pitch));
+    await expect(canvas).toHaveAttribute('data-camera-yaw', '0');
     await expect(page.getByLabel('Focus level', { exact: true })).toHaveCount(0);
     await page.screenshot({ path: info.outputPath('spatial-clearing.png') });
     // The first local browser owns control in this fresh database; no wall-clock ticks run.
     await expect(page.getByRole('button', { name: 'Pause world', exact: true })).toBeVisible();
-    // Project a known public deck point through the default orthographic camera.
+    // Project a known public deck point through the explicitly established orthographic camera.
     // This clicks actual scene geometry, not a hidden test-only move endpoint.
     const rect = (await canvas.boundingBox())!;
-    const scale = rect.height / 24;
+    const scale = rect.height / (2 * camera.zoom);
+    const focus = worldPosition(
+      entityGet(game.service.world.entities, game.service.controlledEntityId)!,
+    );
+    const deck = { x: 24, y: 3, z: 6 };
     const point = {
-      x: rect.width / 2 + (24 - 11) * scale,
-      y: rect.height / 2 - (3 * Math.cos(0.88) + 6 * Math.sin(0.88)) * scale,
+      x: rect.width / 2 + (deck.x - focus.x) * scale,
+      y:
+        rect.height / 2 -
+        ((deck.y - focus.y) * Math.cos(camera.pitch) +
+          (focus.z - deck.z) * Math.sin(camera.pitch)) *
+          scale,
     };
     await canvas.click({ position: point });
     await expect.poll(() => commands.length).toBe(1);
