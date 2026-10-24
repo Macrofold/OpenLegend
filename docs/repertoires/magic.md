@@ -211,7 +211,7 @@ Divination can expose a particular trace or answer a carefully bounded question.
 
 ## Illusion, performance and glamour
 
-A convincing illusion changes available sensory evidence, not reality by adjective. Beauty, comedy and theatrical deceit deserve as much specificity as stealth.
+A convincing illusion changes available sensory evidence, not reality by adjective. Beauty, comedy and theatrical deceit deserve as much specificity as stealth. The [perception design](../projects/perspective-perception-feature-spec.md) keeps its apparent source distinct from its actual producer.
 
 | ID     | Idea                                | Seed worlds | Use  | Priority   | Level | Specific behavior and payoff                                                                                                                                                      | Build scope / gap                                                     | Inspiration                          |
 | ------ | ----------------------------------- | ----------- | ---- | ---------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------ |

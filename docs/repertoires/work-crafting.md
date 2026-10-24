@@ -52,7 +52,7 @@ Seeds and references: [Minecraft](source-atlas.md#g20), [Against the Storm](sour
 
 A repairer listens, measures and asks about recent changes before deciding whether a pump needs cleaning or replacement. Different evidence supports different methods. Skilled play is learning what matters, with tools that improve inspection. Avoid fake investigation where every clue merely increments a hidden counter before the only permitted repair button unlocks.
 
-Related entries: [WORK-101](#diagnosis-machinery-utilities-and-technical-service).
+Related entries: [WORK-101](#diagnosis-machinery-utilities-and-technical-service). Observation and testimony follow the [perception design](../projects/perspective-perception-feature-spec.md).
 
 Seeds and references: [Project Zomboid](source-atlas.md#g37), [The Witcher 3: Wild Hunt](source-atlas.md#g72), [Prey (2017)](source-atlas.md#g118).
 

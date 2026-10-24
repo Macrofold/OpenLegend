@@ -400,7 +400,7 @@ A system can be efficient in steady operation and still unable to start. These c
 
 ## Situated sensing and machine recognition
 
-Detection, identification and interpretation are different outputs. These systems make uncertainty useful without presenting a blank sensor display as proof that nothing exists.
+Detection, identification and interpretation are different outputs. These systems make uncertainty useful without presenting a blank sensor display as proof that nothing exists. Characters receive instrument readings through the same [perception and evidence contract](../projects/perspective-perception-tech-design.md).
 
 | ID     | Idea                                  | Seed worlds | Use  | Priority     | Level | Specific behavior and payoff                                                                                                                                                                               | Build scope / gap                                            | Inspiration                                           |
 | ------ | ------------------------------------- | ----------- | ---- | ------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------- |

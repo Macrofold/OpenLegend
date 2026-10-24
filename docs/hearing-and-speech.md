@@ -168,6 +168,8 @@ Delivery labels require a permitted delivery cue. A faint ordinary voice is not 
 
 A later identification is new evidence. It does not rewrite the original utterance's fragments or retroactively convert all unknown historical voices to a currently visible actor. Initialization must preserve deliberately absent source/target roles rather than treating them as missing data to repair. The selected shared contract preserves exposure continuity separately from live authorization: a reconnectable episode does not keep current detail visible during a gap. Continued real exposure may strengthen evidence; rereading, replaying or republishing the same account adds no physical exposure or familiarity. Later recognition updates only supported facts, leaving earlier position, equipment and activity observations historical.
 
+The [observer-specific perception design](projects/perspective-perception-tech-design.md) owns native recognition, familiarity and contact association. Speech supplies the acoustic quality actually available to the listener; private emitter identity, an unattenuated source signature or a guessed name cannot substitute. Ordinary classification and evidence recording require no AI request; optional interpretation consumes the permitted result.
+
 ### Editing committed speech
 
 Generic event and awareness editors must not rewrite committed speech text or content independently of the listener capsule. Reject such rewrites clearly; existing guarded deletion and awareness-importance edits remain permitted. A correction spoken in the world is a new event, not a retroactive hearing upgrade. A dedicated administrative re-authoring operation needs explicit semantics for already-perceived fragments and their dependents; that unresolved extension is recorded in [D66](../archive/05-project/open-decisions.md#d66--re-authoring-committed-speech).
@@ -243,6 +245,8 @@ Above/Below labels require the sensory policy’s corresponding evidence. Primar
 ### Historical bearings do not track hidden sources
 
 The bearing belongs to the listener position at event time. Rotating the camera is safe; translating the listener is not permission to recompute the bearing from a hidden source's current or historical exact coordinates. Once the listener moves materially (initial display tolerance 0.5 m), remove the directional arrow and use a neutral recent-speech caption for the remaining reading lifetime. This threshold only affects presentation; no new evidence is granted.
+
+Under the [observer-specific evidence target](projects/perspective-perception-tech-design.md), the saved reference frame also preserves the listener's orientation at acquisition. Turning now cannot change whether an earlier sound was heard on the left. A later view may describe an already permitted fixed world bearing in a new presentation frame only when its precision supports that conversion; it cannot consult the hidden source or turn an old bearing into a current source location. The player-experience designer owns that presentation, with the existing neutral fallback remaining valid.
 
 An overhead caption can follow a speaker only while its current pose remains authorized and its source association was established. On loss of visibility, detach from the live head. Use only previously permitted bearing information from the same event-time frame, or a neutral fallback. Never attach to a last-seen ghost that is secretly moving. An unknown voice must not automatically become identified just because a person enters view during the lingering caption.
 

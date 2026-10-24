@@ -16,6 +16,10 @@ Historical integration: hearing source `c4379246` was consolidated on `codex/hea
 
 Development compatibility follows the [root policy](../../AGENTS.md#development-save-policy). Joint save/restart/restore qualification covers the current format.
 
+## Observer evidence integration target
+
+The [module-A design](../projects/perspective-perception-tech-design.md) is complete, with runtime delivery open in [PP01–PP07](perspective-perception.md). Its native acquisition cuts, per-fact timestamps, observer-local contacts, familiarity and retained identity extend these same event/observation owners. Current instantaneous speech and optional later timed phrase occurrences each acquire only their actual listener-permitted evidence; replay, restored presentation and already processed slices do not add exposure or duplicate familiarity. Historical sound bearings retain the acquisition frame rather than following a hidden source or the listener's later orientation. Same-format restore preserves legitimate pending acquisition and rejects stale epoch work. This design does not complete the existing time, media, acoustics or joint-qualification gates.
+
 ## Joint qualification
 
 [Current evidence](../verification/hearing-main-integration.md) distinguishes actual combined checks from historical measurements. [SR27–SR31 and HE coverage](TODO.md#elapsed-time-cross-cutting-regression-coverage) retain emission-before/after-motion, status/sleep/visibility changes, geometry/floor boundaries, immutable parent/fork behavior, revocation/restore and 1×/8× caption observations. Independently scheduled speech demand must report lateness and unattempted work. No unpaid/native experiment establishes live-provider quality, full graphical qualification or unrestricted dense-world capacity.
