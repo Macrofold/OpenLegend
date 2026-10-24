@@ -40,31 +40,34 @@ Selected [stealth, awareness and surprise](projects/stealth-awareness-feature-sp
 
 Selected [vision and gaze](projects/vision-and-gaze-feature-spec.md): [the vision inventory](limits/vision-and-gaze.md) records finite visual fields, supported body/optical families, physical turns, world light, evidence quality, complete temporal coverage and operational bounds. [The world profile](worlds/base/vision-and-gaze.md) owns authored values; [VG00–VG08](maintainers/vision-and-gaze.md) separates B's design from unstarted implementation and qualification. Cache or renderer limits cannot truncate authoritative sensing.
 
+Selected [preparedness and surprise](projects/preparedness-and-surprise-feature-spec.md): [SUR-L01–SUR-L05](limits/preparedness-and-surprise.md) owns the initial authored multiplier/lead/retention, supported outcome families and complete local-work tradeoffs. [SUR01–SUR09](maintainers/preparedness-and-surprise.md) separates complete F design from open implementation/playability. SA-L02/SA-L06 retain their shared IDs and point to this detailed owner; no numeric engine default or measured balance is claimed.
+
 ## Feature inventories
 
 [Attention and investigation](projects/attention-and-investigation-feature-spec.md) has a selected [ATI-L01–ATI-L07 inventory](limits/attention-and-investigation.md) and [ATI delivery tracker](maintainers/attention-and-investigation.md), with runtime and player qualification open.
 
-| Feature                                                                                               | Inventory                                       | Implementation tasks                                                                                                 |
-| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| [Stealth, awareness and surprise](projects/stealth-awareness-feature-spec.md)                         | [Limits](limits/stealth-awareness.md)           | [Tracker](maintainers/stealth-awareness.md)                                                                          |
-| [Vision and gaze](projects/vision-and-gaze-feature-spec.md)                                           | [Limits](limits/vision-and-gaze.md)             | [Tracker](maintainers/vision-and-gaze.md)                                                                            |
-| [Combat and threat responses](projects/combat-and-threat-responses-feature-spec.md)                   | [Limits](limits/combat-and-threat-responses.md) | [Tracker](maintainers/combat-and-threat-responses.md)                                                                |
-| [Cognition and action selection](agent-agency.md)                                                     | [Limits](limits/cognition.md)                   | [Tracker](maintainers/cognition-redesign.md)                                                                         |
-| [Memory, knowledge and consolidation](memory-architecture.md)                                         | [Limits](limits/memory.md)                      | [Tracker](maintainers/cognition-redesign.md)                                                                         |
-| [AI execution and spending](ai-providers.md)                                                          | [Limits](limits/ai-execution.md)                | [Tracker](maintainers/macrofold-worker-api.md)                                                                       |
-| [Invention and generated content](../archive/07-technical-architecture/declarations-and-evolution.md) | [Limits](limits/inventions.md)                  | [Tracker](maintainers/inventions-and-world-evolution.md)                                                             |
-| [Objects, inventory and equipment](projects/completed/persistent-objects-feature-spec.md)             | [Limits](limits/objects.md)                     | [Tracker](maintainers/persistent-objects.md)                                                                         |
-| [Shared state, resources and effects](status-effects.md)                                              | [Limits](limits/state-effects.md)               | [Tracker](maintainers/state-contributions.md)                                                                        |
-| [Native work and invalidation](projects/completed/dependency-invalidation-feature-spec.md)            | [Limits](limits/native-work.md)                 | [Tracker](maintainers/dependency-invalidation.md)                                                                    |
-| [Food preparation and finite casts](food-preparation.md)                                              | [Limits](limits/food-preparation.md)            | [Tracker](maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking) |
-| [Feelings and social continuity](projects/completed/appraisal-social-continuity-feature-spec.md)      | [Limits](limits/feelings.md)                    | [Tracker](maintainers/actor-model.md#advanced-emotional-state-foundation)                                            |
-| [Accounts, participation and transport](projects/completed/multiplayer-authority-feature-spec.md)     | [Limits](limits/multiplayer.md)                 | [Tracker](maintainers/multiplayer.md)                                                                                |
-| [Space, movement and perception](spatial-world.md)                                                    | [Limits](limits/spatial.md)                     | [Tracker](maintainers/spatial-world.md)                                                                              |
-| [Narration and conversations](narration-and-conversations.md)                                         | [Limits](limits/narration.md)                   | [Tracker](maintainers/narration-and-conversations.md)                                                                |
-| [Persistence, checkpoints and recovery](save-and-load.md)                                             | [Limits](limits/persistence.md)                 | [Tracker](maintainers/save-and-load.md)                                                                              |
-| [Diagnostics and inspection](performance.md)                                                          | [Limits](limits/observability.md)               | [Tracker](maintainers/performance-profiling.md)                                                                      |
-| [Authoring and presentation](ui-design-brief.md)                                                      | [Limits](limits/interface.md)                   | [Tracker](maintainers/TODO.md)                                                                                       |
-| [Bundled-world defaults](worlds/base/README.md)                                                       | [Limits](limits/base-world.md)                  | [Tracker](maintainers/base-world.md)                                                                                 |
+| Feature | Inventory | Implementation tasks |
+| --- | --- | --- |
+| [Stealth, awareness and surprise](projects/stealth-awareness-feature-spec.md) | [Limits](limits/stealth-awareness.md) | [Tracker](maintainers/stealth-awareness.md) |
+| [Vision and gaze](projects/vision-and-gaze-feature-spec.md) | [Limits](limits/vision-and-gaze.md) | [Tracker](maintainers/vision-and-gaze.md) |
+| [Preparedness and surprise](projects/preparedness-and-surprise-feature-spec.md) | [Limits](limits/preparedness-and-surprise.md) | [Tracker](maintainers/preparedness-and-surprise.md) |
+| [Combat and threat responses](projects/combat-and-threat-responses-feature-spec.md) | [Limits](limits/combat-and-threat-responses.md) | [Tracker](maintainers/combat-and-threat-responses.md) |
+| [Cognition and action selection](agent-agency.md) | [Limits](limits/cognition.md) | [Tracker](maintainers/cognition-redesign.md) |
+| [Memory, knowledge and consolidation](memory-architecture.md) | [Limits](limits/memory.md) | [Tracker](maintainers/cognition-redesign.md) |
+| [AI execution and spending](ai-providers.md) | [Limits](limits/ai-execution.md) | [Tracker](maintainers/macrofold-worker-api.md) |
+| [Invention and generated content](../archive/07-technical-architecture/declarations-and-evolution.md) | [Limits](limits/inventions.md) | [Tracker](maintainers/inventions-and-world-evolution.md) |
+| [Objects, inventory and equipment](projects/completed/persistent-objects-feature-spec.md) | [Limits](limits/objects.md) | [Tracker](maintainers/persistent-objects.md) |
+| [Shared state, resources and effects](status-effects.md) | [Limits](limits/state-effects.md) | [Tracker](maintainers/state-contributions.md) |
+| [Native work and invalidation](projects/completed/dependency-invalidation-feature-spec.md) | [Limits](limits/native-work.md) | [Tracker](maintainers/dependency-invalidation.md) |
+| [Food preparation and finite casts](food-preparation.md) | [Limits](limits/food-preparation.md) | [Tracker](maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking) |
+| [Feelings and social continuity](projects/completed/appraisal-social-continuity-feature-spec.md) | [Limits](limits/feelings.md) | [Tracker](maintainers/actor-model.md#advanced-emotional-state-foundation) |
+| [Accounts, participation and transport](projects/completed/multiplayer-authority-feature-spec.md) | [Limits](limits/multiplayer.md) | [Tracker](maintainers/multiplayer.md) |
+| [Space, movement and perception](spatial-world.md) | [Limits](limits/spatial.md) | [Tracker](maintainers/spatial-world.md) |
+| [Narration and conversations](narration-and-conversations.md) | [Limits](limits/narration.md) | [Tracker](maintainers/narration-and-conversations.md) |
+| [Persistence, checkpoints and recovery](save-and-load.md) | [Limits](limits/persistence.md) | [Tracker](maintainers/save-and-load.md) |
+| [Diagnostics and inspection](performance.md) | [Limits](limits/observability.md) | [Tracker](maintainers/performance-profiling.md) |
+| [Authoring and presentation](ui-design-brief.md) | [Limits](limits/interface.md) | [Tracker](maintainers/TODO.md) |
+| [Bundled-world defaults](worlds/base/README.md) | [Limits](limits/base-world.md) | [Tracker](maintainers/base-world.md) |
 
 Proposed [progressive 3D pixel art](projects/3d-pixel-art-feature-spec.md): [A3D01–A3D14](limits/3d-pixel-art.md) inventory the new asset-pipeline envelopes and unqualified device targets; [V3D01–V3D12](maintainers/3d-pixel-art.md) own delivery. A3D15 records the separate delivered bundled-model pilot. Existing lighting, spending, physical-world and persistence limits above remain controlling; the pilot does not deliver the proposed general pipeline.
 
