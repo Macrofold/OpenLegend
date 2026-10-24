@@ -19,17 +19,17 @@ A resonant sound with a meaningful decay must be an explicitly admitted interval
 
 The existing ordinary movement speed remains the underlying travel rate. For a supported human body, select these controls through ordinary action admission:
 
-| Setting | Selected effect |
-| --- | --- |
-| Ordinary travel | Existing effective movement rate, including existing injury/condition rules; no new fatigue or speed change. |
-| Deliberate quiet pace | Cap at `0.25 ×` that underlying rate; deliberate foot-contact technique contributes the sound adjustment below. |
-| Crouched posture | Human supported body height/ear/eye/interaction anchors described below; movement capped at `0.15 ×` underlying rate. |
+| Setting                               | Selected effect                                                                                                                                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ordinary travel                       | Existing effective movement rate, including existing injury/condition rules; no new fatigue or speed change.                                                                                                  |
+| Deliberate quiet pace                 | Cap at `0.25 ×` that underlying rate; deliberate foot-contact technique contributes the sound adjustment below.                                                                                               |
+| Crouched posture                      | Human supported body height/ear/eye/interaction anchors described below; movement capped at `0.15 ×` underlying rate.                                                                                         |
 | Direction, quiet and posture together | `ordinaryEffectiveRate × min(directionFactor, quietCap, postureCap)`. Direction is 1/.75/.55 at B’s 60°/120° boundaries; absent caps are 1. Keep the one deliberate-contact adjustment; do not multiply caps. |
-| Posture transition | `0.4` normal-speed seconds of stationary ordinary physical work; revalidate final support/body/attachments at completion. |
+| Posture transition                    | `0.4` normal-speed seconds of stationary ordinary physical work; revalidate final support/body/attachments at completion.                                                                                     |
 
 The inspected human rate is `.11 m/simulation-second`, or `6.6 m/normal-speed-second`. Quiet travel is therefore `1.65 m/normal-speed-second`, and crouched travel at most `.99`. Traversing 6 metres takes approximately `.91`, `3.64` or `6.06` normal-speed seconds respectively before route/condition effects. This preserves the already-capable ordinary route; it does not disguise a global movement rebalance as stealth work. Check those actual burdens with players before retuning them. Player-selected sprint is not added here; actual native fast escape and any separately admitted sprint use their own resulting speed/contact profile.
 
-Posture is selected only for a body with an admitted posture family. The human standing body is the actor's saved numeric living profile. Its crouched variant retains radius and slope limit, uses `0.60 ×` living height, `0.55 ×` standing eye/ear heights and `0.60 ×` standing interaction height, all anchored to the same actual support. Preserve the existing body capability identity (`person`) across posture so changing numeric shape does not remove item-handling eligibility. Validate these numeric variants at construction, including anchors within the body. B’s [crouched person fixture](vision-and-gaze.md#crouched-person-fixture) supplies the matching 1.05 m optical body and .869 m receptor anchor for the default person, preserving actual face ratios and sample count; commit those physical/optical fields together. Revalidate attachments through their existing compatibility/fit rules. Current equipment ports do not provide local geometric coordinates, so this slice does not claim accurate clearance for the ends of long carried objects. Body collision remains authoritative; equipment extension clearance requires an installed attachment envelope in its owning spatial/equipment design before it can be enforced. This first approximation has no arbitrary limb articulation, prone movement or universal animal crouch.
+Posture is selected only for a body with an admitted posture family. The human standing body is the actor's saved numeric living profile. Its crouched variant retains radius and slope limit, uses `0.60 ×` living height, `0.55 ×` standing eye/ear heights and `0.60 ×` standing interaction height, all anchored to the same actual support. Preserve the existing body capability identity (`person`) across posture so changing numeric shape does not remove item-handling eligibility. Validate these numeric variants at construction, including anchors within the body. B’s [crouched person fixture](vision-and-gaze.md#crouched-person-fixture) supplies the matching 1.05 m optical body and .869 m eye anchor for the default person; the separate standing 1.52 m ear anchor becomes .836 m, preserving actual face ratios and sample count; commit those physical/optical fields together. Revalidate attachments through their existing compatibility/fit rules. Current equipment ports do not provide local geometric coordinates, so this slice does not claim accurate clearance for the ends of long carried objects. Body collision remains authoritative; equipment extension clearance requires an installed attachment envelope in its owning spatial/equipment design before it can be enforced. This first approximation has no arbitrary limb articulation, prone movement or universal animal crouch.
 
 The transition keeps the old accepted body until its completion boundary. Completion atomically changes posture/profile and related geometry; there is no partially blended mechanical body. Interrupted/refused transitions keep the old posture. An accepted posture change can produce the handling contact below; a request or failed availability check cannot. Preserve gaze's accepted relative transform where the new body supports it; otherwise the joint pose owner applies B's admitted clamp/refusal once. Standing does not reset body life, learned identity, guard recovery or stride phase.
 
@@ -41,14 +41,14 @@ The locomotion owner retains normalized cycle phase and an integer contact ordin
 
 For the initial profiles below, one cycle has one contact group at its end. A hare's group represents its bounding contact, not two fictitious human feet. The reusable family also admits ordered offsets in `(0,1]`, with stable contact labels; simultaneous offsets form one physical group. It is bounded to eight offsets per admitted cycle. A larger limb count can use grouped actual contacts or a separately supported profile rather than silently dropping contacts.
 
-| Body | Travel cycle metres | Quiet cycle metres | Crouched cycle metres | Escape cycle metres | Bare body contact level at ordinary reference speed | Foliage coupling adjustment |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Human | 2.20 | .66 | .50 | Standing evade uses 2.20; another fast profile requires separate admission | 52 dB SPL at 1 m | 0 dB |
-| Hare | .55 | Not installed | Not installed | 1.80 | 30 | −10 |
-| Deer | 1.20 | Not installed | Not installed | 2.40 | 46 | −4 |
-| Wolf | .90 | Not installed | Not installed | 1.80 | 42 | −6 |
-| Bear | 1.00 | Not installed | Not installed | 1.60 | 54 | 0 |
-| Small bird on ground | .25 | Not installed | Not installed | .60 | 24 | −14 |
+| Body                 | Travel cycle metres | Quiet cycle metres | Crouched cycle metres |                                                        Escape cycle metres | Bare body contact level at ordinary reference speed | Foliage coupling adjustment |
+| -------------------- | ------------------: | -----------------: | --------------------: | -------------------------------------------------------------------------: | --------------------------------------------------: | --------------------------: |
+| Human                |                2.20 |                .66 |                   .50 | Standing evade uses 2.20; another fast profile requires separate admission |                                    52 dB SPL at 1 m |                        0 dB |
+| Hare                 |                 .55 |      Not installed |         Not installed |                                                                       1.80 |                                                  30 |                         −10 |
+| Deer                 |                1.20 |      Not installed |         Not installed |                                                                       2.40 |                                                  46 |                          −4 |
+| Wolf                 |                 .90 |      Not installed |         Not installed |                                                                       1.80 |                                                  42 |                          −6 |
+| Bear                 |                1.00 |      Not installed |         Not installed |                                                                       1.60 |                                                  54 |                           0 |
+| Small bird on ground |                 .25 |      Not installed |         Not installed |                                                                        .60 |                                                  24 |                         −14 |
 
 These distances reflect game travel rates rather than an animation rig. Native escape keeps the existing species speed; each body pins a positive finite reference speed from its unmodified ordinary locomotion definition at the admitted clock conversion. Actual speed includes current pace, injury and other movement restrictions; do not recompute the reference from that modified speed. Foliage coupling is a separate authored body/contact property because moving vegetation is different from bearing weight on a foot; changing a foot-impact level does not retune rustling. Wing motion is a separate supported profile, never a foot contact during flight. A crawling contrast can install an interval scrape instead of cyclic impacts; it must provide actual contact/motion coverage.
 
@@ -60,16 +60,16 @@ Initialize the partial-contact fields to peak `0` and all-quiet `true`. For each
 
 For unchanged pace this equals `10 log10(max(vNormal / vReferenceNormal, .10))` plus its technique adjustment. The floor keeps a complete load-bearing contact from becoming infinitely quiet; zero actual travel emits none. Preserve the unrounded native level. Body differences come from authored profiles, not inferred health or inventory mass.
 
-| Actual support/contact material | Level adjustment | Physical contact feature class |
-| --- | ---: | --- |
-| Short grass/soft vegetation support | −6 dB | soft |
-| Firm earth | 0 | soft |
-| Sand | −4 | soft |
-| Timber | +2 | hard |
-| Stone | +6 | hard |
-| Loose gravel/scree | +10 | granular |
-| Shallow water with admitted wading support | +8 | granular |
-| Dry leaf litter | +8 | granular |
+| Actual support/contact material            | Level adjustment | Physical contact feature class |
+| ------------------------------------------ | ---------------: | ------------------------------ |
+| Short grass/soft vegetation support        |            −6 dB | soft                           |
+| Firm earth                                 |                0 | soft                           |
+| Sand                                       |               −4 | soft                           |
+| Timber                                     |               +2 | hard                           |
+| Stone                                      |               +6 | hard                           |
+| Loose gravel/scree                         |              +10 | granular                       |
+| Shallow water with admitted wading support |               +8 | granular                       |
+| Dry leaf litter                            |               +8 | granular                       |
 
 These are bindings on real support/contact definitions. A nonwalkable water cell does not become walkable to produce a splash. Existing heterogeneous support selection decides which material is touched. At a seam contact, use the support accepted for the landing/contact point under that owner's deterministic tie rule. Independent body contact with a brush volume can coexist with a ground contact.
 
@@ -85,16 +85,16 @@ An accepted human posture transition emits one clothing/body handling contact at
 
 ### Other selected producers
 
-| Physical owner/profile | Selected sound rule and occurrence |
-| --- | --- |
-| Actual body/tool impact | Material-specific authored contact: soft body 52, wood 60, stone 68, metal 72 dB SPL at 1 m; one actual contact group, including a real shield interception. Current melee uses the contacted body's accepted position plus half its accepted height as its source anchor, captured before mutation; no exact limb/shield mesh point is claimed. Actual projectile contact uses its swept contact position. Missing contact emits no impact. |
-| Supported landing/fall | `56 + bodyOffset + 10 log10(1 + vImpact² / (4 m²/normal-second²)) + surfaceAdjustment`, clamped to `[24, 96]` dB SPL; `bodyOffset = Lbody − 52`. Here `vImpact` is the nonnegative closing component of body velocity **relative to the contacted support, along its contact normal**, converted to metres per normal-speed second exactly once. Capture it before clearing fall state. This adds sound, not damage. |
-| Moving through short grass contact volume | Real moving-overlap interval at 32 dB SPL at 1 m plus the body’s foliage coupling adjustment and the actual current `10 log10(max(vNormal / vReferenceNormal, .10))` movement adjustment. |
-| Moving through dry brush contact volume | Same supported interval at 46 plus foliage coupling and actual current movement adjustment; stops on actual overlap loss or no displacement. |
-| Installed work beat | Reference levels above for the actual contacted material; beat phase follows accepted elapsed work, not callback count. An installed beat profile must declare its real contact cadence and anchor. |
-| First sustained work example | Existing `prepare` / `fiber` (Clean fibers, `NATIVE_PREPARATIONS.fiber`): 42 dB SPL at 1 m with rough interval features, active only while that exact admitted action is in its working stage. Its current 960-simulation-second preparation is 16 normal-speed seconds before existing work-rate modifiers. Admission/material consumption alone does not start a source; interrupted, blocked or completed work ends it. No new sawing action is required. |
-| First environment interval example | Existing active small fire at 38 dB SPL at 1 m, rough interval features; extinguishing ends it. Heat and fuel remain their existing owners. |
-| Rain/weather | Initial policy continues to use the installed ambient background. A local rain source requires an actual supported spatial/time profile; no automatic emitter from a weather label. |
+| Physical owner/profile                    | Selected sound rule and occurrence                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Actual body/tool impact                   | Material-specific authored contact: soft body 52, wood 60, stone 68, metal 72 dB SPL at 1 m; one actual contact group, including a real shield interception. Current melee uses the contacted body's accepted position plus half its accepted height as its source anchor, captured before mutation; no exact limb/shield mesh point is claimed. Actual projectile contact uses its swept contact position. Missing contact emits no impact.                 |
+| Supported landing/fall                    | `56 + bodyOffset + 10 log10(1 + vImpact² / (4 m²/normal-second²)) + surfaceAdjustment`, clamped to `[24, 96]` dB SPL; `bodyOffset = Lbody − 52`. Here `vImpact` is the nonnegative closing component of body velocity **relative to the contacted support, along its contact normal**, converted to metres per normal-speed second exactly once. Capture it before clearing fall state. This adds sound, not damage.                                         |
+| Moving through short grass contact volume | Real moving-overlap interval at 32 dB SPL at 1 m plus the body’s foliage coupling adjustment and the actual current `10 log10(max(vNormal / vReferenceNormal, .10))` movement adjustment.                                                                                                                                                                                                                                                                    |
+| Moving through dry brush contact volume   | Same supported interval at 46 plus foliage coupling and actual current movement adjustment; stops on actual overlap loss or no displacement.                                                                                                                                                                                                                                                                                                                 |
+| Installed work beat                       | Reference levels above for the actual contacted material; beat phase follows accepted elapsed work, not callback count. An installed beat profile must declare its real contact cadence and anchor.                                                                                                                                                                                                                                                          |
+| First sustained work example              | Existing `prepare` / `fiber` (Clean fibers, `NATIVE_PREPARATIONS.fiber`): 42 dB SPL at 1 m with rough interval features, active only while that exact admitted action is in its working stage. Its current 960-simulation-second preparation is 16 normal-speed seconds before existing work-rate modifiers. Admission/material consumption alone does not start a source; interrupted, blocked or completed work ends it. No new sawing action is required. |
+| First environment interval example        | Existing active small fire at 38 dB SPL at 1 m, rough interval features; extinguishing ends it. Heat and fuel remain their existing owners.                                                                                                                                                                                                                                                                                                                  |
+| Rain/weather                              | Initial policy continues to use the installed ambient background. A local rain source requires an actual supported spatial/time profile; no automatic emitter from a weather label.                                                                                                                                                                                                                                                                          |
 
 Work cadence is authored in normal-speed seconds and uses current work speed/progress through the activity owner. Accelerating the world advances the same process, not a second acoustic rate. A supported manufacture shortcut must preserve every actual consequential beat or provide the same interval analytically; completing all elapsed work in one callback cannot create one fictitious final bang.
 
@@ -110,13 +110,13 @@ Ambient remains the installed 28 dB SPL baseline unless a selected world definit
 
 This is a selected broadband competition law. **Instantaneous impulses use peak/coincidence comparison at their sealed physical phase**, not integrated acoustic energy. Current speech remains instantaneous. A real interval source participates at its start and throughout its active interval, but not at its end. Later causal sources at the same simulation time belong to the next physical phase and cannot mask earlier acquisition. For an impulse, evaluate its real source-to-current-ear path; persistent competitors contribute their current held reception under the displacement-fidelity rule below. Those inputs are part of this one selected provider, not chosen according to cache availability. Impulses never become positive-duration maskers. Only actual impulse roots supply discrete weak weights; an interval can mask or support a detected point mixture, but gains no extra duration or impulse weight from that evaluation. Own-body signals can mask external sounds; only the candidate's own complete emission group is excluded. Proprioceptive self-attribution is separate from a hidden producer identity.
 
-| Hearing profile | Floor | Strong detection threshold `D` | Partial/clear word thresholds |
-| --- | ---: | ---: | --- |
-| Ordinary human | 0 dB SPL | 0 dB margin | Existing 6/12 dB, unchanged |
-| Hare / wolf | 0 | −3 | No language installed for ordinary animals |
-| Deer | 0 | −2 | No language installed |
-| Bird / bear | 0 | −1 | No language installed |
-| Contrast hearing profile | Authored finite floor | Authored finite threshold | Only when a compatible linguistic policy is installed |
+| Hearing profile          |                 Floor | Strong detection threshold `D` | Partial/clear word thresholds                         |
+| ------------------------ | --------------------: | -----------------------------: | ----------------------------------------------------- |
+| Ordinary human           |              0 dB SPL |                    0 dB margin | Existing 6/12 dB, unchanged                           |
+| Hare / wolf              |                     0 |                             −3 | No language installed for ordinary animals            |
+| Deer                     |                     0 |                             −2 | No language installed                                 |
+| Bird / bear              |                     0 |                             −1 | No language installed                                 |
+| Contrast hearing profile | Authored finite floor |      Authored finite threshold | Only when a compatible linguistic policy is installed |
 
 The lower animal threshold is a selected discrimination advantage, not a negative background level or hidden identity bonus. It replaces the original uniform animal detection tuning for this target while preserving the ordinary-speech **reaction-band** policy. A source at the same received SPL can yield different detection opportunities for different senses. Perception's selected attribute affects A's familiarity/recognition calculation; this C policy does **not** duplicate that calculation or silently make Perception alter hearing thresholds. A different installed world may select another detection law or omit hearing/recognition entirely. Installed conditions that block hearing remain authoritative; no new temporary-condition multiplier is invented here.
 
@@ -126,14 +126,14 @@ For `delta = M − D`, an impulse or a newly eligible interval reception with `d
 
 For real intervals, select constant weak support rates rather than a continuously varying numerical integral:
 
-| Received `delta` | A input per normal-speed second |
-| --- | --- |
-| Below −6 dB | Zero-rate gap; A applies its existing decay |
-| [−6, −4.5) | 1 support unit (normalized strength .25) |
-| [−4.5, −3) | 2 (.50) |
-| [−3, −1.5) | 3 (.75) |
-| [−1.5, 0) | 4 (1) |
-| At least 0 | Immediate strong reception, then actual live support |
+| Received `delta` | A input per normal-speed second                      |
+| ---------------- | ---------------------------------------------------- |
+| Below −6 dB      | Zero-rate gap; A applies its existing decay          |
+| [−6, −4.5)       | 1 support unit (normalized strength .25)             |
+| [−4.5, −3)       | 2 (.50)                                              |
+| [−3, −1.5)       | 3 (.75)                                              |
+| [−1.5, 0)        | 4 (1)                                                |
+| At least 0       | Immediate strong reception, then actual live support |
 
 This is an authored difference between a sustained signal and an impulse, not a rounding approximation. A integrates uncovered constant-rate spans exactly, including its first crossing, and decays only during unsupported gaps. The selected continuous provider measures source and ear anchors at no more than **.5 metres of accepted travel each**, using the existing motion-fidelity owner. Between those boundaries it holds each anchor and computes reception from those sampled positions and current acoustic geometry. Relative geometry can differ from the actual scene by up to 1 metre; this is a declared sensing approximation, not exact continuous ray tracing. Actual source/level/material/posture/geometry/life changes cut the held interval immediately. Equality enters the higher band of the measured value. A host publication supplies no extra measurement. The [canonical schedule](../../projects/acoustic-stealth-tech-design.md#canonical-measurements-and-held-reception) owns phase, persistence and point-occurrence handling.
 
@@ -183,15 +183,15 @@ Use the existing [animal sound response owner](animal-sound-responses.md) and it
 
 For a detected cue without acquired voice/speech proof, first exclude known self emission and a null-response profile. Use `delta = M − D` and only A's admitted received classification/features:
 
-| Received evidence | Hare/deer/bird minimum delta | Wolf/bear minimum delta |
-| --- | ---: | ---: |
-| Contact-like or ringing-like | 8 dB | 14 dB |
+| Received evidence                         |                                                                           Hare/deer/bird minimum delta |                  Wolf/bear minimum delta |
+| ----------------------------------------- | -----------------------------------------------------------------------------------------------------: | ---------------------------------------: |
+| Contact-like or ringing-like              |                                                                                                   8 dB |                                    14 dB |
 | Continuous rustling or unclassified sound | 18 dB and a real onset or rise of at least 6 dB above this observed episode's retained change baseline | 24 dB with the same onset/rise condition |
-| Unresolved mixture | 24 dB and a real onset or rise of at least 12 dB | 30 dB with the same onset/rise condition |
+| Unresolved mixture                        |                                                       24 dB and a real onset or rise of at least 12 dB | 30 dB with the same onset/rise condition |
 
 An interval onset means an actual absent-to-present or below-to-at-least-eligible-threshold transition in the A-admitted observed envelope. Extending an already present interval, re-rendering, a changed private source ID, returning from a work-budget yield and restoration are not onsets. The first eligible onset stores its acquired `delta` as the native episode's change baseline. A later qualifying rise compares against that retained baseline, then replaces it once with the new qualifying acquired level; routine samples never move it. A genuine physical end/loss closes presence; a later newly eligible interval may produce an onset, still subject to the existing repeat key/idle rule. Apply threshold/rise changes at the provider’s canonical measurements and actual dependency changes, then solve A’s duration crossing within the held span; publication creates neither. An instantaneous unclassified occurrence can have a real onset but still passes the same strength and repeat rules. Persist presence, baseline and exact contributing evidence under the existing native response owner, outside its optional alarm episode so returning to routine does not invent a new onset.
 
- Weak accumulation can establish detection without meeting any alarm threshold. An animal may therefore hear quiet routine locomotion and continue. Native short exposure remains available at its own expiry, even when no response pattern is inserted. This filter intentionally avoids interpreting every soft contact as danger while allowing loud near movement and hard clatter to matter. It does not identify hidden conspecifics or grant learning. E’s separately installed ground-bird contrast may consider a cue that fails this alarm eligibility through its finite curiosity method; no ordinary hare/deer/bird name enables it.
+Weak accumulation can establish detection without meeting any alarm threshold. An animal may therefore hear quiet routine locomotion and continue. Native short exposure remains available at its own expiry, even when no response pattern is inserted. This filter intentionally avoids interpreting every soft contact as danger while allowing loud near movement and hard clatter to matter. It does not identify hidden conspecifics or grant learning. E’s separately installed ground-bird contrast may consider a cue that fails this alarm eligibility through its finite curiosity method; no ordinary hare/deer/bird name enables it.
 
 The one response-pattern value has independent optional `alarm {latestCue,idleExpiry}` and `curiosity {latestCue,idleExpiry}` slots. C reads/refreshes only alarm; E reads/refreshes only curiosity. Evaluate alarm eligibility before curiosity even when an alarm repeat is suppressed. Prune slots independently and remove the key only when both are absent. Curiosity’s consumed onset receipt stays with the existing per-ExposureRef presence/acquisition record, not another map. The animal policy owns alarm idle duration; E’s installed profile owns curiosity’s.
 

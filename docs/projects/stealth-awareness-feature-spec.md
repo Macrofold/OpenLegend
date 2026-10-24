@@ -1,8 +1,8 @@
 # Stealth, awareness and surprise — feature specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | Integrated design is complete; runtime delivery and play qualification remain open. Controlled-character psychological policy remains SA-D01. | 2026-10-24 |
+| Status      | Current progress                                                                                                                              | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Integrated design is complete; runtime delivery and play qualification remain open. Controlled-character psychological policy remains SA-D01. | 2026-10-24   |
 
 ## Purpose and selected scope
 
@@ -188,4 +188,3 @@ The [repertoire assessment](stealth-awareness-repertoire-review.md) relates thes
 - Limits and constraints: [Shared inventory](../limits/stealth-awareness.md), with links to existing hearing, memory, cognition, combat and native-work inventories.
 - Shared contracts and source audit: [Technical design](stealth-awareness-tech-design.md).
 - World behavior: [Psychological reactions](../worlds/base/psychological-reactions.md), [combat](../worlds/base/combat.md), [time](../worlds/base/time.md) and the selected world's sense/identity policy owners identified in the technical design.
-

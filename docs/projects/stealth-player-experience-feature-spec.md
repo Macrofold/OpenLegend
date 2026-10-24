@@ -1,7 +1,7 @@
 # Playable stealth controls and an honest player perspective
 
-| Status      | Current progress                                                                                                                      | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                           | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | The integrated player-experience design is specified; implementation and player qualification remain open. | 2026-10-24   |
 
 ## Purpose and authority

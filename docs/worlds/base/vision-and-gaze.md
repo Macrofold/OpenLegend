@@ -92,17 +92,17 @@ Each box face sample represents that actual face's area. Each head sample repres
 
 ### Crouched person fixture
 
-The selected human crouch commits together with C’s body profile: height **1.05 m**, unchanged radius **.28 m**, and eye/ear height **.869 m**. Preserve the same capability identity, 42 body samples, 10 facial landmarks, actual instantiated face ratios and head/eye limits. Use these support-local replacements; keep the standing x/z bounds except where stated:
+The selected human crouch commits together with C’s body profile: height **1.05 m**, unchanged radius **.28 m**, eye height **.869 m**, and separate ear height **.836 m** from the standing 1.52 m acoustic anchor. Preserve the same capability identity, 42 body samples, 10 facial landmarks, actual instantiated face ratios and head/eye limits. Use these support-local replacements; keep the standing x/z bounds except where stated:
 
-| Part | Crouched geometry |
-| --- | --- |
-| Torso | `y=[.34,.70]` |
-| Hips | `y=[.28,.50]` |
-| Legs | `y=[0,.40]` |
-| Arms | `y=[.40,.70]` |
-| Hands | `y=[.32,.40]` |
-| Neck | `x=[−.07,.07], y=[.65,.74], z=[−.04,.11]` |
-| Head | Unchanged radius `.17`, centre/pivot `(0,.869,.06)` |
+| Part  | Crouched geometry                                   |
+| ----- | --------------------------------------------------- |
+| Torso | `y=[.34,.70]`                                       |
+| Hips  | `y=[.28,.50]`                                       |
+| Legs  | `y=[0,.40]`                                         |
+| Arms  | `y=[.40,.70]`                                       |
+| Hands | `y=[.32,.40]`                                       |
+| Neck  | `x=[−.07,.07], y=[.65,.74], z=[−.04,.11]`           |
+| Head  | Unchanged radius `.17`, centre/pivot `(0,.869,.06)` |
 
 Facial coordinates remain head-local and unchanged; the default/constructed pupil y is therefore .869 m, and the head top is 1.039 m within the admitted crouched height. The lowered torso and forward head offset keep the admitted face-ratio extremes out of the torso/neck fixture. Recompute represented box areas from these actual bounds. Rotate head/eye parts through the same accepted joints; do not flatten the face or its recognition ratios by .55/.60. C’s .4-normal-second stationary transition retains the standing fixture until atomic completion; refusal/interruption retains the old fixture. Standing reverses through the same admitted posture owner. An authored nondefault body must supply its matching standing/crouched optical fixtures and validate anchors/envelopes before installation.
 
@@ -177,7 +177,7 @@ Let `W_i` be the patch's detection angular weight and `Q_signal = Σ(a_i T_i W_i
 
 These bands provide constant rates over the provider-held visual cells. A alone integrates uncovered duration, stores progress and solves acquisition: threshold/max **1**, full-strength rate **4/s**, gap decay **2/s**, correlation grace **0.5 s**. Thus a held rate .5 needs two normal-speed seconds from empty, rate 1 one second, rate 2 half a second and rate 3 one third. Existing progress remains A-owned. Strong support acquires at its actual sample; an unsampled brief flash can be missed. At sampled/actual reported loss, end current support while preserving original historical times. Correlation grace grants no extra live detail.
 
-Immediate eligibility uses the final quality including Perception. A stationary cue at full physical quality has `q_raw=1`: default `P=50` gives immediate eligibility, while the extreme `P=0` gives `q=0.75` and needs one third of a normal-speed second from empty. More generally, a stationary cue cannot reach the immediate band at `P<20`. This selected brief low-ability delay requires no inspection command and is not permanent blindness. Qualification must assess it alongside ordinary default-ability encounters; tuning must change these canonical bands/gain if the delay harms play, rather than adding an undocumented obvious-target exception.
+Immediate eligibility uses the final quality including Perception. A stationary cue at full physical quality has `q_raw=1`: default `perceptionValue=50` gives immediate eligibility, while the extreme `perceptionValue=0` gives `q=0.75` and needs one third of a normal-speed second from empty. More generally, a stationary cue cannot reach the immediate band at `perceptionValue<20`. This selected brief low-ability delay requires no inspection command and is not permanent blindness. Qualification must assess it alongside ordinary default-ability encounters; tuning must change these canonical bands/gain if the delay harms play, rather than adding an undocumented obvious-target exception.
 
 ### Location precision
 

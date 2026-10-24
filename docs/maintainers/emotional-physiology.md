@@ -22,14 +22,14 @@ Every EP01–EP09 checkbox below is **unstarted implementation or qualification*
 
 EP01 supplies compatible definitions and records. EP02–EP04 can then advance as narrow native/appraisal slices. EP05 depends on EP04 and existing cognition admission. EP06 installs the selected authored profiles through those owners. EP07 accompanies each changed record/publication path; it is not a final cleanup phase. EP08 completes cross-module callers and EP09 qualifies the complete player/NPC/native journeys. Native shock can be implemented against the accepted A/C/F interfaces without waiting for a chosen player interpretation producer.
 
-| Existing work | Coordination boundary |
-| --- | --- |
-| ACT07/ACT08 | Delivered source-linked appraisal/social-continuity foundations stay delivered. EP extends their owner rather than reopening or replacing them. ACT09 process authoring is separate and remains unimplemented. |
+| Existing work                       | Coordination boundary                                                                                                                                                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ACT07/ACT08                         | Delivered source-linked appraisal/social-continuity foundations stay delivered. EP extends their owner rather than reopening or replacing them. ACT09 process authoring is separate and remains unimplemented.                  |
 | CE02/CE03/CE05 and continuing lives | Reuse numerical/qualitative interpretation, current context and personal presentation. EP supplies general bodily/reassessment/review mechanics; whole-character independence and broader episode qualification remain with CE. |
-| CTR06–CTR10 | Preserve two-stage threat interpretation/purpose then independent action. EP owns emotional values/review/mechanics; CTR/F own threat choices, preparedness, contact and combat qualification. |
-| SAD-D/SAI-D | This tracker is D's focused implementation owner. [Stealth tracking](stealth-awareness.md) keeps shared dependencies and final integration. |
-| ND11/ND19 | Only the selected general-emotion and internally due reassessment design is closed by EP00. Dreams, older-memory transformation and unrelated scheduling design remain with their owners. |
-| D69/DG23 | Wider psychological needs and experience-shaped outlook are connected opportunities, not automatic meters or personality mutations delivered here. |
+| CTR06–CTR10                         | Preserve two-stage threat interpretation/purpose then independent action. EP owns emotional values/review/mechanics; CTR/F own threat choices, preparedness, contact and combat qualification.                                  |
+| SAD-D/SAI-D                         | This tracker is D's focused implementation owner. [Stealth tracking](stealth-awareness.md) keeps shared dependencies and final integration.                                                                                     |
+| ND11/ND19                           | Only the selected general-emotion and internally due reassessment design is closed by EP00. Dreams, older-memory transformation and unrelated scheduling design remain with their owners.                                       |
+| D69/DG23                            | Wider psychological needs and experience-shaped outlook are connected opportunities, not automatic meters or personality mutations delivered here.                                                                              |
 
 ## EP01 — Definitions and current-format records
 

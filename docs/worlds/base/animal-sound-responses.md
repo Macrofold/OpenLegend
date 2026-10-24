@@ -14,7 +14,7 @@ The installed native response profile remains the single policy selection. Its c
 
 ## Initial outcomes and deliberate simplification
 
-An animal either continues its current behavior or enters/updates that shared alarm. Alarm produces actual escape movement, alert settling or a truthful blocked condition. A skittish deer can flee when it hears a qualifying cue; a calmer animal can continue. Detecting a routine physical noise does not by itself establish alarm eligibility. Sound does not automatically classify its speaker as an attacker, change relationships or supply a psychological feeling.
+An alarm-only profile either continues its current behavior or enters/updates that shared alarm; the separately installed finite curiosity method below adds its own admitted choice. Alarm produces actual escape movement, alert settling or a truthful blocked condition. A skittish deer can flee when it hears a qualifying cue; a calmer animal can continue. Detecting a routine physical noise does not by itself establish alarm eligibility. Sound does not automatically classify its speaker as an attacker, change relationships or supply a psychological feeling.
 
 The [attention design](../../projects/attention-and-investigation-tech-design.md#6-native-animal-methods) selects an opt-in finite observation/ground-curiosity extension under this same controller, with independent alarm/curiosity dispositions and no hidden source pursuit; [ATI05](../../maintainers/attention-and-investigation.md#ati05--native-choices-through-one-controller) owns its unimplemented delivery. Hiding, richer instincts and exceptional cognitive creatures remain future repertoire. Ordinary alert settling provides a stationary aftermath without another timed hold action. Continued activity must not be described as an investigation that never happened.
 
@@ -22,12 +22,12 @@ The [attention design](../../projects/attention-and-investigation-tech-design.md
 
 Extend the animal's existing installed response profile with `soundAlarmMinimumBand`, a nonnegative integer or null. Null means the animal can hear but this acoustic policy does not initiate alarm. The table below preserves voice-policy reaction bindings; the installed hearing sense independently determines detection. Use those bands only for an actually acquired A voice-like classification or understood speech facts. Ordinary language-disabled animals cannot supply the latter and rely on the acquired classification. All other received cues use the eligibility rule owned by [physical sound](physical-sound.md), through this same response-pattern/alarm intake.
 
-| Authored binding | Initial value | Meaning |
-| --- | --- | --- |
-| Ordinary hare, deer and bird | 0 | An acquired voice-like cue or understood speech can qualify from band 0. |
-| Ordinary wolf and bear | 2 | A sufficiently strong acquired voice/speech cue can qualify from band 2. |
-| Territorial stag | null | Hearing does not replace the existing territorial warning/attack/withdrawal decision. |
-| Explicit nonreactive contrast fixture | null | Detection remains independent of whether a native response is installed. |
+| Authored binding                      | Initial value | Meaning                                                                               |
+| ------------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
+| Ordinary hare, deer and bird          | 0             | An acquired voice-like cue or understood speech can qualify from band 0.              |
+| Ordinary wolf and bear                | 2             | A sufficiently strong acquired voice/speech cue can qualify from band 2.              |
+| Territorial stag                      | null          | Hearing does not replace the existing territorial warning/attack/withdrawal decision. |
+| Explicit nonreactive contrast fixture | null          | Detection remains independent of whether a native response is installed.              |
 
 Other received cues—including masked/unclassified utterances, quiet routine locomotion and low rough rustle—do not automatically alarm the animal. Sufficiently intense abrupt impacts and received sharp/ringing patterns can qualify under the physical-sound policy. Its filter uses the listener's permitted acoustic evidence, never private emitter species IDs, occurrence type or unheard words. Nearby animals acquire actual emitted sounds independently; no group-alarm broadcast or automatic shared knowledge is introduced. Received voice/speech evidence retains the bands above; an indistinct sound does not acquire that exception from its source's private speech payload.
 
@@ -51,7 +51,7 @@ For a cue acquired only through weak accumulation, use **band 0** for response b
 
 ## Repeated sound without repeated behavior work
 
-Every actual eligible exposure receives its own sensory record before response selection. Self, subthreshold and nonreactive-profile records are not erased merely because they cause no startle. Raw event expiry is fixed at acquisition plus the sensory lifetime; a later repetition never extends an older event.
+Every actual eligible exposure receives its own sensory record before response selection. Self, subthreshold and nonreactive-profile records are not erased merely because they cause no alarm. Raw event expiry is fixed at acquisition plus the sensory lifetime; a later repetition never extends an older event.
 
 Keep one acoustic-pattern map on the existing native response owner. Its key is the ordered permitted acoustic class set, permitted observed association-or-anonymous, original direction/elevation-or-unlocalized, and intensity band. Use the shared structured-key encoder; hidden emitter IDs never distinguish anonymous keys. Each value has independent optional `alarm {latestCue,idleExpiry}` and `curiosity {latestCue,idleExpiry}` slots. C uses alarm only; E uses curiosity only. Retain each slot’s exact cue and absolute expiry, with no count history, transcript or second map. Returning to routine preserves suppression; controller removal/new body life retires it without replay. Count both optional slots and retained support in native byte reservations.
 

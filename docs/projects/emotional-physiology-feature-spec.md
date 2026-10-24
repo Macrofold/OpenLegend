@@ -1,8 +1,8 @@
 # Emotional physiology and adaptive reappraisal — feature specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | Integrated design is complete; EP01–EP09 implementation and qualification remain open, with SA-D01 explicitly unapproved. | 2026-10-24 |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Integrated design is complete; EP01–EP09 implementation and qualification remain open, with SA-D01 explicitly unapproved. | 2026-10-24   |
 
 ## Purpose and scope
 
@@ -33,14 +33,14 @@ The [gameplay priorities](../repertoires/gameplay-priorities.md) remain authorit
 
 ### Selected payoffs
 
-| Payoff | Playable contribution |
-| --- | --- |
-| Courage becomes legible | Someone can take a meaningful risk while afraid; composure and willingness to help remain independent. |
-| Practical care matters | Cover, an open route, food or a watch handoff changes real circumstances and may support reassessment without guaranteeing a cure. |
-| A shared day has several meanings | Participants retain their own evidence, values and interpretations. |
-| Returning home has a payoff | Joy, relief and unresolved concerns can coexist during cooking, repair, conversation or rest. |
-| Sensitivity can be enjoyable | Beauty, welcome, anticipation, music and chosen frightening entertainment can matter more to particular people. |
-| Success remains successful | A defeated threat or solved burden need not be replaced with fresh danger, obligatory grief or emotional chores. |
+| Payoff                                | Playable contribution                                                                                                                          |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Courage becomes legible               | Someone can take a meaningful risk while afraid; composure and willingness to help remain independent.                                         |
+| Practical care matters                | Cover, an open route, food or a watch handoff changes real circumstances and may support reassessment without guaranteeing a cure.             |
+| A shared day has several meanings     | Participants retain their own evidence, values and interpretations.                                                                            |
+| Returning home has a payoff           | Joy, relief and unresolved concerns can coexist during cooking, repair, conversation or rest.                                                  |
+| Sensitivity can be enjoyable          | Beauty, welcome, anticipation, music and chosen frightening entertainment can matter more to particular people.                                |
+| Success remains successful            | A defeated threat or solved burden need not be replaced with fresh danger, obligatory grief or emotional chores.                               |
 | Familiar activities remain worthwhile | Mastery, expression, company and association can sustain enjoyment without constant novelty, stat rewards or endless relationship progression. |
 
 ### Player burden and tradeoffs
@@ -57,11 +57,11 @@ World definitions select emotion vocabulary and policy; prose grants no mechanic
 
 ## Three meanings with three owners
 
-| Meaning | Authoritative owner | Contract |
-| --- | --- | --- |
-| Native bodily reaction | Existing body/status/state-contribution owners | An exact committed cause can produce a short reaction on an applicable body, modified by installed physiology, conditions or mechanical traits. No AI or episodic memory is required. A model's declaration of calm cannot erase or extend it. |
-| Interpreted emotion | Existing private appraisal owner | The character interprets permitted experience, memories, values and beliefs under an installed definition. Cause, sources, meaning, value and lifetime remain explicit. Another person's intent or performance cannot set it. |
-| Effective mechanical state | Read-only effect/parameter composition | Supported consumers derive effects from the complete applicable bodily/appraised contributions. There is no independently writable global emotion or consumer-specific competing aggregate. |
+| Meaning                    | Authoritative owner                            | Contract                                                                                                                                                                                                                                       |
+| -------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native bodily reaction     | Existing body/status/state-contribution owners | An exact committed cause can produce a short reaction on an applicable body, modified by installed physiology, conditions or mechanical traits. No AI or episodic memory is required. A model's declaration of calm cannot erase or extend it. |
+| Interpreted emotion        | Existing private appraisal owner               | The character interprets permitted experience, memories, values and beliefs under an installed definition. Cause, sources, meaning, value and lifetime remain explicit. Another person's intent or performance cannot set it.                  |
+| Effective mechanical state | Read-only effect/parameter composition         | Supported consumers derive effects from the complete applicable bodily/appraised contributions. There is no independently writable global emotion or consumer-specific competing aggregate.                                                    |
 
 One attack may support both bodily startle and later interpreted fear. The maximum composition rule avoids additive double counting. A body can react without an interpreter, and an interpreter can feel fear without a mammalian startle response.
 
@@ -91,12 +91,12 @@ Pause freezes progress. Saving halfway and reopening retains the remaining half 
 
 World definitions select vocabulary, causes, representations, lifetimes, review permission and any mechanical mapping. These are authored fictional laws, not diagnoses or universal psychology. Omitted definitions grant no fallback emotion.
 
-| Emotion | Meaning and representation | Consequence |
-| --- | --- | --- |
-| Fear | Personally understood harm, vulnerability, danger, uncertain escape or valued loss; source-linked scaled base appraisals with explicit direction/target rules | Declared accuracy/evasion effects can coexist with courage, useful work or full supported running speed. Other worlds may select supported lifetimes. |
-| Joy | Welcome company, useful success, beauty, performance or ordinary enjoyment; source-linked positive appraisal with its own scale and lifetime | Can inform later interest, attention and chosen company. It grants no combat power, consent, loyalty, need fulfilment or compulsory expression. |
-| Grief | Continuing meaning of a personally understood loss; existing persistent qualitative, cause-stacked representation | May coexist with happiness and useful work. No universal sadness meter, recovery deadline, direct combat penalty or periodic model duty. |
-| Anger | A perceived wrong, obstruction, provocation or disregard; existing independently interpreted appraisal with its own source and lifetime | May inform demands or methods without compelling aggression. Resolution does not certify forgiveness, trust or repair. |
+| Emotion | Meaning and representation                                                                                                                                    | Consequence                                                                                                                                           |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fear    | Personally understood harm, vulnerability, danger, uncertain escape or valued loss; source-linked scaled base appraisals with explicit direction/target rules | Declared accuracy/evasion effects can coexist with courage, useful work or full supported running speed. Other worlds may select supported lifetimes. |
+| Joy     | Welcome company, useful success, beauty, performance or ordinary enjoyment; source-linked positive appraisal with its own scale and lifetime                  | Can inform later interest, attention and chosen company. It grants no combat power, consent, loyalty, need fulfilment or compulsory expression.       |
+| Grief   | Continuing meaning of a personally understood loss; existing persistent qualitative, cause-stacked representation                                             | May coexist with happiness and useful work. No universal sadness meter, recovery deadline, direct combat penalty or periodic model duty.              |
+| Anger   | A perceived wrong, obstruction, provocation or disregard; existing independently interpreted appraisal with its own source and lifetime                       | May inform demands or methods without compelling aggression. Resolution does not certify forgiveness, trust or repair.                                |
 
 The [installed definitions](../../packages/domain/src/worlds/base/appraisals.ts) already distinguish experience-linked `wilderness:grief` from `wilderness:authored-grief`. Source-linked grief permits perceived/remembered causes and reflection creation, but not ordinary decision creation. Its selected independent review permission applies only to existing lawful records. Authored grief remains authored-only, with decision/reflection and AI review disabled. Exact installation/pin rules remain in the [world policy](../worlds/base/psychological-reactions.md) and technical design.
 
@@ -122,15 +122,15 @@ Experience may inform confidence, interests or self-understanding through existi
 
 Personality should explain a particular person without scripting decisions. Follow [character authorship](compelling-characters-feature-spec.md), [agent agency](../agent-agency.md) and the [traits catalogue](../repertoires/traits.md); contextual tendencies, interests and values do not require global brave/cowardly/angry/cheerful types.
 
-| Dimension | Useful variation and boundary |
-| --- | --- |
-| Bodily composure | Installed body/trait rules can alter native magnitude, recovery or supported effects; they cannot improve perception, settle fear or choose risk. |
-| Courage and risk willingness | Values, beliefs, stakes and capabilities can make one risk worthwhile and another pointless. Shaking, strength and obedience are different. |
-| Appraisal sensitivity | Beauty, welcome, pain, injustice or embarrassment may matter differently; sensitivity grants neither sensory acuity nor a uniformly negative outlook. |
-| Temperament and persistence | Quick irritation, slow recovery, enthusiasm or restraint can inform interpretation; prose installs no multiplier, forced action or infinite lifetime. |
-| Expression | Native cues and chosen presentation can be open, restrained, practised or misleading; they prove neither feeling nor consent. |
-| Coping | Work, walking, company, privacy, humour, music or repair can supply experience. Actual outcomes matter; no activity guarantees relief or becomes universally optimal. |
-| Development | Authorized changes to beliefs, tastes and self-understanding use their existing owners; this module awards no personality XP and requires no trauma. |
+| Dimension                    | Useful variation and boundary                                                                                                                                         |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bodily composure             | Installed body/trait rules can alter native magnitude, recovery or supported effects; they cannot improve perception, settle fear or choose risk.                     |
+| Courage and risk willingness | Values, beliefs, stakes and capabilities can make one risk worthwhile and another pointless. Shaking, strength and obedience are different.                           |
+| Appraisal sensitivity        | Beauty, welcome, pain, injustice or embarrassment may matter differently; sensitivity grants neither sensory acuity nor a uniformly negative outlook.                 |
+| Temperament and persistence  | Quick irritation, slow recovery, enthusiasm or restraint can inform interpretation; prose installs no multiplier, forced action or infinite lifetime.                 |
+| Expression                   | Native cues and chosen presentation can be open, restrained, practised or misleading; they prove neither feeling nor consent.                                         |
+| Coping                       | Work, walking, company, privacy, humour, music or repair can supply experience. Actual outcomes matter; no activity guarantees relief or becomes universally optimal. |
+| Development                  | Authorized changes to beliefs, tastes and self-understanding use their existing owners; this module awards no personality XP and requires no trauma.                  |
 
 A calm voice can belong to someone afraid; quiet and demonstrative friends can feel equal joy. Someone may tolerate injury but fear dependence, prepare carefully for danger but dislike ceremonial attention, or enjoy fictional fright while refusing real risk. Familiar company, imperfect music, beautiful weather and satisfaction with a modest life offer positive specificity without a hidden wound.
 
@@ -154,12 +154,12 @@ The [operation contract](emotional-physiology-tech-design.md#ep-c08--independent
 
 ### A useful end-to-end flow
 
-| Step | Required behavior |
-| --- | --- |
-| Experience | Native reactions proceed without AI; an eligible interpreter may appraise its own permitted evidence. |
-| Continue | Existing work, goals and invitations keep their owners while feelings persist. |
-| Become eligible | Material evidence, bodily/context change or an authored finite recovery/threshold opportunity can justify review, without determining its answer. |
-| Admit and consider | Existing cognition can batch compatible feelings or reuse an already admitted request. The model chooses only supported outcomes for supplied feelings. |
+| Step                 | Required behavior                                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Experience           | Native reactions proceed without AI; an eligible interpreter may appraise its own permitted evidence.                                                                       |
+| Continue             | Existing work, goals and invitations keep their owners while feelings persist.                                                                                              |
+| Become eligible      | Material evidence, bodily/context change or an authored finite recovery/threshold opportunity can justify review, without determining its answer.                           |
+| Admit and consider   | Existing cognition can batch compatible feelings or reuse an already admitted request. The model chooses only supported outcomes for supplied feelings.                     |
 | Publish and continue | Current authority and exact dependencies admit valid components; subsequent cognition/mechanics consume the accepted result. Delay or failure invents no emotion or action. |
 
 ### Eligibility without a maintenance loop
@@ -230,11 +230,11 @@ Native bodily startle and physical conditions apply equally to controlled and au
 
 ### Alternatives and recommended initial choice
 
-| Alternative | Conditional product and tradeoff |
-| --- | --- |
-| A. Native body only during direct control | Native effects apply; autonomous interpreted-emotion creation/review is disabled and appraised-emotion mechanics are masked. This preserves subjective freedom with little extra interface/model burden, but player/NPC interpretation differs and retained-state transitions need truthful feedback. It supplies no persistent interpreted player fear. |
-| B. Deterministic authored interpretation | Explicit native world rules create/reassess selected emotions from the character's own admitted evidence through existing appraisal authority. This supplies predictable persistent player mechanics without paid interpretation, but imposes a fictional condition that must be explained. Exact rules cannot be replaced by a label or freeform personality inference. |
-| C. Explicitly opted-in model interpretation | The active player grants bounded interpretation for named families/consequences, using the same source, budget, lifetime and publication rules. This supports contextual roleplay, with explicit private-context consent, cost/uncertainty, revocation and transfer requirements. Movement, dialogue or unrelated AI assistance is not opt-in. |
+| Alternative                                 | Conditional product and tradeoff                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A. Native body only during direct control   | Native effects apply; autonomous interpreted-emotion creation/review is disabled and appraised-emotion mechanics are masked. This preserves subjective freedom with little extra interface/model burden, but player/NPC interpretation differs and retained-state transitions need truthful feedback. It supplies no persistent interpreted player fear.                 |
+| B. Deterministic authored interpretation    | Explicit native world rules create/reassess selected emotions from the character's own admitted evidence through existing appraisal authority. This supplies predictable persistent player mechanics without paid interpretation, but imposes a fictional condition that must be explained. Exact rules cannot be replaced by a label or freeform personality inference. |
+| C. Explicitly opted-in model interpretation | The active player grants bounded interpretation for named families/consequences, using the same source, budget, lifetime and publication rules. This supports contextual roleplay, with explicit private-context consent, cost/uncertainty, revocation and transfer requirements. Movement, dialogue or unrelated AI assistance is not opt-in.                           |
 
 **Recommend A initially**, pending approval. If persistent interpreted fear is selected for ordinary player mechanics, **prefer B over silent autonomous model appraisal**. C is an explicit alternative, not a fallback for a missing native rule. Choosing fear does not authorize joy, grief, anger or a needs simulation; selected families, consequences and grants must be explicit. Fictional conditions are not claims about the real human's psychology.
 
@@ -251,6 +251,8 @@ Under B, declare the permitted native producer/families and how compatible retai
 ### Implementation gate
 
 The decision must settle producer authority, families, mechanical application, human authorship, display, revocation and transfer together. Player interpretation remains blocked or available only under an explicitly selected authorized policy; omitted policy, prompts, fallback and restoration adopt no option.
+
+Until SA-D01 is selected, keep the new retained-appraisal/direct-control composition path disabled at profile or feature enablement. An unresolved applicability policy is not a transient native preparation failure: do not enable that policy and hold physical combat waiting for the product decision. Disabling interpretation does not authorize masking inherited active appraisals or treating them as absent. Existing physical combat and independently complete native-body paths remain available. Before selection, qualify controlled-character paths only on profiles or cases without that unresolved retained-appraisal component; a transfer that requires deciding its mechanical applicability remains outside the enabled and qualified slice.
 
 Native body mechanics, autonomous interpretations, animals, maximum fear composition, time rules and bounded review can proceed independently. SA-D01 does not reopen those contracts.
 
@@ -340,64 +342,64 @@ The repertoires remain proposal catalogues. A selected baseline emotion capabili
 
 ### Repertoire responsibilities
 
-| Repertoire file | Applicable coverage | Selected boundary or existing owner |
-| --- | --- | --- |
-| [README](../repertoires/README.md) | Catalogue map, ownership, classifications and evidence | Preserve stable IDs, priority semantics and proposal status; integration owns central reconciliation |
-| [Design foundation](../repertoires/design-foundation.md) | Motives, independent purposes, danger, power, pleasure and world tone | Useful activity and distinct people remain the purpose; no compulsory benevolence, remorse or growth |
-| [Gameplay priorities](../repertoires/gameplay-priorities.md) | Entire first-game, selection, replay-value and completion policy | Serve actual survival/making/danger/return; pleasures need no stat bonus and psychological administration is not a prerequisite |
-| [Coverage](../repertoires/coverage.md) | Core/Complete slices, category scope and optional worlds | Distinguish selected baseline from broad psychology depth; final integration owns broad mapping |
-| [Selection and scale](../repertoires/selection-and-scale.md) | First evening, rescue, threat defeated, return and complexity budgets | Choose a small worthwhile scene; due work and bounded operating attention remain essential |
-| [Psychology and behavior](../repertoires/psychology-behavior.md) | PB-003/013/024/092/181/182/188/202/213/267/271/272/320 | Primary meaning/conduct examples: delayed fear, brave action, joy during grief, individual interpretation and lasting safety |
-| [Needs](../repertoires/needs.md) | ND-025/028/061/098/170/175/186/195/264/284 | Actual desired conditions and private appraisal differ; no dashboard or mandatory emotional maintenance |
-| [Traits](../repertoires/traits.md) | TR-002/005/006/008/013/143/150/155/163 | Composure, sensitivity, contextual risks, expression and coping are independent; prose grants no mechanics |
-| [Characters and backstories](../repertoires/characters-backstories.md) | CB-001/032/052/076/089/202/216/225/282/289 | Biographies supply particular interests and context, including happy lives; no decision scripts or mandatory trauma |
-| [Relationships](../repertoires/relationships.md) | RSH-123/166/195/196/229/303/339/342/353 | Each participant interprets independently; care, affection, gratitude, grief and loyalty do not become one approval score |
-| [Bodies and species](../repertoires/bodies-species.md) | BSP-017/042/044/045/101/151/208/260 | Native exact-body reactions, memoryless animals and synthetic diversity; no physiology-to-personality shortcut |
-| [Combat and rescue](../repertoires/combat-rescue.md) | CR-078/081/082/084/130/205/206/258/282 | Existing threat and action owners retain choices; no duplicate morale meter, automatic flight or grief penalty |
-| [Abilities and progression](../repertoires/abilities-progression.md) | AP-023/077/101/106/114/245/263/270 | Handling, listening, intimidation and care remain bounded attempts; skill does not write private emotion |
-| [Actions](../repertoires/actions.md) | MND-01/05/12, CARE-11, SOC-07, LAW-11 | Emotional review is independently eligible and does not require a deliberate action, speech or ceremony |
-| [Mechanics](../repertoires/mechanics.md) | MEC-159/164/172/177/180/189/270; appraisal/capability families | Keep source-linked appraisal and real effect resolution; pleasure, attachment and rescue are not automatic numeric reciprocity |
-| [Adventure and discovery](../repertoires/adventure-discovery.md) | AD-142/161/226/227/235/304 | Real return, rewards and reunions matter; a place need not heal and old companions need no compulsory new mission |
-| [Arts and leisure](../repertoires/arts-leisure.md) | ARL046/177/192/196/200/208/236/250/284 | Chosen sadness, horror, imperfect performance and beauty can be worthwhile; audience feelings remain independent |
-| [Faith and ritual](../repertoires/faith-ritual.md) | FTH028/055/065/071/075/159/171/212/248 | Finite ceremonies do not finish grief; joy, privacy and declining forgiveness remain possible |
-| [Magic](../repertoires/magic.md) | MG-084/129/131/141/144/147/195/204/220 | Affect magic requires explicit admitted capabilities; chosen expression and forced smiling do not prove private feeling |
-| [Unusual realities](../repertoires/unusual-realities.md) | UNR-069/086/123/130/200/238/244 | Emotional weather, shared sensation and consumable courage remain separately selected laws with exact authority |
-| [Technology](../repertoires/technology.md) | TE-160/273/296 and experiential interfaces | Sensory technology supplies experience, not thought access, guaranteed pleasure or unrelated need fulfilment |
-| [Languages and knowledge](../repertoires/languages-knowledge.md) | LKN013/054/079/132 | Solitude, tone, deliberate signals and corrections require bounded interpretation rather than private access |
-| [History and myth](../repertoires/history-myth.md) | HMY056/079/086/144/158/182/206/224/242/270 | A shared history can mean different things; correction preserves actual past experience and alternate history is not current fact |
-| [Diplomacy and conflict](../repertoires/diplomacy-conflict.md) | DIP-009/058/079/091/209/214/234/268/282 | Cooperation and pleasure can precede affection or settled grievances; fear does not impose consent |
-| [Institutions and politics](../repertoires/institutions-politics.md) | INS-062/089/119/201/208/264/281/300 | Institutions establish circumstances, duties and permissions, not private truth or compulsory emotional participation |
-| [Automation and creators](../repertoires/automation-creators.md) | ACR-008/019/069/076/095/104/112/146/222 | Creator intent does not install emotional effects; staged danger retains actual physical consequences |
-| [Ecology and weather](../repertoires/ecology-weather.md) | ECW-016/099/172/204/205/235 | Weather, sensory cues and paths supply actual experience; native learning remains its own selected scope |
-| [Economy and logistics](../repertoires/economy-logistics.md) | ECON-040/148/208; valuation terminology | Meals and sensory works need no emotion currency; economic appraisal keeps its separate meaning |
-| [Materials and resources](../repertoires/materials-resources.md) | MAT-130/138/151/185 | Supported physical/sensory effects do not silently erase memory, grief or distrust |
-| [Objects](../repertoires/objects.md) | ITEM-029/035/132/165/195/215 | Keepsakes, instruments and comfort objects have personal meanings, not guaranteed calm or happiness |
-| [Settlements and architecture](../repertoires/settlements-architecture.md) | ARC-013/133/139/140/167/235/244 | Actual quiet, routes, access and known history can support review; places cannot read wishes or guarantee safety beliefs |
-| [Work and crafting](../repertoires/work-crafting.md) | WORK-011/071/076/126/131/154/208 | Useful work and performance supply real outcomes while emotional continuity remains private |
-| [Simulation experiments](../repertoires/simulation-experiments.md) | SIM-113/149/196/206 and experimental limits | Shared success and different senses do not imply universal happiness; design examples are not empirical findings |
-| [Combinations](../repertoires/combinations.md) | All 25 situations contextually reviewed; especially wolf at gate, rehearsal, alien meal, changing allegiance, quarry and household after victory | Compose selected owners into complete scenes without selecting every surrounding system |
-| [Source atlas](../repertoires/source-atlas.md) | Research provenance and attribution | Preserve thematic-source meaning; this design adds no bibliographic completion claim |
-| [Group 3 reading progress](../repertoires/group-3-reading-progress.md) | Psychology, needs, traits, characters and relationships ledger | Retain existing research status; feature coverage is not a new complete source reread |
-| [Group 6 reading progress](../repertoires/group-6-reading-progress.md) | Expanded world/culture/material ledger | Cross-references do not alter research completion |
-| [Group 7 research progress](../repertoires/group-7-research-progress.md) | Later research and synthesis ledger | Preserve provenance; no provider experiment or empirical psychology claim |
-| [Medieval survival](../repertoires/worlds/medieval-survival.md) | Threewater cast, routes, convoy, fair and rites | Particular motives and native danger serve survival; culture and ritual do not prescribe emotions |
-| [Living fantasy](../repertoires/worlds/living-fantasy.md) | Borrowed Dawn cast, bounded magic, history and partial prophecy | Explicit local laws, present pleasure and uncertain knowledge coexist; no unselected affect magic |
-| [Modern life](../repertoires/worlds/modern-life.md) | Linden Reach cast, flood history and varied good lives | Particular bonds and interests supply play without demographic temperament stereotypes |
-| [Planetary science fiction](../repertoires/worlds/planetary-scifi.md) | Veyra Reach bodies/senses and Nemei mantle | Species, culture and individual identity differ; visible patterns remain bounded evidence |
+| Repertoire file                                                            | Applicable coverage                                                                                                                              | Selected boundary or existing owner                                                                                               |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| [README](../repertoires/README.md)                                         | Catalogue map, ownership, classifications and evidence                                                                                           | Preserve stable IDs, priority semantics and proposal status; integration owns central reconciliation                              |
+| [Design foundation](../repertoires/design-foundation.md)                   | Motives, independent purposes, danger, power, pleasure and world tone                                                                            | Useful activity and distinct people remain the purpose; no compulsory benevolence, remorse or growth                              |
+| [Gameplay priorities](../repertoires/gameplay-priorities.md)               | Entire first-game, selection, replay-value and completion policy                                                                                 | Serve actual survival/making/danger/return; pleasures need no stat bonus and psychological administration is not a prerequisite   |
+| [Coverage](../repertoires/coverage.md)                                     | Core/Complete slices, category scope and optional worlds                                                                                         | Distinguish selected baseline from broad psychology depth; final integration owns broad mapping                                   |
+| [Selection and scale](../repertoires/selection-and-scale.md)               | First evening, rescue, threat defeated, return and complexity budgets                                                                            | Choose a small worthwhile scene; due work and bounded operating attention remain essential                                        |
+| [Psychology and behavior](../repertoires/psychology-behavior.md)           | PB-003/013/024/092/181/182/188/202/213/267/271/272/320                                                                                           | Primary meaning/conduct examples: delayed fear, brave action, joy during grief, individual interpretation and lasting safety      |
+| [Needs](../repertoires/needs.md)                                           | ND-025/028/061/098/170/175/186/195/264/284                                                                                                       | Actual desired conditions and private appraisal differ; no dashboard or mandatory emotional maintenance                           |
+| [Traits](../repertoires/traits.md)                                         | TR-002/005/006/008/013/143/150/155/163                                                                                                           | Composure, sensitivity, contextual risks, expression and coping are independent; prose grants no mechanics                        |
+| [Characters and backstories](../repertoires/characters-backstories.md)     | CB-001/032/052/076/089/202/216/225/282/289                                                                                                       | Biographies supply particular interests and context, including happy lives; no decision scripts or mandatory trauma               |
+| [Relationships](../repertoires/relationships.md)                           | RSH-123/166/195/196/229/303/339/342/353                                                                                                          | Each participant interprets independently; care, affection, gratitude, grief and loyalty do not become one approval score         |
+| [Bodies and species](../repertoires/bodies-species.md)                     | BSP-017/042/044/045/101/151/208/260                                                                                                              | Native exact-body reactions, memoryless animals and synthetic diversity; no physiology-to-personality shortcut                    |
+| [Combat and rescue](../repertoires/combat-rescue.md)                       | CR-078/081/082/084/130/205/206/258/282                                                                                                           | Existing threat and action owners retain choices; no duplicate morale meter, automatic flight or grief penalty                    |
+| [Abilities and progression](../repertoires/abilities-progression.md)       | AP-023/077/101/106/114/245/263/270                                                                                                               | Handling, listening, intimidation and care remain bounded attempts; skill does not write private emotion                          |
+| [Actions](../repertoires/actions.md)                                       | MND-01/05/12, CARE-11, SOC-07, LAW-11                                                                                                            | Emotional review is independently eligible and does not require a deliberate action, speech or ceremony                           |
+| [Mechanics](../repertoires/mechanics.md)                                   | MEC-159/164/172/177/180/189/270; appraisal/capability families                                                                                   | Keep source-linked appraisal and real effect resolution; pleasure, attachment and rescue are not automatic numeric reciprocity    |
+| [Adventure and discovery](../repertoires/adventure-discovery.md)           | AD-142/161/226/227/235/304                                                                                                                       | Real return, rewards and reunions matter; a place need not heal and old companions need no compulsory new mission                 |
+| [Arts and leisure](../repertoires/arts-leisure.md)                         | ARL046/177/192/196/200/208/236/250/284                                                                                                           | Chosen sadness, horror, imperfect performance and beauty can be worthwhile; audience feelings remain independent                  |
+| [Faith and ritual](../repertoires/faith-ritual.md)                         | FTH028/055/065/071/075/159/171/212/248                                                                                                           | Finite ceremonies do not finish grief; joy, privacy and declining forgiveness remain possible                                     |
+| [Magic](../repertoires/magic.md)                                           | MG-084/129/131/141/144/147/195/204/220                                                                                                           | Affect magic requires explicit admitted capabilities; chosen expression and forced smiling do not prove private feeling           |
+| [Unusual realities](../repertoires/unusual-realities.md)                   | UNR-069/086/123/130/200/238/244                                                                                                                  | Emotional weather, shared sensation and consumable courage remain separately selected laws with exact authority                   |
+| [Technology](../repertoires/technology.md)                                 | TE-160/273/296 and experiential interfaces                                                                                                       | Sensory technology supplies experience, not thought access, guaranteed pleasure or unrelated need fulfilment                      |
+| [Languages and knowledge](../repertoires/languages-knowledge.md)           | LKN013/054/079/132                                                                                                                               | Solitude, tone, deliberate signals and corrections require bounded interpretation rather than private access                      |
+| [History and myth](../repertoires/history-myth.md)                         | HMY056/079/086/144/158/182/206/224/242/270                                                                                                       | A shared history can mean different things; correction preserves actual past experience and alternate history is not current fact |
+| [Diplomacy and conflict](../repertoires/diplomacy-conflict.md)             | DIP-009/058/079/091/209/214/234/268/282                                                                                                          | Cooperation and pleasure can precede affection or settled grievances; fear does not impose consent                                |
+| [Institutions and politics](../repertoires/institutions-politics.md)       | INS-062/089/119/201/208/264/281/300                                                                                                              | Institutions establish circumstances, duties and permissions, not private truth or compulsory emotional participation             |
+| [Automation and creators](../repertoires/automation-creators.md)           | ACR-008/019/069/076/095/104/112/146/222                                                                                                          | Creator intent does not install emotional effects; staged danger retains actual physical consequences                             |
+| [Ecology and weather](../repertoires/ecology-weather.md)                   | ECW-016/099/172/204/205/235                                                                                                                      | Weather, sensory cues and paths supply actual experience; native learning remains its own selected scope                          |
+| [Economy and logistics](../repertoires/economy-logistics.md)               | ECON-040/148/208; valuation terminology                                                                                                          | Meals and sensory works need no emotion currency; economic appraisal keeps its separate meaning                                   |
+| [Materials and resources](../repertoires/materials-resources.md)           | MAT-130/138/151/185                                                                                                                              | Supported physical/sensory effects do not silently erase memory, grief or distrust                                                |
+| [Objects](../repertoires/objects.md)                                       | ITEM-029/035/132/165/195/215                                                                                                                     | Keepsakes, instruments and comfort objects have personal meanings, not guaranteed calm or happiness                               |
+| [Settlements and architecture](../repertoires/settlements-architecture.md) | ARC-013/133/139/140/167/235/244                                                                                                                  | Actual quiet, routes, access and known history can support review; places cannot read wishes or guarantee safety beliefs          |
+| [Work and crafting](../repertoires/work-crafting.md)                       | WORK-011/071/076/126/131/154/208                                                                                                                 | Useful work and performance supply real outcomes while emotional continuity remains private                                       |
+| [Simulation experiments](../repertoires/simulation-experiments.md)         | SIM-113/149/196/206 and experimental limits                                                                                                      | Shared success and different senses do not imply universal happiness; design examples are not empirical findings                  |
+| [Combinations](../repertoires/combinations.md)                             | All 25 situations contextually reviewed; especially wolf at gate, rehearsal, alien meal, changing allegiance, quarry and household after victory | Compose selected owners into complete scenes without selecting every surrounding system                                           |
+| [Source atlas](../repertoires/source-atlas.md)                             | Research provenance and attribution                                                                                                              | Preserve thematic-source meaning; this design adds no bibliographic completion claim                                              |
+| [Group 3 reading progress](../repertoires/group-3-reading-progress.md)     | Psychology, needs, traits, characters and relationships ledger                                                                                   | Retain existing research status; feature coverage is not a new complete source reread                                             |
+| [Group 6 reading progress](../repertoires/group-6-reading-progress.md)     | Expanded world/culture/material ledger                                                                                                           | Cross-references do not alter research completion                                                                                 |
+| [Group 7 research progress](../repertoires/group-7-research-progress.md)   | Later research and synthesis ledger                                                                                                              | Preserve provenance; no provider experiment or empirical psychology claim                                                         |
+| [Medieval survival](../repertoires/worlds/medieval-survival.md)            | Threewater cast, routes, convoy, fair and rites                                                                                                  | Particular motives and native danger serve survival; culture and ritual do not prescribe emotions                                 |
+| [Living fantasy](../repertoires/worlds/living-fantasy.md)                  | Borrowed Dawn cast, bounded magic, history and partial prophecy                                                                                  | Explicit local laws, present pleasure and uncertain knowledge coexist; no unselected affect magic                                 |
+| [Modern life](../repertoires/worlds/modern-life.md)                        | Linden Reach cast, flood history and varied good lives                                                                                           | Particular bonds and interests supply play without demographic temperament stereotypes                                            |
+| [Planetary science fiction](../repertoires/worlds/planetary-scifi.md)      | Veyra Reach bodies/senses and Nemei mantle                                                                                                       | Species, culture and individual identity differ; visible patterns remain bounded evidence                                         |
 
 ### Exact focused catalogue entries
 
 These 28 entries carry the focused selected emotion boundaries. Their useful surrounding examples, stable IDs, priorities, levels and source attributions remain with their canonical catalogues.
 
-| Catalogue | Entry IDs | Required interpretation |
-| --- | --- | --- |
-| [Psychology and behavior](../repertoires/psychology-behavior.md) | PB-013, PB-024, PB-092, PB-181, PB-188, PB-202 | Bodily context can support same-cause change; simultaneous meanings, honest joy, independent fear directions, delayed review and grief during pleasure remain possible |
-| [Needs](../repertoires/needs.md) | ND-028, ND-061, ND-186, ND-264 | Actual protection/refuge differs from calm; mourning needs no periodic maintenance; shared activity has individual meanings |
-| [Traits](../repertoires/traits.md) | TR-002, TR-005, TR-013, TR-143, TR-150 | Recovery/intensification remains bounded and source-linked; expression, contextual risk willingness and actual coping results differ |
-| [Characters and backstories](../repertoires/characters-backstories.md) | CB-052, CB-202, CB-282 | The same history supports distinct interpretations, good afternoons and different chosen coping activities |
-| [Relationships](../repertoires/relationships.md) | RSH-166, RSH-196, RSH-303, RSH-339 | Surprise does not force trust; grief company and chosen horror preserve agency; rescue gratitude can coexist with loss |
-| [Bodies and species](../repertoires/bodies-species.md) | BSP-101, BSP-208, BSP-260 | Horse control, synthetic fear and native hare startle/escape preserve separate body, interpretation and controller owners |
-| [Combat and rescue](../repertoires/combat-rescue.md) | CR-082, CR-205, CR-258 | Existing willingness has no extra morale meter; mourning has no forced closure; a trusted helper matters through actual help |
+| Catalogue                                                              | Entry IDs                                      | Required interpretation                                                                                                                                                |
+| ---------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Psychology and behavior](../repertoires/psychology-behavior.md)       | PB-013, PB-024, PB-092, PB-181, PB-188, PB-202 | Bodily context can support same-cause change; simultaneous meanings, honest joy, independent fear directions, delayed review and grief during pleasure remain possible |
+| [Needs](../repertoires/needs.md)                                       | ND-028, ND-061, ND-186, ND-264                 | Actual protection/refuge differs from calm; mourning needs no periodic maintenance; shared activity has individual meanings                                            |
+| [Traits](../repertoires/traits.md)                                     | TR-002, TR-005, TR-013, TR-143, TR-150         | Recovery/intensification remains bounded and source-linked; expression, contextual risk willingness and actual coping results differ                                   |
+| [Characters and backstories](../repertoires/characters-backstories.md) | CB-052, CB-202, CB-282                         | The same history supports distinct interpretations, good afternoons and different chosen coping activities                                                             |
+| [Relationships](../repertoires/relationships.md)                       | RSH-166, RSH-196, RSH-303, RSH-339             | Surprise does not force trust; grief company and chosen horror preserve agency; rescue gratitude can coexist with loss                                                 |
+| [Bodies and species](../repertoires/bodies-species.md)                 | BSP-101, BSP-208, BSP-260                      | Horse control, synthetic fear and native hare startle/escape preserve separate body, interpretation and controller owners                                              |
+| [Combat and rescue](../repertoires/combat-rescue.md)                   | CR-082, CR-205, CR-258                         | Existing willingness has no extra morale meter; mourning has no forced closure; a trusted helper matters through actual help                                           |
 
 The retained “same event, two appraisals” worked example in psychology supplies the complementary ordinary-life case: a host welcomes a visitor while a cook worries about supplies and can also welcome the company. Actual food arriving may support review of the worry while preparation continues. No single scene mood or forced preference is required.
 
@@ -409,30 +411,30 @@ These are future acceptance requirements as design. They have not been executed.
 
 Use the scenarios' same producer and permission preconditions: autonomous eligible interpreters, lawfully admitted existing grief and no authored-grief AI review. The two explicitly controlled-character rows remain conditional on an approved SA-D01 policy; they cannot be used to select one implicitly.
 
-| Case | Observable required result |
-| --- | --- |
-| Same attack, different people | Compatible native reactions can differ by installed physiology; personally supported fear/anger/no-change can differ by context without granting unseen knowledge |
-| Brave while afraid | Supported fear may affect accuracy/evasion while rescue, defence or escape remains chosen through existing owners at supported movement speed |
-| Many small causes | Exact causes remain distinct and the declared effective fear query uses the strongest applicable contribution without an independently writable total |
-| Two directed dangers | Escape from one source does not clear another; each retains its direction and cause while the selected body projection includes all mapped active fear without a hidden target-distance filter |
-| Startle before model completion | Native onset/recovery and physical outcomes occur without waiting for AI; applicable later appraisal may keep fear high |
-| Shock ordering | A shock caused by an impact affects later eligible checks, never its own already-determined defence; cause wrappers do not duplicate onset |
-| Quiet change during work | Eligible emotional reassessment can occur while goal, action and ordinary pending conversation continue |
-| Delayed fear from the same cause | A legitimate reassessment changes supported intensity within the original-cause envelope without inventing another external event |
-| Stable/no-change feeling | Native lifetime and meaning remain intact; no fresh occurrence, recursive notification or perpetual paid review is created |
-| Bounded intensity review | Intense episodes may receive earlier eligible attention under policy while quiet feelings can remain dormant and total work stays bounded |
-| Joy during grief | Both meanings can persist while a real activity is enjoyed; no cancellation, compulsory cure, combat bonus or mandatory mourning timer |
-| Same performance, different meanings | Recipients can delight, worry, grieve or remain indifferent from their own evidence; the performer cannot select their private result |
-| Body recovery and an old insult | Improved bodily condition can support a different current interpretation without erasing the original words or proving disrespect absent |
-| Actual helper arrival | Real acquired help, routes and safety can support review; a familiar identity alone grants no capability, knowledge or guaranteed calm |
-| Uncertain outward expression | Observers receive only supported cues/words and normal uncertainty; attack, retreat, smile and silence do not certify feelings or consent |
-| Failed, delayed or stale request | Existing native progress and lifetime continue; no fabricated calm/action, stale overwrite, swallowed ordinary opportunity or unbounded retry |
-| Correction, forgetting and reopen | Current authority and evidence rules apply; no reconstructed private source, fresh allowance, revived terminal record or offline wall-time catch-up |
-| Three-second normal-play example | Speed and pause preserve the authored duration meaning, and save/load resumes the same remaining native contribution |
-| Native hare and synthetic character | Memoryless native reaction and existing animal escape need no AI; a synthetic interpreter can fear without an uninstalled mammalian reflex |
-| Direct human control | Native effects apply; player interpreted production/projection follows an approved explicit policy and transfer invalidates stale private authority |
-| Controlled-character transition under conditional A | Masking/unmasking has truthful visible mechanical feedback, preserves records and native time, and grants no free review epoch |
-| Whole playable continuation | A complete supported danger-and-return scene is understandable and worth choosing without a mandatory emotion-management chore |
+| Case                                                | Observable required result                                                                                                                                                                     |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Same attack, different people                       | Compatible native reactions can differ by installed physiology; personally supported fear/anger/no-change can differ by context without granting unseen knowledge                              |
+| Brave while afraid                                  | Supported fear may affect accuracy/evasion while rescue, defence or escape remains chosen through existing owners at supported movement speed                                                  |
+| Many small causes                                   | Exact causes remain distinct and the declared effective fear query uses the strongest applicable contribution without an independently writable total                                          |
+| Two directed dangers                                | Escape from one source does not clear another; each retains its direction and cause while the selected body projection includes all mapped active fear without a hidden target-distance filter |
+| Startle before model completion                     | Native onset/recovery and physical outcomes occur without waiting for AI; applicable later appraisal may keep fear high                                                                        |
+| Shock ordering                                      | A shock caused by an impact affects later eligible checks, never its own already-determined defence; cause wrappers do not duplicate onset                                                     |
+| Quiet change during work                            | Eligible emotional reassessment can occur while goal, action and ordinary pending conversation continue                                                                                        |
+| Delayed fear from the same cause                    | A legitimate reassessment changes supported intensity within the original-cause envelope without inventing another external event                                                              |
+| Stable/no-change feeling                            | Native lifetime and meaning remain intact; no fresh occurrence, recursive notification or perpetual paid review is created                                                                     |
+| Bounded intensity review                            | Intense episodes may receive earlier eligible attention under policy while quiet feelings can remain dormant and total work stays bounded                                                      |
+| Joy during grief                                    | Both meanings can persist while a real activity is enjoyed; no cancellation, compulsory cure, combat bonus or mandatory mourning timer                                                         |
+| Same performance, different meanings                | Recipients can delight, worry, grieve or remain indifferent from their own evidence; the performer cannot select their private result                                                          |
+| Body recovery and an old insult                     | Improved bodily condition can support a different current interpretation without erasing the original words or proving disrespect absent                                                       |
+| Actual helper arrival                               | Real acquired help, routes and safety can support review; a familiar identity alone grants no capability, knowledge or guaranteed calm                                                         |
+| Uncertain outward expression                        | Observers receive only supported cues/words and normal uncertainty; attack, retreat, smile and silence do not certify feelings or consent                                                      |
+| Failed, delayed or stale request                    | Existing native progress and lifetime continue; no fabricated calm/action, stale overwrite, swallowed ordinary opportunity or unbounded retry                                                  |
+| Correction, forgetting and reopen                   | Current authority and evidence rules apply; no reconstructed private source, fresh allowance, revived terminal record or offline wall-time catch-up                                            |
+| Three-second normal-play example                    | Speed and pause preserve the authored duration meaning, and save/load resumes the same remaining native contribution                                                                           |
+| Native hare and synthetic character                 | Memoryless native reaction and existing animal escape need no AI; a synthetic interpreter can fear without an uninstalled mammalian reflex                                                     |
+| Direct human control                                | Native effects apply; player interpreted production/projection follows an approved explicit policy and transfer invalidates stale private authority                                            |
+| Controlled-character transition under conditional A | Masking/unmasking has truthful visible mechanical feedback, preserves records and native time, and grants no free review epoch                                                                 |
+| Whole playable continuation                         | A complete supported danger-and-return scene is understandable and worth choosing without a mandatory emotion-management chore                                                                 |
 
 Native deterministic acceptance establishes actual state, ordering and effects. Bound provider fixtures establish request/admission behavior, not natural interpretation quality. Controlled live evidence must establish that different characters select coherent different meanings and can continue useful activity without scripted outcomes. Human play evidence must separately establish understandable controls, worthwhile choices and acceptable interruption/operating burden. None is substituted by fluent narration.
 

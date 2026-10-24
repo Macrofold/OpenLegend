@@ -10,7 +10,7 @@ The shared [SC01–SC14 contracts](../projects/stealth-awareness-tech-design.md#
 
 ## Source baseline, dependencies and design disposition
 
-The [technical baseline](../projects/acoustic-stealth-tech-design.md#authority-and-inspected-baseline) records the exact common-contract and completed A branch pins used by `codex/design-stealth-04-acoustics`. A's [feature][a-feature], [technical contract][a-tech], [world policy][a-policy] and [PP tracker][a-work] are design dependencies; their runtime/history is not merged here.
+The [technical baseline](../projects/acoustic-stealth-tech-design.md#authority-and-inspected-baseline) retains the exact common-contract and completed A source pins used for the initial audit. The integrated A [feature][a-feature], [technical contract][a-tech], [world policy][a-policy] and [PP tracker][a-work] are canonical design dependencies; their implementation remains tracked separately.
 
 The integrated [vision design](../projects/vision-and-gaze-tech-design.md) supplies the shared physical pose, explicit crouched optical fixture, minimum direction/quiet/posture speed caps and canonical visual sampling. C retains its independent .5 m acoustic anchor law and exact impulses. Recheck changed code at implementation time without reopening these settled design contracts.
 
@@ -28,17 +28,17 @@ This design completes only the physical-sound/quiet-movement and generalized-hea
 
 Dependencies below refer to the narrow implemented interface each slice needs, not reciprocal completion of entire sibling projects. Safe projection and current-format persistence accompany the first source; they are not postponed until a final polish phase.
 
-| Work | Status | Dependencies | Completion boundary |
-| --- | --- | --- | --- |
-| ACS00 | Completed — design only | Exact common source; completed A design; shared B/C boundaries | Selected pair, policy, limits, source/scenario/repertoire review and scoped handoffs. |
-| ACS01 | Not started | ACS00; SAI-C interface review; PP01–PP02 acquisition contract; integrated exact source adapters | One physical occurrence/hearing path with memory-independent receiver eligibility and exact owner revisions. |
-| ACS02 | Not started | ACS01; joint B/C SC06–SC07 pose contract; existing action/motion owners | Admitted quiet gait/posture and body-appropriate contact emissions from actual traversal. |
-| ACS03 | Not started | ACS01; each supported activity's real occurrence/lifecycle owner | Other physical producers, persistent intervals and simultaneous sound/masking without synthetic duration. |
-| ACS04 | Not started | ACS01–ACS03 supported inputs; PP01–PP04; relevant SPK interfaces | Received features, location uncertainty, classification/recognition and speech semantics compose end to end. |
-| ACS05 | Not started | Actual ACS02–ACS04 reception; shared native controller; applicable E/F interfaces | Eligible animal responses and voluntary attention/warning consumers use the same evidence. |
-| ACS06 | Not started | Starts with ACS01; A's PP06 and G projection; completes across ACS01–ACS05 | Current-format restore, invalidation and every public/actor projection preserve the admitted meaning. |
-| ACS07 | Not started | Staged with ACS01–ACS06; complete producer and consumer callers | Mechanical, ordering, disclosure, recovery and full-path workload evidence on the implemented tree. |
-| ACS08 | Not started | Relevant ACS02–ACS07 delivery; ordinary G controls and applicable E behavior | Uncoached play demonstrates useful decisions and acceptable burden; tuning changes follow their policy owner. |
+| Work  | Status                  | Dependencies                                                                                    | Completion boundary                                                                                           |
+| ----- | ----------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| ACS00 | Completed — design only | Exact common source; completed A design; shared B/C boundaries                                  | Selected pair, policy, limits, source/scenario/repertoire review and scoped handoffs.                         |
+| ACS01 | Not started             | ACS00; SAI-C interface review; PP01–PP02 acquisition contract; integrated exact source adapters | One physical occurrence/hearing path with memory-independent receiver eligibility and exact owner revisions.  |
+| ACS02 | Not started             | ACS01; joint B/C SC06–SC07 pose contract; existing action/motion owners                         | Admitted quiet gait/posture and body-appropriate contact emissions from actual traversal.                     |
+| ACS03 | Not started             | ACS01; each supported activity's real occurrence/lifecycle owner                                | Other physical producers, persistent intervals and simultaneous sound/masking without synthetic duration.     |
+| ACS04 | Not started             | ACS01–ACS03 supported inputs; PP01–PP04; relevant SPK interfaces                                | Received features, location uncertainty, classification/recognition and speech semantics compose end to end.  |
+| ACS05 | Not started             | Actual ACS02–ACS04 reception; shared native controller; applicable E/F interfaces               | Eligible animal responses and voluntary attention/warning consumers use the same evidence.                    |
+| ACS06 | Not started             | Starts with ACS01; A's PP06 and G projection; completes across ACS01–ACS05                      | Current-format restore, invalidation and every public/actor projection preserve the admitted meaning.         |
+| ACS07 | Not started             | Staged with ACS01–ACS06; complete producer and consumer callers                                 | Mechanical, ordering, disclosure, recovery and full-path workload evidence on the implemented tree.           |
+| ACS08 | Not started             | Relevant ACS02–ACS07 delivery; ordinary G controls and applicable E behavior                    | Uncoached play demonstrates useful decisions and acceptable burden; tuning changes follow their policy owner. |
 
 ## ACS00 — Complete the selected design and source-grounded review
 
@@ -165,17 +165,17 @@ Dependencies below refer to the narrow implemented interface each slice needs, n
 
 The contextual review covers all 42 repertoire files. These existing opportunities connect the acoustic design to the broader game; catalogue entries remain proposals until their own delivery is selected.
 
-| Repertoire | Relevant entries | Design relationship |
-| --- | --- | --- |
-| [Abilities/progression](../repertoires/abilities-progression.md) | AP-022, AP-044 | Quiet approach and armor technique make footing, fit, route, range and time useful choices; movement/acoustics and perception retain sound/detection ownership. |
-| [Actions](../repertoires/actions.md) | REL-12, OBS-02, COM-08 | Supported movement changes actual contacts. Ambiguous rhythms and agreed knocks provide evidence without proving identity or choosing another person's response. |
-| [Adventure/discovery](../repertoires/adventure-discovery.md) | AD-046, AD-051 | Route/load choices serve a household hunt; a fleeing quarry's fresh rustles can renew a broad clue after sight is lost. |
-| [Bodies/species](../repertoires/bodies-species.md) | BSP-260; movement anatomy | Walking, hopping, crawling and wing motion need their actual supported contact patterns; a hare produces its own clues during escape. |
-| [Ecology/weather](../repertoires/ecology-weather.md) | ECW-027, ECW-102 | Congregating waterfowl receive and mask sounds independently; noisy scree affects walkers, prey and subsequent routes. |
-| [Materials/resources](../repertoires/materials-resources.md) | MAT-049, MAT-255 | Supported lining and hobnails connect quietness to fitting, space and traction, without a universally superior material. |
-| [Objects](../repertoires/objects.md) | ITEM-231 | A jostled clapper makes cargo choices matter during escape and can celebrate the prize at home. |
-| [Work/crafting](../repertoires/work-crafting.md) | WORK-084 | Compatible armor fitting can reduce avoidable rattle while preserving real coverage and carried weight. |
-| [Combinations](../repertoires/combinations.md) | “The quarry that learns” | The quarry's new brush/scree sounds support listening, changing vantage or accepting escape rather than live hidden tracking. |
+| Repertoire                                                       | Relevant entries          | Design relationship                                                                                                                                              |
+| ---------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Abilities/progression](../repertoires/abilities-progression.md) | AP-022, AP-044            | Quiet approach and armor technique make footing, fit, route, range and time useful choices; movement/acoustics and perception retain sound/detection ownership.  |
+| [Actions](../repertoires/actions.md)                             | REL-12, OBS-02, COM-08    | Supported movement changes actual contacts. Ambiguous rhythms and agreed knocks provide evidence without proving identity or choosing another person's response. |
+| [Adventure/discovery](../repertoires/adventure-discovery.md)     | AD-046, AD-051            | Route/load choices serve a household hunt; a fleeing quarry's fresh rustles can renew a broad clue after sight is lost.                                          |
+| [Bodies/species](../repertoires/bodies-species.md)               | BSP-260; movement anatomy | Walking, hopping, crawling and wing motion need their actual supported contact patterns; a hare produces its own clues during escape.                            |
+| [Ecology/weather](../repertoires/ecology-weather.md)             | ECW-027, ECW-102          | Congregating waterfowl receive and mask sounds independently; noisy scree affects walkers, prey and subsequent routes.                                           |
+| [Materials/resources](../repertoires/materials-resources.md)     | MAT-049, MAT-255          | Supported lining and hobnails connect quietness to fitting, space and traction, without a universally superior material.                                         |
+| [Objects](../repertoires/objects.md)                             | ITEM-231                  | A jostled clapper makes cargo choices matter during escape and can celebrate the prize at home.                                                                  |
+| [Work/crafting](../repertoires/work-crafting.md)                 | WORK-084                  | Compatible armor fitting can reduce avoidable rattle while preserving real coverage and carried weight.                                                          |
+| [Combinations](../repertoires/combinations.md)                   | “The quarry that learns”  | The quarry's new brush/scree sounds support listening, changing vantage or accepting escape rather than live hidden tracking.                                    |
 
 SAD-I owns the broader repertoire navigation, coverage and priority synthesis when the A–G designs are combined. Existing source ledgers and optional world profiles retain their scope.
 
@@ -199,4 +199,3 @@ Before implementing, read the paired design, installed physical-sound policy, ac
 [a-policy]: ../worlds/base/perception-recognition.md
 [a-work]: perspective-perception.md
 [sa-d02]: ../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation
-

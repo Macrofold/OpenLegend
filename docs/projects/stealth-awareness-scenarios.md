@@ -1,8 +1,8 @@
 # Stealth and awareness — complete gameplay scenarios
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | Integrated design traces specified; runtime, performance and player qualification remain open. SA-D01 remains an explicit product dependency. | 2026-10-24 |
+| Status      | Current progress                                                                                                                             | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Integrated design traces reviewed; runtime, performance and player qualification remain open. SA-D01 remains an explicit product dependency. | 2026-10-24   |
 
 ## Authority and reading rules
 

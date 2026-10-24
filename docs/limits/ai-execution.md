@@ -479,4 +479,3 @@ Reason: protect a clear useful path without claiming semantic verification of al
 ## Historical provider context
 
 The original audit cited Jev provider allowances of 64,000 tokens per complete request and 32,000 for shared state plus the longest question, versus the local estimated targets of 55,000 and 28,000 (LA046/LA047, four characters per token). These are historical source claims, not freshly verified provider specifications. Recheck the provider contract before changing margins; the 255-option bound is per multiple-choice question, not a question-count cap.
-

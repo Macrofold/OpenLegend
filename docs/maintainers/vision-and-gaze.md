@@ -25,16 +25,16 @@ The [technical dependency record](../projects/vision-and-gaze-tech-design.md#1-a
 
 Implement through the existing spatial, action, observation, clock and view owners. The first useful release must join physical vision to A's observer-specific evidence and G's safe ordinary-player projection. A hidden target that still appears through a raw view, shadow, tooltip or light source has not passed this feature's acceptance.
 
-| Task | Dependencies                                                     | Required outcome before dependent work                                                           |
-| ---- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| VG01 | VG00; installed body/sense owners                                | Valid installed body/sense policies and one authoritative physical orientation.                  |
-| VG02 | VG01; action/spatial owners; C’s selected posture/movement contract     | Looking, moving and interruption share actual admitted work and body constraints.                |
-| VG03 | VG01; spatial/material/body owners                               | One current-query geometry model for exposed parts and independent optical/collision properties. |
-| VG04 | VG03; installed clock/light definitions; FPW03 and G             | World light determines physical evidence and permitted rendered meaning.                         |
-| VG05 | VG01–VG04; integrated A producer/accumulation adapters | Every canonical sample/held interval reaches A with measured/acquired timing and precision.                   |
-| VG06 | VG03–VG05; spatial index/native-work owners                      | Bounded complete candidate and temporal work with correct invalidation and explicit overload.    |
-| VG07 | VG01–VG06; save/authoring/action lifecycle owners                | Current-format restore and installed definitions preserve the same future outcome.               |
-| VG08 | VG01–VG07; applicable SAI-A/C/E/F/G integration                  | Complete native/server/client journeys and measured operational and play acceptance.             |
+| Task | Dependencies                                                        | Required outcome before dependent work                                                           |
+| ---- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| VG01 | VG00; installed body/sense owners                                   | Valid installed body/sense policies and one authoritative physical orientation.                  |
+| VG02 | VG01; action/spatial owners; C’s selected posture/movement contract | Looking, moving and interruption share actual admitted work and body constraints.                |
+| VG03 | VG01; spatial/material/body owners                                  | One current-query geometry model for exposed parts and independent optical/collision properties. |
+| VG04 | VG03; installed clock/light definitions; FPW03 and G                | World light determines physical evidence and permitted rendered meaning.                         |
+| VG05 | VG01–VG04; integrated A producer/accumulation adapters              | Every canonical sample/held interval reaches A with measured/acquired timing and precision.      |
+| VG06 | VG03–VG05; spatial index/native-work owners                         | Bounded complete candidate and temporal work with correct invalidation and explicit overload.    |
+| VG07 | VG01–VG06; save/authoring/action lifecycle owners                   | Current-format restore and installed definitions preserve the same future outcome.               |
+| VG08 | VG01–VG07; applicable SAI-A/C/E/F/G integration                     | Complete native/server/client journeys and measured operational and play acceptance.             |
 
 ### VG01 — Physical orientation and installed body/sense definitions
 
@@ -62,7 +62,7 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 **Status: Not started.** Coordinate spatial primitives, authored body/equipment definitions and C's actual posture.
 
-- [ ] Replace coarse exposed-height assumptions for the selected visual model with the specified receiver and target part/surface geometry, projected exposure, range, motion and detail precision. Use the same predicate in current queries and future interval preparation. Compile the selected finite same-surface bridges so an unobstructed rotating body keeps its binding when adjacent samples take over, without requiring fine contact detail. Distinct-part handoffs still require actually visible authored seams.
+- [ ] Replace coarse exposed-height assumptions for the selected visual model with the specified receiver and target part/surface geometry, projected exposure, range, motion and detail precision. Use the same point predicate in due sample preparation and its admitted held-availability integration; current queries consume the completed result. Compile the selected finite same-surface bridges so an unobstructed rotating body keeps its binding when adjacent samples take over, without requiring fine contact detail. Distinct-part handoffs still require actually visible authored seams.
 - [ ] Add independent authored vision/light transmission, physical collision and attack-obstruction properties through existing geometry/material definitions. Validate walls, foliage, slopes, low roofs and small openings without inferring solidity from opacity.
 - [ ] Install the selected crouched optical fixture together with C’s 1.05 m body/.869 m receptor anchor, retaining 52 samples and unchanged face proportions. Compose direction/quiet/posture speed caps by minimum through the single movement owner.
 - [ ] Require actual action/part-owned preparation transforms before exposing a visual weapon/limb preparation cue; a hidden action stage is not a physical pose.

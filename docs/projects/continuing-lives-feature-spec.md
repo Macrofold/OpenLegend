@@ -634,4 +634,3 @@ The choice covering directly controlled interpreted-emotion creation/review, ret
 - Research refinements and delivery mapping: [technical design](continuing-lives-tech-design.md), [intelligent-simulation tracking](../maintainers/intelligent-simulation.md) and [shared constraints](../limits/intelligent-simulation.md); existing CE/AG/AE/CR/PS owners remain authoritative.
 - Parent design: [product-scalability feature specification](product-scalability-feature-spec.md) and existing [technical design](product-scalability-tech-design.md). The finite service remains a proposal, separate from its independently useful attended refinements.
 - Package scope and progress: [five-specification plan](five-product-feature-specs.md).
-

@@ -126,4 +126,3 @@ reducing finite supply. Final compound resource/object/authority scenarios, sour
 - [x] Record evidence in Verification, current implementation in Architecture, affected parent status/dependencies and deferred regression tasks here. The original delegated pass deferred automated suites; future check selection follows the current [verification policy](../../.agents/rules/verification.md), with CI mandatory.
 
 **Dependencies:** SC01–SC07. **Exit:** complete scenario evidence and honest remaining limitations. No isolated benchmark, schema or passing compile closes EWF/INV/SL/PF release gates.
-

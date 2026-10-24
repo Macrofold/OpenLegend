@@ -174,4 +174,3 @@ The accepted and delivered foundation uses one extended appraisal owner with sta
 
 - Implementation: [ACT07/ACT08 delivery and remaining actor work](../../maintainers/actor-model.md#priority-5-implementation-slices).
 - Limits and constraints: [Feelings and social continuity inventory](../../limits/feelings.md).
-

@@ -101,4 +101,3 @@ Reconsideration follows [limits audit](../maintainers/limits-audit.md) and the o
 [policy]: ../worlds/base/physical-sound.md
 [work]: ../maintainers/acoustic-stealth.md
 [a-limits]: perspective-perception.md
-

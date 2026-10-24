@@ -107,4 +107,3 @@ For comparative work, preserve complete required identity, source-specific permi
 - Emotional-system owner: [Feature](emotional-physiology-feature-spec.md), [technical contract](emotional-physiology-tech-design.md) and [delivery tracker](../maintainers/emotional-physiology.md).
 - Limits and constraints: [CG14 authorship boundary](../limits/cognition.md#cg14--character-authorship-and-personal-evidence), [memory/cognition limits](../limits/cognition.md), [feeling limits](../limits/feelings.md). No new numerical runtime bound is introduced.
 - Evidence: [PG02 report](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices), historical trials remain distinct from the new content and expanded world.
-

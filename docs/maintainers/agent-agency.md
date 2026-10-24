@@ -224,26 +224,26 @@ PW03/PW10's AG10 consumer keeps ordinary review/Stop/plain own-request results s
 
 The [October 2 Engineer 3 report](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026) contributes current family/watch native checks, final PostgreSQL restarts, scoped-page/access cases and six actual injected-director scenarios to AG11, alongside the historical baseline. Scripted ordinary card/craft/custody checks passed; the historical shared TypeScript/picker blockers have been repaired and NP04 supplies the shared ordinary picker. Uncoached player observation, actual voluntary model choices and the broader combined PW06 acceptance remain separately tracked. AG12/AG13 and the full deterministic/adversarial matrix below are not closed; settled/reserved/outstanding/uncertain Engineer 3 Jev exposure remains $0.
 
-| Scenario | Required observation |
-| --- | --- |
-| No response during valid work | No new thought, goal, event or cancellation; native work progresses |
-| Hunger during long-running work | Supported long work can be interrupted for food; the prior goal survives, progress/resources obey native rules, and resumption revalidates current conditions |
-| Combined decision | Several optional components admitted with distinct outcomes; no forced category |
-| Same known action, different wording | Equivalent native effect without a new definition |
-| Bow discovery and production | Private actor-authored method, admitted recipe, separate gathering/preparation/crafting, actual ammunition/use prerequisites |
-| Invention without construction | Knowledge may persist; no item, material consumption or forced goal |
-| Inadequate or unknown method | Neutral scoped clarification or honest limitation; no concealed engine-supplied conceptual solution |
-| An easier food source appears | An eligible opportunity to reassess; old plan not forced or silently erased |
-| Unreachable prey or missing material | Dependent work blocks without fabricated success; unchanged failure does not loop |
-| A social/epistemic goal | Persists without a fake objective success predicate or control over another actor |
-| Nonhuman actor | Granted cognition works within its embodiment; no automatic speech or human hand capability |
-| Goal abandoned during invention | Result does not restart the canceled plan or spend crafting inputs |
-| Two actors, one final resource | Single authoritative consumption; loser gets grounded feedback |
-| Private invention near another actor | No recipe/method/goal leakage through events, metadata, diagnostics or retrieval |
-| Duplicate/late/conflicting completion | Exactly one effect; conflicts and retired identities cannot be re-admitted |
-| Restart/restore/pause/zero budget | Correct scoped recovery, no new paid dispatch, native fallback preserves actual state |
-| Injection and malformed references | Untrusted speech/goal text, prototype IDs, alias cycles and forged result refs cannot acquire authority |
-| Crowded scene and long history | Bounded candidates and diagnostics; relevant protected evidence and fair admission survive |
+| Scenario                              | Required observation                                                                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No response during valid work         | No new thought, goal, event or cancellation; native work progresses                                                                                           |
+| Hunger during long-running work       | Supported long work can be interrupted for food; the prior goal survives, progress/resources obey native rules, and resumption revalidates current conditions |
+| Combined decision                     | Several optional components admitted with distinct outcomes; no forced category                                                                               |
+| Same known action, different wording  | Equivalent native effect without a new definition                                                                                                             |
+| Bow discovery and production          | Private actor-authored method, admitted recipe, separate gathering/preparation/crafting, actual ammunition/use prerequisites                                  |
+| Invention without construction        | Knowledge may persist; no item, material consumption or forced goal                                                                                           |
+| Inadequate or unknown method          | Neutral scoped clarification or honest limitation; no concealed engine-supplied conceptual solution                                                           |
+| An easier food source appears         | An eligible opportunity to reassess; old plan not forced or silently erased                                                                                   |
+| Unreachable prey or missing material  | Dependent work blocks without fabricated success; unchanged failure does not loop                                                                             |
+| A social/epistemic goal               | Persists without a fake objective success predicate or control over another actor                                                                             |
+| Nonhuman actor                        | Granted cognition works within its embodiment; no automatic speech or human hand capability                                                                   |
+| Goal abandoned during invention       | Result does not restart the canceled plan or spend crafting inputs                                                                                            |
+| Two actors, one final resource        | Single authoritative consumption; loser gets grounded feedback                                                                                                |
+| Private invention near another actor  | No recipe/method/goal leakage through events, metadata, diagnostics or retrieval                                                                              |
+| Duplicate/late/conflicting completion | Exactly one effect; conflicts and retired identities cannot be re-admitted                                                                                    |
+| Restart/restore/pause/zero budget     | Correct scoped recovery, no new paid dispatch, native fallback preserves actual state                                                                         |
+| Injection and malformed references    | Untrusted speech/goal text, prototype IDs, alias cycles and forged result refs cannot acquire authority                                                       |
+| Crowded scene and long history        | Bounded candidates and diagnostics; relevant protected evidence and fair admission survive                                                                    |
 
 ### AG12 — Behavioral value and cost, separately authorized
 
@@ -297,4 +297,3 @@ The [October 14 continued combat qualification](../verification/rivals-and-conte
 The [shared decision admission correction](../verification/rivals-and-contested-ground.md#preserve-admitted-decisions-and-qualify-the-last-ammunition--october-14-2026) preserves a funded autonomous opportunity when another character receives a player request. Existing busy refusal and explicit resubmission replace unconditional thought cancellation; ordinary action feedback, fairness and bounded urgent refresh remain. This closes that scheduling defect, not broader agency reliability.
 
 Actual independent choice evidence now includes a [fed defender selecting shield guard after fresh injury](../verification/rivals-and-contested-ground.md#fed-defender-fresh-injury-and-independently-chosen-guard--october-14-2026), with all required evidence present, accepted work and current-format continuation. Its decision takes 22.022 real seconds; this is one defensive response, not full combat responsiveness, hostile attack, independent evasion or pursuit. Earlier cancelled opportunities are test timing/presence failures rather than refusals. Those original Batch 06 criteria and broader AG reliability remain open; no forced decision, threshold change or actor-specific controller is added.
-
