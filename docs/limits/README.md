@@ -4,6 +4,8 @@ A limit is a chosen restriction on capacity, access to supported features, selec
 
 The selected first-playable design has linked inventories for [shared integration](first-playable-world.md), [survival/making](first-playable-survival.md), [camp construction](editable-shelters.md), [cooperation](first-playable-cooperation.md) and [roaming](first-playable-roaming.md). Their authored numbers are selected starting values, with runtime/player qualification still open.
 
+The selected [acoustic-stealth inventory](acoustic-stealth.md) owns physical-source, quiet-movement, real-overlap and acoustic-work constraints. It consumes the existing [hearing/speech inventory](hearing-and-speech.md) for shared quantities, speech and native sound-response boundaries; it does not duplicate those limits or imply runtime qualification.
+
 ## One owner per purpose
 
 - The feature specification owns behavior and accepted requirements.

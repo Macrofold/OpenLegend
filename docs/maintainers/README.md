@@ -26,6 +26,10 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 [Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). Selected ND11/ND13 design is complete; runtime and independent acceptance remain open in CTR.
 
+## Acoustic stealth and physical sound
+
+[Acoustic stealth (ACS00–ACS08)](acoustic-stealth.md) owns delivery of the completed [feature specification](../projects/acoustic-stealth-feature-spec.md) and [technical design](../projects/acoustic-stealth-tech-design.md), with [constraints](../limits/acoustic-stealth.md) and the bundled [physical-sound policy](../worlds/base/physical-sound.md). SAD-C and the selected ND13/ND16 design slices are complete; implementation and qualification remain open. Supported physical sources and speech share the hearing owner, perspective evidence and native response integration.
+
 ## Speech and social perception
 
 [Speech and social perception (SPK00–SPK11)](speech-and-social-perception.md) owns the [feature specification](../projects/speech-and-social-perception-feature-spec.md) and [technical design](../projects/speech-and-social-perception-tech-design.md). The selected ordinary-speech portion of ND16 is designed; implementation, qualification and broader hearing/media acceptance retain their owners.
