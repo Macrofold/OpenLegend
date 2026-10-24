@@ -12,7 +12,7 @@ This is **module B — vision and orientation** in the [shared stealth contracts
 
 A owns noticing, evidence accumulation and storage, recognition, names, independent fact freshness and remembered knowledge. B supplies actual visible opportunities, detail and physical orientation. C owns posture, locomotion/contact policy and sound. E chooses whether and where to look, inspect, watch or investigate. F decides preparedness and surprise. G owns controls, camera privacy and presentation using A's permitted results.
 
-The existing `docs/projects/stealth-awareness-tech-design.md` remains unchanged and authoritative. This feature creates no second action channel, knowledge store, attention scheduler, awareness flag or hidden/visible switch on an actor.
+The shared `docs/projects/stealth-awareness-tech-design.md` is authoritative. This feature creates no second action channel, knowledge store, attention scheduler, awareness flag or hidden/visible switch on an actor.
 
 ## Current behavior and selected target
 

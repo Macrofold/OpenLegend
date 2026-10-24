@@ -16,7 +16,7 @@ The integrated [vision design](../projects/vision-and-gaze-tech-design.md) suppl
 
 **Exact source revisions are adopted.** SC02/A preserve each source owner’s actual version and storage role, including personal string digests; there is no universal numeric-native assumption or additional acoustic counter. ACS01/04/06 implement those adapters. SA-D01 remains the separate controlled-player psychological policy, including creation/review, retained-appraisal applicability, disclosure and control transfer.
 
-This design completes only the physical-sound/quiet-movement and generalized-hearing portions of [ND13](needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization), [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and SAD-C. Broader controls, communication, attention, emotional behavior, surprise, hearing media and final shared integration retain their open owners.
+This design completes only the physical-sound/quiet-movement and generalized-hearing portions of [ND13](needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization), [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) and SAD-C. Broader controls, communication, attention, emotional behavior, surprise and hearing media retain their own scope and delivery owners. SAD-I has completed integration of the selected A–G designs; their runtime work remains open.
 
 - [EPR](events-perception-and-reactions.md), [PP01–PP06][a-work] and [SPK](speech-and-social-perception.md) retain acquisition, recognition, speech/addressing, experience and memory responsibilities. Acoustic tasks integrate their supported inputs and consumers without duplicating their delivery checklists.
 - [HE01–HE05](hearing-and-speech.md) retain delivered speech/caption/history foundations and outstanding hearing qualification. This design changes selected physical-sound scope, not historical runtime evidence or unchanged speech thresholds.
@@ -177,7 +177,7 @@ The contextual review covers all 42 repertoire files. These existing opportuniti
 | [Work/crafting](../repertoires/work-crafting.md)                 | WORK-084                  | Compatible armor fitting can reduce avoidable rattle while preserving real coverage and carried weight.                                                          |
 | [Combinations](../repertoires/combinations.md)                   | “The quarry that learns”  | The quarry's new brush/scree sounds support listening, changing vantage or accepting escape rather than live hidden tracking.                                    |
 
-SAD-I owns the broader repertoire navigation, coverage and priority synthesis when the A–G designs are combined. Existing source ledgers and optional world profiles retain their scope.
+SAD-I records the integrated repertoire navigation, coverage and priorities for the combined A–G designs. Existing source ledgers and optional world profiles retain their scope.
 
 ## Handoff and evidence requirements
 
