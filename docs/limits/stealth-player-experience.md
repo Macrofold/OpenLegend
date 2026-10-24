@@ -22,6 +22,8 @@ This is operational liveness, not a simulation duration. It grants no progress, 
 
 **Reason/tradeoff:** a modest coarse step supports keyboard-only exploration while pointer/point selection permits precision. Actual turn rate/range, sensory coverage, body-assisted costs and completion belong to B. The preview distinguishes requested and actual gaze; an out-of-range request does not silently turn the body.
 
+The focused area/vantage selector uses **0.25 m** arrow-key translation and **1 m** with Shift in its captured camera-ground basis. Those keys belong to the selector while focused. They adjust only a permitted draft point; they do not move the body, enumerate a search grid or change E's supported region shapes/coverage. Region extents come from the installed method adapter or an already permitted known region, not a new client radius rule. Confirm returns to review and a separate Start admits work. These proposed fine/coarse placement steps need keyboard/touch usability qualification; non-ground bodies require their installed adapter or permitted named choices.
+
 The minimum interface covers desktop keyboard/mouse and responsive visible controls. Touch selection/click-to-move and explicit Look/Watch remain possible. Full gamepad profiles, virtual sticks and arbitrary assistive hardware qualification are not selected by this scope; essential decisions still need non-drag/non-hold alternatives.
 
 ## SPX-L03 — Historical scene decorations

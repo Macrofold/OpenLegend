@@ -57,6 +57,7 @@ The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a2
 **Status: Not started.** Dependencies: SPX01–02; E methods and own fulfillment; A/C original evidence; SA-D03/F readiness handoff where preparation is displayed.
 
 - [ ] Expose installed finite Watch, Watch for danger, Listen, Scan, Inspect and Investigate through existing action discovery and Current work.
+- [ ] Implement the scoped area/vantage selector through existing placement/known-place/activity owners: keyboard and tap choices, offered region extents, Confirm distinct from Start, Cancel restoring the draft, exact stale-input handling and no hidden-source defaults.
 - [ ] Preserve default observation-only Watch; explicit danger anticipation and actual preparing/maintaining/unfulfilled/ended/incomplete feedback. Physically maintained coverage cannot substitute for F's completed preparation lead.
 - [ ] Preserve parent work and original deadlines across compatible amendments; expose exact Stop watching, end only owned gaze on stop/expiry and end the facet with parent work.
 - [ ] Investigate original region/bearing with a player-selected permitted vantage when range is unknown. Report partial/empty findings without proving absence or rebinding to the wrong person.
