@@ -517,6 +517,12 @@ Current-conversation projection and its deferred coverage are owned by [NC12 com
 - [ ] Verify old failed jobs no longer keep the badge degraded after a newer successful completion. Cancellations are not provider-health evidence. Labels now say Recent AI error / Latest AI request failed instead of implying a live Service limited health check.
 - [ ] Document the distinction between configured providers, request outcomes and actual service health; consider independent per-provider health later. No tests run for this change.
 
+### Standalone Cognition Lab consumer
+
+- [x] Design the isolated developer workspace, current-left/historical-right distinction, actual-stage capture, one-shot prepared-request editing and retained-run inspection. The [paired design](../projects/cognition-lab-feature-spec.md) and [CL00–CL11](cognition-lab.md) own this selected design and its implementation breakdown.
+
+The lab reuses ordinary cognition, memory and action owners through a shared runtime; it is not a new cognition pipeline or a replacement for the in-game Intelligence panel. CR11/CR12 and the inspector qualification below remain open at their recorded scopes. Lab retention/export and compact navigation are now specified, but their implementation is CL05/CL08/CL11; provider-side missing history, live permissions, complete-cost evidence and other existing inspector gaps are not closed by that design.
+
 ### Intelligence call inspector — deferred validation and documentation
 
 - [ ] Add focused tests for direct Jev/LM, Macrofold inference, and full harness/world-agent input/output capture, failures, cancellation, receipt usage, billing, raw provider responses, and restart history.

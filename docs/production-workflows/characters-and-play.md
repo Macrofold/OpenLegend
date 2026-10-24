@@ -10,6 +10,10 @@ Use this route to turn an idea into a place, person or situation that somebody w
 
 The work can begin with a mechanical idea, a striking image, a person, a location or a player observation. Creative exploration can move between them. The final result still has to join actual world behavior, permitted knowledge and appropriate presentation. The [gameplay priorities](../repertoires/gameplay-priorities.md) choose the worthwhile activity; this route explains how to develop it.
 
+## Selected laboratory consumer
+
+The [Cognition Lab](../projects/cognition-lab-feature-spec.md) supplies the designed isolated rehearsal workspace for this route. Start from a worthwhile person/situation, use ordinary native speech and actions, inspect exact personal evidence and actual outcomes, then change one relevant factor. Its [repertoire map](../projects/cognition-lab-repertoire-review.md) supplies optional recipes for memory, independent help/refusal, humor, ordinary pleasure, invention, threat and interrupted work. Keep the intended experience and human review notes outside model input; let the character make the choice. A saved starting scenario, continuation checkpoint and retained evidence run have different purposes. [CL](../maintainers/cognition-lab.md) retains pending tool delivery; CE/IS/CTR/FPV retain actual character and player evidence.
+
 ## The route
 
 ```mermaid

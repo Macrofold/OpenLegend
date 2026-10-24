@@ -18,6 +18,7 @@ Existing combat, perception, speech, memory and agency designs remain authoritat
 
 ## 4. Character coherence, own-action truth and belief revision
 
+- [x] Specify the selected isolated rehearsal and evidence-inspection workspace in the [Cognition Lab pair](../projects/cognition-lab-feature-spec.md), with current scenario truth, personal evidence, exact model inputs and accepted effects kept distinct. [CL](cognition-lab.md) owns tool delivery; the comparison below still requires real evidence.
 - [ ] Compare current, stock, creative and low-refusal models through E3/E4 and existing character episodes. Preserve required identity and source-linked own-action outcomes; distinguish reality, belief, intentional lies and unexplained errors or drift. Test justified change without scripting the desired decisions or weakening selected acceptance such as CTR's Ada baseline. **Owners:** CE05, CR12/AG12, R10/R24; DG23/ND19 only for lasting outlook changes. [Context and characterization](../../archive/02-research/npc-cognition/02-mantella-and-npc-systems.md).
 
 ## 5. Optional expression and truly interactive voice
@@ -44,11 +45,13 @@ Existing combat, perception, speech, memory and agency designs remain authoritat
 
 ## 10. A fair longitudinal model screen before a production choice
 
+- [x] Design the compact interactive consumer for saved scenarios/checkpoints/runs, serial one-factor variants, exact captured requests and human notes outside model input in [Cognition Lab](../projects/cognition-lab-tech-design.md). [CL08/CL09](cognition-lab.md) owns implementation; the runnable panel, corpus, budgets and actual comparisons below remain open.
 - [x] Specify the selected pinned manifest, bounded comparison stages, role isolation, failure taxonomy, held-out families and whole-episode acceptance in the [paired design](../projects/custom-models-feature-spec.md). Optional tooling and actual corpus/model runs remain open under [MX](custom-models.md); they do not gate production provider delivery.
 - [ ] Prepare a small runnable panel, pinned configuration, original-character episodes, acceptable alternatives, family-level held-out splits, human review and task budget. Reuse [existing benchmark fairness](../../scripts/decision-benchmark/README.md#grading-and-fairness); preserve failed coverage, severe errors and uncertain charges. Then obtain whole-episode and delayed-recall evidence, measuring useful action/expression latency and drift against exposure length. Preparation is not execution or adoption. **Owners:** CE05/CR12/AG12, R24 and existing verification owners. [Protocol](../../archive/02-research/npc-cognition/11-evaluation-and-research-gates.md).
 
 ## 11. Cognition that produces distinctive and enjoyable play
 
+- [x] Map all 28 repertoire catalogues to [12 reference episode recipes](../projects/cognition-lab-repertoire-review.md#repertoire-derived-episode-cards) with meaningful choices, positive pleasure, actual consequence, existing acceptance owners and explicit stopping points. These complete the selected lab recipe design; they are not twelve required shipped presets or delivered gameplay mechanics.
 - [ ] Select a worthwhile supported activity and identify the player's choices, NPC contribution, stakes or pleasure, consequence and stopping point. Test enjoyment, understandable alternatives, useful invention, person-specific recall, wording effort and repeat value against an adequate baseline. Keep interesting work for the player; do not force successful cooperation or novelty. A scoped play study may accompany model screening where prerequisites allow it. **Owners:** DG02/CE, DG03/FPV, R10/R24, AG/CR and existing invention/cooperation owners. [Player-value hypotheses](../../archive/02-research/npc-cognition/12-playable-opportunities-and-review.md) · [Playtest plan](../projects/first-playable-playtest-plan.md).
 
 Close preparation with a usable experiment specification or an explicit decision not to pursue it. Model quality and gameplay acceptance require actual evidence in the owning tracker. Full feature/technical designs are needed only for selected missing contracts, not to restate existing designs.

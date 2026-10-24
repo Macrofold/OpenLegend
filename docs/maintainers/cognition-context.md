@@ -2,6 +2,8 @@
 
 **Status: Done — designed; core runtime implementation and qualification open · October 21, 2026.** The feature and technical specifications complete the commissioned context-construction design. This tracker owns its coordinated implementation stages, not a replacement memory, action, perception, identity, provider or evaluation subsystem. No runtime checkbox below is satisfied by the design or by character-count calculations.
 
+The selected [Cognition Lab](../projects/cognition-lab-feature-spec.md) is a developer consumer of this shared preparation and its exact captures. [CL](cognition-lab.md) owns isolated editing, request inspection and comparison controls; SC keeps context construction and omission/quality acceptance. The lab can expose the current implementation before all SC work lands, and must identify which installed stages/evidence are available.
+
 ## Maintained records
 
 - Behavior and gameplay: [Feature specification](../projects/situation-aware-cognition-context-feature-spec.md).

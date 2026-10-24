@@ -6,6 +6,8 @@ The selected first-playable design has linked inventories for [shared integratio
 
 The selected [ND38 skilled action design](../projects/action-execution-and-skill-expression-feature-spec.md) has its own **proposed, unimplemented** [ASE-L01–ASE-L10 limits](action-execution-and-skill-expression.md) for optional timed combat, manual inputs, bounded true per-item pouch fit, faster world clocks and deferred competitive browser trust. It changes no current weapon, recipe, clock or storage limit yet.
 
+The selected standalone [Cognition Lab](../projects/cognition-lab-feature-spec.md) has proposed [CLL01–CLL09](cognition-lab.md) for runtime isolation, compact navigation, paging, explicit run bounds and retained capture. Shared provider, cognition, native action and save constraints keep their existing owners; no runtime capacity claim follows from the design.
+
 ## One owner per purpose
 
 The accepted [shared NPC text design](../projects/npc-speech-streaming-feature-spec.md) is inventoried in [NST-L01–NST-L09](npc-speech-streaming.md). Shared hearing, cognition, memory, response and HTTP/caption limits retain their existing owners; the new inventory distinguishes selected batching/presentation constraints from unmeasured multiplayer capacity.
