@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 24, 2026 — Local verification only
+
+Mike requires repository checks to run locally and prohibits GitHub CI. The Code checks and Spatial world checks workflows are disabled, and their repository definitions are removed. The [verification policy](../.agents/rules/verification.md#local-verification-only) retains impact-based check selection, disposable local PostgreSQL databases and explicit authorization for full validation. Historical CI references do not authorize another hosted run or an automatic full-suite rerun. This replaces the previous automatic push/pull-request workflow; runtime correctness, privacy, accounting and existing acceptance requirements remain unchanged.
+
 ## October 24, 2026 — Extend deployment selection to native judgments
 
 The custom-model contract now includes native SystemOne judgments alongside independently selected fast/complex NPC chat replies. The same [trusted configuration](live-ai-setup.md#use-existing-model-deployments-for-decisions-and-replies), deployment binding and existing inference/recovery/accounting owners apply. Native decisions preserve named Choice/Score/Noul answers and their current consumers; chat models do not stand in for a scoring head. Native model-reported timing remains distinct from provider and complete-request timing. Missing configuration preserves existing models and escalation policy.

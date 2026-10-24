@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                         | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Asset storage and shared tooling are delivered; game packaging, hosted rollout and production qualification remain open. | 2026-10-17   |
+| In progress | Asset storage and shared tooling are delivered; game packaging, hosted rollout and production qualification remain open. | 2026-10-24   |
 
 **Hosting design, researched 2 October 2026; asset operations implemented under AS.** This is the execution companion to the [technical design](production-deployment-tech-design.md). The Dockerfile, application CDK, game deployment workflows and release-specific maintenance gate still need implementation. Asset storage is deployed and its shared publisher is implemented; use the [canonical asset workflow](../asset-workflow.md) for supported commands and [AS verification](../verification/game-asset-storage.md) for actual results. Other command examples remain proposed until exercised. [PD01–PD12](../maintainers/production-deployment.md) owns tasks and acceptance; this document owns the deployment procedure, not another checklist.
 
@@ -18,7 +18,7 @@ The proposed implementation adds these artifacts:
 
 - A root `Dockerfile` and `.dockerignore`: reproducible application image, no credentials, private saves, local caches or research artwork.
 - An `infra/` TypeScript CDK application: a foundation stack for networking, registry, database and application secrets; a runtime stack for the world service and its load balancer. Integrate verified outputs from the independently retained [asset infrastructure](game-asset-storage-tech-design.md#2-physical-storage-and-accounts); do not create a second asset resource owner or a VPC/database instance per player/world.
-- A protected build/release workflow and a separately authorized asset-publication workflow. Reuse `.github/workflows/check.yml`; do not replace its checks with deployment success.
+- A protected build/release procedure and a separately authorized asset-publication workflow. Run repository checks locally under the [verification policy](../../.agents/rules/verification.md#local-verification-only); deployment success does not replace those checks. Do not add GitHub CI as part of deployment work.
 - A narrow operator release command implementing the phases below, with a durable release record. Do not build a generic workflow platform or an administration dashboard before the first safe release.
 
 **Current packaging facts matter.** At the reviewed revision, `pnpm run build` generates configuration, type-checks with `tsc --noEmit`, and builds the browser into `dist/client`. It does **not** produce a compiled server. `pnpm start` regenerates configuration and executes `apps/server/src/main.ts` through `tsx`. A Docker recipe that copies only `dist/` and runs `node dist/server.js` will not run this application. See [package scripts](../../package.json), [client output](../../apps/client/vite.config.ts) and [server entry](../../apps/server/src/main.ts).

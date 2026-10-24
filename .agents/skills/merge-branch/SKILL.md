@@ -45,7 +45,7 @@ Resolve certain conflicts from both sides' intent and current authoritative cont
 
 Report affected files, both intentions, the chosen resolution and rationale. If any resolution is uncertain or requires developer input, stop all work, preserve conflicts, explain alternatives and recommendation, and await the answer. Follow any stricter repository conflict rule. No unresolved conflict may be committed or pushed.
 
-Review the complete staged diff against the recorded destination and run checks selected by reconciliation effects. Fix introduced issues; distinguish baseline failures, reused evidence and unrun checks. Do not convert a merge into broader qualification or net-new work.
+Review the complete staged diff against the recorded destination and run local checks selected by reconciliation effects under the [verification policy](../../rules/verification.md#local-verification-only). Fix introduced issues; distinguish baseline failures, reused evidence and unrun checks. Do not convert a merge into broader qualification or net-new work.
 
 For relevant database/save/starting-world changes, complete the [configured development-database readiness check](../../rules/verification.md#rebase-verification) before calling the destination ready. Fresh disposable fixtures alone do not establish local startup readiness.
 

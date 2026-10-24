@@ -22,7 +22,7 @@ Apply these principles to rebases and merges, including synchronization within a
 5. **Reconcile documents without creating ceremony.** Resolve documentation conflicts and update newly inaccurate contracts or status. Accurate plans, reports and remaining-work entries stand. Do not create a merge diary, new evidence report or repeat unchanged deferrals merely to record the operation; material planning requirements still apply.
 6. **Finish at the agreed boundary.** After the requested history operation, affected-diff review and selected checks pass, report the refs, consequential resolutions and verification limits, then stop. Establish whether a failure is introduced or pre-existing; fix introduced failures, and report unrelated baseline failures without repairing them as part of reconciliation. Unchanged broader qualification remains tracked, not reopened as merge work.
 
-These limits govern reconciliation, not separately authorized feature implementation or required CI. Agent reading, analysis and harness setup are part of elapsed time; short test execution does not justify prolonged preparation.
+These limits govern reconciliation, not separately authorized feature implementation or required local verification. Agent reading, analysis and harness setup are part of elapsed time; short test execution does not justify prolonged preparation.
 
 ## Select the target
 
