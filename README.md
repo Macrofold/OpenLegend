@@ -115,6 +115,8 @@ Invent also supports bounded gathering tools: a compatible carried tool improves
 
 Set `OPEN_LEGEND_AUTH_MODE=oidc`, an exact `OPEN_LEGEND_PUBLIC_ORIGIN` (for example `https://world.example.org`), `OPEN_LEGEND_OIDC_ISSUER` and `OPEN_LEGEND_OIDC_CLIENT_ID`. Register that client with authorization-code flow, PKCE S256 and redirect URI `<public-origin>/auth/callback`. Set `OPEN_LEGEND_OIDC_CLIENT_SECRET` only if the registered client requires one. HTTPS is required for both origin and issuer. `OPEN_LEGEND_HOST` controls the bind address; a reverse proxy must preserve the configured public Host/origin. The separate `OPEN_LEGEND_OIDC_LOOPBACK_HTTP=true` option permits plain HTTP for local development only on loopback addresses (`localhost`, `127.0.0.1`, `::1`): a local game address such as `http://localhost:3210` can then use a hosted HTTPS provider such as Auth0, or a local HTTP identity provider. Cookies are marked `Secure` whenever the public origin is HTTPS. A bare-host issuer may be written with or without its trailing slash.
 
+For HTTP loopback sign-in, opening another loopback address on the same port redirects browser navigation to `OPEN_LEGEND_PUBLIC_ORIGIN`, preserving the page path and query. For example, `http://127.0.0.1:3211` opens the configured `http://localhost:3211` game. Startup prints the configured public address. API requests still require that exact origin; use it for scripts and registered sign-in callbacks.
+
 The operator supplies `OPEN_LEGEND_ACCOUNT_BINDINGS` as a JSON array of exact verified issuer/subject mappings. For example, replace the issuer/subject placeholders with values from your provider:
 
 ```json

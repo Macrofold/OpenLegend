@@ -1,8 +1,8 @@
 # Auth0 sign-in
 
-| Status      | Current progress                                                                                                                                | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Real local sign-in, player control and Macrofold operation work; the broader two-account invite and access-removal checks remain open in IDP01. | 2026-10-16   |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Local entry uses the configured sign-in address; the broader two-account invite and access-removal checks remain open in IDP01. | 2026-10-24   |
 
 On October 1, 2026 Mike selected Auth0 as the world login service ([D05](../../archive/05-project/open-decisions.md)) and asked for a plan to run it locally. This plan covers only repository changes. Creating the Auth0 tenant, its dashboard settings and personal credentials stay outside the repository; credentials live only in an untracked local `.env`. It builds on [entry and maintenance](completed/multiplayer-entry-maintenance.md) (invites and World operations). Estimated 30–60 changed logic lines plus documentation. The change is small but touches the authentication boundary, so this durable plan records its rules and checks. Mike subsequently authorized implementation and the local integration continuation below.
 
@@ -21,6 +21,7 @@ The original configuration accepted plain HTTP only when **both** the game addre
 2. **Login adapter** ([authentication.ts](../../apps/server/src/authentication.ts)): relax the `openid-client` HTTPS requirement only when the login service itself uses HTTP (local Keycloak), never for an HTTPS service such as Auth0.
 3. **Cookies** ([http.ts](../../apps/server/src/http.ts)): session, login and invite cookies are `Secure` whenever the public address is HTTPS. The flag is omitted only for an HTTP loopback address. This actual-address rule is implemented; the original opt-in-based rule was the pre-change defect.
 4. **Issuer spelling** ([config.ts](../../apps/server/src/config.ts)): store the configured issuer and every binding's issuer in normalized URL form. Auth0 signs tokens with `https://<tenant>/` (trailing slash), so both spellings in configuration must match. Issuers with a path, such as Keycloak realms, are unchanged.
+5. **Local entry address** ([http.ts](../../apps/server/src/http.ts), [main.ts](../../apps/server/src/main.ts)): with explicit HTTP loopback opt-in, GET/HEAD navigation through another loopback hostname on the listening port redirects to the configured public origin, preserving path and query. API requests retain exact Host/origin checks. Startup prints the public origin so its link already matches the registered callback and browser cookies.
 
 No UI or protocol change is needed. Invites, World operations and account bindings work unchanged with Auth0 user IDs (for example `auth0|…` or `google-oauth2|…`).
 

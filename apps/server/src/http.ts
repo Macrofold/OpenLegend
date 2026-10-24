@@ -802,22 +802,42 @@ async function initializeGameServer(
       return mcp.handle(request, response);
     const address = (options.publicServer ?? server).address();
     const port = address && typeof address !== 'string' ? address.port : config.port;
-    const allowedHosts = new Set(
-      config.authentication.mode === 'local'
-        ? [`127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`]
-        : [new URL(config.authentication.origin).host],
-    );
-    if (!allowedHosts.has(request.headers.host ?? ''))
-      return send(response, 403, {
-        ok: false,
-        code: 'host',
-        message: 'Use the configured game host.',
-      });
+    const loopbackHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`]);
+    const publicOrigin =
+      config.authentication.mode === 'oidc' ? new URL(config.authentication.origin) : undefined;
+    const allowedHosts = publicOrigin ? new Set([publicOrigin.host]) : loopbackHosts;
     let url: URL;
     try {
       url = new URL(request.url ?? '/', `http://${request.headers.host}`);
     } catch {
       return send(response, 400, { ok: false, code: 'url', message: 'Invalid URL.' });
+    }
+    if (!allowedHosts.has(request.headers.host ?? '')) {
+      // Local browser entry must reach the registered sign-in origin before cookies
+      // are issued. Redirect navigation only; API access keeps its exact Host checks.
+      if (
+        config.authentication.insecureLoopback &&
+        publicOrigin?.protocol === 'http:' &&
+        loopbackHosts.has(publicOrigin.host) &&
+        loopbackHosts.has(request.headers.host ?? '') &&
+        (request.method === 'GET' || request.method === 'HEAD') &&
+        request.url?.startsWith('/') &&
+        !['/api', '/auth', '/mcp'].some(
+          (path) => url.pathname === path || url.pathname.startsWith(`${path}/`),
+        )
+      ) {
+        response.writeHead(307, {
+          Location: `${publicOrigin.origin}${url.pathname}${url.search}`,
+          'Cache-Control': 'no-store',
+        });
+        response.end();
+        return;
+      }
+      return send(response, 403, {
+        ok: false,
+        code: 'host',
+        message: 'Use the configured game host.',
+      });
     }
     const ownOrigin =
       config.authentication.mode === 'oidc'
