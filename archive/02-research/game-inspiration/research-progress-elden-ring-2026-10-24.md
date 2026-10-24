@@ -18,7 +18,7 @@ Apply [R01–R14 and conditional R15](research-requirements.md), including the [
 | [World, exploration and narrative](dossiers/elden-ring/02-world-exploration-and-narrative.md) | In progress | Complete regional design, deep lore, quest studies, presentation and production. |
 | Reception and commercial analysis | In progress | Five substantive written reviews, contrasting Steam testimony, supported commercial estimates and causal limits. |
 | Native multiplayer and modding | In progress | Native rules, R15 applicability and documented tools/workflows/creations/limitations. |
-| Synthesis and coverage | In progress | Comparative design lessons, existing OpenLegend owner links, requirement map, preservation/content/link review and committed closure. |
+| [Synthesis and OpenLegend implications](dossiers/elden-ring/05-design-synthesis-and-openlegend.md) | Draft complete | Integrated requirement map, preservation/content/link review and committed closure remain open. |
 
 **Next completion boundary:** all chapters substantively complete, integrated through the existing dossier/indexes, reviewed and committed. No runtime implementation or gameplay tests are part of this research assignment. Source-access gaps will be stated beside affected claims.
 
