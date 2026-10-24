@@ -2,7 +2,7 @@
 
 [Feature](../projects/stealth-player-experience-feature-spec.md) · [Technical contract](../projects/stealth-player-experience-tech-design.md) · [SPX delivery](../maintainers/stealth-player-experience.md) · [Inventory rules](README.md)
 
-These are **selected design proposals, not implemented or measured optimums**. Updated 2026-10-23. Existing specialist inventories remain the sole owners of movement, sound, gaze, attention, startle and surprise laws. Information authorization, exact life/control binding, current-versus-history separation and atomic admission are correctness obligations, not tunable limits.
+These are **selected design proposals, not implemented or measured optimums**. Updated 2026-10-24. Existing specialist inventories remain the sole owners of movement, sound, gaze, attention, startle and surprise laws. Information authorization, exact life/control binding, current-versus-history separation and atomic admission are correctness obligations, not tunable limits.
 
 ## SPX-L01 — Replaceable input traffic and freshness
 
@@ -26,7 +26,7 @@ The minimum interface covers desktop keyboard/mouse and responsive visible contr
 
 ## SPX-L03 — Historical scene decorations
 
-**Status: Proposed replacement of current implicit faint memory. Restrictiveness: Medium.** Reuse the existing **128-entry maximum** for disposable remembered scene entries ([LA222](interface.md#la222)). A newly demoted eligible marker remains in the active scene for **5 normal-play seconds**, then leaves that scene layer; a pause freezes this simulation-derived age. Opening/pinning historical inspection keeps the record readable independently. Journal/history access follows actual retained knowledge, not this renderer lifetime.
+**Status: Proposed replacement of current implicit faint memory. Restrictiveness: Medium.** Reuse the existing **128-entry maximum** for disposable remembered scene entries ([LA222](interface.md#la222)). A newly demoted eligible marker remains in the active scene for **5 normal-play seconds**, then leaves that scene layer; a pause freezes this simulation-derived age. Opening/pinning historical inspection keeps the record readable independently. Historical inspection and eligible source access follow actual retained knowledge, not this renderer lifetime; acquired occurrences use Events (J), separately from Character records.
 
 Use hollow labeled location markers by default. Optional frozen silhouettes share the same authorization and bound. No remembered decoration emits light, sound, shadow, animation, collision or current-target data. Entries expire/evict without asserting death, absence or forgetting. Re-observation comes from a new current permission, not renewing a decoration through hidden state.
 
@@ -48,14 +48,14 @@ Reading time is real UI time under existing caption policy, independent of simul
 
 **Status: Current owners reused; new integration unqualified. Restrictiveness: As rated by each owner.**
 
-| Existing constraint | G treatment |
-| --- | --- |
-| Current server stream ceiling of 20 Hz | Publication pacing only. Native senses, gaze, motion, preparation and effects keep their own ordered simulation boundaries. Short acquired cues still reach history. |
-| Existing caption listener-origin displacement fallback (0.5 m in inspected scene code) | Retain neutral historical placement once its old directional screen anchor is misleading; no recalculation from hidden source position. Reconcile future C precision in its owner. |
-| Hover's 200 ms delay / 80 ms fade ([interface](interface.md)) | Reuse ordinary pointer presentation; loss of permission bypasses fade for live targeting. Reduced motion removes animation. |
-| Existing graphics budgets, including 2/8 local light slots | Aesthetic only. Select from current permitted appearance; historical emitters are removed under the new target. No graphics tier changes detection. |
-| E's finite method durations/check allowances; B's actual turn rates; C's pace/posture; D/F's effect/preparation laws | Read installed descriptors and current feedback. No duplicate constants or client calculations. |
-| Existing ordered event, knowledge/history, caption and native continuation bounds | Retain their semantic owners and truthful partial/incomplete outcomes. No whole-history scan per input or new nearest-N perception cap. |
+| Existing constraint                                                                                                  | G treatment                                                                                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Current server stream ceiling of 20 Hz                                                                               | Publication pacing only. Native senses, gaze, motion, preparation and effects keep their own ordered simulation boundaries. Short acquired cues still reach history.               |
+| Existing caption listener-origin displacement fallback (0.5 m in inspected scene code)                               | Retain neutral historical placement once its old directional screen anchor is misleading; no recalculation from hidden source position. Reconcile future C precision in its owner. |
+| Hover's 200 ms delay / 80 ms fade ([interface](interface.md))                                                        | Reuse ordinary pointer presentation; loss of permission bypasses fade for live targeting. Reduced motion removes animation.                                                        |
+| Existing graphics budgets, including 2/8 local light slots                                                           | Aesthetic only. Select from current permitted appearance; historical emitters are removed under the new target. No graphics tier changes detection.                                |
+| E's finite method durations/check allowances; B's actual turn rates; C's pace/posture; D/F's effect/preparation laws | Read installed descriptors and current feedback. No duplicate constants or client calculations.                                                                                    |
+| Existing ordered event, knowledge/history, caption and native continuation bounds                                    | Retain their semantic owners and truthful partial/incomplete outcomes. No whole-history scan per input or new nearest-N perception cap.                                            |
 
 ## SPX-L06 — Remaining workload and qualification limits
 
@@ -64,4 +64,3 @@ Reading time is real UI time under existing caption policy, independent of simul
 SPX07 must measure complete cold/warm publication, dense change, reconnection, partial visibility, delayed inputs, correction and creator downgrade. Count selected/scanned/hydrated facts, transferred bytes, native work, queue age, retained render resources and cue-to-action latency. Reuse prepared current facts and actual invalidation; page optional reads before hydration. Preserve required observations and coherent native continuation under overload. A bounded caption list or 128 history decorations does not prove bounded upstream work or acceptable frame time.
 
 No latency budget, optimal cue lifetime, supported machine scale or verified accessibility/fun result is asserted. Concrete measured failures should lead to focused adjustments here or in the actual owner, not an untracked “temporary” cap or a new framework.
-

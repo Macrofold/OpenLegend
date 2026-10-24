@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Design: complete for SAD-G's selected scope; cross-specialist integration open. Implementation: not started by this work. UX, accessibility, performance and security qualification: not performed.** Updated 2026-10-23.
+**Design: complete for SAD-G's selected scope; cross-specialist integration open. Implementation: not started by this work. UX, accessibility, performance and security qualification: not performed.** Updated 2026-10-24.
 
 [Feature behavior](../projects/stealth-player-experience-feature-spec.md) owns controls, feedback and all ten player journeys. [Technical design](../projects/stealth-player-experience-tech-design.md) owns projection, input, component boundaries, invalid states and G-AC acceptance. [Limits](../limits/stealth-player-experience.md) owns discretionary defaults and remaining capacity questions. [SA coordination](stealth-awareness.md) owns A–G/I integration; this tracker is the focused SAI-G implementation owner.
 
@@ -57,10 +57,10 @@ The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a2
 **Status: Not started.** Dependencies: SPX01–02; E methods and own fulfillment; A/C original evidence; SA-D03/F readiness handoff where preparation is displayed.
 
 - [ ] Expose installed finite Watch, Watch for danger, Listen, Scan, Inspect and Investigate through existing action discovery and Current work.
-- [ ] Preserve default observation-only Watch; explicit danger anticipation and actual preparing/maintaining/unfulfilled/ended/incomplete feedback.
-- [ ] Preserve parent work and original deadlines across compatible amendments; end only owned gaze on expiry and end the facet with parent work.
+- [ ] Preserve default observation-only Watch; explicit danger anticipation and actual preparing/maintaining/unfulfilled/ended/incomplete feedback. Physically maintained coverage cannot substitute for F's completed preparation lead.
+- [ ] Preserve parent work and original deadlines across compatible amendments; expose exact Stop watching, end only owned gaze on stop/expiry and end the facet with parent work.
 - [ ] Investigate original region/bearing with a player-selected permitted vantage when range is unknown. Report partial/empty findings without proving absence or rebinding to the wrong person.
-- [ ] Extend current captions/Noticed and Events readers using original listener frame, acquired time, precision and permitted wording. Retain critical acquired cues through reading overflow.
+- [ ] Extend current captions/Noticed and Events (J) readers using original listener frame, acquired time, precision and permitted wording. Historical inspection opens exact eligible records; Character records keeps its separate purpose. Retain critical acquired cues through reading overflow.
 - [ ] Deliver explicit Last seen/heard/Suspected inspection, independent facet ages, hollow markers and safe selection demotion.
 - [ ] Qualify G-J01–05/J09 and relevant G-AC sensory/history cases; verify a learned voice never becomes a body target.
 
@@ -74,7 +74,7 @@ The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a2
 - [ ] Keep ordinary movement, speech, Stop and compatible action available during startle; reflect only actual mechanical restrictions.
 - [ ] Preserve admitted evasion geometry and enforce current range before new cost. Separate finite startle end from persistent applicable effects.
 - [ ] Keep surprise eligibility private, injury composition native and lethal confirmation invariant to hidden target readiness. No new confirmation after ranged release.
-- [ ] Present only permitted actual contact/defense/injury/aftermath and useful recovery options, without promises of guaranteed warnings or defense.
+- [ ] Present only permitted actual contact/defense/injury/aftermath and useful recovery options. Qualify a registered warning with failed defense, retained expectation after guard ends, zero-injury shield contact and an unperceived miss without inventing cues or injury.
 - [ ] Resolve any claimed controlled-player persistent emotion behavior through the full SA-D01 decision before implementing or presenting it.
 - [ ] Qualify G-J06–08 and relevant G-AC combat/time cases at 1×, permitted pause and debug speeds.
 
@@ -84,7 +84,7 @@ The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a2
 
 **Status: Not started.** Dependencies: SPX01; existing permission/control/history owners.
 
-- [ ] Use separate authorized creator request/view scope and a persistent creator banner; inspect/create grants never imply other players' private mind access.
+- [ ] Use separate explicitly selected authorized creator request/view scope and a persistent creator banner. Holding inspect/create grants alone never promotes ordinary publication or grants other players' private mind access; gate tools, detailed work and detached reads too.
 - [ ] Clear privileged geometry, contacts, cues, caches, asset/inspector/target state and pending callbacks before an ordinary baseline is rendered.
 - [ ] Retire held input on blur, hidden tab, pause, restore, connection loss, control transfer and actor/body/life change; no replay on resumption.
 - [ ] Preserve actual character knowledge across creator viewing; do not import human debugger knowledge into the character's memory.
@@ -124,4 +124,3 @@ The branch was created from contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a2
 Keep the detailed [contradiction register](../projects/stealth-player-experience-tech-design.md#contradictions-and-integration-recommendations) canonical rather than duplicating its contract text here. SAD-I must reconcile SA-D01's full scope, SA-D02 typed evidence revisions, SA-D03 actual preparation start time, A/B detection policy, B/C movement, source-free light/daylight, E's opted-in curiosity contrast and F's warning producers. Broad repertoire/priority reconciliation remains with SAD-I.
 
 This design narrows the **needs-design** work for controls, perspective and basic remapping; it does not close all ND13 recommendations/devices, SA implementation, FPV play qualification or unrelated repertoire ideas. Source inspection and documentation review are the only verification conducted here.
-
