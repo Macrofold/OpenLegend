@@ -26,13 +26,13 @@ Close missing preparation when an adequate design and delivery breakdown exist, 
 
 Read each ND entry's selected scope separately from its possible expansions:
 
-| Disposition               | Meaning                                                                                                                   |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Selected design complete  | Reuse the named design; delivery and acceptance may still be open.                                                        |
+| Disposition | Meaning |
+| --- | --- |
+| Selected design complete | Reuse the named design; delivery and acceptance may still be open. |
 | Product proposal prepared | Reuse the proposed behavior; resolve remaining adoption and technical/operational design before dependent implementation. |
-| Needs scoped design       | A wanted extension still needs its concrete product/technical contract.                                                   |
-| Decision required         | Finish independent investigation, then resolve the named consequential choice before settling dependent design.           |
-| Conditional               | Start only for a selected use case or demonstrated problem; an experiment is not always necessary.                        |
+| Needs scoped design | A wanted extension still needs its concrete product/technical contract. |
+| Decision required | Finish independent investigation, then resolve the named consequential choice before settling dependent design. |
+| Conditional | Start only for a selected use case or demonstrated problem; an experiment is not always necessary. |
 
 The supported opening, static discovery, immediate barter, paired outing, open shelter and sling-competence designs have existing owners. Their narrower evidence does not establish the whole first playable. Use their trackers for actual integration and remaining qualification rather than infer availability from a summary here.
 
@@ -42,26 +42,26 @@ Groups organize decisions and dependencies, not a release queue, staffing plan o
 
 ### Reuse the five existing product proposals
 
-| Existing proposal                                                                | Design groups                                          |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| [Continuing NPC lives](../projects/continuing-lives-feature-spec.md)             | DG02, DG17                                             |
-| [Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) | DG02, DG18, DG26                                       |
-| [World creation](../projects/world-creation-feature-spec.md)                     | DG12; DG17 for larger continuing-community assumptions |
-| [Editable shelters and rain](../projects/editable-shelters-feature-spec.md)      | DG13; DG20 for broader thermal effects                 |
-| [Authored stats and checks](../projects/authored-stats-feature-spec.md)          | DG14                                                   |
+| Existing proposal | Design groups |
+| --- | --- |
+| [Continuing NPC lives](../projects/continuing-lives-feature-spec.md) | DG02, DG17 |
+| [Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) | DG02, DG18, DG26 |
+| [World creation](../projects/world-creation-feature-spec.md) | DG12; DG17 for larger continuing-community assumptions |
+| [Editable shelters and rain](../projects/editable-shelters-feature-spec.md) | DG13; DG20 for broader thermal effects |
+| [Authored stats and checks](../projects/authored-stats-feature-spec.md) | DG14 |
 
 ### Order and parallel opportunities
 
-| Band                      | Groups    | Dependency boundary                                                                                                                                                                    |
-| ------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Personal game             | DG01–DG05 | Actions, characters and player-learning preparation can progress together; recall and session rituals are conditional.                                                                 |
-| Shared play               | DG06–DG11 | Exchange/cooperation and conflict preparation can progress together. Public entry consumes applicable human-protection and admission decisions; social/study programs remain optional. |
-| Creation and expression   | DG12–DG16 | Creation, construction and competence have distinct owners. Required first-camp construction is early work; optional perspectives/exports are not gates.                               |
-| Continuing communities    | DG17–DG25 | Attended slices can use current contracts. New absence/clocks/funding rules must be settled before a dependent continuing-world offer.                                                 |
-| Spoken communication      | DG26      | Coordinate shared media/hearing meaning, then deliver independently useful stages. Text remains complete.                                                                              |
-| Service and participation | DG27–DG30 | Offers and visits can proceed independently with their actual inputs. Marketplace and fund programs have separate rights/operating decisions.                                          |
-| Deeper society            | DG31–DG34 | Select biology, institutions, extraordinary minds and campaigns independently; consume only actual shared dependencies.                                                                |
-| Conditional expansion     | DG35–DG36 | Additional platforms or beyond-game uses start at a selected need, not automatically after other bands.                                                                                |
+| Band | Groups | Dependency boundary |
+| --- | --- | --- |
+| Personal game | DG01–DG05 | Actions, characters and player-learning preparation can progress together; recall and session rituals are conditional. |
+| Shared play | DG06–DG11 | Exchange/cooperation and conflict preparation can progress together. Public entry consumes applicable human-protection and admission decisions; social/study programs remain optional. |
+| Creation and expression | DG12–DG16 | Creation, construction and competence have distinct owners. Required first-camp construction is early work; optional perspectives/exports are not gates. |
+| Continuing communities | DG17–DG25 | Attended slices can use current contracts. New absence/clocks/funding rules must be settled before a dependent continuing-world offer. |
+| Spoken communication | DG26 | Coordinate shared media/hearing meaning, then deliver independently useful stages. Text remains complete. |
+| Service and participation | DG27–DG30 | Offers and visits can proceed independently with their actual inputs. Marketplace and fund programs have separate rights/operating decisions. |
+| Deeper society | DG31–DG34 | Select biology, institutions, extraordinary minds and campaigns independently; consume only actual shared dependencies. |
+| Conditional expansion | DG35–DG36 | Additional platforms or beyond-game uses start at a selected need, not automatically after other bands. |
 
 ### Band 1 — Improve the current personal game
 
@@ -317,14 +317,14 @@ Conditional ND32: identify one learning, rehearsal, writing, agent-evaluation or
 
 ### Shared decisions that keep parallel work separate
 
-| Shared meaning                         | Owning boundary                                                                                                                                                                                |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Action, perception and knowledge       | DG02 uses AG/EPR/HE/NC; DG01 presents permitted opportunities, DG18 groups actual evidence and DG26 extends selected hearing/media. None invents another actor's action or private knowledge.  |
-| Human risk, clocks and funding         | DG07 handles selected participation risk; DG17 handles new clock/quiet-world behavior through PS. DG08/DG29 consume it for entry/capacity and DG27 for actual customer terms.                  |
-| Materials and consequences             | DG13 construction, DG19 food/resource change, DG20 heat and DG21 bodily effects share PO/state/time owners rather than duplicate writable custody, moisture or progress.                       |
-| Facts, memories and history            | DG23 interpretation, DG25 selected correction/restore and DG04 recall consume canonical provenance. DG09/DG15/DG16 cannot redefine historical events through disclosure or presentation.       |
-| Rights, money and attribution          | DG12 establishes reuse/provenance; DG28 publication/payouts, DG27 customer/supporter fulfillment and DG30 funds consume actual shared rights. Fictional currency/institutions remain separate. |
-| Public operation and fictional conduct | DG08 owns selected participation/enforcement, DG09 adopted resident policy and DG10 its social pilot. Fictional governments and optional research grant no operator powers.                    |
+| Shared meaning | Owning boundary |
+| --- | --- |
+| Action, perception and knowledge | DG02 uses AG/EPR/HE/NC; DG01 presents permitted opportunities, DG18 groups actual evidence and DG26 extends selected hearing/media. None invents another actor's action or private knowledge. |
+| Human risk, clocks and funding | DG07 handles selected participation risk; DG17 handles new clock/quiet-world behavior through PS. DG08/DG29 consume it for entry/capacity and DG27 for actual customer terms. |
+| Materials and consequences | DG13 construction, DG19 food/resource change, DG20 heat and DG21 bodily effects share PO/state/time owners rather than duplicate writable custody, moisture or progress. |
+| Facts, memories and history | DG23 interpretation, DG25 selected correction/restore and DG04 recall consume canonical provenance. DG09/DG15/DG16 cannot redefine historical events through disclosure or presentation. |
+| Rights, money and attribution | DG12 establishes reuse/provenance; DG28 publication/payouts, DG27 customer/supporter fulfillment and DG30 funds consume actual shared rights. Fictional currency/institutions remain separate. |
+| Public operation and fictional conduct | DG08 owns selected participation/enforcement, DG09 adopted resident policy and DG10 its social pilot. Fictional governments and optional research grant no operator powers. |
 
 Investigate independent questions while an input is pending, but do not settle dependent contracts around assumed answers. Reconcile overlapping slices in their canonical owners before signing off a combined design.
 
@@ -332,61 +332,61 @@ Investigate independent questions while an input is pending, but do not settle d
 
 Each ND entry retains one preparation description below. Multiple DGs indicate distinct slices, not duplicate ownership or permission to close the whole need from one consumer.
 
-| Need | Groups           | Boundary                                                                                                          |
-| ---- | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
-| ND01 | DG12             | Opening assembly; broader worlds selected separately                                                              |
-| ND02 | DG08             | Discovery, settlement and admission                                                                               |
-| ND03 | DG14             | Additional useful stat/check consumers                                                                            |
-| ND04 | DG14, DG23       | Practical competence versus personality change                                                                    |
-| ND05 | DG21, DG31       | Care versus deeper biology                                                                                        |
-| ND06 | DG19, DG31       | Renewal versus generations; first-playable resources/predators stay in FPV/BW/AG                                  |
-| ND07 | DG13             | Required camp wall/entrance versus broader homes                                                                  |
-| ND08 | DG13, DG20       | Shelter exposure versus thermal effects                                                                           |
-| ND09 | DG06, DG22, DG32 | Immediate trade, deferred agreements and complex obligations                                                      |
-| ND10 | DG06, DG22, DG32 | Required small cooperation versus associations/institutions                                                       |
-| ND11 | DG07, DG33       | Human/conflict rules versus NPC afterlife                                                                         |
-| ND12 | DG12, DG28       | Free library reuse versus commercial distribution                                                                 |
-| ND13 | DG01, DG35       | Ordinary controls versus selected device expansion                                                                |
-| ND14 | DG24, DG26       | Text versus calls                                                                                                 |
-| ND15 | DG26             | Speech media                                                                                                      |
+| Need | Groups | Boundary |
+| --- | --- | --- |
+| ND01 | DG12 | Opening assembly; broader worlds selected separately |
+| ND02 | DG08 | Discovery, settlement and admission |
+| ND03 | DG14 | Additional useful stat/check consumers |
+| ND04 | DG14, DG23 | Practical competence versus personality change |
+| ND05 | DG21, DG31 | Care versus deeper biology |
+| ND06 | DG19, DG31 | Renewal versus generations; first-playable resources/predators stay in FPV/BW/AG |
+| ND07 | DG13 | Required camp wall/entrance versus broader homes |
+| ND08 | DG13, DG20 | Shelter exposure versus thermal effects |
+| ND09 | DG06, DG22, DG32 | Immediate trade, deferred agreements and complex obligations |
+| ND10 | DG06, DG22, DG32 | Required small cooperation versus associations/institutions |
+| ND11 | DG07, DG33 | Human/conflict rules versus NPC afterlife |
+| ND12 | DG12, DG28 | Free library reuse versus commercial distribution |
+| ND13 | DG01, DG35 | Ordinary controls versus selected device expansion |
+| ND14 | DG24, DG26 | Text versus calls |
+| ND15 | DG26 | Speech media |
 | ND16 | DG02, DG18, DG26 | Ordinary speech/social evidence designed under SPK; selected media and further hearing extensions remain separate |
-| ND17 | DG25             | Attributed correction versus administrative retcon                                                                |
-| ND18 | DG01             | Static discovery versus broader place/narration families                                                          |
-| ND19 | DG23             | Older interpretation and optional dreams                                                                          |
-| ND20 | DG04             | Conditional retrieval comparison                                                                                  |
-| ND21 | DG33             | Deliberate telepathy versus broader mental families                                                               |
-| ND22 | DG27             | Offer adoption and customer lifecycle                                                                             |
-| ND23 | DG28             | Allocation, marketplace rights and payouts                                                                        |
-| ND24 | DG27             | Optional recognition/dedication                                                                                   |
-| ND25 | DG30             | Conditional fund/governance operation                                                                             |
-| ND26 | DG03, DG27       | Player learning versus paid-offer evidence                                                                        |
-| ND27 | DG09             | Selected service conduct/audience policy                                                                          |
-| ND28 | DG05             | Optional session/return experience                                                                                |
-| ND29 | DG11             | Optional well-being study                                                                                         |
-| ND30 | DG16             | Personal edition versus shared/print extensions                                                                   |
-| ND31 | DG10             | Conditional human social pilot                                                                                    |
-| ND32 | DG36             | Selected beyond-game use                                                                                          |
-| ND33 | DG19             | Food condition and preservation                                                                                   |
-| ND34 | DG35             | Browser retained; other platforms conditional                                                                     |
-| ND35 | DG25             | Protected shared restore versus broader portability/history                                                       |
-| ND36 | DG15             | Selected external perspective versus other cutaways                                                               |
-| ND37 | DG08             | Public reporting and operator authority                                                                           |
+| ND17 | DG25 | Attributed correction versus administrative retcon |
+| ND18 | DG01 | Static discovery versus broader place/narration families |
+| ND19 | DG23 | Older interpretation and optional dreams |
+| ND20 | DG04 | Conditional retrieval comparison |
+| ND21 | DG33 | Deliberate telepathy versus broader mental families |
+| ND22 | DG27 | Offer adoption and customer lifecycle |
+| ND23 | DG28 | Allocation, marketplace rights and payouts |
+| ND24 | DG27 | Optional recognition/dedication |
+| ND25 | DG30 | Conditional fund/governance operation |
+| ND26 | DG03, DG27 | Player learning versus paid-offer evidence |
+| ND27 | DG09 | Selected service conduct/audience policy |
+| ND28 | DG05 | Optional session/return experience |
+| ND29 | DG11 | Optional well-being study |
+| ND30 | DG16 | Personal edition versus shared/print extensions |
+| ND31 | DG10 | Conditional human social pilot |
+| ND32 | DG36 | Selected beyond-game use |
+| ND33 | DG19 | Food condition and preservation |
+| ND34 | DG35 | Browser retained; other platforms conditional |
+| ND35 | DG25 | Protected shared restore versus broader portability/history |
+| ND36 | DG15 | Selected external perspective versus other cutaways |
+| ND37 | DG08 | Public reporting and operator authority |
 
 ## Product scalability: substantial plans already exist
 
 The [scalability suite](../product-scalability/README.md), [feature specification](../projects/product-scalability-feature-spec.md), [technical design](../projects/product-scalability-tech-design.md), [PS tracker](product-scalability.md) and [limits](../limits/product-scalability.md) own this direction. PS01's completed preparation and bounded component evidence do not close PS02–PS08. Reuse the plans rather than create another scheduler or scalability backlog.
 
-| Existing work                   | Remaining preparation and consuming groups                                                                                                                                                                                                                 |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PS02–PS03: continuing activity  | Select supported families, coarse execution, interruption and truthful fallback. DG02/DG17; [background progression](../product-scalability/background-progression.md).                                                                                    |
-| PS04 / PS-D02: attention/scenes | Select useful sensory/scene families, focus and exact-language exceptions with quality/cost evidence. DG02/DG18/DG26; [attention](../product-scalability/attention-and-scenes.md).                                                                         |
-| PS05 / PS-D01: participation    | Resolve selected background harms, encounter entry/exit, standing defenses, reconnect and finite dangerous-logout continuation while preserving human protection. DG07/DG08/DG29; [participation](../product-scalability/participation-and-protection.md). |
-| PS05 / PS-D03: clocks           | Assign needs, aging, work, memory, appointments and campaigns to explicit clocks with restart/shared-economy consequences. DG17; [time](../simulation-time.md).                                                                                            |
-| PS06: admission/capacity        | Qualify activity-specific costs and fair admission for parties, residents, return and growing effects; no universal player-per-region count. DG08/DG18/DG29; [capacity](../product-scalability/capacity-and-economics.md).                                 |
-| PS07 / PS-D04: domains/travel   | Select entry/build/damage/import rights, powers, clock/economy compatibility and safe arrival. DG29; [worlds and belonging](../product-scalability/worlds-and-belonging.md).                                                                               |
-| PS07 / PS-D05: campaigns        | Select notice/revision, time-zone coverage, return and contribution recognition with one canonical outcome. DG34; [campaigns](../product-scalability/shared-campaigns.md).                                                                                 |
-| PS03/PS06 / PS-D06: funding     | Define authorized quiet-world activity and exhaustion behavior separately from retained history. DG17 supplies service meaning; DG27 consumes it in terms.                                                                                                 |
-| PS08: evidence                  | Qualify each offered slice; broader population/history, concentrated demand and mass-return comparisons belong with DG29/DG34.                                                                                                                             |
+| Existing work | Remaining preparation and consuming groups |
+| --- | --- |
+| PS02–PS03: continuing activity | Select supported families, coarse execution, interruption and truthful fallback. DG02/DG17; [background progression](../product-scalability/background-progression.md). |
+| PS04 / PS-D02: attention/scenes | Select useful sensory/scene families, focus and exact-language exceptions with quality/cost evidence. DG02/DG18/DG26; [attention](../product-scalability/attention-and-scenes.md). |
+| PS05 / PS-D01: participation | Resolve selected background harms, encounter entry/exit, standing defenses, reconnect and finite dangerous-logout continuation while preserving human protection. DG07/DG08/DG29; [participation](../product-scalability/participation-and-protection.md). |
+| PS05 / PS-D03: clocks | Assign needs, aging, work, memory, appointments and campaigns to explicit clocks with restart/shared-economy consequences. DG17; [time](../simulation-time.md). |
+| PS06: admission/capacity | Qualify activity-specific costs and fair admission for parties, residents, return and growing effects; no universal player-per-region count. DG08/DG18/DG29; [capacity](../product-scalability/capacity-and-economics.md). |
+| PS07 / PS-D04: domains/travel | Select entry/build/damage/import rights, powers, clock/economy compatibility and safe arrival. DG29; [worlds and belonging](../product-scalability/worlds-and-belonging.md). |
+| PS07 / PS-D05: campaigns | Select notice/revision, time-zone coverage, return and contribution recognition with one canonical outcome. DG34; [campaigns](../product-scalability/shared-campaigns.md). |
+| PS03/PS06 / PS-D06: funding | Define authorized quiet-world activity and exhaustion behavior separately from retained history. DG17 supplies service meaning; DG27 consumes it in terms. |
+| PS08: evidence | Qualify each offered slice; broader population/history, concentrated demand and mass-return comparisons belong with DG29/DG34. |
 
 [PS-D01–PS-D06](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) own consequential choices. Current elapsed-time integration, ordinary absence handling and regional data ownership retain their existing designs and delivery owners.
 
@@ -396,15 +396,15 @@ Use the [AI game-development research](../../archive/02-research/ai-game-develop
 
 Production should give inventions a recognizable identity; residents should be worth spending time with; places should support discovery, atmosphere and meaningful approaches; and coordinated presentation should make actions understandable and satisfying. The existing [playability gates](../projects/five-product-feature-specs.md#playability-gates) own judgment of the complete experience. These opportunities guide a selected slice without requiring a new generic AI-production feature or a second fun-evaluation system.
 
-| Area                                                     | Preparation to carry forward                                                                                                                                                                                                                                                                             | Existing owner and disposition                                                                                                                                                                                                                                                                                                                                                                                                |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Visual style and a repeatable asset family               | Choose a useful next object, body or place; retain the brief, editable sources, revision route and in-game evidence. Decide the expressive identity and representation from the actual camera and intended use. Broader body, use/rest, equipment, rights, cleanup and device qualification remain open. | [Art studies](art-direction.md), [V3D01/V3D12](3d-pixel-art.md), [3D feature](../projects/3d-pixel-art-feature-spec.md), [technical design](../projects/3d-pixel-art-tech-design.md) and [R02](../../archive/05-project/research-backlog.md). The mercenary idle/walk study exists. The wider pipeline has a design; do not reopen it as wholly undesigned.                                                                   |
-| Inventions that retain their visual identity             | Develop reusable visual vocabulary that can express a player's idea across a world object, relevant equipment view and icon. Use the existing accepted fallback and supported family route; identify any additional capability before promising it.                                                      | DG12 and [INV-12](inventions-and-world-evolution.md#inv-12--progressive-in-game-art-and-compatible-publication), with the [runtime art contract](../invention-art-pipeline.md). General generation, family promotion and publication still need their existing implementation and qualification. Offline asset creation does not close them.                                                                                  |
-| Whole characters with memorable behavior and performance | Connect authored identity, a situation, visible form, motion and optional voice to full episodes of independent choice and later consequences. Compare actual player appeal alongside grounding and cost, using the current resident as a meaningful baseline.                                           | DG02, [CE01–CE05](character-experience.md), [character feature](../projects/compelling-characters-feature-spec.md) and [technical design](../projects/compelling-characters-tech-design.md). The authored psychology and whole-life acceptance choices stay with these owners. A model audition is an empirical task, not a new NPC architecture.                                                                             |
-| A coherent, useful game interface                        | Capture the actual current states; compare artwork, composition and faithful implementation separately. Carry a selected art kit and layout through existing panels, supported inputs and real content.                                                                                                  | [UI brief](../ui-design-brief.md), [UIUX](ui-ux.md) and existing interface feature/technical designs. The design system and delivered redesign already exist. Fresh visual diagnosis and player observation are pending evidence, not proof that React or PlayCanvas must be replaced.                                                                                                                                        |
-| A distinctive playable outing and demonstrable promise   | Let practical invention change an approach, a resident's purpose change the situation, and an actual consequence matter later. Select the relevant instance for the slice; record voluntary response separately from technical success and cost.                                                         | DG03, the [playability gates](../projects/five-product-feature-specs.md#playability-gates), ND26 and the [commercial execution brief](../../archive/02-research/indie-launch-commercials/execution-brief.md). Enjoyment, audience interest and payment remain separate questions. This adds no release sequence or numerical market threshold.                                                                                |
-| Sound, motion, effects and optional voice                | Design feedback around actual events and the intended experience; review timing, readability and the whole mix. Select optional media only within its existing proposed scope and technical preparation.                                                                                                 | [Feedback workflow](../production-workflows/audio-and-feedback.md), [hearing/speech](hearing-and-speech.md), DG26/HE07 and the applicable presentation owners. An offline recording or generated clip does not implement streamed speech, lip sync or new hearing semantics.                                                                                                                                                  |
-| Saved workflows, skills and engine experiments           | Trial a concrete helper or graph where it can reduce repeated work, improve revisions or make worthwhile output feasible. Preserve source settings and inspect the actual export. Compare a Godot authoring route only against a real production question.                                               | [Tool audit](../../archive/02-research/ai-game-development/04-skills-and-tooling.md), [evaluation plan](../../archive/02-research/ai-game-development/11-evaluation-and-adoption.md) and the applicable task owner. Browser-only delivery remains selected in [DG35's decision](../projects/completed/platform-and-offline-decision-brief.md). Catalog coverage and desk research do not qualify a tool or justify migration. |
+| Area | Preparation to carry forward | Existing owner and disposition |
+| --- | --- | --- |
+| Visual style and a repeatable asset family | Choose a useful next object, body or place; retain the brief, editable sources, revision route and in-game evidence. Decide the expressive identity and representation from the actual camera and intended use. Broader body, use/rest, equipment, rights, cleanup and device qualification remain open. | [Art studies](art-direction.md), [V3D01/V3D12](3d-pixel-art.md), [3D feature](../projects/3d-pixel-art-feature-spec.md), [technical design](../projects/3d-pixel-art-tech-design.md) and [R02](../../archive/05-project/research-backlog.md). The mercenary idle/walk study exists. The wider pipeline has a design; do not reopen it as wholly undesigned. |
+| Inventions that retain their visual identity | Develop reusable visual vocabulary that can express a player's idea across a world object, relevant equipment view and icon. Use the existing accepted fallback and supported family route; identify any additional capability before promising it. | DG12 and [INV-12](inventions-and-world-evolution.md#inv-12--progressive-in-game-art-and-compatible-publication), with the [runtime art contract](../invention-art-pipeline.md). General generation, family promotion and publication still need their existing implementation and qualification. Offline asset creation does not close them. |
+| Whole characters with memorable behavior and performance | Connect authored identity, a situation, visible form, motion and optional voice to full episodes of independent choice and later consequences. Compare actual player appeal alongside grounding and cost, using the current resident as a meaningful baseline. | DG02, [CE01–CE05](character-experience.md), [character feature](../projects/compelling-characters-feature-spec.md) and [technical design](../projects/compelling-characters-tech-design.md). The authored psychology and whole-life acceptance choices stay with these owners. A model audition is an empirical task, not a new NPC architecture. |
+| A coherent, useful game interface | Capture the actual current states; compare artwork, composition and faithful implementation separately. Carry a selected art kit and layout through existing panels, supported inputs and real content. | [UI brief](../ui-design-brief.md), [UIUX](ui-ux.md) and existing interface feature/technical designs. The design system and delivered redesign already exist. Fresh visual diagnosis and player observation are pending evidence, not proof that React or PlayCanvas must be replaced. |
+| A distinctive playable outing and demonstrable promise | Let practical invention change an approach, a resident's purpose change the situation, and an actual consequence matter later. Select the relevant instance for the slice; record voluntary response separately from technical success and cost. | DG03, the [playability gates](../projects/five-product-feature-specs.md#playability-gates), ND26 and the [commercial execution brief](../../archive/02-research/indie-launch-commercials/execution-brief.md). Enjoyment, audience interest and payment remain separate questions. This adds no release sequence or numerical market threshold. |
+| Sound, motion, effects and optional voice | Design feedback around actual events and the intended experience; review timing, readability and the whole mix. Select optional media only within its existing proposed scope and technical preparation. | [Feedback workflow](../production-workflows/audio-and-feedback.md), [hearing/speech](hearing-and-speech.md), DG26/HE07 and the applicable presentation owners. An offline recording or generated clip does not implement streamed speech, lip sync or new hearing semantics. |
+| Saved workflows, skills and engine experiments | Trial a concrete helper or graph where it can reduce repeated work, improve revisions or make worthwhile output feasible. Preserve source settings and inspect the actual export. Compare a Godot authoring route only against a real production question. | [Tool audit](../../archive/02-research/ai-game-development/04-skills-and-tooling.md), [evaluation plan](../../archive/02-research/ai-game-development/11-evaluation-and-adoption.md) and the applicable task owner. Browser-only delivery remains selected in [DG35's decision](../projects/completed/platform-and-offline-decision-brief.md). Catalog coverage and desk research do not qualify a tool or justify migration. |
 
 Use the existing 3D and compelling-character feature/technical pairs and the UI/playability briefs for the areas above. Each linked owner identifies unselected design choices, unfinished implementation and unrun empirical work. Add a new design need when a selected production route reveals a missing player capability or contract that its current owner does not cover.
 
@@ -418,17 +418,17 @@ Native continuation, nested learned activities, required recent outcomes, person
 
 Mike commissioned the paired designs below. The [integration map](intelligent-simulation.md) records detailed readiness, policy dependencies and existing implementation IDs; the [design plan](../projects/completed/intelligent-simulation-design-plan.md) records the inspected source and completion checks. Mike resolved the three policy questions: exact calculated physical activity, compact expressive background contributions, and numerical personal reactions without mandatory prose alongside rich descriptions where useful. No developer answer remains outstanding for this selected scope. Broader service/crowd/approximation offers stay separate; the designed conditional profiling/routing comparisons are not a claim of measured optimization. Design completion is neither runtime completion nor a new implementation approval.
 
-| Refinement                                          | Feature / technical owner                                                                                                                                                                                                                                                  | Selected scope and remaining runtime boundary                                                                                                                                                            |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chosen work, alternatives and stopping              | [Continuing lives §16](../projects/continuing-lives-feature-spec.md#16-research-refinement--a-chosen-life-can-continue-and-change) / [technical §§3–4](../projects/continuing-lives-tech-design.md#3-express-the-actual-choice-with-existing-composition)                  | Existing selected methods, exact bounds, interruption and legitimate endings; no new psychological law.                                                                                                  |
-| Personal attention and quiet initiative             | Same pair, technical §4                                                                                                                                                                                                                                                    | Permitted meaningful changes through existing intake and quiet opportunities; source-linked numerical reaction profile is selected; whole-life quality remains unqualified.                              |
-| Native work, selection and interpretation           | [Evaluation feature](../projects/intelligent-simulation-evaluation-feature-spec.md) / [routing design](../projects/intelligent-simulation-evaluation-tech-design.md#conditional-routing-and-calibration)                                                                   | Current/simpler/candidate comparison, invalidation and unavailable capabilities; no new production route or confidence threshold.                                                                        |
-| Later personal consequences                         | Continuing lives §16 / [technical §5](../projects/continuing-lives-tech-design.md#5-later-conduct-uses-the-same-evidence-and-interpretation-owners)                                                                                                                        | Evidence, interpretation, numerical private reaction, rumor origins, correction and later choice; unrelated personality/need families remain separate.                                                   |
-| Independent shared activity and readable intentions | [Attention and scenes §18](../projects/attention-and-scenes-feature-spec.md#18-research-refinement--independent-shared-activity-that-people-can-understand) / [technical design](../projects/attention-and-scenes-tech-design.md)                                          | Exact attended speech plus selected compact background contributions, individual interpretation/consent and actual work; no invented transcript.                                                         |
-| Share computation first                             | Evaluation pair, [shared-computation design](../projects/intelligent-simulation-evaluation-tech-design.md#shared-computation-experiment)                                                                                                                                   | Full-caller profiling, semantic owners, complete reuse dependencies and rejection of unhelpful optimization; candidate algorithm follows an observed bottleneck.                                         |
-| Truthful distant work and detail changes            | [Scalability §8](../projects/product-scalability-feature-spec.md#8-intelligencesimulation-research-refinement--october-15-2026) / [technical §11](../projects/product-scalability-tech-design.md#11-research-refinement-one-authoritative-world-under-efficient-execution) | Protected authority, earliest boundaries, reconstruction and truthful evidence; exact rate/work/trajectory/event families selected, with conservative current-path fallback and no approximate outcomes. |
-| Concurrency, clocks and fair service                | Same scalability pair, technical §11                                                                                                                                                                                                                                       | Current commit, fairness, capacity, clock and accounting owners; broader operating offers retain PS-D decisions.                                                                                         |
-| Whole episodes and complete cost                    | [Evaluation feature](../projects/intelligent-simulation-evaluation-feature-spec.md) / [technical design](../projects/intelligent-simulation-evaluation-tech-design.md)                                                                                                     | Matched episodes, legitimate alternatives, later return, held-out comparisons, complete measured costs and uncertainty.                                                                                  |
+| Refinement | Feature / technical owner | Selected scope and remaining runtime boundary |
+| --- | --- | --- |
+| Chosen work, alternatives and stopping | [Continuing lives §16](../projects/continuing-lives-feature-spec.md#16-research-refinement--a-chosen-life-can-continue-and-change) / [technical §§3–4](../projects/continuing-lives-tech-design.md#3-express-the-actual-choice-with-existing-composition) | Existing selected methods, exact bounds, interruption and legitimate endings; no new psychological law. |
+| Personal attention and quiet initiative | Same pair, technical §4 | Permitted meaningful changes through existing intake and quiet opportunities; source-linked numerical reaction profile is selected; whole-life quality remains unqualified. |
+| Native work, selection and interpretation | [Evaluation feature](../projects/intelligent-simulation-evaluation-feature-spec.md) / [routing design](../projects/intelligent-simulation-evaluation-tech-design.md#conditional-routing-and-calibration) | Current/simpler/candidate comparison, invalidation and unavailable capabilities; no new production route or confidence threshold. |
+| Later personal consequences | Continuing lives §16 / [technical §5](../projects/continuing-lives-tech-design.md#5-later-conduct-uses-the-same-evidence-and-interpretation-owners) | Evidence, interpretation, numerical private reaction, rumor origins, correction and later choice; unrelated personality/need families remain separate. |
+| Independent shared activity and readable intentions | [Attention and scenes §18](../projects/attention-and-scenes-feature-spec.md#18-research-refinement--independent-shared-activity-that-people-can-understand) / [technical design](../projects/attention-and-scenes-tech-design.md) | Exact attended speech plus selected compact background contributions, individual interpretation/consent and actual work; no invented transcript. |
+| Share computation first | Evaluation pair, [shared-computation design](../projects/intelligent-simulation-evaluation-tech-design.md#shared-computation-experiment) | Full-caller profiling, semantic owners, complete reuse dependencies and rejection of unhelpful optimization; candidate algorithm follows an observed bottleneck. |
+| Truthful distant work and detail changes | [Scalability §8](../projects/product-scalability-feature-spec.md#8-intelligencesimulation-research-refinement--october-15-2026) / [technical §11](../projects/product-scalability-tech-design.md#11-research-refinement-one-authoritative-world-under-efficient-execution) | Protected authority, earliest boundaries, reconstruction and truthful evidence; exact rate/work/trajectory/event families selected, with conservative current-path fallback and no approximate outcomes. |
+| Concurrency, clocks and fair service | Same scalability pair, technical §11 | Current commit, fairness, capacity, clock and accounting owners; broader operating offers retain PS-D decisions. |
+| Whole episodes and complete cost | [Evaluation feature](../projects/intelligent-simulation-evaluation-feature-spec.md) / [technical design](../projects/intelligent-simulation-evaluation-tech-design.md) | Matched episodes, legitimate alternatives, later return, held-out comparisons, complete measured costs and uncertainty. |
 
 ### Chosen activities, alternative means and satisfied stopping
 
@@ -504,6 +504,8 @@ Select discoverable information, recommendations/new-community offers, joining a
 
 ### ND03 — World-authored stats, checks and their effects
 
+**Selected visual Perception consumer: Done — designed.** [VG](vision-and-gaze.md) specifies improvement of genuinely available weak visual evidence and precision, bounded by actual field, range, geometry and light. Runtime remains open; broader stats/check consumers retain this owner's scope.
+
 **Selected sling design delivered; additional consumers need scoped design.** Reuse the [stats pair](../projects/authored-stats-tech-design.md), [PC](practical-competence.md), EWF02/EWF04 and shared state. PC06 appreciation remains qualification.
 
 **Recognition-only Perception consumer: Done — designed.** [Module A's world policy](../worlds/base/perception-recognition.md#installation-and-ability) selects the attribute's range/default, current-value access, deterministic recognition effects and capability boundary. [PP03](perspective-perception.md#pp03--familiarity-local-individuals-recognition-and-names) owns its unstarted installation and qualification; this does not install broader stat checks, skill progression or condition rules. Other consumers still need their own scoped design.
@@ -518,11 +520,15 @@ Another competence or personality family needs explicit causes, attribution, unc
 
 ### ND05 — Richer bodies, illness and care
 
+**Selected visual body/receiver scope: Done — designed.** [VG](vision-and-gaze.md) specifies authored head/eye freedoms, physical turn rates and exposed body-part geometry through the existing spatial/action owners. Runtime, C's posture work, illness/care and unsupported anatomy families remain open.
+
 **Recovery/care product proposal prepared; adoption and technical delivery open.** Reuse [recovery and care](../projects/recovery-and-care-feature-spec.md), its [tracker](recovery-and-care.md), ACT/BW and [survival](../worlds/base/survival.md). New illness, anatomy or treatment families remain conditional beyond the selected recovery journey.
 
 For a selected extension define causes, observable/uncertain symptoms, severity/time, actual treatment/resources, actor knowledge and death/save consequences. Neither body-state examples nor generic attributes implement biology. Sources: [physical-state proposal](../../archive/03-design-proposals/agents-and-social-simulation.md), F03 and EWF10.
 
 ### ND06 — Ecology, aging and generations
+
+**Selected animal visual differences: Done — designed.** [VG](vision-and-gaze.md) specifies finite body/species fields and central/peripheral quality, including lateral-vision animals. Actual animal choices retain attention/native-behavior owners; runtime and broader ecology/lifecycle work remain open.
 
 **Selected first-playable wildlife: Done — designed.** The [roaming feature specification](../projects/first-playable-roaming-feature-spec.md), [technical design](../projects/first-playable-roaming-tech-design.md) and [authored wildlife profile](../worlds/base/first-playable-roaming.md) settle finite feeding, ordinary habitat movement, locally perceived wolf-pack hunting, bear danger and independent human opportunity inputs. [RW01–RW06](first-playable-roaming.md) owns runtime/encounter qualification and consumes [native animal escape](../worlds/base/animal-responses.md) under CTR03–CTR04. This settles the selected local pack behavior; it does not complete renewal, full food webs, offspring, aging, reproduction or DG19/DG31.
 
@@ -537,6 +543,8 @@ For broader ecology/lifecycle work, choose a concrete loop with observable scarc
 Explain the useful defensive and home activity, not merely the assembly. Broader household membership, large structures and general structural simulation remain separately selected. Sources: [construction proposal](../../archive/03-design-proposals/evolving-materials-and-construction.md), D31/R21, INV-6/PO/SW and [the world target](../worlds/base/playable-openings.md#a-camp-the-player-can-defend-and-call-home).
 
 ### ND08 — Material, weather, heat and fire interactions beyond campfires
+
+**Selected optical material/light scope: Done — designed.** [VG](vision-and-gaze.md) specifies world-owned light, surface contrast and independent visual/light transmission versus collision/attack obstruction. Runtime remains open; this does not adopt heat transfer, ignition/spread or broader weather/material families.
 
 **Selected rain/moisture consumer delivered; heat product proposal prepared, technical/expanded families open.** Reuse [shelter evidence](../verification/editable-shelters.md), BW19 campfire care and shared state. [Heat and materials](../projects/heat-and-materials-feature-spec.md), [HM](heat-and-materials.md) and INV-6/BW26 own selected thermal stages.
 
@@ -590,7 +598,7 @@ Define complete dependency inventories, retained attribution, private-origin met
 
 ### ND13 — Stable action recommendations and complete control customization
 
-**Selected stealth/control boundary: Done — shared design.** [SA00](stealth-awareness.md) selects independent physical looking while moving through one accepted pose/action owner, voluntary sound investigation, deliberate posture/watch intentions, camera-only presentation and per-fact current/historical disclosure. G and B/C/E retain detailed bindings, supported admission and UI acceptance; ranking, remapping and broader device scope remain open.
+**Selected stealth/control boundary: Done — shared design; physical gaze scope: Done — designed.** [SA00](stealth-awareness.md) selects independent looking, voluntary investigation, deliberate posture/watch intentions and per-fact disclosure. [VG](vision-and-gaze.md) specifies physical looking while moving through the existing action owner and keeps camera direction separate. Runtime, C's posture policy, E's voluntary choices and G's bindings/UI acceptance remain open; ranking, remapping and broader device scope are unchanged.
 
 **Combat-sensitive Command-click slice: Done — designed, October 17; implementation open.** The already delivered Command shortcut is the baseline. The [combat-response feature specification](../projects/combat-and-threat-responses-feature-spec.md) and [technical design](../projects/combat-and-threat-responses-tech-design.md) specify harmless selection, per-opponent current/recent evidence and own offensive intent, exact method/target preview, simulation-time grace, deliberate Speak/Stop controls, stable gestures and real recovery/staleness. [CTR02/CTR09/CTR10](combat-and-threat-responses.md) owns delivery; the [COMBAT ND13 synthesis](../../archive/02-research/game-inspiration/synthesis/combat-and-encounters.md#nd13--predictable-opponent-specific-quick-actions) owns its source discussion. Counting/ranking, revision grouping, arbitrary remapping and other device/input extensions below remain open.
 
@@ -611,6 +619,8 @@ Complete addressing, consent, delivery/read distinctions, availability, blocking
 Preserve committed-word/transcript timing, partial listener eligibility, recognized identity, interruptions, permission denial, mute/revocation/reconnect, retention, rights and actual latency/cost across selected playback/dictation/raw-voice stages. Audience membership alone does not authorize a full utterance. Sources: [audio research](../../archive/02-research/engines-art-and-audio.md), [transport research](../../archive/02-research/hosting-and-scale.md), D10/R07 and HE/NC/MP/spending owners.
 
 ### ND16 — Hearing and communication beyond direct-path speech
+
+**Selected visual evidence producer: Done — designed.** [VG](vision-and-gaze.md) specifies only physically available visual facets and their actual support times for A. A retains recognition, accumulation and remembered knowledge; B supplies no unseen equipment/face update through a current voice. Runtime and the hearing/communication remainder remain open.
 
 **Selected stealth/hearing boundary: Done — shared design.** [SA00](stealth-awareness.md) and [A/C contracts](../projects/stealth-awareness-tech-design.md#shared-contracts) replace reliable unfamiliar-first-hearing identity with familiarity, actual evidence quality and selected base-world Perception. Words, names, association and location remain independent; physical receivers need no autobiography, and source occurrence order differs from actual acquired evidence. C's physical sound design and SPK runtime delivery remain open.
 
@@ -764,21 +774,21 @@ Test a useful bounded outcome with feedback/debrief or trustworthy scoring, sour
 
 ## Existing designs and deliberate deferrals to reuse
 
-| Area                             | Existing owner and remaining boundary                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Art/appearances                  | [Art pipeline](../invention-art-pipeline.md), [3D feature spec](../projects/3d-pixel-art-feature-spec.md), [technical design](../projects/3d-pixel-art-tech-design.md), [V3D](3d-pixel-art.md), INV-12/INV-14 and [art studies](art-direction.md). Pilot evidence is distinct from broader style/provider/rights, asset cost, review and device qualification.                                                                                                         |
-| Time/locality                    | [Simulation time](simulation-time.md), [boundaries](simulation-boundaries.md), [proportional work](../projects/proportional-step-work.md), PF/EPR/SW. Reuse scheduler/family designs; product-resolution choices stay with PS.                                                                                                                                                                                                                                         |
-| Hosting/authentication           | [PD](production-deployment.md), [Auth0 plan](../projects/auth0-sign-in.md), [production data](production-data.md) and [MP](multiplayer.md). ND02/ND37 supplies selected entry/enforcement decisions, not replacement infrastructure.                                                                                                                                                                                                                                   |
-| Persistence/queries              | [Technical architecture](../../archive/07-technical-architecture/README.md), data/PF/PD and [save/load](save-and-load.md). Current PostgreSQL/scoped HTTP/SSE and PD06 recovery remain controlling; ND35 is a separate shared-gameplay extension.                                                                                                                                                                                                                      |
-| Agency/teaching                  | [AG](agent-agency.md), [CR/CH](cognition-redesign.md), INV-4/INV-7 and [NP](parallel-batch-02-foundations-and-usability.md). Reuse pursuits/tools/knowledge; progression and real-world value are distinct consumers.                                                                                                                                                                                                                                                  |
-| Conversation memory              | [Compaction feature spec](../projects/completed/conversation-compaction-feature-spec.md), [technical design](../projects/completed/conversation-compaction-tech-design.md) and NC14–NC18. [SPK](speech-and-social-perception.md) replaces mandatory social membership while preserving bounded source-linked history and structured evidence; it selects no semantic reply graph. NC12 retains broader qualification and NC18 conditional richer-state/retrieval work. |
-| Survival/actions/state           | [AE](action-experience.md), [BW](base-world.md), [SC](state-contributions.md), [DI](dependency-invalidation.md) and existing PW/NP batches. Keep delivery and acceptance with their owners.                                                                                                                                                                                                                                                                            |
-| Family facts/promises            | BW16/BW17, D63/D64 and [ACT](actor-model.md). Objective creator inspection, memory-based learning and promise changes have existing owners; selected new vocabulary/processes need their own scope.                                                                                                                                                                                                                                                                    |
-| Reviewed content removal         | [Batch 09 technical design](../projects/completed/parallel-batch-09-reviewed-content-removal-tech-design.md), [RD](parallel-batch-09-reviewed-content-removal.md) and [creator edits](creator-edits.md). Reuse selected condition-removal design/evidence; broad definition/stock retirement and memory propagation are separate.                                                                                                                                      |
-| AI execution                     | [Provider contract](../ai-providers.md), [MW](macrofold-worker-api.md), [World Agent writes](world-agent-writes.md), R19/R20. Existing migration/authoring owners retain delivery; comparative hosting research is not another game prerequisite.                                                                                                                                                                                                                      |
-| Executable algorithms            | INV-8.4/EWF10, D20/R05. Conditional on an actual mechanic unsupported by declarative composition, with a selected isolation design; no generic sandbox project.                                                                                                                                                                                                                                                                                                        |
-| Alternate scale/world strategies | [Scalability alternatives](../product-scalability/alternatives.md) retain explicit triggers for seamless geography, time dilation, isolated rollback, chapter worlds and reenactments.                                                                                                                                                                                                                                                                                 |
-| Tokens/corporate mission         | D38, [funding exploration](../../archive/06-marketing/tokens-and-community-funding.md) and [money/mission](../../archive/08-wellbeing-vision/13-money-and-mission.md). Unselected; ordinary entitlement/fund work need not adopt them.                                                                                                                                                                                                                                 |
+| Area | Existing owner and remaining boundary |
+| --- | --- |
+| Art/appearances | [Art pipeline](../invention-art-pipeline.md), [3D feature spec](../projects/3d-pixel-art-feature-spec.md), [technical design](../projects/3d-pixel-art-tech-design.md), [V3D](3d-pixel-art.md), INV-12/INV-14 and [art studies](art-direction.md). Pilot evidence is distinct from broader style/provider/rights, asset cost, review and device qualification. |
+| Time/locality | [Simulation time](simulation-time.md), [boundaries](simulation-boundaries.md), [proportional work](../projects/proportional-step-work.md), PF/EPR/SW. Reuse scheduler/family designs; product-resolution choices stay with PS. |
+| Hosting/authentication | [PD](production-deployment.md), [Auth0 plan](../projects/auth0-sign-in.md), [production data](production-data.md) and [MP](multiplayer.md). ND02/ND37 supplies selected entry/enforcement decisions, not replacement infrastructure. |
+| Persistence/queries | [Technical architecture](../../archive/07-technical-architecture/README.md), data/PF/PD and [save/load](save-and-load.md). Current PostgreSQL/scoped HTTP/SSE and PD06 recovery remain controlling; ND35 is a separate shared-gameplay extension. |
+| Agency/teaching | [AG](agent-agency.md), [CR/CH](cognition-redesign.md), INV-4/INV-7 and [NP](parallel-batch-02-foundations-and-usability.md). Reuse pursuits/tools/knowledge; progression and real-world value are distinct consumers. |
+| Conversation memory | [Compaction feature spec](../projects/completed/conversation-compaction-feature-spec.md), [technical design](../projects/completed/conversation-compaction-tech-design.md) and NC14–NC18. [SPK](speech-and-social-perception.md) replaces mandatory social membership while preserving bounded source-linked history and structured evidence; it selects no semantic reply graph. NC12 retains broader qualification and NC18 conditional richer-state/retrieval work. |
+| Survival/actions/state | [AE](action-experience.md), [BW](base-world.md), [SC](state-contributions.md), [DI](dependency-invalidation.md) and existing PW/NP batches. Keep delivery and acceptance with their owners. |
+| Family facts/promises | BW16/BW17, D63/D64 and [ACT](actor-model.md). Objective creator inspection, memory-based learning and promise changes have existing owners; selected new vocabulary/processes need their own scope. |
+| Reviewed content removal | [Batch 09 technical design](../projects/completed/parallel-batch-09-reviewed-content-removal-tech-design.md), [RD](parallel-batch-09-reviewed-content-removal.md) and [creator edits](creator-edits.md). Reuse selected condition-removal design/evidence; broad definition/stock retirement and memory propagation are separate. |
+| AI execution | [Provider contract](../ai-providers.md), [MW](macrofold-worker-api.md), [World Agent writes](world-agent-writes.md), R19/R20. Existing migration/authoring owners retain delivery; comparative hosting research is not another game prerequisite. |
+| Executable algorithms | INV-8.4/EWF10, D20/R05. Conditional on an actual mechanic unsupported by declarative composition, with a selected isolation design; no generic sandbox project. |
+| Alternate scale/world strategies | [Scalability alternatives](../product-scalability/alternatives.md) retain explicit triggers for seamless geography, time dilation, isolated rollback, chapter worlds and reenactments. |
+| Tokens/corporate mission | D38, [funding exploration](../../archive/06-marketing/tokens-and-community-funding.md) and [money/mission](../../archive/08-wellbeing-vision/13-money-and-mission.md). Unselected; ordinary entitlement/fund work need not adopt them. |
 
 ## Source authority
 

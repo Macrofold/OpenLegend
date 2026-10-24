@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-21 — Physical vision, independent gaze and world-owned light
+
+The selected [vision feature](projects/vision-and-gaze-feature-spec.md) and [technical design](projects/vision-and-gaze-tech-design.md) separate motion, body heading, physical gaze and camera direction. Authored body limits and world light determine which exposed details can actually be seen; complete temporal preparation preserves fleeting opportunities without granting omnidirectional knowledge or unseen updates. [World policy](worlds/base/vision-and-gaze.md), [limits](limits/vision-and-gaze.md) and [VG00–VG08](maintainers/vision-and-gaze.md) own values, restrictions and delivery. The complete repertoire review refines 32 existing rows across 15 topical files, including useful wildlife watching, rescue lighting and different witnesses' partial views. This is design-only work: implementation, runtime/performance qualification and player acceptance remain open; the shared contracts and A's recognition/evidence ownership are preserved.
+
 ## October 20, 2026 — General emotional physiology and independent reassessment
 
 The [emotion feature](projects/emotional-physiology-feature-spec.md), [technical contract](projects/emotional-physiology-tech-design.md) and [EP tracker](maintainers/emotional-physiology.md) specify three owners: native life-bound bodily reaction, private source-linked appraisal and a complete read-only mechanical projection. Effective fear takes the strongest applicable contribution; accuracy/steadiness and newly admitted evasion reach use one authored modifier, while running/fleeing speed keeps its existing owners. Native startle uses normal-play durations and ordered committed causes; it never modifies its own incoming hit.

@@ -15,6 +15,8 @@ Implemented Batch 06 consumers [CF02/CF03](parallel-batch-06-rivals-and-conteste
 
 The [capability specification](../action-capabilities.md) owns behavior/contracts. The [action repertoire](../repertoires/actions.md) owns example intents. [Architecture](../architecture.md) owns current facts; [Verification](../verification.md) owns actual evidence. The [maintainer index](README.md) remains navigation only. The [playable-game priority policy](../repertoires/gameplay-priorities.md) owns product selection; this technical tracker does not override it.
 
+**Selected physical-gaze extension — designed, implementation open:** [VG02](vision-and-gaze.md#vg02--looking-through-the-existing-action-owner) specifies idle looking and compatible looking while moving through this existing action owner, with actual body constraints, refusal, interruption and saved continuation. [The selected composition contract](../action-capabilities.md#selected-look-posture-and-watch-composition) remains the local authority; E chooses watch/investigation and C owns posture policy. This adds no second action lane and closes none of the implementation or broader action acceptance below.
+
 ## Delivered scope and remaining work
 
 | Area                                 | Implemented                                                                                                                                                                                                                                                                                                                                                   | Not yet delivered or qualified                                                                                                                                      |
