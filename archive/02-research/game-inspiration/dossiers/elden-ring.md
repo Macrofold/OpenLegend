@@ -34,7 +34,7 @@ Walking, sprinting, jumping, crouching, rolling, backstepping, climbing ladders 
 
 ### Stance, poise and critical openings
 
-Elden Ring distinguishes the **enemy stance-break loop** from the player's **Poise** resistance. Heavy, charged, jumping and guard-counter attacks are especially effective at breaking enemy stance; a broken/exposed enemy can then accept a high-damage critical at the appropriate position, and parries can create the same kind of opening. Some enemies require more than one parry before they become vulnerable. [E28](#e28)
+Elden Ring distinguishes the **enemy stance-break loop** from the player's **Poise** resistance. Heavy, charged, jumping and guard-counter attacks are especially effective at breaking enemy stance; an eligible broken/exposed enemy can then accept a high-damage critical at the appropriate position, and parries can create the same kind of opening. Some enemies require more than one parry before they become vulnerable. [E28](#e28)
 
 For the player, **Poise** is an equipment-derived resistance to being staggered out of actions. Heavier armor tends to provide more Poise, but its weight can push the character into a slower/heavier dodge state. [E29](#e29) This creates a real build tradeoff between maintaining action under pressure and preserving mobility rather than reducing “defense” to damage resistance alone.
 
@@ -100,7 +100,7 @@ The August 2026 patch supplies a particularly concrete persistence boundary: a n
 
 ## 5. Shadow of the Erdtree as a distinct progression experiment
 
-Released **June 21, 2024**, the expansion takes the player into the Land of Shadow and follows Miquella's departure from his body, strength and lineage. Messmer and the land's suppressed history extend the base mythology. Purchasing the ordinary expansion requires the base game; the Premium Bundle supplies expansion extras but is not the same bundle as the Deluxe Edition containing both games' content. [E11](#e11)
+Released **June 21, 2024**, the expansion takes the player into the Land of Shadow and follows Miquella's departure from his body, strength and lineage. Messmer and the land's suppressed history extend the base mythology. Purchasing the ordinary expansion requires the base game; the Premium Bundle supplies expansion extras but is not the same bundle as the Deluxe Edition containing the base game and expansion. [E11](#e11)
 
 Entry requires defeating Radahn and Mohg. In the new region, Scadutree Fragments increase player attack and defense, while Revered Spirit Ashes strengthen associated spirit/Torrent performance there. The regional blessing is not an additional permanent multiplier throughout the original Lands Between. New equipment can return to the original world, so the boundary differs between collected objects and regional progression. [E18](#e18) [E26](#e26)
 
@@ -216,7 +216,7 @@ Suggested study sequence: compare a failed early encounter with the route chosen
 
 ## Sources and access notes
 
-**Original source register, September 26–27, 2026.** The deep chapters have their own October 24 source registers. Relevant written bodies were read unless described as a discovery route. Guides document observed play, not proprietary implementation. Failed guessed URLs, inaccessible Fextralife/Fandom bodies and an inaccessible Xbox interview are not counted as evidence. No code, unseen video or current platform benchmark was inspected.
+**Original source register, September 26–27, 2026.** The deep chapters have their own October 24 source registers. Relevant written bodies were read unless described as a discovery route. Guides document observed play, not proprietary implementation. Failed guessed URLs, inaccessible Fextralife/Fandom bodies and an inaccessible Xbox interview were not counted as evidence in that September capture. The October chapters separately document the accessible Xbox Wire interview and their own source limits. No code, unseen video or current platform benchmark was inspected.
 
 <a id="e1"></a>**E1.** [Bandai Namco: Tarnished Edition released](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-tarnished-edition-and-new-content-elden-ring-beckon-back-players-the), August 28, 2026. Primary content, release and original-game unit milestone.
 

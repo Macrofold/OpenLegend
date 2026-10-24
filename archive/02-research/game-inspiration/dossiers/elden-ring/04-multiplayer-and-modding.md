@@ -15,7 +15,13 @@ Elden Ring lets other people affect a mostly solitary adventure at several level
 | Invasion and rescue | Co-op generally opens a host to invaders; Taunter's Tongue enables additional invitation behavior. Blue/White Cipher Rings connect defenders with invaded hosts. Ordinary sessions have a four-player limit. [M01](#m01) | Help and danger are coupled. A temporary social advantage also changes the encounter ecology. |
 | Deliberate arena competition | Colosseum modes include duels, team combat and free-for-all combat; some configurations support six players. [M02](#m02) | Players can seek a contest without also progressing a host's level or hunting through the world. |
 
-Bloodstains communicate a previous player's fatal movement; passing apparitions supply a glimpse of another journey. They do not provide the complete enemy state or a guaranteed solution. A firsthand co-op guide also documents that a guest's assistance does **not** clear that boss in the guest's own campaign. This distinction matters when two friends intend to complete an adventure together rather than exchange help. [M22](#m22)
+Bloodstains replay another player's death, while passing apparitions cannot directly interact with the observer. A message appraisal can restore its author's HP. These are useful traces, not complete encounter recordings or guaranteed solutions. [M23](#m23) A firsthand co-op guide documents that a guest's assistance does **not** clear that boss in the guest's own campaign. [M22](#m22) Guests nevertheless receive transferable-to-their-own-play rewards, including runes and Rune Arcs for successful assistance; campaign completion and personal earnings are different kinds of persistence. [M01](#m01)
+
+**Human invasions and NPC invasions are different.** A red adversary encountered alone without inviting human invasions can be a scripted NPC. The community multiplayer guide explicitly identifies this case; offline play does not remove those authored encounters. [M25](#m25) Varré's post-1.06 NPC route is another reason to avoid treating every invasion-related quest event as compulsory human PvP. [M03](#m03)
+
+**Native item exchange is bounded.** A community guide documents leaving eligible equipment and consumables on the ground for another player, rather than using a protected trade window. Weapons, armor, talismans, Ashes of War, rune consumables and crafting materials are among the transferable categories. Progression items such as Great Runes, upgrade materials, spells, flask upgrades and Larval Tears are excluded. Receiving upgraded weapons is restricted by the recipient's attained upgrade level; we do not supply an unverified normal/somber conversion formula. “Leave” and destructive “Discard” are different actions. These documented community observations were not reproduced here. [M24](#m24)
+
+Our interpretation: trading supplies generosity and build experimentation while withholding some progression shortcuts. Ground exchange also lacks the guarantees of an escrow transaction. This is a meaningful social-economy choice, not a conventional auction house or permission to import arbitrary items.
 
 ### What the restrictions accomplish, and what they cost
 
@@ -52,6 +58,8 @@ The substantial-ecosystem gate is met. Nexus displayed approximately **7.9 thous
 | Reusable production tools | Smithbox, me3, WitchyBND | Make structured edits and loading possible beyond one bespoke project. [M07](#m07) [M09](#m09) [M12](#m12) |
 
 This is a community PC creation ecosystem around a proprietary game. The sources demonstrate community tools and reverse-engineered formats; they do **not** demonstrate a first-party Elden Ring construction kit, an integrated console mod marketplace or an official guarantee that arbitrary modifications are supported. Native messages and equipment combinations are forms of expression, but they are not equivalent to uploading new levels or code.
+
+**Origin and duration boundary.** The examined projects identify their creators and public release histories: Reforged's page records an April 3, 2022 original upload and an October 2026 update. That establishes a multiyear public maintenance span, not the time required to build it. The underlying development start dates, full contributor-hours, budgets and production schedules of these mods are **unknown from the examined author documentation**. Their scope must not be converted into a made-up team-size or “months to build” estimate. [M16](#m16)
 
 ## 3. What players are actually creating
 
@@ -136,6 +144,8 @@ A community's output also relies on unpaid work beyond the headline author: tran
 
 These are research hypotheses, not adopted product requirements.
 
+Open Legend's current [development save policy](../../../../../AGENTS.md#development-save-policy) explicitly excludes legacy compatibility work during active development. Its [authority and generated-data boundaries](../../../../../AGENTS.md#boundaries) also remain controlling: studying native DLL mods does not authorize executable generated content, additional mutation owners or client authority in Open Legend. The external ecosystem's migration and extension practices are evidence to understand, not permission to replace our current contracts.
+
 | Candidate lesson | Evidence making it worth investigating | What we would need to prove locally |
 | --- | --- | --- |
 | Make social intent explicit | Temporary native aid and persistent Seamless play serve different goals | Which experience our players actually want; how shared progression and disagreement work |
@@ -149,7 +159,7 @@ We cannot conclude from these sources that modding caused Elden Ring's sales, th
 
 ## Sources and access notes
 
-All sources accessed October 24, 2026. Technical descriptions below come from the relevant publisher, developer or tool/mod author. Creator claims about quality and safety are attributed, not treated as independent certification. Version references are observations at the cutoff, not future compatibility promises.
+All sources accessed October 24, 2026. Tool/mod workings come from their authors; official rules use publisher/developer documentation where available. The limited community gameplay observations are identified separately. Creator claims about quality and safety are attributed, not treated as independent certification. Version references are observations at the cutoff, not future compatibility promises.
 
 <a id="m01"></a>**M01.** Bandai Namco, [Introduction to the Multiplayer System](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-introduction-the-multiplayer-system), February 21, 2022. Primary launch guide; core session rules read. Its confusing statements about red effigies and maximum Taunter's Tongue invaders are not repeated as current exact rules.
 
@@ -194,3 +204,9 @@ All sources accessed October 24, 2026. Technical descriptions below come from th
 <a id="m21"></a>**M21.** FromSoftware, [Game FAQs](https://www.fromsoftware.jp/jp/faq-games.html). Only the Elden Ring and Tarnished Edition platform/session sections used; the site's Dark Souls III weapon-level/password answer must not be mistaken for Elden Ring evidence.
 
 <a id="m22"></a>**M22.** PC Gamer, [Elden Ring co-op guide](https://www.pcgamer.com/is-elden-ring-co-op-multiplayer/), May 29, 2024. Firsthand explanatory account used narrowly for native guest progression and asynchronous traces; its older mod player-count statement is superseded by the current creator description.
+
+<a id="m23"></a>**M23.** FromSoftware, [Online manual: network play 1](https://www.fromsoftware.jp/manual/eldenring/ps4/networkplay1.html). Japanese primary description of apparitions, bloodstains, messages and appraisal healing; translated/paraphrased here.
+
+<a id="m24"></a>**M24.** Game.Guide, [How to Drop Items in Elden Ring](https://www.game.guide/how-to-drop-items-in-elden-ring), August 1, 2022. Written gameplay demonstration with screenshots; item categories and upgrade restriction used as community-observed rules, not independent testing. Its suggestion that a password excludes random invaders is not adopted because the primary manual contradicts that implication.
+
+<a id="m25"></a>**M25.** [Vanilla multiplayer: detailed guide](https://steamcommunity.com/sharedfiles/filedetails/?id=3229146704), Steam community guide. Used narrowly for the distinction between uninvited solo NPC encounters and eligible human invasions; other formulas and broad claims were not audited or imported.

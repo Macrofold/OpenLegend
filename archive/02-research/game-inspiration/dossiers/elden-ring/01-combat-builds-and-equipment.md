@@ -101,6 +101,101 @@ Displayed attack rating is a useful comparison, but actual damage also depends o
 
 **Constructed case 4 — the larger menu number disappoints.** A player switches an otherwise comparable weapon to a split-damage affinity because the combined menu total rises. Against a particular enemy, the actual hit does not improve enough to justify the change. The player tests the same attack and target, checks the damage types, then compares a physical alternative. The productive lesson is to compare controlled outcomes rather than treating a summed rating as a universal ranking. **Limit:** this does not mean split damage is inherently worse. Target weakness, attribute distribution, reinforcement and the skill can make it the better choice. [C16](#c16)
 
+### Reinforcement creates commitment; bell bearings relax it
+
+Ordinary reinforcement reaches +25 through Smithing Stones, with an Ancient Dragon Smithing Stone for the final step. Tunnels supply stones; the first Smithing-Stone Miner's Bell Bearing, obtained in Raya Lucaria Crystal Tunnel, opens repeat purchases of early tiers at the Twin Maiden Husks. [C19](#c19)
+
+Somber reinforcement uses one stone of the appropriate tier per step to +9, followed by a Somber Ancient Dragon Smithing Stone for +10. Bell bearings eventually open purchases of Somber tiers 1–9. The two tracks are different economies; a +9 ordinary weapon and a +9 Somber weapon are not equivalent positions on their respective tracks. [C20](#c20)
+
+**Analysis:** found stones initially ask the player to choose what to trust. A supply unlock later converts an exploration achievement into freedom to experiment: the bottleneck moves from locating individual resources to paying for them. The final scarce upgrade preserves a last commitment. This is a promising progression pattern, but its order matters. If a novel weapon arrives before catch-up resources, discovery can feel like receiving homework; if every replacement is immediately superior and free, attachment and anticipation weaken.
+
+A weapon's reinforcement is also distinct from the player's investment. Finding a new armament does not refund the old one's stones. The sensible first comparison is whether its actions and skill solve a desired problem, followed by the cost of bringing it to a comparable reinforcement level. **Analysis:** this makes a safe place to try moves valuable even when no formal training-room system is supplied. The practical uncertainty is often “Will I enjoy this?” before it is “Is its final optimized damage greater?”
+
+## 6. Magic is a loadout and timing system
+
+Sorceries normally use staves and incantations use sacred seals. A usable spell requires possession, a memorized slot, its attributes, a suitable equipped catalyst and sufficient FP. Incantations include attacks, recovery and enhancements; several require Intelligence or Arcane as well as, or instead of, the simple expectation that Faith alone defines all incantations. The input for a catalyst's hand casts the selected spell, while spell selection cycles separately. Many spells permit charging, trading additional commitment for an altered result. [C21](#c21)
+
+Memory Stones expand the initial two spell slots, with eight stones bringing that capacity to ten before other effects. They are discoverable progression, including tower rewards and a Red Wolf of Radagon drop, rather than a direct benefit from buying more Mind. Mind's FP capacity and the number of different prepared spells therefore solve different problems. [C22](#c22)
+
+The major magical traditions supply distinct tactical shapes. This is a selective functional map, not a claim that every spell within a tradition behaves alike:
+
+| Tradition or example | Action it adds | Design question it poses |
+| --- | --- | --- |
+| Glintstone Arc | A widening horizontal magical attack | Are several targets aligned well enough to make one cast efficient? |
+| Carian Slicer / Adula's Moonblade | A magical blade; the latter also projects frost | Can a caster exploit a close opening, or overlap blade and projectile reach? |
+| Gravity, exemplified by Rock Sling | Projectiles with substantial stance utility | Is there enough time and space for the attack to connect? |
+| Night, exemplified by Ambush Shard | An attack originating behind the target | Can attack origin solve a defensive orientation problem? |
+| Dragon Communion | Breath attacks, including elemental and rot forms | Does the opportunity justify a long exposed cast? |
+| Dragon Cult | Lightning projectiles and spreading strikes | Does target size or positioning make the spread useful? |
+| Bestial | Fast stone attacks, claws and self-maintenance | Is a quick utility action better than a large damage commitment? |
+| Godskin black flame | Fire attacks with a continuing health-drain component | Can a brief successful application keep contributing while the player repositions? |
+| Two Fingers / Erdtree / Golden Order | Healing, protection, enhancements and specialized effects | Is the next resource best spent recovering, preventing harm or attacking? |
+| Frenzied Flame | Attacks associated with madness, sometimes with self-costs | Is the target susceptible to the secondary effect? |
+
+The spell descriptions support these broad distinctions; numerical advice and sweeping “best spell” rankings in third-party databases are not assumed current. Rock Sling and Carian Slicer are especially clear counterexamples to treating all sorcery as the same ranged projectile. [C23](#c23) [C45](#c45)
+
+**Analysis:** two broad casting interfaces lower handling friction without flattening all magic into one style. A player can develop a sorcerer who fights in melee, or a weapon specialist who equips a small set of utility incantations. Build identity emerges from a selected combination. The price is hidden dependency: a new spell may look available in inventory while one of several casting prerequisites is missing. Good onboarding must distinguish owning, preparing, equipping and being able to pay for an action.
+
+**Constructed case 5 — the mage's actual expedition budget.** A caster reaches a boss with abundant healing but no FP. Instead of assuming that the spell is weak, the player shifts one shared flask charge from Crimson to Cerulean at the next rest. This buys more casting, but reduces recovery from mistakes. Another option is to reserve magic for dangerous opponents and use a compatible melee answer against weaker ones. The next trial tests which resource runs out first. **Limit:** maximum theoretical damage per FP does not guarantee victory when the spell misses or leaves the caster exposed; reallocating every charge toward FP can make the character less robust. [C26](#c26)
+
+## 7. Damage, status and resistance must not be collapsed
+
+The damage model distinguishes physical attack types—standard, strike, slash and pierce—from magic, fire, lightning and holy components. An attack can also apply buildup or pressure without those being the same quantity as HP damage. The community motion-data definitions separately document damage multipliers, status multipliers, stamina damage, poise damage, hit reactions and shield penetration. They explicitly warn that adding two separate hits' motion values does not guarantee the same result as one large hit. [C17](#c17)
+
+The resistance families are Immunity for poison/rot, Robustness for bleed/frost, Focus for sleep/madness, and Vitality for death blight. Poison and rot drain health over time; bleed causes a burst; frost combines a burst with a temporary vulnerability; sleep disables or disrupts susceptible targets; madness drains HP/FP and interrupts eligible Tarnished; death blight kills susceptible Tarnished when its buildup completes. These effects are not universally applicable to every enemy. [C04](#c04)
+
+Arcane's status interaction is conditional. Community mechanics references distinguish bleed, poison, sleep and madness buildup on an Arcane-scaling delivery mechanism from frost, rot and death blight, which do not receive that same benefit. An innate bleed label on a weapon does not by itself prove that raising Arcane increases its buildup. This is community-documented behavior, not a complete new experiment performed for this dossier. [C24](#c24)
+
+**Analysis:** status attacks add a second time horizon. Direct damage pays immediately; buildup rewards sufficiently concentrated application before the opportunity decays. A fast multi-hit pattern can be attractive for that reason, but a resistant or immune opponent changes the payoff. The same principle explains why “this build destroyed one boss” is weak evidence for universal balance. Different enemies exercise different portions of the build.
+
+The useful player questions are separate: Which damage gets through? Can this opponent suffer the desired ailment? How many safe applications can the player obtain? What happens after activation? Does the effect help enough to justify losing direct damage, reach or survivability? **Analysis:** the pleasure comes from discovering a meaningful match. The frustration comes when an invisible immunity or an unexplained scaling exception turns a seemingly coherent build into a poor tool without telling the player why.
+
+## 8. Support equipment changes priorities and temporal windows
+
+### Talismans
+
+Talisman Pouches expand the initial equipment allowance toward four talismans. The normal acquisition route includes Margit, Enia after two Great Runes, and the golden shade of Godfrey. These unlocks increase the number of effects that can be composed simultaneously. Examples of behavior-oriented effects include Claw Talisman improving jump attacks and Curved Sword Talisman improving guard counters. Their names are not interchangeable statements about weapon categories. [C25](#c25)
+
+**Analysis:** a talisman can make the player practice an action by rewarding it. That is stronger behavioral guidance than a generic attack bonus. A limited set of slots also prevents collecting every talisman from becoming automatic accumulation of all benefits. The tradeoff is optimization pressure: if the same few unconditional bonuses outperform more expressive effects, the collection grows while practical choice narrows. Defensive and resource effects can have disproportionate value when they cross a threshold such as surviving another hit, but the game does not always expose those consequences plainly.
+
+### Crimson and Cerulean flasks
+
+The main flasks share an allocation of charges: Crimson restores HP, Cerulean restores FP. Golden Seeds expand charges; Sacred Tears increase restoration. The latter improve both flask types, while allocation remains adjustable at rest. This lets exploration improve the expedition's capacity and lets a player tune the same capacity to a different strategy. [C26](#c26)
+
+**Analysis:** healing is not merely a stock count. It also needs an opening. A character may die with charges remaining because the encounter denied a safe use, or because repeated panic healing consumed the same unsafe opening. More charges then solve a different problem from stronger restoration, faster recovery, damage reduction or a tactic that creates space. This distinction is essential when evaluating difficulty and the design of aid.
+
+### Wondrous Physick
+
+The Physick is a separately refilled, customizable flask. Crystal tears define its effects, including recovery, stamina support, damage enhancement, protection and specialized counters; Golden Seeds and Sacred Tears do not simply upgrade it like the ordinary flasks. The resulting design adds a planned temporary window to an otherwise persistent equipment setup. [C27](#c27)
+
+The expansion's Deflecting Hardtear is unusually consequential. Its item description improves protection immediately after assuming a guard and rewards a successful timely guard with stronger counters. It changes the timing behavior the player is rewarded for, rather than merely enlarging an existing number. [C28](#c28)
+
+**Constructed case 6 — a different defensive rhythm for one attempt.** A player who normally holds a shield continuously prepares the Deflecting Hardtear and instead learns to raise the guard just before contact. A successful timely block creates a better counter opportunity. The next decision is whether to pursue that rhythm or return to the old defense when the temporary benefit is unavailable. **Limit:** this is not a universal parry, does not promise every attack is blockable, and does not remove the need to read follow-ups or manage stamina. The illustration follows the tear's described behavior without asserting a frame window or current numerical multiplier. [C28](#c28)
+
+### Great Runes and Rune Arcs
+
+Great Runes connect major victories, restoration at Divine Towers, equipped selection and a consumable activation. Examples differ: Godrick raises attributes, Radahn expands HP/FP/stamina, Morgott emphasizes HP, and Rykard restores health from defeated enemies. The Great Rune of the Unborn is a different case tied to rebirth. An ordinary equipped Great Rune's benefit requires a Rune Arc; after death, another Arc is needed to reactivate it. [C29](#c29)
+
+**Analysis:** persistent acquisition paired with per-life activation creates an interesting emotional mismatch. The prize looks like permanent character progress, while practical use asks the player to wager a consumable on the current life. Someone learning a boss may hoard the aid precisely while needing help most. A more confident player may obtain more value from each Arc because it survives longer. The system can reward preparation and accomplishment while also amplifying an experience gap; whether that is desirable depends on the role assigned to the aid.
+
+## 9. Crafting, ammunition, containers and loot
+
+The Crafting Kit, sold by Kalé, allows consumable production outside combat. Cookbooks add recipes. The vocabulary includes projectile ammunition, throwing items, weapon greases, boluses, resistance food and perfumes. Ingredients turn travel and enemy hunting into options for the next encounter; recipes create knowledge-based unlocks. Crafting does not replace the separate armament reinforcement economy. [C30](#c30)
+
+Cracked Pots are reusable containers: using their crafted contents releases a vessel for further crafting. Ritual Pots and Perfume Bottles serve related but distinct recipes. Thus ingredient supply and simultaneous prepared capacity are different constraints. The item database also describes storage behavior: stocked throwing items can supply future rest refills while containers are available for further preparation. A consumable's carried cap and stored stock are not the same as the player's weight limit. [C31](#c31)
+
+**Constructed case 7 — a small portable arsenal.** A player with a few cracked pots wants both fire damage and sleep utility. Filling every vessel with one recipe commits the immediate loadout even if ingredients for the other exist. After using a pot, the vessel returns, but recrafting must wait until combat ends. The player therefore prepares a mixed allocation before the encounter and revises it after observing what mattered. **Limit:** a recipe requires its own ingredients and compatibility; owning a reusable vessel does not make all ammunition free or all enemies vulnerable. This is a rules-based illustration of capacity allocation, not a claim about a specific optimal recipe count. [C31](#c31)
+
+**Analysis:** this system provides temporary access to effects without demanding an attribute respec. That makes side resources potentially meaningful to many builds. It also creates a familiar hoarding trap: when replenishment is uncertain and the player is still learning, spending a rare ingredient on a failed attempt can feel like losing future permission to experiment. The reusable-container rule softens one cost, but it cannot eliminate ingredient scarcity or the inconvenience of rebuilding a stock.
+
+The item interface matters to this economy. Four directly addressable pouch positions supplement the cycling item slots. Keeping high-frequency actions easy to reach can make an apparently marginal consumable usable under pressure; burying it in a long cycle can make it functionally unavailable. PowerPyx's written guide and its reader comments document both the shortcut and frustration with cycling through a populated list to heal. These are interface observations and individual reactions, not a population-wide accessibility measurement. [C32](#c32)
+
+Loot comes through placed treasure, merchant transactions, enemy drops and authored rewards. The official guide names the first three acquisition paths; they support different player expectations. A known chest rewards route knowledge, whereas a drop can invite repetition. [C18](#c18) Silver-Pickled Fowl Foot temporarily increases item discovery, showing that farming efficiency itself can become a preparation choice. This changes the chance of obtaining eligible drops; it does not turn every fixed reward into a different object or guarantee a desired item. [C33](#c33)
+
+Remembrances convert particular major victories into a choice of associated equipment or spells, or runes. Wandering Mausoleums allow limited duplication, even after a Remembrance was consumed; the expansion provides additional duplication coffins. This is a second decision about the identity inherited from a boss, rather than a random roll for an unrelated prize. [C33](#c33)
+
+**Analysis:** the reward's action is part of the encounter's memory. Learning to fear an enemy's spectacular move and then gaining an associated tool turns victory into imitation and appropriation. Conversely, a reward the current build cannot use may communicate future possibility or immediate disappointment. A generous respec and catch-up economy determines which interpretation wins. Catalog size alone is an incomplete measure of reward quality.
+
 ## Sources and access
 
 Sources below were read as written bodies unless explicitly qualified. Official beginner guides are player explanations, not complete frame-data specifications. Community testing and patch notes must resolve edge cases before treating simplified advice as a universal rule.
@@ -136,3 +231,39 @@ Sources below were read as written bodies unless explicitly qualified. Official 
 <a id="c15"></a>**C15 — Weapon families and alternative functions.** [GamesRadar, Best weapons in Elden Ring](https://www.gamesradar.com/elden-ring-weapons-best/), displayed update accessed October 24, 2026. Original guide; used for weapon categories and named distinctions, not its subjective “best” ranking.
 
 <a id="c16"></a>**C16 — Community calculation boundaries.** [Tarnished.dev, calculator documentation and change log](https://www.tarnished.dev/), data marked version 1.17, updated August 28, 2026. Primary documentation by the calculator's maintainer. No calculator-output reproduction or proprietary implementation claim.
+
+<a id="c17"></a>**C17 — Attack-data definitions.** [Community Motion Values and Attack Data](https://docs.google.com/spreadsheets/d/1j4bpTbsnp5Xsgw9TP2xv6d8R4qk0ErpE9r_5LGIDraU/edit), marked App 1.17.2 when accessed October 24, 2026. Primary community reference sheet, reached through the established Elden Ring data-resource collection. Read the definitions sheet; numerical tabs were not exhaustively exported or independently reproduced.
+
+<a id="c18"></a>**C18 — Current introductory action and reward vocabulary.** [Bandai Namco, Tarnished Edition Starter Guide](https://en.bandainamcoent.eu/elden-ring/news/elden-ring-tarnished-edition-starter-guide), August 27, 2026. Official written companion to a video; used its prose, not an unwatched video.
+
+<a id="c19"></a>**C19 — Standard reinforcement.** [GamesRadar, Smithing Stones](https://www.gamesradar.com/elden-ring-smithing-stones/), displayed update August 14, 2026. Original guide; read upgrade and first bell-bearing sections. Broad claims about reaching all areas “anytime” are not adopted.
+
+<a id="c20"></a>**C20 — Somber reinforcement.** [GamesRadar, Somber Smithing Stones](https://www.gamesradar.com/elden-ring-somber-smithing-stones-locations/), displayed update August 14, 2026. Original guide; one stone per step, tiers 1–9 purchase unlocks, separate final upgrade.
+
+<a id="c21"></a>**C21 — Casting prerequisites and controls.** [Windows Central / Jez Corden, Brendan Lowry and Rebecca Spear, How to use incantations](https://www.windowscentral.com/elden-ring-how-use-incantations), June 17, 2024. Original guide; read controls, requirements and memorization. Its “all incantations require Faith” simplification is not adopted universally.
+
+<a id="c22"></a>**C22 — Spell-slot progression.** [PowerPyx / imbroken963, Memory Stone locations](https://www.powerpyx.com/elden-ring-memory-stone-locations/), February 27, 2022. Original item-location guide; used slot count and representative acquisitions, not its incorrect implied prerequisite for all Roundtable access.
+
+<a id="c23"></a>**C23 — Contrasting sorcery actions.** Gamer Guides item records for [Rock Sling](https://www.gamerguides.com/elden-ring/database/magic-spells/sorceries/rock-sling) and [Carian Slicer](https://www.gamerguides.com/elden-ring/database/magic-spells/sorceries/carian-slicer), undated, accessed October 24, 2026. Read item-text transcriptions and explanatory descriptions; no numerical performance measurement.
+
+<a id="c24"></a>**C24 — Arcane compatibility.** [Recjawjind's original Steam mechanics answer](https://steamcommunity.com/app/1245620/discussions/0/4406290986182340111/), June 27, 2024; cross-checked against indexed descriptions of Eldenpedia's [Weapon Scaling](https://eldenring.wiki.gg/wiki/Weapon_Scaling) and [Arcane](https://eldenring.wiki.gg/wiki/Arcane). Steam body read; wiki direct requests returned 403, so those are corroborating indexed excerpts only. Community rule explanation, not a publisher specification or reproduced test.
+
+<a id="c25"></a>**C25 — Talisman functions and capacity.** Gamer Guides records for [Talisman Pouch](https://www.gamerguides.com/elden-ring/database/items/key-items/talisman-pouch), [Claw Talisman](https://www.gamerguides.com/elden-ring/database/items/talismans/claw-talisman) and [Curved Sword Talisman](https://www.gamerguides.com/elden-ring/database/items/talismans/curved-sword-talisman); plus [Upcomer / Joey Carr, Talisman Slots](https://upcomer.com/how-to-get-more-talisman-slots-in-elden-ring/), March 2, 2022. Item text and original guides. Upcomer's claim that Rennala herself directly awards a pouch is excluded; Enia's two-Great-Rune condition is retained.
+
+<a id="c26"></a>**C26 — Flask allocation and upgrading.** [PowerPyx, How to Get More Flasks](https://www.powerpyx.com/elden-ring-how-to-get-more-flasks/), February 26, 2022. Original guide. Its all-HP/all-FP prescriptions are not adopted; allocation is a contextual tradeoff.
+
+<a id="c27"></a>**C27 — Physick effects and refill.** [Gamer Guides, Flask of Wondrous Physick](https://www.gamerguides.com/elden-ring/database/items/consumables/flask-of-wondrous-physick), undated, accessed October 24, 2026. Item-text transcription and effect index. Used qualitative effects, not an exhaustive contemporary numerical table.
+
+<a id="c28"></a>**C28 — Timing-based defensive customization.** [Gamer Guides, Deflecting Hardtear](https://www.gamerguides.com/elden-ring-shadow-of-the-erdtree/database/key-items/reusable/deflecting-hardtear), undated, accessed October 24, 2026. Item-text transcription is the basis; database multipliers and timing claims were not reproduced and are not asserted here.
+
+<a id="c29"></a>**C29 — Great Runes.** [PC Gamer / Sarah James, Great Runes](https://www.pcgamer.com/how-to-use-elden-ring-great-rune-arc/), May 31, 2022; [Push Square / Liam Croft, How to Use Great Runes](https://www.pushsquare.com/guides/elden-ring-how-to-use-great-runes), displayed update August 26, 2026. Original guides, respectively for functions/restoration and until-death activation.
+
+<a id="c30"></a>**C30 — Crafting vocabulary.** [VGKAMI, Complete Crafting and Cookbook Guide](https://vgkami.com/elden-ring-the-complete-crafting-and-cookbook-guide/), September 7, 2022. Original guide; consulted kit, container and recipe sections. Base-game counts are not presented as counts including later DLC.
+
+<a id="c31"></a>**C31 — Reusable-container rule.** [Gamer Guides, Cracked Pot](https://www.gamerguides.com/elden-ring/database/items/key-items/cracked-pot), undated, accessed October 24, 2026. Item-text transcription and storage explanation; distinguishes prepared inventory from permanent container ownership.
+
+<a id="c32"></a>**C32 — Item access and individual reactions.** [PowerPyx, Quick Slots Item Wheel](https://www.powerpyx.com/elden-ring-how-to-use-quick-slots-item-wheel/), February 25, 2022, with dated reader comments. Original control guide and qualitative comments, not survey evidence.
+
+<a id="c33"></a>**C33 — Discovery and victory rewards.** [Gamer Guides, Silver-Pickled Fowl Foot](https://www.gamerguides.com/elden-ring/database/items/consumables/silver-pickled-fowl-foot), undated; [PC Gamer / Sarah James, Remembrance duplication](https://www.pcgamer.com/elden-ring-remembrance-duplicate-wandering-mausoleum/), updated July 9, 2024. Item text and original guide; read duplication and base/DLC reward sections.
+
+<a id="c45"></a>**C45 — Magic traditions and representative spell shapes.** Gamer Guides [Sorceries](https://www.gamerguides.com/elden-ring/database/magic-spells/sorceries) and [Incantations](https://www.gamerguides.com/elden-ring/database/magic-spells/incantations), accessed October 24, 2026. Read relevant item-text entries for glintstone, night, cold, dragon, bestial, black-flame, protection and frenzy examples. These are qualitative selections; database-wide counts and stale numerical recommendations are excluded.
