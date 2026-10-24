@@ -4,6 +4,8 @@ A limit is a chosen restriction on capacity, access to supported features, selec
 
 The selected first-playable design has linked inventories for [shared integration](first-playable-world.md), [survival/making](first-playable-survival.md), [camp construction](editable-shelters.md), [cooperation](first-playable-cooperation.md) and [roaming](first-playable-roaming.md). Their authored numbers are selected starting values, with runtime/player qualification still open.
 
+The selected [ND38 skilled action design](../projects/action-execution-and-skill-expression-feature-spec.md) has its own **proposed, unimplemented** [ASE-L01–ASE-L10 limits](action-execution-and-skill-expression.md) for optional timed combat, manual inputs, bounded true per-item pouch fit, faster world clocks and deferred competitive browser trust. It changes no current weapon, recipe, clock or storage limit yet.
+
 ## One owner per purpose
 
 The accepted [shared NPC text design](../projects/npc-speech-streaming-feature-spec.md) is inventoried in [NST-L01–NST-L09](npc-speech-streaming.md). Shared hearing, cognition, memory, response and HTTP/caption limits retain their existing owners; the new inventory distinguishes selected batching/presentation constraints from unmeasured multiplayer capacity.

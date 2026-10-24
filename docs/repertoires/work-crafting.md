@@ -1,5 +1,7 @@
 # Work, craft, professions and invention
 
+**Selected hands-on craft proof (ND38; designed, not implemented):** [Fitted woven containers](../worlds/base/skilled-action-execution.md#the-chosen-noncombat-proof-fitted-woven-container) use optional point placement during one genuine crafting activity, not the combat timing circle. Real consumed materials and work produce one usable bag, whose individual capacity may vary with admitted fit. Ordinary crafting remains sufficient; the first pouch shows actual capacity without a categorical grade, while later meaningful grades remain optional. [ASE08](../maintainers/action-execution-and-skill-expression.md#ase08--real-quality-producing-noncombat-proof) owns delivery.
+
 **Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. Entry rows own individual priorities; worked examples provide context without a second ranking. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)

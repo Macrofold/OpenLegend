@@ -1,5 +1,7 @@
 # Playable game first
 
+**Skillful participation should create meaningful choices, not mandatory chores.** [ND38](../projects/action-execution-and-skill-expression-feature-spec.md) tests whether moving while aiming at an actual deer and optionally fitting a useful pouch improves the game's enjoyment. Quick attacks and ordinary craft remain fully viable. Measure voluntary use after mastery and whether improved capacity really helps an expedition, trade or gift. [ASE](../maintainers/action-execution-and-skill-expression.md) owns implementation and user evidence.
+
 This document owns feature-selection policy for the current OpenLegend survival-adventure. The [28 canonical catalogues](README.md#catalogue-map) own entry descriptions and priorities; [whole-game coverage](coverage.md) distinguishes essential capabilities from later elaborations. The [first-playable scenario](../worlds/base/playable-openings.md#first-playable-game-target) owns required world content. [FPV](../maintainers/first-playable-validation.md) coordinates delivery and player evidence through existing subsystem owners.
 
 ## The game we need to be able to play

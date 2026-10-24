@@ -1,5 +1,7 @@
 # Repertoires for inhabited worlds
 
+**Skilled participation (ND38):** [The selected design](../projects/action-execution-and-skill-expression-feature-spec.md) joins optional timed combat, moving-target aim and a genuinely distinct fitted-container finishing action. It is designed, not implemented. The 28 canonical catalogues retain stable IDs; Mechanics owns the reusable skill pattern, Combat owns attacks, Work owns finishing, and Abilities owns learned competence.
+
 **28 canonical catalogues: 7,872 non-action entries and 385 action examples.** Each catalogue contains the full descriptions, stable IDs, current priorities, useful worked patterns, applicability, build gaps and research. There is one maintained version of each idea—not separate source inventories and ranking registers. The 270 worked patterns overlap some entries; these are not additive counts of unique features.
 
 **A complete, enjoyable OpenLegend experience comes first.** Readable combat, exploration, rewards, progression, useful crafting and building belong alongside a small real instance of practical invention, independent characters and persistent consequences. Neither chores nor a technical showcase can substitute for enjoyable play. Start with the [priority policy](gameplay-priorities.md), then [whole-game coverage](coverage.md) and [selection and scale](selection-and-scale.md).

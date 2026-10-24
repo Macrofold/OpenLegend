@@ -69,6 +69,14 @@ requirement to preserve or convert older development definitions. Refuse incompa
 without resetting or replacing it. Nonempty containers cannot be retired without a separate
 content disposition.
 
+## Planned fitted-container consumer
+
+[ND38 fitting](skilled-action-execution.md#the-chosen-noncombat-proof-fitted-woven-container) is **designed, not implemented**. It selects optional finishing only for an exactly admitted woven manufacture method with explicit support; the separately authored woven bag and an item's name do not acquire that option. The [camp-container family](camp-containers.md) still owns real material quantities, ordinary size and labor, with no additional tool or station requirement. The fitting profile alone owns its numerical law and initial choice to omit categorical grades.
+
+The planned result keeps a creation-time property on the same individual item, and one object-owned reader supplies its actual capacity to storage, nested movement, inspection, disclosed trade terms and save validation. Empty packing load and the load of all nested contents still count. Characters currently have no finite total carrying-load limit; the useful comparison is carrying a larger kit as one movable pouch alongside ordinary pouches and direct carrying. Capacity disclosure does not grant container access, reveal hidden contents or teach a recipe.
+
+Craft materials are already spent at work start. The optional **Ready to finish** action must neither require them again nor create output early. Same-version restore preserves working/waiting craft only if native work has not been interrupted; genuine departure or cancellation retains normal material loss and no pouch. The [ND38 technical contract](../../projects/action-execution-and-skill-expression-tech-design.md#4-noncombat-proof-quality-sensitive-woven-container) and [ASE08](../../maintainers/action-execution-and-skill-expression.md#ase08--real-quality-producing-noncombat-proof) own implementation, exact continuation and verification.
+
 ## Shared containers and active work
 
 Reachable, visible world containers and piles are shared by default. An admitted container

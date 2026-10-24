@@ -26,6 +26,10 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 [Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). CTR owns current delivery and unsatisfied independent acceptance; this index does not repeat its status.
 
+## Skilled player action execution and real item quality
+
+[Action execution and skilled input (ASE01–ASE12)](action-execution-and-skill-expression.md) owns delivery of [ND38's feature specification](../projects/action-execution-and-skill-expression-feature-spec.md), [technical design](../projects/action-execution-and-skill-expression-tech-design.md), [selected world rules](../worlds/base/skilled-action-execution.md) and [limits](../limits/action-execution-and-skill-expression.md). The design is complete; movement during aim, timed release, real mouse-directed attacks, local bodily evasion and usable fitted-item quality are **not yet implemented or play-qualified**. CTR and ordinary action/craft owners retain authoritative contact, permission and material effects.
+
 ## Speech and social perception
 
 [Speech and social perception (SPK00–SPK11)](speech-and-social-perception.md) owns the [feature specification](../projects/speech-and-social-perception-feature-spec.md) and [technical design](../projects/speech-and-social-perception-tech-design.md). The selected ordinary-speech portion of ND16 is designed; implementation, qualification and broader hearing/media acceptance retain their owners.
