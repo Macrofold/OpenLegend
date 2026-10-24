@@ -97,6 +97,7 @@ export class LibraryActors {
 }
 
 export class LibraryActor {
+  readonly ready: Promise<boolean>;
   state: 'loading' | 'ready' | 'failed' = 'loading';
   visible = false;
   get height(): number {
@@ -125,17 +126,22 @@ export class LibraryActor {
     private readonly prepare: (source: pc.StandardMaterial) => pc.StandardMaterial,
     private readonly release: () => void,
   ) {
-    void loading
+    this.ready = loading
       .then((resource) => {
-        if (this.disposed) return;
+        if (this.disposed) return false;
         this.install(resource);
+        return true;
       })
       .catch((error: unknown) => {
-        if (this.disposed) return;
+        if (this.disposed) return false;
         this.clear();
         this.state = 'failed';
         console.warn('Library actor unavailable; keeping its sprite.', error);
+        return false;
       });
+  }
+  get presentationReady(): boolean {
+    return this.state === 'ready';
   }
   private install(resource: BundledModel): void {
     const node = (this.node = resource.instantiateRenderEntity({

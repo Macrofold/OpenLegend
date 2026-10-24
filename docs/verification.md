@@ -1,5 +1,7 @@
 # Verification
 
+- [First-playable entry](verification/first-playable-entry.md) — actual loading bar, held/failed required artwork, explicit Retry and current Main selection; bounded animal feeding evidence remains separate.
+
 - [Production custom models](verification/custom-models.md) — implemented native judgment/NPC chat routing, shared inference and benchmark support; configuration, protocol fixtures, actual Macrofold API and native gameplay evidence remain distinct from current Kev/Huihui access and live operating acceptance.
 
 [Macrofold efficiency follow-through](verification/macrofold-efficiency-followup.md) records shared inference receipts, bounded diagnostics, narrow PostgreSQL reads and authoring revision checks, including requested-review fixes and the integrated private-inspection ordering correction.

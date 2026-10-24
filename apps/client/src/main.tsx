@@ -64,7 +64,7 @@ import {
 import type { CommandRequestIdentity } from './command-request';
 import { playerEntity } from './entity-view';
 import { createWorldRenderer } from './scene';
-import type { ScreenRect, WorldRenderer, ShadowQuality } from './world-renderer';
+import type { ScreenRect, WorldRenderer, ShadowQuality, SceneLoadProgress } from './world-renderer';
 import { observeHudLayout } from './ui/hud-layout';
 import { WorldHover } from './ui/world-hover';
 import { CaptionGapNotice, useMissedCaptions } from './ui/caption-gap-notice';
@@ -159,6 +159,16 @@ function taskScope(view: GameView) {
     view.player.id,
   ]);
 }
+function sceneLoadOwner(view: GameView) {
+  return JSON.stringify([
+    view.worldId,
+    view.saveTimeline,
+    view.access?.scope,
+    view.access?.privateDraftScope,
+    view.player.id,
+    view.presentationRelease,
+  ]);
+}
 function nearbyIdentity(view: GameView) {
   return JSON.stringify([
     view.worldId,
@@ -207,6 +217,11 @@ function App({
     [sceneError, setSceneError] = useState(''),
     [sceneCreated, setSceneCreated] = useState(false),
     [notice, setNotice] = useState('');
+  const [sceneLoad, setSceneLoad] = useState<{
+    owner: string;
+    progress: SceneLoadProgress;
+  } | null>(null);
+  const rendererViewOwner = useRef('');
   const [conditionPolicyRevision, setConditionPolicyRevision] = useState(0);
   const [inspectors, setInspectors] = useState<{ id: string; slot: number }[]>([]);
   const [activeInspector, setActiveInspector] = useState<string | null>(null);
@@ -420,7 +435,12 @@ function App({
     document.title = view ? `Open Legend — ${view.presentation.worldName}` : 'Open Legend';
   }, [view?.presentation.worldName]);
   const { paused: tabPaused, acceptView, pause: pauseTab, isPaused, enter } = tab;
-  const connected = transportReady && !tabPaused && !!view?.access?.controlling;
+  const sceneProgress =
+    view && sceneLoad?.owner === sceneLoadOwner(view)
+      ? sceneLoad.progress
+      : { phase: 'loading' as const, completed: 0, total: 0 };
+  const sceneReady = sceneProgress.phase === 'ready' && !sceneError;
+  const connected = transportReady && !tabPaused && !!view?.access?.controlling && sceneReady;
   targetingAllowed.current =
     connected &&
     !picker &&
@@ -428,7 +448,14 @@ function App({
     !!view?.player.alive &&
     view.player.participation !== 'inactive';
   const creation = useCreationRequest(view, connected);
-  const showEntry = !view || (tabPaused && !tab.blocked && entryStatus.kind !== 'loading');
+  const showEntry =
+    !view || !sceneReady || (tabPaused && !tab.blocked && entryStatus.kind !== 'loading');
+  const visibleEntryStatus: EntryStatus =
+    view && sceneError
+      ? { kind: 'scene-failed', message: sceneError }
+      : view && !sceneReady && entryStatus.kind === 'loading'
+        ? { kind: 'scene-loading', progress: sceneProgress }
+        : entryStatus;
   const showFocusPause = !!view && tabPaused && !tab.blocked && !showEntry;
   const accept = useCallback(
     (next: GameView, reset = false) => {
@@ -767,7 +794,7 @@ function App({
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
   }, [scale, narrow]);
-  const worldVisible = view !== null && (!tabPaused || tab.blocked);
+  const worldVisible = view !== null && sceneReady && (!tabPaused || tab.blocked);
   const aimPanel =
     view?.player.action?.controls &&
     ((narrow && open.length > 0) || expandedWorkspaces.some((id) => open.includes(id)))
@@ -1315,7 +1342,7 @@ function App({
     scene.current?.destroy();
     scene.current = null;
     setSceneCreated(false);
-    setSceneError(`${String(error)}. The In view list still provides interactions.`);
+    setSceneError(String(error));
   }, []);
   useEffect(() => {
     const initial = latest.current;
@@ -1325,6 +1352,7 @@ function App({
     let frame = 0;
     let task: number | undefined;
     let allocated: WorldRenderer | null = null;
+    let renderer: WorldRenderer | null = null;
     const discard = () => {
       allocated?.destroy();
       allocated = null;
@@ -1354,6 +1382,13 @@ function App({
       if (!current()) return;
       try {
         allocated = createWorldRenderer(surface, {
+          loadingChanged: (progress) => {
+            // The installed renderer survives focus/control changes. Its own
+            // preparation generation rejects old work after a new view is set.
+            if (!renderer || (scene.current !== renderer && allocated !== renderer)) return;
+            setSceneLoad({ owner: rendererViewOwner.current, progress });
+            if (progress.phase === 'failed') failScene(progress.message);
+          },
           select: (...args) => handlers.current.select(...args),
           move: (p) => handlers.current.move(p),
           target: (entity) => handlers.current.target(entity),
@@ -1381,6 +1416,7 @@ function App({
                 : { projection, rotationLocked, following },
             ),
         });
+        renderer = allocated;
         allocated.setSuspended(true);
         schedule(() => {
           if (!current()) {
@@ -1421,6 +1457,7 @@ function App({
         vision: visionGuide,
         hearing: hearingGuide,
       });
+      rendererViewOwner.current = sceneLoadOwner(view);
       scene.current.setView(view);
     } catch (error) {
       failScene(error);
@@ -2296,10 +2333,11 @@ function App({
       <canvas
         id="world"
         ref={canvas}
-        tabIndex={view ? 0 : -1}
-        aria-hidden={!view}
+        data-entry-loading={!sceneReady}
+        tabIndex={view && sceneReady ? 0 : -1}
+        aria-hidden={!view || !sceneReady}
         aria-label={view?.presentation.worldName ?? 'World'}
-        inert={tabPaused}
+        inert={tabPaused || !sceneReady}
       />
       <div
         ref={hud}
@@ -2316,8 +2354,13 @@ function App({
       >
         {showEntry && (
           <EntryScreen
-            status={entryStatus}
+            status={visibleEntryStatus}
             onRetry={() => {
+              if (sceneError) {
+                setSceneLoad(null);
+                setSceneError('');
+                return;
+              }
               setEntryStatus({
                 kind: 'loading',
                 retryLabel:
@@ -2947,27 +2990,13 @@ function App({
             }}
           />
         )}
-        {!connected && view && !tabPaused && (
+        {!transportReady && view && !tabPaused && sceneReady && (
           <div id="connection" role="status" className="ol-connection ol-card">
             Connection interrupted. Reconnecting to your saved world…
           </div>
         )}
-        {sceneError && (
-          <div className="ol-scene-error ol-card" role="alert">
-            <p>{sceneError}</p>
-            <Button
-              onPress={() => {
-                setSceneError('');
-                show('nearby');
-              }}
-            >
-              Retry scene
-            </Button>
-            <Button onPress={() => show('nearby')}>Open In view</Button>
-          </div>
-        )}
       </div>
-      {hover && !picker && !tabPaused && (
+      {hover && !picker && !tabPaused && sceneReady && (
         <WorldHover
           primaryAction={
             hover.primary && primaryAction.preview?.targetId === hover.entity.id

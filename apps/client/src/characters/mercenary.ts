@@ -85,6 +85,9 @@ export class MercenaryModels {
   setArtTreatment(style: Readonly<ArtTreatment>): void {
     this.materials.setArtTreatment(style);
   }
+  artworkReady(): Promise<boolean> {
+    return this.materials.artworkReady();
+  }
   destroy(): Promise<void> | undefined {
     this.download.abort();
     this.faces.destroy();
@@ -98,6 +101,7 @@ export class MercenaryModels {
 const displayScale = 1.1;
 
 export class MercenaryActor {
+  readonly ready: Promise<boolean>;
   private node?: pc.Entity;
   private cloth?: CapeCloth;
   private pixels?: PixelCharacter;
@@ -129,17 +133,26 @@ export class MercenaryActor {
     loading: Promise<LoadedModel>,
     private readonly camera: pc.Entity,
   ) {
-    void loading
+    this.ready = loading
       .then((resource) => {
-        if (this.disposed) return;
+        if (this.disposed) return false;
         this.install(resource);
+        return true;
       })
       .catch((error: unknown) => {
-        if (this.disposed) return;
+        if (this.disposed) return false;
         this.release();
         this.state = 'failed';
         console.warn('Mercenary preview keeps the sprite fallback:', error);
+        return false;
       });
+  }
+  /** Offscreen decorative sleeping does not need to finish a visible pose. */
+  get presentationReady(): boolean {
+    return (
+      this.state === 'ready' &&
+      (!this.wanted || this.decorativeSleeping || (!this.resetCloth && this.settling === 0))
+    );
   }
   private install({ resource, tracks, cloth }: LoadedModel): void {
     const node = (this.node = resource.instantiateRenderEntity({

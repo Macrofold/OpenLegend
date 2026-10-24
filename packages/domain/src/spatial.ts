@@ -449,6 +449,7 @@ export function findApproachPath(
   actor: Entity,
   target: Entity,
   reach: number,
+  occupiedBodies = false,
 ): RoutePlan | null {
   const start = supportedPosition(actor);
   if (!start) return null;
@@ -508,12 +509,29 @@ export function findApproachPath(
       a.x - b.x,
   );
   const destinations: SurfacePoint[] = [];
+  const sweeps = occupiedBodies ? occupiedBodySweepReader(world, actor) : undefined;
+  let occupiedRoutes = 0;
   for (const candidate of candidates) {
     if (!reaches(candidate) || !canStand(map, candidate, profile)) continue;
+    if (sweeps && !sweeps(candidate, candidate).clear(candidate)) continue;
     if (destinations.length === 12) break;
-    destinations.push(candidate);
+    if (sweeps && occupiedRoutes++ === 12) break;
     const route = findSurfaceRoute(map, start, candidate, profile);
-    if (route.status === 'reached') return route;
+    if (route.status === 'reached') {
+      // Different animals can approach the same food. A static route and a free
+      // destination do not prove the body can pass its current neighbours.
+      let from = start;
+      const clear =
+        !sweeps ||
+        route.path.every((point) => {
+          const result = sweeps(from, point).clear(point);
+          from = point;
+          return result;
+        });
+      if (clear) return route;
+      continue;
+    }
+    destinations.push(candidate);
   }
   return destinations.length
     ? {

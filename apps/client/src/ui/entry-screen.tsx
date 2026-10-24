@@ -2,10 +2,13 @@ import { Button } from '../design-system/components';
 import { LoadingIndicator } from '../design-system/loading';
 import type { WorldCreationHostStatus } from '@open-legend/protocol';
 import { EntryNotice } from './entry-notice';
+import type { SceneLoadProgress } from '../world-renderer';
 import './entry-screen.css';
 
 export type EntryStatus =
   | { kind: 'loading'; retryLabel?: 'Check access again' | 'Retry connection' }
+  | { kind: 'scene-loading'; progress: SceneLoadProgress }
+  | { kind: 'scene-failed'; message: string }
   | { kind: 'signed-out' }
   | { kind: 'forbidden' }
   | { kind: 'creation-host'; host: WorldCreationHostStatus }
@@ -15,12 +18,17 @@ export type EntryStatus =
 export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry: () => void }) {
   const signedOut = status.kind === 'signed-out';
   const forbidden = status.kind === 'forbidden';
-  const loading = status.kind === 'loading';
-  const retryLabel = loading
-    ? status.retryLabel
-    : forbidden
-      ? 'Check access again'
-      : 'Retry connection';
+  const loading = status.kind === 'loading' || status.kind === 'scene-loading';
+  const retryLabel =
+    status.kind === 'loading'
+      ? status.retryLabel
+      : status.kind === 'scene-loading'
+        ? undefined
+        : status.kind === 'scene-failed'
+          ? 'Retry scene'
+          : forbidden
+            ? 'Check access again'
+            : 'Retry connection';
   return (
     <main className="ol-entry" aria-labelledby="entry-title">
       <section className="ol-card ol-entry-card">
@@ -31,7 +39,10 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
           </h1>
         </header>
         <EntryNotice />
-        <div className="ol-entry-message" role={status.kind === 'failed' ? 'alert' : 'status'}>
+        <div
+          className="ol-entry-message"
+          role={status.kind === 'failed' || status.kind === 'scene-failed' ? 'alert' : 'status'}
+        >
           {signedOut ? (
             <>
               <h2>Enter your world</h2>
@@ -45,8 +56,33 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
                 check your access or send an invitation.
               </p>
             </>
-          ) : loading ? (
+          ) : status.kind === 'scene-loading' ? (
+            <div className="ol-entry-progress">
+              <h2>
+                {status.progress.phase === 'preparing' ? 'Preparing your world' : 'Loading artwork'}
+              </h2>
+              <progress
+                aria-label="World preparation"
+                max={Math.max(1, status.progress.total)}
+                value={status.progress.total ? status.progress.completed : undefined}
+              />
+              {status.progress.total > 0 && (
+                <p>
+                  {status.progress.completed} of {status.progress.total} ready
+                </p>
+              )}
+            </div>
+          ) : status.kind === 'loading' ? (
             <LoadingIndicator active={loading} label="Connecting to your world" />
+          ) : status.kind === 'scene-failed' ? (
+            <>
+              <h2>Your world’s artwork couldn’t finish loading</h2>
+              <p>Retry to prepare the scene before entering.</p>
+              <details>
+                <summary>Loading details</summary>
+                <p>{status.message}</p>
+              </details>
+            </>
           ) : status.kind === 'creation-host' ? (
             <>
               <h2>

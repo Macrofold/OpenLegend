@@ -47,6 +47,12 @@ Deliver the first curated source, local fetch, preserved study and game release 
 
 The [bounded native-browser evidence](../verification/game-asset-storage.md#actual-asset-free-game-and-recovery-controls) covers the 27-actor fixture, eleven visible models, both pinned hosted tools, explicit renderer replacement and owner recovery. Its scope is one machine and the recorded world; the configured current world's signed-in owner journey is qualified separately under AS07.
 
+The current game's [entry readiness evidence](../verification/first-playable-entry.md)
+supplements AS04: selected initial artwork and a complete rendered frame finish
+behind the loading bar, while required failures offer an explicit scene retry.
+This closes the temporary-artwork flash reported in the current Main; it does not
+change the wider delivery or hosted acceptance scopes above.
+
 ## AS05 — Inventory, preservation and repository migration
 
 **Owners:** tooling, art/doc maintainers. **Depends on:** AS01–AS04 and the AS06 preservation/restore gate before removal.

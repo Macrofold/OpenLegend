@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                            | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native ecology, optional human supply inputs and ordinary Main are installed; independent trips, pacing, performance and remaining qualification stay open. | 2026-10-22   |
+| In progress | Native ecology, optional human supply inputs and ordinary Main are installed; independent trips, pacing, performance and remaining qualification stay open. | 2026-10-24   |
 
 [Feature specification](../projects/first-playable-roaming-feature-spec.md) · [Technical design](../projects/first-playable-roaming-tech-design.md) · [Authored rules](../worlds/base/first-playable-roaming.md) · [Limits](../limits/first-playable-roaming.md). This owns the selected ND06/ND11 roaming slice, coordinated by [FPV](first-playable-validation.md). It does not reopen the completed stag or close CTR escape qualification.
 
@@ -59,6 +59,14 @@ also stops a walking person and prevents wolf/bear contact during preparation;
 open-gate controls still injure. These are controlled software cases, not
 independent willingness or encounter-pacing evidence. [Current checks and failed
 capacity gates](../verification/first-playable-world.md#final-movement-and-geometry-corrections--october-22).
+
+Animals approaching food now check other bodies through the existing physical
+movement owner, and a failed feeding approach clears its current work and honors
+the same blocked-route wait. Controlled clearance/failure/restoration checks and
+a 600-game-second ordinary Main window with 20 animals pass; that window contains
+five completed meals and no sampled body overlaps, while retaining 41 truthful
+action stops. These bounded checks leave ordinary pacing and wider qualification
+open. See [feeding approach clearance and recovery](../verification/first-playable-world.md#feeding-approach-clearance-and-recovery--october-24).
 
 ## RW03 — Perceived pack hunting and local bear danger
 

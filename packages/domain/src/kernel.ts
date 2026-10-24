@@ -9,7 +9,7 @@ import {
   nativeForagingDue,
   nativeForagingIntention,
   noteNativeForagingAdmission,
-  noteNativeForagingMovementFailure,
+  noteNativeForagingFailure,
 } from './worlds/base/foraging.js';
 import {
   prepareNativeFeeding,
@@ -785,7 +785,13 @@ function approachPath(world: WorldState, actor: Entity, action: Action): RoutePl
         bodyProfile(actor),
       )
     : actionTarget(world, action)
-      ? findApproachPath(world, actor, actionTarget(world, action)!, actionReach(world, action))
+      ? findApproachPath(
+          world,
+          actor,
+          actionTarget(world, action)!,
+          actionReach(world, action),
+          actor.actor?.controller === 'native' && !!actor.animal,
+        )
       : null;
 }
 function approach(world: WorldState, actor: Entity, action: Action): Outcome | null {
@@ -4188,8 +4194,7 @@ function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reas
       actor.actor!.action!.id,
       outcome(false, 'action-failed', reason),
     );
-  if (actor.actor!.action?.type === 'move')
-    noteNativeForagingMovementFailure(world, actor, actor.actor!.action.id);
+  if (actor.actor!.action) noteNativeForagingFailure(world, actor, actor.actor!.action.id);
   actor.actor!.action = null;
   if (privateReason) {
     emit(world, events, 'action-stopped', subjectNarration(actor, `stopped the action.`), actor);
@@ -5177,7 +5182,7 @@ function advanceAction(
           actor,
           action.path,
           nativeMovementSpeed(world, actor) * seconds,
-          !!action.nativeLocomotion,
+          !!action.nativeLocomotion || (actor.actor!.controller === 'native' && !!actor.animal),
         )
       ) {
         action.path = [];

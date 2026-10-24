@@ -282,7 +282,7 @@ function blockNativeForaging(world: WorldState, animal: Entity): void {
   delete state.proposal;
   changed(world, animal);
 }
-export function noteNativeForagingMovementFailure(
+export function noteNativeForagingFailure(
   world: WorldState,
   animal: Entity,
   actionId: string,

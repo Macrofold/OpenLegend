@@ -94,6 +94,8 @@ The goal is controlled expansion: recognizable regional materials, distinctive l
 
 ## Art-directed working interfaces
 
+For borders, textured panels, ornamental rails and connecting elements before screen design, use the [UI-style profile](art-flows/profiles.md#ui-style) through either [art flow](art-flows/README.md). Its output is a coherent set of style specimens and construction notes. The working-interface route below applies when the request includes full interface design or implementation; do not make it a prerequisite to a surface study.
+
 **Route:** player decision → information/interaction sketch → visual alternatives → complete-screen exemplar and art kit → shared components → live states → game integration → visual and interaction review.
 
 OpenLegend already has a design system and a recent world-first interface redesign. Begin with the actual current screen and owner, not an old screenshot or an assumption that the theme is missing. The [UI research](../../archive/02-research/ai-game-development/08-ui-quality-and-production.md) separates plausible causes of a weak result; it does not claim to have diagnosed today's running interface.

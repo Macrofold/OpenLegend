@@ -107,6 +107,9 @@ export class MercenaryMaterials {
   diagnostics() {
     return this.variants.diagnostics();
   }
+  artworkReady(): Promise<boolean> {
+    return this.variants.ready();
+  }
   private filterTexture(texture: pc.Texture): void {
     const source = this.originalSampling.get(texture);
     if (this.filtering === 'source' && source) {

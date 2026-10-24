@@ -9,7 +9,11 @@ export interface ScreenRect extends ScreenPoint {
   width: number;
   height: number;
 }
+export type SceneLoadProgress =
+  | { phase: 'loading' | 'preparing' | 'ready'; completed: number; total: number }
+  | { phase: 'failed'; completed: number; total: number; message: string };
 export interface SceneCallbacks {
+  loadingChanged?(progress: SceneLoadProgress): void;
   select(entity: EntityView | null, at?: ScreenPoint, ground?: SurfacePoint): void;
   move(position: SurfacePoint): void;
   target(entity: EntityView): void;

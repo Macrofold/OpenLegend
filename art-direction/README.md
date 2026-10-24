@@ -4,6 +4,8 @@ This folder is the shared home for visual direction, feedback, decisions and ref
 
 ## Start here
 
+**Reusable art requests:** use the [Standard or Higgsfield flow](../docs/production-workflows/art-flows/README.md) for style, asset, character, scene, material, motion or UI-system work. The agent handles the steps and file handoffs. The [UI surface-language brief](studies/ui-surface-language/brief.md) records the supplied border/panel/connector study request; it is not a completed visual study.
+
 **Asset storage and authoring:** follow [Asset workflows](../docs/asset-workflow.md) before fetching, creating, editing, capturing or publishing assets. Substantial models, editable sources, reference media and study captures belong in the separate library/study/runtime collections; Git retains direction, recipes, small pins and verified hosted links. [AS01–AS08](../docs/maintainers/game-asset-storage.md) tracks the remaining migration and recovery gates. Original license, attribution and reference-only limits still apply to publicly hosted sources.
 
 **Published studies:** [Current interactive tools and preserved boards](https://assets.openlegend.ai/studies/public/viewers/navigation-81bd67a16da37540aa1b9688cc22b05b5ed495c727692cab64ab5ffd5b877d36/index.html). Historical comparisons keep their recorded captures and verification limits; today's interactive tools use the current renderer.

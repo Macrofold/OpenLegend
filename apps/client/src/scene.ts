@@ -52,6 +52,7 @@ import {
 } from './world-camera';
 import type {
   SceneCallbacks,
+  SceneLoadProgress,
   WorldRenderer,
   SpeechCaptionOptions,
   ShadowQuality,
@@ -254,7 +255,17 @@ export class WildernessScene implements WorldRenderer {
   private readonly frameRateMeter = new FrameRateMeter();
   private profiler?: ScenePerformance;
   private renderedFrames = 0;
-  private readyRequested = false;
+  private loadingScope = '';
+  private loadingGeneration = 0;
+  private loadingPhase: SceneLoadProgress['phase'] = 'loading';
+  private reportedLoading = '';
+  private preparingFrame = 0;
+  private sceneryPreparation?: Promise<boolean>;
+  private paintPreparation?: Promise<boolean>;
+  private readonly loadingTasks = new Map<
+    Promise<boolean>,
+    { done: boolean; ok: boolean; relevant(): boolean; visualReady?(): boolean }
+  >();
   private presentation!: WorldPresentation;
   private sceneProps!: ScenePropResources;
   private libraryScenery!: LibraryScenery;
@@ -460,26 +471,155 @@ export class WildernessScene implements WorldRenderer {
   private finishRender = (): void => {
     this.redrawPending = false;
     const device = this.app.graphicsDevice;
-    if (this.destroyed || !(device instanceof pc.WebglGraphicsDevice)) return;
+    if (this.destroyed) return;
+    const generation = this.loadingGeneration;
+    // Only this frame's fence can qualify this frame's installed artwork. An
+    // older frame finishing later cannot establish that the replacement drew.
+    const frameReady =
+      this.loadingPhase === 'preparing' &&
+      this.renderedFrames > this.preparingFrame &&
+      [...this.loadingTasks.values()].every(
+        (task) => !task.relevant() || !task.visualReady || task.visualReady(),
+      );
+    const finishLoading = () => {
+      if (frameReady) this.finishLoadingFrame(generation);
+    };
+    if (!(device instanceof pc.WebglGraphicsDevice)) {
+      finishLoading();
+      return;
+    }
     let fence: Promise<unknown>;
     try {
       fence = device.clientWaitAsync(0, 4);
     } catch {
       // Failed or lost contexts must not strand the renderer behind a pending slot.
+      this.failLoading();
       return;
     }
     this.pendingFrames.add(fence);
     const release = () => this.pendingFrames.delete(fence);
     // Completion owns only its own slot, even after context loss or scene disposal.
-    void fence.then(release, release);
+    void fence.then(
+      () => {
+        release();
+        finishLoading();
+      },
+      () => {
+        release();
+        if (generation === this.loadingGeneration) this.failLoading();
+      },
+    );
   };
   private resetRenderQueue = (): void => {
     this.pendingFrames.clear();
     this.redrawPending = true;
+    this.failLoading();
   };
+
+  private resetLoading(scope: string): void {
+    this.loadingScope = scope;
+    this.loadingGeneration++;
+    this.loadingPhase = 'loading';
+    this.reportedLoading = '';
+    this.loadingTasks.clear();
+    this.paintPreparation = this.mercenary?.artworkReady();
+    this.canvas.dataset.ready = 'false';
+  }
+  private reportLoading(): void {
+    if (this.destroyed || this.loadingPhase === 'failed' || this.loadingPhase === 'ready') return;
+    const tasks = [...this.loadingTasks.values()];
+    if (tasks.some((task) => task.relevant() && task.done && !task.ok)) {
+      this.failLoading();
+      return;
+    }
+    const completed = tasks.filter((task) => task.done || !task.relevant()).length;
+    const phase = completed === tasks.length ? 'preparing' : 'loading';
+    if (phase === 'preparing' && this.loadingPhase !== 'preparing')
+      this.preparingFrame = this.renderedFrames;
+    this.loadingPhase = phase;
+    const progress: SceneLoadProgress = { phase, completed, total: tasks.length + 1 };
+    const signature = JSON.stringify(progress);
+    if (signature !== this.reportedLoading) {
+      this.reportedLoading = signature;
+      this.callbacks.loadingChanged?.(progress);
+    }
+    this.app.renderNextFrame = true;
+  }
+  private trackLoading(
+    promise: Promise<boolean>,
+    relevant: () => boolean,
+    visualReady?: () => boolean,
+  ): void {
+    if (this.loadingTasks.has(promise)) return;
+    const generation = this.loadingGeneration;
+    const task = { done: false, ok: false, relevant, visualReady };
+    this.loadingTasks.set(promise, task);
+    const settled = (ok: boolean) => {
+      if (this.destroyed || generation !== this.loadingGeneration) return;
+      task.done = true;
+      task.ok = ok;
+      this.reportLoading();
+    };
+    void promise.then(settled, () => settled(false));
+  }
+  private collectLoading(): void {
+    if (this.loadingPhase === 'ready' || this.loadingPhase === 'failed') return;
+    if (this.sceneryPreparation) this.trackLoading(this.sceneryPreparation, () => true);
+    let hasMercenary = false;
+    for (const [id, entry] of this.actors) {
+      if (!entry.observed) continue;
+      const relevant = () => this.actors.get(id) === entry && entry.observed;
+      if (entry.model) {
+        const model = entry.model;
+        this.trackLoading(model.ready, relevant, () => model.presentationReady);
+        hasMercenary ||= entry.view.appearance === 'mercenary-model';
+      }
+      if (entry.sceneProp)
+        this.trackLoading(
+          entry.sceneProp.ready,
+          relevant,
+          () => !!entry.propInstalled || !entry.root.enabled,
+        );
+    }
+    if (hasMercenary && this.paintPreparation)
+      this.trackLoading(this.paintPreparation, () =>
+        [...this.actors.values()].some(
+          (entry) => entry.observed && !!entry.model && entry.view.appearance === 'mercenary-model',
+        ),
+      );
+    this.reportLoading();
+  }
+  private finishLoadingFrame(generation: number): void {
+    if (
+      this.destroyed ||
+      generation !== this.loadingGeneration ||
+      this.loadingPhase !== 'preparing' ||
+      this.renderedFrames <= this.preparingFrame ||
+      [...this.loadingTasks.values()].some(
+        (task) => task.relevant() && task.visualReady && !task.visualReady(),
+      )
+    )
+      return;
+    this.loadingPhase = 'ready';
+    this.canvas.dataset.ready = 'true';
+    const total = this.loadingTasks.size + 1;
+    this.callbacks.loadingChanged?.({ phase: 'ready', completed: total, total });
+  }
+  private failLoading(): void {
+    if (this.destroyed || this.loadingPhase === 'ready' || this.loadingPhase === 'failed') return;
+    this.loadingPhase = 'failed';
+    this.canvas.dataset.ready = 'false';
+    this.callbacks.loadingChanged?.({
+      phase: 'failed',
+      completed: [...this.loadingTasks.values()].filter((task) => task.done && task.ok).length,
+      total: this.loadingTasks.size + 1,
+      message: 'The game artwork could not be prepared. Retry loading the scene.',
+    });
+  }
 
   /** Developer comparison changes no DTO, world identity, actions or saved state. */
   setArtTreatment(style: ArtTreatment): void {
+    const treatmentChanged = JSON.stringify(this.requestedArt) !== JSON.stringify(style);
     this.requestedArt = { ...style };
     if (!this.externalAssetsAllowed)
       style = {
@@ -504,19 +644,24 @@ export class WildernessScene implements WorldRenderer {
     this.libraryScenery?.setTreatment(style);
     if (['natural', 'kenney', 'quaternius', 'study', 'canopy'].includes(style.environment)) {
       const family = style.environment as 'natural' | 'kenney' | 'quaternius' | 'study' | 'canopy';
-      void this.libraryScenery
+      this.sceneryPreparation = this.libraryScenery
         .load(family)
         .then((loaded) => {
-          if (!loaded || this.destroyed || this.artSettings.environment !== family || !this.view)
-            return;
-          this.buildLandscape(this.view.map);
-          this.updateEntityPresentation();
+          if (this.destroyed) return false;
+          // The boolean means newly installed, not success: cached/coalesced
+          // scenery returns false; download/decode failures reject this promise.
+          if (loaded && this.artSettings.environment === family && this.view) {
+            this.buildLandscape(this.view.map);
+            this.updateEntityPresentation();
+          }
+          return true;
         })
         .catch((error: unknown) => {
           if (!this.destroyed)
             console.warn('Library scenery could not load; retaining the authored fallback.', error);
+          return false;
         });
-    }
+    } else this.sceneryPreparation = undefined;
     this.mercenary?.setArtTreatment(style);
     this.presentation.setArtTreatment(style);
     if (relight && this.view)
@@ -536,7 +681,6 @@ export class WildernessScene implements WorldRenderer {
       this.updateEntityPresentation();
     }
     if ((replaceProp || replaceHares || replaceSources) && this.view) {
-      let replaced = false;
       for (const [id, entry] of this.actors)
         if (
           (replaceSources &&
@@ -547,10 +691,9 @@ export class WildernessScene implements WorldRenderer {
         ) {
           this.releaseEntity(entry);
           this.actors.delete(id);
-          replaced = true;
         }
-      if (replaced) this.setView(this.view);
     }
+    if (treatmentChanged && this.view) this.setView(this.view);
   }
   artDiagnostics() {
     const stats = this.app.stats;
@@ -676,6 +819,13 @@ export class WildernessScene implements WorldRenderer {
       view.player.id,
       view.access?.privateDraftScope,
     ]);
+    const loadingScope = JSON.stringify([
+      worldKey,
+      view.access?.scope,
+      view.presentationRelease,
+      this.artSettings,
+    ]);
+    if (loadingScope !== this.loadingScope) this.resetLoading(loadingScope);
     if (this.worldKey !== worldKey) {
       for (const entry of this.actors.values()) this.releaseEntity(entry);
       this.actors.clear();
@@ -848,14 +998,7 @@ export class WildernessScene implements WorldRenderer {
     this.statusIndicators.observe(entities);
     this.speech.observe(view);
     this.profiler?.view(profileStarted, view, this.actors.size);
-    if (!this.readyRequested) {
-      this.readyRequested = true;
-      // An existing WebGL context alone does not prove that the world rendered.
-      this.app.renderNextFrame = true;
-      this.app.once('postrender', () => {
-        if (!this.destroyed) this.canvas.dataset.ready = 'true';
-      });
-    }
+    this.collectLoading();
   }
 
   setCaptionOptions(options: SpeechCaptionOptions): void {
@@ -3182,6 +3325,8 @@ export class WildernessScene implements WorldRenderer {
     this.landscapeOcclusion.length = 0;
     if (this.destroyed) return;
     this.destroyed = true;
+    this.loadingGeneration++;
+    this.loadingTasks.clear();
     this.suspended = true;
     this.app.autoRender = false;
     pc.AppBase.cancelTick(this.app);

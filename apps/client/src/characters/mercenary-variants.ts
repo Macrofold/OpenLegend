@@ -147,6 +147,11 @@ export class MercenaryVariants {
   get current(): MercenaryArt {
     return this.active;
   }
+  async ready(): Promise<boolean> {
+    const wanted = this.wanted;
+    if (wanted !== 'original') await this.pending.get(wanted);
+    return !this.disposed && this.wanted === wanted && this.active === wanted;
+  }
   get paint(): Paint | undefined {
     return this.active === 'original' ? undefined : this.paints.get(this.active);
   }

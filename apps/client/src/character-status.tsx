@@ -217,6 +217,13 @@ export class CharacterStatuses {
         continue;
       }
       if (!event.actorId || !statusTypes.has(event.type)) continue;
+      // Routine native work stays in history according to the selected world's
+      // presentation policy. The player's own stopped action still needs feedback.
+      if (
+        event.presentation?.displayToPlayer === false &&
+        !(event.actorId === view.player.id && event.type === 'action-stopped')
+      )
+        continue;
       const actor =
         event.actorId === view.player.id
           ? view.player
