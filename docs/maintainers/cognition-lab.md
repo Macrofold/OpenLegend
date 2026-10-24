@@ -34,7 +34,7 @@ The design task does not authorize new automated tests. For implementation quali
 - [ ] Deliver the opening flow: normal initialized scene, selected character, Say composer ready, Submit, one immediate response and readable result summary without opening settings or raw JSON.
 - [ ] Use shared light-theme primitives, compact meaningful icons, hover/focus descriptions, visible primary action labels, keyboard focus and readable statuses. Keep controls stable during streaming, long content and empty/error states.
 
-**Exit:** at 1920×1080 and 2560×1440 the selected person, category navigation, timeline filters, composer, run controls and inspector navigation remain visible. A user can identify who spoke, who reacted and what happened without drilling. Common evidence is one direct action away and a full memory at most one more. Browser zoom/reduced viewport preserves access without turning the target into a phone-first design.
+**Exit:** at 1920×1080 and 2560×1440 the selected person, category navigation, timeline filters, composer, run controls and inspector navigation remain visible. A user can identify who spoke, who reacted and what happened without drilling. Common evidence is one direct action away and a full memory at most one more, with only CLL05's explicit actual-call choice exception for a multi-call root without a unique primary. Browser zoom/reduced viewport preserves access without turning the target into a phone-first design.
 
 ## CL03 — Current state, evidence and model-only editors
 
@@ -86,6 +86,7 @@ The design task does not authorize new automated tests. For implementation quali
 ## CL08 — Starting scenarios, checkpoints and retained runs
 
 - [ ] Implement the three distinct save intents and their labels: reusable starting scenario, current continuation checkpoint and retained evidence/run.
+- [ ] Capture one exact current applied origin automatically when a new run starts, including unsaved applied edits, without a naming dialog; reuse it for subsequent intervals and record ordered stimuli/interventions. Reset identifies its origin; New uses the normal initializer.
 - [ ] Use current-format native world save/restore for scenario/checkpoint content, including required body, action, memory, recognition and queue continuation state according to native ownership.
 - [ ] Retain exact experiment evidence separately from mutable current state, with explicit annotations, names, provenance, import/export and deliberate removal.
 - [ ] Implement bounded capture/storage admission and honest partial/error states. Never silently evict pinned work or imply that a capture-only run can resume a world.

@@ -1,8 +1,8 @@
 # Cognition Lab — feature specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | Product design is specified; runtime implementation and usability/behavior qualification have not started. | 2026-10-24 |
+| Status      | Current progress                                                                                           | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Product design is specified; runtime implementation and usability/behavior qualification have not started. | 2026-10-24   |
 
 ## 1. Purpose and product outcome
 
@@ -55,10 +55,10 @@ The browser viewport contains one full-height workspace. The workspace document 
 
 At default UI scale use the existing 4 px token rhythm: 8 px workspace inset, 8 px column gaps, a 40 px header and a 32 px experiment strip. The panes take the remaining height. These are selected lab presentation defaults, not changes to ordinary game panels; [CLL05](../limits/cognition-lab.md#cll05) owns their rationale and qualification.
 
-| Reference viewport | Left pane | Center pane | Right pane | Expected use |
-| --- | --- | --- | --- | --- |
-| 1920 × 1080 | 420 px | 734 px | 734 px | Ordinary authoring, speech and full structured inspection simultaneously. |
-| 2560 × 1440 | 480 px | 1024 px | 1024 px | Larger prose, side-by-side facts and richer comparisons without enlarged controls. |
+| Reference viewport | Left pane | Center pane | Right pane | Expected use                                                                       |
+| ------------------ | --------- | ----------- | ---------- | ---------------------------------------------------------------------------------- |
+| 1920 × 1080        | 420 px    | 734 px      | 734 px     | Ordinary authoring, speech and full structured inspection simultaneously.          |
+| 2560 × 1440        | 480 px    | 1024 px     | 1024 px    | Larger prose, side-by-side facts and richer comparisons without enlarged controls. |
 
 The widths exclude the workspace inset and two column gaps. Pane splitters preserve user choices per device. Reset layout restores these defaults. The selected character, composed text, collection queries, active record and scroll anchors survive resizing. Growing the screen adds readable content space; it does not increase button sizes or impose wider padding.
 
@@ -68,14 +68,14 @@ The large-desktop reference target is at least 1600 × 900 available CSS pixels 
 
 ### Scroll ownership
 
-| Region | Fixed content | Scrollable content | Search |
-| --- | --- | --- | --- |
-| Left | Person selector, category rail, current category title, Apply/Discard when dirty | One category body | Fixed search for Memories, History, Relations, Possessions, Surroundings and other growing collections. |
-| Center | Timeline filter strip, actor/target/mode controls, composer and Submit | One event timeline | Fixed timeline search and compact filter controls. |
-| Right list | Inspector header, trace search, filters, follow control | One trace list | Always available; filters do not replace search. |
-| Right detail | Back/breadcrumb, trace/call selector, result strip, subsection tabs, payload buttons | One selected detail body | Fixed search when the detail body is a collection or long payload. |
-| Payload modal | Stage/snapshot header, editor toolbar, footer actions | One payload editor | Editor find, with next/previous matches. |
-| Focused text editor | Subject/field title and Apply/Cancel | One text editor | Find for long text. |
+| Region              | Fixed content                                                                        | Scrollable content       | Search                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Left                | Person selector, category rail, current category title, Apply/Discard when dirty     | One category body        | Fixed search for Memories, History, Relations, Possessions, Surroundings and other growing collections. |
+| Center              | Timeline filter strip, actor/target/mode controls, composer and Submit               | One event timeline       | Fixed timeline search and compact filter controls.                                                      |
+| Right list          | Inspector header, trace search, filters, follow control                              | One trace list           | Always available; filters do not replace search.                                                        |
+| Right detail        | Back/breadcrumb, trace/call selector, result strip, subsection tabs, payload buttons | One selected detail body | Fixed search when the detail body is a collection or long payload.                                      |
+| Payload modal       | Stage/snapshot header, editor toolbar, footer actions                                | One payload editor       | Editor find, with next/previous matches.                                                                |
+| Focused text editor | Subject/field title and Apply/Cancel                                                 | One text editor          | Find for long text.                                                                                     |
 
 Never put a separately scrollable memory list inside the scrolling left category or a scrollable question table inside the scrolling right body. The owning collection is the body. Item selection replaces that body or opens the specified focused editor. A fixed finite row of view/filter options uses compact buttons rather than a scrollable selector.
 
@@ -115,18 +115,18 @@ All left values are current scenario values, even when the right side shows an e
 
 ### Field and category behavior
 
-| Category | Required editable or inspectable content | Important distinction |
-| --- | --- | --- |
-| Person | Name, authored description, biography, personality, traits, values, interests, preferences, current accepted self-understanding and beliefs | Biography, present circumstances and chosen intentions are distinct. Descriptive traits do not automatically grant mechanical effects. |
-| Body | Applicable health/energy/fullness/spirit or world-authored equivalents, units/range/direction, injury, pain/discomfort, wake/sleep, posture, senses, active conditions | Use actual installed definitions. Lower fullness means more hunger in the base world. Unknown is not zero. |
-| Feelings | Every active permitted feeling, its source/target, qualitative or numerical value, lifetime, last change and proposed/accepted update | Bodily reaction, interpreted feeling and calculated gameplay consequence are separate. |
-| Relations | Directional personal notes, known name, recognition/acquaintance binding, beliefs about the person, actual supported commitments | A relationship word does not establish reciprocal feeling, consent, recognition or native promise state. |
-| Work | Current goals, selected and suspended plans, current action, remaining work, blocked steps, commitments and consequences of interruption | A scenario-seeded goal is labeled an intervention; it is not an independently chosen intention. |
-| Possessions | Inventory, equipment, quantities, resources, usable tools and learned methods | Saying someone is skilled or owns a weapon in prose does not install the method or physical item. |
-| Surroundings | People, animals, objects, placements, facing, relevant physical conditions and current personal sensory evidence | Scenario truth and the selected person's perception have separate labeled views. |
-| Memories | Raw experiences, retained shared-event awareness, summaries, source/perspective/time, certainty, selection/index status and actual dependencies | A heard claim, inference, imagination and observed fact retain their meanings. |
-| History | Authored past speech/events, speaker/actor, target, volume, actual or authored hearers, times and dependent experience | Rewriting visible text alone is not a coherent history edit. |
-| Custom | Freeform text, named concerns, traits and numeric/qualitative fields with chosen input placement | Model-input-only information has no native mechanic unless the installed engine supports one. |
+| Category     | Required editable or inspectable content                                                                                                                               | Important distinction                                                                                                                  |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Person       | Name, authored description, biography, personality, traits, values, interests, preferences, current accepted self-understanding and beliefs                            | Biography, present circumstances and chosen intentions are distinct. Descriptive traits do not automatically grant mechanical effects. |
+| Body         | Applicable health/energy/fullness/spirit or world-authored equivalents, units/range/direction, injury, pain/discomfort, wake/sleep, posture, senses, active conditions | Use actual installed definitions. Lower fullness means more hunger in the base world. Unknown is not zero.                             |
+| Feelings     | Every active permitted feeling, its source/target, qualitative or numerical value, lifetime, last change and proposed/accepted update                                  | Bodily reaction, interpreted feeling and calculated gameplay consequence are separate.                                                 |
+| Relations    | Directional personal notes, known name, recognition/acquaintance binding, beliefs about the person, actual supported commitments                                       | A relationship word does not establish reciprocal feeling, consent, recognition or native promise state.                               |
+| Work         | Current goals, selected and suspended plans, current action, remaining work, blocked steps, commitments and consequences of interruption                               | A scenario-seeded goal is labeled an intervention; it is not an independently chosen intention.                                        |
+| Possessions  | Inventory, equipment, quantities, resources, usable tools and learned methods                                                                                          | Saying someone is skilled or owns a weapon in prose does not install the method or physical item.                                      |
+| Surroundings | People, animals, objects, placements, facing, relevant physical conditions and current personal sensory evidence                                                       | Scenario truth and the selected person's perception have separate labeled views.                                                       |
+| Memories     | Raw experiences, retained shared-event awareness, summaries, source/perspective/time, certainty, selection/index status and actual dependencies                        | A heard claim, inference, imagination and observed fact retain their meanings.                                                         |
+| History      | Authored past speech/events, speaker/actor, target, volume, actual or authored hearers, times and dependent experience                                                 | Rewriting visible text alone is not a coherent history edit.                                                                           |
+| Custom       | Freeform text, named concerns, traits and numeric/qualitative fields with chosen input placement                                                                       | Model-input-only information has no native mechanic unless the installed engine supports one.                                          |
 
 Numerical controls pair a compact slider with an exact-value field, authored units, meaningful endpoints and reset. Keyboard entry and step controls remain available; dragging is never the only route. Preserve incomplete numeric drafts. A slider previews during movement and stages its final value on release; it does not dispatch cognition on each pointer movement. Fixed or derived values are labeled and link to their actual contributors instead of presenting a misleading writable total.
 
@@ -138,17 +138,17 @@ Traits and installed definitions use editable comboboxes or named searchable pic
 
 Installed field descriptors supply label, value type, units, range/options, writable or derived status, help and native owner. The UI renders those descriptors rather than hard-coding a special form for every possible feeling or body. It must not omit an installed field because its name is unfamiliar. An unavailable native editor is a visible capability state, with its actual value inspectable and a source link where available.
 
-| Field shape | Default compact control | Disclosure and validation |
-| --- | --- | --- |
-| Bounded number | Slider plus exact input | Units/endpoints visible; native validation and missing/unknown state retained. |
-| Unbounded number or duration | Exact input plus unit/clock selector | No arbitrary slider ceiling; simulation duration is distinguished from real time. |
-| Boolean | Small named toggle | On/off meaning and inherited/unknown status are explicit. |
-| Fixed enum | Compact segmented control for a small set; combobox for a larger set | Current value remains visible; no scrolling strip of fixed options. |
-| Tags or references | Searchable multi-select with short chips/count | Typed identity bindings, not name-only strings; full selected set is reachable directly. |
-| Short text | Inline input | Preserve draft until apply; no change on blur if the enclosing transaction is not committed. |
-| Long text | Readable preview and focused editor | Full content is editable/copyable in one action. |
-| Growing record collection | Searchable table/list in the category's one body | Add/edit/remove with a stable field schema and explicit affected record. |
-| Structured value without a specialized editor | Labeled advanced structured editor | Preserve complete supported content; field-path errors retain the draft. Never silently flatten or truncate. |
+| Field shape                                   | Default compact control                                              | Disclosure and validation                                                                                    |
+| --------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Bounded number                                | Slider plus exact input                                              | Units/endpoints visible; native validation and missing/unknown state retained.                               |
+| Unbounded number or duration                  | Exact input plus unit/clock selector                                 | No arbitrary slider ceiling; simulation duration is distinguished from real time.                            |
+| Boolean                                       | Small named toggle                                                   | On/off meaning and inherited/unknown status are explicit.                                                    |
+| Fixed enum                                    | Compact segmented control for a small set; combobox for a larger set | Current value remains visible; no scrolling strip of fixed options.                                          |
+| Tags or references                            | Searchable multi-select with short chips/count                       | Typed identity bindings, not name-only strings; full selected set is reachable directly.                     |
+| Short text                                    | Inline input                                                         | Preserve draft until apply; no change on blur if the enclosing transaction is not committed.                 |
+| Long text                                     | Readable preview and focused editor                                  | Full content is editable/copyable in one action.                                                             |
+| Growing record collection                     | Searchable table/list in the category's one body                     | Add/edit/remove with a stable field schema and explicit affected record.                                     |
+| Structured value without a specialized editor | Labeled advanced structured editor                                   | Preserve complete supported content; field-path errors retain the draft. Never silently flatten or truncate. |
 
 Custom entries have a name, type, value, explicit subject/scope, recipient actors and supported stage placement. Scopes are this person, a directed relationship, an object or the scene. Person and directed-relation additions default to the owning actor only; object and scene additions require chosen recipients. Nothing defaults to every actor. The editor shows where the addition will enter model input, or why the selected call will not include it. The persistent **Model input only** label distinguishes a custom fear, skill claim or invented concern from an installed effect. Exact inputs on the right show whether it was actually included. Source labels such as story premise, private belief or observed description explain the experiment; they do not grant physical truth or native perception. Deliberately adding another recipient is a recorded intervention. A custom number need not have a decay rule, and a qualitative attachment need not have a number. Removing a custom input removes that input; it does not reverse unrelated native effects.
 
@@ -250,12 +250,12 @@ The selected execution boundary holds the scenario consistently while the reques
 
 Historical actions have distinct labels and guarantees:
 
-| Action | What it does | What the result means |
-| --- | --- | --- |
-| Replay recorded run | Displays captured events, requests and outcomes without dispatch or mutation | Evidence of the original run. |
-| Rerun request | Submits a fresh request from recorded input, with current provider/schema validation; defaults to request-only comparison | New output for that captured input. No claim of fresh perception/retrieval, native action execution or world effects. |
-| Continue from checkpoint | Continues a fresh call result through normal native admission from an actually captured compatible checkpoint at that breakpoint | A new scenario continuation with new accepted outcomes; the old result is untouched. |
-| Run scenario again | Restores the selected coherent origin and executes the full event/preparation/decision sequence again | New whole-scenario behavior, including whatever context the normal game selects now. |
+| Action                   | What it does                                                                                                                     | What the result means                                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Replay recorded run      | Displays captured events, requests and outcomes without dispatch or mutation                                                     | Evidence of the original run.                                                                                         |
+| Rerun request            | Submits a fresh request from recorded input, with current provider/schema validation; defaults to request-only comparison        | New output for that captured input. No claim of fresh perception/retrieval, native action execution or world effects. |
+| Continue from checkpoint | Continues a fresh call result through normal native admission from an actually captured compatible checkpoint at that breakpoint | A new scenario continuation with new accepted outcomes; the old result is untouched.                                  |
+| Run scenario again       | Restores the selected coherent origin and executes the full event/preparation/decision sequence again                            | New whole-scenario behavior, including whatever context the normal game selects now.                                  |
 
 **Continue from checkpoint** is unavailable when no actual breakpoint checkpoint was captured. Its inline explanation offers **Run scenario again**; the UI never reconstructs executable history from a request alone. Request-only rerun and live one-shot override are therefore visibly different modes. No historical action receipt is executed merely by replaying a recorded result.
 
@@ -267,9 +267,11 @@ The compact **Focal** picker remains beside the run-until condition. Its actor d
 
 The run-until selector names its actual stop condition: One response, Next event, Next decision, Selected action outcome, Chosen simulation time or Until stopped. Unsupported conditions are explained rather than approximated. The selected focal actor and any target action remain visible. Each mode uses the finite allowances in CLL06 and shared spending rules. **Continue** renews the displayed allowance explicitly within the same retained run; there is no automatic loop when a guard is reached. A continuous experiment retains a reachable Stop control even when a read or model request is pending.
 
-One response completes an interval and leaves the run **Held**, preserving a natural conversation. Another submitted stimulus or explicit Continue can add to the same episode; it does not rewrite finalized stages. **End run** closes a held episode; **Stop** closes an active run after native cancellation/settlement. Reset/load also closes the prior episode before replacing its scenario. The visible lifecycle is Ready, Running, Held, Stopping and Ended, with the actual held/stopped reason beside it. The developer need not create, name or retain a new run for each sentence.
+One response completes an interval and leaves the run **Held**, preserving a natural conversation. Another submitted stimulus or explicit Continue can add to the same episode; it does not rewrite finalized stages. **End run** closes a held episode; **Stop** closes an active run after native cancellation/settlement. Reset/load also closes the prior episode before replacing its scenario. The visible lifecycle is Ready, Running, Held and Ended, with the actual held/stopped reason beside it. While admitted work settles, show **Finishing current work**, or **Stopping** after Stop, before reaching Held/Ended; this is the technical design's Settling state, not another state owner. The developer need not create, name or retain a new run for each sentence.
 
 Time advance uses simulation time and the installed world clock, with normal-play duration labels when appropriate. Real model latency never becomes an emotion's duration or unrequested world catch-up. Reading an old run or stopping follow does not freeze the world. Cancelling a pending request is distinct from pausing simulation and preserves the actual outcome/usage uncertainty.
+
+Starting a new run automatically captures its actual applied starting state once, without a name/save dialog, so unsaved applied edits are included in Run scenario again and matched comparisons. A later utterance or Continue in the same held episode reuses that origin and records the ordered stimuli/interventions; this is not a full-world copy per utterance or model call. Failed origin capture preserves the draft and exposes the concrete storage/setup error before execution. **Reset** names and restores the selected run origin or saved scenario start; **New** initializes a fresh scene from the current world definitions.
 
 Save operations distinguish **Scenario** (a fresh reusable starting setup), **Checkpoint** (a coherent running situation to resume), and **Run** (actual recorded inputs/results/diagnostics). Each action has a named destination and truthful saved/failed status. A coherent save includes the people, objects, histories, relationships, work and installed definitions needed for its meaning; it is not just the selected character's visible JSON.
 
@@ -303,20 +305,20 @@ The comparison retains actual model/route settings, prompt/question variants, au
 
 Initial loading uses the shared delayed loading treatment without fabricating scenario values. After a same-scenario view is populated, refresh preserves layout and readable content. Empty, filtered-empty, unavailable, partial, stale, failed, pending and completed states have distinct wording. No unknown meter becomes zero and no missing trace implies that nothing happened.
 
-| State | Visible explanation | Available next action |
-| --- | --- | --- |
-| New compatible scene | The current person and ready composer; an empty feed says no lab events yet | Type and Submit; no onboarding gate. |
-| No records in a category | The category's real empty state, such as No memories yet | Add where supported, or continue the experiment. |
-| Search has no matches | No matches for the visible query; unfiltered total stays available | Clear query/filter. |
-| No eligible actor or missing starting definitions | The concrete unavailable actor/definition, without placeholder meters | Choose/add a compatible actor or resolve the named definition. |
-| Waiting for native/provider work | Actual stage and wait reason; elapsed time/cost status where known | Inspect other evidence; Stop where supported. Do not claim the character is thinking unless a fictional thought exists. |
-| Held at a prepared call | Held before the named stage | Edit input, Continue original, or Stop. |
-| No response | The actual recorded distinction: unheard, no decision, continued work, rejected action, or other owner result | Inspect the directly linked evidence; modify the scene or continue deliberately. |
-| Guard reached | Run limit reached with the actual exhausted allowance | Continue with the displayed renewed allowance, change bounded settings, or End run. |
-| Incomplete capture | Which request/input/stage is unavailable and why, when known | Read remaining evidence or run a fresh experiment; never infer missing values from current state. |
-| Request/save outcome uncertain | The known confirmed portion and the unresolved operation | Reconcile the existing operation before a fresh retry. |
-| Connection lost or revision conflict | Last confirmed values labeled stale; explicit affected draft/operation | Reconnect/reload current values or resolve that conflict; no speculative successful mutation. |
-| Incompatible saved item | The current-format or missing-definition reason | Choose another item or create a fresh scene; no compatibility wizard. |
+| State                                             | Visible explanation                                                                                           | Available next action                                                                                                   |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| New compatible scene                              | The current person and ready composer; an empty feed says no lab events yet                                   | Type and Submit; no onboarding gate.                                                                                    |
+| No records in a category                          | The category's real empty state, such as No memories yet                                                      | Add where supported, or continue the experiment.                                                                        |
+| Search has no matches                             | No matches for the visible query; unfiltered total stays available                                            | Clear query/filter.                                                                                                     |
+| No eligible actor or missing starting definitions | The concrete unavailable actor/definition, without placeholder meters                                         | Choose/add a compatible actor or resolve the named definition.                                                          |
+| Waiting for native/provider work                  | Actual stage and wait reason; elapsed time/cost status where known                                            | Inspect other evidence; Stop where supported. Do not claim the character is thinking unless a fictional thought exists. |
+| Held at a prepared call                           | Held before the named stage                                                                                   | Edit input, Continue original, or Stop.                                                                                 |
+| No response                                       | The actual recorded distinction: unheard, no decision, continued work, rejected action, or other owner result | Inspect the directly linked evidence; modify the scene or continue deliberately.                                        |
+| Guard reached                                     | Run limit reached with the actual exhausted allowance                                                         | Continue with the displayed renewed allowance, change bounded settings, or End run.                                     |
+| Incomplete capture                                | Which request/input/stage is unavailable and why, when known                                                  | Read remaining evidence or run a fresh experiment; never infer missing values from current state.                       |
+| Request/save outcome uncertain                    | The known confirmed portion and the unresolved operation                                                      | Reconcile the existing operation before a fresh retry.                                                                  |
+| Connection lost or revision conflict              | Last confirmed values labeled stale; explicit affected draft/operation                                        | Reconnect/reload current values or resolve that conflict; no speculative successful mutation.                           |
+| Incompatible saved item                           | The current-format or missing-definition reason                                                               | Choose another item or create a fresh scene; no compatibility wizard.                                                   |
 
 These are meaning requirements, not a vocabulary list to expose internal enum names. Apply the [player-facing language standard](../ui-ux/player-facing-language.md) to this developer surface: name the actor, operation, actual result and useful next step in plain language. Technical detail belongs where it helps the experimenter act.
 
@@ -334,20 +336,20 @@ The selected 28 px controls exceed WCAG 2.2's 24 CSS px minimum-target dimension
 
 The final implementation must be qualified through the connected tasks and concrete UI checks specified in the maintainer tracker. A typecheck, fixture payload or attractive screenshot does not establish usability or autonomous character quality. All journeys must retain the independent inspected person, event actor, target and autonomous participants, plus the explicit focal actor in run policy. A view selection must never silently change any of the other roles.
 
-| Journey | Required visible outcome |
-| --- | --- |
-| Open and speak | A compatible default scene reaches a ready Say composer without a setup wizard; one submission produces an attributable event and response/no-response explanation. |
-| Inspect history while running | Selecting an earlier decision displays its captured inputs on the right; the left continues to display current values and remains an editor for the current scenario. |
-| Change a need and repeat | Stage/apply a numeric change, reset or branch deliberately, rerun the same event and compare actual behavior; the meter's authored direction and native consequences remain visible. |
-| Edit personality and recognition | A freeform trait edit and an acquaintance binding remain distinguishable; the character's actual input identifies only the names they know. |
-| Observe emotion sources | Bodily reaction, interpreted feeling and derived effect remain separate; qualitative feelings retain qualitative presentation. |
-| Explain silence | Hearing failure, deliberate continuation, native-only handling, unavailable service and rejected result are distinguishable without reading an undifferentiated log. |
-| Inspect one missing memory | Search reaches the memory, its content and its actual inclusion/exclusion/coverage status with at most the selected shallow access path. |
-| Override a prepared request | Only modal Submit uses edited input; original/difference are retained; a left edit invalidates the request; normal Submit uses current scenario information. |
-| Author past speech | Changing words, attribution or hearers updates the intended scenario through the owning history/experience rules and reveals relevant dependent invalidation. |
-| Compare an episode | The same starting situation and event sequence support a one-factor comparison with later consequences, separate expectations and recorded-versus-fresh replay. |
-| Use a large dense workspace | At 1920 × 1080 and 2560 × 1440, fixed controls remain visible while long collections/text scroll in their one owning body. No control moves because a record expands. |
-| Use keyboard and long content | Long names, multiline text, no results, disabled actions, popup boundaries, focus, IME and enlarged text preserve the same task without accidental submission or clipped controls. |
+| Journey                          | Required visible outcome                                                                                                                                                             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Open and speak                   | A compatible default scene reaches a ready Say composer without a setup wizard; one submission produces an attributable event and response/no-response explanation.                  |
+| Inspect history while running    | Selecting an earlier decision displays its captured inputs on the right; the left continues to display current values and remains an editor for the current scenario.                |
+| Change a need and repeat         | Stage/apply a numeric change, reset or branch deliberately, rerun the same event and compare actual behavior; the meter's authored direction and native consequences remain visible. |
+| Edit personality and recognition | A freeform trait edit and an acquaintance binding remain distinguishable; the character's actual input identifies only the names they know.                                          |
+| Observe emotion sources          | Bodily reaction, interpreted feeling and derived effect remain separate; qualitative feelings retain qualitative presentation.                                                       |
+| Explain silence                  | Hearing failure, deliberate continuation, native-only handling, unavailable service and rejected result are distinguishable without reading an undifferentiated log.                 |
+| Inspect one missing memory       | Search reaches the memory, its content and its actual inclusion/exclusion/coverage status with at most the selected shallow access path.                                             |
+| Override a prepared request      | Only modal Submit uses edited input; original/difference are retained; a left edit invalidates the request; normal Submit uses current scenario information.                         |
+| Author past speech               | Changing words, attribution or hearers updates the intended scenario through the owning history/experience rules and reveals relevant dependent invalidation.                        |
+| Compare an episode               | The same starting situation and event sequence support a one-factor comparison with later consequences, separate expectations and recorded-versus-fresh replay.                      |
+| Use a large dense workspace      | At 1920 × 1080 and 2560 × 1440, fixed controls remain visible while long collections/text scroll in their one owning body. No control moves because a record expands.                |
+| Use keyboard and long content    | Long names, multiline text, no results, disabled actions, popup boundaries, focus, IME and enlarged text preserve the same task without accidental submission or clipped controls.   |
 
 ### Required end-to-end qualification details
 

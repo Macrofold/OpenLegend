@@ -94,4 +94,3 @@ Use the backlog’s [ranking method](../maintainers/limits-audit.md#ranking-meth
 Prior evidence: [exact retrieval and cold-source residency](../verification/data-foundation.md#data-foundation-runtime), [private-note candidate preparation](../verification/items-and-knowledge.md#editable-knowledge-and-observer-names) and [dense-work gaps](../maintainers/performance.md#pf09--population-work-follows-relevance). Figures are fixture observations on their recorded versions/hardware, not current natural-session forecasts.
 
 Still outside this focused inspection: exhaustive native family/controller loops, all legacy migration branches, every projection/editor query, browser rendering and every external provider path. Their existing inventories and PF/EPR/CR qualification remain; do not infer they are bounded because they are absent here. Inspect their input/iteration boundary when a consuming feature or measurement makes them relevant.
-
