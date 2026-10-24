@@ -20,7 +20,7 @@ The design task does not authorize new automated tests. For implementation quali
 
 ## CL01 — Shared runtime composition and isolated lab startup
 
-- [ ] Extract the narrow shared runtime factory described in the technical design and use it for both ordinary gameplay and one separate lab instance in the existing server process.
+- [ ] Extract the narrow shared runtime factory described in the technical design and use it for both ordinary gameplay and one separate lab instance. Keep one host-owned execution pool with scoped store/runtime registrations, recovery and settlement; never multiply process capacity or reconcile one store's uncertain attempts against another.
 - [ ] Provision the dedicated lab PostgreSQL database and lab data directory in normal development setup. Initialize it with the same selected world's normal initializer; do not add an ordinary-use setup wizard or fall back to gameplay storage.
 - [ ] Add authenticated lab identity, explicit active scenario and revision checks. Keep gameplay pause, control, selected character, model settings, saves and live world independent.
 - [ ] Install the initial hold before any lab clock/director admission. Separate authorized driver liveness from explicit physical participation through the shared owner; the default speaker stays present without a game renderer, while real departure/removal retains its effects.
@@ -69,7 +69,8 @@ The design task does not authorize new automated tests. For implementation quali
 ## CL06 — Run, step, hold, breakpoint and cancellation
 
 - [ ] Implement the explicit controller/state machine for One response, bounded Run for, Advance time, Continue, next-stage stepping and selected pre-dispatch breakpoints.
-- [ ] Implement lab hold independently of ordinary game pause/cancel behavior. Preserve or cancel pending work exactly as the technical contract states and expose the actual state.
+- [ ] Implement lab hold independently of ordinary game pause/cancel behavior across primary, higher-model, maintenance and other native dispatch owners. Gate scoped queue starts and every actual attempt; unsupported input editing never exempts a stage from Hold or guards.
+- [ ] Make held waits abort-aware and drainable on Stop/load/disposal. Suspend/re-arm each undispatched owner's actual deadlines, retain no scarce lease through human wait, and preserve any dispatched/uncertain attempt's capacity. Hold must not wait on `AiDirector.idle()` and its own held continuation.
 - [ ] Enforce visible run guards and existing provider/spending bounds; distinguish a run limit from a character decision. Renew guards only by explicit continuation.
 - [ ] Keep operator wait, simulated elapsed time, active orchestration time and provider execution time distinct. Do not monkey-patch process clocks or refund real work.
 
@@ -89,7 +90,7 @@ The design task does not authorize new automated tests. For implementation quali
 
 - [ ] Provide the explicit current-format, point-in-time game-to-lab import; report source and time and then break all synchronization.
 - [ ] Implement the three distinct save intents and their labels: reusable starting scenario, current continuation checkpoint and retained evidence/run.
-- [ ] Capture one exact current applied origin automatically when a new run starts, including unsaved applied edits, without a naming dialog; reuse it for subsequent intervals and record ordered stimuli/interventions. Reset identifies its origin; New uses the normal initializer.
+- [ ] Capture one exact current applied origin automatically when a new run starts: a coherent native checkpoint plus an immutable lab context/settings snapshot, including unsaved applied edits, custom fields, supported holds and participation/autonomy. Publish/restore the pair together, reuse native bytes when the native cut matches, and record later stimuli/interventions without another whole-world copy per interval.
 - [ ] Use current-format native world save/restore for scenario/checkpoint content, including required body, action, memory, recognition and queue continuation state according to native ownership.
 - [ ] Retain exact experiment evidence separately from mutable current state, with explicit annotations, names, provenance, import/export and deliberate removal.
 - [ ] Apply one retention allowance to serialized lab metadata, native-only run records, artifacts/checkpoints and pending writes, with reserved terminal receipt space and incremental accounting. Remove shared artifact bytes only after the last eligible lab reference; preserve other runs when removing a descriptor.
@@ -118,7 +119,7 @@ The design task does not authorize new automated tests. For implementation quali
 
 ## CL11 — Integrated usefulness, performance and parity
 
-- [ ] Complete the feature specification's acceptance journeys using actual native state and inspect the same request/effect path in game and lab; record source revision, configuration and any provider substitution.
+- [ ] Complete the feature specification's acceptance journeys using actual native state and inspect the same request/effect path in game and lab; record source revision, configuration and any provider substitution. Include independent background dispatch, aborting held waits, shared capacity with separate uncertain-store receipts, and reset of lab-only inputs/settings with the native origin.
 - [ ] Qualify full desktop journeys, stable scroll/focus, keyboard controls, long lists/text, streaming, error recovery, historical/current separation and ordinary speech setup comprehension with Mike.
 - [ ] Measure initial readiness, interaction latency and query/DOM work with growing unrelated fields/choices, many intervals in one run and large stage evidence collections. Verify bounded bootstrap/detail projections and paging before hydration through actual production query plans.
 - [ ] Measure first origin capture, import and repeated comparison restores with growing cold history while the game runs, including full-operation latency, peak memory and native-lane/event-loop delays. Qualify mixed native-only/model capture admission and shared-reference deletion; tune proposed bounds from evidence.
