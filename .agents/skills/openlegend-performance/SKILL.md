@@ -24,4 +24,4 @@ Load only the matching detailed contract below. An ordinary feature reads this c
 - For movement, geometry, navigation preparation or sensory candidate work, read [Spatial, navigation and sensory performance](../../../docs/performance/spatial.md).
 - For collecting/interpreting performance, optional instrumentation or benchmark drivers, read [Performance measurement and interpretation](../../../docs/performance/measurement.md).
 
-No benchmark, questionnaire or new instrumentation is required merely by loading this guidance.
+No benchmark, questionnaire or new instrumentation is required merely by loading this guidance. No optimization is needed when the existing design meets the task's requirements and review finds no actionable performance issue.

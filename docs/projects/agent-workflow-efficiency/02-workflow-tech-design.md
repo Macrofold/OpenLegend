@@ -95,24 +95,26 @@ Choose a different approach when information gain disappears: narrow the questio
 4. **Install documentation navigation and migrate the named entry points.** Follow [the documentation-system migration](06-documentation-system-design.md#bounded-adoption) in the isolated adoption checkout. Promote current truth out of historical locations, separate growing records, and retain completed-project filing. Do not audit or relocate every old document before the new workflow is usable.
 5. **Review and verify the instruction change.** Content/anchor review, pinned formatting, `pnpm guidance:check`, and the focused dispatch cases below. No game stress, provider calls, dependency installation, new checker infrastructure, or broad gameplay suites are required for prose-only adoption.
 
-Adoption is authorized in this conversation and isolated from the main checkout. The installed operational owners govern their matching task modes; the design/audit package is optional reference context.
+The operational instructions and documentation migrations are integrated into local `main`. The installed operational owners govern their matching task modes; the design/audit package is optional reference context. The [adoption plan](03-instruction-edit-plan.md#current-adoption-progress) records remaining acceptance.
 
 ## Focused routing and behavior checks for later adoption
 
-Use the existing CG05 approach on the agent runtime actually used for development. A small combined read-only routing exercise can cover several rows; do not run one costly agent for every sentence. The present side conversation prohibits sub-agents, so fresh-session observations remain explicitly unverified; static routing is not a substitute.
+Use the existing CG05 approach on the agent runtime actually used for development. A small combined read-only routing exercise can cover several rows; do not run one costly agent for every sentence. The source session did not run fresh-session observations, so they remain explicitly unverified; static routing is not a substitute.
 
-| Case                                                       | Expected evidence                                                                                      |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Local executable fix and new-file fix                      | Implementation rule and relevant short performance/contract routes load; unrelated subsystems do not   |
-| Design-only request mentioning implementation and stress   | Relevant design context and authorized experiments only; no automatic implementation startup           |
-| Question or prose correction mentioning caches             | No implementation workflow and no automatic benchmark                                                  |
-| Findings-only review versus review-and-fix                 | Both preserve review scope; only the authorized fix phase activates implementation                     |
-| Package working directory                                  | Complete root/local constraints and matching routes are found without requiring a root cwd             |
-| Resume after compaction with valid evidence                | Reads compact current progress and current diff; no automatic full-suite or full-report restart        |
-| Required diagnostic fails outside ordinary population      | Records the result and capability limit; does not invent a pass or silently waive a separate hard gate |
-| Explicit pass gate fails                                   | Remains incomplete; diagnosis continues within authorization or a genuine blocker is identified        |
-| Fixture rejects a valid result or a service is unavailable | Distinguishes cause, changes setup or waits on a prerequisite, avoids repeated unchanged runs          |
-| Privacy bug appears during review                          | Fixes and verifies it even if rare; efficiency does not suppress high-impact defects                   |
+| Case                                                             | Expected evidence                                                                                                                                             |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Local executable fix and new-file fix                            | Implementation rule and relevant short performance/contract routes load; unrelated subsystems do not                                                          |
+| Design-only request mentioning implementation and stress         | Relevant design context and authorized experiments; proposed delivery tasks recorded, only satisfied design scope closed, no automatic implementation startup |
+| Documentation lifecycle during design, implementation and review | Track gaps; close proven scope; retire obsolete work with reasons; keep dependencies, filing and navigation aligned; read-only review reports only            |
+| Question or prose correction mentioning caches                   | No implementation workflow and no automatic benchmark                                                                                                         |
+| Findings-only review versus review-and-fix                       | Both preserve review scope; only the authorized fix phase activates implementation                                                                            |
+| Clean review or satisfied task                                   | Reports no actionable findings or remaining work without inventing edits/tasks; accurate documents stay unchanged, but missing required evidence stays open   |
+| Package working directory                                        | Complete root/local constraints and matching routes are found without requiring a root cwd                                                                    |
+| Resume after compaction with valid evidence                      | Reads compact current progress and current diff; no automatic full-suite or full-report restart                                                               |
+| Required diagnostic fails outside ordinary population            | Records the result and capability limit; does not invent a pass or silently waive a separate hard gate                                                        |
+| Explicit pass gate fails                                         | Remains incomplete; diagnosis continues within authorization or a genuine blocker is identified                                                               |
+| Fixture rejects a valid result or a service is unavailable       | Distinguishes cause, changes setup or waits on a prerequisite, avoids repeated unchanged runs                                                                 |
+| Privacy bug appears during review                                | Fixes and verifies it even if rare; efficiency does not suppress high-impact defects                                                                          |
 
 Structural checks cannot prove the agent followed the intended trigger. Check the complete effective instruction chain in a fresh session, including native skill discovery and applicable ancestor/package guidance. Inspect actual reads and actions where available. Retain unsupported runtime/platform cases as CG05 gaps; do not make the full cross-vendor historical matrix a new automatic adoption gate. Explicit existing requirements still need their own disposition.
 

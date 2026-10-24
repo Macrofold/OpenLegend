@@ -1,6 +1,6 @@
 # Adaptive workflow adoption — verification
 
-Source: `Macrofold/OpenLegend`, `origin/main` at `ecf49b1237e0aa83e408572a486aadb7f29cb910`, plus the adoption/review changes in this record’s Git history. Observed October 24, 2026. The approved package is `f48601abe`; operational scope and remaining acceptance are in the [adoption plan](../../../projects/agent-workflow-efficiency/03-instruction-edit-plan.md).
+Source: `Macrofold/OpenLegend`, adoption revision `7508ffa5003810d41019b491dcab227cfd34ecf2`, based on `origin/main` at `ecf49b1237e0aa83e408572a486aadb7f29cb910`. Observed October 24, 2026. The approved package is `f48601abe`; operational scope and remaining acceptance are in the [adoption plan](../../../projects/agent-workflow-efficiency/03-instruction-edit-plan.md).
 
 ## Local evidence
 

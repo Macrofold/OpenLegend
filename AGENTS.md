@@ -63,6 +63,8 @@ Before planning, implementing, or reviewing executable behavior or runtime data 
 
 Prefer the smallest clear, complete change that preserves correctness, robustness, performance, modularity and product intent. Reuse semantic owners and helpers; separate concerns, remove relevant dead code and avoid needless dependencies. Abstract shared meaning or a real second use, not merely similar syntax. Follow local patterns unless improving them deliberately.
 
+Checks assess evidence; they do not impose a quota of findings, edits, tasks or open questions. “No actionable findings,” “No changes needed,” and “Remaining work: None” are valid when supported. Leave sound work unchanged and finish when agreed obligations are satisfied. Missing required evidence remains a gap, not a reason to invent unrelated work or claim completion.
+
 Keep exploratory scratch out of canonical docs; reconcile accepted designs and tracked work under the documentation policy.
 
 ### Validate only for a concrete purpose

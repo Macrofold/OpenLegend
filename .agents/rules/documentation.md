@@ -18,7 +18,17 @@ Raw logs, traces, profiles, dumps and screenshots stay outside Git unless explic
 
 Before code/design changes, discover relevant work through the [maintainer index](../../docs/maintainers/README.md) and focused trackers. Read affected design owners, decisions, dependencies and exit criteria; cite their paths/IDs in the handoff. Tasks, dependencies, blockers and acceptance have one focused owner; use [TODO](../../docs/maintainers/TODO.md) only when none fits.
 
-Update changed behavior, decisions, status and concrete gaps at coherent delivery checkpoints and before handoff. Accurate entries and deferral reasons need no rewrite. Check only satisfied criteria, preserve unverified acceptance and reopen regressions. Keep IDs stable; link replacements for obsolete work. Significant actionable out-of-scope findings belong once in their owner; hypothetical improvements need not become tasks.
+For edit-authorized work, reconcile affected entries at coherent delivery checkpoints and before handoff in both directions: unfinished accepted requirements and concrete gaps needing follow-through have tracked coverage, and tracked work still describes what remains. Include direct dependents when their prerequisites change; preserve their actual integration/evidence requirements. This is an affected-scope check, not a whole-backlog audit. Findings-only reviews report discrepancies without editing.
+
+If reconciliation finds no gaps or stale records, leave accurate entries unchanged; an empty remaining-work list is valid.
+
+- **Missing work:** reuse or extend a matching entry; create one only for work needing durable follow-through. State the outcome, dependencies and completion criteria. Before a design handoff, reconcile proposed implementation and verification entries; label unapproved scope as proposed.
+- **Satisfied criteria:** check only the satisfied scope and link evidence. Separate delivered work from remaining implementation or acceptance; do not close an unfinished parent. Apply the design/delivery distinction below.
+- **Still-relevant deferred or blocked work:** keep it open with the actual reason and condition for resuming. Accurate entries need no rewrite.
+- **Duplicate, superseded or no-longer-applicable work:** remove it from active work with a supported reason and replacement link where applicable; preserve unique requirements and repair dependencies. Record its actual disposition, not a false completion.
+- **Regression:** reopen the affected scope and identify what invalidated completion; preserve the earlier evidence's original scope.
+
+A task entry grants no execution authority. Routine edits and speculative improvements need no new task; significant actionable out-of-scope findings belong once in their owner. Age, low priority or unavailable verification does not make accepted work obsolete. Retiring an accepted requirement needs evidence that its purpose is satisfied elsewhere or no longer applies, or an authorized scope decision; do not silently cancel it for convenience. Keep IDs stable and file closed entries under the [tracker filing rules](../../docs/documentation-system.md#growth-rules-that-do-not-require-another-maintenance-programme).
 
 For long-running work retain one compact current-progress section in the existing tracker or plan: unfinished scope, consequential decisions, next action, applicable evidence and owned resources/financial uncertainty. Replace stale content; do not create a parallel progress diary. A safety commit or routine reconciliation needs no new report or repeated deferral notes. Material planning risk and explicitly requested records still apply.
 
@@ -36,6 +46,8 @@ Project feature specifications and technical designs have a compact status table
 
 Use Not started, In progress, Blocked or Completed. The progress cell is one plain-language sentence, not a task inventory. An optional rough percentage must be supported by scope/evidence. Update status and dates when substantive content, progress, decisions or acceptance changes. Reconcile affected owners at coherent checkpoints and before handoff; unchanged reviews need no new date. Related documents must agree with the tracker. Do not refresh architecture-use timestamps on rereads unless explicitly requested; then record actual use at the applicable checkpoint.
 
+Task completion applies to the outcome named by that task. Close a design-only entry when its requested documents, required decisions and review are complete, linking the design and remaining implementation entries. Required unanswered design questions keep it open. Design completion does not authorize implementation or satisfy delivery/qualification criteria. For a feature-delivery project, keep its overall status unfinished and describe design completion in progress. A project scoped solely to design may be Completed as design, with that scope explicit.
+
 Mark Completed only when agreed scope, integration, documentation, review fixes and required evidence are complete. In the completion change, follow [contract promotion and completed filing](../../docs/documentation-system.md#current-contracts-and-completed-projects): retain discoverable current contracts, file completed project material under `docs/projects/completed/<year>/`, and repair incoming/internal references together. Existing completed paths need no immediate move. Intermediate checkpoints do not move files; unfinished shared scope and required human evidence stay active. Reopen only the affected scope; an expansion need not reopen old work. Keep useful meaning and evidence without duplicate active copies.
 
 ## Project approval and current truth
@@ -51,6 +63,8 @@ Record consequential accepted product/contract decisions and major capabilities 
 ## Reconcile documentation
 
 Code/evidence establishes current behavior; accepted requirements establish targets. Explain changed assumptions and reconcile owners without weakening a specification to excuse a defect or treating a proposal as accepted. Unresolved material choices stay in their focused owner.
+
+At coherent checkpoints and before handoff, reconcile the affected contracts, task dispositions/dependencies, project status and navigation together. Replace stale descriptions of current behavior rather than append corrections. Apply [task maintenance](#keep-maintainer-work-synchronized) and the relevant [filing/navigation rules](../../docs/documentation-system.md); new or moved owners must remain discoverable. Preserve unchanged valid content and unrelated archives. Review this against the actual task and diff, not merely the documents already edited; missing documentation updates are part of the change. Read-only requests report gaps instead.
 
 For conversation capture extract agreed decisions, requirements, useful examples, constraints, evidence limits, tasks and questions into their existing owners. Check that each useful point is represented without copying the transcript, progress narration or a chain of revisions. Silence means agreement only where explicitly granted for that conversation; it never grants destructive, paid or permission-changing authority.
 

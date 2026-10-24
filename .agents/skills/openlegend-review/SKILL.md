@@ -11,6 +11,8 @@ description: >-
 
 Before completion, inspect the complete affected diff and relevant contracts/consumers for correctness, lifecycle/ownership, unnecessary work, simplification, and documentation accuracy. Fix in-scope issues unless the task is read-only. After a correction, review its diff and affected assumptions; reread broader areas only when that correction or a new finding invalidates their previous review. A new commit or context window alone does not invalidate completed review. Preserve branch-wide coverage for an explicit full review, including changes outside the last commit. Scale routine checks to the [root low-risk workflow](../../../AGENTS.md#low-risk-changes); use the full review below for substantial changes or an explicit review request.
 
+Check [documentation reconciliation](../../rules/documentation.md#reconcile-documentation) against the actual change, including missing or obsolete task entries, completion evidence, filing and navigation. Findings-only reviews report these gaps without editing.
+
 For standalone rebases, [reconciliation review](../openlegend-rebase/SKILL.md#review-and-verify-reconciliation) defines the affected diff and when to reuse prior review evidence. The size of the pre-existing feature alone does not trigger a new full review.
 
 ## Substantial or requested reviews
@@ -29,4 +31,4 @@ Make justified in-scope improvements and review the fixes and affected consumers
 
 Actual authorized fixes use the [implementation workflow](../../rules/implementation.md); findings-only review does not activate it.
 
-[Verification](../../rules/verification.md) determines permitted checks; use the linked root handoff requirements for the result. No findings is not proof of correctness.
+[Verification](../../rules/verification.md) determines permitted checks; use the linked root handoff requirements for the result. No actionable findings is a valid outcome: leave sound work unchanged and report the reviewed scope and limits, without implying proof of correctness or inventing improvements.
