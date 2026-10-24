@@ -6,6 +6,10 @@ Use this handbook to turn an idea into something a player can recognize, use, re
 
 The route is chosen for the wanted experience. Improving the weight of a carried tool, making a person recognizable, revealing a mysterious path, or making an inventory satisfying to use can call for different combinations of art, geometry, animation, sound and native behavior. Begin with the smallest complete production path that can answer the actual question, while preserving the game's distinctive invention and independent-character ambitions in the early playable experience. [Gameplay priorities](../repertoires/gameplay-priorities.md) owns project selection; this handbook does not place inventory, graphics or any new pipeline ahead of already selected work.
 
+## Run an art request
+
+For a repeatable agent-operated request, use the [Standard and Higgsfield art flows](art-flows/README.md). Say which flow and what you want; the agent handles the brief, tool prompts, visual review, revisions and saving. The shared procedure separates a style/asset study, usable production files and explicit game integration. It loads only the relevant [deliverable profile](art-flows/profiles.md), and preserves outputs through the project's S3 workflow. A study can finish before any playable build.
+
 ## The common route
 
 **Idea → brief → concept or playable blockout → editable source → usable export → working game integration → play and presentation review → reusable result.**

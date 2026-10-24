@@ -1,5 +1,9 @@
 # Open Legend UI design brief
 
+## Visual style exploration
+
+Use the [reusable art flows](production-workflows/art-flows/README.md) and [UI-style profile](production-workflows/art-flows/profiles.md#ui-style) to explore panel materials, borders, corners, rails and connecting ornament before changing screen layouts. The [surface-language brief](../art-direction/studies/ui-surface-language/brief.md) supplies the current reference study. Study approval, production asset qualification and implementation are separate outcomes; candidates do not replace this brief or the accepted design-system values. When a direction is selected for implementation, reconcile it through the existing component and token owners.
+
 ## Whole-interface redesign scope
 
 Mike's October 3 request covers the entire interface; inventory was an example. The first redesign delivery concentrated on inventory, contextual camp tasks, Crafting and conversation. The implemented continuation now changes the shared shell, Character and actions, reading/history, settings, creator navigation and entry/recovery presentation as one interface. This does not establish complete gameplay or usability acceptance. The [current source/evidence map](ui-ux/interface-coverage.md) retains the original 58 audited groups and five later integrated groups, including death, final-blow review, barter, known places and shared outings. It accounts for ordinary play, Character/history, entry/settings/saves, invention/creator editors, operations and diagnostics. The existing [feature specification](projects/game-interaction-redesign-feature-spec.md) and [technical design](projects/game-interaction-redesign-tech-design.md) own the full experience; [UIUX07–UIUX18](maintainers/ui-ux.md#uiux07) and the [verification report](verification/game-interaction-redesign.md) distinguish delivered behavior from the remaining native, input and player-observation checks.

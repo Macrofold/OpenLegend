@@ -4,6 +4,8 @@ This folder is the shared home for visual direction, feedback, decisions and ref
 
 ## Start here
 
+**Reusable art requests:** use the [Standard or Higgsfield flow](../docs/production-workflows/art-flows/README.md) for style, asset, character, scene, material, motion or UI-system work. The agent handles the steps and file handoffs. The [UI surface-language brief](studies/ui-surface-language/brief.md) records the supplied border/panel/connector study request; it is not a completed visual study.
+
 **Asset storage:** substantial models, editable sources, reference media and study captures belong in the external library/study/runtime collections specified by the [asset storage feature](../docs/projects/game-asset-storage-feature-spec.md) and [S3/URL design](../docs/projects/game-asset-storage-tech-design.md). Git retains direction, recipes, small pins and verified hosted links. [AS01–AS08](../docs/maintainers/game-asset-storage.md) tracks the unimplemented migration; current local assets/links remain preserved until real destinations and recovery are verified. Before hosting reference art, check its permitted storage/distribution audience.
 
 **Preserved iterations:** [Study archive](studies/README.md) contains the recovered earlier screenshots/videos and the current small-detail/grounded-lighting comparisons. Current direction includes survival, weathering and emotional range alongside sunlight and warmth; preserve readable darkness and avoid uniformly cheerful presentation.

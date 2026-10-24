@@ -1,5 +1,7 @@
 # Art-study archive
 
+For new studies, use the [Standard or Higgsfield art flow](../../docs/production-workflows/art-flows/README.md) and [record/handoff outline](../../docs/production-workflows/art-flows/study-record.md). The [UI surface-language brief](ui-surface-language/brief.md) defines the requested border, panel and connector exploration; no generated candidates or archived image collection are claimed yet.
+
 Every recoverable earlier capture is preserved here, including rejected work. Original review packages and filenames are unchanged. Source assets and alternate exports remain in their existing catalogs.
 
 **Storage:** future substantial study files belong in the separate durable S3 study collection, using exact model/source/media references and permanent iteration URLs. [The study directory contract](../../docs/projects/game-asset-storage-tech-design.md#43-study-archive) defines organization; [AS03/AS05](../../docs/maintainers/game-asset-storage.md) owns publication and migration. The local links below describe current files, not a completed cloud archive. Preserve them until verified hosted replacements and recovery exist; do not replace them with hypothetical URLs or add more large Git snapshots.
