@@ -7,21 +7,17 @@ import { scarFactor } from './scar-effects.js';
 import type { Action, Entity, Outcome, WorldState } from './types.js';
 import { activelyParticipates } from './participation-state.js';
 
-/** Admission never chooses hostility. A released projectile checks its captured source
- * attribution separately from the body's ability to begin another action. */
+/** Admission never chooses hostility. Released effects use their captured contact law;
+ * this check authorizes beginning an attack, not an already committed impact. */
 export function attackPermissionProblem(
   world: WorldState,
   actor: Entity,
   target: Entity | undefined,
   attack: { requiresLethalReview?: boolean; targetLife?: number },
-  committedSource?: { controller: 'player' | 'npc' | 'native' },
 ): Outcome | null {
   const policy = bodyPolicy(world)?.combat;
-  const sourceController = committedSource?.controller ?? actor.actor?.controller;
-  if (
-    !committedSource &&
-    (!actor.actor?.alive || actor.actor.incapacitated || !activelyParticipates(actor))
-  )
+  const sourceController = actor.actor?.controller;
+  if (!actor.actor?.alive || actor.actor.incapacitated || !activelyParticipates(actor))
     return outcome(false, 'attack-source-unavailable', 'This body cannot begin an attack.');
   if (
     !target?.actor?.alive ||
@@ -48,6 +44,7 @@ export function attackPermissionProblem(
 export interface LethalReviewPolicy {
   title: string;
   description: string;
+  rangedDescription: string;
   confirmLabel: string;
   cancelLabel: string;
 }

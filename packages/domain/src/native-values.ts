@@ -18,10 +18,9 @@ import {
 import { attributeDefinition } from './world-modules.js';
 import type { AttributeState } from './world-modules.js';
 
-/** Exact ordered arithmetic, bounded by compaction rather than by slowing the world.
- * Saved continuation retains the same operations and anchors; no alternate meter owner.
- * docs/limits/native-work.md#nw17--experimental-deferred-arithmetic-window */
-export const NATIVE_VALUE_SEGMENTS = 64;
+/** One earned-time anchor for independent continuous rates. Unsupported ordered/coupled
+ * effects stay with the eager integration owner; no history of subdivisions is replayed.
+ * docs/projects/performance-overhaul/animal-execution.md#43-capabilities-and-bodily-dependencies */
 export interface NativeValueAttribute {
   rates: number[];
   min: number;
@@ -38,7 +37,8 @@ export interface NativeValueBinding {
   from: number;
 }
 export interface NativeValueWindow {
-  segments: Array<{ seconds: number; simTime: number }>;
+  elapsedSeconds: number;
+  simTime: number;
   bindingCount: number;
   bindings: Record<string, NativeValueBinding>;
   byEntity: Record<string, Record<string, string>>;
@@ -62,7 +62,7 @@ function storedAttribute(entity: Entity, attributeId: string): AttributeState | 
 const currentAttributeReads = new WeakMap<
   NativeValueAttribute,
   {
-    segment: WeakRef<object>;
+    elapsed: number;
     from: number;
     anchorValue: number;
     anchorRevision: number;
@@ -70,7 +70,7 @@ const currentAttributeReads = new WeakMap<
     state: AttributeState;
   }
 >();
-/** Pure current state, including its revision. Readers never write anchors or accounting. */
+/** Pure current state; reads never write anchors, charge work or emit events. */
 export function currentAttributeState(
   world: WorldState,
   entity: Entity,
@@ -81,39 +81,30 @@ export function currentAttributeState(
   const anchor = readOnlyDraftView(state),
     binding = bindingFor(world, entity.id, attributeId);
   if (!binding || typeof anchor.value !== 'number') return anchor;
-  const operation = getOwn(readOnlyDraftView(binding.attributes), attributeId)!;
-  let value = anchor.value,
-    revision = anchor.revision;
-  const segments = readOnlyDraftView(windowOf(world)!.segments);
-  const segment = readOnlyDraftView(segments[segments.length - 1]!);
-  const cached = currentAttributeReads.get(operation);
+  const operation = readOnlyDraftView(getOwn(readOnlyDraftView(binding.attributes), attributeId)!);
+  const elapsed = windowOf(world)!.elapsedSeconds,
+    cached = currentAttributeReads.get(operation);
   if (
-    cached?.segment.deref() === segment &&
+    cached &&
+    cached.elapsed === elapsed &&
     cached.from === binding.from &&
-    cached.anchorValue === value &&
-    cached.anchorRevision === revision &&
+    cached.anchorValue === anchor.value &&
+    cached.anchorRevision === anchor.revision &&
     cached.concernActive === anchor.concernActive
   ) {
     countDomainWork('nativeValueReadCacheHits');
     return cached.state;
   }
-  const rates = readOnlyDraftView(operation.rates);
-  countDomainWork('nativeValueOperationsReplayed', (segments.length - binding.from) * rates.length);
-  for (let i = binding.from; i < segments.length; i++) {
-    const segment = readOnlyDraftView(segments[i]!);
-    for (const rate of rates) {
-      const next = Math.max(operation.min, Math.min(operation.max, value + rate * segment.seconds));
-      if (next !== value) {
-        if (!Number.isSafeInteger(++revision)) throw new Error('Attribute revision exhausted.');
-        value = next;
-      }
-    }
-  }
+  const rate = readOnlyDraftView(operation.rates).reduce((sum, value) => sum + value, 0);
+  const value = Math.max(
+    operation.min,
+    Math.min(operation.max, anchor.value + rate * (elapsed - binding.from)),
+  );
+  const revision = anchor.revision;
+  if (!Number.isSafeInteger(revision)) throw new Error('Attribute revision exhausted.');
   const projected = Object.freeze({ ...anchor, value, revision });
-  // One derived result per attribute operation group, with no world/draft references or predecessor
-  // cursor. Reading an older fork can replace this cache entry, never its arithmetic.
   currentAttributeReads.set(operation, {
-    segment: new WeakRef(segment),
+    elapsed,
     from: binding.from,
     anchorValue: anchor.value,
     anchorRevision: anchor.revision,
@@ -134,31 +125,17 @@ export function currentStatusInstance(
     window = windowOf(world);
   const binding = window && getOwn(readOnlyDraftView(window.bindings), anchor.episode);
   if (!binding) return anchor;
-  let elapsedSeconds = anchor.elapsedSeconds;
-  const segments = readOnlyDraftView(window!.segments);
-  countDomainWork('nativeValueOperationsReplayed', segments.length - binding.from);
-  for (let i = binding.from; i < segments.length; i++)
-    elapsedSeconds += readOnlyDraftView(segments[i]!).seconds;
-  return { ...anchor, elapsedSeconds };
+  return {
+    ...anchor,
+    elapsedSeconds: anchor.elapsedSeconds + window!.elapsedSeconds - binding.from,
+  };
 }
+/** Work is charged by its existing owner at integration, independently of lazy meter reads. */
 export function currentWorkInvocation(world: WorldState, id: string): WorkInvocation | undefined {
   const state = readOnlyDraftView(world).workState;
-  const stored = state && readOnlyDraftView(state).invocations;
-  const invocation = stored && readOnlyDraftView(stored)[id];
-  if (!invocation) return;
-  const anchor = readOnlyDraftView(invocation),
-    window = windowOf(world);
-  const binding = window && getOwn(readOnlyDraftView(window.bindings), id);
-  if (!binding) return anchor;
-  const result = { ...anchor, used: { ...readOnlyDraftView(anchor.used) } };
-  const segments = readOnlyDraftView(window!.segments);
-  countDomainWork('nativeValueOperationsReplayed', segments.length - binding.from);
-  for (let i = binding.from; i < segments.length; i++) {
-    const segment = readOnlyDraftView(segments[i]!);
-    advanceInvocationInterval(result, segment.simTime);
-    chargeInvocationValue(result, binding.demand);
-  }
-  return result;
+  const records = state && readOnlyDraftView(state).invocations;
+  const invocation = records && readOnlyDraftView(records)[id];
+  return invocation && readOnlyDraftView(invocation);
 }
 /** In-place materialization preserves existing owned entity/status references. It does
  * not emit history: eligibility excludes threshold/latch changes, and invalidation was
@@ -178,9 +155,7 @@ export function materializeNativeEpisode(world: WorldState, episode: string): vo
     attribute.revision = value.revision;
   }
   const status = currentStatusInstance(world, entity, binding.statusId)!;
-  const work = currentWorkInvocation(world, episode)!;
   entity.statusEffects![binding.statusId]!.elapsedSeconds = status.elapsedSeconds;
-  Object.assign(world.workState!.invocations[episode]!, work, { used: { ...work.used } });
   const owned = world.pendingNativeIntegration!;
   delete owned.bindings[episode];
   owned.bindingCount--;
@@ -245,8 +220,8 @@ function sameNativeAttributes(
     );
   });
 }
-/** Append one shared segment after preflighting every episode through its existing
- * accounting owner. A changed cohort materializes before its next operation. */
+/** Advance the shared earned-time anchor through existing invocation accounting.
+ * A changed cohort materializes before its next operation. */
 export function retainNativeIntegration(
   world: WorldState,
   bindings: Omit<NativeValueBinding, 'from'>[],
@@ -267,24 +242,22 @@ export function retainNativeIntegration(
       )
         materializeNativeEpisode(world, prior.episode);
     }
-    if ((windowOf(world)?.segments.length ?? 0) >= NATIVE_VALUE_SEGMENTS)
-      materializeNativeValuesInPlace(world);
   }
   if (!bindings.length) return new Set();
   for (const binding of bindings) {
-    const work = currentWorkInvocation(world, binding.episode);
+    const work = world.workState?.invocations[binding.episode];
     if (!work) throw new Error('Pending native value has no admitted invocation.');
-    const next = { ...work, used: { ...work.used } };
-    advanceInvocationInterval(next, world.simTime);
-    chargeInvocationValue(next, binding.demand);
+    advanceInvocationInterval(work, world.simTime);
+    chargeInvocationValue(work, binding.demand);
   }
   const owned = (world.pendingNativeIntegration ??= {
-    segments: [],
+    elapsedSeconds: 0,
+    simTime: world.simTime,
     bindingCount: 0,
     bindings: {},
     byEntity: {},
   });
-  const from = owned.segments.length;
+  const from = owned.elapsedSeconds;
   for (const binding of bindings) {
     if (owned.bindings[binding.episode]) continue;
     owned.bindingCount++;
@@ -293,8 +266,8 @@ export function retainNativeIntegration(
     for (const attributeId of Object.keys(binding.attributes))
       subject[attributeId] = binding.episode;
   }
-  // Only duration/time are shared; operation order and each binding's anchor remain explicit.
-  owned.segments.push({ seconds, simTime: world.simTime });
+  owned.elapsedSeconds += seconds;
+  owned.simTime = world.simTime;
   countDomainWork('nativeValueSegmentsRetained');
   for (const binding of bindings) {
     // Eligibility already proved whether any meter changes. Clamped accounting-only
@@ -327,10 +300,18 @@ export function validateNativeValueWindow(world: WorldState): void {
     throw new Error('Invalid saved native arithmetic continuation.');
   };
   if (
-    !hasRecordFields(window, ['segments', 'bindingCount', 'bindings', 'byEntity']) ||
-    !Array.isArray(window.segments) ||
-    !window.segments.length ||
-    window.segments.length > NATIVE_VALUE_SEGMENTS ||
+    !hasRecordFields(window, [
+      'elapsedSeconds',
+      'simTime',
+      'bindingCount',
+      'bindings',
+      'byEntity',
+    ]) ||
+    !Number.isFinite(window.elapsedSeconds) ||
+    window.elapsedSeconds <= 0 ||
+    !Number.isFinite(window.simTime) ||
+    window.simTime > world.simTime ||
+    window.elapsedSeconds > window.simTime + 16 * Number.EPSILON * Math.max(1, window.simTime) ||
     !Number.isSafeInteger(window.bindingCount) ||
     window.bindingCount <= 0 ||
     !nativeRecord(window.bindings) ||
@@ -338,28 +319,6 @@ export function validateNativeValueWindow(world: WorldState): void {
     Object.keys(window.bindings).length !== window.bindingCount
   )
     fail();
-  let previous = 0;
-  let duration = 0;
-  for (const segment of window.segments) {
-    if (
-      !hasRecordFields(segment, ['seconds', 'simTime']) ||
-      typeof segment.seconds !== 'number' ||
-      !Number.isFinite(segment.seconds) ||
-      segment.seconds <= 0 ||
-      typeof segment.simTime !== 'number' ||
-      !Number.isFinite(segment.simTime) ||
-      segment.simTime < previous ||
-      segment.simTime > world.simTime
-    )
-      fail();
-    duration += segment.seconds;
-    // A flushed prior interval and this endpoint's own application may share a
-    // clock, but no prefix can earn arithmetic before the world's time origin.
-    const timeSlack =
-      8 * Number.EPSILON * Math.max(1, segment.simTime, duration) * window.segments.length;
-    if (!Number.isFinite(duration) || duration > segment.simTime + timeSlack) fail();
-    previous = segment.simTime;
-  }
   const expected = new Map<string, Map<string, string>>();
   for (const [episode, binding] of Object.entries(window.bindings)) {
     if (
@@ -374,9 +333,9 @@ export function validateNativeValueWindow(world: WorldState): void {
       !isSafeRecordId(binding.entityId) ||
       !isSafeRecordId(binding.statusId) ||
       binding.episode !== episode ||
-      !Number.isSafeInteger(binding.from) ||
+      !Number.isFinite(binding.from) ||
       binding.from < 0 ||
-      binding.from >= window.segments.length ||
+      binding.from >= window.elapsedSeconds ||
       !nativeRecord(binding.attributes) ||
       !Object.keys(binding.attributes).length ||
       !hasRecordFields(binding.demand, ['tests', 'effects']) ||
@@ -406,7 +365,7 @@ export function validateNativeValueWindow(world: WorldState): void {
       work.rootId !== episode ||
       work.actorId !== entity.id ||
       work.moduleId !== definition.id ||
-      window.segments[binding.from]!.simTime < work.intervalAt
+      window.simTime < work.intervalAt
     )
       fail();
     if (Object.keys(binding.attributes).length > definition.whileActive.length) fail();
@@ -437,27 +396,20 @@ export function validateNativeValueWindow(world: WorldState): void {
       if (!anchor || typeof anchor.value !== 'number' || !installed) fail();
       let value = anchor.value;
       const thresholds = statusArithmeticThresholds(installed);
-      for (let index = binding.from; index < window.segments.length; index++) {
-        let changed = false;
-        for (const rate of attribute.rates) {
-          const next = Math.max(
-            attribute.min,
-            Math.min(attribute.max, value + rate * window.segments[index]!.seconds),
-          );
-          if (
-            !Number.isFinite(next) ||
-            (next !== value &&
-              thresholds.some(
-                (threshold) =>
-                  Math.min(value, next) <= threshold && Math.max(value, next) >= threshold,
-              ))
-          )
-            fail();
-          changed ||= next !== value;
-          value = next;
-        }
-        if (changed !== attribute.changed) fail();
-      }
+      const rate = attribute.rates.reduce((sum, amount) => sum + amount, 0);
+      const next = Math.max(
+        attribute.min,
+        Math.min(attribute.max, value + rate * (window.elapsedSeconds - binding.from)),
+      );
+      if (
+        !Number.isFinite(next) ||
+        (next !== value &&
+          thresholds.some(
+            (threshold) => Math.min(value, next) <= threshold && Math.max(value, next) >= threshold,
+          )) ||
+        (next !== value) !== attribute.changed
+      )
+        fail();
     }
     validateRetainedStatusArithmetic(
       world,
@@ -467,9 +419,8 @@ export function validateNativeValueWindow(world: WorldState): void {
       binding.attributes,
       binding.demand,
     );
-    // Projecting through the original work owner rejects impossible bursts/demands;
-    // the subsequent full materialized validation checks final revisions/time as well.
-    currentWorkInvocation(world, episode);
+    // Work was already charged at integration; the owning world validator checks
+    // its invocation limits and references, including the earned interval.
   }
   if (Object.keys(window.byEntity).length !== expected.size) fail();
   for (const [entityId, values] of Object.entries(window.byEntity)) {

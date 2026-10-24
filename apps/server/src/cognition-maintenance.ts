@@ -1,4 +1,4 @@
-import { entityGet } from '@open-legend/domain';
+import { entityGet, experienceEntryKey, experienceReading } from '@open-legend/domain';
 import { undispatchedReceipt } from './decision-state.js';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import { CognitionExecution, type ExecutionLease } from './cognition-execution.js';
@@ -878,12 +878,12 @@ export class CognitionMaintenance {
         throw new Error('Maintenance dispatch was already claimed.');
       result = await this.macrofold.withSourceValidation(validateSource, execute);
       result.receipt = normalizeReceiptCost(result.receipt);
-      if (result.receipt.completionUncertain) this.executionLease?.uncertain();
+      if (result.receipt.completionUncertain) this.executionLease?.uncertain(id);
       await this.service.store.settle(id, result.receipt);
     } catch (error) {
       // A lost dispatch or settlement acknowledgement must retain the shared
       // execution slot until its durable receipt can establish completion.
-      this.executionLease?.uncertain();
+      this.executionLease?.uncertain(id);
       throw error;
     }
     if (result.outcome !== 'value') throw new Error(`${result.outcome}: ${result.reason}`);
@@ -943,16 +943,14 @@ export class CognitionMaintenance {
       async (job) => {
         const c = this.service.config;
         const groups = batch.protected.map((source) => ({
-          sourceIds: [source.id],
-          text: source.summary,
+          sourceKeys: [experienceEntryKey(source)],
+          text: experienceReading(source, actorId).summary,
         }));
         if (batch.routine.length) {
-          const positions = new Map(batch.sources.map((source, i) => [source.id, i]));
-          const requests = consolidationRequests(
-            batch,
-            this.service.world.statusEffectPolicy.clockOffsetHours,
-            entityGet(this.service.world.entities, actorId)?.name,
+          const positions = new Map(
+            batch.sources.map((source, i) => [experienceEntryKey(source), i]),
           );
+          const requests = consolidationRequests(batch, this.service.world, actorId);
           for (const [index, { context, handles }] of requests.entries()) {
             const request: GenerateRequest = {
               requestId: `${job.id}:summary:${index}`,
@@ -987,7 +985,7 @@ export class CognitionMaintenance {
                 if (!source || covered.has(handle))
                   throw new Error('Consolidation returned unknown or repeated source handles.');
                 covered.add(handle);
-                return positions.get(source.id)!;
+                return positions.get(experienceEntryKey(source))!;
               });
               if (
                 groupPositions.some(
@@ -1006,23 +1004,23 @@ export class CognitionMaintenance {
             groups.push(
               ...value.groups.map((group) => ({
                 text: group.text,
-                sourceIds: group.sourceIds.map((handle) => {
+                sourceKeys: group.sourceIds.map((handle) => {
                   const source = handles.get(handle);
                   if (!source) throw new Error('Unknown consolidation source handle.');
-                  return source.id;
+                  return experienceEntryKey(source);
                 }),
               })),
             );
           }
           groups.sort(
             (a, b) =>
-              Math.min(...a.sourceIds.map((id) => positions.get(id)!)) -
-              Math.min(...b.sourceIds.map((id) => positions.get(id)!)),
+              Math.min(...a.sourceKeys.map((id) => positions.get(id)!)) -
+              Math.min(...b.sourceKeys.map((id) => positions.get(id)!)),
           );
         }
         await this.log.record(`${job.id}:coverage`, 'Consolidation coverage', {
           mode: batch.mode,
-          sources: batch.sources.map((s) => s.id),
+          sources: batch.sources.map(experienceEntryKey),
           groups,
         });
         if (controller.signal.aborted || this.service.paused)
@@ -1045,7 +1043,11 @@ export class CognitionMaintenance {
               return acceptConsolidation(world, actorId, job.id, batch.sources, groups);
             });
           },
-          batch.selection ? batch.sources.map((source) => source.id) : undefined,
+          batch.selection
+            ? batch.sources.map((source) =>
+                source.source === 'awareness' ? source.value.eventId : source.value.id,
+              )
+            : undefined,
         );
         if (!accepted.ok) throw new Error(accepted.message);
         committed = true;

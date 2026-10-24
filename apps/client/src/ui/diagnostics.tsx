@@ -1566,34 +1566,30 @@ function RetrievalSummary({ retrieval }: { retrieval: Retrieval }) {
           <strong>Conversation context</strong>
           <dl className="ol-diagnostic-fields">
             <Labeled label="Mode">{valueText(retrieval.conversation['mode'])}</Labeled>
-            <Labeled label="Conversation">
-              {valueText(retrieval.conversation['conversationId']) ?? 'None'}
-            </Labeled>
             <Labeled label="Compactor version">
               {valueText(retrieval.conversation['compactorVersion'])}
             </Labeled>
-            <Labeled label="Permitted speech">
-              {valueText(retrieval.conversation['permittedTurns'])} turns,{' '}
-              {valueText(retrieval.conversation['permittedBytes'])} bytes
+            <Labeled label="Exact selected speech">
+              {valueText(retrieval.conversation['selectedTurns'])} turns
+            </Labeled>
+            <Labeled label="Other history remains">
+              {retrieval.conversation['more'] === true ? 'Yes' : 'No'}
             </Labeled>
             <Labeled label="Model context">
               {valueText(retrieval.conversation['projectionBytes'])} /{' '}
               {valueText(retrieval.conversation['maxBytes'])} bytes
             </Labeled>
-            <Labeled label="Recent verbatim speech">
-              {valueText(retrieval.conversation['recentTurns'])} turns,{' '}
-              {valueText(retrieval.conversation['recentBytes'])} bytes
-            </Labeled>
             <Labeled label="Summary">
               {valueText(retrieval.conversation['summaryBytes'])} bytes, coverage{' '}
-              {valueText(retrieval.conversation['throughAwarenessSequence']) ?? 'none'}
+              {valueText(retrieval.conversation['summaryFromSequence']) ?? 'none'}–
+              {valueText(retrieval.conversation['summaryThroughSequence']) ?? 'none'}
             </Labeled>
             <Labeled label="Compaction calls">
               {valueText(retrieval.conversation['compactionCalls'])}
             </Labeled>
           </dl>
           <details>
-            <summary>Exact model-facing conversation</summary>
+            <summary>Readable speech projection</summary>
             <pre>
               {valueText(retrieval.conversation['projection']) ?? 'No conversation supplied.'}
             </pre>

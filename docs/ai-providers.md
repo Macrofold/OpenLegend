@@ -16,7 +16,16 @@ Core sparse-schema delivery retains existing revision fields and meaningful work
 
 ### Admission and cancellation
 
-The server has one shared decision slot. A new conversation or invention request uses the existing busy refusal while an admitted decision owns it; it does not cancel another character's funded opportunity. This replaces the earlier unconditional chat-first preemption. The client preserves its draft for explicit resubmission after the current decision finishes. Invalid, paused, replayed or unauthorized requests cannot discard current work. A successfully admitted human conversation or invention cancels background reflection asynchronously without waiting for remote cleanup. The existing urgent evidence refresh, explicit cancellation, durable receipts and uncertain spending remain separate.
+The director admits at most two immediate pipelines per world, one per actor
+and at most one ordinary pipeline. Urgent personal evidence can use the second
+position; two urgent actors can occupy both. A new conversation or invention
+request receives the existing busy refusal when its actor or ordinary capacity is
+occupied, preserving the player's draft. Admission never cancels another funded
+character decision. Each job owns its watcher, cancellation, preview, reservations
+and completion; deferral records timing without freeing a still-running pipeline.
+A successfully admitted human request cancels background reflection asynchronously.
+The [combat qualification](verification/combat-and-threat-responses.md) records
+controlled coverage; complete live fairness and reaction qualification remain open.
 
 Resolve the validity and authority of a replacement request before any cancellation it could cause. A request's priority alone does not establish that its replacement operation is permitted or worth discarding already admitted work. Cancellation does not make dispatched work free or create an automatic retry. [Complete-operation authorization](engine-and-world-boundaries.md#complete-operation-authorization) and [continuation](save-and-load.md#continuation-and-identity) own those boundaries; [the combat qualification](verification/rivals-and-contested-ground.md#preserve-admitted-decisions-and-qualify-the-last-ammunition--october-14-2026) records the demonstrated failure and correction.
 
@@ -221,6 +230,15 @@ Generation and reflection capture one owned immutable schema and compiled valida
 
 ## Receipts, outcomes, and accounting
 
+For ordinary Macrofold judgments and fast/complex generation, caller cancellation
+immediately forbids answer delivery and progress callbacks. The original HTTP
+reply may still be observed for at most one second after cancellation, inside the
+original request deadline, to retain its exact Run identity and completed charge.
+Known unfinished Runs still receive cancellation; verified completed execution
+needs no cancellation request. Missing terminal evidence retains uncertainty and
+its execution/spending hold. This never repeats admission or publishes a cancelled
+proposal.
+
 A confirmed Macrofold `run_budget_exhausted` inference reports that the request exceeded its per-call spending limit after existing receipt/usage reconciliation. Its conservative provider admission bound can exceed the expected final bill; configure `JEV_CALL_RESERVE_USD` to cover the intended admitted request size and authorized spending. This does not increase the default reserve, retry a rejected call automatically, or turn uncertain completion into a free failure.
 
 Results are a discriminated union: `{outcome:'value',value,receipt}` or `{outcome,reason,receipt}`. Failure outcomes are `unavailable`, `invalid`, `failed`, `refused`, `cancelled`, and `uncertain`; `unknown` is reserved for adapters with explicit semantic abstention. These adapters preserve Jev’s unknown option instead. Reasons are stable short codes rather than provider messages.
@@ -269,7 +287,23 @@ An explicit configuration overrides the default, including its exact eligible or
 
 The immediate choice has a one-second budget from intake. Native behavior and compatible existing actions continue when a choice is deferred. Waiting for Luna holds neither the simulation nor a world transaction; other characters and permitted player commands can proceed. A still-useful late original answer may commit once before its original deadline; it does not trigger Luna merely for being slow. Useful-later work lasts at most 31 seconds from intake. A higher request must start within two seconds of its eligibility and finish publication within 30 seconds of that eligibility, bounded by the original deadline. Both elapsed-time and wall-clock fences apply; a simulation-time boundary may expire sooner. [DE-L01–DE-L04](limits/ai-execution.md#decision-escalation-limits) own exact limits.
 
-`CognitionExecution` shares one background execution across reconsideration, paid maintenance and indexing, separately from one primary execution. Sixteen waiting reconsiderations retain identifiers and deadlines, without copied prompts. Decision and maintenance classes alternate; decisions use trusted urgency, eligibility time and stable ID. Primary saturation defers new opportunities rather than launching a second slow primary or using Luna to bypass capacity. Unknown execution retains its lease across restart; known completed work with missing pricing frees execution capacity while keeping its monetary hold.
+`CognitionExecution` permits one primary inference and 100 simultaneous background
+operations per server process, under [DE-L02](limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention).
+Urgent work prefers the shared background allowance used by reconsideration,
+paid maintenance and indexing, then primary; per-world immediate admission stays
+separate. Each uncertain attempt occupies one position after restart, and its
+definitive settlement releases only that position. Sixteen waiting reconsiderations
+retain identifiers/deadlines without copied prompts. Decision and maintenance
+classes alternate within their existing queue; admission uses trusted urgency and
+aging. Saturated executions defer without another provider or automatic retry.
+Known completed work with missing pricing frees execution capacity while keeping
+its monetary hold. The higher concurrency grants no additional spending allowance.
+
+The selected supplied-response strategy plans two sequential judgments inside the
+original useful lifetime and funding. Its one-second immediate timing can be
+recorded as deferred while those declared stages finish; their original deadline
+never renews. A failed stage buys no higher-model fallback. Ordinary routes retain
+their existing one-second dispatch rule and configured higher-attempt policy.
 
 If startup cannot reconstruct occupied executions from storage, this pool closes and cancels queued admission. It never treats missing accounting as free capacity or repeatedly schedules the failed read. Callers retain the original storage failure; a corrected restart must reconstruct capacity before dispatch can resume.
 

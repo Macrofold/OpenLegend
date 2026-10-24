@@ -3,6 +3,5 @@
  * docs/worlds/base/social.md
  */
 export const BASE_SOCIAL_POLICY = {
-  conversationInactivitySeconds: 1800,
   notableThreshold: 8,
 } as const;

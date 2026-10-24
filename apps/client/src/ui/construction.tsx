@@ -1,28 +1,26 @@
+import { ConstructionCooperation } from './construction-cooperation';
 import { LoadingIndicator } from '../design-system/loading';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type {
   ActionOption,
   ApiResult,
-  ConstructionPlan,
+  CanopyConstructionPlan as ConstructionPlan,
   ConstructionShape,
   ConstructionView,
   GameView,
+  HearthConstructionView,
 } from '@open-legend/protocol';
 import { getScoped, post } from '../api';
+import { playerActionStatusKey } from '../action-browser';
 import type { CommandDispatcher } from '../command-request';
 import { Button, SelectField } from '../design-system/components';
 import { useInventoryCommand } from './use-inventory-command';
 import type { ConstructionPlacement, ConstructionPreviewTransform } from '../world-renderer';
 import { ConstructionIllustration } from './construction-illustration';
 import './construction.css';
-export function Construction({
-  view,
-  connected,
-  visible,
-  command,
-  preview,
-  placement,
-}: {
+import { HearthConstruction } from './hearth-construction';
+import { BoundaryConstruction } from './boundary-construction';
+export interface ConstructionProps {
   view: GameView;
   connected: boolean;
   visible: boolean;
@@ -33,7 +31,178 @@ export function Construction({
     transform?: ConstructionPreviewTransform,
   ): void;
   placement(controls: ConstructionPlacement | null): void;
-}) {
+}
+export interface ConstructionWorkProps extends ConstructionProps {
+  operations: ReturnType<typeof useInventoryCommand>;
+  registerResult(handler: (result: ApiResult) => void): () => void;
+}
+export function Construction(props: ConstructionProps) {
+  const [kind, setKind] = useState<'assembly' | 'hearth' | 'boundary'>('assembly');
+  const [readError, setReadError] = useState<string>();
+  const [readRetry, setReadRetry] = useState(0);
+  const [catalogue, setCatalogue] = useState<{
+    owner: string;
+    structureLabel?: string;
+    boundaryLabel?: string;
+    label?: string;
+  }>();
+  const owner = JSON.stringify([
+    props.view.worldId,
+    props.view.saveTimeline,
+    props.view.player.id,
+    props.view.access?.privateDraftScope,
+  ]);
+  const current = catalogue?.owner === owner ? catalogue : undefined;
+  const choices = [
+    ...(current?.structureLabel
+      ? [{ id: 'assembly' as const, label: current.structureLabel }]
+      : []),
+    ...(current?.boundaryLabel ? [{ id: 'boundary' as const, label: current.boundaryLabel }] : []),
+    ...(current?.label ? [{ id: 'hearth' as const, label: current.label }] : []),
+  ];
+  const active = choices.find((choice) => choice.id === kind)?.id ?? choices[0]?.id ?? 'assembly';
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const resultHandlers = useRef<
+    Partial<Record<'assembly' | 'boundary', (result: ApiResult) => void>>
+  >({});
+  // Switching construction families keeps one uncertain request and its original receipt.
+  const operations = useInventoryCommand({
+    worldId: props.view.worldId,
+    actorId: props.view.player.id,
+    timeline: props.view.saveTimeline,
+    scope: props.view.access?.scope ?? '',
+    recoveryScope: props.view.access?.commandRecoveryScope,
+    epoch: props.view.commandEpoch,
+    connected: props.connected,
+    task: 'construction',
+    command: props.command,
+    onResolved(result, request) {
+      const input = request.command;
+      if (input && typeof input === 'object' && 'type' in input && input.type === 'outing') return;
+      const plan =
+        input &&
+        typeof input === 'object' &&
+        'type' in input &&
+        input.type === 'construction' &&
+        'constructionPlan' in input
+          ? input.constructionPlan
+          : undefined;
+      const kind =
+        plan &&
+        typeof plan === 'object' &&
+        'implementation' in plan &&
+        plan.implementation === 'grounded-panel-boundary'
+          ? 'boundary'
+          : 'assembly';
+      resultHandlers.current[kind]?.(result);
+    },
+  });
+  const onCatalogue = useCallback(
+    (value: HearthConstructionView) => {
+      setReadError(undefined);
+      setCatalogue((previous) =>
+        previous?.owner === owner &&
+        previous.label === value.label &&
+        previous.structureLabel === value.structureLabel &&
+        previous.boundaryLabel === value.boundaryLabel
+          ? previous
+          : {
+              owner,
+              label: value.label,
+              structureLabel: value.structureLabel,
+              boundaryLabel: value.boundaryLabel,
+            },
+      );
+    },
+    [owner],
+  );
+  const onCatalogueFailure = useCallback(() => setReadError(owner), [owner]);
+  const routes = useMemo(() => {
+    const route = (target: typeof active) => ({
+      preview: (...args: Parameters<ConstructionProps['preview']>) => {
+        if (activeRef.current === target) props.preview(...args);
+      },
+      placement: (controls: ConstructionPlacement | null) => {
+        if (activeRef.current === target) props.placement(controls);
+      },
+    });
+    const register = (kind: 'assembly' | 'boundary') => (handler: (result: ApiResult) => void) => {
+      resultHandlers.current[kind] = handler;
+      return () => {
+        if (resultHandlers.current[kind] === handler) delete resultHandlers.current[kind];
+      };
+    };
+    return {
+      assembly: { ...route('assembly'), registerResult: register('assembly') },
+      hearth: route('hearth'),
+      boundary: { ...route('boundary'), registerResult: register('boundary') },
+    };
+  }, [props.preview, props.placement]);
+  // Clear the former mechanic before the newly active child's effects install
+  // its controls. A late reply from the hidden child cannot clear them.
+  useLayoutEffect(() => {
+    props.preview(null);
+    props.placement(null);
+  }, [active, owner]);
+  return (
+    <div className="ol-construction">
+      {readError === owner && (
+        <div role="status">
+          <p>Building choices could not be refreshed. Existing selections are kept.</p>
+          <Button disabled={!props.connected} onPress={() => setReadRetry((value) => value + 1)}>
+            Retry building choices
+          </Button>
+        </div>
+      )}
+      {choices.length > 1 && (
+        <SelectField
+          label="Build"
+          value={active}
+          options={choices}
+          onChange={(value) => setKind(value as typeof kind)}
+        />
+      )}
+      <div hidden={active !== 'assembly'}>
+        <AssemblyConstruction
+          {...props}
+          {...routes.assembly}
+          operations={operations}
+          visible={props.visible && active === 'assembly'}
+        />
+      </div>
+      <div hidden={active !== 'hearth'}>
+        <HearthConstruction
+          {...props}
+          {...routes.hearth}
+          visible={props.visible && active === 'hearth'}
+          readVisible={props.visible}
+          onCatalogue={onCatalogue}
+          onCatalogueFailure={onCatalogueFailure}
+          readRetry={readRetry}
+        />
+      </div>
+      <div hidden={active !== 'boundary'}>
+        <BoundaryConstruction
+          {...props}
+          {...routes.boundary}
+          operations={operations}
+          visible={props.visible && active === 'boundary'}
+        />
+      </div>
+    </div>
+  );
+}
+function AssemblyConstruction({
+  view,
+  connected,
+  visible,
+  command,
+  preview,
+  placement,
+  operations,
+  registerResult,
+}: ConstructionWorkProps) {
   const [placing, setPlacing] = useState(false),
     [commitRequested, setCommitRequested] = useState(false),
     [unsupportedPoint, setUnsupportedPoint] = useState(false),
@@ -68,7 +237,14 @@ export function Construction({
   const [availability, setAvailability] = useState({ available, revision: 0 });
   if (availability.available !== available)
     setAvailability({ available, revision: availability.revision + 1 });
+  const peopleKey = JSON.stringify(
+    view.entities
+      .filter((entity) => entity.kind === 'actor' && entity.id !== view.player.id)
+      .map((entity) => [entity.id, entity.name]),
+  );
   const readKey = JSON.stringify([
+    peopleKey,
+    playerActionStatusKey(view.player),
     view.access?.scope,
     view.saveTimeline,
     availability.revision,
@@ -104,7 +280,11 @@ export function Construction({
   const roots = view.entities.filter(
       (entity) => !!data && entity.assembly?.familyId === data.family.id,
     ),
-    root = roots.find((entity) => entity.id === rootId);
+    root = roots.find((entity) => entity.id === rootId),
+    coverings =
+      root?.assembly?.implementation === 'four-corner-flexible-bays'
+        ? root.assembly.parts.filter((part) => part.role === 'cover')
+        : [];
   useEffect(() => {
     if (!available) return;
     const abort = new AbortController();
@@ -274,6 +454,7 @@ export function Construction({
         plan,
         data?.family,
         data?.authorized,
+        view.map.spatial.revision,
         plan &&
           [
             ...new Set([
@@ -286,7 +467,15 @@ export function Construction({
           ? data?.lowered.find((material) => material.id === plan.outgoingId)
           : undefined,
       ]),
-    [readKey, plan, data?.family, data?.authorized, data?.lowered, materialsById],
+    [
+      readKey,
+      plan,
+      data?.family,
+      data?.authorized,
+      data?.lowered,
+      materialsById,
+      view.map.spatial.revision,
+    ],
   );
   const currentKey = useRef(key);
   currentKey.current = key;
@@ -315,17 +504,8 @@ export function Construction({
     },
     [],
   );
-  const operations = useInventoryCommand({
-    worldId: view.worldId,
-    actorId: view.player.id,
-    timeline: view.saveTimeline,
-    scope: view.access?.scope ?? '',
-    recoveryScope: view.access?.commandRecoveryScope,
-    epoch: view.commandEpoch,
-    connected,
-    command,
-    task: 'construction',
-    onResolved(result) {
+  useLayoutEffect(() =>
+    registerResult((result) => {
       const submitted = submittedPlacement.current;
       if (
         result.ok &&
@@ -339,8 +519,8 @@ export function Construction({
       submittedPlacement.current = null;
       setError(result.ok ? '' : result.message);
       setReadRevision((revision) => revision + 1);
-    },
-  });
+    }),
+  );
   const canCommand = connected && !operations.pending;
   const invoke = (
     type: ActionOption['command']['type'],
@@ -607,6 +787,32 @@ export function Construction({
               {!placing && !root && (
                 <p className="ol-caption">Choose what to build, then place it in the world.</p>
               )}
+              {!placing && !root && data.sites.length > 0 && (
+                <SelectField
+                  label="Known building places"
+                  value={
+                    data.sites.find(
+                      (choice) =>
+                        site &&
+                        choice.point.surfaceId === site.surfaceId &&
+                        choice.point.x === site.x &&
+                        choice.point.z === site.z,
+                    )?.id ?? ''
+                  }
+                  disabled={busy}
+                  options={[
+                    { id: '', label: 'Current chosen place' },
+                    ...data.sites.map((choice) => ({ id: choice.id, label: choice.label })),
+                  ]}
+                  onChange={(id) => {
+                    const choice = data.sites.find((choice) => choice.id === id);
+                    if (choice) {
+                      setSite({ ...choice.point });
+                      setReview(undefined);
+                    }
+                  }}
+                />
+              )}
               {view.player.activity?.name === data.family.name && (
                 <p role="status">
                   {view.player.activity.status === 'active'
@@ -649,22 +855,20 @@ export function Construction({
                     {root.assembly.parts.filter((p) => p.role === 'cover').length} coverings
                   </p>
                   <div className="ol-actions">
-                    {root.assembly.parts
-                      .filter((p) => p.role === 'cover')
-                      .map((part) => (
-                        <Button
-                          key={part.id}
-                          disabled={!canCommand || view.clock.paused}
-                          onPress={() =>
-                            void invoke('construction-rest', 'Rest in covered bay', {
-                              targetId: root.id,
-                              bay: part.bay,
-                            })
-                          }
-                        >
-                          Rest in bay {part.bay + 1}
-                        </Button>
-                      ))}
+                    {coverings.map((part) => (
+                      <Button
+                        key={part.id}
+                        disabled={!canCommand || view.clock.paused}
+                        onPress={() =>
+                          void invoke('construction-rest', 'Rest in covered bay', {
+                            targetId: root.id,
+                            bay: part.bay,
+                          })
+                        }
+                      >
+                        Rest in bay {part.bay + 1}
+                      </Button>
+                    ))}
                     <Button
                       disabled={!canCommand || view.clock.paused}
                       onPress={() =>
@@ -804,11 +1008,10 @@ export function Construction({
                     <SelectField
                       label="Actual covering to remove"
                       value={outgoingId}
-                      options={
-                        root?.assembly?.parts
-                          .filter((p) => p.role === 'cover')
-                          .map((p) => ({ id: p.id, label: `${p.name}, bay ${p.bay + 1}` })) ?? []
-                      }
+                      options={coverings.map((p) => ({
+                        id: p.id,
+                        label: `${p.name}, bay ${p.bay + 1}`,
+                      }))}
                       onChange={setOutgoingId}
                     />
                   )}
@@ -893,6 +1096,20 @@ export function Construction({
                             </p>
                           )}
                       </details>
+                      <ConstructionCooperation
+                        view={view}
+                        cooperation={data.cooperation}
+                        plan={review?.key === key ? review.plan : undefined}
+                        ready={
+                          canCommand &&
+                          !view.clock.paused &&
+                          !readError &&
+                          !unsupportedPoint &&
+                          review?.key === key &&
+                          !!review.result.ok
+                        }
+                        operations={operations}
+                      />
                       <div className="ol-actions">
                         <Button
                           busy={busy}

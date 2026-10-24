@@ -65,7 +65,8 @@ function clearSessionDrafts(
           (key.startsWith('open-legend:action-request:') ||
             key.startsWith('open-legend:inventory-command:') ||
             key.startsWith('open-legend:invention-request:') ||
-            key.startsWith('open-legend:activity-command:')))
+            key.startsWith('open-legend:activity-command:') ||
+            key.startsWith('open-legend:agreement-command:')))
       )
         sessionStorage.removeItem(key);
   } catch {

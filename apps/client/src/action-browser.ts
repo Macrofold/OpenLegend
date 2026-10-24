@@ -1,4 +1,17 @@
-import type { CatalogueAction, EntityView } from '@open-legend/protocol';
+import type { CatalogueAction, EntityView, GameView } from '@open-legend/protocol';
+
+/** Own-body facts can change while inventory and selected work stay unchanged.
+ * Refresh retained availability after those changes without polling every tick.
+ * Native checks still decide whether the chosen action can actually start. */
+export function playerActionStatusKey(player: GameView['player']): string {
+  return JSON.stringify([
+    player.life,
+    player.alive,
+    player.participation,
+    player.canUseInventory,
+    player.statusEffects,
+  ]);
+}
 
 /** Long-lived inspectors refresh when permitted choices change, not for every
  * walking position, animation, distance label or remaining-time update. The
@@ -18,6 +31,8 @@ export function actionSubjectKey(subject: EntityView | undefined): string {
         subject.health,
         subject.quantity,
         subject.storage?.revision,
+        subject.assembly?.revision,
+        subject.actionRevision,
         subject.canTalk,
         subject.statusEffects?.map((effect) => effect.id),
         subject.controls?.map(choice),

@@ -10,16 +10,12 @@ it('native fixture: look-closer prose and berry facts describe actual resource m
   entityGet(world.entities, 'berries-west')!.resource!.quantity = 36;
   const observation = observeActor(world, PLAYER_ID)!;
   expect(commandFacts({ type: 'gather', targetId: 'berries-west' }, observation)).toEqual([
-    ['Yields', '2 Wild berries'],
-    ['Time', '10 minutes of game time, plus travel'],
+    ['Yields', '1 Wild berries'],
+    ['Time', '30 seconds of game time, plus travel'],
   ]);
-  expect(
-    describeEntity(
-      entityGet(world.entities, 'berries-west')!,
-      world.itemDefinitions,
-      world.castDefinitions,
-    ),
-  ).toContain('Familiar edible berries');
+  expect(describeEntity(world, entityGet(world.entities, 'berries-west')!)).toContain(
+    'Familiar edible berries',
+  );
   world.memories[NPC_ID]!.push({
     id: 'secret',
     actorId: NPC_ID,
@@ -30,18 +26,16 @@ it('native fixture: look-closer prose and berry facts describe actual resource m
     entityIds: [],
     importance: 1,
   });
-  expect(
-    describeEntity(
-      entityGet(world.entities, NPC_ID)!,
-      world.itemDefinitions,
-      world.castDefinitions,
-    ),
-  ).not.toContain('secret');
+  expect(describeEntity(world, entityGet(world.entities, NPC_ID)!)).not.toContain('secret');
 });
 
-it('native fixture: preparation facts have material costs and exclude travel', () => {
+it('native fixture: known crafting facts have material costs and exclude travel', () => {
   const observation = observeActor(createWorld(), PLAYER_ID)!;
-  const facts = commandFacts({ type: 'prepare', preparation: 'cord' }, observation);
+  const method = observation.knownRecipes.find(
+    (recipe) =>
+      recipe.source.kind === 'fixed-transform' && recipe.source.definition.id === 'base:twist-cord',
+  )!;
+  const facts = commandFacts({ type: 'craft', recipeId: method.id }, observation);
   expect(facts.some(([label]) => label === 'Costs')).toBe(true);
   expect(facts.find(([label]) => label === 'Time')?.[1]).not.toContain('travel');
 });

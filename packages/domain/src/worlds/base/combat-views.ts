@@ -7,6 +7,8 @@ import { sameSurfacePoint } from '../../spatial.js';
 import { distance3D, interpolate, type SurfacePoint } from '@open-legend/spatial';
 import { BASE_EVASION_DIRECTIONS } from './ranged-counterplay.js';
 import type { Entity, WorldState } from '../../types.js';
+import { attackPreparation, attackPreparationLabel } from '../../combat-encounters.js';
+import { renderNarration, subjectNarration, person } from '../../narration.js';
 
 /** Exact selected movement facts share the installed profile with native execution. */
 export function evasionDescription(world: WorldState, actor: Entity, destination: SurfacePoint) {
@@ -47,8 +49,34 @@ function preparationDescription(target: Entity): string | undefined {
     return action.ranged.ready
       ? 'Holding a prepared aim; a shot has not been released.'
       : `Preparing a shot; ${Math.ceil(action.remainingSeconds)} game seconds of preparation remain.`;
-  if (action?.strikePhase === 'windup')
+  if (action?.type === 'strike' && action.stage === 'working' && action.strikePhase !== 'recovery')
     return `Preparing a strike; ${Math.ceil(action.remainingSeconds)} game seconds remain.`;
+}
+/** A visible performer never supplies an unseen target. The actor's own current body
+ * is an available reference even when they cannot see themselves. */
+export function observedAttackCue(
+  world: WorldState,
+  observer: Entity,
+  source: Entity,
+): string | undefined {
+  if (!seesEntity(world, observer, source)) return;
+  const action = attackPreparation(world, source);
+  const target = action?.targetId ? entityGet(world.entities, action.targetId) : undefined;
+  if (
+    !target?.actor ||
+    action?.targetLife !== (target.actor.physicalLife ?? 0) ||
+    (target.id !== observer.id && !seesEntity(world, observer, target))
+  )
+    return;
+  return renderNarration(
+    world,
+    subjectNarration(source, [
+      `${attackPreparationLabel(world, source)} `,
+      person(target, 'object'),
+      '.',
+    ]),
+    observer.id,
+  );
 }
 /** Read the authoritative activity, returning only the currently visible preparation.
  * Scoped observations deliberately omit private ranged bindings.
@@ -61,7 +89,9 @@ export function observedAttackPreparation(
   const current = entityGet(world.entities, target.id);
   if (!current?.actor?.alive) return;
   const description = preparationDescription(current);
-  return description && seesEntity(world, observer, current) ? description : undefined;
+  if (!description || !seesEntity(world, observer, current)) return;
+  const cue = observedAttackCue(world, observer, current);
+  return cue ? `${cue} ${description}` : description;
 }
 /** No observed preparation grants the target's private purpose or a hidden countdown. */
 export function observedCombatActivity(
@@ -81,5 +111,7 @@ export function observedCombatActivity(
           ? 'Making a chosen short evasive movement. It grants no immunity.'
           : undefined;
   }
-  return description && seesEntity(world, observer, current) ? description : undefined;
+  if (!description || !seesEntity(world, observer, current)) return;
+  const cue = observedAttackCue(world, observer, current);
+  return cue ? `${cue} ${description}` : description;
 }

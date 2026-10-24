@@ -1,8 +1,8 @@
 # Speech and social perception — feature specification
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Selected behavior and shared-streaming coordination are designed; SPK01–SPK11 implementation and qualification remain pending. | 2026-10-18   |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Core speech, memory, admission, native sound and recipient controls are connected; integrated/live/player qualification remains open. | 2026-10-24   |
 
 ## Purpose and design status
 

@@ -30,6 +30,8 @@ routes(
     '/api/history',
     '/api/world-events',
     '/api/construction',
+    '/api/construction/hearths',
+    '/api/player-interaction/availability',
     '/api/world-agent/creation/openings',
     '/api/world-agent/creation/targets',
   ],
@@ -49,6 +51,7 @@ routes(
     '/api/god/activity-history',
     '/api/commitments',
     '/api/construction/preview',
+    '/api/work-batches/preview',
     '/api/inventory',
     '/api/inventory/access',
     '/api/inventory/destinations',
@@ -108,7 +111,11 @@ routes(
 routes('POST', ['/api/inventions/list', '/api/inventions/receipt'], 'read', 15_000, 'receipt');
 routes(
   'POST',
-  ['/api/world-agent/session/draft-preview', '/api/world-agent/session/draft-check'],
+  [
+    '/api/construction/hearth-preview',
+    '/api/world-agent/session/draft-preview',
+    '/api/world-agent/session/draft-check',
+  ],
   'preparation',
   15_000,
   'observation',

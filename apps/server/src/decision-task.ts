@@ -176,7 +176,9 @@ export function prepareDecisionTask(
       DECISION_LIMITS.inputBytes ||
     Buffer.byteLength(JSON.stringify(prepared.schema)) > DECISION_LIMITS.schemaBytes
   )
-    throw new Error('Complete required decision input or schema exceeds its byte allowance.');
+    throw new Error(
+      `Complete required decision input or schema exceeds its byte allowance: ${Buffer.byteLength(prepared.instructions) + Buffer.byteLength(prepared.context)} input bytes; ${Buffer.byteLength(JSON.stringify(prepared.schema))} schema bytes.`,
+    );
   return prepared;
 }
 

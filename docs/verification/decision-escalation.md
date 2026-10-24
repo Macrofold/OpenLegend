@@ -1,8 +1,27 @@
 # Decision fallback implementation and verification
 
-Updated **2026-10-17**. **Luna Low fallback is enabled by default** for the configured primary decision model. Eligible unresolved decisions receive at most one separately funded request. Existing character actions and native simulation continue while it waits; the eventual proposal must still pass current permissions, world rules and decision-expiry checks.
+Updated **2026-10-22**. **Luna Low fallback is enabled by default** for the configured primary decision model. Eligible unresolved decisions receive at most one separately funded request. Existing character actions and native simulation continue while it waits; the eventual proposal must still pass current permissions, world rules and decision-expiry checks.
 
 [Current behavior](../ai-providers.md#decision-escalation) · [Feature specification](../projects/decision-escalation-feature-spec.md) · [Technical design](../projects/decision-escalation-tech-design.md) · [DE01–DE05](../maintainers/cognition-redesign.md#decision-escalation) · [Limits](../limits/ai-execution.md#decision-escalation-limits) · [Model comparisons](../benchmarks/README.md).
+
+## Background capacity — October 22
+
+At the owner's explicit request, the shared background allowance is 100 operations
+per server process. A no-provider exercise through the actual scheduler reached
+100 simultaneous held operations, queued the 101st, and admitted it after one
+release. Restored uncertain attempts each occupied one position; settling one
+released only that position. Repeated local release did not free another position.
+
+The existing decision/maintenance fixtures produced 68 passes and one missing-export
+failure while unrelated animal-navigation edits were in progress. Once that export
+was available, the failed check and an extended real-PostgreSQL recovery check both
+passed. The latter reconstructs two uncertain attempts, admits 98 other background
+operations, refuses further admission at 100, then frees exactly one position on a
+known completion without a price; financial obligations remain. Full TypeScript
+and production TypeScript compilation pass. The two-pending-attempt SQL plan uses
+the existing unsettled-attempt index and exact link-key lookups. No provider calls were made. These
+checks establish scheduling/accounting correctness, not live throughput, memory or
+character quality at 100; the broader release gates below remain open.
 
 ## Live gameplay with Luna Low
 

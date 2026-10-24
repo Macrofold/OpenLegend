@@ -1,17 +1,19 @@
 import { BASE_CANOPY, CANOPY_ITEMS } from './canopies.js';
 import type { ItemDefinition } from '../../types.js';
+import type { DefinitionPin } from '../../world-modules.js';
 import type { MaterialInterface } from '../../invention-families.js';
 import { BASE_KNIFE_EQUIPMENT, BASE_SPEAR_EQUIPMENT } from './equipment.js';
+import { BASE_CORD_TWISTING, BASE_MATERIAL_ITEMS } from './material-methods.js';
 
 /** Native preparation and invented cord share these authored costs and output semantics.
  * docs/worlds/base/items.md#cordage-manufacture-and-reuse */
 export const BASE_CORDAGE_RULE = {
-  label: 'Twist cord',
-  input: 'prepared_fiber',
-  inputQuantity: 2,
-  output: 'cord',
-  outputQuantity: 1,
-  workSeconds: 1200,
+  label: BASE_CORD_TWISTING.name,
+  input: BASE_CORD_TWISTING.inputs[0]!.definitionId,
+  inputQuantity: BASE_CORD_TWISTING.inputs[0]!.quantity,
+  output: BASE_CORD_TWISTING.outputs[0]!.definitionId,
+  outputQuantity: BASE_CORD_TWISTING.outputs[0]!.quantity,
+  workSeconds: BASE_CORD_TWISTING.workSeconds,
   properties: ['binding', 'flexible'] as const,
   packingLoad: 1,
 };
@@ -32,7 +34,7 @@ const CONTACT_CHARACTERISTICS: ItemDefinition['characteristics'] = [
  * remain quiet. The story selector still owns all admission. */
 export const CONSTRUCTED_ITEM_STORY_FIELDS = { story_importance: { story_importance: 8 } };
 
-export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
+const existingItems: Readonly<Record<string, ItemDefinition>> = {
   ...CANOPY_ITEMS,
   raw_river_fish: {
     id: 'raw_river_fish',
@@ -124,6 +126,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     container: { capacity: 24, maximumDepth: 16 },
   },
   raw_fiber: {
+    tracksMaterialOrigins: true,
     icon: 'resource.reed',
     gatherLabel: 'Gather reed fibers',
     id: 'raw_fiber',
@@ -160,6 +163,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     properties: [...BASE_CORDAGE_RULE.properties],
   },
   wood: {
+    tracksMaterialOrigins: true,
     icon: 'resource.branch',
     gatherLabel: 'Gather branches',
     id: 'wood',
@@ -171,6 +175,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     properties: ['rigid', 'flexible', 'shaft', 'fuel'],
   },
   stone: {
+    tracksMaterialOrigins: true,
     icon: 'resource.pebble',
     gatherLabel: 'Gather stones',
     id: 'stone',
@@ -226,6 +231,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     icon: 'resource.meat',
     id: 'raw_meat',
     version: 1,
+    nutrition: 24,
     portable: true,
     packingLoad: 1,
     name: 'Raw meat',
@@ -284,14 +290,27 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
   },
 };
 
-export const NATIVE_PREPARATIONS = {
-  fiber: {
-    label: 'Clean fibers',
-    input: 'raw_fiber',
-    inputQuantity: 2,
-    output: 'prepared_fiber',
-    outputQuantity: 2,
-    workSeconds: 960,
-  },
-  cord: BASE_CORDAGE_RULE,
-} as const;
+export function baseItemDefinitions(
+  materialItems: readonly ItemDefinition[],
+  coverProfile: DefinitionPin = BASE_CANOPY.defaultCover,
+): Record<string, ItemDefinition> {
+  const selectedItems: Record<string, ItemDefinition> = Object.fromEntries(
+    Object.entries(existingItems).map(([id, definition]) => [
+      id,
+      definition.assemblyMaterial?.role === 'cover'
+        ? { ...definition, assemblyMaterial: { ...definition.assemblyMaterial, coverProfile } }
+        : definition,
+    ]),
+  );
+  for (const definition of materialItems) {
+    if (Object.hasOwn(selectedItems, definition.id))
+      throw new Error('New authored material cannot replace an existing item definition.');
+    selectedItems[definition.id] = {
+      ...definition,
+      ...(definition.melee ? { characteristics: CONTACT_CHARACTERISTICS } : {}),
+    };
+  }
+  return selectedItems;
+}
+export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> =
+  baseItemDefinitions(BASE_MATERIAL_ITEMS);

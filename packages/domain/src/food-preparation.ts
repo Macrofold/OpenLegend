@@ -1,3 +1,4 @@
+import { isMaterialInputRole } from './native-inputs.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { itemFor } from './objects.js';
 import { accessiblePossession } from './object-access.js';
@@ -6,6 +7,7 @@ import {
   itemDefinitionPin,
   RESOURCE_GROUP_OPERATION_LIMIT,
   type ResourceOperation,
+  type ResourceAvailability,
 } from './resource-claims.js';
 import { definitionPin, type DefinitionPin } from './world-modules.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
@@ -38,9 +40,6 @@ export interface CookingPreparation {
   inputs: Record<string, string>;
 }
 export type CookCommand = Extract<Command, { type: 'cook' }>;
-export function isCookingInputRole(value: unknown): value is string {
-  return isSafeRecordId(value) && /^[a-z][a-z0-9_-]*$/.test(value);
-}
 /** A reviewed transformation includes the meanings of its referenced materials.
  * Keep cached individual pins; only compose the small dependency vector here.
  * docs/food-preparation.md#preparation-definitions-and-exact-choices */
@@ -106,6 +105,7 @@ export function cookingClaims(
   actorId: string,
   definition: FoodPreparationDefinition,
   inputs: Record<string, string>,
+  availability?: ResourceAvailability,
 ): ResourceOperation[] | undefined {
   chargeWork({ tests: definition.inputs.length });
   if (Object.keys(inputs).length !== definition.inputs.length) return;
@@ -120,7 +120,7 @@ export function cookingClaims(
     )
       return;
     const amount = (amounts.get(item.id) ?? 0) + input.quantity;
-    if (availableItemQuantity(world, item.id) < amount) return;
+    if (availableItemQuantity(world, item.id, undefined, availability) < amount) return;
     amounts.set(item.id, amount);
     claims.push({
       source: {
@@ -152,11 +152,12 @@ export function cookingPreparations(
   world: WorldState,
   inventory: readonly ItemInstance[],
   selectedItemId?: string,
+  availability?: ResourceAvailability,
 ): CookingPreparation[] {
   // Choice reads can run outside a native transition; retain the same work ceiling
   // when exact ingredient assignment needs to try more than the first set of lots.
   return withWorkMeter(WORK_LIMITS.group, () =>
-    cookingPreparationsWithinWork(world, inventory, selectedItemId),
+    cookingPreparationsWithinWork(world, inventory, selectedItemId, availability),
   );
 }
 export function cookingCommand(choice: CookingPreparation, heatId: string): CookCommand {
@@ -176,6 +177,7 @@ function cookingPreparationsWithinWork(
   world: WorldState,
   inventory: readonly ItemInstance[],
   selectedItemId?: string,
+  availability?: ResourceAvailability,
 ): CookingPreparation[] {
   const choices: CookingPreparation[] = [];
   const lotsByDefinition = new Map<string, ItemInstance[]>();
@@ -183,7 +185,7 @@ function cookingPreparationsWithinWork(
   let selected: ItemInstance | undefined;
   chargeWork({ tests: inventory.length });
   for (const item of inventory) {
-    free.set(item.id, availableItemQuantity(world, item.id));
+    free.set(item.id, availableItemQuantity(world, item.id, undefined, availability));
     const lots = lotsByDefinition.get(item.definitionId);
     if (item.id === selectedItemId) selected = item;
     if (lots && item.id === selectedItemId) lots.unshift(item);
@@ -288,21 +290,9 @@ export function validCookingInputs(value: unknown): value is Record<string, stri
     !!value &&
     typeof value === 'object' &&
     !Array.isArray(value) &&
-    Object.entries(value).every(([role, id]) => isCookingInputRole(role) && isSafeRecordId(id))
+    Object.entries(value).every(([role, id]) => isMaterialInputRole(role) && isSafeRecordId(id))
   );
 }
-/** Flatten private input identities only for the existing activity argument language.
- * The original command remains the sole executable representation. */
-export function activityCommandFields(command: Command): Record<string, unknown> {
-  if (command.type !== 'cook') return command as unknown as Record<string, unknown>;
-  const { inputs, ...fields } = command;
-  return {
-    ...fields,
-    ...Object.fromEntries(Object.entries(inputs).map(([role, id]) => [`input:${role}`, id])),
-  };
-}
-export const isCookingInputField = (field: string): boolean =>
-  field.startsWith('input:') && isCookingInputRole(field.slice(6));
 
 export function validateFoodPreparations(world: WorldState): void {
   if (
@@ -345,7 +335,7 @@ export function validateFoodPreparations(world: WorldState): void {
       definition.inputs.some(
         (input) =>
           !hasRecordFields(input, ['role', 'definitionId', 'quantity']) ||
-          !isCookingInputRole(input.role),
+          !isMaterialInputRole(input.role),
       ) ||
       definition.outputs.some((output) => !hasRecordFields(output, ['definitionId', 'quantity'])) ||
       definition.outputs.some(

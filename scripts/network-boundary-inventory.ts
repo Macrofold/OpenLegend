@@ -109,6 +109,7 @@ export const networkDependencies: Readonly<Record<string, string>> = {
  * classification merely because its package name is absent from a denylist. */
 export const localDependencies: Readonly<Record<string, string>> = {
   '@dimforge/rapier3d-compat': 'Local collision geometry.',
+  '@noble/hashes': 'Local deterministic hashing and byte conversion; no network transport.',
   '@streamparser/json': 'Local incremental JSON parsing.',
   '@types/node': 'Compile-time declarations.',
   '@types/pg': 'Compile-time declarations.',

@@ -1,3 +1,4 @@
+import { reconcileCompacts } from './social-compacts.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { subjectNarration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
@@ -9,7 +10,6 @@ import { finish, emit, outcome } from './events.js';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
 import { releaseInvocationResources } from './resource-claims.js';
 import { cancelPlan, discardSuspended } from './agency.js';
-import { leaveConversation } from './conversations.js';
 import { isSafeRecordId } from './records.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import type { Transition, WorldEvent, WorldState } from './types.js';
@@ -23,6 +23,7 @@ function interruptDepartureWork(world: WorldState, entity: Entity): void {
   cancelPlan(world, actor, entity.id);
   discardSuspended(world, actor, entity.id);
   actor.action = null;
+  delete actor.encounters;
   actor.planGeneration++;
   for (const definition of world.statusEffectPolicy.definitions)
     if (definition.occupiesAction) {
@@ -35,7 +36,6 @@ function interruptDepartureWork(world: WorldState, entity: Entity): void {
     }
 }
 function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): void {
-  leaveConversation(world, entity.id, 'disconnect');
   interruptDepartureWork(world, entity);
   const state = entity.actor!.participation!;
   const support = supportedPosition(entity);
@@ -43,6 +43,7 @@ function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): v
     state.returnAnchor = support;
   state.phase = 'inactive';
   reconcileOutings(world, events, { changedOnly: true });
+  reconcileCompacts(world, events);
   if (world.exitExposures) delete world.exitExposures[entity.id];
   emit(
     world,
@@ -139,7 +140,6 @@ export function changeParticipation(
       'The saved location and configured return location are unavailable. A safe return location must be restored.',
     );
   const world = draftWorld(input);
-  if (operation.type === 'depart') leaveConversation(world, actorId, 'disconnect');
   const entity = entityGet(world.entities, actorId)!,
     actor = entity.actor!,
     events: WorldEvent[] = [];
@@ -177,6 +177,7 @@ export function changeParticipation(
       );
   }
   reconcileOutings(world, events, { changedOnly: true });
+  reconcileCompacts(world, events);
   return finish(
     world,
     events,

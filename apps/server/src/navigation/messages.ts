@@ -1,3 +1,4 @@
+import type { NativeRefugeBatch } from '@open-legend/domain';
 import type {
   BodyProfile,
   NavigationRequest,
@@ -9,6 +10,9 @@ export type NavigationMessage = {
   key: string;
   map?: SpatialMap;
   request?: NavigationRequest;
+  requests?: NavigationRequest[];
+  /** Private physical alternatives, processed serially by the same bounded worker. */
+  variants?: Array<{ map: SpatialMap; requests: NavigationRequest[] }>;
   /** One existing body for optional idle map warmup; never replaces a real request body. */
   warmBody?: BodyProfile;
 };
@@ -31,6 +35,19 @@ export interface NavigationReply {
   id: number;
   key: string;
   result?: NavigationResult;
+  results?: NavigationResult[];
   timing?: NavigationTiming;
   error?: string;
 }
+
+/** Ordered derived answers; current action/proposal identity is checked at publication. */
+export type PreparedNavigationPublication = {
+  actorId: string;
+} & (
+  | { kind: 'action'; actionId: string; request: NavigationRequest; result: NavigationResult }
+  | {
+      kind: 'native-refuge';
+      batch: NativeRefugeBatch;
+      results: NavigationResult[];
+    }
+);

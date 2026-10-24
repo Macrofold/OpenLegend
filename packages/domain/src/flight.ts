@@ -14,10 +14,15 @@ import {
   type BodyProfile,
   type WorldPoint,
 } from '@open-legend/spatial';
-import { bodyProfile, setSpatialPosition, spatialMap } from './spatial-state.js';
+import { bodyProfile, setSpatialPosition, spatialMap, flightRouteDigest } from './spatial-state.js';
 import { emit } from './events.js';
+import { nativeResponseProfile, nativeResponseMovementFactor } from './native-response.js';
+import { readNativeDangers, nativeDangersClearAt } from './native-response-danger.js';
 import { TIME_EPSILON } from './simulation-time.js';
-import type { FlightRoute } from './spatial-state.js';
+import { recordSemanticChange } from './dependencies.js';
+import { chargeWork } from './work-budget.js';
+import type { FlightRoute, FlightConnection } from './spatial-state.js';
+import type { NativeFlightLocomotion } from './native-response.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 
 /** Short-lived landing broad phase, created lazily after voluntary movement.
@@ -140,9 +145,148 @@ export function flightSpeed(
     ? Math.min(route.speed, (route.climbSpeed * separation) / vertical)
     : route.speed;
 }
+function routineHeldForAlarm(entity: Entity): boolean {
+  return !!(
+    entity.animal?.episode &&
+    entity.spatial.flight &&
+    !entity.spatial.flight.nativeLocomotion &&
+    worldSupport(entity) !== null
+  );
+}
+function effectiveFlightSpeed(
+  world: WorldState,
+  entity: Entity,
+  route: FlightRoute,
+): { speed: number; climbSpeed: number } {
+  const binding = entity.spatial.flight?.nativeLocomotion;
+  if (!binding) return route;
+  const profile = nativeResponseProfile(world, binding.profile);
+  // A forecast can reach a later joined corridor before actual progress does.
+  // The captured digest belongs to that actual current corridor until the join.
+  const current = world.flightRoutes[entity.spatial.flight!.routeId];
+  if (!profile || !current || binding.routeDigest !== flightRouteDigest(current))
+    throw new Error('Changed admitted native flight definition.');
+  const speed = profile.locomotion[binding.locomotion]?.flightEscape;
+  if (speed === undefined) throw new Error('Missing admitted flight movement profile.');
+  const factor = nativeResponseMovementFactor(world, entity, profile);
+  return { speed: speed * factor, climbSpeed: route.climbSpeed * factor };
+}
+/** Stop the physical flight at this exact boundary before asking the one native
+ * controller for a further finite leg. No preceding time belongs to that choice. */
+function requestFlightChoice(world: WorldState, entity: Entity): void {
+  const flight = entity.spatial.flight;
+  if (!flight?.nativeLocomotion || flight.stopAtLanding) return;
+  flight.awaitingChoice = true;
+  const episode = entity.animal?.episode;
+  if (episode && episode.id === flight.nativeLocomotion.episodeId) {
+    episode.reviewAt = world.simTime;
+    recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'behavior' });
+  }
+}
+/** Already airborne control changes retain movement only through the next real
+ * landing. A supported body has no released flight to preserve. */
+export function retireNativeFlight(world: WorldState, entity: Entity): void {
+  const flight = entity.spatial.flight;
+  if (!flight?.nativeLocomotion) return;
+  if (flight.nativeLocomotion.physicalLife !== (entity.actor?.physicalLife ?? 0)) {
+    recoverUnavailableNativeFlight(entity);
+    return;
+  }
+  if (worldSupport(entity) !== null) {
+    delete entity.spatial.flight;
+    return;
+  }
+  flight.stopAtLanding = true;
+  delete flight.awaitingChoice;
+  delete flight.nativeLocomotion.stopAt;
+  const route = world.flightRoutes[flight.routeId]!;
+  const seen = new Set<string>();
+  let cursor: { route: FlightRoute; next: number } | undefined = { route, next: flight.next },
+    landing = false;
+  while (cursor) {
+    const key = JSON.stringify([cursor.route.id, cursor.next]);
+    if (seen.has(key)) break;
+    seen.add(key);
+    if (cursor.route.points[cursor.next]!.landingSurfaceId) {
+      landing = true;
+      break;
+    }
+    cursor = flightSuccessor(world, cursor.route, cursor.next);
+  }
+  if (!landing) {
+    delete entity.spatial.flight;
+    entity.spatial.fallVelocity = 0;
+  }
+}
+export function finishNativeFlightResponse(entity: Entity): void {
+  if (entity.spatial.flight) delete entity.spatial.flight.nativeLocomotion;
+}
+/** A supported routine perch can be the safe settling place too. Preserve its
+ * actual arrived waypoint so finishing a decorative wait cannot restart flight. */
+export function holdNativeFlightPerch(world: WorldState, entity: Entity): void {
+  const flight = entity.spatial.flight;
+  if (!flight || flight.atRest || worldSupport(entity) === null) return;
+  const route = world.flightRoutes[flight.routeId]!,
+    arrived = (flight.next + route.points.length - 1) % route.points.length,
+    point = route.points[arrived]!;
+  if (
+    point.landingSurfaceId !== worldSupport(entity) ||
+    distance3D(point.position, worldPosition(entity)) > SPATIAL_LIMITS.epsilon
+  )
+    return;
+  flight.next = arrived;
+  flight.waitSeconds = 0;
+  flight.atRest = true;
+}
+export function recoverUnavailableNativeFlight(entity: Entity): void {
+  if (worldSupport(entity) !== null) delete entity.spatial.flight;
+  else {
+    delete entity.spatial.flight;
+    entity.spatial.fallVelocity = 0;
+  }
+}
+/** A completely prepared connection grants progress, never an immediate position
+ * change. The ordinary flight owner performs takeoff and every later sweep. */
+export function startNativeFlight(
+  entity: Entity,
+  connection: FlightConnection,
+  binding: NativeFlightLocomotion,
+): void {
+  entity.spatial.flight = {
+    routeId: connection.routeId,
+    next: connection.next,
+    waitSeconds: 0,
+    nativeLocomotion: binding,
+  };
+}
+/** A joined route can be faster within the same interval. Candidate envelopes
+ * must cover that whole admitted continuation, not only the present leg. */
+export function flightMaximumSpeed(world: WorldState, entity: Entity): number {
+  const progress = entity.spatial.flight;
+  if (!progress || progress.atRest || progress.awaitingChoice || routineHeldForAlarm(entity))
+    return 0;
+  const initial = world.flightRoutes[progress.routeId];
+  if (!initial) throw new Error('Missing admitted native flight route.');
+  if (progress.nativeLocomotion || initial.continuation.kind !== 'join')
+    return effectiveFlightSpeed(world, entity, initial).speed;
+  const seen = new Set<string>();
+  let routeId = progress.routeId,
+    maximum = 0;
+  while (!seen.has(routeId)) {
+    chargeWork({ tests: 1 });
+    seen.add(routeId);
+    const route = world.flightRoutes[routeId];
+    if (!route) throw new Error('Missing admitted native flight route.');
+    maximum = Math.max(maximum, route.speed);
+    if (route.continuation.kind !== 'join') break;
+    routeId = route.continuation.routeId;
+  }
+  return maximum;
+}
 /** Game seconds one lap of a route takes, visiting every waypoint once (waits excluded). */
 const lapSeconds = new WeakMap<FlightRoute, number>();
 export function routeLapSeconds(route: FlightRoute): number {
+  if (route.continuation.kind !== 'loop') return Infinity;
   let seconds = lapSeconds.get(route);
   if (seconds === undefined) {
     seconds = 0;
@@ -157,6 +301,21 @@ export function routeLapSeconds(route: FlightRoute): number {
 }
 /** Hops one private path may take; short circling routes can lap several times per slice. */
 const PATH_HOPS = 64;
+
+/** The same admitted successor is used by prediction and execution. A join
+ * changes only the route reference at its exact shared point, never position. */
+function flightSuccessor(
+  world: WorldState,
+  route: FlightRoute,
+  arrived: number,
+): { route: FlightRoute; next: number } | undefined {
+  if (arrived + 1 < route.points.length) return { route, next: arrived + 1 };
+  const continuation = route.continuation;
+  if (continuation.kind === 'loop') return { route, next: 0 };
+  if (continuation.kind === 'join')
+    return { route: world.flightRoutes[continuation.routeId]!, next: continuation.next };
+  return undefined;
+}
 /** A mid-air corridor turn with no wait is a private motion deadline: nothing is emitted,
  * reserved or observed there. Only landing and hovering waypoints end the private path, so
  * a flock's staggered turns do not split every other entity's interval. The caller's
@@ -167,7 +326,9 @@ export function flightPathSeconds(
   travelLimit: number,
 ): { stop: number; landing: boolean; travel: number; waypoint?: FlightRoute['points'][number] } {
   const progress = entity.spatial.flight!;
-  const route = world.flightRoutes[progress.routeId]!;
+  if (progress.atRest || progress.awaitingChoice || routineHeldForAlarm(entity))
+    return { stop: Infinity, landing: false, travel: Infinity };
+  let route = world.flightRoutes[progress.routeId]!;
   let position = worldPosition(entity),
     next = progress.next,
     seconds = 0,
@@ -175,16 +336,26 @@ export function flightPathSeconds(
   for (let hop = 0; hop < route.points.length * PATH_HOPS; hop++) {
     const waypoint = route.points[next]!;
     const distance = distance3D(position, waypoint.position);
-    const speed = flightSpeed(position, waypoint.position, route);
+    const speed = flightSpeed(
+      position,
+      waypoint.position,
+      effectiveFlightSpeed(world, entity, route),
+    );
     const travel =
       path + distance >= travelLimit ? seconds + (travelLimit - path) / speed : Infinity;
     seconds += distance / speed;
-    if (waypoint.landingSurfaceId || waypoint.waitSeconds > 0)
+    if (
+      waypoint.landingSurfaceId ||
+      waypoint.waitSeconds > 0 ||
+      progress.nativeLocomotion?.stopAt === next
+    )
       return { stop: seconds, landing: !!waypoint.landingSurfaceId, travel, waypoint };
     if (travel !== Infinity) return { stop: Infinity, landing: false, travel };
     path += distance;
     position = waypoint.position;
-    next = (next + 1) % route.points.length;
+    const successor = flightSuccessor(world, route, next);
+    if (!successor) return { stop: seconds, landing: true, travel, waypoint };
+    ({ route, next } = successor);
   }
   // A lap too short to reach the travel limit in PATH_HOPS hops ends the private path there.
   // Laps covering under a game second in total keep the flyer within millimetres; bounding
@@ -219,6 +390,9 @@ export function flightTracks(
   const progress = entity.spatial.flight;
   if (
     !progress ||
+    progress.atRest ||
+    progress.awaitingChoice ||
+    routineHeldForAlarm(entity) ||
     progress.waitSeconds > 0 ||
     entity.spatial.fallVelocity !== undefined ||
     !entity.actor?.alive ||
@@ -227,7 +401,7 @@ export function flightTracks(
     entity.actor.action
   )
     return undefined;
-  const route = world.flightRoutes[progress.routeId]!;
+  let route = world.flightRoutes[progress.routeId]!;
   const map = spatialMap(world),
     body = bodyProfile(entity);
   const track: MotionTrack = { at: [0], pose: [{ ...worldPosition(entity) }] };
@@ -241,7 +415,7 @@ export function flightTracks(
     const from = track.pose.at(-1)!,
       to = waypoint.position;
     const separation = distance3D(from, to);
-    const speed = flightSpeed(from, to, route);
+    const speed = flightSpeed(from, to, effectiveFlightSpeed(world, entity, route));
     const fraction =
       separation <= 1e-8 ? 1 : Math.min(1, (speed * (seconds - elapsed)) / separation);
     const end = interpolate(from, to, fraction);
@@ -260,8 +434,16 @@ export function flightTracks(
     elapsed = fraction === 1 ? elapsed + (separation <= 1e-8 ? 0 : separation / speed) : seconds;
     track.at.push(Math.min(seconds, elapsed));
     track.pose.push(end);
-    if (fraction !== 1 || waypoint.landingSurfaceId || waypoint.waitSeconds > 0) break;
-    next = (next + 1) % route.points.length;
+    if (
+      fraction !== 1 ||
+      waypoint.landingSurfaceId ||
+      waypoint.waitSeconds > 0 ||
+      progress.nativeLocomotion?.stopAt === next
+    )
+      break;
+    const successor = flightSuccessor(world, route, next);
+    if (!successor) break;
+    ({ route, next } = successor);
   }
   // Past a landing, hover or the hop cap the body's future is not predicted here.
   track.until = Math.min(seconds, elapsed);
@@ -283,6 +465,16 @@ export function admittedLanding(
   const map = spatialMap(world),
     body = bodyProfile(entity);
   const landing = resolveSupport(map, waypoint.position, waypoint.landingSurfaceId);
+  if (entity.spatial.flight?.nativeLocomotion && !entity.spatial.flight.stopAtLanding) {
+    const episode = entity.animal?.episode;
+    if (!episode) return null;
+    const frame = readNativeDangers(world, entity, episode);
+    if (
+      frame.status !== 'complete' ||
+      !nativeDangersClearAt(entity, waypoint.position, frame, world.simTime)
+    )
+      return null;
+  }
   return landing &&
     canStand(map, landing, body) &&
     !(landingOccupancy?.() ?? new LandingOccupancy(world)).blocked(entity.id, landing, body)
@@ -305,6 +497,9 @@ export function landingDue(world: WorldState, entity: Entity, seconds: number): 
   const progress = entity.spatial.flight;
   if (
     !progress ||
+    progress.atRest ||
+    progress.awaitingChoice ||
+    routineHeldForAlarm(entity) ||
     progress.waitSeconds > 0 ||
     !entity.actor?.alive ||
     entity.actor.action ||
@@ -373,8 +568,52 @@ export function advanceFlight(
   )
     return;
   if (entity.actor.action) return; // No second voluntary position writer while a native action owns the body.
-  const route = world.flightRoutes[progress.routeId];
+  let route = world.flightRoutes[progress.routeId];
   if (!route) throw new Error('Missing admitted native flight route.');
+  // An alarm chooses before an unreleased routine takeoff. Removing support
+  // first would make its actual floor look like an obstacle to the new connector.
+  if (routineHeldForAlarm(entity)) return;
+  if (progress.atRest) {
+    // Resume only at a start boundary; none of the preceding interval belongs
+    // to this new departure. Active settling keeps the actual perch.
+    if (
+      seconds === 0 &&
+      !entity.animal?.episode &&
+      !progress.stopAtLanding &&
+      entity.actor.controller === 'native'
+    ) {
+      if (route.continuation.kind !== 'land') {
+        const successor = flightSuccessor(world, route, progress.next);
+        if (
+          !successor ||
+          !admittedLanding(world, entity, route.points[progress.next]!, landingOccupancy)
+        )
+          return;
+        progress.routeId = successor.route.id;
+        progress.next = successor.next;
+        delete progress.atRest;
+        advanceFlight(world, entity, 0, events, landingOccupancy, emitOccurrence);
+        return;
+      }
+      const resumeId = route.continuation.resumeRouteId;
+      if (!resumeId) return;
+      const resume = world.flightRoutes[resumeId],
+        departure = resume?.points[0];
+      if (
+        !departure?.landingSurfaceId ||
+        worldSupport(entity) !== departure.landingSurfaceId ||
+        distance3D(worldPosition(entity), departure.position) > SPATIAL_LIMITS.epsilon ||
+        !canStand(map, { ...departure.position, surfaceId: departure.landingSurfaceId }, body)
+      )
+        return;
+      progress.routeId = resumeId;
+      progress.next = 1;
+      delete progress.atRest;
+      advanceFlight(world, entity, 0, events, landingOccupancy, emitOccurrence);
+    }
+    return;
+  }
+  if (progress.awaitingChoice) return;
   if (progress.waitSeconds > 0) {
     const remaining = progress.waitSeconds - seconds;
     progress.waitSeconds = remaining > TIME_EPSILON ? remaining : 0;
@@ -391,7 +630,7 @@ export function advanceFlight(
     const from = worldPosition(entity),
       to = waypoint.position;
     const separation = distance3D(from, to);
-    const speed = flightSpeed(from, to, route);
+    const speed = flightSpeed(from, to, effectiveFlightSpeed(world, entity, route));
     if (seconds === 0 && separation > SPATIAL_LIMITS.epsilon) {
       // Taking off is a start-boundary transition, not backdated after movement.
       if (
@@ -424,10 +663,24 @@ export function advanceFlight(
     const ignoredSupports = [departureSupport, waypoint.landingSurfaceId].filter(
       (id): id is string => !!id,
     );
-    if (!canFlySegment(map, from, next, body, ignoredSupports)) return;
+    if (!canFlySegment(map, from, next, body, ignoredSupports)) {
+      if (progress.stopAtLanding) {
+        recoverUnavailableNativeFlight(entity);
+        return;
+      }
+      requestFlightChoice(world, entity);
+      return;
+    }
     const landing =
       fraction === 1 ? admittedLanding(world, entity, waypoint, landingOccupancy) : null;
-    if (waypoint.landingSurfaceId && fraction === 1 && !landing) return;
+    if (waypoint.landingSurfaceId && fraction === 1 && !landing) {
+      if (progress.stopAtLanding) {
+        recoverUnavailableNativeFlight(entity);
+        return;
+      }
+      requestFlightChoice(world, entity);
+      return;
+    }
     const wasGrounded = worldSupport(entity) !== null;
     setSpatialPosition(world, entity, next, landing?.surfaceId ?? null);
     if (wasGrounded && !landing)
@@ -439,8 +692,29 @@ export function advanceFlight(
         entity,
       );
     if (fraction !== 1) return;
-    progress.next = (progress.next + 1) % route.points.length;
-    progress.waitSeconds = waypoint.waitSeconds;
+    if (progress.nativeLocomotion?.stopAt === progress.next) {
+      requestFlightChoice(world, entity);
+      return;
+    }
+    if (landing && progress.stopAtLanding) {
+      progress.atRest = true;
+      progress.waitSeconds = 0;
+      delete progress.nativeLocomotion;
+    } else {
+      const successor = flightSuccessor(world, route, progress.next);
+      if (successor) {
+        if (route.id !== successor.route.id)
+          recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'behavior' });
+        route = successor.route;
+        progress.routeId = route.id;
+        progress.next = successor.next;
+        if (progress.nativeLocomotion)
+          progress.nativeLocomotion.routeDigest = flightRouteDigest(route);
+      } else {
+        progress.atRest = true;
+      }
+      progress.waitSeconds = waypoint.waitSeconds;
+    }
     if (landing)
       emitOccurrence(
         world,

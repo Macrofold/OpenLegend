@@ -1,8 +1,8 @@
 # Performance overhaul: calculations that follow actual changes
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Ordinary candidate dispositions and initial compromise trials are recorded; smooth 3× remains unmet. | 2026-10-17   |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Animal execution mechanisms and focused qualification are complete in PF09; normal-speed capacity and broader acceptance remain open. | 2026-10-24   |
 
 **Implementation update — October 17, 2026, 18:22 EDT.** The final implementation-only pass installs selective participant-operation/group reuse, exact phase-owned local refresh, cross-call false numeric-condition reuse and matching planned stationary-craft eligibility. Current conditions still run, unknown/shared dependencies rebuild and no earlier physical deadline is extended. Runtime/performance qualification for this final batch is unrun. [Implemented scope and fallbacks](../../verification/performance/overhaul-simulation-implementation.md#reuse-unaffected-calculations-at-ordinary-simulation-boundaries--october-17-2026).
 
@@ -14,6 +14,8 @@ The engine already has elapsed-time integration, local motion slices, deferred b
 Current [time semantics](../../simulation-time.md), [spatial behavior](../../spatial-world.md), [boundary catalogue](../../maintainers/simulation-boundaries.md), [native-work constraints](../../limits/native-work.md) and [base-world timing](../../worlds/base/time.md) remain authoritative. A world-owned fidelity change is a separate experiment from an exact engine optimization.
 
 The first slices below are selected experimental starting points, not accepted changes to gameplay. Their checkpoints say what must be proved before dependent edits. Follow the shared implementation guide for measurement, reporting and adoption; the scenarios here describe future checks, none run during this documentation pass. Finishing a first slice does not finish the entire candidate. Function names identify the inspected owners; recheck their callers at the implementation revision.
+
+**Current animal continuation — 2026-10-24:** the [21-item design](animal-execution.md) and [implementation packets](animal-execution-tasks.md) specify the selected follow-through from the October 23 profile. Use their connected batches and PF09 checklist for this work. Earlier PF17 experiments/dispositions remain historical evidence, not instructions to rerun unchanged trials or recreate delivered mechanisms.
 
 ## PF17.9 — Local mechanical recalculation
 
@@ -169,7 +171,7 @@ Use [kernel.test.ts](../../../packages/domain/src/kernel.test.ts) physiology/dea
 
 **Proposed numerical contract.** First preserve the existing sequence of arithmetic and clamping exactly, using a bounded list of pending operation segments rather than assuming `rate × total time` is equivalent. A segment records the elapsed argument and ordered operation identity that eager integration would have applied. A pure current-value read replays only that value's pending segments from its materialized value. One transition-owned window, published immutably with the supported values, may span publications; its total reachable pending segment count is experimentally capped at 64. Before appending the next segment at that bound, materialize every value referring to the window, then clear it and start a new window. Current state cannot retain a chain of prior windows; older immutable snapshots may still retain their own unchanged data. This bounds retained/replay work without dropping work or slowing game time. The choice of 64 is a provisional finite experiment setting, not a measured optimum or adopted gameplay limit, and must be inventoried as proposed before implementation. If replay/compaction erases the benefit, reject this exact variant. A rate-and-anchor variant with changed rounding is a separate recorded numerical decision, not an invisible substitution.
 
-The proposed bound and compaction policy are recorded in [NW17](../../limits/native-work.md#nw17--experimental-deferred-arithmetic-window); update that owner if the experiment changes them.
+The proposed bound and compaction policy are recorded in [NW17](../../limits/native-work.md#nw17--anchored-continuous-native-values); update that owner if the experiment changes them.
 
 **Checkpoint before representation edits.** Produce a consumer matrix covering `readAttribute`, `rawHealthValue`, `setAttribute`, `projectAttributes`, `bodyContext`, `prepareAttributeForecast` and `advanceReservoirs` in [world-modules.ts](../../../packages/domain/src/world-modules.ts); `readState`/`writeState` in [state-owners.ts](../../../packages/domain/src/state-owners.ts); condition/status checks; action admission/completion; server projections, AI context and the save codec. Include direct reads of attribute values and episode elapsed/work fields, not just calls to named helpers. Specify how value revisions, threshold events, episode time and charged work are current without mutating a world on read. This matrix and a worked two-publication/one-write/save example are required deliverables. If a coherent accounting/revision representation is still missing, stop dependent implementation and report that exact gap.
 
@@ -200,7 +202,7 @@ Existing entrypoints are the physiology/pause/restore checks in [kernel.test.ts]
 
 **Priority/status:** next; refinement of proportional-step stage 6. **Scope:** medium, expand one participant family at a time. **Intended behavior:** unchanged.
 
-**Code fact.** [kernel.ts](../../../packages/domain/src/kernel.ts) repeatedly constructs or scans working, burning, wandering, landing and approaching participants within each slice. The world-owned [animal behavior](../../../packages/domain/src/worlds/base/animal-behavior.ts) decrements ordinary wander countdowns even when no decision is due.
+**Recorded baseline before CTR03–CTR04.** [kernel.ts](../../../packages/domain/src/kernel.ts) repeatedly constructs or scans working, burning, wandering, landing and approaching participants within each slice. The world-owned [animal behavior](https://github.com/Macrofold/OpenLegend/blob/19a0c303a89d3cb278db1cbbbe5b95e2e6e26fe1/packages/domain/src/worlds/base/animal-behavior.ts) decrements ordinary wander countdowns even when no decision is due.
 
 **Implementation.** Extend existing participant preparation with moving, working, burning and due-decision subsets. First replace ordinary idle wander countdown updates with absolute game-time deadlines and select only due animals at the existing endpoints. Preserve endpoint execution and carried timer remainder: do not silently add global stops at every due time or replay extra overdue hops. Preserve the existing order among simultaneous choices and landings, including which animal takes each saved random number. Continue to use one simulation clock.
 
@@ -212,7 +214,7 @@ Existing entrypoints are the physiology/pause/restore checks in [kernel.test.ts]
 
 ### Implementation packet
 
-**Selected first slice.** Change only ordinary idle animal wandering, leaving flight, fleeing, threats, work and fires on their existing paths. `advanceWorldNative` currently filters/sorts eligible wanderers and calls `advanceAnimal`; `advanceAnimal` in [worlds/base/animal-behavior.ts](../../../packages/domain/src/worlds/base/animal-behavior.ts) subtracts elapsed seconds, makes at most one hop per invocation, and adds the next random wait to the remaining countdown. There is also a zero-duration start-phase call. Preserve those actual invocation phases; do not invent a new global animal scheduler.
+**Recorded first slice.** Change only ordinary idle animal wandering, leaving flight, fleeing, threats, work and fires on their existing paths. `advanceWorldNative` currently filters/sorts eligible wanderers and calls `advanceAnimal`; `advanceAnimal` in [worlds/base/animal-behavior.ts](https://github.com/Macrofold/OpenLegend/blob/19a0c303a89d3cb278db1cbbbe5b95e2e6e26fe1/packages/domain/src/worlds/base/animal-behavior.ts) subtracts elapsed seconds, makes at most one hop per invocation, and adds the next random wait to the remaining countdown. There is also a zero-duration start-phase call. Preserve those actual invocation phases; do not invent a new global animal scheduler.
 
 **Correction to an earlier experiment's premise.** Ordinary wander deadlines do not normally create shared global stops. `nativeMotionInterval` in [motion-boundaries.ts](../../../packages/domain/src/motion-boundaries.ts) uses that timer only when the allowed displacement is below the 0.4-metre hop. The rejected alignment experiment therefore did not remove the supposed ordinary global-stop cost. This proposal targets countdown writes, filtering and sorting, and must count those costs directly.
 

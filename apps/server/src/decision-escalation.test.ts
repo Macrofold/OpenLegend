@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import {
@@ -27,9 +28,10 @@ import { readConfig, testRepository } from '../../../tests/fixtures/database.js'
 import { editWorld, enterLocalWorld, useNearCampSight } from '../../../tests/fixtures/service.js';
 import { AiDirector } from './ai-director.js';
 import { WorldService } from './world-service.js';
-import { CognitionExecution } from './cognition-execution.js';
+import { CognitionExecution, type ExecutionLease } from './cognition-execution.js';
 import { DecisionEscalator } from './decision-escalator.js';
 import {
+  DECISION_LIMITS,
   DECISION_MODEL,
   DECISION_REASONS,
   decisionRoot,
@@ -160,7 +162,7 @@ async function harness(
       reasons: options.reasons ?? [...DECISION_REASONS],
     }),
   });
-  const store = await testRepository();
+  const store = await testRepository(undefined, options.preset ? undefined : stockedCamp());
   const service = new WorldService(store, config, () => now);
   await enterLocalWorld(service);
   await service.setConnection('fixture', true);
@@ -180,6 +182,17 @@ async function harness(
       return options.judge ? options.judge(request) : primary(request, 0.95, true);
     },
     async generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
+      // This specimen supplies higher decision answers only. Optional memory
+      // maintenance must not consume the deferred answer intended for that decision.
+      if (['memory_consolidation', 'background_reflection'].includes(request.task))
+        return {
+          outcome: 'unavailable',
+          reason: 'Memory generation is outside this decision fixture.',
+          receipt: receipt(request.requestId, 'openai', {
+            dispatched: false,
+            estimatedCostUsd: 0,
+          }),
+        };
       calls.higher.push(request);
       return (
         options.generate
@@ -330,12 +343,27 @@ function readerCoordinator(
   return { escalator, calls };
 }
 
+// Leave one background position for the queued blocker used by existing specimens.
+async function occupyOtherBackgroundPositions(execution: CognitionExecution): Promise<void> {
+  const leases: ExecutionLease[] = [];
+  for (let index = 1; index < DECISION_LIMITS.backgroundExecutions; index++) {
+    const lease = await execution.primary(true);
+    expect(lease?.executionClass).toBe('background');
+    if (lease) leases.push(lease);
+  }
+  cleanup.unshift(async () => {
+    for (const lease of leases) lease.release();
+  });
+}
+
 describe('enabled character decision reconsideration', () => {
   it('E26 fails closed when reconstructing occupied executions fails before the first caller', async () => {
     let reject!: (error: Error) => void;
-    const restored = new Promise<('primary' | 'background')[]>((_, fail) => {
-      reject = fail;
-    });
+    const restored = new Promise<Awaited<ReturnType<GameRepository['occupiedDecisionSlots']>>>(
+      (_, fail) => {
+        reject = fail;
+      },
+    );
     const pool = new CognitionExecution({
       occupiedDecisionSlots: () => restored,
       onSettlement: () => () => {},
@@ -465,7 +493,9 @@ describe('enabled character decision reconsideration', () => {
     expect(h.food()).toBe(2);
     expect(job.result).toMatchObject({ disposition: 'uncertain' });
     expect(await h.execution.primary()).toBeUndefined();
-    expect(await h.store.occupiedDecisionSlots()).toContain('primary');
+    expect(await h.store.occupiedDecisionSlots()).toEqual(
+      expect.arrayContaining([expect.objectContaining({ executionClass: 'primary' })]),
+    );
   });
   it('E08 accepts a valid late primary once within the original useful period', async () => {
     let h!: Awaited<ReturnType<typeof harness>>;
@@ -851,7 +881,7 @@ describe('enabled character decision reconsideration', () => {
     expect((await pending).decision?.groups['q0']?.state).toBe('resolved');
     expect(h.calls.higher).toHaveLength(1);
   });
-  it('E22 an admitted new conversation fences only the older decision for that character', async () => {
+  it('E22 newly heard addressed speech fences only the older decision for that character', async () => {
     const entered = deferred<GenerateRequest>(),
       released = deferred<AiResult<unknown>>();
     let first = true;
@@ -870,16 +900,13 @@ describe('enabled character decision reconsideration', () => {
     const pending = h.thought(),
       request = await entered.promise,
       old = await h.root();
-    expect(
-      (
-        await h.director.submit(
-          'chat',
-          'new-fixture-conversation',
-          'Please consider this new question.',
-          NPC_ID,
-        )
-      ).ok,
-    ).toBe(true);
+    const admitted = await h.service.say(
+      'new-fixture-speech',
+      PLAYER_ID,
+      'Please consider this new question.',
+      NPC_ID,
+    );
+    expect(admitted.ok, JSON.stringify(admitted)).toBe(true);
     released.resolve(value(request.requestId, 'openai', chooseFood(request)));
     await pending;
     expect(h.food()).toBe(2);
@@ -1357,6 +1384,7 @@ describe('durable reader publication and bounded scheduling', () => {
         { escalator, calls } = readerCoordinator(h);
       const blocker = deferred<void>(),
         started = deferred<void>();
+      await occupyOtherBackgroundPositions(h.execution);
       h.execution.enqueue({
         id: 'fixture-background-blocker',
         actorId: 'world-agent',
@@ -1403,7 +1431,7 @@ describe('durable reader publication and bounded scheduling', () => {
       expect(calls).toHaveLength(0);
       expect((await h.store.getJob(job.id))?.decision?.end).toBe('restart');
       const slots = await h.store.occupiedDecisionSlots();
-      expect(slots.includes('background')).toBe(dispatched);
+      expect(slots.some((slot) => slot.executionClass === 'background')).toBe(dispatched);
       const account = (await h.store.usage(10, NPC_ID)).budget;
       expect(account.spentUsd + account.reservedUsd).toBe(dispatched ? 0.25 : 0);
       if (!dispatched)
@@ -1562,7 +1590,16 @@ describe('durable reader publication and bounded scheduling', () => {
           (p: { label: string }) => p.label === 'frustration',
         );
         const source = context.appraisals.sources.find(
-          (s: { evidence: string }) => s.evidence === sourceId,
+          (s: { experience: { reference?: string; value?: { summary?: string } } }) => {
+            const reference = s.experience.reference;
+            const experience = reference
+              ? context.character.experience[Number(reference.match(/\[(\d+)\]$/)![1])]
+              : s.experience;
+            return (
+              experience.value.summary ===
+              'I felt disappointed when my carefully prepared work was dismissed.'
+            );
+          },
         );
         return value(request.requestId, 'openai', {
           answers: {
@@ -1689,6 +1726,7 @@ describe('durable reader publication and bounded scheduling', () => {
     await h.store.putJob({ ...job, stimulusEvidenceIds: required });
     const blocker = deferred<void>(),
       entered = deferred<void>();
+    await occupyOtherBackgroundPositions(h.execution);
     h.execution.enqueue({
       id: 'dense-preparation-blocker',
       actorId: 'world-agent',
@@ -1739,6 +1777,7 @@ describe('durable reader publication and bounded scheduling', () => {
     });
     const blocker = deferred<void>(),
       started = deferred<void>();
+    await occupyOtherBackgroundPositions(h.execution);
     h.execution.enqueue({
       id: 'fixture-queue-blocker',
       actorId: 'world-agent',
@@ -1798,6 +1837,7 @@ describe('durable reader publication and bounded scheduling', () => {
         },
         declined: async () => {},
       });
+    await occupyOtherBackgroundPositions(h.execution);
     enqueue('initial-maintenance', 'maintenance', 0, true);
     await started.promise;
     enqueue('lower-urgency', 'decision', 2);
@@ -1840,9 +1880,9 @@ describe('durable reader publication and bounded scheduling', () => {
       {
         async embed(request) {
           seen.push(
-            request.texts.some((text) => text.startsWith('Old indexing fixture'))
+            request.texts.some((text) => text.includes('Old indexing fixture'))
               ? 'old'
-              : request.texts.includes('New indexing fixture.')
+              : request.texts.some((text) => text.includes('New indexing fixture.'))
                 ? 'new'
                 : 'other',
           );
@@ -1912,7 +1952,7 @@ describe('durable reader publication and bounded scheduling', () => {
     await h.store.markDecisionDispatch(id);
     const lease = await h.execution.primary();
     expect(lease).toBeDefined();
-    lease!.uncertain();
+    lease!.uncertain(id);
     lease!.release();
     await h.store.settle(
       id,
@@ -1925,6 +1965,49 @@ describe('durable reader publication and bounded scheduling', () => {
     expect(next).toBeDefined();
     next?.release();
     expect((await h.store.usage(10, NPC_ID)).budget.spentUsd).toBe(0.05);
+
+    const ids = [`${job.id}:background-a`, `${job.id}:background-b`];
+    for (const attemptId of ids) {
+      expect(
+        await h.store.reserve(attemptId, 'openai', 0.02, 10, NPC_ID, undefined, undefined, {
+          rootJobId: job.id,
+          category: 'level',
+          level: 4,
+          stage: 'decision-escalation',
+          executionClass: 'background',
+        }),
+      ).toBe(true);
+      await h.store.markDecisionDispatch(attemptId);
+      await h.store.settle(
+        attemptId,
+        receipt(attemptId, 'openai', {
+          completionUncertain: true,
+          estimatedCostUsd: undefined,
+        }),
+      );
+    }
+    const recovered = new CognitionExecution(h.store, h.now);
+    cleanup.unshift(async () => recovered.close());
+    const primaryLease = await recovered.primary();
+    const background: ExecutionLease[] = [];
+    for (let index = ids.length; index < DECISION_LIMITS.backgroundExecutions; index++) {
+      const lease = await recovered.primary(true);
+      expect(lease?.executionClass).toBe('background');
+      if (lease) background.push(lease);
+    }
+    expect(await recovered.primary(true)).toBeUndefined();
+    await h.store.settle(ids[0]!, receipt(ids[0]!, 'openai', { estimatedCostUsd: undefined }));
+    await recovered.reconcile(h.store);
+    const freed = await recovered.primary(true);
+    expect(freed?.executionClass).toBe('background');
+    expect(await recovered.primary(true)).toBeUndefined();
+    expect(await h.store.occupiedDecisionSlots()).toEqual([
+      { attemptId: ids[1], executionClass: 'background' },
+    ]);
+    freed?.release();
+    for (const lease of background) lease.release();
+    primaryLease?.release();
+    expect((await h.store.usage(10, NPC_ID)).budget.spentUsd).toBe(0.09);
   });
   it('E26 reloads a funding stop recorded after another coordinator was created', async () => {
     const h = await harness({

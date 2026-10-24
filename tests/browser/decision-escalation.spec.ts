@@ -1,3 +1,4 @@
+import { NPC_ID } from '@open-legend/domain';
 import { expect, test } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig, testRepository, closeTestDatabases } from '../fixtures/database.js';
@@ -76,7 +77,7 @@ test('E36 explains one reconsideration and total cost in the authorized inspecto
     await game.close();
   }
 });
-test('E36 keeps NPC waiting dots, failure details and a newer draft during reconsideration', async ({
+test('E36 keeps the pending reply, failure details and a newer speech draft during reconsideration', async ({
   page,
 }, info) => {
   test.setTimeout(120_000);
@@ -132,27 +133,26 @@ test('E36 keeps NPC waiting dots, failure details and a newer draft during recon
     await useNearCampSight(game.service);
     await page.goto(`http://127.0.0.1:${address.port}`);
     await enterGame(page);
-    await page.getByRole('button', { name: 'Conversation', exact: true }).click();
-    await page
-      .getByRole('button', { name: /^Talk to / })
-      .first()
-      .click();
-    const input = page.getByRole('textbox', { name: 'Your message', exact: true });
+    await page.getByRole('button', { name: 'In view', exact: true }).click();
+    await page.locator(`[data-entity="${NPC_ID}"]`).click({ button: 'right' });
+    await page.getByRole('searchbox', { name: 'Find an action' }).fill('speak');
+    await page.locator(`[data-catalogue-action="talk-${NPC_ID}"]`).click();
+    const input = page.getByRole('textbox', { name: 'Words to say out loud', exact: true });
+    const waiting = page.getByRole('status').filter({ hasText: /is considering a reply/ });
     await input.fill('Could we talk about the plan?');
     await input.press('Enter');
     await expect.poll(() => requests.length).toBe(1);
     expect(requests[0]!.task).toBe('decision-escalation');
-    await expect(page.getByRole('status', { name: 'Waiting for a reply' })).toBeVisible();
+    await expect(waiting).toBeVisible();
     await input.fill('Keep this newer unsent message.');
     release!();
-    await expect(page.getByRole('status', { name: 'Waiting for a reply' })).toBeHidden();
-    const failed = page.getByRole('button', {
-      name: 'Failed: The AI answer could not be used.',
-      exact: true,
-    });
-    await expect(failed).toBeVisible();
-    await failed.hover();
-    await expect(page.getByRole('tooltip')).toContainText('The AI answer could not be used.');
+    await expect(waiting).toBeHidden();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'The AI answer could not be used.' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Retry their reply', exact: true }),
+    ).toBeVisible();
     await expect(input).toHaveValue('Keep this newer unsent message.');
     expect(requests).toHaveLength(1);
     await page.screenshot({ path: info.outputPath('npc-fallback-failure.png') });

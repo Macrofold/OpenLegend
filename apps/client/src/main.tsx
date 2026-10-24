@@ -1,5 +1,7 @@
 import { browserSubscription } from './browser-network';
 import type { Subscription } from '@open-legend/network';
+import { sunlightAtHour } from './sunlight';
+import { namePhrase } from '@open-legend/language';
 import { WorldComposer, type WorldIntent } from './ui/world-composer';
 import { NearbyEntities } from './ui/nearby-entities';
 import { AimControls } from './ui/aim-controls';
@@ -23,7 +25,7 @@ import { Journal } from './ui/journal';
 import { Settings } from './ui/settings';
 import { createRoot } from 'react-dom/client';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
-import { ClockOffsetContext, clockParts } from './ui/event-time';
+import { WorldClockProvider, clockParts } from './ui/event-time';
 import {
   useCallback,
   useEffect,
@@ -99,6 +101,7 @@ import { WorldAgent } from './ui/world-agent';
 import { EventTime } from './ui/event-time';
 import { AiSettings, Character, Crafting, EntityDetail, Inventory } from './ui/panels';
 import { CampActivity, type ActivityEntry } from './ui/camp-activity';
+import { WorkBatches, type WorkBatchEntry } from './ui/work-batches';
 import { ContainerOpening, useContainerOpening } from './ui/container-opening';
 import { Diagnostics, Mind, type DiagnosticSelection } from './ui/diagnostics';
 import { useLocal } from './ui/storage';
@@ -208,6 +211,12 @@ function App({
   const [inspectors, setInspectors] = useState<{ id: string; slot: number }[]>([]);
   const [activeInspector, setActiveInspector] = useState<string | null>(null);
   const [worldIntent, setWorldIntent] = useState<(WorldIntent & { owner: string }) | null>(null);
+  const [speechPreferenceNotice, setSpeechPreferenceNotice] = useState<{
+    scope: string;
+    targetId: string;
+    message: string;
+  } | null>(null);
+  const speechPreferenceRequest = useRef<object | null>(null);
   const [itemCreation, setItemCreation] = useState<{
     target: ItemCreationTarget;
     definitionId?: string;
@@ -228,6 +237,7 @@ function App({
     [hover, setHover] = useState<{
       entity: EntityView;
       point: { x: number; y: number };
+      primary: boolean;
     } | null>(null);
   const [lethalReview, setLethalReview] = useState<{
     review: NonNullable<ApiResult['lethalReview']>;
@@ -249,6 +259,7 @@ function App({
   const [inventoryOpened, setInventoryOpened] = useState(false);
   const [activityOpened, setActivityOpened] = useState(false);
   const [activityEntry, setActivityEntry] = useState<ActivityEntry>();
+  const [workBatchEntry, setWorkBatchEntry] = useState<WorkBatchEntry>();
   const [retainedPanels, setRetainedPanels] = useState<PanelId[]>([]);
   const [actionSubject, setActionSubject] = useState<EntityView | null>(null);
   const [actionEntry, setActionEntry] = useState(0);
@@ -263,6 +274,7 @@ function App({
   const [gameError, setGameError] = useState('');
   const [mindDirty, setMindDirty] = useState(false);
   const [mindSwitchMessage, setMindSwitchMessage] = useState('');
+  const [recoveryRequest, setRecoveryRequest] = useState<string | null>(null);
   const [inventionSeed, setInventionSeed] = useState<{
       id: string;
       text: string;
@@ -277,6 +289,7 @@ function App({
     } | null>(null),
     [godEditors, setGodEditors] = useState<GodEditorWindow[]>([]),
     [timeSettings, setTimeSettings] = useState(false),
+    [openingDisclosure, setOpeningDisclosure] = useState<{ owner: string; expanded: boolean }>(),
     [pausePending, setPausePending] = useState(false),
     [speedPending, setSpeedPending] = useState(false),
     [width, setWidth] = useState(innerWidth),
@@ -351,7 +364,9 @@ function App({
       nearbySelect: (_id: string) => {},
       nearbyContextMenu: (_id: string, _x: number, _y: number) => {},
       browseKnown: (_opener: HTMLElement) => {},
-      primaryAction: (_entity: EntityView) => {},
+      beginPrimaryAction: (_entity: EntityView): string | null => null,
+      commitPrimaryAction: (_id: string, _entity: EntityView) => {},
+      cancelPrimaryAction: () => {},
     }),
     retry = useRef(() => {});
   latest.current = view;
@@ -1017,6 +1032,7 @@ function App({
     containerOpening.open(entity);
   }
   function openActivity(entry?: ActivityEntry) {
+    setWorkBatchEntry(undefined);
     setActivityEntry(entry);
     show('activity');
     setPicker(null);
@@ -1041,10 +1057,23 @@ function App({
     setWorldIntent({
       mode: 'speak',
       targetId: id,
-      label: recipient.name,
+      label: namePhrase(recipient, 'indefinite'),
       owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
     });
     setPicker(null);
+  }
+  function addressPerson(id: string, label: string) {
+    const current = latest.current;
+    if (!current) return;
+    const visible = current.entities.find((entity) => entity.id === id);
+    setWorldIntent({
+      mode: 'speak',
+      targetId: id,
+      label: visible ? namePhrase(visible, 'indefinite') : label,
+      owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
+    });
+    setPicker(null);
+    hide('events');
   }
   function talkAbout(item: { itemId: string; name: string; recipientId?: string }) {
     const current = latest.current;
@@ -1054,7 +1083,7 @@ function App({
     );
     setWorldIntent({
       mode: 'speak',
-      ...(recipient ? { targetId: recipient.id, label: recipient.name } : {}),
+      ...(recipient ? { targetId: recipient.id, label: namePhrase(recipient, 'indefinite') } : {}),
       item: { id: item.itemId, name: item.name },
       owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
     });
@@ -1224,9 +1253,17 @@ function App({
       }
     }
   }
-  const primaryAction = usePrimaryAction(view, connected && !tabPaused, run, notify);
+  const primaryAction = usePrimaryAction(
+    view,
+    connected && !tabPaused,
+    hover?.primary ? hover.entity : null,
+    run,
+    notify,
+  );
   handlers.current = {
-    primaryAction,
+    beginPrimaryAction: primaryAction.begin,
+    commitPrimaryAction: primaryAction.commit,
+    cancelPrimaryAction: primaryAction.cancel,
     browseKnown: (opener) => browseActions({ catalogue: true }, opener),
     nearbySelect: (id) => {
       const entity = latest.current?.entities.find((entry) => entry.id === id);
@@ -1320,15 +1357,18 @@ function App({
           select: (...args) => handlers.current.select(...args),
           move: (p) => handlers.current.move(p),
           target: (entity) => handlers.current.target(entity),
-          primaryAction: (entity) => handlers.current.primaryAction(entity),
-          hover: (entity, point) =>
+          beginPrimaryAction: (entity) => handlers.current.beginPrimaryAction(entity),
+          commitPrimaryAction: (id, entity) => handlers.current.commitPrimaryAction(id, entity),
+          cancelPrimaryAction: () => handlers.current.cancelPrimaryAction(),
+          hover: (entity, point, primary) =>
             setHover((previous) =>
               previous?.entity === entity &&
               previous.point.x === point.x &&
-              previous.point.y === point.y
+              previous.point.y === point.y &&
+              previous.primary === primary
                 ? previous
                 : entity
-                  ? { entity, point }
+                  ? { entity, point, primary }
                   : null,
             ),
           selectionDenied: notify,
@@ -1597,7 +1637,17 @@ function App({
         command: a.intent.command,
         reason: a.reason,
       });
-    else if (a.intent.kind === 'activity' && a.targetId && a.enabled) {
+    else if (a.intent.kind === 'work-batch' && a.enabled && view) {
+      setWorkBatchEntry({
+        id: a.id,
+        owner: taskScope(view),
+        label: a.label,
+        selection: a.intent.selection,
+      });
+      setActivityEntry(undefined);
+      show('activity');
+      setPicker(null);
+    } else if (a.intent.kind === 'activity' && a.targetId && a.enabled) {
       openActivity({
         familyId: a.intent.family,
         targetId: a.targetId,
@@ -1606,7 +1656,51 @@ function App({
       });
     } else if (a.intent.kind === 'compose') {
       if (a.intent.mode === 'invention') invent();
-      else talk(a.intent.npcId ?? '');
+      else {
+        const targetId = a.intent.npcId ?? '';
+        talk(targetId);
+        const preference = a.intent.preference,
+          scope = latest.current?.access?.scope;
+        if (preference && scope) {
+          const request = {};
+          speechPreferenceRequest.current = request;
+          setSpeechPreferenceNotice({
+            scope,
+            targetId,
+            message: 'Changing the shortcut preference…',
+          });
+          void command({
+            id: `${a.id}:preference`,
+            label: a.label,
+            enabled: true,
+            command: preference,
+          })
+            .then((result) => {
+              if (
+                speechPreferenceRequest.current !== request ||
+                latest.current?.access?.scope !== scope
+              )
+                return;
+              setSpeechPreferenceNotice({
+                scope,
+                targetId,
+                message: result.ok ? 'Shortcut preference updated.' : result.message,
+              });
+            })
+            .catch((error) => {
+              if (
+                speechPreferenceRequest.current !== request ||
+                latest.current?.access?.scope !== scope
+              )
+                return;
+              setSpeechPreferenceNotice({
+                scope,
+                targetId,
+                message: `The shortcut preference result is unconfirmed. ${String(error)}`,
+              });
+            });
+        }
+      }
     }
   }
   function browseActions(context: ActionContext, opener: Element) {
@@ -1793,7 +1887,7 @@ function App({
     const props = {
       view,
       connected,
-      command: (a: ActionOption) => command(a),
+      command,
     };
     switch (id) {
       case 'inventory':
@@ -1804,6 +1898,17 @@ function App({
               {...props}
               narrow={narrow}
               showHeading={false}
+              chooseWork={(item) => {
+                if (!item.workBatch) return;
+                setWorkBatchEntry({
+                  id: `meal:${item.id}`,
+                  owner: taskScope(view),
+                  label: item.workBatch.label,
+                  selection: item.workBatch.selection,
+                });
+                setActivityEntry(undefined);
+                show('activity');
+              }}
               browseActions={(item, opener, dispatchCommand) => {
                 const bounds = opener.getBoundingClientRect();
                 openPicker({
@@ -1844,13 +1949,26 @@ function App({
         );
       case 'activity':
         return (
-          <CampActivity
-            view={view}
-            connected={connected}
-            command={(action, request) => command(action, request, 'activity')}
-            entry={activityEntry}
-            visible={connected && panelVisible('activity')}
-          />
+          <>
+            <WorkBatches
+              key={taskScope(view)}
+              view={view}
+              connected={connected}
+              visible={panelVisible('activity')}
+              entry={workBatchEntry?.owner === taskScope(view) ? workBatchEntry : undefined}
+              command={(action, request) => command(action, request, 'activity')}
+              close={() => setWorkBatchEntry(undefined)}
+            />
+            {workBatchEntry?.owner !== taskScope(view) && (
+              <CampActivity
+                view={view}
+                connected={connected}
+                command={(action, request) => command(action, request, 'activity')}
+                entry={activityEntry}
+                visible={connected && panelVisible('activity')}
+              />
+            )}
+          </>
         );
       case 'crafting':
         return (
@@ -1939,6 +2057,7 @@ function App({
             browseRecipe={(recipeId, opener) => browseActions({ recipeId }, opener)}
             connected={connected}
             inventionSeed={inventionSeed}
+            recoveryRequest={recoveryRequest}
             invent={invent}
             visible={visible}
           />
@@ -1949,6 +2068,7 @@ function App({
         return (
           <WorldEvents
             view={view}
+            addressPerson={addressPerson}
             inspectEntity={(id) => {
               const target =
                 id === view.player.id
@@ -2127,8 +2247,52 @@ function App({
         );
     }
   }
+  const currentWorldIntent =
+    view && worldIntent?.owner === JSON.stringify([view.worldId, view.saveTimeline, view.player.id])
+      ? worldIntent
+      : null;
+  // Narrow reading panels and the speech bar cover the full clock. Keep its
+  // existing pause control in the utility row without closing the current task.
+  const clockInTopTools =
+    narrow && (open.length > 0 || inspectors.length > 0 || !!currentWorldIntent);
+  const pauseButton = view && (
+    <IconButton
+      id="pause"
+      icon={view.clock.paused ? 'ui.play' : 'ui.pause'}
+      label={view.clock.paused ? 'Resume world' : 'Pause world'}
+      disabled={!connected || pausePending || view.clock.pauseReason === 'maintenance'}
+      pressed={view.clock.paused}
+      onPress={() => void pause()}
+    />
+  );
+  const openingOwner = view ? JSON.stringify([view.worldId, view.player.id]) : '';
+  const openingInformation = view?.presentation.introduction && (
+    <details
+      className="ol-card ol-opening-information"
+      open={openingDisclosure?.owner === openingOwner ? openingDisclosure.expanded : true}
+      onToggle={(event) => {
+        const expanded = event.currentTarget.open;
+        setOpeningDisclosure((current) =>
+          current?.owner === openingOwner && current.expanded === expanded
+            ? current
+            : { owner: openingOwner, expanded },
+        );
+      }}
+      hidden={
+        open.length > 0 ||
+        inspectors.length > 0 ||
+        !!currentWorldIntent ||
+        !!picker ||
+        !!view.player.death
+      }
+      key={openingOwner}
+    >
+      <summary>Arriving here</summary>
+      <p>{view.presentation.introduction}</p>
+    </details>
+  );
   return (
-    <ClockOffsetContext.Provider value={view?.clock.offsetHours ?? 0}>
+    <WorldClockProvider clock={view?.clock}>
       <canvas
         id="world"
         ref={canvas}
@@ -2227,11 +2391,15 @@ function App({
                 </div>
               </section>
             )}
-            <div className="ol-clock-position">
+            <div className="ol-clock-position" hidden={clockInTopTools}>
               <div className="ol-card ol-timebar" aria-label="Time">
                 <div className="ol-timebar-when">
                   <Icon
-                    name={view.clock.hour < 6 || view.clock.hour >= 19 ? 'ui.night' : 'ui.day'}
+                    name={
+                      sunlightAtHour(view.clock.hour, view.clock.daylight).isDay
+                        ? 'ui.day'
+                        : 'ui.night'
+                    }
                   />
                   <div>
                     <span className="ol-timebar-day">Day {view.clock.day}</span>
@@ -2240,6 +2408,9 @@ function App({
                       {clockParts(view.clock.seconds, view.clock.offsetHours).minute}
                     </span>
                     <div className="ol-timebar-location">{view.presentation.locationName}</div>
+                    {view.clock.weather && (
+                      <div className="ol-timebar-status">{view.clock.weather.label}</div>
+                    )}
                     {(view.clock.paused || view.clock.preparingNavigation) && (
                       <div className="ol-timebar-status">
                         {view.clock.paused
@@ -2252,14 +2423,7 @@ function App({
                   </div>
                 </div>
                 <span className="ol-timebar-sep" />
-                <IconButton
-                  id="pause"
-                  icon={view.clock.paused ? 'ui.play' : 'ui.pause'}
-                  label={view.clock.paused ? 'Resume world' : 'Pause world'}
-                  disabled={!connected || pausePending || view.clock.pauseReason === 'maintenance'}
-                  pressed={view.clock.paused}
-                  onPress={() => void pause()}
-                />
+                {!clockInTopTools && pauseButton}
                 <SegmentedControl
                   label="Time speed"
                   options={timeSpeeds.map((n) => ({
@@ -2299,12 +2463,14 @@ function App({
                   </p>
                 </div>
               )}
+              {!narrow && openingInformation}
               <div className="ol-hud-notices">
                 <EntryNotice />
                 <MaintenanceNotice maintenance={view.maintenance} />
               </div>
             </div>
             <div className="ol-top-tools">
+              {clockInTopTools && pauseButton}
               <Button id="gameMenuButton" size="sm" variant="quiet" onPress={() => toggle('game')}>
                 Game
               </Button>
@@ -2547,7 +2713,11 @@ function App({
                           command={command}
                           godControls={characterGodControls(inspected)}
                           actionBrowser={actionBrowser(
-                            { entity: inspected, context: { targetId: id }, point: { x: 0, y: 0 } },
+                            {
+                              entity: inspected,
+                              context: { targetId: id },
+                              point: { x: 0, y: 0 },
+                            },
                             'inspection',
                             !narrow || (raised && inspectorSheetVisible),
                           )}
@@ -2575,6 +2745,7 @@ function App({
                   Actions
                 </Button>
               </div>
+              {narrow && openingInformation}
               <CameraControls
                 overlays={{ vision: visionGuide, hearing: hearingGuide }}
                 toggleOverlay={(sense) =>
@@ -2602,6 +2773,19 @@ function App({
             {!tabPaused && performance && <FpsCounter renderer={scene} />}
             {!tabPaused && picker && !creation.visible && actionBrowser(picker)}
             <WorldComposer
+              notice={notice}
+              clearRecipient={() => {
+                setWorldIntent({
+                  mode: 'speak',
+                  owner: JSON.stringify([view.worldId, view.saveTimeline, view.player.id]),
+                });
+              }}
+              preferenceNotice={
+                speechPreferenceNotice?.scope === view.access?.scope &&
+                speechPreferenceNotice?.targetId === worldIntent?.targetId
+                  ? speechPreferenceNotice?.message
+                  : undefined
+              }
               key={JSON.stringify([
                 view.worldId,
                 view.saveTimeline,
@@ -2610,12 +2794,7 @@ function App({
               ])}
               view={view}
               connected={connected}
-              intent={
-                worldIntent?.owner ===
-                JSON.stringify([view.worldId, view.saveTimeline, view.player.id])
-                  ? worldIntent
-                  : null
-              }
+              intent={currentWorldIntent}
               visible={!tabPaused && !picker}
               close={() => {
                 setWorldIntent(null);
@@ -2727,7 +2906,12 @@ function App({
               )}
           </div>
         )}
-        <div id="toast" role="status" className="ol-toast" hidden={!notice}>
+        <div
+          id="toast"
+          role="status"
+          className="ol-toast"
+          hidden={!notice || (!!currentWorldIntent && !tabPaused && !picker)}
+        >
           {notice}
         </div>
         {targeting && (
@@ -2785,6 +2969,11 @@ function App({
       </div>
       {hover && !picker && !tabPaused && (
         <WorldHover
+          primaryAction={
+            hover.primary && primaryAction.preview?.targetId === hover.entity.id
+              ? primaryAction.preview
+              : undefined
+          }
           key={hover?.entity.id}
           name={hover.entity.name}
           point={hover.point}
@@ -2802,7 +2991,14 @@ function App({
       )}
       {view?.player.death && (
         <div className="ol-play-workspace" inert={tabPaused}>
-          <DeathNotice view={view} command={command} />
+          <DeathNotice
+            view={view}
+            command={command}
+            reviewFreshWorld={() => {
+              setRecoveryRequest(crypto.randomUUID());
+              openGameTask('world-editor');
+            }}
+          />
         </div>
       )}
       {showFocusPause && (
@@ -2828,7 +3024,7 @@ function App({
           confirm={() => void confirmLethalAttack()}
         />
       )}
-    </ClockOffsetContext.Provider>
+    </WorldClockProvider>
   );
 }
 function ApplicationScope() {

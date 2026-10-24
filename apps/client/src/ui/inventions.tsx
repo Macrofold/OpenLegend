@@ -408,7 +408,8 @@ export function Inventions({
     const terms = recipeQuery.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
     if (!terms.length) return recipes;
     return recipes.filter((recipe) => {
-      const text = `${recipe.name} ${recipe.description} ${recipe.output.name}`.toLocaleLowerCase();
+      const text =
+        `${recipe.name} ${recipe.description} ${recipe.outputs.map((output) => output.name).join(' ')}`.toLocaleLowerCase();
       return terms.every((term) => text.includes(term));
     });
   }, [recipes, recipeQuery]);
@@ -981,7 +982,7 @@ function LearnedRecipeCard({
       </header>
       <p className="ol-caption ol-recipe-material-summary">
         {recipe.ingredients.map((ingredient, index) => (
-          <span key={`${ingredient.role}:${index}`}>
+          <span key={`${ingredient.name}:${index}`}>
             {ingredient.quantity} {ingredient.name}
             {Number.isFinite(ingredient.available) &&
               ingredient.available < ingredient.quantity && (

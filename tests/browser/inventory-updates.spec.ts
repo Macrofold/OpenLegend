@@ -1,3 +1,4 @@
+import { stockedCamp } from '../fixtures/world.js';
 import { test, expect } from '@playwright/test';
 import { NPC_ID, entityGet, inventoryFor, executeCommand } from '@open-legend/domain';
 import { createGameServer } from '../../apps/server/src/http.js';
@@ -18,7 +19,8 @@ test('inventory keeps its search and focus during unrelated motion and refreshes
   const now = Date.now();
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: await testRepository(),
+    // This inventory-refresh fixture requires actual carried stock; Main starts empty.
+    store: await testRepository(undefined, stockedCamp()),
     production: true,
     tick: false,
     now: () => now,

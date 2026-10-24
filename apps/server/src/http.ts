@@ -1,8 +1,9 @@
-import { entityGet } from '@open-legend/domain';
+import { entityGet, validatePerceivedSound, type PerceivedSound } from '@open-legend/domain';
 import { recoverPlayerAction } from './action-request-recovery.js';
 import { recoverHumanRequest } from './human-request-recovery.js';
 import { CognitionExecution } from './cognition-execution.js';
-import { constructionPlanSchema } from './construction.js';
+import { constructionPlanSchema, hearthPlanSchema } from './construction.js';
+import { workBatchRequestSchema } from './work-batches.js';
 import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
 import { continuitySubjects, continuityView } from './continuity-view.js';
@@ -64,6 +65,7 @@ import {
   recordDuration,
   countMetric,
   profilingEnabled,
+  recordBackgroundFailure,
 } from './performance.js';
 import {
   ACTIVITY_LIMITS,
@@ -90,7 +92,8 @@ import { AiDirector } from './ai-director.js';
 import { readConfig, type AppConfig } from './config.js';
 import { PostgresDatabase } from './postgres.js';
 import { SqlGameRepository, digest } from './store.js';
-import { WorldService, commandInputSchema, requestIdSchema } from './world-service.js';
+import { WorldService } from './world-service.js';
+import { commandInputSchema, requestIdSchema } from './command-input-schema.js';
 import { projectPatch, projectView, ViewChangedError } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue, ActionCatalogueUnavailable } from './action-catalogue.js';
@@ -256,6 +259,17 @@ const godPersonEditor = z
   .strict();
 const godAwareness = z
   .object({
+    retentionClass: z.literal('memory'),
+    sound: z
+      .custom<PerceivedSound>((value) => {
+        try {
+          validatePerceivedSound(value);
+          return true;
+        } catch {
+          return false;
+        }
+      })
+      .optional(),
     exposure: z
       .custom<import('@open-legend/domain').EncounterExposure>(validEncounterExposure)
       .optional(),
@@ -320,6 +334,37 @@ const godMemory = z
     resolved: z.boolean().optional(),
   })
   .strict();
+const godExperienceSource = z
+  .object({
+    kind: z.enum(['awareness', 'memory', 'summary']),
+    id: requestIdSchema,
+    revision: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .strict();
+const godSpeechAttribution = z
+  .object({
+    version: z.literal(1),
+    groups: z
+      .array(
+        z
+          .object({
+            speakerId: requestIdSchema.nullable(),
+            targetId: requestIdSchema.nullable(),
+            addressing: z.enum(['ambient', 'directed']).nullable(),
+            observerRelation: z.enum(['self', 'addressed', 'overheard', 'ambient', 'seen']),
+            acquisition: z.enum(['self', 'heard', 'seen']),
+            intelligibility: z.enum(['none', 'partial', 'clear']),
+            firstAt: z.number().finite().min(0),
+            lastAt: z.number().finite().min(0),
+            sourceCount: z.number().int().positive(),
+            supportKey: z.string().regex(/^[a-f0-9]{64}$/),
+            sources: z.array(godExperienceSource).max(8192),
+          })
+          .strict(),
+      )
+      .max(8192),
+  })
+  .strict();
 const godSummary = z
   .object({
     id: requestIdSchema,
@@ -327,7 +372,8 @@ const godSummary = z
     sequence: z.number().int().min(0).optional(),
     from: z.number().finite().min(0),
     to: z.number().finite().min(0),
-    sourceIds: z.array(requestIdSchema).max(1000),
+    sources: z.array(godExperienceSource).max(8192),
+    attribution: godSpeechAttribution,
     entityIds: z.array(requestIdSchema).max(100),
     importance: z.number().finite(),
     revision: z.number().int().min(0).optional(),
@@ -486,7 +532,8 @@ async function initializeGameServer(
   onFailure(() => autosaves.close());
   await service.ready;
   await autosaves.initialize();
-  const navigation = new NavigationCoordinator(service);
+  let wakeAfterNavigation: (() => void) | undefined;
+  const navigation = new NavigationCoordinator(service, () => wakeAfterNavigation?.());
   onFailure(() => navigation.close());
   const cognitionExecution = new CognitionExecution(store, options.now);
   onFailure(() => cognitionExecution.close());
@@ -1070,6 +1117,8 @@ async function initializeGameServer(
           responseCapability = 'create';
           return send(response, 200, await authoring.creationTargets(value.sessionId, scope));
         }
+        if (request.method === 'GET' && url.pathname === '/api/construction/hearths')
+          return send(response, 200, service.hearthConstructionView(scope));
         if (request.method === 'GET' && url.pathname === '/api/construction')
           return send(response, 200, service.constructionView(scope));
         if (request.method === 'GET' && url.pathname === '/api/state')
@@ -1136,8 +1185,6 @@ async function initializeGameServer(
         if (request.method === 'GET' && url.pathname === '/api/history') {
           const options = z
             .object({
-              conversationId: requestIdSchema.optional(),
-              active: z.literal('true').optional(),
               speechOnly: z.literal('true').optional(),
               responseActions: z.literal('true').optional(),
               participantId: requestIdSchema.optional(),
@@ -1150,11 +1197,6 @@ async function initializeGameServer(
           if (!store.history)
             return send(response, 503, { message: 'History repository unavailable.' });
           const epoch = `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}`;
-          const scopedId = options.active
-            ? service.world.conversations?.active[scope.actorId]
-            : options.conversationId;
-          if (options.active && options.conversationId && options.conversationId !== scopedId)
-            throw new HistoryCursorError('The active conversation changed. Refresh it.');
           const page = await store.history.transcript(
             service.world.id,
             scope.accountId,
@@ -1163,10 +1205,8 @@ async function initializeGameServer(
               ...options,
               speechOnly: options.speechOnly === 'true',
               responseActions: options.responseActions === 'true',
-              conversationId: scopedId,
             },
           );
-          if (options.active && !scopedId) page.items = [];
           const speechJobs = options.speechOnly
             ? await store.getSpeechJobs(
                 page.items
@@ -1205,28 +1245,24 @@ async function initializeGameServer(
 
           const profile = await service.profileFor(scope);
           await assertHistoryRead(scope, epoch);
-          if (options.active && scopedId !== service.world.conversations?.active[scope.actorId])
-            throw new HistoryCursorError('The active conversation changed. Refresh it.');
-          const activeId = service.world.conversations?.active[scope.actorId];
-          const active = activeId ? service.world.conversations?.records[activeId] : undefined;
           return send(response, 200, {
             ...page,
             ...(messages ? { messages } : {}),
             voice: profile.preferences.narratorVoice,
-            scope: scopedId,
-            active: active
-              ? {
-                  id: active.id,
-                  generation: active.generation,
-                  members: active.intervals
-                    .filter((i) => i.leftAt === undefined)
-                    .map((i) => ({
-                      id: i.actorId,
-                      name: observerDescription(service.world, scope.actorId, i.actorId),
-                    })),
-                }
-              : null,
           });
+        }
+        if (request.method === 'GET' && url.pathname === '/api/player-interaction/availability') {
+          const value = z
+            .object({ mode: z.enum(['speak', 'act']), targetId: requestIdSchema.optional() })
+            .strict()
+            .parse(Object.fromEntries(url.searchParams));
+          const available = await service.playerInteractionAvailability(
+            value.mode,
+            value.targetId,
+            scope,
+          );
+          service.assertScope(scope);
+          return send(response, 200, available);
         }
         if (request.method === 'GET' && url.pathname === '/api/events') {
           if (streams.size + privateStreams.size + pendingStreams >= config.capacity.connections)
@@ -1583,6 +1619,8 @@ async function initializeGameServer(
         const controlling = [
           '/api/god/construction-shower',
           '/api/construction/preview',
+          '/api/construction/hearth-preview',
+          '/api/work-batches/preview',
           '/api/command',
           '/api/knowledge',
           '/api/control',
@@ -1920,10 +1958,16 @@ async function initializeGameServer(
               return send(response, 200, activityStatus(service, scope));
             case '/api/activity-preview': {
               const input = commandInputSchema.parse(body);
-              if (input.type !== 'activity-request')
-                return send(response, 400, { ok: false, message: 'Review a requested activity.' });
+              if (
+                input.type !== 'activity-request' &&
+                (input.type !== 'outing' || input.outingOperation !== 'propose')
+              )
+                return send(response, 400, {
+                  ok: false,
+                  message: 'Review an activity or cooperation proposal.',
+                });
               service.assertScope(scope, 'play', true);
-              return send(response, 200, service.previewCommand(input, scope.actorId));
+              return send(response, 200, service.previewCommand(input, scope.actorId, true, scope));
             }
             case '/api/inventory/history': {
               const value = z
@@ -2012,6 +2056,18 @@ async function initializeGameServer(
                   scope,
                 ),
               );
+            case '/api/work-batches/preview':
+              return send(
+                response,
+                200,
+                service.previewWorkBatch(workBatchRequestSchema.parse(body), scope),
+              );
+            case '/api/construction/hearth-preview':
+              return send(
+                response,
+                200,
+                await service.previewHearth(hearthPlanSchema.parse(body), scope),
+              );
             case '/api/construction/preview':
               return send(
                 response,
@@ -2091,28 +2147,6 @@ async function initializeGameServer(
                 200,
                 await service.transition((world) =>
                   amendCommitment(world, scope.actorId, value.id, value.revision, value),
-                ),
-              );
-            }
-            case '/api/conversation': {
-              const value = z
-                .object({
-                  requestId: requestIdSchema,
-                  operation: z.enum(['join', 'leave']),
-                  conversationId: requestIdSchema,
-                  generation: z.number().int().nonnegative(),
-                })
-                .strict()
-                .parse(body);
-              return send(
-                response,
-                200,
-                await service.conversation(
-                  value.requestId,
-                  value.operation,
-                  value.conversationId,
-                  value.generation,
-                  scope,
                 ),
               );
             }
@@ -3057,6 +3091,7 @@ async function initializeGameServer(
                 value.budgetUsd,
                 scope,
                 value.purpose,
+                value.freshRecovery,
               );
               return send(response, 200, {
                 ok: true,
@@ -3629,8 +3664,9 @@ async function initializeGameServer(
           .considerThought()
           .catch((error: unknown) => {
             if (error instanceof OverloadError) return;
+            recordBackgroundFailure('decision-admission', error);
             service.storageError =
-              'Background admission failed; simulation paused. Restart and reconcile storage.';
+              'Character decision admission failed; simulation paused. Restart after resolving the recorded failure.';
             service.notify();
           })
           .finally(() => {
@@ -3639,15 +3675,16 @@ async function initializeGameServer(
     })()
       .catch((error: unknown) => {
         if (error instanceof OverloadError) return;
+        recordBackgroundFailure('simulation-tick', error);
         service.storageError =
-          'Background persistence failed; simulation paused. Restart and reconcile storage.';
+          'Automatic simulation failed; simulation paused. Restart after resolving the recorded failure.';
         service.notify();
       })
       .finally(() => {
         ticking = false;
         // One owned continuation preserves catch-up throughput without keeping an
         // old elapsed-time offer open. The interval remains the idle wake owner.
-        if (more && !disposed && !loadingSave)
+        if (more && !disposed && !loadingSave && !clockContinuation)
           clockContinuation = setImmediate(() => {
             clockContinuation = undefined;
             wakeClock();
@@ -3672,6 +3709,16 @@ async function initializeGameServer(
           }
           wakeClock();
         }, 50);
+  if (interval)
+    wakeAfterNavigation = () => {
+      // A completed route removes the physical wait now. Reuse the one owned
+      // clock continuation; admission still charges only actual elapsed time.
+      if (disposed || loadingSave || clockContinuation) return;
+      clockContinuation = setImmediate(() => {
+        clockContinuation = undefined;
+        wakeClock();
+      });
+    };
 
   return {
     server,
@@ -3725,6 +3772,7 @@ async function initializeGameServer(
       }
     };
     if (interval) clearInterval(interval);
+    wakeAfterNavigation = undefined;
     if (clockContinuation) clearImmediate(clockContinuation);
     clockContinuation = undefined;
     if (publishTimer) clearTimeout(publishTimer);

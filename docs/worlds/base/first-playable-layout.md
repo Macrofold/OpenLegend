@@ -1,10 +1,10 @@
 # First-playable Main world layout
 
-| Status                           | Current progress                                                                                                                                                 | Last updated |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Designed; implementation pending | The selected Main layout preserves existing useful content, adds finite natural supplies and gives roaming lives physical room; FPW owns construction and proof. | 2026-10-17   |
+| Status                | Current progress                                                                                                                                                              | Last updated |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Partially implemented | Complete Main is selected with empty hands, preserved scenarios, relocated Watchpost/animals and finite natural supplies. Whole-camp and encounter qualification remain open. | 2026-10-19   |
 
-This is the single authored placement/starting-condition owner for the [complete first-playable design](../../projects/first-playable-world-feature-spec.md). Current runtime still uses the supplied Main opening described in [playable openings](playable-openings.md). The following is the new selected Main template, not a save migration or a custom/solo capacity increase.
+This is the single authored placement/starting-condition owner for the [complete first-playable design](../../projects/first-playable-world-feature-spec.md). Ordinary startup and Main creation use this template through the same initializer. The [content manifest](../../../packages/domain/src/worlds/base/config/first-playable-manifest.generated.json) records its actual selected entities, definition pins, positions, stock and declared custody. This is fresh construction, not a save migration or a custom/solo capacity increase.
 
 ## Premise and first view
 
@@ -18,7 +18,7 @@ Select a finite supported extent **128 m × 112 m**, with the existing northwest
 
 The original lookout, ramp, river fishing reaches, Mending Clearing, Reed-side Store, workshop, stag territory/refuge/cache and bird flight corridor stay at their existing coordinates. Their native support and clear approaches are protected during seeded rock placement. Decorative trees/shrubs remain decoration: they cannot become invisible barriers or harvest sources. New physical rock formations use the same native solids and their real sight/sound/movement behavior. The ground edge is visible/inspectable as the supported world's boundary, without an invented exit destination.
 
-Reserve the three suggested camps below before random physical blockers, with 6 × 6 m contiguous dry support and no existing object body or known flight/route obstruction. A reservation guarantees usable terrain, not ownership, material, construction or safety. The player can choose any other physically eligible permitted site. A preview must evaluate the actual layout, adjacent gate-slider space, body access and supports; the named suggestion is not an admission bypass.
+Reserve the three suggested camps below before random physical blockers, with 6 × 6 m contiguous dry support and no existing object body or known flight/route obstruction. A reservation guarantees usable terrain, not ownership, material, construction or safety. A nearby marker describes each site; Build offers its name only from the character’s own retained discovery. The suggested construction origin lies one section spacing southwest of the plot center, fitting the default four-metre layout within the reserved ground. The player can choose any other physically eligible permitted site. A preview must evaluate the actual layout, adjacent gate-slider space, body access and supports; the named suggestion is not an admission bypass.
 
 | Site center                           | Meaningful advantage                                                                        | Meaningful cost                                                                       |
 | ------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |

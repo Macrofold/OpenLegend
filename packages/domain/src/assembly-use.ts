@@ -1,9 +1,25 @@
+import { constructionPermissionCurrent } from './construction-contributions.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { releaseInvocationResources } from './resource-claims.js';
 import { finishPlanAction } from './agency.js';
 import type { ConstructionPermission } from './assembly-types.js';
+import {
+  gateUsePermission,
+  structuralImpactPermission,
+  type CampAssetPermission,
+} from './camp-asset-permissions.js';
+import {
+  constructionPermissionBatch,
+  currentGatherMaterialPermission,
+} from './construction-permissions.js';
+import { definitionPin } from './world-modules.js';
 import { canStand, incidentExposure, solidOverlap } from '@open-legend/spatial';
-import { assemblySite, coverGeometry, localPoint, rectangularBounds } from './assembly-geometry.js';
+import {
+  assemblySite,
+  assemblyShapes,
+  localPoint,
+  rectangularBounds,
+} from './assembly-geometry.js';
 import { bodyProfile, bodySpace, spatialMap, worldPosition } from './spatial-state.js';
 import { worldRootEntities } from './entity-index.js';
 import { overlaps } from './assemblies.js';
@@ -26,7 +42,8 @@ export function evaluateAssemblyRest(
     family = component && world.assemblyFamilies?.[component.family.id],
     actor = entityGet(world.entities, actorId);
   if (
-    !family ||
+    family?.implementation !== 'four-corner-flexible-bays' ||
+    component?.implementation !== 'four-corner-flexible-bays' ||
     !site ||
     !actor?.actor ||
     !Number.isSafeInteger(bay) ||
@@ -68,10 +85,16 @@ export function evaluateAssemblyRest(
       'rest-clearance',
       'This person’s complete resting space does not fit this bay.',
     );
-  const roof = coverGeometry(family, site, root!.spatial.heading, bay, component!.arrangementId);
+  const coverIds = new Set(
+    Object.values(component!.parts)
+      .filter((part) => part.role === 'cover' && part.bay === bay)
+      .map((part) => part.itemId),
+  );
+  const roofs = assemblyShapes(world, root!).panels.filter((panel) => coverIds.has(panel.id));
   const coverage = incidentExposure(
     { minX: rest.min.x, maxX: rest.max.x, minZ: rest.min.z, maxZ: rest.max.z, y: rest.max.y },
-    [{ id: 'rest-cover', ...roof, transmission: 0 }],
+    // This checks whether the resting body fits beneath actual sheets, not rain transmission.
+    roofs.map((roof) => ({ ...roof, transmission: 0 })),
   );
   if (
     coverage.fraction > 1e-7 ||
@@ -163,15 +186,44 @@ export function reconcileConstructionAuthority(
   world: WorldState,
   permissions: readonly ConstructionPermission[],
 ): void {
+  const batch = constructionPermissionBatch(world.id, permissions);
   for (const entity of entityValues(world.entities)) {
     const action = entity.actor?.action;
-    if (!action?.assemblyPhase) continue;
+    if (action?.type === 'gather' && action.materialPermission) {
+      const resource = entityGet(world.entities, action.targetId ?? '')?.resource,
+        definition = resource && world.itemDefinitions[resource.definitionId];
+      const problem =
+        definition &&
+        currentGatherMaterialPermission(
+          batch,
+          entity.id,
+          action.targetId!,
+          definitionPin(definition),
+          action.materialPermission,
+        );
+      if (!definition || problem) {
+        finishPlanAction(
+          world,
+          entity.id,
+          action.id,
+          outcome(
+            false,
+            'construction-permission',
+            problem?.message ?? 'The permitted material source is no longer available.',
+          ),
+        );
+        entity.actor!.action = null;
+      }
+      continue;
+    }
+    if (!action?.assemblyPhase && !action?.hearthWork) continue;
     const receipt = action.constructionGrant,
       grant = permissions.find(
         (p) =>
           p.id === receipt?.id &&
+          p.worldId === world.id &&
           p.actorId === entity.id &&
-          !p.revoked &&
+          constructionPermissionCurrent(world, p) &&
           p.revision === receipt.revision,
       );
     if (grant) continue;
@@ -184,6 +236,47 @@ export function reconcileConstructionAuthority(
         false,
         'construction-permission',
         'Current building permission is unavailable. Installed parts remain.',
+      ),
+    );
+    entity.actor!.action = null;
+  }
+}
+
+/** Operational revocation ends unfinished asset work in paused/restored worlds.
+ * Already committed material loss, gate movement and bars remain unchanged. */
+export function reconcileCampAssetAuthority(
+  world: WorldState,
+  permissions: readonly CampAssetPermission[],
+): void {
+  for (const entity of entityValues(world.entities)) {
+    const action = entity.actor?.action,
+      work = action?.gateWork ?? action?.boundaryImpact;
+    if (!action || !work) continue;
+    const grant = action.boundaryImpact
+      ? structuralImpactPermission(
+          world,
+          work.intent.assemblyId,
+          work.intent.itemId,
+          permissions,
+          work.grant.id,
+        )
+      : gateUsePermission(
+          world,
+          work.intent.assemblyId,
+          work.intent.itemId,
+          action.gateWork!.intent.operation,
+          permissions,
+          work.grant.id,
+        );
+    if (grant?.id === work.grant.id && grant.revision === work.grant.revision) continue;
+    finishPlanAction(
+      world,
+      entity.id,
+      action.id,
+      outcome(
+        false,
+        'asset-permission',
+        'Current permission for this operation is unavailable. Already committed consequences remain.',
       ),
     );
     entity.actor!.action = null;

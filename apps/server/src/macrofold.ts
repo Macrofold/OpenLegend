@@ -171,14 +171,45 @@ function requestSignal(request: { signal?: AbortSignal; deadlineMs?: number }, t
   };
 }
 
+/** Cancelling publication must not abandon an almost-returned original receipt.
+ * Observe that same HTTP reply for at most one extra second, inside its original
+ * deadline. No retry, new execution or permission to publish follows. */
+function observeCancelledReceipt(signal: AbortSignal) {
+  const cancelled = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let operation: NetworkOperation | undefined;
+  let cancelledFirst = false;
+  const stop = () => {
+    cancelledFirst = !!operation && operation.remainingMs() > 0;
+    timer = setTimeout(() => cancelled.abort(signal.reason), 1000);
+    timer.unref();
+  };
+  signal.addEventListener('abort', stop, { once: true });
+  if (signal.aborted) stop();
+  return {
+    // The enclosing NetworkOperation still owns the original wall/monotonic
+    // deadline. Only caller cancellation gets this bounded accounting observation.
+    signal: cancelled.signal,
+    observe(value: NetworkOperation) {
+      operation = value;
+    },
+    cancelledFirst: () => cancelledFirst,
+    close() {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', stop);
+    },
+  };
+}
+
 function failureResult<T>(
   error: unknown,
   receipt: AiReceipt,
   cancelled: boolean,
   aborted: boolean,
+  cancelledFirst = false,
 ): AiResult<T> {
   if (error instanceof NetworkError) {
-    cancelled = error.kind === 'cancelled';
+    cancelled = cancelledFirst || error.kind === 'cancelled';
     aborted ||= error.kind === 'cancelled' || error.kind === 'deadline_exceeded';
   }
   if (error instanceof InvalidData && error.code === 'invalid_request_deadline')
@@ -1599,6 +1630,11 @@ export class MacrofoldBackend implements AiClient {
         : this.service.config.macrofoldTimeoutSeconds * 1000,
     );
     const signal = control.signal;
+    const immediate =
+      Boolean(request.macrofoldDeployment) ||
+      request.execution === 'fast' ||
+      request.execution === 'complex';
+    const observation = immediate ? observeCancelledReceipt(signal) : undefined;
     const preparation = this.deploymentSchemas.get(request.schema);
     if (preparation) {
       const remainingMs = preparation.expiresAt - performance.now();
@@ -1613,20 +1649,28 @@ export class MacrofoldBackend implements AiClient {
       )
         throw new InvalidData('invalid_deployment_generation_route');
       return await this.api.run(
-        { timeoutMs: control.timeoutMs, deadlineAtMs: control.deadlineAtMs, signal },
+        {
+          timeoutMs: control.timeoutMs,
+          deadlineAtMs: control.deadlineAtMs,
+          signal: observation?.signal ?? signal,
+        },
         async (operation) => {
-          const signal = operation.signal;
+          observation?.observe(operation);
+          const operationSignal = operation.signal;
           if (!this.service.config.macrofoldKey)
             throw new MacrofoldUnavailable('The AI service is not configured.');
           signal.throwIfAborted();
+          operation.throwIfStopped();
           // Validate caller contracts before spending, including schema-keyword field names.
           const preparedSchema = preparation?.schema ?? prepareSchema(request.schema, 500_000);
-          if (
-            request.macrofoldDeployment ||
-            request.execution === 'fast' ||
-            request.execution === 'complex'
-          )
-            return await this.singleInference<T>(request, receipt, signal, preparedSchema);
+          if (immediate)
+            return await this.singleInference<T>(
+              request,
+              receipt,
+              signal,
+              preparedSchema,
+              operationSignal,
+            );
           // Fresh history for each bounded inference; only explicitly permitted context
           // enters the call. Compute is reusable without accumulating private memories.
           if (
@@ -1649,7 +1693,7 @@ export class MacrofoldBackend implements AiClient {
               context: request.context,
             }),
             false,
-            signal,
+            operationSignal,
             receipt,
           );
           const value = validateMacrofoldValue<T>(preparedSchema, JSON.parse(output));
@@ -1664,8 +1708,15 @@ export class MacrofoldBackend implements AiClient {
         ['deployment_binding_stale', 'unsupported_model_capability'].includes(error.code)
       )
         this.deploymentPreparation.invalidate(request.macrofoldDeployment);
-      return failureResult(error, receipt, control.cancelled(), signal.aborted);
+      return failureResult(
+        error,
+        receipt,
+        control.cancelled(),
+        signal.aborted,
+        observation?.cancelledFirst(),
+      );
     } finally {
+      observation?.close();
       receipt.completedAt = new Date().toISOString();
       receipt.latencyMs = Date.now() - Date.parse(receipt.startedAt);
     }
@@ -1722,6 +1773,7 @@ export class MacrofoldBackend implements AiClient {
     receipt: AiReceipt,
     signal: AbortSignal,
     preparedSchema: PreparedSchema,
+    observation: AbortSignal,
   ): Promise<AiResult<T>> {
     const config = this.service.config;
     const provider = 'openrouter';
@@ -1773,15 +1825,19 @@ export class MacrofoldBackend implements AiClient {
       `single:${request.requestId}`,
       '/v1/inferences',
       undefined,
+      observation,
       signal,
-      undefined,
       false,
       this.deploymentSchemas.get(request.schema)?.validateSource,
       () => {
         receipt.dispatched = true;
         receipt.completionUncertain = true;
       },
-      request.onProgress,
+      request.onProgress
+        ? (progress) => {
+            if (!signal.aborted) request.onProgress?.(progress);
+          }
+        : undefined,
       {
         inputFingerprint: digest(logicalBody),
         prepareBody: async () => {
@@ -1802,8 +1858,10 @@ export class MacrofoldBackend implements AiClient {
       },
     );
     const run = string(accepted['run_id']);
+    receipt.providerRequestId = run;
     try {
-      const inference = await this.inferenceResult(accepted, receipt, signal, target);
+      if (signal.aborted && !accepted['result']) signal.throwIfAborted();
+      const inference = await this.inferenceResult(accepted, receipt, observation, target);
       signal.throwIfAborted();
       const failure = inferenceFailure<T>(inference, receipt);
       if (failure) return failure;
@@ -1816,7 +1874,7 @@ export class MacrofoldBackend implements AiClient {
         receipt,
       };
     } catch (error) {
-      if (signal.aborted) {
+      if (signal.aborted && receipt.completionUncertain) {
         try {
           await this.cancel(run);
         } catch {}
@@ -1840,16 +1898,22 @@ export class MacrofoldBackend implements AiClient {
     }
     const control = requestSignal(request, config.aiTimeoutMs);
     const signal = control.signal;
+    const observation = observeCancelledReceipt(signal);
     let run: string | undefined;
     try {
       if (control.invalid) throw new InvalidData('invalid_request_deadline');
       return await this.api.run(
-        { timeoutMs: control.timeoutMs, deadlineAtMs: control.deadlineAtMs, signal },
+        {
+          timeoutMs: control.timeoutMs,
+          deadlineAtMs: control.deadlineAtMs,
+          signal: observation.signal,
+        },
         async (operation) => {
-          const signal = operation.signal;
+          observation.observe(operation);
           if (!this.service.config.macrofoldKey)
             throw new MacrofoldUnavailable('The AI service is not configured.');
           signal.throwIfAborted();
+          operation.throwIfStopped();
           const questions = prepareQuestions(request.questions, 500_000);
           // Capture before journal/descriptor I/O; logical replay and new execution
           // must compare and use the same immutable caller input.
@@ -1886,8 +1950,8 @@ export class MacrofoldBackend implements AiClient {
             `inference:${request.requestId}`,
             '/v1/inferences',
             undefined,
+            operation.signal,
             signal,
-            undefined,
             false,
             validateSource,
             () => {
@@ -1930,7 +1994,9 @@ export class MacrofoldBackend implements AiClient {
             },
           );
           run = string(accepted['run_id']);
-          const inference = await this.inferenceResult(accepted, receipt, signal, target);
+          receipt.providerRequestId = run;
+          if (signal.aborted && !accepted['result']) signal.throwIfAborted();
+          const inference = await this.inferenceResult(accepted, receipt, operation.signal, target);
           signal.throwIfAborted();
           const failure = inferenceFailure<JudgeValue>(inference, receipt);
           if (failure) return failure;
@@ -1947,6 +2013,7 @@ export class MacrofoldBackend implements AiClient {
         this.deploymentPreparation.invalidate(target);
       if (
         run &&
+        receipt.completionUncertain &&
         (signal.aborted ||
           (error instanceof NetworkError &&
             ['cancelled', 'deadline_exceeded'].includes(error.kind)))
@@ -1957,8 +2024,15 @@ export class MacrofoldBackend implements AiClient {
       }
       // Rejected admission never reached a model; do not label it uncertain or bill the reserve.
       // docs/ai-providers.md#receipts-outcomes-and-accounting
-      return failureResult(error, receipt, control.cancelled(), signal.aborted);
+      return failureResult(
+        error,
+        receipt,
+        control.cancelled(),
+        signal.aborted,
+        observation.cancelledFirst(),
+      );
     } finally {
+      observation.close();
       receipt.completedAt = new Date().toISOString();
       receipt.latencyMs = Date.now() - Date.parse(receipt.startedAt);
     }

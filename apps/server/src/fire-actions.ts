@@ -6,8 +6,35 @@ import {
   type Entity,
   type ItemInstance,
   type WorldState,
+  entityGet,
+  pointVisionQuery,
+  definitionPin,
+  nativeCommandSupported,
 } from '@open-legend/domain';
 import type { CommandInput } from '@open-legend/protocol';
+import type { SurfacePoint } from '@open-legend/spatial';
+
+/** A personally seen chosen site, never a hidden camp or a grant from custody.
+ * Every consumer still uses the ordinary native admission for its exact stock. */
+export function hearthPlacementOptions(world: WorldState, actorId: string, site?: SurfacePoint) {
+  const actor = entityGet(world.entities, actorId);
+  if (
+    !site ||
+    !actor ||
+    !nativeCommandSupported(world, 'place-hearth') ||
+    !pointVisionQuery(world, actor)(site)
+  )
+    return [];
+  return Object.values(world.hearthDefinitions ?? {}).map((definition) => ({
+    id: `place-hearth:${definition.id}`,
+    label: definition.actionLabel,
+    description: `${definition.description} ${definition.help} ${definition.input.quantity} ${world.itemDefinitions[definition.input.definition.id]!.name}; ${definition.workSeconds} work seconds plus approach.`,
+    command: {
+      type: 'place-hearth' as const,
+      hearthPlan: { definition: definitionPin(definition), site: { ...site } },
+    },
+  }));
+}
 
 export interface FireCareOption {
   id: string;

@@ -6,9 +6,11 @@ import './death-notice.css';
 export function DeathNotice({
   view,
   command,
+  reviewFreshWorld,
 }: {
   view: GameView;
   command(action: ActionOption): Promise<unknown>;
+  reviewFreshWorld(): void;
 }) {
   const [busy, setBusy] = useState(false);
   const death = view.player.death;
@@ -38,6 +40,15 @@ export function DeathNotice({
         {continuation.label}
       </Button>
       {!continuation.enabled && <p className="ol-caption">{continuation.reason}</p>}
+      <p className="ol-caption">
+        If no rest spot can receive you, your lost life and belongings remain saved. Ask the host to
+        clear an obstruction or prepare a separate world.
+      </p>
+      {death.freshWorldReview && (
+        <Button variant="quiet" onPress={reviewFreshWorld}>
+          Review fresh-world options
+        </Button>
+      )}
     </aside>
   );
 }

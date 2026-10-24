@@ -1,5 +1,5 @@
 {
-  "revision": 3,
+  "revision": 5,
   "clockOffsetHours": 8,
   "namedTimes": { "dawn": 6, "dusk": 18 },
   "definitions": [
@@ -80,6 +80,22 @@
                     }
                   },
                   {
+                    "field": {
+                      "target": "$subject",
+                      "name": "nativeResponseActive",
+                      "operator": "equal",
+                      "value": false
+                    }
+                  },
+                  {
+                    "field": {
+                      "target": "$subject",
+                      "name": "nativeForagingActive",
+                      "operator": "equal",
+                      "value": false
+                    }
+                  },
+                  {
                     "compare": {
                       "target": "$subject",
                       "attribute": "wilderness:energy",
@@ -103,7 +119,14 @@
       },
       "reactivationDelaySeconds": 300,
       "occupiesAction": true,
-      "interruptOn": ["injury", "recovery", "new-action", "voluntary", "revived"],
+      "interruptOn": [
+        "perceived-danger",
+        "injury",
+        "recovery",
+        "new-action",
+        "voluntary",
+        "revived"
+      ],
       "whileActive": [
         {
           "changeRate": {
@@ -257,6 +280,14 @@
               }
             ]
           },
+          {
+            "field": {
+              "target": "$subject",
+              "name": "controllerProfileId",
+              "operator": "equal",
+              "value": ""
+            }
+          },
           { "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" } }
         ]
       },
@@ -408,6 +439,147 @@
             "amount": -0.01,
             "everyGameSeconds": 300,
             "unit": "fractionOfRange"
+          }
+        }
+      ]
+    },
+    {
+      "id": "base:pasture-forager:metabolism",
+      "type": "statusEffect",
+      "target": "$subject",
+      "label": "Metabolism",
+      "enabled": true,
+      "requires": {
+        "all": [
+          {
+            "field": { "target": "$subject", "name": "alive", "operator": "equal", "value": true }
+          },
+          {
+            "field": {
+              "target": "$subject",
+              "name": "incapacitated",
+              "operator": "equal",
+              "value": false
+            }
+          },
+          {
+            "field": {
+              "target": "$subject",
+              "name": "controllerProfileId",
+              "operator": "equal",
+              "value": "base:pasture-forager"
+            }
+          },
+          { "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" } }
+        ]
+      },
+      "automaticActivation": {
+        "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" }
+      },
+      "reactivationDelaySeconds": 0,
+      "occupiesAction": false,
+      "interruptOn": [],
+      "whileActive": [
+        {
+          "changeRate": {
+            "target": "$subject",
+            "attribute": "wilderness:fullness",
+            "amount": -0.0002,
+            "per": "gameSecond"
+          }
+        }
+      ]
+    },
+    {
+      "id": "base:wolf-forager:metabolism",
+      "type": "statusEffect",
+      "target": "$subject",
+      "label": "Metabolism",
+      "enabled": true,
+      "requires": {
+        "all": [
+          {
+            "field": { "target": "$subject", "name": "alive", "operator": "equal", "value": true }
+          },
+          {
+            "field": {
+              "target": "$subject",
+              "name": "incapacitated",
+              "operator": "equal",
+              "value": false
+            }
+          },
+          {
+            "field": {
+              "target": "$subject",
+              "name": "controllerProfileId",
+              "operator": "equal",
+              "value": "base:wolf-forager"
+            }
+          },
+          { "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" } }
+        ]
+      },
+      "automaticActivation": {
+        "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" }
+      },
+      "reactivationDelaySeconds": 0,
+      "occupiesAction": false,
+      "interruptOn": [],
+      "whileActive": [
+        {
+          "changeRate": {
+            "target": "$subject",
+            "attribute": "wilderness:fullness",
+            "amount": -0.0006,
+            "per": "gameSecond"
+          }
+        }
+      ]
+    },
+    {
+      "id": "base:bear-forager:metabolism",
+      "type": "statusEffect",
+      "target": "$subject",
+      "label": "Metabolism",
+      "enabled": true,
+      "requires": {
+        "all": [
+          {
+            "field": { "target": "$subject", "name": "alive", "operator": "equal", "value": true }
+          },
+          {
+            "field": {
+              "target": "$subject",
+              "name": "incapacitated",
+              "operator": "equal",
+              "value": false
+            }
+          },
+          {
+            "field": {
+              "target": "$subject",
+              "name": "controllerProfileId",
+              "operator": "equal",
+              "value": "base:bear-forager"
+            }
+          },
+          { "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" } }
+        ]
+      },
+      "automaticActivation": {
+        "hasAttribute": { "target": "$subject", "attribute": "wilderness:fullness" }
+      },
+      "reactivationDelaySeconds": 0,
+      "occupiesAction": false,
+      "interruptOn": [],
+      "whileActive": [
+        {
+          "changeRate": {
+            "target": "$subject",
+            "attribute": "wilderness:fullness",
+            "amount": -0.0004,
+            "per": "gameSecond"
           }
         }
       ]

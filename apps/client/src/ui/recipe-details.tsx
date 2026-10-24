@@ -12,20 +12,42 @@ export function RecipeDetails({ recipe }: { recipe: RecipeDetailsView }) {
         <dt>Materials</dt>
         <dd>
           {recipe.ingredients.map((ingredient, index) => (
-            <div key={`${ingredient.role}:${ingredient.name}:${index}`}>
-              {ingredient.quantity} {ingredient.name} ({ingredient.role}) —{' '}
+            <div key={`${ingredient.name}:${index}`}>
+              {ingredient.quantity} {ingredient.name} —{' '}
               {typeof ingredient.available === 'number' && Number.isFinite(ingredient.available)
                 ? `${ingredient.available} currently held`
                 : 'availability unknown'}
             </div>
           ))}
         </dd>
+        {!!recipe.retainedTools.length && (
+          <>
+            <dt>Kept tools</dt>
+            <dd>
+              {recipe.retainedTools.map((tool) => (
+                <div key={tool.role}>
+                  {tool.quantity}{' '}
+                  {tool.choices
+                    .map((choice) => `${choice.name} (${choice.available} held)`)
+                    .join(' or ')}
+                  ; reserved during work and kept afterward.
+                </div>
+              ))}
+            </dd>
+          </>
+        )}
         <dt>Work</dt>
         <dd>{formatDisplayNumber(recipe.workSeconds)} game seconds</dd>
         <dt>Makes</dt>
         <dd>
-          <strong>{recipe.output.name}</strong>
-          {recipe.output.description && <p>{recipe.output.description}</p>}
+          {recipe.outputs.map((output) => (
+            <div key={output.port}>
+              <strong>
+                {output.quantity} {output.name}
+              </strong>
+              {output.description && <p>{output.description}</p>}
+            </div>
+          ))}
         </dd>
         {recipe.facts.map((fact) => (
           <Fragment key={fact.id}>

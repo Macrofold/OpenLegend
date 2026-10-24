@@ -12,6 +12,72 @@ The custom-model contract now includes native SystemOne judgments alongside inde
 
 The requested implementation review makes contradictory no-invocation answers uncertain, lets standalone native callers reduce their output allowance, preserves chat recovery as elapsed time reduces its wire timeout, and honors longer server-requested metadata waits across revision observations. Background learning keeps fresh permission checks while skipping an identical already-recorded dispatch claim. These shared-owner fixes preserve game validation and once-only inference; [verification](verification/custom-models.md#requested-native-integration-review--october-24-2026) records their focused evidence and remaining live/CI limits.
 
+## October 24, 2026 — Following correctness and focused module ownership
+
+The [following review](verification/performance/2026-10/animal-execution.md#following-and-focused-modularity-review--october-24-2026) reproduces and fixes a follower remaining stationary when no passive meter changes occur. Current action/body reads replace redundant eligibility sets while existing capability preparation remains cached. Path execution, command-input schemas and construction-phase data validation move unchanged to focused owners. PF09.A05 and its design now describe the implemented representation; connected native checks, 89 existing checks, TypeScript and build pass. Broader performance and participant acceptance remain open; no new capacity claim or guidance duplication is added.
+
+## October 24, 2026 — Repeated animal-execution review
+
+The [second full review](verification/performance/2026-10/animal-execution.md#second-requested-review--october-24-2026) corrects incapacitated observers being removed from routine senses and narrows unrelated bodily-rule signature invalidation through the existing change owner, retaining full foreign/global evaluation. Actual reproductions, 74 existing checks and TypeScript pass. The repeated 10/20/50 Main runs reach 99.7%/84.4%/12.8% of normal speed with zero command/storage/worker errors. The earlier twenty-added pass remains evidence for its source, not reliable capacity; normal-speed, latency and broader acceptance stay open. Current plans point to one measurement owner instead of repeating exact performance figures.
+
+## October 24, 2026 — Shared deadline and sensing lifecycle review
+
+Retained bodily deadlines now compare complete current rates, including another body's effect and native drain/replenishment. Established sight/contact clocks stay due after observing bodies stop moving; scheduling and recording share observer selection and retire obsolete quiet-animal clocks. The [requested review](verification/performance/2026-10/animal-execution.md#requested-review--october-24-2026) records reproductions, shared fixes, removed unused bookkeeping and focused verification. After the corrected separate policy comparison, Main selects its existing three-game-second routine-sight cadence, preserving exact event/action checks. Final 10/20/50-added results reach 99.7%/99.5%/16.8% of normal speed; command latency, larger-population and broader first-playable acceptance remain open.
+
+## 2026-10-24T05:39:00Z — Animal execution implementation and measured dispositions
+
+All 21 [animal-execution packets](projects/performance-overhaul/animal-execution-tasks.md) now have implemented consumers or their specified conditional disposition. Native execution retains unchanged bodily calculations and owned deadlines, movement updates shared physical components, and eligible meters use earned-time anchors instead of ordered segment replay. The server shares bounded internal intervals, due/change owners select maintenance and animal work, and existing scoped view/record owners reuse unchanged results. Current-format readers and writers change together; no compatibility path is added.
+
+Saved routine sight/contact sampling is available, but the separate sight candidate failed to improve complete operations and Main retains its boundary-triggered policy. Main installs no incidental-contact sense. Static walking queries share the existing bounded geometry workers; their collision initialization and an inclusive vision-cone edge defect are repaired. No residual pure kernel meets the hardware-prototype gate. The [current evidence](verification/performance/2026-10/animal-execution.md) records actual software checks, rejected trials, 99.7%/65.4%/9.7% normal-speed progress at 10/20/50 added animals and retained limits. Larger runs are skipped under the fifty-animal gate; normal-speed, whole-first-playable and real-participant acceptance remain open.
+
+## 2026-10-24T03:26:45Z — Complete animal execution performance design
+
+Extended the existing performance feature/technical pair with the [21-item
+animal execution design](projects/performance-overhaul/animal-execution.md) and
+[implementation packets](projects/performance-overhaul/animal-execution-tasks.md).
+The design records current profiling limits, phase order, exact data/mutation
+owners, deadlines/invalidation, component writes, continuous meters, saved sight
+cadence, conditional fidelity/worker/hardware choices and matched verification.
+PF09.AD marks design complete; every runtime item and integrated qualification
+remain open. Existing plans now route to this continuation, the needs-design
+register records the scoped closure, and NW19 distinguishes proposed bounds from
+installed limits. No runtime, world tuning, benchmark, service or paid call was
+changed/run. Historical rejected trials and broader first-playable gates remain.
+
+## 2026-10-23T20:52:05Z — Performance implementation review
+
+Native decision and action-completion owners now invalidate movement forecasts
+when an escape stops for route preparation, including silent/waiting outcomes.
+The captured 50-animal crash is fixed; identical continuation, current-format
+restoration and final 10/20/50 server evidence are retained in the
+[animal campaign](verification/performance/2026-10/animal-reductions.md).
+Regional sight preparation stops before collecting more than 65 opaque shapes;
+duplicate batch rays share calculation. Simulation, limits and delivery trackers
+now reflect these corrections. Gameplay rules and broader acceptance gates remain.
+
+## 2026-10-23T20:05:41Z — Complete eighteen-idea performance implementation
+
+Shared spatial owners now retain bounded regional sight and static-corridor
+proofs, skip out-of-range cells until possible entry and support authored angular
+vision. Main retains 360° vision. Required unresolved rays can use two bounded
+geometry workers before ordered observation; failure falls back locally. Existing
+navigation, scoped views and SQL owners share compatible preparation/reads with
+current physical, privacy and transaction fences. No new movement authority or
+population cap. [Contracts](spatial-world.md#seeing-and-hearing-in-3d),
+[NW18](limits/native-work.md#nw18--derived-spatial-and-read-reuse) and the
+[complete campaign](verification/performance/2026-10/animal-reductions.md) record
+implementation, correctness and measured limitations separately.
+
+## 2026-10-23T06:11:21Z — Sampled routine sight and shared native work
+
+The bundled world now bounds ordinary vision by its installed three-game-second
+cadence, without forecasting future visibility/danger-clearance crossings. Brief
+visual opportunities can be missed; actual contact, event-time sound/attacks,
+chosen watch/reach and current admission keep their physical checks. Shared
+geometry, local forecasts and owned native movement admission reduce repeated
+preparation without another movement or scheduling authority. See [time fidelity](worlds/base/time.md#spatial-fidelity),
+[NW12](limits/native-work.md#nw12) and [measured limits](verification/performance/2026-10/animal-reductions.md).
+
 ## October 22, 2026 — Deliver production custom-model selection
 
 Ordinary fast and complex NPC replies can select an existing Macrofold deployment through trusted server configuration. The [setup guide](live-ai-setup.md#use-existing-model-deployments-for-decisions-and-replies) documents deployment selection, optional revision pins and output policy. Shared capability preparation chooses supported structured output before the existing spending reservation; the existing inference, recovery, cancellation, local validation and native publication owners retain authority. No experiment manifest, hosting credentials or deployment management enters gameplay saves. Missing configuration preserves existing models.
@@ -25,6 +91,84 @@ Shared preparation preserves surviving callers, original deadlines and the metad
 The [custom-model pair](projects/custom-models-feature-spec.md), [MX tracker](maintainers/custom-models.md) and [limit inventory](limits/custom-models.md) specify ordinary production NPC generation through stable Macrofold deployments, optional model-revision pins, capability-aware output and existing local/world authority. [Macrofold's contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md) owns hosting, automatic recovery, deliberate revision updates and shared infrastructure costs; RunPod/vLLM is the first managed adapter, alongside operator-trusted compatible endpoints.
 
 Production continuity takes precedence over experimental reproducibility: worker restarts and diagnostic identity changes do not independently invalidate valid answers or require a new game profile. The service uses standing capacity/spending configuration; experiment IDs, finite study sessions and certificate equality are not game admission requirements. Optional comparisons reuse the same target and existing harness. Per-call charging remains separate from hosting cost, and local validation, current world permissions, original deadlines and no automatic inference replay remain protected. Implementation and live operating/model-quality evidence remain open; no default model is selected by design alone.
+
+## 2026-10-22T22:10:00Z — Simple animal escape and local path waits
+
+Mike selected sequential imperfect escape over complete route optimization:
+10–15 m legs, 75% immediate acceptance, best 50% after three angles, and at most
+ten angles before taking the best usable result. A per-request navigation option
+lets animals wait while the world continues; existing callers retain world holds.
+Attack preparation no longer alarms animals. Arrow speed becomes 3 m/game second
+and the ranged approach allowance 3.5 m with a 2 m short-tool floor (clamped to actual range), preserving damage, preparation, accuracy
+and committed flight. These gameplay choices favor practical hunting and bounded
+search over optimal animal escape. See [animal rules](worlds/base/animal-responses.md),
+[BW12](limits/base-world.md#bw12--remains-and-native-escape),
+[RC02](limits/parallel-batch-06-rivals-and-contested-ground.md#rc02--preparation-speed-and-aim-error)
+and [current evidence](verification/first-playable-world.md#sequential-escape-local-path-waits-and-hunting--october-22).
+
+## 2026-10-22T21:59:22Z — Shared background AI capacity
+
+Mike explicitly expanded background AI concurrency from one to 100 operations per
+server process so one uncertain cancellation cannot monopolize it. The shared
+scheduler counts exact active/recovered attempts; settlement releases only the
+completed operation. Primary and per-world immediate admission, monetary limits,
+queues and deadlines remain unchanged. This permits more concurrent preparation
+and provider work; it does not qualify throughput at 100 or increase funding.
+See [DE-L02](limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention)
+and [DE02/DE04](maintainers/cognition-redesign.md#decision-escalation).
+
+## 2026-10-22T18:39:27Z — Useful bow reach
+
+The owner authorized extending bow reach beyond prey avoidance. The bundled
+bow-family ceiling changes 10 → 30 metres and its Field bow 8 → 24 metres,
+including the watchpost archer. Existing manufacture, disclosure, action facts
+and straight-flight/contact owners consume the same definitions. Preparation,
+projectile speed, damage, steadiness and animal movement/avoidance stay unchanged.
+See the [world rule](worlds/base/ranged-counterplay.md) and [LA114](limits/inventions.md#la114).
+The changed trusted family pin requires fresh current-format development worlds;
+no legacy reader or protected accounting reset is introduced.
+The [task authorization guidance](../AGENTS.md#task-scope-and-authorization) also
+clarifies that documenting agent-selected world tuning does not itself create a
+new approval requirement; explicit owner constraints remain controlling.
+
+## 2026-10-22T04:46:03Z — Physical review and delivery evidence
+
+The combined plan now states current source/order/collision results instead of
+overlapping investigation instructions. The verification owner records exact
+candidate comparisons, rejected grid tuning, actual camp rain/drying, the current
+incomplete CI result and the execution-delay diagnosis. The crowded-server seed
+description now distinguishes the startup world from its added cohort. Accepted
+world behavior and existing guidance policies remain unchanged.
+
+## October 22, 2026, 02:13:05 UTC — Authored repair and checkpoint guidance
+
+Repair material/count/structural roles now reach every construction consumer;
+Main's two-fiber rule is unchanged. [SH-L16](limits/editable-shelters.md) records
+the shared 1–64-unit execution bound, and the [combined evidence](verification/first-playable-world.md#authored-repair-materials-and-complete-consumers--october-22)
+distinguishes native/SQL/browser proof from controlled setup. Shelter summaries
+are consolidated around delivered behavior and their remaining checks. The
+technical designs record their use datetime.
+
+The existing verification route now requires the complete-capture contract before
+copying retained worlds. That contract clarifies active working reads versus
+portable copies and corrects stale format markers. No new AGENTS section, skill,
+compatibility reader or duplicate policy is added; CG05's broader agent-routing
+qualification remains open under this single-AI assignment.
+
+## October 21, 2026, 07:03:31 UTC — Complete-world alignment and guidance
+
+The [combat feature specification](projects/combat-and-threat-responses-feature-spec.md)
+now includes Mike's approved observed-motion leading while preserving fixed
+released trajectories. The [camp specification](projects/editable-shelters-feature-spec.md)
+reflects installed practical gate geometry; the authored profile remains its exact
+numeric owner. These align approved behavior, not failed acceptance: Ada's
+personality and open counterattack gate are unchanged. The seven implementation
+designs record this reference timestamp without an architectural rewrite.
+
+[CG33.2](maintainers/agent-guidance.md) tightens the existing verification route and
+journey/fixture guidance, and adds unchanged-selection refresh to the existing
+React chapter. Existing performance and world/engine rules already cover the
+other lessons; no new skill, handbook or duplicate policy is introduced.
 
 ## October 20, 2026 — Generalize context construction and bound delivery
 
@@ -41,6 +185,49 @@ The [feature specification](projects/situation-aware-cognition-context-feature-s
 [Speech coordination](projects/situation-aware-cognition-context-tech-design.md#96-composition-with-the-selected-public-speech-record-contract) retains NST’s sole publication/lifecycle owner and composes sparse payloads at its cutover. The [evidence record](projects/situation-aware-cognition-context-evidence-and-decisions.md) preserves the request measurements, exact source baseline, References clarification and unresolved export anomaly; character counts do not establish token, cost or quality gains.
 
 The [42-file repertoire review](projects/situation-aware-cognition-context-repertoire-review.md) preserves entry identities/priorities and useful existing scope while strengthening ordinary-object invention, old evidence, competing purposes, personal humor and voluntary interpretation. Catalogue priority is independent of runtime relevance. The selected ND20/DG04 and C17 preparation design is complete; implementation and broader acceptance remain with their existing owners. No runtime/test code or paid provider work was delivered; additional and cumulative task Jev cost **$0**.
+
+## October 19, 2026 — Complete Main and personally received agreements
+
+Ordinary Main and creation now use the complete compiled empty-handed template.
+The initializer preserves the useful scenario union, moves the whole Watchpost
+and original predator identities together, and places the former player kit once
+as Kest's declared exposed repair stock. Public hearths start cold; initial
+competence creates no stock or invented historical work. [Layout](worlds/base/first-playable-layout.md)
+and [FPW](maintainers/first-playable-world.md) own the current composition and
+remaining full qualification.
+
+Gift/travel/help controls now retain exact personally received terms, including
+item descriptions, without inferring unseen withdrawals from live records.
+Trade knowledge derives from its actual retained sources; forgetting/correction
+revokes that knowledge. Finite request menus and daylight use installed world
+configuration. These changes preserve one native authority and deliberately
+reject incompatible development storage; no old-format reader is introduced.
+The [evidence record](verification/first-playable-world.md#complete-main-and-personal-agreement-integration)
+separates component correctness from independent choices and player experience.
+
+## October 19, 2026 — Natural wall materials reach physical construction
+
+Construction YAML now owns exact camp structural definitions and integrity, resolved
+to installed item and attribute pins through the shared initializer. Short/tall posts
+and ordinary/access panels manufacture through existing finite methods and install
+as the actual conditioned objects; the short post produces its one usable wood
+offcut. Chosen post/panel sequences use the existing finite activity and scoped
+construction service/receipt path. Boundary requests retain the exact reviewed
+family version/digest, so changing the definition requires another review before
+work starts. Native and current PostgreSQL evidence is recorded in
+[the first-playable report](verification/first-playable-world.md#authored-camp-structural-materials).
+Ordinary post/panel Build controls and native gate installation now have focused
+browser/native/PostgreSQL evidence. Gate/runner recipes and ordinary gate controls
+are being connected to their working consumer; gate use, complete rights,
+damage/recovery and final natural-route acceptance remain open in SH07–SH12/SV03.
+Main’s supplied opening stays selected.
+
+## October 19, 2026 — Safe identity allocation after gameplay rewind
+
+Updated the identity/save contracts and FPW plan for retaining already-issued
+native numbers across explicit restore. Recorded real checkpoint, current
+operational-grant, unsafe-install refusal and fresh PostgreSQL repository evidence.
+Automatic material-grant publication remains open.
 
 ## October 18, 2026 — Design shared progressive NPC speech
 
@@ -87,6 +274,172 @@ Current operation identities, uncertain spending, one-use authentication, exact-
 The [player-facing language standard](ui-ux/player-facing-language.md) makes the player the audience of every displayed or spoken message, including authored, generated and accessible text. It replaces mechanical descriptions of simulation objects with natural explanations of the player's situation and choices; “can result in death” is the accepted alternative to “can kill this body.” Clear perspective, truthful consequences, permitted knowledge and distinct character voices constrain rewrites. Literal anatomical language and useful specialist terms remain valid when they serve the reader.
 
 [Root routing](../AGENTS.md#load-only-relevant-context) requires the shared writing rule across all layers. The [research ledger](ui-ux/research.md#player-facing-language) owns supporting sources; [UIUX20](maintainers/ui-ux.md#uiux20) separates the delivered standard from existing-copy implementation, and [CG05](maintainers/agent-guidance.md#cg05--read-only-routing-cases) retains unrun installed-agent qualification. This is a writing-policy decision, not changed runtime mechanics or a claim that existing messages have all been rewritten.
+
+## October 18, 2026 — Private material completion facts
+
+Recorded native fact ordering, actual output-origin snapshots and public/storage
+exclusion evidence. Navigation metadata forwarding is a fixture repair; exact
+operational grants and atomic publication remain open in FPW01.
+
+## October 18, 2026 — Exact natural-material origins
+
+Recorded distinct raw-material source lots, manufacturing propagation and
+current-format/PostgreSQL evidence before operational construction grants. More
+separate material lots preserve exact permission boundaries; untracked goods keep
+ordinary stacking. Atomic authority publication remains open.
+
+## October 18, 2026 — Prepared natural supplies
+
+Recorded world-scoped gathering and the prepared source-before-family stage,
+exact finite stock, scoped source-to-tool/PostgreSQL evidence and the initializer
+identity-collision fix. Main selection, authority/fire and full-world acceptance
+remain open in FPW/SV; fixture corrections did not change gameplay rules.
+
+## October 18, 2026 — Exact manufacturing outputs
+
+Installed methods use ordered output ports with exact item-definition pins and
+quantities. Existing family inventions still create one admitted definition;
+crafting, permitted recipe displays, action results and current-format validation
+consume the same list. This prepares natural transformations without a second
+manufacturing executor or an ambiguous first-product shortcut. Trusted finite transformations and exact retained-tool holds now use the same
+craft action, preserving spent input and releasing tools when work ends.
+Player invention families retain their existing powers. Fiber cleaning and cord twisting are authored known methods through this owner,
+with their approved 48/60-second work replacing 960/1,200 seconds. The separate
+preparation command is removed. Authored flint, pole stock and the club plus knapping/club methods are now installed
+through the same build-time bundle. The club uses existing contact/equipment
+owners and can share the hands with a shield. Exact source placement, the
+remaining catalogue and complete survival route stay open in
+[SV02–SV10](maintainers/first-playable-survival.md);
+[focused evidence](verification/first-playable-world.md#shared-manufacture) does
+not qualify the final opening or player experience.
+
+## October 18, 2026 — Speech without social enrollment
+
+Ordinary speech no longer creates a group, joins/merges people or expires on an
+inactivity/disconnect timer. Native commands, saves, history indexes, inference
+freshness, previews and API controls use actual actor/source/request ownership.
+Person history includes only the viewer's retained speech speaker or permitted
+addressee; quoted names and undisclosed recipients grant no match. Narration,
+commitments, physical cooperation and provider/invention sessions keep independent
+ownership. NPC output explicitly supports ambient speech, and detected direct
+calls can reach decisions without understood words. The [SPK tracker](maintainers/speech-and-social-perception.md) and
+[evidence](verification/speech-and-social-perception.md#ordinary-membership-removal)
+retain unqualified live, performance and combined-world acceptance.
+
+## October 18, 2026 — Bounded complete personal speech
+
+Automatic dialogue now selects an actor’s ordered personal speech through indexed
+source metadata and complete payload sizes. Complete records and readable prose
+share the existing request allowance; current causes and committed work results
+remain independently required. Derived speech summaries retain native attribution
+and exact typed source coverage. Optional generation failure preserves usable
+recent evidence and the prior valid summary. Unselected history stays retained.
+The remaining ordinary membership consumers and final quality/performance gates
+remain tracked in [SPK04–SPK05](maintainers/speech-and-social-perception.md); the
+[verification report](verification/speech-and-social-perception.md#bounded-actor-scoped-speech-and-compaction) separates native/fixture proof from live model quality.
+
+## October 18, 2026 — Single-address speech evidence and independent recognition
+
+The first SPK cut uses one native addressee, complete acquired addressing and
+label-only speech participants, with one shared role/projection owner and strict
+current-format validation. The installed world definition selects stable human
+face/voice recognition independently of known names; understanding words is a
+separate actor capability from hearing and speaking. This replaces episode-only
+human recognition and the duplicate intended-recipient fallback. Recognition
+supplies no hidden location or physical target, and unheard intended targets
+receive no remote message. The knowledge generator prepares its authored policy
+before importing the world initializer so first generation uses current data.
+[Evidence](verification/speech-and-social-perception.md) records native/SQL and
+production-browser checks; [SPK](maintainers/speech-and-social-perception.md)
+retains memory, membership, animal, interface and complete acceptance work.
+
+## October 18, 2026 — Lead only personally observed motion at release
+
+Mike approved leading after the early practical bow hunt's observed-point shot
+struck terrain behind retreating prey. The [bundled aiming contract](worlds/base/ranged-counterplay.md#ranged-tools-and-preparation)
+now extrapolates one actually executed movement segment seen by the shooter,
+within existing projectile range. It never reads a target's future route. This
+changes release direction while preserving preparation, speed, range, steadiness
+draws and fixed released flight; turns and lost evidence still permit misses.
+[CTR03–CTR04](maintainers/combat-and-threat-responses.md) retain practical hunting
+and complete continuation/character/player qualification.
+
+## October 18, 2026 — Shared native escape and territorial withdrawal
+
+Grounded animals use one installed response family and ordinary timed movement,
+with complete personally perceived danger and continuously checked settling.
+The stag's injury-selected relinquishment now hands movement to that same owner
+while preserving its pursuit and antler timing. Its old fixed refuge becomes a
+known preferred option only within otherwise interchangeable clear choices.
+This prevents territorial return from overwriting escape and preserves cache
+relinquishment after settling. Flight now distinguishes loops, finite landings and
+exact route joins through one predictor/executor. Supported terminal rest holds
+during alarm, and an authored return starts only at the actual perch. The bird’s danger-driven choices use the same owner, with supported finite
+landing, ground fallback and ordinary flight continuation. Native control transfer retires both policies
+before another mind/player chooses work. The complete preparation envelope
+reserves slots for the preferred and retained points, while the bundled twelve
+generated destinations remain unchanged. [CTR03–CTR04](maintainers/combat-and-threat-responses.md)
+retain bird, broader boundary, performance and player qualification; the
+[evidence](verification/combat-and-threat-responses.md) distinguishes an actual
+hunt-to-meal journey from independent invention and real-player acceptance.
+
+## October 18, 2026 — Actual projectile contact and human attack permission
+
+CTR01 installs the selected bundled-world permission for attacks on vulnerable
+players and removes target-only projectile immunity and contact-time lethal
+suppression. Released shots retain their contact law and source attribution;
+practice ammunition can injure an interceptor, launcher-family guidance uses
+the same selected collateral warning, a prepared shield still protects its own body, and initial launch overlap ends once the projectile clears its
+source. This makes physical interception consequential while retaining departure
+protection and pre-release review. [Native checkpoint evidence](verification/combat-and-threat-responses.md)
+is partial; [CTR](maintainers/combat-and-threat-responses.md) retains complete
+caller, continuation, character and player qualification.
+
+Personal danger records now retain exact observer/life bindings, observed preparation,
+separate movement and hostility changes, own chosen methods and original deadlines.
+The existing perception/event/action-result owners produce those facts; contextual
+ranking consumes the exact personal pair. This preserves uncertainty and recognition
+while removing whole-projectile/history scans from that preference. Native and
+PostgreSQL component evidence is separate from the installed response strategy
+and the actual browser control checks; independent character and performance
+acceptance remain open.
+
+Read-only work-transition preparation now exposes the real lost progress, spent
+inputs, paused-work consequence and persistent recovery. Ordinary response-plan
+admission checks materials after releasing only the exact replaced invocation’s
+holds, before cancelling work. A gather-to-cook replacement and a refused
+replacement retaining the original work pass natively; complete busy choices and
+the remaining prepared-choice consumers stay open in CTR05. Busy NPC menus now
+retain physical alternatives and explain recovery. Exact affected-work bindings
+and selected handling reach shared response admission, including speech that
+preserves work. A refused learned-method start retains the original work.
+
+Explicit return to paused work now uses the existing agency owner, checks its remaining first action before ending the intervention and preserves outputs, attempt/debit ceilings and original limits. Saved actor-reference associations also cover unexpanded steps, preventing a later unfamiliar sighting from silently replacing the selected person. Last-seen threat choices bind historical places without live targeting authority and inherit a continuing chase’s original bounds. Finite proximity movement also ends at the selected real range or its original deadline through the existing follow owner. It permits closer arrival than the ordinary 1.5-unit following minimum without changing ordinary relational following, and binds the originally selected physical body. These shared mechanisms add no mover, attack loop or permission grant; full combat qualification remains open.
+
+Private feeling reads now select exact installed definitions and subjects beyond
+convenience paging, and decision rendering preserves current intensity, scale and
+decay. The same index supports target replacement. Cause-derived identity
+validation and retirement of the unused old feeling converter preserve the
+current-format boundary. The connected two-stage strategy now preserves complete relevance/choice requests, source-bound independent interpretation and canonical publication provenance. Controlled native callbacks admit and start an exact selected strike. Personally seen projectile sources persist as permitted participants; unseen sources stay anonymous. New ordinary worlds now select interpreted fear/anger and the strategy together, with both automatic fear producers removed and Ada’s general assertiveness authored without a forced goal. Independent character and remaining runtime qualification stay open.
+
+Finite chosen physical work now uses the existing activity and movement owners
+for original deadlines, distance boundaries and exact visible participants.
+Interruption and restoration preserve those limits; counted fire care keeps its
+consumption receipts. This supplies native stopping controls for later selected
+threat responses without adding another mover or attack loop.
+
+Required choices now preserve their complete set or refuse before inference.
+Chosen purpose definitions, roles and source IDs remain attached through native
+composition and private action history; ordinary optional suggestions keep their
+existing behavior. The wilderness threat strategy consumes this shared binding/preparation. A ready
+manual aim also offers its exact immediate release, retaining its chosen purpose
+and preparation link in private history without retaining one-attack permission.
+
+Actual contact now grants its recipient a felt event account even without seeing
+the performer. The account preserves bodily results and anonymous danger while
+withholding an unseen source, weapon and position; private danger components are
+excluded from other people's observations. The native and PostgreSQL evidence
+retains the initial failed check and the repaired result.
 
 ## October 18, 2026 — Review optional measurement and carry its lessons forward
 
@@ -241,7 +594,7 @@ The requested implementation review adds exact interrupted-request recovery, ind
 
 The authorized [overhaul execution](projects/performance-overhaul/execution.md) implements shared canonical personal account bodies, bounded post-commit full-text index preparation, typed compact writes, persistent entity ownership, exact deferred numeric/status/work reads, unchanged animal deadlines, local perception/material work, smaller public patches and selective rendering/UI/thought preparation. Current contracts are reconciled in [architecture](architecture.md), [memory](memory-architecture.md), [simulation time](simulation-time.md) and [save/load](save-and-load.md). Database15 / `development-2026-10-16-performance-overhaul` identifies the new current layout; no older reader or migration is added and no ordinary game save was reset.
 
-The numerical operation window is bounded by [NW17](limits/native-work.md#nw17--experimental-deferred-arithmetic-window), and delayed indexed search/backpressure by [MH15](limits/memory.md#mh15--delayed-lexical-preparation). Exact evidence/privacy remain immediate; indexed optional search may wait explicitly. The restricted journal alternative is rejected after its real walking-change inventory; no second durable authority is installed. Focused checks pass on their recorded revisions, while full smooth3× remains unproven. The first measurement’s copied-package links limited attribution; a startup-only actual workspace-binding guard now prevents that mistake. [Results and limitations](verification/performance/overhaul-implementation.md) retain all failures.
+The numerical operation window is bounded by [NW17](limits/native-work.md#nw17--anchored-continuous-native-values), and delayed indexed search/backpressure by [MH15](limits/memory.md#mh15--delayed-lexical-preparation). Exact evidence/privacy remain immediate; indexed optional search may wait explicitly. The restricted journal alternative is rejected after its real walking-change inventory; no second durable authority is installed. Focused checks pass on their recorded revisions, while full smooth3× remains unproven. The first measurement’s copied-package links limited attribution; a startup-only actual workspace-binding guard now prevents that mistake. [Results and limitations](verification/performance/overhaul-implementation.md) retain all failures.
 
 ## October 16, 2026 — Turn performance proposals into implementation packets
 
@@ -249,7 +602,7 @@ The [performance-overhaul specification](projects/performance-overhaul-feature-s
 
 [PF17](maintainers/performance.md#pf17--performance-overhaul-ideas) routes future implementation through these packets and the existing [evaluation rules](projects/performance-overhaul/evaluation.md). The evidence audit remains controlling: old numbers are directional, actual callers matter, and a completed prototype does not complete the candidate or smooth-3× goal. No candidate was newly implemented or adopted here; earlier private prototypes retain their recorded status. No runtime, test, server or benchmark was run in this documentation expansion and no gameplay compromise was adopted.
 
-[A3D20](limits/3d-pixel-art.md#a3d20--experimental-cloth-quality-tiers) records the visual card's concrete starting thresholds; [NW17](limits/native-work.md#nw17--experimental-deferred-arithmetic-window) records the deferred-arithmetic card's finite pending-operation window. Both are unqualified experiments, preserving current runtime settings. The remaining architectural decisions stay explicit rather than being filled with arbitrary gameplay or storage limits.
+[A3D20](limits/3d-pixel-art.md#a3d20--experimental-cloth-quality-tiers) records the visual card's concrete starting thresholds; [NW17](limits/native-work.md#nw17--anchored-continuous-native-values) records the deferred-arithmetic card's finite pending-operation window. Both are unqualified experiments, preserving current runtime settings. The remaining architectural decisions stay explicit rather than being filled with arbitrary gameplay or storage limits.
 
 The deeper source audit also corrects two proposal premises: status-condition compilation already exists and must be reused, and the rolling recent-response collection uses map-entry positions rather than the list branch initially described. The updated cards target the actual remaining work; neither correction establishes a new timing result.
 

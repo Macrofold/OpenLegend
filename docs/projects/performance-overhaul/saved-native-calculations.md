@@ -1,10 +1,10 @@
 # Save shared native calculations without undoing their reuse
 
-| Status      | Current progress                                                                                                                              | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Save reuse and cold validation implemented with finite evidence; combined qualification continues, and the last complete build reaches2.047×. | 2026-10-17   |
+| Status      | Current progress                                                                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Save reuse remains installed; A15 replaces segment replay, while the October 17 experiments below retain their original evidence. | 2026-10-24   |
 
-This is the next PF17.11/PF17.8 experiment in the existing authorized [execution](execution.md), not a second project or permission request. Updated October17,2026,13:26EDT. [Current results](../../verification/performance/overhaul-implementation.md) and [task owner](../../maintainers/performance.md#pf17--performance-overhaul-ideas).
+The current [animal continuation](animal-execution.md) supersedes this chapter's October 17 segment-list representation with [anchored continuous values](../../limits/native-work.md#nw17--anchored-continuous-native-values). Saving, exact accepted-snapshot ownership and cold-validation responsibilities remain; the following scope, algorithms and measurements record the October 17 experiments and must not be read as the current arithmetic API. [PF09](../../maintainers/performance.md#pf09-animal-execution-continuation) owns the current delivery and capacity status.
 
 ## Why this may matter
 

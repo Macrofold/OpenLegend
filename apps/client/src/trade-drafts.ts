@@ -8,6 +8,7 @@ export interface TradeDraft {
   giveQuantity: string;
   receiveQuantity: string;
   prior?: { id: string; revision: number };
+  constructionUse?: NonNullable<ItemTradeView['offers'][number]['constructionUse']>;
 }
 interface SavedTradeDraft {
   draft?: TradeDraft;
@@ -38,6 +39,14 @@ function readDraft(key: string): SavedTradeDraft | undefined {
           typeof saved.draft.receiveQuantity === 'string' &&
           lotValid(saved.draft.give) &&
           lotValid(saved.draft.receive) &&
+          (!saved.draft.constructionUse ||
+            (typeof saved.draft.constructionUse.detail === 'string' &&
+              typeof saved.draft.constructionUse.terms?.operation === 'string' &&
+              Number.isFinite(saved.draft.constructionUse.terms.expiresAt) &&
+              !!saved.draft.constructionUse.terms.site &&
+              ['minX', 'maxX', 'minZ', 'maxZ'].every((key) =>
+                Number.isFinite(saved.draft!.constructionUse!.terms.site[key as 'minX']),
+              ))) &&
           (!saved.draft.prior ||
             (typeof saved.draft.prior.id === 'string' &&
               Number.isSafeInteger(saved.draft.prior.revision)))))

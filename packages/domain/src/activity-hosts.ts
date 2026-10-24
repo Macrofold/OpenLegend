@@ -53,6 +53,8 @@ export interface ActivityHostDescriptor {
     targetId: string,
   ) => { value: boolean | undefined; depends: string[]; nextBoundary?: number };
   acceptsTarget?: (world: WorldState, targetId: string) => boolean;
+  /** Trusted data projection from this world's installed policy; it grants no executor. */
+  requestDescriptors?: (world: WorldState) => ActivityRequestDescriptor[];
   compileRequest?: (
     world: WorldState,
     actorId: string,
@@ -116,6 +118,19 @@ export function nativeCommandSupported(world: WorldState, command: Command['type
   }
   return true;
 }
+/** Core physical work can stop through its ordinary cancellation owner. Optional
+ * installed families must separately declare that their committed effects survive it. */
+export function deadlineSafeActivityCommand(
+  world: WorldState,
+  command: Command['type'],
+  requireInstalled = true,
+): boolean {
+  if (['move', 'follow', 'strike', 'guard', 'evade', 'pickup'].includes(command)) return true;
+  const host = requireInstalled
+    ? activityHostForCommand(world, command)
+    : trustedActivityHostForCommand(command);
+  return host?.definition.deadlineSafeCommands.includes(command) ?? false;
+}
 export function itemOutputFamilies(world: WorldState, namedPorts = false): string[] {
   const result = new Set<string>(['pickup']);
   for (const [command, meaning] of installedActionMeanings(world))
@@ -168,6 +183,24 @@ export type ActivityRequestPresentation = {
       reserve: string;
     }
 );
+export type ActivityRequestField = {
+  modeLabels?: Record<'enqueue' | 'replace' | 'interrupt', string>;
+  label: string;
+  minimum?: number;
+  maximum?: number;
+  /** Bounds for duration selection; a future exact/named deadline can be nearer. */
+  minimumDuration?: number;
+  maximumDuration?: number;
+  required: true;
+  discovery?: {
+    source: 'spatial' | 'storage' | 'materials';
+    /** Materials from this selected source require current character evidence. */
+    sourceField?: string;
+  };
+} & (
+  | { type: 'definition'; definitionKind: 'item' | 'recipe' }
+  | { type: 'entity' | 'integer' | 'time' | 'mode'; definitionKind?: never }
+);
 export interface ActivityRequestDescriptor {
   /** Exact native operations this composition needs; no equipment/material grant. */
   requires?: readonly Command['type'][];
@@ -177,29 +210,28 @@ export interface ActivityRequestDescriptor {
   label: string;
   description: string;
   presentation?: ActivityRequestPresentation;
-  fields: Record<
-    string,
-    {
-      type: 'entity' | 'definition' | 'integer' | 'time' | 'mode';
-      modeLabels?: Record<'enqueue' | 'replace' | 'interrupt', string>;
-      label: string;
-      minimum?: number;
-      maximum?: number;
-      /** Bounds for duration selection; a future exact/named deadline can be nearer. */
-      minimumDuration?: number;
-      maximumDuration?: number;
-      required: true;
-      discovery?: {
-        source: 'spatial' | 'storage' | 'materials';
-        /** Materials from this selected source require current character evidence. */
-        sourceField?: string;
-      };
+  fields: Record<string, ActivityRequestField>;
+}
+export function activityHostRequests(
+  world: WorldState,
+  host: ActivityHostDescriptor,
+): readonly ActivityRequestDescriptor[] {
+  return host.requestDescriptors
+    ? host.requestDescriptors(world)
+    : (host.definition.requests ?? []);
+}
+export function validateInstalledActivityRequests(world: WorldState): void {
+  const seen = new Set<string>();
+  for (const host of selectedDescriptors(world))
+    for (const request of activityHostRequests(world, host)) {
+      if (seen.has(request.id))
+        throw new Error('Two installed hosts cannot own the same activity request.');
+      seen.add(request.id);
     }
-  >;
 }
 export function activityRequestDescriptors(world: WorldState): ActivityRequestDescriptor[] {
   return selectedDescriptors(world)
-    .flatMap((host) => host.definition.requests ?? [])
+    .flatMap((host) => activityHostRequests(world, host))
     .filter(
       (request) =>
         request.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
@@ -208,7 +240,7 @@ export function activityRequestDescriptors(world: WorldState): ActivityRequestDe
 export function activityRequestHost(world: WorldState, requestId: string) {
   for (const host of selectedDescriptors(world)) {
     if (
-      host.definition.requests?.some(
+      activityHostRequests(world, host).some(
         (request) =>
           request.id === requestId &&
           request.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
@@ -224,7 +256,8 @@ export function activityRequestChoices(
 ) {
   const supported = new Set(activityRequestDescriptors(world).map((request) => request.id));
   const results = selectedDescriptors(world).flatMap((host) => {
-    return host.requestChoices && host.definition.requests?.some((entry) => supported.has(entry.id))
+    return host.requestChoices &&
+      activityHostRequests(world, host).some((entry) => supported.has(entry.id))
       ? [host.requestChoices(world, actorId, observed)]
       : [];
   });
@@ -249,7 +282,7 @@ export function bindActivityRequest(
 ): Command | Outcome {
   for (const host of selectedDescriptors(world)) {
     if (
-      host.definition.requests?.some(
+      activityHostRequests(world, host).some(
         (descriptor) =>
           descriptor.id === request.family &&
           descriptor.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
@@ -271,7 +304,7 @@ export function reviewActivityRequest(
 ): string[] {
   for (const host of selectedDescriptors(world)) {
     if (
-      host.definition.requests?.some(
+      activityHostRequests(world, host).some(
         (entry) =>
           entry.id === request.family &&
           entry.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
@@ -403,7 +436,8 @@ export function activityHostPins(): DefinitionPin[] {
 export function validateActivityHostPins(pins: readonly DefinitionPin[]): void {
   if (!Array.isArray(pins) || pins.length > trustedActivityHosts().length)
     throw new Error('Invalid installed activity support.');
-  const seen = new Set<string>();
+  const seen = new Set<string>(),
+    requests = new Set<string>();
   for (const pin of pins) {
     const host = trustedActivityHost(pin);
     if (
@@ -413,6 +447,11 @@ export function validateActivityHostPins(pins: readonly DefinitionPin[]): void {
       !exactActivityHostPin(pin, activityHostPin(host))
     )
       throw new Error('Missing or incompatible trusted activity host.');
+    for (const request of host.definition.requests ?? []) {
+      if (requests.has(request.id))
+        throw new Error('Two installed hosts cannot own the same activity request.');
+      requests.add(request.id);
+    }
     seen.add(pin.id);
   }
 }

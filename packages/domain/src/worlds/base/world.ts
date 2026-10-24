@@ -1,22 +1,39 @@
+import firstPlayable from './config/first-playable.generated.json' with { type: 'json' };
+import {
+  installBaseOpeningContent,
+  installBaseCampSuggestions,
+  validateBaseOpeningPlacements,
+  resolveOpeningPeople,
+} from './opening-content.js';
+import { installBaseSupplyOpportunities } from './supply-config.js';
+import { installBaseEcology, baseEcologyReservations } from './ecology.js';
+import { recipeMechanicalPin } from '../../invention-families.js';
+import { BASE_SOCIAL_OFFERS } from './social-offer-config.js';
+import { BASE_PERSON_ROLES } from './people-config.js';
+import { BASE_WORK_ACTIVITY_HOST } from './work-activity.js';
+import { BASE_MEAL_ACTIVITY_HOST } from './meal-activity.js';
+import { baseAnimalResponse } from './animal-response-profile.js';
 import { entityGet, entitySet, entityValues } from '../../entity-collection.js';
 import { emptyEntities } from '../../entity-collection.js';
 import { BASE_NATIVE_ACTIVITY_HOSTS } from './native-activities.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { BASE_TERRAIN } from './spatial-definitions.js';
 import { BASE_CANOPY, CANOPY_ATTRIBUTES, BASE_CANOPY_SCENE } from './canopies.js';
+import { BASE_BOUNDARY_CONFIGURATION, installBaseBoundary } from './camp-boundaries.js';
 import { BASE_SOCIAL_POLICY } from './social.js';
 import { baseConstructionProfile } from './canopy-scene.js';
-import { BASE_KNOWLEDGE_POLICY } from './knowledge.js';
+import { assignGivenName, BASE_KNOWLEDGE_POLICY, BASE_SOCIAL_PERCEPTION } from './knowledge.js';
 import { BASE_RANGED_POLICY } from './hunting.js';
 import {
   STARTER_EXTENT,
   starterTiles,
   starterScenery,
   populateOuterWilderness,
+  starterGroundAt,
 } from './landscape.js';
 import { emptyActionExperience } from '../../action-experience.js';
 import { installWatchpost } from './watchpost.js';
-import { ADA_IDENTITY } from './characters.js';
+import { BASE_PEOPLE } from './characters.js';
 import { installKnownShieldMethod } from './shield-family.js';
 import { BASE_WOVEN_CONTAINER_METHOD } from './container-method.js';
 import { startingRecipeKnowledge } from './knowledge.js';
@@ -26,10 +43,14 @@ import { NATIVE_STRIKES } from './strikes.js';
 import { STAG_CONTACT, installFirstThreat } from './first-threat.js';
 import { addItem, nextRandom, reserveEntityId } from '../../data.js';
 import { BASE_ITEM_HANDLING } from './item-handling.js';
-import { NATIVE_ITEMS } from './items.js';
+import { NATIVE_ITEMS, baseItemDefinitions } from './items.js';
 import { BASE_FOOD_PREPARATIONS } from './food-preparations.js';
 import { BASE_CAST_DEFINITIONS, installRiverReaches, RIVER_LINE_METHOD } from './river-fishing.js';
-import { installRecipe } from '../../declarations.js';
+import { installRecipe, installFixedTransform } from '../../declarations.js';
+import { BASE_MATERIAL_METHODS } from './material-methods.js';
+import type { PreparedBaseMaterialWorld } from './first-playable-config.js';
+import { baseResourceReservations, installBaseMaterialSources } from './material-sources.js';
+import { validateSpatialExtent } from '@open-legend/spatial';
 import { learnRecipe } from '../../knowledge.js';
 import { DEFAULT_STATUS_EFFECT_POLICY } from './status-effects.js';
 import {
@@ -48,7 +69,7 @@ import { definitionPin } from '../../world-modules.js';
 import { DEFAULT_ATTRIBUTES } from './attributes.js';
 import { DEFAULT_SENSES } from '../../perception.js';
 import { BASE_BODY_POLICY } from './body-policy.js';
-import { DEFAULT_COGNITION_POLICY } from './cognition.js';
+import { baseCognitionPolicy } from './cognition.js';
 import { initializeAttributes, createModuleManifest } from '../../world-modules.js';
 import { SLING_TARGET, SLING_HANDLING } from './practical-competence.js';
 import { setStartingPractice } from '../../practical-competence.js';
@@ -75,8 +96,10 @@ import traitBank from './config/traits.json' with { type: 'json' };
 import { migrateCognition } from '../../experience.js';
 import type { ActorComponent, CharacterTrait, Entity, WorldState } from '../../types.js';
 import type { ConstructionPermission } from '../../assembly-types.js';
-import { itemsForOwner } from '../../objects.js';
-import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
+import { tracksMaterialOrigins } from '../../material-inventory.js';
+import { BASE_RESOURCE_GATHERING_SECONDS, BASE_GATHERING_POLICY } from './resources.js';
+
+const FIRST_PLAYABLE = firstPlayable as unknown as PreparedBaseMaterialWorld;
 
 export const PLAYER_ID = 'entity-0001';
 export const NPC_ID = 'entity-0002';
@@ -89,31 +112,69 @@ export {
 };
 const MERCENARY_ID = 'peacock-mercenary';
 export const TRAIT_BANK: readonly CharacterTrait[] = traitBank;
-export { NATIVE_ITEMS, NATIVE_PREPARATIONS } from './items.js';
+export { NATIVE_ITEMS } from './items.js';
 
 /** The full authored camp supplies this permission for its exact starting builder. */
 export function baseWorldInitialConstructionSeeds(
   world: WorldState,
   builderId = PLAYER_ID,
+  prepared: PreparedBaseMaterialWorld = FIRST_PLAYABLE,
 ): ConstructionPermission[] {
+  const policy = prepared.opening.construction,
+    family = world.assemblyFamilies?.[policy.boundaryFamily];
   if (
-    !entityGet(world.entities, 'camp-route-marker') ||
-    !entityGet(world.entities, builderId)?.actor
+    !entityGet(world.entities, builderId)?.actor ||
+    family?.implementation !== 'grounded-panel-boundary' ||
+    !world.map.spatial?.surfaces.some((surface) => surface.id === policy.site.surfaceId)
   )
-    return [];
+    throw new Error(
+      'The selected camp policy needs its actual builder, surface and installed boundary family.',
+    );
+  const eligible = new Set(policy.materialItems);
+  for (const id of eligible) {
+    const definition = world.itemDefinitions[id];
+    if (!definition || !tracksMaterialOrigins(definition))
+      throw new Error('Construction sources require exact tracked material definitions.');
+  }
+  const sources = prepared.sources
+    .filter((source) => eligible.has(source.item))
+    .map((source) => {
+      const actual = entityGet(world.entities, source.id)?.resource,
+        definition = world.itemDefinitions[source.item]!;
+      if (actual?.definitionId !== source.item)
+        throw new Error('A construction source must exist under its exact installed identity.');
+      return { entityId: source.id, definition: definitionPin(definition) };
+    });
+  if (!sources.length)
+    throw new Error('The selected camp policy requires actual finite material sources.');
   return [
     {
-      id: 'intro-canopy-builder',
+      id: policy.id,
       worldId: world.id,
       actorId: builderId,
       revision: 1,
       revoked: false,
-      site: structuredClone(BASE_CANOPY_SCENE.site),
-      operations: ['post', 'cover', 'lower', 'reclaim-post', 'reclaim-lowered'],
-      materialIds: itemsForOwner(world, builderId).map((item) => item.id),
+      site: { ...policy.site },
+      operations: [...policy.operations],
+      materialIds: [],
+      ...(policy.materialContributions ? { materialContributions: true as const } : {}),
+      acquisition: { sources, assemblyIds: [] },
+      publicGateUse: {
+        family: definitionPin(family),
+        operations: [...policy.publicGateUseOperations],
+      },
+      ...(policy.structuralExposure
+        ? {
+            structuralExposure: {
+              family: definitionPin(family),
+              operations: ['held-tool-impact'] as ['held-tool-impact'],
+            },
+          }
+        : {}),
     },
   ];
 }
+
 export function createActor(
   world: WorldState,
   controller: 'player' | 'npc',
@@ -124,6 +185,7 @@ export function createActor(
     backstory?: string;
     initialGoals?: string[];
   } = {},
+  energy?: number,
 ): ActorComponent {
   const initialGoals = identity.initialGoals?.map((goal) => goal.trim()).filter(Boolean);
   const actor: ActorComponent = {
@@ -134,7 +196,7 @@ export function createActor(
     controller,
     species: 'human',
     body: livingBody('human'),
-    capabilities: { cognition: true, memory: true, innerWorld: true, speech: true },
+    capabilities: { cognition: true, memory: true, innerWorld: true, speech: true, language: true },
     health: 100,
     alive: true,
     incapacitated: false,
@@ -166,6 +228,11 @@ export function createActor(
             food.schema.min + ((food.schema.max - food.schema.min) * fullness) / 100,
         }
       : {};
+  const energyDefinition = meters.find((definition) => definition.id === 'wilderness:energy');
+  if (energy !== undefined && energyDefinition?.schema.kind === 'number')
+    initial[energyDefinition.id] =
+      energyDefinition.schema.min +
+      ((energyDefinition.schema.max - energyDefinition.schema.min) * energy) / 100;
   initializeAttributes(actor, meters, initial);
   return actor;
 }
@@ -177,39 +244,69 @@ export function createFreshBaseWorld(
   seed: number,
   accounts: WorldCreationAccounts,
   identity: { worldId: string; playerId: string },
+  prepared?: PreparedBaseMaterialWorld,
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
+  const extent = prepared?.opening.extentMetres ?? STARTER_EXTENT;
+  validateSpatialExtent(extent.width, extent.depth);
+  const canopy = prepared
+    ? { ...BASE_CANOPY, coverProfiles: prepared.coverProfiles, defaultCover: prepared.defaultCover }
+    : BASE_CANOPY;
+  const boundary = prepared?.boundary ?? BASE_BOUNDARY_CONFIGURATION;
   const world: WorldState = {
-    presentation: { ...BASE_WORLD_PRESENTATION },
+    gatheringPolicy: { ...(prepared ? prepared.opening.gathering : BASE_GATHERING_POLICY) },
+    presentation: {
+      ...BASE_WORLD_PRESENTATION,
+      ...(prepared
+        ? {
+            crafting: structuredClone(prepared.catalogue),
+            introduction: prepared.opening.content.introduction,
+          }
+        : {}),
+    },
     perceptionFeatures: {},
     schemaVersion: 10,
     actionExperience: emptyActionExperience(),
     participationPolicy: structuredClone(BASE_PARTICIPATION_POLICY),
     itemHandling: structuredClone(BASE_ITEM_HANDLING),
-    statusEffectPolicy: structuredClone(DEFAULT_STATUS_EFFECT_POLICY),
+    statusEffectPolicy: {
+      ...structuredClone(DEFAULT_STATUS_EFFECT_POLICY),
+      ...(prepared ? { clockOffsetHours: prepared.opening.content.clockOffsetHours } : {}),
+    },
     authorship: {
       creatorAccountIds: [...accounts.creatorAccountIds],
       playerAccountIds: { [identity.playerId]: accounts.playerAccountId },
     },
     inventionPolicy: initialInventionPolicy(),
     moduleManifest: createModuleManifest(
-      [...DEFAULT_ATTRIBUTES, ...CANOPY_ATTRIBUTES],
+      [...DEFAULT_ATTRIBUTES, ...CANOPY_ATTRIBUTES, ...boundary.attributes],
       DEFAULT_SENSES,
-      BASE_BODY_POLICY,
+      prepared
+        ? {
+            ...structuredClone(BASE_BODY_POLICY),
+            consumption: {
+              ...structuredClone(BASE_BODY_POLICY.consumption!),
+              meal: structuredClone(prepared.meal),
+            },
+          }
+        : BASE_BODY_POLICY,
       BASE_RECIPE_FAMILIES.map((family) => definitionPin(family.definition)),
       [
         STOCK_ACTIVITY_HOST,
         ...BASE_NATIVE_ACTIVITY_HOSTS,
         BASE_FIRE_ACTIVITY_HOST,
+        ...(prepared ? [BASE_MEAL_ACTIVITY_HOST, BASE_WORK_ACTIVITY_HOST] : []),
         BASE_CAMP_ACTIVITY_HOST,
         BASE_OUTING_HOST,
         BASE_CANOPY_ACTIVITY_HOST,
       ].map(activityHostPin),
       BASE_RANGED_POLICY,
+      BASE_SOCIAL_PERCEPTION,
     ),
-    cognitionPolicy: structuredClone(DEFAULT_COGNITION_POLICY),
+    cognitionPolicy: baseCognitionPolicy(),
     storyPolicy: defaultStoryPolicy(),
     socialPolicy: structuredClone(BASE_SOCIAL_POLICY),
+    socialOfferPolicy: structuredClone(prepared ? prepared.socialOfferPolicy : BASE_SOCIAL_OFFERS),
     knowledgePolicy: structuredClone(BASE_KNOWLEDGE_POLICY),
     actorKnowledge: {},
     observerIdentities: {},
@@ -224,20 +321,26 @@ export function createFreshBaseWorld(
     paused: false,
     profile: { id: 'grounded-wilderness', version: 1 },
     map: {
-      width: STARTER_EXTENT.width,
-      height: STARTER_EXTENT.depth,
+      width: extent.width,
+      height: extent.depth,
       tiles: [],
       terrain: structuredClone(BASE_TERRAIN),
-      spatial: starterSpatialLayout(STARTER_EXTENT.width, STARTER_EXTENT.depth),
+      spatial: starterSpatialLayout(extent.width, extent.depth),
     },
-    flightRoutes: starterFlightRoutes(),
+    flightRoutes: {},
     nativeStrikes: structuredClone({ ...NATIVE_STRIKES, [STAG_CONTACT.id]: STAG_CONTACT }),
     entities: emptyEntities(),
     objectState: { revision: 0 },
-    assemblyFamilies: { [BASE_CANOPY.id]: structuredClone(BASE_CANOPY) },
-    constructionProfile: baseConstructionProfile(BASE_CANOPY_SCENE.suggested),
+    assemblyFamilies: { [BASE_CANOPY.id]: structuredClone(canopy) },
     assemblyGeometryRevision: 0,
-    itemDefinitions: structuredClone(NATIVE_ITEMS),
+    itemDefinitions: structuredClone(
+      prepared
+        ? baseItemDefinitions(
+            prepared.items.map((row) => row.definition),
+            prepared.defaultCover,
+          )
+        : NATIVE_ITEMS,
+    ),
     foodPreparations: structuredClone(BASE_FOOD_PREPARATIONS),
     castDefinitions: structuredClone(BASE_CAST_DEFINITIONS),
     recipes: {},
@@ -248,7 +351,91 @@ export function createFreshBaseWorld(
     declarationReceipts: {},
     nextId: 1,
   };
-  world.map.tiles = starterTiles(normalizedSeed, world.map.width, world.map.height);
+  if (prepared)
+    world.workBatchPolicy = {
+      ...structuredClone(prepared.workBatches),
+      presentation: structuredClone(prepared.workRequests),
+    };
+  const installedBoundary = installBaseBoundary(world, boundary);
+  world.constructionProfile = baseConstructionProfile(
+    prepared
+      ? starterGroundAt(
+          world.map.spatial!,
+          (prepared.opening.campReservations[0]!.minX +
+            prepared.opening.campReservations[0]!.maxX) /
+            2 -
+            installedBoundary.geometry.section.spacing,
+          (prepared.opening.campReservations[0]!.minZ +
+            prepared.opening.campReservations[0]!.maxZ) /
+            2 -
+            installedBoundary.geometry.section.spacing,
+        )
+      : BASE_CANOPY_SCENE.suggested,
+    canopy,
+    installedBoundary,
+  );
+  if (prepared?.materialContributions)
+    world.constructionProfile.materialContributions = structuredClone(
+      prepared.materialContributions,
+    );
+  if (prepared?.contentsExposureProfiles)
+    world.contentsExposureProfiles = Object.fromEntries(
+      prepared.contentsExposureProfiles.map((profile) => [profile.id, structuredClone(profile)]),
+    );
+  if (prepared?.dailyRain) {
+    const source = prepared.dailyRain;
+    if (source.region.openingBoundsRef !== prepared.opening.id)
+      throw new Error('Daily rain requires the selected opening bounds.');
+    const bounds = {
+      id: source.region.openingBoundsRef + ':bounds',
+      version: prepared.opening.revision,
+      minX: 0,
+      maxX: extent.width - 1,
+      minZ: 0,
+      maxZ: extent.depth - 1,
+    };
+    const daily = {
+      ...structuredClone(source),
+      clock: {
+        clock: 'localTime' as const,
+        offsetHours: world.statusEffectPolicy.clockOffsetHours,
+      },
+      region: {
+        opening: definitionPin(bounds),
+        bounds,
+      },
+    };
+    world.dailyRainDefinitions = { [daily.id]: daily };
+    world.constructionProfile.dailyRain = definitionPin(daily);
+  }
+  if (prepared?.hearths.length) {
+    world.hearthDefinitions = Object.fromEntries(
+      prepared.hearths.map(({ input, ...definition }) => {
+        const material = world.itemDefinitions[input.definitionId];
+        if (!material)
+          throw new Error('A placed-fire input requires its actual installed material.');
+        return [
+          definition.id,
+          {
+            ...definition,
+            input: { definition: definitionPin(material), quantity: input.quantity },
+          },
+        ];
+      }),
+    );
+  }
+  world.map.tiles = starterTiles(
+    normalizedSeed,
+    world.map.width,
+    world.map.height,
+    prepared
+      ? [
+          ...baseResourceReservations(prepared.opening, prepared.sources),
+          ...baseEcologyReservations(prepared.ecology),
+        ]
+      : [],
+  );
+  world.flightRoutes = starterFlightRoutes(world.map);
   world.map.spatial!.scenery = starterScenery(
     normalizedSeed,
     world.map.width,
@@ -259,14 +446,33 @@ export function createFreshBaseWorld(
   return world;
 }
 
-/** The full authored camp, surrounding encounters and finite starting possessions. */
+/** Ordinary startup and interactive Main creation share this exact initializer. */
 export function createWorld(
+  seed = FIRST_PLAYABLE.opening.seed,
+  accounts?: WorldCreationAccounts,
+  identity?: { worldId: string; playerId: string; residentId: string },
+  prepared: PreparedBaseMaterialWorld = FIRST_PLAYABLE,
+): WorldState {
+  return buildBaseWorld(seed, accounts, identity, prepared);
+}
+
+/** Charge/contact presets deliberately keep their small supplied camp and no ecology. */
+export function createBaseDiagnosticWorld(
+  seed: number,
+  accounts?: WorldCreationAccounts,
+): WorldState {
+  return buildBaseWorld(seed, accounts);
+}
+
+/** One composition owner; the diagnostic scope omits the selected Main bundle. */
+function buildBaseWorld(
   seed = 73,
   accounts: WorldCreationAccounts = {
     creatorAccountIds: ['local-player'],
     playerAccountId: 'local-player',
   },
   identity?: { worldId: string; playerId: string; residentId: string },
+  prepared?: PreparedBaseMaterialWorld,
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const { worldId, playerId, residentId } = identity ?? {
@@ -274,10 +480,52 @@ export function createWorld(
     playerId: PLAYER_ID,
     residentId: NPC_ID,
   };
-  const world = createFreshBaseWorld(normalizedSeed, accounts, { worldId, playerId });
+  const people = prepared ? prepared.people : BASE_PEOPLE;
+  const resolvedPeople = prepared
+    ? resolveOpeningPeople(prepared.opening.content, playerId, residentId)
+    : undefined;
+  const personBindings = {
+    ada: residentId,
+    mercenary: MERCENARY_ID,
+    mara: MARA_ID,
+    tavin: TAVIN_ID,
+  };
+  // Scenario owners retain their stable identities; bindings reject collisions rather
+  // than installing a second copy under an alternate role.
+  if (
+    resolvedPeople &&
+    (Object.entries(personBindings).some(
+      ([role, id]) => resolvedPeople[role as keyof typeof personBindings] !== id,
+    ) ||
+      resolvedPeople.kest !== 'kest' ||
+      resolvedPeople.orin !== 'orin')
+  )
+    throw new Error('Opening bindings disagree with their scenario owners.');
+  if (new Set([playerId, ...Object.values(personBindings)]).size !== 5)
+    throw new Error('Starting people require distinct actual identities.');
+  const world = createFreshBaseWorld(normalizedSeed, accounts, { worldId, playerId }, prepared);
   // Reserve application-assigned numbers before starting stock uses the shared sequence.
   // docs/identity-and-references.md#contract
-  for (const id of [playerId, residentId]) reserveEntityId(world, id);
+  for (const id of [
+    playerId,
+    residentId,
+    ...(resolvedPeople ? Object.values(resolvedPeople) : []),
+    ...(prepared?.opening.content.wildlife.map((row) => row.id) ?? []),
+    ...(prepared?.opening.content.hearths.map((row) => row.id) ?? []),
+    ...(prepared
+      ? [
+          prepared.opening.content.repairStock.id,
+          ...prepared.opening.content.repairStock.lots.flatMap((row) =>
+            row.positions.flatMap((_, index) => [
+              `${row.id}:ground:${index}`,
+              `${row.id}:lot:${index}`,
+            ]),
+          ),
+        ]
+      : []),
+  ])
+    reserveEntityId(world, id);
+  for (const source of prepared?.sources ?? []) reserveEntityId(world, source.id);
   world.memories = { [playerId]: [], [residentId]: [], [MERCENARY_ID]: [] };
   world.knowledge = { [playerId]: [], [residentId]: [], [MERCENARY_ID]: [] };
   const entities: Entity[] = [
@@ -298,33 +546,45 @@ export function createWorld(
       nameForm: 'proper',
       kind: 'player',
       placement: worldPlacement({ y: 0, x: 11, z: 13 }, 'terrain'),
-      actor: createActor(world, 'player', 76),
+      actor: createActor(
+        world,
+        'player',
+        prepared?.opening.content.conditions.player.fullness ?? 76,
+        {},
+        prepared?.opening.content.conditions.player.energy,
+      ),
     },
     {
       spatial: baseSpatial('person'),
       id: residentId,
-      name: 'Ada',
+      name: people.ada.name,
       appearance: 'study:ada-field-tunic',
       nameForm: 'proper',
       kind: 'npc',
       placement: worldPlacement({ y: 0, x: 13, z: 12 }, 'terrain'),
-      actor: createActor(world, 'npc', 35, ADA_IDENTITY),
+      actor: createActor(
+        world,
+        'npc',
+        prepared?.opening.content.conditions.ada.fullness ?? 35,
+        people.ada.identity,
+        prepared?.opening.content.conditions.ada.energy,
+      ),
     },
     {
       spatial: baseSpatial('person'),
       id: MERCENARY_ID,
-      name: 'Peacock Mercenary',
+      name: people.mercenary.name,
       nameForm: 'proper',
       kind: 'npc',
       appearance: 'mercenary-model',
       placement: worldPlacement({ y: 0, x: 12, z: 11 }, 'terrain'),
-      actor: createActor(world, 'npc', 76, {
-        initialGoals: [],
-        traits: [],
-        personality: 'Reserved and practical.',
-        backstory:
-          'I am a travelling mercenary. I make my living through travel and practical work.',
-      }),
+      actor: createActor(
+        world,
+        'npc',
+        prepared?.opening.content.conditions.mercenary.fullness ?? 76,
+        people.mercenary.identity,
+        prepared?.opening.content.conditions.mercenary.energy,
+      ),
     },
     {
       spatial: baseSpatial('object'),
@@ -429,15 +689,7 @@ export function createWorld(
         ),
       ),
       placement: worldPlacement({ y: 0, x: 16, z: 13 }, 'terrain'),
-      animal: {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 150 },
-      },
+      animal: baseAnimalResponse(world, 'hare', 150),
     },
     {
       spatial: baseSpatial('hare'),
@@ -452,15 +704,7 @@ export function createWorld(
         ),
       ),
       placement: worldPlacement({ y: 0, x: 21, z: 11 }, 'terrain'),
-      animal: {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 100 },
-      },
+      animal: baseAnimalResponse(world, 'hare', 100),
     },
     {
       spatial: baseSpatial('deer'),
@@ -476,15 +720,7 @@ export function createWorld(
         ),
       ),
       placement: worldPlacement({ y: 0, x: 21, z: 19 }, 'terrain'),
-      animal: {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 200 },
-      },
+      animal: baseAnimalResponse(world, 'deer', 200),
     },
     {
       id: 'lookout-cache',
@@ -517,15 +753,7 @@ export function createWorld(
           (definition) => definition.id === 'wilderness:energy',
         ),
       ),
-      animal: {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 0 },
-      },
+      animal: baseAnimalResponse(world, 'bird', 0, 'clearing-bird-loop'),
     },
   ];
   for (const entity of entities) {
@@ -546,12 +774,109 @@ export function createWorld(
       throw new Error('A starting person identity collides with an authored scene object.');
     entitySet(world.entities, entity.id, entity);
   }
-  for (const material of [...BASE_CANOPY_SCENE.kit, ...BASE_CANOPY_SCENE.variantStock])
+  for (const material of prepared
+    ? []
+    : [...BASE_CANOPY_SCENE.kit, ...BASE_CANOPY_SCENE.variantStock])
     for (let n = 0; n < material.quantity; n++) {
       const id = addItem(world, playerId, material.definitionId, 1);
       if (material.quantity > 1) entityGet(world.entities, id)!.name += ` ${n + 1}`;
     }
   const shieldRecipe = installKnownShieldMethod(world);
+  const installMaterialMethods = () => {
+    const installedMethods = new Map<string, string>();
+    const methods = prepared
+      ? prepared.methods
+      : BASE_MATERIAL_METHODS.map((definition) => ({
+          definition,
+          learning: 'authored-elementary' as const,
+        }));
+    for (const method of methods) {
+      const provenance = {
+        source: 'authored-world',
+        profile: { ...world.profile },
+      } as const;
+      const { recipe } =
+        'definition' in method
+          ? installFixedTransform(world, method.definition, provenance)
+          : installRecipe(world, method.candidate, provenance);
+      const sourceId = 'definition' in method ? method.definition.id : method.id;
+      installedMethods.set(sourceId, recipe.id);
+      for (const id of prepared ? [playerId] : [playerId, residentId, MERCENARY_ID])
+        learnRecipe(
+          world,
+          id,
+          recipe.id,
+          'authored',
+          'definition' in method ? method.definition.id : method.id,
+        );
+    }
+    if (prepared) {
+      const cooperation = world.socialOfferPolicy?.cooperation;
+      if (cooperation?.families.includes('help')) {
+        cooperation.helpMethods = prepared.cooperationHelpMethodRefs.map((sourceId) => {
+          const id = installedMethods.get(sourceId);
+          if (!id) throw new Error('A cooperative method is not installed.');
+          return recipeMechanicalPin(world.recipes[id]!);
+        });
+      }
+      const bindings = personBindings,
+        knownBindings = new Map(Object.entries(bindings));
+      for (const role of BASE_PERSON_ROLES) {
+        const actorId = bindings[role],
+          person = people[role];
+        if (!entityGet(world.entities, actorId)?.actor)
+          throw new Error('The authored starting person is absent.');
+        for (const [recipe, evidence] of [
+          [shieldRecipe, 'base:known-shield'],
+          [containerRecipe, 'base:known-woven-container'],
+          [riverMethod, 'base:river-line'],
+        ] as const)
+          learnRecipe(world, actorId, recipe.id, 'authored', evidence);
+        for (const methodId of person.startingKnowledge.methodRefs) {
+          const recipeId = installedMethods.get(methodId);
+          if (!recipeId) throw new Error('The starting person references an uninstalled method.');
+          learnRecipe(world, actorId, recipeId, 'authored', methodId);
+        }
+        for (const known of person.startingKnowledge.knownPeople) {
+          const targetId = knownBindings.get(known.personRole);
+          if (!targetId) throw new Error('The starting acquaintance role is not installed.');
+          const result = assignGivenName(
+            world,
+            actorId,
+            {
+              subjectId: targetId,
+              expectedRevision: world.observerIdentities?.[actorId]?.[targetId]?.revision ?? 0,
+              givenName: known.givenName,
+            },
+            [targetId],
+            true,
+          );
+          if (!result.ok) throw new Error(result.message);
+        }
+        if (person.startingKnowledge.knownPeople.length) {
+          const priorKnowledge = world.actorKnowledge?.[actorId];
+          const text =
+            (priorKnowledge?.general?.text ? priorKnowledge.general.text + '\n\n' : '') +
+            '# Acquaintances\n' +
+            person.startingKnowledge.knownPeople
+              .map((known) => 'I know ' + known.givenName + ' from spending time at this camp.')
+              .join('\n');
+          (world.actorKnowledge ??= {})[actorId] = {
+            ...priorKnowledge,
+            general: {
+              origin: 'authored-starting',
+              subjectId: null,
+              text,
+              revision: (priorKnowledge?.general?.revision ?? 0) + 1,
+              evidenceIds: [],
+            },
+          };
+        }
+      }
+      installBaseSupplyOpportunities(world, prepared.opportunities, installedMethods);
+    }
+  };
+  if (!prepared) installMaterialMethods();
   const containerRecipe = installRecipe(world, BASE_WOVEN_CONTAINER_METHOD, {
     source: 'authored-world',
     profile: { ...world.profile },
@@ -561,6 +886,7 @@ export function createWorld(
   for (const id of [playerId, residentId, MERCENARY_ID]) {
     startingRecipeKnowledge(world, id, shieldRecipe.id);
     learnRecipe(world, id, containerRecipe.id, 'authored', 'base:known-woven-container');
+    if (prepared && id === playerId) continue;
     addItem(world, id, 'stone_tool', 1);
     addItem(world, id, 'knife', 1);
     addItem(world, id, 'prepared_fiber', id === playerId ? 4 : 2);
@@ -593,12 +919,27 @@ export function createWorld(
   populateOuterWilderness(world);
   installFirstThreat(world);
   installExpeditions(world);
-  installMissingBelonging(world, playerId);
-  installWatchpost(world, createActor);
+  installMissingBelonging(world, playerId, people, prepared?.opening.content.conditions);
+  installWatchpost(
+    world,
+    createActor,
+    prepared?.opening.content.watchpostOffset,
+    prepared?.opening.content.conditions,
+  );
+  // Resolve the complete existing scene first: a new source cannot overwrite a
+  // person, item or later-installed encounter. Families then see actual sources.
+  if (prepared) {
+    installBaseOpeningContent(world, prepared.opening.content, resolvedPeople!);
+    installBaseCampSuggestions(world, prepared.opening.campReservations);
+    installBaseEcology(world, prepared.ecology);
+    installBaseMaterialSources(world, prepared.opening, prepared.sources);
+    installMaterialMethods();
+  }
   initializeIdentity(world);
   validateInventionAttribution(world);
   migrateCognition(world);
   validateSpatialWorld(world);
+  if (prepared) validateBaseOpeningPlacements(world);
   return world;
 }
 

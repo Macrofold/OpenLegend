@@ -13,9 +13,9 @@ import { findApproachPath, isWalkable } from '../../spatial.js';
 import { bodyProfile, spatialMap, supportedPosition, worldPlacement } from '../../spatial-state.js';
 import { recipeFamily } from '../../world-modules.js';
 import { supportsManualWork } from '../../living.js';
+import { manufactureInputQuantities } from '../../manufacture.js';
 import type { Entity, WorldState } from '../../types.js';
 import { BASE_OPENING_PROFILE, type BaseInitialWorldCandidate } from './initial-opening.js';
-import { NATIVE_PREPARATIONS } from './items.js';
 
 import type { OpeningReadiness } from '../../world-creation.js';
 
@@ -23,7 +23,8 @@ import type { OpeningReadiness } from '../../world-creation.js';
  * Server-native route results must remain bound to this exact candidate/request.
  */
 export function checkBaseOpeningReadiness(
-  candidate: Pick<BaseInitialWorldCandidate, 'opening' | 'harsh' | 'scene'> & {
+  candidate: Pick<BaseInitialWorldCandidate, 'harsh' | 'scene'> & {
+    opening: BaseInitialWorldCandidate['opening'] | 'main';
     player: { id: string };
   },
   world: WorldState,
@@ -161,7 +162,10 @@ export function checkBaseOpeningReadiness(
 
   const method = world.knowledge[player.id]
     ?.map((known) => world.recipes[known.recipeId])
-    .find((recipe) => recipe?.familyPin.id === 'base:woven-container');
+    .find(
+      (recipe) =>
+        recipe?.source.kind === 'family' && recipe.source.familyPin.id === 'base:woven-container',
+    );
   if (!method)
     finding(
       'known-making',
@@ -188,35 +192,50 @@ export function checkBaseOpeningReadiness(
         immediate.message,
       );
     else {
-      const inputs = new Map<string, number>();
-      for (const input of method.inputs)
-        inputs.set(input.definitionId, (inputs.get(input.definitionId) ?? 0) + input.quantity);
+      const inputs = manufactureInputQuantities(method);
+      const known = (id: string) =>
+        world.knowledge[player.id]
+          ?.map((row) => world.recipes[row.recipeId])
+          .find(
+            (recipe) =>
+              recipe?.source.kind === 'fixed-transform' && recipe.source.definition.id === id,
+          );
+      const cleaning = known('base:clean-fibers'),
+        twisting = known('base:twist-cord');
+      if (!cleaning || !twisting) {
+        finding(
+          'known-making',
+          'blocked',
+          'Required fiber preparation methods are not actually known.',
+        );
+        return result;
+      }
       const cordNeeded = Math.max(
         0,
-        (inputs.get(NATIVE_PREPARATIONS.cord.output) ?? 0) -
-          (totals.get(NATIVE_PREPARATIONS.cord.output) ?? 0),
+        (inputs.get(twisting.outputs[0]!.definition.id) ?? 0) -
+          (totals.get(twisting.outputs[0]!.definition.id) ?? 0),
       );
-      const cordBatches = Math.ceil(cordNeeded / NATIVE_PREPARATIONS.cord.outputQuantity);
+      const cordBatches = Math.ceil(cordNeeded / twisting.outputs[0]!.quantity);
       const fiberNeeded = Math.max(
         0,
-        (inputs.get(NATIVE_PREPARATIONS.fiber.output) ?? 0) +
-          cordBatches * NATIVE_PREPARATIONS.cord.inputQuantity -
-          (totals.get(NATIVE_PREPARATIONS.fiber.output) ?? 0),
+        (inputs.get(cleaning.outputs[0]!.definition.id) ?? 0) +
+          cordBatches * twisting.inputs[0]!.quantity -
+          (totals.get(cleaning.outputs[0]!.definition.id) ?? 0),
       );
-      const fiberBatches = Math.ceil(fiberNeeded / NATIVE_PREPARATIONS.fiber.outputQuantity);
+      const fiberBatches = Math.ceil(fiberNeeded / cleaning.outputs[0]!.quantity);
       const rawNeeded = Math.max(
         0,
-        fiberBatches * NATIVE_PREPARATIONS.fiber.inputQuantity -
-          (totals.get(NATIVE_PREPARATIONS.fiber.input) ?? 0),
+        fiberBatches * cleaning.inputs[0]!.quantity -
+          (totals.get(cleaning.inputs[0]!.definitionId) ?? 0),
       );
       const otherMissing = [...inputs].some(
         ([definitionId, quantity]) =>
-          definitionId !== NATIVE_PREPARATIONS.fiber.output &&
-          definitionId !== NATIVE_PREPARATIONS.cord.output &&
+          definitionId !== cleaning.outputs[0]!.definition.id &&
+          definitionId !== twisting.outputs[0]!.definition.id &&
           (totals.get(definitionId) ?? 0) < quantity,
       );
       const supply = rawNeeded
-        ? sourceQuantity(NATIVE_PREPARATIONS.fiber.input, rawNeeded)
+        ? sourceQuantity(cleaning.inputs[0]!.definitionId, rawNeeded)
         : { status: 'ready' as const, quantity: 0 };
       finding(
         'known-making',
@@ -232,7 +251,7 @@ export function checkBaseOpeningReadiness(
     }
   }
 
-  if (candidate.opening === 'inhabited') {
+  if (candidate.opening === 'inhabited' || candidate.opening === 'main') {
     const swing = recipeFamily(world, 'base:swing');
     const invention =
       !!swing &&
@@ -275,26 +294,89 @@ export function checkBaseOpeningReadiness(
     );
     const heatAccess = anyAccess(
       candidate.scene
-        .filter((scene) => scene.kind === 'fire' && scene.fuelSeconds > 0)
+        .filter(
+          (scene) =>
+            scene.kind === 'fire' && (candidate.opening === 'main' || scene.fuelSeconds > 0),
+        )
         .map((scene) => entityGet(world.entities, scene.id)!),
     );
     finding(
       'cooking-access',
       heatAccess,
       heatAccess === 'ready'
-        ? 'A lit finite-fuel fire has a physically reachable cooking stance.'
+        ? candidate.opening === 'main'
+          ? 'A cold public hearth has a reachable working stance; actual fuel and lighting remain necessary.'
+          : 'A lit finite-fuel fire has a physically reachable cooking stance.'
         : heatAccess === 'incomplete'
           ? 'The required route to cooking heat is incomplete.'
           : 'The hunting-food loop needs reachable supported cooking heat.',
     );
-    const toolMaterials = (totals.get('prepared_fiber') ?? 0) > 0 && (totals.get('cord') ?? 0) > 0;
-    finding(
-      'tool-inputs',
-      toolMaterials ? 'ready' : 'blocked',
-      toolMaterials
-        ? 'Actual pouch and binding materials are present for a supported hunting-tool proposal; the generated tool’s exact requirements remain to be checked.'
-        : 'The advertised invention opportunity is missing its required supported pouch or binding materials.',
-    );
+    if (candidate.opening === 'main') {
+      const required = [
+        [
+          'cutting-stone',
+          [
+            ['stone', 1],
+            ['knappable_flint', 1],
+          ],
+          'stone_tool',
+        ],
+        [
+          'fire-materials',
+          [
+            ['stone', 4],
+            ['wood', 2],
+            ['raw_fiber', 1],
+          ],
+          undefined,
+        ],
+        [
+          'camp-materials',
+          [
+            ['straight_pole', 30],
+            ['raw_fiber', 94],
+          ],
+          undefined,
+        ],
+      ] as const;
+      for (const [id, needs, output] of required) {
+        const known =
+          !output ||
+          (world.knowledge[player.id] ?? []).some((k) =>
+            world.recipes[k.recipeId]?.outputs.some((port) => port.definition.id === output),
+          );
+        const supplies = needs.map(([definition, quantity]) =>
+          sourceQuantity(definition, quantity),
+        );
+        const status =
+          !known || supplies.some((s) => s.status === 'blocked')
+            ? 'blocked'
+            : supplies.some((s) => s.status === 'incomplete')
+              ? 'incomplete'
+              : 'ready';
+        finding(
+          id,
+          status,
+          !known
+            ? 'The first cutting tool has no actually known making method.'
+            : status === 'ready'
+              ? 'The actual finite source quantities have reachable ordinary gathering approaches. This establishes prerequisites, not completed work or future availability.'
+              : status === 'incomplete'
+                ? 'Required source approaches are still incomplete.'
+                : 'The selected natural progression lacks sufficient accessible material.',
+        );
+      }
+    } else {
+      const toolMaterials =
+        (totals.get('prepared_fiber') ?? 0) > 0 && (totals.get('cord') ?? 0) > 0;
+      finding(
+        'tool-inputs',
+        toolMaterials ? 'ready' : 'blocked',
+        toolMaterials
+          ? 'Actual pouch and binding materials are present for a supported hunting-tool proposal; the generated tool’s exact requirements remain to be checked.'
+          : 'The advertised invention opportunity is missing its required supported pouch or binding materials.',
+      );
+    }
   }
   const foodNavigationStart = result.navigation.length;
   const food =

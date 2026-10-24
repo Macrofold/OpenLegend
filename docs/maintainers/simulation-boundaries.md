@@ -2,6 +2,8 @@
 
 This is a running design inventory for [simulation time](../simulation-time.md), not a second task tracker. PF13 owns the current delivery; PF/SW/EPR and feature owners retain future implementation tasks. Add a row when a mechanic gains a useful exact deadline, validity bound or unresolved coupling. A deadline predicts when work may matter; it never authorizes an effect or proves that an arbitrary larger interval is safe.
 
+The animal continuation's participant-owned deadline/invalidation design is complete in [PF09](performance.md#pf09-animal-execution-continuation), with [concrete contracts](../projects/performance-overhaul/animal-execution.md#41-retained-preparation-and-invalidation). It reuses this catalogue's existing families; it does not implement a universal scheduler or close unsupported coupled-law work. Runtime delivery remains in PF09.
+
 ## How to extend the catalogue
 
 For each scenario record: authoritative inputs; what remains constant; earliest deadline or conservative bound; invalidators; required boundary work; implementation/evidence status; and its existing owner. Use game-time deadlines for mechanics, monotonic real time for host/network/reading budgets, and rendering time for appearance. Never turn a timer unit into a universal update frequency. Inputs with unknown evolution need a bounded fallback rather than a speculative certificate.

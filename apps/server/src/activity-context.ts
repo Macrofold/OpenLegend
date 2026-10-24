@@ -1,5 +1,5 @@
 import { entityGet } from '@open-legend/domain';
-import { isCookingInputField, preparationDefinition } from '@open-legend/domain';
+import { isNativeInputField, preparationDefinition } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
   acquiredActivities,
@@ -17,7 +17,8 @@ import {
   availableItemQuantity,
   observerDescription,
   possessionItems,
-  NATIVE_PREPARATIONS,
+  manufactureInputQuantities,
+  prepareManufactureStock,
   type ActivityOutput,
   type ActivityMethod,
   type ActivityNode,
@@ -40,6 +41,7 @@ export function activityChoiceView(
   bindings: Record<string, ActivityBinding>,
   root = method.root,
   actualOutputs: Record<string, ActivityOutput[]> = {},
+  cancelled?: ReadonlySet<string>,
 ): ActivityView {
   const products = new Map<string, Omit<ActivityOutput, 'itemId'>>();
   const index = (node: ActivityNode): void => {
@@ -55,7 +57,7 @@ export function activityChoiceView(
   index(method.root);
   const futureKeys = new Set<string>();
   const upcoming = (node: ActivityNode): void => {
-    if (node.kind === 'invoke') futureKeys.add(node.key);
+    if (node.kind === 'invoke' && !cancelled?.has(node.key)) futureKeys.add(node.key);
     if (node.kind === 'sequence') node.children.forEach(upcoming);
     if (node.kind === 'branch') {
       upcoming(node.yes);
@@ -67,8 +69,22 @@ export function activityChoiceView(
   const availableOutputs = Object.fromEntries(
     Object.entries(actualOutputs).filter(([key]) => !futureKeys.has(key)),
   );
+  // A cancelled producer can retain an earlier actual result, but promises no
+  // new output. Its absence must read like unavailable output, not future stock.
+  for (const key of cancelled ?? []) availableOutputs[key] ??= [];
   const view = (node: ActivityNode): ActivityView => {
     if (node.kind === 'invoke') {
+      if (cancelled?.has(node.key))
+        return {
+          name: node.name,
+          facts: [
+            {
+              name: 'cancelled',
+              value: 'This step will not run again in this activity.',
+              critical: true,
+            },
+          ],
+        };
       const outputs: Record<
         string,
         { port: string; itemId: string; definitionId: string; quantity: number }[]
@@ -232,6 +248,18 @@ export function activityChoiceView(
   const result = view(root);
   if (root.kind !== 'invoke') {
     type Demand = { quantity: number; available?: number; name: string; future: boolean };
+    let freeStock: Map<string, number> | undefined;
+    const freeQuantity = (definitionId: string): number => {
+      if (!freeStock) {
+        freeStock = new Map();
+        for (const lot of prepareManufactureStock(world, actorId).byId.values())
+          freeStock.set(
+            lot.item.definitionId,
+            (freeStock.get(lot.item.definitionId) ?? 0) + lot.available,
+          );
+      }
+      return freeStock.get(definitionId) ?? 0;
+    };
     const needs = (node: ActivityNode): Map<string, Demand> => {
       const totals = new Map<string, Demand>();
       const combine = (other: Map<string, Demand>, maximum = false) => {
@@ -259,27 +287,17 @@ export function activityChoiceView(
               : {}),
           });
       else if (node.kind === 'invoke') {
+        if (cancelled?.has(node.key)) return totals;
         const literal = (field: string) => {
           const arg = node.args[field];
           return arg && 'literal' in arg ? String(arg.literal) : '';
         };
         const recipe = node.command === 'craft' ? world.recipes[literal('recipeId')] : undefined;
-        const preparation =
-          node.command === 'prepare'
-            ? NATIVE_PREPARATIONS[literal('preparation') as keyof typeof NATIVE_PREPARATIONS]
-            : undefined;
-        const inputs =
-          recipe?.inputs ??
-          (preparation
-            ? [{ definitionId: preparation.input, quantity: preparation.inputQuantity }]
-            : []);
-        for (const input of inputs)
-          totals.set(`definition:${input.definitionId}`, {
-            quantity: input.quantity,
-            available: [...possessionItems(world, actorId)]
-              .filter((item) => item.definitionId === input.definitionId)
-              .reduce((sum, item) => sum + availableItemQuantity(world, item.id), 0),
-            name: world.itemDefinitions[input.definitionId]?.name ?? 'required material',
+        for (const [definitionId, quantity] of recipe ? manufactureInputQuantities(recipe) : [])
+          totals.set(`definition:${definitionId}`, {
+            quantity,
+            available: freeQuantity(definitionId),
+            name: world.itemDefinitions[definitionId]?.name ?? 'required material',
             future: false,
           });
         const field = ['eat', 'drop'].includes(node.command)
@@ -287,12 +305,10 @@ export function activityChoiceView(
           : node.command === 'hunt'
             ? 'ammoItemId'
             : undefined;
-        const selectedFields =
-          node.command === 'cook'
-            ? Object.keys(node.args).filter(isCookingInputField)
-            : field
-              ? [field]
-              : [];
+        const selectedFields = [
+          ...Object.keys(node.args).filter(isNativeInputField),
+          ...(field ? [field] : []),
+        ];
         const cooking =
           node.command === 'cook'
             ? preparationDefinition(world, {
@@ -344,9 +360,7 @@ export function activityChoiceView(
               available: item
                 ? node.command === 'cook'
                   ? availableItemQuantity(world, item.id)
-                  : [...possessionItems(world, actorId)]
-                      .filter((other) => other.definitionId === item.definitionId)
-                      .reduce((sum, other) => sum + availableItemQuantity(world, other.id), 0)
+                  : freeQuantity(item.definitionId)
                 : 0,
               name: item
                 ? (world.itemDefinitions[item.definitionId]?.name ?? 'carried item')
@@ -554,13 +568,21 @@ export function remainingActivityText(
       value: `${execution.archivedSteps} earlier steps are recorded separately; they are not included in this summary`,
       critical: true,
     });
-  if (execution?.control) {
+  if (execution?.control?.kind === 'counted') {
     const budget = execution.control.budget;
     const unit =
       activityHostForCommand(world, budget.command)?.definition.spending?.unit ?? 'units';
     facts.push({
       name: 'chosen limits and actual progress',
       value: `Stop at simulation time ${execution.control.deadline}. Used ${execution.spent ?? 0} of at most ${budget.maximumSpent} ${unit}; admitted ${execution.attempts ?? 0} of at most ${budget.maximumAttempts} attempts.${execution.interrupted ? ' Attendance was interrupted; continuous care cannot be claimed.' : ''} Completed transfers stay in their actual destination.`,
+      critical: true,
+    });
+  }
+  if (execution?.control?.kind === 'finite') {
+    const subjects = Object.values(execution.control.subjects);
+    facts.push({
+      name: 'chosen stopping conditions',
+      value: `Stop no later than simulation time ${execution.control.deadline}.${execution.control.boundary ? ` Stay within ${execution.control.boundary.radius} m of the chosen starting position.` : ''}${subjects.some((subject) => !subject.observationOnly) ? ' Stop if a required visible participant is lost or changes physical life.' : ''}${subjects.some((subject) => subject.observationOnly) ? ' Losing sight of a person relevant only to the chosen purpose prompts reconsideration; it does not stop this work.' : ''}${execution.control.stopWithin ? ` Stop when the chosen participant comes within ${execution.control.stopWithin.distance} m with a clear interaction path; no attack follows.` : ''}${execution.interrupted ? ' The activity was interrupted.' : ''}`,
       critical: true,
     });
   }
@@ -578,6 +600,7 @@ export function remainingActivityText(
     execution &&
     (execution.request ??
       (execution.methodId ? world.actionExperience.methods[execution.methodId] : undefined));
+  const cancelled = execution?.cancelledKeys && new Set(execution.cancelledKeys);
   if (execution && method)
     children.push(
       ...[...execution.pending]
@@ -590,6 +613,7 @@ export function remainingActivityText(
             execution.bindings,
             frame.node,
             execution.outputs,
+            cancelled,
           ),
         ),
     );

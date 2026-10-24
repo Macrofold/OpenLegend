@@ -1,6 +1,6 @@
 # First-playable cooperation — limits and constraints
 
-The [people profile](../worlds/base/first-playable-people.md) and [technical design](../projects/first-playable-cooperation-tech-design.md) select these first-playable policies. **Design selected, runtime and tuning evidence open, 2026-10-17.** Current social/gift/travel limits remain in [base-world limits](base-world.md) until the new profile is implemented. Exact identity, current permission, once-only effects and private evidence are integrity requirements, not discretionary restrictions to relax.
+The [people profile](../worlds/base/first-playable-people.md) and [technical design](../projects/first-playable-cooperation-tech-design.md) select these first-playable policies. **Runtime implemented; combined technical, independent-behavior and player qualification remain open in [CP](../maintainers/first-playable-cooperation.md).** Existing social/gift/travel limits remain in [base-world limits](base-world.md). Exact identity, current permission, once-only effects and private evidence are integrity requirements, not discretionary restrictions to relax.
 
 ## CPL01 — Four authored initially non-hostile residents
 

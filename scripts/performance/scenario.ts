@@ -1,11 +1,32 @@
-import { entityGet, entityHas, entitySet, entityValues } from '../../packages/domain/src/index.js';
+import {
+  entityGet,
+  entityHas,
+  entitySet,
+  entityValues,
+  executeCommand,
+  setSpatialPosition,
+  updateWorld,
+  worldSupport,
+  activelyParticipates,
+} from '../../packages/domain/src/index.js';
+import { commitContactImpact } from '../../packages/domain/src/contact-defense.js';
+import { emit } from '../../packages/domain/src/events.js';
+import { reconcileNativeExposure } from '../../packages/domain/src/native-response-controller.js';
+import { bodyProfile } from '../../packages/domain/src/spatial-state.js';
+import { occupiedBodySweepClear } from '../../packages/domain/src/spatial.js';
+import { NATIVE_STRIKES } from '../../packages/domain/src/worlds/base/strikes.js';
 import {
   baseSpatial,
   BASE_BODY_PROFILES,
 } from '../../packages/domain/src/worlds/base/spatial-definitions.js';
 import { worldPlacement } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
-import { canStand, resolveSupport, type SurfacePoint } from '@open-legend/spatial';
+import {
+  canStand,
+  resolveSupport,
+  type SurfacePoint,
+  type SpatialBlocker,
+} from '@open-legend/spatial';
 import { spatialMap } from '../../packages/domain/src/spatial-state.js';
 import {
   createWorld,
@@ -15,11 +36,25 @@ import {
   type WorldState,
 } from '../../packages/domain/src/index.js';
 
+const alarmStanceBearings = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+  [Math.SQRT1_2, Math.SQRT1_2],
+  [-Math.SQRT1_2, Math.SQRT1_2],
+  [Math.SQRT1_2, -Math.SQRT1_2],
+  [-Math.SQRT1_2, -Math.SQRT1_2],
+] as const;
+
 export interface Scenario {
   input?: string;
   seed: number;
   people: number;
   animals: number;
+  /** Controlled native contact impacts alarm this fraction of the added deer, during fixture setup. */
+  nativeAlarmPercent: number;
+  nativePressure: 'none' | 'converging-people' | 'geometry-edits';
   /** Synthetic flight bodies beyond the starter bird, in an isolated fixture. */
   birds: number;
   mapSize?: number;
@@ -71,6 +106,8 @@ export function parseScenario(value: unknown): Scenario {
         'seed',
         'people',
         'animals',
+        'nativeAlarmPercent',
+        'nativePressure',
         'birds',
         'mapSize',
         'groupDistance',
@@ -89,8 +126,17 @@ export function parseScenario(value: unknown): Scenario {
       throw new Error(`Unknown scenario field: ${key}`);
   if (v.input !== undefined && typeof v.input !== 'string')
     throw new Error('input must be a file path.');
-  if (v.layout !== undefined && !['crowded', 'scattered'].includes(String(v.layout)))
+  if (
+    v.layout !== undefined &&
+    (typeof v.layout !== 'string' || !['crowded', 'scattered'].includes(v.layout))
+  )
     throw new Error('Unknown layout.');
+  if (
+    v.nativePressure !== undefined &&
+    (typeof v.nativePressure !== 'string' ||
+      !['none', 'converging-people', 'geometry-edits'].includes(v.nativePressure))
+  )
+    throw new Error('Unknown native pressure workload.');
   if (v.objects !== undefined && !Array.isArray(v.objects))
     throw new Error('objects must be an array.');
   const objects = ((v.objects ?? []) as Record<string, unknown>[]).map((group, index) => {
@@ -124,6 +170,8 @@ export function parseScenario(value: unknown): Scenario {
     seed: integer(v.seed, 73, 1, 0x7fffffff),
     people: integer(v.people, 0, 0, 1000),
     animals: integer(v.animals, 0, 0, 10000),
+    nativeAlarmPercent: integer(v.nativeAlarmPercent, 0, 0, 100),
+    nativePressure: (v.nativePressure ?? 'none') as Scenario['nativePressure'],
     birds: integer(v.birds, 0, 0, 1000),
     ...(v.mapSize === undefined ? {} : { mapSize: integer(v.mapSize, 96, 28, 256) }),
     groupDistance: integer(v.groupDistance, 0, 0, 192),
@@ -147,6 +195,7 @@ export function parseScenario(value: unknown): Scenario {
   if (
     (scenario.people +
       scenario.animals +
+      (scenario.nativePressure === 'converging-people' ? 4 : 0) +
       scenario.birds +
       objects.reduce((n, g) => n + g.count, 0)) *
       (scenario.groupDistance ? 2 : 1) >
@@ -156,7 +205,156 @@ export function parseScenario(value: unknown): Scenario {
   return scenario;
 }
 
-export function populateScenario(input: WorldState | undefined, scenario: Scenario): WorldState {
+export interface ScenarioPopulation {
+  world: WorldState;
+  addedAnimalIds: string[];
+}
+
+export type NativePressureFixture =
+  | {
+      kind: 'converging-people';
+      walkers: Array<{ id: string; destinations: [SurfacePoint, SurfacePoint] }>;
+    }
+  | { kind: 'geometry-edits'; screen: SpatialBlocker };
+
+/** Finite, explicit diagnostic interventions, never autonomous game behavior. */
+export function prepareNativePressure(
+  input: WorldState,
+  scenario: Scenario,
+  animalIds: readonly string[],
+): { world: WorldState; fixture?: NativePressureFixture } {
+  if (scenario.nativePressure === 'none') return { world: input };
+  if (scenario.groupDistance) throw new Error('Native pressure uses one exact cohort.');
+  for (const animalId of animalIds) {
+    const origin = worldPosition(entityGet(input.entities, animalId)!);
+    if (scenario.nativePressure === 'geometry-edits') {
+      const screen: SpatialBlocker = {
+        id: 'profile-pressure-screen',
+        bounds: {
+          min: { x: origin.x + 2.8, y: origin.y - 0.05, z: origin.z - 3 },
+          max: { x: origin.x + 3, y: origin.y + 0.45, z: origin.z + 3 },
+        },
+        nonWalkable: true,
+        movement: true,
+        sight: false,
+        acousticTransmission: 1,
+        material: 'wood',
+      };
+      if (!pressureScreenFits(input, screen)) continue;
+      const world = updateWorld(input, (draft) => {
+        draft.map.spatial.blockers.push(screen);
+        draft.map.spatial.revision++;
+      });
+      return { world, fixture: { kind: 'geometry-edits', screen } };
+    }
+    let world = input;
+    const walkers: Extract<NativePressureFixture, { kind: 'converging-people' }>['walkers'] = [];
+    for (const side of [-1, 1])
+      for (const lateral of [-1.2, 1.2]) {
+        const map = spatialMap(world),
+          point = (x: number) => resolveSupport(map, { x, y: origin.y, z: origin.z + lateral });
+        const from = point(origin.x + side * 8),
+          near = point(origin.x + side * 2),
+          far = point(origin.x - side * 2);
+        if (!from || !near || !far) break;
+        const spawned = spawnWorldEntity(world, {
+          id: `profile-pressure-person:${walkers.length}`,
+          type: 'person',
+          position: from,
+          person: {
+            name: `Pressure walker ${walkers.length + 1}`,
+            personality: '',
+            backstory: 'Controlled two-group movement workload.',
+            traitIds: [],
+            initialGoals: [],
+          },
+        });
+        if (!spawned.outcome.ok) break;
+        const id = spawned.outcome.entityId!,
+          body = entityGet(spawned.world.entities, id)!;
+        if (
+          ![near, far].every(
+            (p) =>
+              canStand(spatialMap(spawned.world), p, bodyProfile(body)) &&
+              occupiedBodySweepClear(spawned.world, body, p, p),
+          )
+        )
+          break;
+        world = freezeWorld(spawned.world);
+        walkers.push({ id, destinations: [near, far] });
+      }
+    if (walkers.length === 4) return { world, fixture: { kind: 'converging-people', walkers } };
+  }
+  throw new Error('The exact native pressure workload has no valid admitted layout.');
+}
+
+function pressureScreenFits(world: WorldState, screen: SpatialBlocker): boolean {
+  if (
+    screen.bounds.min.x < 0 ||
+    screen.bounds.max.x > world.map.width - 1 ||
+    screen.bounds.min.z < 0 ||
+    screen.bounds.max.z > world.map.height - 1
+  )
+    return false;
+  const map = spatialMap(world),
+    spatial = {
+      ...map.spatial,
+      blockers: [...map.spatial.blockers.filter((b) => b.id !== screen.id), screen],
+    };
+  return entityValues(world.entities).every((entity) => {
+    if (!entity.actor || !activelyParticipates(entity)) return true;
+    const support = worldSupport(entity),
+      point = worldPosition(entity),
+      body = bodyProfile(entity);
+    if (
+      !support ||
+      point.x + body.radius < screen.bounds.min.x ||
+      point.x - body.radius > screen.bounds.max.x ||
+      point.z + body.radius < screen.bounds.min.z ||
+      point.z - body.radius > screen.bounds.max.z
+    )
+      return true;
+    return canStand({ ...map, spatial }, { ...point, surfaceId: support }, body);
+  });
+}
+
+export function applyNativePressure(
+  world: WorldState,
+  fixture: NativePressureFixture,
+  phase: number,
+  step = 0,
+): WorldState {
+  if (fixture.kind === 'converging-people') {
+    for (const walker of fixture.walkers) {
+      const result = executeCommand(world, {
+        id: `profile-pressure-move:${phase}:${walker.id}`,
+        actorId: walker.id,
+        type: 'move',
+        destination: walker.destinations[phase % 2]!,
+      });
+      if (!result.outcome.ok)
+        throw new Error(`Native pressure movement refused: ${result.outcome.code}.`);
+      world = freezeWorld(result.world);
+    }
+    return world;
+  }
+  const screen = structuredClone(fixture.screen),
+    offset = step % 2 ? 0 : 0.2;
+  screen.bounds.min.x += offset;
+  screen.bounds.max.x += offset;
+  if (!pressureScreenFits(world, screen)) return world;
+  return updateWorld(world, (draft) => {
+    const index = draft.map.spatial.blockers.findIndex((b) => b.id === screen.id);
+    if (index < 0) throw new Error('The pressure screen was removed.');
+    draft.map.spatial.blockers[index] = screen;
+    draft.map.spatial.revision++;
+  });
+}
+
+export function populateScenario(
+  input: WorldState | undefined,
+  scenario: Scenario,
+): ScenarioPopulation {
   let world = input ?? createWorld(scenario.seed);
   world = structuredClone(world);
   if (scenario.mapSize) {
@@ -169,10 +367,10 @@ export function populateScenario(input: WorldState | undefined, scenario: Scenar
     terrain.maxX = terrain.maxZ = size - 1;
     world.map.spatial.revision++;
   }
-  world = populateGroup(world, scenario, 0, 'near');
-  return scenario.groupDistance
-    ? populateGroup(world, scenario, scenario.groupDistance, 'far')
-    : world;
+  const near = populateGroup(world, scenario, 0, 'near');
+  if (!scenario.groupDistance) return near;
+  const far = populateGroup(near.world, scenario, scenario.groupDistance, 'far');
+  return { world: far.world, addedAnimalIds: [...near.addedAnimalIds, ...far.addedAnimalIds] };
 }
 
 function populateGroup(
@@ -180,7 +378,8 @@ function populateGroup(
   scenario: Scenario,
   offset: number,
   groupId: string,
-): WorldState {
+): ScenarioPopulation {
+  const addedAnimalIds: string[] = [];
   world.paused = false;
   const player = worldPosition(entityValues(world.entities).find((e) => e.kind === 'player')) ?? {
     y: 0,
@@ -239,6 +438,7 @@ function populateGroup(
       });
       if (result.outcome.ok) {
         world = freezeWorld(result.world);
+        if (index >= scenario.people) addedAnimalIds.push(result.outcome.entityId!);
         accepted = true;
         break;
       }
@@ -267,6 +467,7 @@ function populateGroup(
       body: { ...bird!.spatial.body },
       speed: 0.6,
       climbSpeed: 0.3,
+      continuation: { kind: 'loop' },
       points: [
         { position: { x, y, z }, waitSeconds: 0 },
         { position: { x: x + 12, y, z }, waitSeconds: 0 },
@@ -315,5 +516,92 @@ function populateGroup(
       });
     }
   }
-  return world;
+  return {
+    world: prepareAnimalAlarms(world, scenario, groupId, addedAnimalIds),
+    addedAnimalIds,
+  };
+}
+
+/** Explicit generated-workload construction, not travel or an ordinary world opening.
+ * Every alarm uses the native contact-impact owner at a supported in-range stance.
+ * This controlled stress setup is not an ordinary hunting or attack-duration test.
+ * docs/projects/combat-and-threat-responses-tech-design.md#active-alarm-density-workload */
+function prepareAnimalAlarms(
+  world: WorldState,
+  scenario: Scenario,
+  groupId: string,
+  addedAnimalIds: readonly string[],
+): WorldState {
+  const count = Math.ceil((addedAnimalIds.length * scenario.nativeAlarmPercent) / 100);
+  if (!count) return world;
+  const performer = entityValues(world.entities).find((entity) => entity.kind === 'player');
+  if (!performer?.actor || performer.actor.action)
+    throw new Error('Alarm fixtures require an idle player performer.');
+  const performerId = performer.id,
+    original = { ...worldPosition(performer) },
+    originalSupport =
+      performer.placement?.mode === 'world' ? performer.placement.supportSurfaceId : null;
+  for (let index = 0; index < count; index++) {
+    const targetId = addedAnimalIds[index]!;
+    const actor = entityGet(world.entities, performerId)!,
+      target = entityGet(world.entities, targetId)!,
+      origin = worldPosition(target),
+      performerBody = bodyProfile(actor),
+      clearance = performerBody.radius + bodyProfile(target).radius + 0.2,
+      map = spatialMap(world);
+    const strike = world.nativeStrikes?.[NATIVE_STRIKES.punch!.id];
+    if (!strike)
+      throw new Error('The generated alarm fixture requires its installed unarmed method.');
+    let stance: SurfacePoint | undefined;
+    // Nearby bodies can close the inner ring while a real in-range stance remains clear.
+    for (const distance of [clearance, strike.range * 0.95]) {
+      for (const [dx, dz] of alarmStanceBearings) {
+        const point = resolveSupport(map, {
+          x: origin.x + dx * distance,
+          y: origin.y,
+          z: origin.z + dz * distance,
+        });
+        if (
+          point &&
+          canStand(map, point, performerBody) &&
+          occupiedBodySweepClear(world, actor, point, point)
+        ) {
+          stance = point;
+          break;
+        }
+      }
+      if (stance) break;
+    }
+    if (!stance) throw new Error(`No clear alarm-fixture stance for added animal ${index}.`);
+    world = updateWorld(world, (draft) => {
+      setSpatialPosition(draft, entityGet(draft.entities, performerId)!, stance, stance.surfaceId);
+    });
+    world = updateWorld(world, (draft) => {
+      const source = entityGet(draft.entities, performerId)!,
+        target = entityGet(draft.entities, targetId)!;
+      const events: import('../../packages/domain/src/types.js').WorldEvent[] = [];
+      const impact = commitContactImpact(
+        draft,
+        source,
+        target,
+        strike.damage,
+        `profile-alarm:${groupId}:${index}`,
+        events,
+      );
+      emit(draft, events, 'struck', 'The controlled contact blow connected.', source, targetId, {
+        definitionId: strike.id,
+        damage: impact.damage,
+        contactInjury: true,
+        targetReference: true,
+      });
+      reconcileNativeExposure(draft, target);
+    });
+    if (!entityGet(world.entities, targetId)?.animal?.episode)
+      throw new Error(`Native contact did not alarm added animal ${index}.`);
+  }
+  return updateWorld(world, (draft) => {
+    setSpatialPosition(draft, entityGet(draft.entities, performerId)!, original, originalSupport);
+    for (let index = 0; index < count; index++)
+      reconcileNativeExposure(draft, entityGet(draft.entities, addedAnimalIds[index]!)!);
+  });
 }

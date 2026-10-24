@@ -4,17 +4,18 @@ import { knowledgeDocument, characterCount, recognizesSubject } from '@open-lege
 import {
   awarenessBindsSubject,
   entityLabel,
-  entityReferenceMap,
   entityHandles,
+  experienceEntityReferences,
 } from './entity-references.js';
 import {
   seesEntity,
   speechDescription,
+  speechRoles,
   type Awareness,
   type WorldState,
 } from '@open-legend/domain';
 import { gameTime } from './recall.js';
-import type { JsonValue } from '@open-legend/ai';
+import { experienceForModel, experienceModelBindings } from './perceived-context.js';
 import type { WorldService } from './world-service.js';
 
 /** Attribution comes from event-time awareness, never a name guessed from a quote. */
@@ -32,9 +33,8 @@ export function responseTrigger(
   if (!aware) return `Situation change: ${fallback}`;
   const triggerKind = aware.triggerKind;
   const time = `(${gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours)})`;
-  if (aware.eventType === 'speech') {
-    if (!aware.speech) throw new Error('Speech is missing its committed listener perspective.');
-    return `${triggerKind === 'addressed_speech' ? 'Addressed speech (to me)' : triggerKind === 'self_event' ? 'My own speech' : 'Nearby speech'}: ${speechDescription(aware.speech)} ${time}`;
+  if (aware.speech) {
+    return `${triggerKind === 'addressed_speech' ? 'Addressed speech (to me)' : triggerKind === 'self_event' ? 'My own speech' : 'Nearby speech'}: ${speechDescription(aware)} ${time}`;
   }
   return `${triggerKind === 'directed_action' ? 'Action directed at me' : aware.modality === 'internal' ? 'Internal change' : 'World change'}: ${aware.content ?? aware.text} ${time}`;
 }
@@ -45,7 +45,7 @@ export function responseTriggerContext(
   actorId: string,
   eventId?: string,
   evidence?: Awareness[],
-): Record<string, JsonValue> | undefined {
+): Record<string, unknown> | undefined {
   if (!eventId) return undefined;
   const world = service.world;
   const aware = (evidence ?? world.experience?.awareness[actorId])?.find(
@@ -56,31 +56,32 @@ export function responseTriggerContext(
     aware.sourceId && awarenessBindsSubject(world, actorId, aware, aware.sourceId)
       ? entityGet(world.entities, aware.sourceId)
       : undefined;
-  const recipientId = aware.intendedRecipientId ?? aware.targetId;
+  const recipientId = aware.targetId;
   const recipient =
     recipientId && awarenessBindsSubject(world, actorId, aware, recipientId)
       ? entityGet(world.entities, recipientId)
       : undefined;
   const observer = entityGet(world.entities, actorId);
   return {
-    eventId: aware.eventId,
+    experience: experienceForModel(
+      { source: 'awareness', value: aware },
+      experienceModelBindings(world, actorId, { source: 'awareness', value: aware }, 'trigger'),
+    ),
     eventTime: gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours),
     ageGameSeconds: Math.max(0, world.simTime - aware.at),
     observerRelationship: aware.triggerKind ?? 'observed_event',
     // Omit inapplicable roles: strict AI serialization rejects undefined before dispatch.
     // docs/architecture.md#cognition-attribution-and-pacing
-    ...(aware.eventType === 'speech'
+    ...(aware.speech
       ? {
-          speaker: source ? entityLabel(world, source, actorId) : 'Unknown speaker',
-          intendedRecipient: recipient
-            ? entityLabel(world, recipient, actorId)
-            : 'Unknown; no recipient identity perceived',
+          addressing: aware.speech?.addressing ?? null,
+          observerRelation: speechRoles(aware)?.relationship ?? 'unavailable',
         }
       : {}),
-    ...(source && aware.eventType !== 'speech'
+    ...(source && !aware.speech
       ? { source: entityLabel(world, source, actorId), sourceIsMe: source.id === actorId }
       : {}),
-    ...(aware.eventType !== 'speech' && recipient
+    ...(!aware.speech && recipient
       ? {
           subject: entityLabel(world, recipient, actorId),
           subjectCurrentlyVisible: !!(observer && seesEntity(world, observer, recipient)),
@@ -117,8 +118,9 @@ export function readableDecisionContext(
     `## My commitments\n${list(context['commitments'])}\n${context['activityCoverage'] ?? ''}`,
     `## Trigger\n${context['stimulus']}`,
     `## Trigger facts\n${JSON.stringify(context['triggerFacts'] ?? {})}\nEvent-time identity and current visibility are separate. Another nearby individual of the same species is not the speaker. Reconsider whether an older social opportunity still warrants a response; overhearing does not imply an invitation, but deliberate participation is allowed.`,
+    `## Complete personal evidence\n${JSON.stringify(context['experience'] ?? [])}\nThese structured records preserve who experienced each event, acquisition, exact heard fragments and participant roles. Quoted words remain the speaker's words. Self, addressed, overheard, ambient and seen-only are distinct; none grants consent or forces a reply.`,
     `## Task\nChoose only warranted speech, actions, private thoughts, goals or a short native plan. Each kind is optional and may repeat.${(context['triggerFacts'] as { observerRelationship?: string } | undefined)?.observerRelationship === 'addressed_speech' ? ' Speech directed at me normally deserves a natural conversational response, whether a question, statement or greeting.' : ''} Silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.`,
-    `## Conversation so far\nSpeech I personally experienced in this exchange:\n${list(context['conversation'])}\nA turn marked "I said" is my own speech, not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
+    `## Conversation so far\nSelected speech I personally experienced, in chronological order; older unselected history may remain:\n${list(context['conversation'])}\nA turn marked "I said" is my own speech, not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
     ...(Array.isArray(context['planOffers']) && context['planOffers'].length
       ? [
           `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\nPrerequisites must be obtained first. These handles can be queued without a current action shortlist.`,
@@ -130,6 +132,9 @@ export function readableDecisionContext(
         ]
       : []),
     `## Private intentions and native work\n${formatIntentions(context['agency'])}\nThese are intentions and actual step dispositions, never proof that an objective was achieved. Reconsider an existing purpose when its reason has ended, an opportunity was declined, or an unchanged obstacle prevents progress. Continuing for a remaining reason is legitimate; a trait alone does not require restarting completed work.`,
+    ...(Array.isArray(context['supplyOpportunities']) && context['supplyOpportunities'].length
+      ? [`## Optional personal supply considerations\n${list(context['supplyOpportunities'])}`]
+      : []),
     `## Native navigation\n${context['navigation'] ?? ''}\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport']}\nPublic supports: ${JSON.stringify(context['publicSurfaces'] ?? [])}`,
     `## Current time\n${context['now']} (simulation seconds: ${context['simTime'] ?? 'unavailable'})`,
     ...(context['activityRequests']
@@ -160,7 +165,7 @@ export function readableDecisionContext(
     );
   sections.push(
     `## Response format\nReturn {"operations":[]} to continue without intervention. At most 16 operations and 40000 UTF-8 bytes in total. Each operation has localId (unique lowercase letter followed by letters/digits/underscores, max 24), requiresAccepted (earlier operation localIds only, never entity IDs; [] for independent speech), and exactly one non-null field among talk, act, think, goal, plan, note, name, appraise; all seven unused fields must be null. Operations are admitted in order; requiresAccepted means admission, never physical completion.
-Speech: talk={"text":"words","addresseeEntityId":"permitted ID","selfIntroduction":null,"volume":"normal"}, max 1200 characters. Choose volume whisper, normal or shout; whispering is not guaranteed private. Thought: think={"text":"brief private feeling","aboutEntityIds":[]}, max 240 characters.
+Speech: talk={"text":"words","addresseeEntityId":null,"selfIntroduction":null,"volume":"normal"}, max 1200 characters. Use null for ambient speech or copy one permitted ID for directed speech; never inherit a prior recipient. Choose volume whisper, normal or shout; whispering is not guaranteed private. Thought: think={"text":"brief private feeling","aboutEntityIds":[]}, max 240 characters.
 Action: act={"kind":"${capabilities?.expressions ? 'known|expression|proposal|invoke' : 'known|proposal|invoke'}","actionId":null,"verb":null,"targetEntityId":null,"description":null,"invocation":null,"slots":null,"mode":"enqueue|replace|interrupt"}. For known, fill only actionId; ${capabilities?.expressions ? 'for expression, fill verb and optionally targetEntityId; ' : ''}for proposal, fill description (max 500), optionally targetEntityId, and optionally slots={"itemId":null,"instrumentId":null,"recipientId":null,"quantity":null,"quantityMode":null,"until":null,"method":null}: exact permitted IDs for the item acted on, the tool used and the recipient; a whole quantity with quantityMode exact (units handled) or held (total to carry afterwards); ${namedTimes.length ? `until ${namedTimes.join('|')}` : 'until null (this world names no stopping times)'}; method keeps required wording such as quietly. Slots are null for other kinds. Complete typed proposals such as "drop 2 ITEM", "pick up ITEM" or "follow NAME at 4 m" bind without interpretation; a refused one states why. For invoke, fill invocation using Native navigation or an optional installed activity request; actionId, verb, description and top-level targetEntityId remain null. Request families use only their exact parameters and null navigation fields; their selected mode equals act.mode. A chosen request is neither a learned method nor completed work. Unlisted attempts remain available with no action suggestions. No unsupported effects are implied.
 Goal: goal={"operation":"create|revise|pause|resume|complete|abandon","goalId":null,"expectedRevision":null,"objective":null,"parentId":null}. Create supplies objective (max 500), optional parentId; revise supplies existing goalId/revision, objective and optional parentId. Status changes supply only existing goalId/revision. Eight active/paused goals maximum. Completion is a subjective declaration.
 Plan: plan={"mode":"enqueue|replace|cancel","expectedRevision":0,"goalId":null,"steps":[]}. Copy current plan revision (0 if absent). At most eight sequential steps. A step selects {"actionId":"supplied handle","itemFromStep":null,"useItemAs":null}, or consumes an earlier item output with {"actionId":null,"itemFromStep":0,"useItemAs":"equip"} (also "eat"). Indexes are zero-based within this submitted frontier. Only ${outputs} supply item outputs. Later steps wait for earlier completion and recheck prerequisites. Cancel has empty steps and null goalId. A new goal may be referenced as "$localId" only with that localId in requiresAccepted. Physical work takes simulation time. A plan may have no goal.
@@ -196,28 +201,29 @@ export function responseReferences(
     ...new Set([
       actorId,
       ...visibleIds,
-      ...rememberedIds.filter((id) => entityHas(world.entities, id)),
+      ...rememberedIds,
       ...awareness
         .flatMap((entry) =>
-          [entry.sourceId, entry.intendedRecipientId ?? entry.targetId, ...entry.entityIds].filter(
+          [entry.sourceId, entry.targetId, ...entry.entityIds].filter(
             (id): id is string => !!id && awarenessBindsSubject(world, actorId, entry, id),
           ),
         )
-        .filter((id): id is string => !!id && entityHas(world.entities, id)),
+        .filter((id): id is string => !!id),
     ]),
   ];
   const visible = new Set(visibleIds);
+  const handles = experienceEntityReferences(world, actorId, ids);
   const recognizedIds = new Set([actorId, ...visibleIds]);
   const roles = new Map<string, { evidenceId: string; role: string }[]>();
+  const rememberedLabels = new Map<string, string>();
   for (const entry of awareness) {
+    for (const reference of entry.references ?? [])
+      rememberedLabels.set(reference.id, reference.label);
     if (entry.recognized && entry.sourceId) recognizedIds.add(entry.sourceId);
-    if (entry.intendedRecipientId) recognizedIds.add(entry.intendedRecipientId);
+    if (entry.targetId) recognizedIds.add(entry.targetId);
     for (const [id, role] of [
       [entry.sourceId, 'source'],
-      [
-        entry.intendedRecipientId ?? entry.targetId,
-        entry.eventType === 'speech' ? 'intended_recipient' : 'subject',
-      ],
+      [entry.targetId, entry.speech ? 'intended_recipient' : 'subject'],
     ] as const) {
       if (!id || !awarenessBindsSubject(world, actorId, entry, id)) continue;
       const entries = roles.get(id) ?? [];
@@ -230,7 +236,14 @@ export function responseReferences(
   );
   const piled = pileItemIds.filter((id) => !ids.includes(id) && !possessions.includes(id));
   const references = ids.map((id) => {
-    const entity = entityGet(world.entities, id)!;
+    const entity = entityGet(world.entities, id);
+    const rememberedLabel = rememberedLabels.get(id);
+    if (!entity)
+      return JSON.stringify({
+        entityId: handles.get(id),
+        label: rememberedLabel ?? 'Remembered individual',
+        relation: 'remembered identity; current body and location unavailable',
+      });
     return JSON.stringify({
       entityId: entityHandles(world, actorId).get(id),
       label: recognizedIds.has(id)
@@ -283,7 +296,12 @@ export function responseReferences(
       }),
     );
   const all = [...ids, ...possessions, ...piled, ...inspected];
-  return { entityIds: all, references, entityReferences: entityReferenceMap(world, all, actorId) };
+  const completeHandles = experienceEntityReferences(world, actorId, all);
+  return {
+    entityIds: all,
+    references,
+    entityReferences: Object.fromEntries(all.map((id) => [completeHandles.get(id)!, id])),
+  };
 }
 
 function formatIntentions(value: unknown): string {

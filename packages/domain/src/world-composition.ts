@@ -1,6 +1,11 @@
+import { BASE_WORK_ACTIVITY_HOST } from './worlds/base/work-activity.js';
+import { BASE_MEAL_ACTIVITY_HOST } from './worlds/base/meal-activity.js';
 import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
 import { BASE_EVENT_DISCLOSURE } from './worlds/base/event-disclosure.js';
 import { BASE_EVENT_PRESENTATION } from './worlds/base/event-presentation.js';
+import { baseAnimalActivity } from './worlds/base/animal-response-profile.js';
+import { baseAssemblyPresentation } from './worlds/base/presentation.js';
+import type { AssemblyFamily } from './assembly-types.js';
 import { baseContextActions } from './worlds/base/context-actions.js';
 import {
   nativeActivityView as baseActivityView,
@@ -21,8 +26,66 @@ import { BASE_COMMAND_DESCRIPTIONS } from './worlds/base/action-descriptions.js'
 import { baseTypedRequestVocabulary } from './worlds/base/typed-requests.js';
 import { STOCK_ACTIVITY_HOST } from './stock-activity.js';
 import type { WorldCreationCandidate, WorldCreationProfile } from './world-creation.js';
-import type { WorldState } from './types.js';
+import type { Entity, WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
+import { definitionPin, type DefinitionPin } from './world-modules.js';
+import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
+import { BASE_THREAT_RESPONSE_PROFILE } from './worlds/base/threat-response-profile.js';
+import {
+  basePreparedThreatResponses,
+  basePreparedThreatOpportunity,
+  basePreparedThreatResult,
+  baseThreatObservation,
+} from './worlds/base/threat-responses.js';
+import type { Awareness } from './experience.js';
+import type {
+  PreparedResponseSituation,
+  PreparedResponseObservation,
+} from './prepared-responses.js';
+
+/** A selected pin chooses linked trusted native templates. It cannot load code or
+ * silently reinterpret a saved profile after the authored definition changes. */
+export function preparedResponseProfile(pin: DefinitionPin | null) {
+  if (pin === null) return null;
+  return isDefinitionPin(pin) && sameDefinitionPin(pin, definitionPin(BASE_THREAT_RESPONSE_PROFILE))
+    ? BASE_THREAT_RESPONSE_PROFILE
+    : undefined;
+}
+export function preparedResponseObservation(
+  pin: DefinitionPin,
+  change: PreparedResponseObservation,
+  label: string,
+  range?: number,
+): string {
+  if (!preparedResponseProfile(pin))
+    throw new Error('The response observation profile is unavailable.');
+  return baseThreatObservation(change, label, range);
+}
+export function compilePreparedResponses(world: WorldState, input: PreparedResponseSituation) {
+  const profile = preparedResponseProfile(world.cognitionPolicy.preparedResponses);
+  if (profile === undefined) throw new Error('The selected response profile is unavailable.');
+  return profile ? basePreparedThreatResponses(world, profile, input) : null;
+}
+export function preparedResponseOpportunity(
+  world: WorldState,
+  actorId: string,
+  evidence: readonly Awareness[],
+  causeIds: readonly string[],
+): boolean {
+  const profile = preparedResponseProfile(world.cognitionPolicy.preparedResponses);
+  if (profile === undefined) throw new Error('The selected response profile is unavailable.');
+  return !!profile && basePreparedThreatOpportunity(world, profile, actorId, evidence, causeIds);
+}
+
+export function preparedResponseResult(
+  world: WorldState,
+  actorId: string,
+  causeIds: readonly string[],
+): boolean {
+  const profile = preparedResponseProfile(world.cognitionPolicy.preparedResponses);
+  if (profile === undefined) throw new Error('The selected response profile is unavailable.');
+  return !!profile && basePreparedThreatResult(world, profile, actorId, causeIds);
+}
 
 /** Explicit application composition: trusted implementations are linked here, never
  * loaded from world data. The installed manifest remains the only capability selector.
@@ -34,6 +97,8 @@ export function trustedActivityHosts(): readonly ActivityHostDescriptor[] {
     RESERVOIR_ACTIVITY_HOST,
     ...BASE_NATIVE_ACTIVITY_HOSTS,
     BASE_FIRE_ACTIVITY_HOST,
+    BASE_MEAL_ACTIVITY_HOST,
+    BASE_WORK_ACTIVITY_HOST,
     BASE_CAMP_ACTIVITY_HOST,
     BASE_OUTING_HOST,
     BASE_CANOPY_ACTIVITY_HOST,
@@ -101,13 +166,18 @@ export function selectedEventPresentation(world: WorldState) {
   return BASE_EVENT_PRESENTATION;
 }
 
-/** A requested object's menu and direct shortcut use the same selected world preference. */
-export function selectedContextActions(
-  world: WorldState,
-  actorId: string,
-  targetId?: string,
-  observedLaunches?: ReadonlySet<number>,
-) {
+export function selectedAnimalActivity(world: WorldState, entity: Entity) {
   selectedCreationProfileForWorld(world);
-  return baseContextActions(world, actorId, targetId, observedLaunches);
+  return baseAnimalActivity(entity);
+}
+
+export function selectedAssemblyPresentation(world: WorldState, family: AssemblyFamily) {
+  selectedCreationProfileForWorld(world);
+  return baseAssemblyPresentation(family);
+}
+
+/** A requested object's menu and direct shortcut use the same selected world preference. */
+export function selectedContextActions(world: WorldState, actorId: string, targetId?: string) {
+  selectedCreationProfileForWorld(world);
+  return baseContextActions(world, actorId, targetId);
 }

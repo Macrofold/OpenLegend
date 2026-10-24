@@ -6,16 +6,28 @@ import type {
   RecipeCandidate,
   RecipeDefinition,
   RecipeInput,
+  FixedTransformDefinition,
   WorldState,
 } from './types.js';
 import { canonicalJson } from './events.js';
 import { getOwn } from './records.js';
+import { isSafeRecordId } from './records.js';
+import { materialInventoryRule } from './material-inventory.js';
+import { manufactureToolProblem, MANUFACTURE_LIMITS } from './manufacture.js';
 import { definitionPin, recipeFamily, type DefinitionPin } from './world-modules.js';
 
-/** Standard JSON Schema scalar fields; native family validation uses the same constraints. */
-export type RecipeParameterSchema =
+/** Standard JSON Schema scalars and closed one-level records; native validation shares these constraints. */
+export type RecipeScalarParameterSchema =
   | { type: 'number' | 'integer'; minimum: number; maximum: number }
   | { type: 'string'; minLength: number; maxLength: number; enum?: readonly string[] };
+export type RecipeParameterSchema =
+  | RecipeScalarParameterSchema
+  | {
+      type: 'object';
+      additionalProperties: false;
+      required: string[];
+      properties: Record<string, RecipeScalarParameterSchema>;
+    };
 export interface RecipeEditorField {
   /** Input paths name a role rather than an unstable array offset. */
   path: string;
@@ -90,9 +102,11 @@ export type RecipeDependencyReference =
   | { kind: 'item-definition'; pin: DefinitionPin }
   | { kind: 'item-handling-policy'; pin: DefinitionPin }
   | { kind: 'recipe'; pin: DefinitionPin }
+  | { kind: 'assembly-family'; pin: DefinitionPin }
   | { kind: 'family'; pin: DefinitionPin };
 export interface RecipeFamilyDescriptor {
   definition: RecipeFamilyDefinition;
+  parameterOptions?(world: WorldState): Record<string, readonly DefinitionPin[]>;
   validate(
     world: WorldState,
     candidate: RecipeCandidate,
@@ -119,8 +133,15 @@ const textSchema = (maxLength: number) => ({ type: 'string', minLength: 1, maxLe
 /** A request carries only its selected family's parameters, never every family's blocks. */
 export function selectedRecipeCandidateSchema(
   family: RecipeFamilyDescriptor,
+  world: WorldState,
 ): Record<string, unknown> {
   const definition = family.definition;
+  const properties = { ...definition.parameterSchema.properties } as Record<string, unknown>;
+  for (const [name, pins] of Object.entries(family.parameterOptions?.(world) ?? {})) {
+    if (pins.length)
+      properties[name] = { ...definition.parameterSchema.properties[name], enum: pins };
+    else delete properties[name];
+  }
   return objectSchema({
     family: objectSchema({
       id: { type: 'string', const: definition.id },
@@ -143,7 +164,7 @@ export function selectedRecipeCandidateSchema(
       }),
     },
     output: objectSchema({ name: textSchema(80), description: textSchema(700) }),
-    parameters: definition.parameterSchema,
+    parameters: { ...definition.parameterSchema, properties },
   });
 }
 
@@ -205,11 +226,13 @@ export function resolveRecipeMaterial(
     const producer = getOwn(world.recipes, definition.recipeId);
     if (
       !producer ||
-      producer.outputDefinitionId !== definition.id ||
+      !producer.outputs.some((output) => output.definition.id === definition.id) ||
       canonicalJson(definition) !== canonicalJson(getOwn(world.itemDefinitions, definition.id))
     )
       return reject('The manufactured material no longer has its required technique.');
-    const producerFamily = recipeFamily(world, producer.sourceCandidate.family.id);
+    if (producer.source.kind !== 'family')
+      return reject('This material needs a supported invention-family producer.');
+    const producerFamily = recipeFamily(world, producer.source.candidate.family.id);
     const capability = producerFamily?.definition.materialOutput;
     if (
       !capability ||
@@ -229,7 +252,7 @@ export function resolveRecipeMaterial(
       origin: 'generated',
       dependencies: [
         { kind: 'recipe', pin: recipeMechanicalPin(producer) },
-        { kind: 'family', pin: producer.familyPin },
+        { kind: 'family', pin: producer.source.familyPin },
         ...producer.dependencyReferences,
       ],
     };
@@ -331,27 +354,40 @@ function validateRecipeCandidateStructure(
       errors.push(`Missing mechanically required role: ${role.id}.`);
   if (total > inputPolicy.maximumTotal) errors.push('Recipe exceeds its material budget.');
   const schema = family.definition.parameterSchema;
-  if (!record(value.parameters) || !exactKeys(value.parameters, schema.required))
-    errors.push('The selected family needs exactly its declared parameters.');
+  if (
+    !record(value.parameters) ||
+    !schema.required.every((key) => Object.hasOwn(value.parameters as object, key)) ||
+    Object.keys(value.parameters).some((key) => !Object.hasOwn(schema.properties, key))
+  )
+    errors.push('The selected family needs its declared parameters only.');
   else
-    for (const [name, constraint] of Object.entries(schema.properties)) {
-      const parameter = value.parameters[name];
-      if (constraint.type === 'string') {
-        if (
-          !text(parameter, constraint.maxLength) ||
-          parameter.length < constraint.minLength ||
-          (constraint.enum && !constraint.enum.includes(parameter))
-        )
-          errors.push(`Parameter ${name} is outside the supported choices.`);
-      } else if (
-        typeof parameter !== 'number' ||
-        !Number.isFinite(parameter) ||
-        parameter < constraint.minimum ||
-        parameter > constraint.maximum ||
-        (constraint.type === 'integer' && !Number.isSafeInteger(parameter))
-      )
+    for (const [name, parameter] of Object.entries(value.parameters)) {
+      const constraint = schema.properties[name]!;
+      const validScalar = (value: unknown, rule: RecipeScalarParameterSchema): boolean =>
+        rule.type === 'string'
+          ? text(value, rule.maxLength) &&
+            value.length >= rule.minLength &&
+            (!rule.enum || rule.enum.includes(value))
+          : typeof value === 'number' &&
+            Number.isFinite(value) &&
+            value >= rule.minimum &&
+            value <= rule.maximum &&
+            (rule.type !== 'integer' || Number.isSafeInteger(value));
+      const valid =
+        constraint.type === 'object'
+          ? record(parameter) &&
+            constraint.required.every((key) => Object.hasOwn(parameter, key)) &&
+            Object.keys(parameter).every(
+              (key) =>
+                Object.hasOwn(constraint.properties, key) &&
+                validScalar(parameter[key], constraint.properties[key]!),
+            )
+          : validScalar(parameter, constraint);
+      if (!valid)
         errors.push(
-          `Parameter ${name} must be ${constraint.type} from ${constraint.minimum} to ${constraint.maximum}.`,
+          constraint.type === 'number' || constraint.type === 'integer'
+            ? `Parameter ${name} must be ${constraint.type} from ${constraint.minimum} to ${constraint.maximum}.`
+            : `Parameter ${name} is outside the supported choices.`,
         );
     }
   if (errors.length) return errors;
@@ -474,8 +510,135 @@ export function recipeDependencyReferences(
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([, ref]) => ref);
 }
-export function inventionFamily(value: RecipeCandidate | RecipeDefinition): string {
-  return 'sourceCandidate' in value ? value.sourceCandidate.family.id : value.family.id;
+/** The trusted compiler's finite work envelope does not enlarge invention-family powers. */
+export const FIXED_TRANSFORM_IMPLEMENTATION = Object.freeze({
+  id: 'engine:finite-material-transform',
+  version: 1,
+  ...MANUFACTURE_LIMITS,
+});
+
+export function compileFixedTransform(world: WorldState, value: unknown) {
+  const problem = (): never => {
+    throw new Error('Invalid trusted finite material transformation.');
+  };
+  if (
+    !record(value) ||
+    !exactKeys(value, [
+      'id',
+      'version',
+      'name',
+      'description',
+      'workSeconds',
+      'inputs',
+      'retainedTools',
+      'outputs',
+    ]) ||
+    !isSafeRecordId(value.id) ||
+    !integer(value.version, 1, Number.MAX_SAFE_INTEGER) ||
+    !text(value.name, 80) ||
+    !text(value.description, 700) ||
+    typeof value.workSeconds !== 'number' ||
+    !Number.isFinite(value.workSeconds) ||
+    value.workSeconds <= 0 ||
+    !Array.isArray(value.inputs) ||
+    value.inputs.length < 1 ||
+    value.inputs.length > FIXED_TRANSFORM_IMPLEMENTATION.inputRoles ||
+    !Array.isArray(value.retainedTools) ||
+    value.retainedTools.length > FIXED_TRANSFORM_IMPLEMENTATION.retainedToolRoles ||
+    !Array.isArray(value.outputs) ||
+    value.outputs.length < 1 ||
+    value.outputs.length > FIXED_TRANSFORM_IMPLEMENTATION.outputPorts
+  )
+    problem();
+  const definition = value as unknown as FixedTransformDefinition;
+  const roles = new Set<string>(),
+    ports = new Set<string>();
+  const dependencies = new Map<string, RecipeDependencyReference>();
+  const itemPin = (id: string) => {
+    const item = getOwn(world.itemDefinitions, id);
+    if (!item) throw new Error('A transformation needs an exact installed item definition.');
+    const pin = definitionPin(item);
+    dependencies.set(canonicalJson(['item-definition', id]), { kind: 'item-definition', pin });
+    return pin;
+  };
+  for (const input of definition.inputs) {
+    if (
+      !record(input) ||
+      !exactKeys(input, ['role', 'definitionId', 'quantity']) ||
+      !isSafeRecordId(input.role) ||
+      roles.has(input.role) ||
+      !isSafeRecordId(input.definitionId) ||
+      !integer(input.quantity, 1, FIXED_TRANSFORM_IMPLEMENTATION.unitsPerRole)
+    )
+      problem();
+    roles.add(input.role);
+    itemPin(input.definitionId);
+  }
+  const retainedTools = definition.retainedTools.map((tool) => {
+    if (
+      !record(tool) ||
+      !exactKeys(tool, ['role', 'quantity', 'allowedDefinitionIds']) ||
+      !isSafeRecordId(tool.role) ||
+      roles.has(tool.role) ||
+      !integer(tool.quantity, 1, FIXED_TRANSFORM_IMPLEMENTATION.unitsPerRole) ||
+      !Array.isArray(tool.allowedDefinitionIds) ||
+      !tool.allowedDefinitionIds.length ||
+      tool.allowedDefinitionIds.some((id) => !isSafeRecordId(id)) ||
+      new Set(tool.allowedDefinitionIds).size !== tool.allowedDefinitionIds.length
+    )
+      problem();
+    roles.add(tool.role);
+    return {
+      role: tool.role,
+      quantity: tool.quantity,
+      allowedDefinitions: tool.allowedDefinitionIds.map(itemPin),
+    };
+  });
+  const outputs = definition.outputs.map((output) => {
+    if (
+      !record(output) ||
+      !exactKeys(output, ['port', 'definitionId', 'quantity']) ||
+      !isSafeRecordId(output.port) ||
+      ports.has(output.port) ||
+      !isSafeRecordId(output.definitionId) ||
+      !integer(output.quantity, 1, FIXED_TRANSFORM_IMPLEMENTATION.unitsPerRole)
+    )
+      problem();
+    ports.add(output.port);
+    const pin = itemPin(output.definitionId),
+      item = world.itemDefinitions[pin.id]!;
+    materialInventoryRule(world, item);
+    if (item.assemblyMaterial) {
+      const family = getOwn(world.assemblyFamilies ?? {}, item.assemblyMaterial.familyId);
+      if (!family) throw new Error('A structural product needs its installed material family.');
+      dependencies.set(canonicalJson(['assembly-family', family.id]), {
+        kind: 'assembly-family',
+        pin: definitionPin(family),
+      });
+    }
+    return { port: output.port, definition: pin, quantity: output.quantity };
+  });
+  return {
+    name: definition.name,
+    description: definition.description,
+    inputs: definition.inputs,
+    retainedTools,
+    workSeconds: definition.workSeconds,
+    outputs,
+    dependencyReferences: [
+      ...dependencies.values(),
+      { kind: 'item-handling-policy' as const, pin: recipeItemHandlingPin(world) },
+    ],
+    facts: [] as RecipeFact[],
+  };
+}
+
+export function inventionFamily(value: RecipeCandidate | RecipeDefinition): string | undefined {
+  return 'source' in value
+    ? value.source.kind === 'family'
+      ? value.source.candidate.family.id
+      : undefined
+    : value.family.id;
 }
 export function describeInvention(value: RecipeDefinition): string {
   return value.facts
@@ -505,10 +668,15 @@ export function recipeVisibleDependencies(
   recipe: RecipeDefinition,
 ): RecipeDependencyReference[] {
   const direct = new Set(recipe.inputs.map((input) => input.definitionId));
-  const family = recipeFamily(world, recipe.sourceCandidate.family.id);
-  for (const reference of family?.definition.references ?? []) {
-    const id = recipe.sourceCandidate.parameters[reference.parameter];
-    if (typeof id === 'string') direct.add(id);
+  for (const tool of recipe.retainedTools)
+    for (const definition of tool.allowedDefinitions) direct.add(definition.id);
+  if (recipe.source.kind === 'family') {
+    const source = recipe.source;
+    const family = recipeFamily(world, source.candidate.family.id);
+    for (const reference of family?.definition.references ?? []) {
+      const id = source.candidate.parameters[reference.parameter];
+      if (typeof id === 'string') direct.add(id);
+    }
   }
   return recipe.dependencyReferences.filter(
     (reference) =>
@@ -533,50 +701,93 @@ export function validateInstalledRecipe(
   visiting.add(recipe.id);
   try {
     if (
-      !recipe.sourceCandidate ||
-      !recipe.familyPin ||
+      !record(recipe) ||
+      !exactKeys(recipe, [
+        'name',
+        'description',
+        'inputs',
+        'outputs',
+        'retainedTools',
+        'workSeconds',
+        'source',
+        'dependencyReferences',
+        'facts',
+        'id',
+        'version',
+        'digest',
+        'admittedAt',
+        'provenance',
+      ]) ||
+      !record(recipe.source) ||
       !Array.isArray(recipe.dependencyReferences) ||
-      !Array.isArray(recipe.facts)
+      !Array.isArray(recipe.facts) ||
+      getOwn(world.recipes, recipe.id) !== recipe ||
+      recipe.version !== 1
     )
       throw new Error('Incompatible saved recipe format.');
-    const family = recipeFamily(world, recipe.sourceCandidate.family.id);
-    if (
-      !family ||
-      canonicalJson(recipe.familyPin) !== canonicalJson(definitionPin(family.definition))
-    )
-      throw new Error('Missing exact saved recipe family dependency.');
-    const compiled = compileRecipeCandidate(world, recipe.sourceCandidate, 'restore', visiting);
-    const outputName = canonicalName(
-      recipe.sourceCandidate.output.name,
-      compiled.outputDefinition.nameForm,
-    );
-    const { id, version, recipeId, name, description, ...output } =
-      world.itemDefinitions[recipe.outputDefinitionId] ?? {};
-    if (
-      !id ||
-      getOwn(world.recipes, recipe.id) !== recipe ||
-      recipe.version !== 1 ||
-      id !== recipe.outputDefinitionId ||
-      recipeId !== recipe.id ||
-      version !== 1 ||
-      name !== outputName ||
-      description !== recipe.sourceCandidate.output.description ||
-      recipe.digest !== canonicalJson(recipe.sourceCandidate) ||
-      recipe.name !== recipe.sourceCandidate.name ||
-      recipe.description !== recipe.sourceCandidate.description ||
-      canonicalJson(recipe.output) !==
-        canonicalJson({
-          ...recipe.sourceCandidate.output,
-          name: outputName,
-        }) ||
-      canonicalJson(recipe.inputs) !== canonicalJson(recipe.sourceCandidate.inputs) ||
-      recipe.workSeconds !== compiled.workSeconds ||
-      canonicalJson(output) !== canonicalJson(compiled.outputDefinition) ||
-      canonicalJson(recipe.facts) !== canonicalJson(compiled.facts) ||
-      canonicalJson(recipe.dependencyReferences) !==
-        canonicalJson(recipeDependencyReferences(world, recipe.sourceCandidate, compiled, visiting))
-    )
-      throw new Error('Saved recipe does not reproduce its exact compiled meaning.');
+    if (recipe.source.kind === 'fixed-transform') {
+      const source = recipe.source;
+      if (
+        !exactKeys(source, ['kind', 'definition', 'implementationPin']) ||
+        canonicalJson(source.implementationPin) !==
+          canonicalJson(definitionPin(FIXED_TRANSFORM_IMPLEMENTATION)) ||
+        recipe.provenance.source !== 'authored-world'
+      )
+        throw new Error('Missing exact trusted transformation implementation.');
+      const compiled = compileFixedTransform(world, source.definition);
+      const {
+        id: _,
+        version: _version,
+        digest,
+        source: _source,
+        admittedAt: _at,
+        provenance: _provenance,
+        ...meaning
+      } = recipe;
+      if (
+        digest !== canonicalJson({ kind: 'fixed-transform', definition: source.definition }) ||
+        canonicalJson(meaning) !== canonicalJson(compiled)
+      )
+        throw new Error('Saved transformation does not reproduce its exact compiled meaning.');
+    } else if (recipe.source.kind === 'family') {
+      const source = recipe.source;
+      const family = recipeFamily(world, source.candidate?.family.id);
+      if (
+        !exactKeys(source, ['kind', 'candidate', 'familyPin']) ||
+        !family ||
+        canonicalJson(source.familyPin) !== canonicalJson(definitionPin(family.definition))
+      )
+        throw new Error('Missing exact saved recipe family dependency.');
+      const compiled = compileRecipeCandidate(world, source.candidate, 'restore', visiting);
+      const outputName = canonicalName(
+        source.candidate.output.name,
+        compiled.outputDefinition.nameForm,
+      );
+      const { id, version, recipeId, name, description, ...output } =
+        world.itemDefinitions[recipe.outputs?.[0]?.definition.id ?? ''] ?? {};
+      if (
+        !id ||
+        canonicalJson(recipe.outputs) !==
+          canonicalJson([
+            { port: 'product', definition: definitionPin(world.itemDefinitions[id]!), quantity: 1 },
+          ]) ||
+        canonicalJson(recipe.retainedTools) !== '[]' ||
+        recipeId !== recipe.id ||
+        version !== 1 ||
+        name !== outputName ||
+        description !== source.candidate.output.description ||
+        recipe.digest !== canonicalJson(source.candidate) ||
+        recipe.name !== source.candidate.name ||
+        recipe.description !== source.candidate.description ||
+        canonicalJson(recipe.inputs) !== canonicalJson(source.candidate.inputs) ||
+        recipe.workSeconds !== compiled.workSeconds ||
+        canonicalJson(output) !== canonicalJson(compiled.outputDefinition) ||
+        canonicalJson(recipe.facts) !== canonicalJson(compiled.facts) ||
+        canonicalJson(recipe.dependencyReferences) !==
+          canonicalJson(recipeDependencyReferences(world, source.candidate, compiled, visiting))
+      )
+        throw new Error('Saved recipe does not reproduce its exact compiled meaning.');
+    } else throw new Error('Unknown manufacturing source.');
   } finally {
     visiting.delete(recipe.id);
   }
@@ -593,7 +804,7 @@ export function validateInstalledRecipes(world: WorldState): void {
   for (const definition of Object.values(world.itemDefinitions)) {
     if (!definition.material) continue;
     const producer = definition.recipeId && getOwn(world.recipes, definition.recipeId);
-    if (!producer || producer.outputDefinitionId !== definition.id)
+    if (!producer || !producer.outputs.some((output) => output.definition.id === definition.id))
       throw new Error('Material metadata needs its exact admitted producer.');
   }
   for (const entity of entityValues(world.entities)) {
@@ -602,5 +813,7 @@ export function validateInstalledRecipes(world: WorldState): void {
     const recipe = getOwn(world.recipes, action.recipeId);
     if (!recipe || canonicalJson(action.recipePin) !== canonicalJson(recipeMechanicalPin(recipe)))
       throw new Error('Pending manufacturing work needs its exact admitted technique.');
+    const toolProblem = manufactureToolProblem(world, entity.id, action, recipe);
+    if (toolProblem) throw new Error(toolProblem);
   }
 }

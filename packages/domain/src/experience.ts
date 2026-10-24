@@ -1,5 +1,7 @@
+import { perceivedEventType } from './speech.js';
 import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { revokePracticeSupport } from './practical-competence.js';
+import { revokeCombatEvidence } from './combat-encounters.js';
 import { revokeActivityEvidence } from './activity-learning.js';
 import {
   invalidateAppraisals,
@@ -33,10 +35,23 @@ import {
   appendSnapshot,
   isAppendBuffer,
   sealAppends,
+  readOnlyDraftView,
 } from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { personalText } from './narration.js';
+import { chargeWork } from './work-budget.js';
+import {
+  experienceEntryKey,
+  experienceSourceReference,
+  experienceSourceKey,
+  speechAttribution,
+  experienceSourceCoverage,
+  EXPERIENCE_PREPARATION_LIMITS,
+  validExperienceSummary,
+  type ExperienceSourceReference,
+  type SpeechAttributionManifest,
+} from './experience-sources.js';
 import type { ExperienceEntry, MemoryRecord, Transition, WorldState, WorldEvent } from './types.js';
 
 export const EXPERIENCE_LIMITS = {
@@ -49,8 +64,11 @@ export const EXPERIENCE_LIMITS = {
   historyDays: 30,
 } as const;
 export interface Awareness {
+  retentionClass: 'memory' | 'sensory';
+  expiresAt?: number;
+  sound?: import('./sound.js').PerceivedSound;
   /** Names and identities admitted at this occurrence; later knowledge cannot rewrite them. */
-  references?: Array<{ id: string; label: string; role: 'actor' | 'target' }>;
+  references?: Array<{ id: string; label: string; role: 'actor' | 'target' | 'participant' }>;
   /** Non-speech payload permitted at occurrence time; never rebuilt from raw history. */
   eventData?: NonNullable<WorldEvent['data']>;
   /** Exact observable facts learned at encounter/inspection time, not generated prose. */
@@ -73,8 +91,6 @@ export interface Awareness {
   eventType?: string;
   sourceId?: string;
   targetId?: string;
-  /** Intended speech recipient, only when perceived at event time; not proof of delivery. */
-  intendedRecipientId?: string;
   triggerKind?:
     | 'addressed_speech'
     | 'overheard_speech'
@@ -90,7 +106,8 @@ export interface ExperienceSummary {
   text: string;
   from: number;
   to: number;
-  sourceIds: string[];
+  sources: ExperienceSourceReference[];
+  attribution: SpeechAttributionManifest;
   entityIds: string[];
   importance: number;
   sequence?: number;
@@ -126,7 +143,7 @@ export function experienceEntry(
   const id = key.slice(separator + 1);
   if (source === 'awareness') {
     const value = world.experience?.awareness[actorId]?.find((entry) => entry.eventId === id);
-    return value && { source, value };
+    return value?.retentionClass === 'memory' ? { source, value } : undefined;
   }
   if (source === 'memory') {
     const value = world.memories[actorId]?.find((entry) => entry.id === id);
@@ -150,7 +167,8 @@ export function experienceEntries(
 ): Map<string, ExperienceEntry> {
   const entries = new Map<string, ExperienceEntry>();
   for (const value of world.experience?.awareness[actorId] ?? [])
-    entries.set(`awareness:${value.eventId}`, { source: 'awareness', value });
+    if (value.retentionClass === 'memory')
+      entries.set(`awareness:${value.eventId}`, { source: 'awareness', value });
   for (const value of world.memories[actorId] ?? [])
     entries.set(`memory:${value.id}`, { source: 'memory', value });
   for (const value of world.experience?.summaries[actorId] ?? [])
@@ -265,7 +283,11 @@ function containsExperienceKey(world: WorldState, actorId: string, key: string):
 type ExperienceOperation =
   | ExperienceMutation
   | ExperienceMutation[]
-  | { operation: 'consolidate'; retiredIds: string[]; summaries: ExperienceSummary[] }
+  | {
+      operation: 'consolidate';
+      retiredSources: ExperienceSourceReference[];
+      summaries: ExperienceSummary[];
+    }
   | { operation: 'correct'; sourceId: string; correctionEventId: string }
   | {
       operation: 'obligation';
@@ -282,7 +304,51 @@ export function mutateExperience(
 ): string[] | null {
   if (!world.experience) migrateCognition(world);
   if (!hasMemory(entityGet(world.entities, actorId))) return null;
+  const changes = Array.isArray(mutation) ? mutation : [mutation];
+  if (
+    changes.some(
+      (change) =>
+        ('entry' in change &&
+          change.entry.source === 'awareness' &&
+          change.entry.value.retentionClass === 'sensory') ||
+        ('entryId' in change &&
+          world.experience?.awareness[actorId]?.some(
+            (entry) =>
+              entry.retentionClass === 'sensory' && change.entryId === `awareness:${entry.eventId}`,
+          )),
+    )
+  )
+    return null;
   return applyExperienceMutation(world, actorId, mutation, 'copy');
+}
+
+const sensoryDeadlines = new WeakMap<object, number>();
+function sensoryDeadline(entries: Awareness[]): number {
+  const values = readOnlyDraftView(entries);
+  const prior = Object.isFrozen(values) ? sensoryDeadlines.get(values) : undefined;
+  if (prior !== undefined) return prior;
+  let deadline = Infinity;
+  for (const entry of values)
+    if (entry.retentionClass === 'sensory') deadline = Math.min(deadline, entry.expiresAt!);
+  if (Object.isFrozen(values)) sensoryDeadlines.set(values, deadline);
+  return deadline;
+}
+export function nextSensoryExpiry(world: WorldState): number {
+  let deadline = Infinity;
+  for (const entries of Object.values(world.experience?.awareness ?? {}))
+    deadline = Math.min(deadline, sensoryDeadline(entries));
+  return deadline;
+}
+/** Expiry removes optional sensory evidence, never an admitted controller's cue. */
+export function expireSensoryAwareness(world: WorldState): void {
+  for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {})) {
+    if (sensoryDeadline(entries) > world.simTime) continue;
+    sealAppends(world);
+    trackRecordArray(world, world.experience!.awareness, actorId);
+    world.experience!.awareness[actorId] = entries.filter(
+      (entry) => entry.retentionClass !== 'sensory' || entry.expiresAt! > world.simTime,
+    );
+  }
 }
 /** Transfer fresh event-time evidence through the existing admission owner.
  * Read only actual recipients: materializing current(world.entities) here copies the
@@ -290,12 +356,15 @@ export function mutateExperience(
  * Duplicate/forgotten/ownership guards still run through the same mutation owner.
  * Never pass provider/editor-owned objects here. docs/hearing-and-speech.md#performance-and-invalidation
  */
-export function acquireEventAwareness(world: WorldState, entries: Awareness[]): void {
-  if (!entries.length) return;
+export function acquireEventAwareness(world: WorldState, entries: Awareness[]): Awareness[] {
+  const sounds: Awareness[] = [];
+  if (!entries.length) return sounds;
   if (!world.experience) migrateCognition(world);
   for (const entry of entries) {
-    if (!hasMemory(entityGet(world.entities, entry.actorId))) continue;
-    applyExperienceMutation(
+    if (entry.retentionClass !== 'sensory' && !hasMemory(entityGet(world.entities, entry.actorId)))
+      continue;
+    chargeWork({ effects: 1, outputBytes: byteCount(entry) });
+    const admitted = applyExperienceMutation(
       world,
       entry.actorId,
       {
@@ -304,7 +373,9 @@ export function acquireEventAwareness(world: WorldState, entries: Awareness[]): 
       },
       'transfer',
     );
+    if (admitted !== null && entry.sound) sounds.push(entry);
   }
+  return sounds;
 }
 function applyExperienceMutation(
   world: WorldState,
@@ -324,28 +395,32 @@ function applyExperienceMutation(
     ])
       if (entries) additionIndexes.delete(entries);
   if (!Array.isArray(mutation) && mutation.operation === 'consolidate') {
-    const used = new Set(mutation.retiredIds);
+    const used = new Set(mutation.retiredSources.map(experienceSourceKey));
     if (
       (world.memories[actorId] ?? []).some(
         (m) =>
-          m.kind === 'commitment' && !m.resolved && (used.has(m.id) || used.has(m.eventId ?? '')),
+          m.kind === 'commitment' &&
+          !m.resolved &&
+          used.has(experienceSourceKey({ kind: 'memory', id: m.id })),
       )
     )
       return null;
     if (
       mutation.summaries.some((s) =>
-        s.sourceIds.some((id) => world.experience!.forgotten[actorId]?.includes(id)),
+        s.sources.some((source) => world.experience!.forgotten[actorId]?.includes(source.id)),
       )
     )
       return null;
     const state = world.experience!;
     state.summaries[actorId] = cloneValue(mutation.summaries);
-    state.awareness[actorId] = (state.awareness[actorId] ?? []).filter((a) => !used.has(a.eventId));
+    state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(
+      (a) => !used.has(experienceSourceKey({ kind: 'awareness', id: a.eventId })),
+    );
     world.memories[actorId] = (world.memories[actorId] ?? []).filter(
-      (m) => m.kind !== 'episode' || (!used.has(m.id) && !used.has(m.eventId ?? '')),
+      (m) => !used.has(experienceSourceKey({ kind: 'memory', id: m.id })),
     );
     state.consolidatedAt[actorId] = world.simTime;
-    return [...used];
+    return mutation.retiredSources.map((source) => source.id);
   }
   if (!Array.isArray(mutation) && mutation.operation === 'correct') {
     if (
@@ -435,9 +510,61 @@ function applyExperienceMutation(
           entry.value.eventId &&
           world.experience?.forgotten[actorId]?.includes(entry.value.eventId),
       ) ||
-      additions.some((entry) => 'actorId' in entry.value && entry.value.actorId !== actorId)
+      additions.some((entry) => 'actorId' in entry.value && entry.value.actorId !== actorId) ||
+      additions.some(
+        (entry) => entry.source === 'summary' && !validExperienceSummary(entry.value, actorId),
+      )
     )
       return null;
+    if (additions.some((entry) => entry.source === 'summary')) {
+      const available = experienceEntries(world, actorId);
+      const revisions = new Map<string, string>();
+      for (const entry of additions) {
+        if (entry.source !== 'summary') continue;
+        const roots = entry.value.sources.flatMap((reference) => {
+          const key = `${reference.kind}:${reference.id}`,
+            source = available.get(key);
+          if (!source || source === entry) return [];
+          let revision = revisions.get(key);
+          if (!revision) {
+            revision = experienceSourceReference(source).revision;
+            revisions.set(key, revision);
+          }
+          return revision === reference.revision ? [source] : [];
+        });
+        if (!roots.length) return null;
+        const coverage = experienceSourceCoverage(roots);
+        const key = (source: ExperienceSourceReference) =>
+          JSON.stringify([source.kind, source.id, source.revision]);
+        const expected = new Set(coverage.map(key));
+        if (
+          entry.value.sources.length !== expected.size ||
+          entry.value.sources.some((source) => !expected.has(key(source)))
+        )
+          return null;
+        // Creator-authored prose may change; its structural attribution still comes
+        // from actual selected observer sources, never supplied relationship claims.
+        try {
+          entry.value.sources = coverage;
+          entry.value.attribution = speechAttribution(roots, actorId);
+          entry.value.entityIds = [...new Set(roots.flatMap((source) => source.value.entityIds))];
+          entry.value.from = Math.min(
+            ...roots.map((source) =>
+              source.source === 'summary' ? source.value.from : source.value.at,
+            ),
+          );
+          entry.value.to = Math.max(
+            ...roots.map((source) =>
+              source.source === 'summary' ? source.value.to : source.value.at,
+            ),
+          );
+          entry.value.sequence = Math.max(0, ...roots.map((source) => source.value.sequence ?? 0));
+          if (!validExperienceSummary(entry.value, actorId)) return null;
+        } catch {
+          return null;
+        }
+      }
+    }
     const awareness: Awareness[] = [],
       memories: MemoryRecord[] = [],
       summaries: ExperienceSummary[] = [];
@@ -486,6 +613,8 @@ function applyExperienceMutation(
     if (!stableExperienceUpdate(previous, change.entry)) return null;
     const replacement = cloneValue(change.entry.value);
     if ('actorId' in replacement && replacement.actorId !== actorId) return null;
+    if (change.entry.source === 'summary' && !validExperienceSummary(replacement, actorId))
+      return null;
     replacements.set(previous, replacement);
   }
   const removed = new Set(
@@ -631,7 +760,7 @@ export function awarenessMemory(entry: Awareness): MemoryRecord {
     summary: entry.text,
     entityIds: entry.entityIds,
     importance: entry.importance,
-    eventType: entry.eventType,
+    eventType: perceivedEventType(entry),
     speakerId: entry.sourceId,
   };
 }
@@ -644,7 +773,9 @@ export function experiences(
   if (!entityHas(world.entities, actorId) || !entityGet(world.entities, actorId)?.actor) return [];
   const state = world.experience;
   const forgotten = new Set(state?.forgotten[actorId] ?? []);
-  const aware = state?.awareness[actorId] ?? [];
+  const aware = (state?.awareness[actorId] ?? []).filter(
+    (entry) => entry.retentionClass === 'memory',
+  );
   const eventIds = new Set(aware.map((a) => a.eventId));
   const personal = (world.memories[actorId] ?? []).filter(
     (m) =>
@@ -658,7 +789,10 @@ export function experiences(
     .map(awarenessMemory);
   const summaries: MemoryRecord[] = (state?.summaries[actorId] ?? [])
     .filter(
-      (s) => !s.sourceIds.some((id) => forgotten.has(id) || !!state?.corrections?.[actorId]?.[id]),
+      (s) =>
+        !s.sources.some(
+          (source) => forgotten.has(source.id) || !!state?.corrections?.[actorId]?.[source.id],
+        ),
     )
     .map((s) => ({
       id: s.id,
@@ -706,7 +840,9 @@ export function unseenExperiences(
     return { records: [], maxSequence: afterSequence };
   const state = world.experience;
   const forgotten = new Set(state?.forgotten[actorId] ?? []);
-  const aware = state?.awareness[actorId] ?? [];
+  const aware = (state?.awareness[actorId] ?? []).filter(
+    (entry) => entry.retentionClass === 'memory',
+  );
   let maxSequence = afterSequence;
   const records: MemoryRecord[] = [];
   for (const entry of aware) {
@@ -730,7 +866,11 @@ export function unseenExperiences(
     if ((memory.sequence ?? 0) > afterSequence) records.push(memory);
   }
   for (const s of state?.summaries[actorId] ?? []) {
-    if (s.sourceIds.some((id) => forgotten.has(id) || !!state?.corrections?.[actorId]?.[id]))
+    if (
+      s.sources.some(
+        (source) => forgotten.has(source.id) || !!state?.corrections?.[actorId]?.[source.id],
+      )
+    )
       continue;
     maxSequence = Math.max(maxSequence, s.sequence ?? 0);
     if ((s.sequence ?? 0) > afterSequence)
@@ -754,17 +894,33 @@ export function unseenExperiences(
   return { records: records.slice(0, limit), maxSequence };
 }
 export interface MemoryGroup {
-  sourceIds: string[];
+  sourceKeys: string[];
   text: string;
 }
-/** Apply an explicit partition of the supplied sources. Uncovered sources never retire.
- * Important incidents are copied exactly and individually; only routine memories merge.
- */
+/** The reading view is derived; every maintenance/model caller retains its complete entry. */
+export function experienceReading(entry: ExperienceEntry, actorId: string): MemoryRecord {
+  if (entry.source === 'awareness') return awarenessMemory(entry.value);
+  if (entry.source === 'memory') return entry.value;
+  const value = entry.value;
+  return {
+    id: value.id,
+    actorId,
+    at: value.to,
+    kind: 'reflection',
+    source: 'inferred',
+    summary: `Summary of remembered experience: ${value.text}`,
+    entityIds: value.entityIds,
+    importance: value.importance,
+    sequence: value.sequence,
+  };
+}
+/** Complete sources, exact kind/key/revision and an explicit partition precede retirement.
+ * Protected originals stay unchanged, including their structured evidence. */
 export function acceptConsolidation(
   input: WorldState,
   actorId: string,
   id: string,
-  sources: MemoryRecord[],
+  sources: ExperienceEntry[],
   groups: MemoryGroup[],
 ): Transition {
   const reject = (message: string): Transition => ({
@@ -774,71 +930,116 @@ export function acceptConsolidation(
   });
   if (!input.experience || !sources.length || !groups.length)
     return reject('Invalid memory groups.');
+  if (
+    sources.length > EXPERIENCE_PREPARATION_LIMITS.rows ||
+    sources.reduce((bytes, entry) => bytes + byteCount(JSON.stringify(entry.value)), 0) >
+      EXPERIENCE_PREPARATION_LIMITS.bytes
+  )
+    return reject(
+      'Complete consolidation sources exceed preparation capacity; originals retained.',
+    );
   if (input.experience.summaries[actorId]?.some((s) => s.id.startsWith(`${id}:`)))
     return {
       world: input,
       events: [],
       outcome: outcome(true, 'duplicate', 'Memory groups already accepted.'),
     };
-  const current = new Map(experiences(input, actorId, true).map((m) => [m.id, m]));
-  const expected = new Map(sources.map((m) => [m.id, m]));
+  const current = experienceEntries(input, actorId);
+  const expected = new Map(sources.map((entry) => [experienceEntryKey(entry), entry]));
   if (
     expected.size !== sources.length ||
-    sources.some(
-      (s) =>
-        !['episode', 'reflection'].includes(s.kind) ||
-        JSON.stringify(current.get(s.id)) !== JSON.stringify(s),
-    )
+    sources.some((entry) => {
+      const key = experienceEntryKey(entry),
+        reference = experienceSourceReference(entry);
+      const actual = current.get(`${reference.kind}:${reference.id}`);
+      const reading = experienceReading(entry, actorId);
+      return (
+        !['episode', 'reflection'].includes(reading.kind) ||
+        !actual ||
+        JSON.stringify(actual) !== JSON.stringify(entry) ||
+        !expected.has(key)
+      );
+    })
   )
     return reject('Source coverage changed.');
   const used = new Set<string>();
+  const positions = new Map(sources.map((entry, index) => [experienceEntryKey(entry), index]));
+  let previousPosition = -1;
   for (const group of groups) {
     if (
-      !group.sourceIds.length ||
+      !group.sourceKeys.length ||
       !group.text.trim() ||
       byteCount(group.text) > EXPERIENCE_LIMITS.summaryBytes
     )
       return reject('Invalid memory group.');
-    for (const sourceId of group.sourceIds) {
-      if (!expected.has(sourceId) || used.has(sourceId))
-        return reject('Unknown or repeated source.');
-      used.add(sourceId);
+    for (const key of group.sourceKeys) {
+      if (!expected.has(key) || used.has(key)) return reject('Unknown or repeated source.');
+      used.add(key);
     }
-    const important = group.sourceIds
-      .map((id) => expected.get(id)!)
-      .filter((s) => s.importance >= EXPERIENCE_LIMITS.protectedImportance);
-    if (important.length && (group.sourceIds.length !== 1 || group.text !== important[0]!.summary))
+    const groupPositions = group.sourceKeys.map((key) => positions.get(key)!);
+    if (
+      groupPositions.some(
+        (position, index) =>
+          position <= previousPosition ||
+          (index > 0 && position !== groupPositions[index - 1]! + 1),
+      )
+    )
+      return reject('Memory groups cross an intervening source or change chronological order.');
+    previousPosition = groupPositions.at(-1)!;
+    const important = group.sourceKeys
+      .map((key) => experienceReading(expected.get(key)!, actorId))
+      .filter((source) => source.importance >= EXPERIENCE_LIMITS.protectedImportance);
+    if (important.length && (group.sourceKeys.length !== 1 || group.text !== important[0]!.summary))
       return reject('Important incidents must remain separate and unchanged.');
   }
   if (used.size !== sources.length)
     return reject('Every supplied source requires explicit coverage.');
+  const previous = input.experience.summaries[actorId] ?? [];
+  const retired = sources.filter(
+    (entry) => entry.value.importance < EXPERIENCE_LIMITS.protectedImportance,
+  );
+  const retiredKeys = new Set(retired.map(experienceEntryKey));
+  const retained = previous.filter(
+    (summary) => !retiredKeys.has(experienceEntryKey({ source: 'summary', value: summary })),
+  );
+  let replacements: ExperienceSummary[];
+  try {
+    replacements = groups
+      .filter((group) => group.sourceKeys.some((key) => retiredKeys.has(key)))
+      .map((group, i) => {
+        const entries = group.sourceKeys.map((key) => expected.get(key)!);
+        const readings = entries.map((entry) => experienceReading(entry, actorId));
+        const existing = entries.flatMap((entry) =>
+          entry.source === 'summary' ? [entry.value] : [],
+        );
+        return {
+          id: existing[0]?.id ?? `${id}:${i}`,
+          revision: Math.max(0, ...existing.map((summary) => summary.revision ?? 0)) + 1,
+          text: personalText(input, actorId, group.text),
+          from: Math.min(
+            ...entries.map((entry, index) =>
+              entry.source === 'summary' ? entry.value.from : readings[index]!.at,
+            ),
+          ),
+          to: Math.max(...readings.map((source) => source.at)),
+          sources: experienceSourceCoverage(entries),
+          attribution: speechAttribution(entries, actorId),
+          entityIds: [...new Set(entries.flatMap((entry) => entry.value.entityIds))],
+          importance: Math.max(...readings.map((source) => source.importance)),
+          sequence: Math.max(0, ...readings.map((source) => source.sequence ?? 0)),
+        };
+      });
+  } catch (error) {
+    return reject(error instanceof Error ? error.message : 'Invalid summary attribution.');
+  }
+  if (replacements.some((summary) => !validExperienceSummary(summary, actorId)))
+    return reject(
+      'Complete summary attribution exceeds preparation capacity or is invalid; originals retained.',
+    );
   const world = draftWorld(input);
-  const state = world.experience!;
-  const previous = new Map((state.summaries[actorId] ?? []).map((s) => [s.id, s]));
-  // Retention is separate from consolidation: distinct memories never compete for summary slots.
-  // docs/memory-architecture.md#retention-corrections-and-protected-commitments
-  const retained = [...previous.values()].filter((s) => !used.has(s.id));
-  const replacements = groups.map((group, i): ExperienceSummary => {
-    const entries = group.sourceIds.map((id) => expected.get(id)!);
-    const existing = group.sourceIds
-      .map((id) => previous.get(id))
-      .filter((s): s is ExperienceSummary => !!s);
-    // Keep an existing identity when revising a memory, instead of appending one per job.
-    return {
-      id: existing[0]?.id ?? `${id}:${i}`,
-      revision: Math.max(0, ...existing.map((s) => s.revision ?? 0)) + 1,
-      text: personalText(world, actorId, group.text),
-      from: Math.min(...entries.map((s) => previous.get(s.id)?.from ?? s.at)),
-      to: Math.max(...entries.map((s) => s.at)),
-      sourceIds: [...new Set(entries.flatMap((s) => previous.get(s.id)?.sourceIds ?? [s.id]))],
-      entityIds: [...new Set(entries.flatMap((s) => s.entityIds))],
-      importance: Math.max(...entries.map((s) => s.importance)),
-      sequence: Math.max(0, ...entries.map((s) => s.sequence ?? 0)),
-    };
-  });
   const invalidated = mutateExperience(world, actorId, {
     operation: 'consolidate',
-    retiredIds: [...used],
+    retiredSources: retired.map(experienceSourceReference),
     summaries: [...retained, ...replacements].sort(
       (a, b) => a.to - b.to || a.id.localeCompare(b.id),
     ),
@@ -847,7 +1048,11 @@ export function acceptConsolidation(
   const result = finish(
     world,
     [],
-    outcome(true, 'consolidated', 'Explicit memory groups accepted; covered sources retired.'),
+    outcome(
+      true,
+      'consolidated',
+      'Explicit memory groups accepted; covered routine sources retired.',
+    ),
   );
   return { ...result, invalidatedMemoryIds: { [actorId]: invalidated } };
 }
@@ -940,13 +1145,14 @@ export function invalidateExperience(
         expanded = true;
       }
     for (const summary of state.summaries[actorId] ?? [])
-      if (!affected.has(summary.id) && summary.sourceIds.some((id) => affected.has(id))) {
+      if (!affected.has(summary.id) && summary.sources.some((source) => affected.has(source.id))) {
         affected.add(summary.id);
         expanded = true;
       }
   }
   revokeActivityEvidence(world, actorId, [...affected]);
   revokePracticeSupport(world, actorId, affected);
+  revokeCombatEvidence(world, actorId, affected);
   if (forget) {
     state.forgotten[actorId] = [...new Set([...(state.forgotten[actorId] ?? []), ...affected])];
     state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(

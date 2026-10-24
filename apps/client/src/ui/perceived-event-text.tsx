@@ -10,6 +10,28 @@ export function PerceivedEventText({
   event: PublicEvent;
   inspectEntity?: (id: string) => void;
 }) {
+  if (event.speech) {
+    const presentation = event.speechPresentation;
+    if (!presentation) return <>Speech presentation is unavailable.</>;
+    return (
+      <>
+        {presentation.parts.map((part, index) =>
+          part.kind === 'participant' && inspectEntity ? (
+            <button
+              key={index}
+              type="button"
+              className="ol-inline-reference"
+              onClick={() => inspectEntity(part.id)}
+            >
+              {part.text}
+            </button>
+          ) : (
+            <span key={index}>{part.text}</span>
+          ),
+        )}
+      </>
+    );
+  }
   const tokens: Array<{ label: string; render(text: string, key: number): ReactNode }> = [];
   if (inspectEntity && !event.descriptive)
     for (const ref of event.references ?? []) {
@@ -58,10 +80,6 @@ export function PerceivedEventText({
   // Literal, whole-term matching never links “Ada” inside “Canada”, and regex
   // offsets retain the original text even when Unicode case folding changes length.
   const text = event.text;
-  // Native speech attribution precedes the quotation. Words inside testimony are
-  // not identity bindings, even when they repeat the speaker's or recipient's name.
-  const quotedAt = event.speech ? text.indexOf(': “') : -1;
-  const linkedText = quotedAt < 0 ? text : text.slice(0, quotedAt);
   const matches = tokens
     .flatMap((token) => {
       const literal = token.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -69,7 +87,7 @@ export function PerceivedEventText({
         `(?<![\\p{L}\\p{N}\\p{M}_])${literal}(?![\\p{L}\\p{N}\\p{M}_])`,
         'giu',
       );
-      return [...linkedText.matchAll(pattern)].map((match) => ({
+      return [...text.matchAll(pattern)].map((match) => ({
         index: match.index,
         text: match[0],
         token,

@@ -4,6 +4,8 @@ import type { WorldService } from './world-service.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import type { StoryJob } from './history.js';
 import { generationAllowance } from './cognition-budget.js';
+import { experienceForModel, experienceModelBindings } from './perceived-context.js';
+import type { ExperienceEntry } from '@open-legend/domain';
 
 const output = z
   .object({
@@ -157,13 +159,26 @@ export class Narrator {
     const handles = new Map(all.map((source, index) => [`s${index + 1}`, source]));
     const context = {
       voice: voices[job.voice],
-      sources: all.map((source, index) => ({
-        handle: `s${index + 1}`,
-        mandatory: index < job.sources.length,
-        text: source.text,
-        type: source.type,
-        time: source.time,
-      })),
+      sources: all.map((source, index) => {
+        const handle = `s${index + 1}`;
+        const entry: ExperienceEntry = {
+          source: 'awareness',
+          value: {
+            ...source.evidence,
+            eventId: source.id,
+            at: source.time,
+            sequence: source.order,
+          },
+        };
+        return {
+          handle,
+          mandatory: index < job.sources.length,
+          experience: experienceForModel(
+            entry,
+            experienceModelBindings(world, job.actorId, entry, handle),
+          ),
+        };
+      }),
       impacts: job.item.impacts.map(({ entityName, field, delta, sourceId }) => ({
         entityName,
         field,

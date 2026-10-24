@@ -1,0 +1,445 @@
+materialContributions:
+  maximumSeconds: 14400
+  siteRadiusMetres: 4
+  operations: [post, cover, boundary-panel, boundary-gate, repair-boundary, place-hearth]
+  label: Contribute for construction
+  siteLabels: { terrain: the reviewed building ground }
+  termsText: 'Construction use: {operation} on {site} within ({minX}, {minZ})–({maxX}, {maxZ}), ending in {minutes} game minutes. Future use can be withdrawn; completed work remains.'
+
+contentsExposureProfiles:
+  - id: base:open-woven-contents
+    version: 1
+    implementation: open-single-level
+    transmission: 1
+    eligibleMaterialRoles: [cover, fiber]
+    footprint: container-body-top
+    carriedHeight: carrier-handling-height
+    labels:
+      name: Open woven contents
+      description: Eligible cloth and prepared fibers receive the rain reaching this open basket's rim. A roof can protect them; the basket itself is not waterproof.
+
+dailyRain:
+  id: base:first-playable-daily-rain
+  version: 1
+  implementation: daily-vertical-rain
+  clock: localTime
+  windowLocalHours: { start: 16, end: 18 }
+  region: { openingBoundsRef: base:first-playable-main }
+  intensity: 1
+  overlap: maximum
+  labels: { raining: Rain, dry: Dry weather }
+
+hearths:
+  - id: base:stone-ring-hearth
+    version: 1
+    implementation: campfire-ring
+    name: Stone-ring hearth
+    description: A permanent stone ring for an ordinary campfire.
+    actionLabel: Lay a hearth
+    activityText: laying a hearth
+    completedText: Laid a cold hearth. It needs fuel and tinder before lighting.
+    help: Choose clear, level ground. Four stones are held during the work and spent only when the cold hearth is complete.
+    radiusMetres: 0.45
+    heightMetres: 0.15
+    clearanceHeightMetres: 2
+    maximumHeightDifferenceMetres: 0.05
+    terrainOnly: true
+    workSeconds: 120
+    input: { definitionId: stone, quantity: 4 }
+
+defaultCover: base:weather-cloth-cover
+coverProfiles:
+  - id: base:weather-cloth-cover
+    version: 1
+    implementation: flexible-sheet
+    name: Weather-cloth covering
+    width: 1.8
+    length: 2.4
+    thickness: 0.02
+    edge: 0.1
+    transmission: 0
+  - id: base:reed-mat-cover
+    version: 1
+    implementation: flexible-sheet
+    name: Reed-mat covering
+    width: 1.8
+    length: 2.4
+    thickness: 0.02
+    edge: 0.1
+    transmission: 0
+
+boundary:
+  family:
+    id: base:light-camp-boundary
+    version: 1
+    implementation: grounded-panel-boundary
+    name: Wattle boundary
+    description: Real posts and woven panels form a light camp boundary. Missing sections stay open.
+    geometry:
+      section:
+        spacing: 2
+        postSection: 0.1
+        postHeight: 1.8
+        gatePostHeight: 2.3
+        panelWidth: 1.9
+        panelHeight: 1.7
+        panelThickness: 0.08
+        accessOpening:
+          width: 0.3
+          bottom: 0.75
+          top: 1.05
+      gate:
+        travel: 2
+        width: 1.90
+        height: 1.7
+        thickness: 0.08
+        insideOffset: 0.17
+        railHeight: 2.27
+        railSection: 0.06
+        railLength: 2.4
+        hangerSection: 0.04
+        hangerHalfSpacing: 0.7
+        handleHeight: 0.9
+        insideHandleOffset: 0.23
+        outsideHandleOffset: 0.11
+    roles:
+      post: camp_post
+      gatePost: camp_gate_post
+      panel: woven_wattle_panel
+      parkingPanel: woven_gate_parking_panel
+      gate: sliding_wattle_gate
+      rail: gate_rail
+      binding: cord
+    postTools:
+      - stone_tool
+    materials:
+      post: timber
+      panel: timber
+      binding: panel
+    inventory:
+      post:
+        initialAttributes:
+          - base:camp-post-integrity
+        stateAttributes:
+          - base:camp-post-integrity
+        homogeneous: false
+        bagRefusal: null
+      panel:
+        initialAttributes:
+          - base:camp-panel-integrity
+        stateAttributes:
+          - base:camp-panel-integrity
+        homogeneous: false
+        bagRefusal: null
+      gate:
+        initialAttributes:
+          - base:camp-gate-integrity
+        stateAttributes:
+          - base:camp-gate-integrity
+        homogeneous: false
+        bagRefusal: null
+      rail:
+        initialAttributes:
+          - base:camp-rail-integrity
+        stateAttributes:
+          - base:camp-rail-integrity
+        homogeneous: false
+        bagRefusal: null
+    joints:
+      panelTies:
+        - end: 0
+          height: 0.9
+        - end: 1
+          height: 0.9
+      panelContact:
+        min:
+          x: -0.05
+          y: -0.025
+          z: -0.04
+        max:
+          x: 0.05
+          y: 0.025
+          z: 0.04
+      runnerContact:
+        min:
+          x: -0.05
+          y: -0.03
+          z: -0.15
+        max:
+          x: 0.05
+          y: 0.03
+          z: 0.03
+      hangerContact:
+        min:
+          x: -0.02
+          y: -0.02
+          z: -0.02
+        max:
+          x: 0.02
+          y: 0.02
+          z: 0.02
+    workPoints:
+      clearance: 0.1
+      postHeight: 0.9
+      panelHeight: 0.9
+      runnerHeight: 2.27
+    seconds:
+      post: 120
+      boundary-panel: 180
+      boundary-gate: 300
+      remove-boundary-panel: 120
+      remove-boundary-gate: 180
+      reclaim-post: 60
+      reclaim-lowered: 0
+      repair-boundary: 180
+      open: 120
+      close: 120
+      bar: 60
+      unbar: 60
+    labels:
+      post: Install a camp post
+      boundary-panel: Fasten a wattle panel
+      boundary-gate: Install a sliding gate
+      remove-boundary-panel: Untie a wattle panel
+      remove-boundary-gate: Remove a sliding gate
+      reclaim-post: Reclaim an unloaded post
+      reclaim-lowered: Reclaim lowered material
+      repair-boundary: Repair a woven part
+      open: Open the gate
+      close: Close the gate
+      bar: Bar the gate from inside
+      unbar: Lift the inside bar
+    limits:
+      sections: 16
+      gates: 2
+      parts: 96
+      activeEdits: 1
+    integrity:
+      post: base:camp-post-integrity
+      panel: base:camp-panel-integrity
+      gate: base:camp-gate-integrity
+      rail: base:camp-rail-integrity
+    repair:
+      roles:
+        - panel
+        - gate
+      input: prepared_fiber
+      quantity: 2
+      amount: 4
+      toolDefinitions:
+        - stone_tool
+    damage:
+      implementation: held-tool-impact
+      label: Strike a boundary part
+      pastTense: struck the boundary part
+      exposureText: These barriers can be damaged while this world is running, even while you are away.
+      tools:
+        - definition: stone_tool
+          impact: 3
+          seconds: 180
+          reach: 1.5
+          recoverySeconds: 0
+        - definition: spear
+          impact: 1
+          seconds: 180
+          reach: 1.8
+          recoverySeconds: 0
+    salvage:
+      footprint:
+        width: 0.5
+        length: 0.5
+        height: 0.2
+      outputs:
+        post:
+          - port: wood
+            definition: wood
+            quantity: 1
+        panel:
+          - port: wood
+            definition: wood
+            quantity: 1
+          - port: fiber
+            definition: prepared_fiber
+            quantity: 1
+        gate:
+          - port: wood
+            definition: wood
+            quantity: 1
+          - port: fiber
+            definition: prepared_fiber
+            quantity: 2
+        rail:
+          - port: wood
+            definition: wood
+            quantity: 1
+    presentation:
+      postColor: '#715438'
+      coverColor: '#bdae85'
+      bindingSize: 0.04
+      loweredName: Recoverable camp materials
+      failureText:
+        The light boundary lost support. Its surviving parts lie harmlessly on the ground for
+        authorized recovery.
+      help:
+        Use real posts and panels. Construction needs permission for every selected material. Missing
+        sections stay open; walls do not stop rain or sound.
+      exposureText: Exposed to ordinary rain; vertical walls supply no roof.
+      unbarredText: Unbarred
+      barredText: Barred
+      condition:
+        nearlyBrokenFraction: 0.25
+        intact: Intact
+        damaged: Damaged
+        nearlyBroken: Nearly broken
+      openText: Open
+      closedText: Closed
+      planLabels:
+        post: Install a post
+        panel: Fasten a panel
+        gate: Install a sliding gate
+        remove: Remove a part
+        repair: Repair a woven part
+  attributes:
+    - id: base:camp-post-integrity
+      version: 1
+      implementation: number-v1
+      name: Post integrity
+      disclosure: owner
+      presentation:
+        icon: meter.health
+        color: meter.health
+      schema:
+        kind: number
+        min: 0
+        max: 10
+        initial: 10
+        unit: points
+    - id: base:camp-panel-integrity
+      version: 1
+      implementation: number-v1
+      name: Panel integrity
+      disclosure: owner
+      presentation:
+        icon: meter.health
+        color: meter.health
+      schema:
+        kind: number
+        min: 0
+        max: 12
+        initial: 12
+        unit: points
+    - id: base:camp-gate-integrity
+      version: 1
+      implementation: number-v1
+      name: Gate integrity
+      disclosure: owner
+      presentation:
+        icon: meter.health
+        color: meter.health
+      schema:
+        kind: number
+        min: 0
+        max: 16
+        initial: 16
+        unit: points
+    - id: base:camp-rail-integrity
+      version: 1
+      implementation: number-v1
+      name: Rail integrity
+      disclosure: owner
+      presentation:
+        icon: meter.health
+        color: meter.health
+      schema:
+        kind: number
+        min: 0
+        max: 6
+        initial: 6
+        unit: points
+  materials:
+    - id: camp_post
+      revision: 1
+      version: 1
+      name: Camp post
+      description: A 1.80 metre camp upright, 0.10 metres square. It supports wall ties, not canopy roofs.
+      portable: true
+      packingLoad: 2
+      properties:
+        - rigid
+        - shaft
+      assemblyMaterial:
+        familyId: base:light-camp-boundary
+        role: post
+        postHeight: 1.8
+    - id: camp_gate_post
+      revision: 1
+      version: 1
+      name: Tall camp gate post
+      description: A 2.30 metre camp upright, 0.10 metres square, for gate and parking supports.
+      portable: true
+      packingLoad: 2
+      properties:
+        - rigid
+        - shaft
+      assemblyMaterial:
+        familyId: base:light-camp-boundary
+        role: post
+        postHeight: 2.3
+    - id: woven_wattle_panel
+      revision: 1
+      version: 1
+      name: Woven wattle panel
+      description:
+        A solid woven panel, 1.90 metres wide, 1.70 metres high and 0.08 metres thick. It takes
+        two real ties.
+      portable: true
+      packingLoad: 2
+      properties:
+        - rigid
+        - fiber
+      assemblyMaterial:
+        familyId: base:light-camp-boundary
+        role: panel
+    - id: woven_gate_parking_panel
+      revision: 1
+      version: 1
+      name: Gate access panel
+      description:
+        A woven panel with an actual central 0.30 metre hand opening for reaching a parked gate
+        handle.
+      portable: true
+      packingLoad: 2
+      properties:
+        - rigid
+        - fiber
+      assemblyMaterial:
+        familyId: base:light-camp-boundary
+        role: panel
+    - id: sliding_wattle_gate
+      revision: 1
+      version: 1
+      name: Sliding wattle gate
+      description:
+        A 1.90 by 1.70 metre sliding leaf, 0.08 metres thick, with an integral inside bar and
+        ground guide.
+      portable: true
+      packingLoad: 2
+      properties:
+        - rigid
+        - fiber
+      assemblyMaterial:
+        familyId: base:light-camp-boundary
+        role: gate
+    - id: gate_rail
+      revision: 1
+      version: 1
+      name: Gate rail
+      description: A 2.40 metre runner, 0.06 metres square, with complementary reversible lap ends.
+      portable: true
+      packingLoad: 2
+      properties:
+        - rigid
+        - shaft
+      assemblyMaterial:
+        familyId: base:light-camp-boundary
+        role: rail

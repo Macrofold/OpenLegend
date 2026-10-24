@@ -1,18 +1,32 @@
-import { entityGet, entityOwn, entitySet, entityValues } from './entity-collection.js';
+import { CONSTRUCTION_PERMISSION_LIMITS } from './construction-permissions.js';
+import {
+  materialContainerAllowed,
+  exposedContentsMaterial,
+  openContentsProfile,
+  openContentsRoot,
+} from './contents-exposure.js';
+import {
+  entityDelete,
+  entityGet,
+  entityOwn,
+  entitySet,
+  entityValues,
+} from './entity-collection.js';
 import { connectActivityItem } from './action-experience.js';
 import { chargeWork, WorkBudgetError } from './work-budget.js';
 import { contributionSourceBound } from './status-capabilities.js';
 import { current, isDraft, original } from 'immer';
 import { changedDraftEntityIds, readOnlyDraftView, sensoryDraftWrites } from './draft.js';
-import { worldRootEntities } from './entity-index.js';
+import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { recordSemanticChange } from './dependencies.js';
 import { nextEntityId, nextId, reserveEntityId } from './data.js';
 import { canonicalJson } from './events.js';
 import { getOwn, isSafeRecordId, hasRecordFields } from './records.js';
 import { attributeDefinition, definitionPin, type DefinitionPin } from './world-modules.js';
-import { materialInventoryRule } from './material-inventory.js';
-import { sameDefinitionPin } from './state-owners.js';
+import { materialInventoryRule, tracksMaterialOrigins } from './material-inventory.js';
+import { readState, sameDefinitionPin, type StateAddress } from './state-owners.js';
+import { manufactureOutputLots } from './manufacture.js';
 import {
   assertReservedStock,
   itemHasReservations,
@@ -26,7 +40,7 @@ import {
   objectIndexEntries,
   type ObjectIndexNode,
 } from './object-index.js';
-import type { Entity, ItemInstance, WorldState } from './types.js';
+import type { Entity, ItemInstance, RecipeDefinition, WorldState } from './types.js';
 import { isAssemblyPlacement } from './spatial-state.js';
 import { equipmentConflicts, equipmentProblem } from './equipment.js';
 
@@ -34,6 +48,9 @@ export interface ItemLot {
   assemblyClaim?: import('./assembly-types.js').AssemblyClaim;
   /** Physical input provenance. Authorization remains in the server's current grant. */
   materialOriginIds?: string[];
+  /** Accepted transfer provenance, not authority. The matching current operational
+   * grant must still authorize this actual material's use. */
+  materialContributionIds?: string[];
   definitionPin: DefinitionPin;
   unitPin: DefinitionPin;
   quantity: number;
@@ -87,6 +104,7 @@ interface MaterialMembership {
   owner: object;
   definitions: object;
   families: object | undefined;
+  profiles: object | undefined;
   members: ObjectIndexNode<string> | undefined;
   groups: ObjectIndexNode<ObjectIndexNode<true> | undefined> | undefined;
   wet: ObjectIndexNode<true> | undefined;
@@ -132,7 +150,7 @@ export function retiredObjectIds(world: WorldState): readonly string[] {
   }
   return ids;
 }
-function parentOf(entity: Entity | undefined): string | undefined {
+export function parentOf(entity: Entity | undefined): string | undefined {
   return entity?.placement && entity.placement.mode !== 'world'
     ? entity.placement.parentEntityId
     : undefined;
@@ -141,7 +159,7 @@ function indexFor(world: WorldState): IndexedObjects {
   const token = world.objectState;
   let index = indexes.get(token);
   if (index) return index;
-  if (isDraft(world) && original(world)?.objectState) {
+  if (isDraft(world) && original(world)?.objectState === readOnlyDraftView(world.objectState)) {
     const base = original(world)!;
     const inherited = indexFor(base);
     index = {
@@ -177,6 +195,18 @@ function indexFor(world: WorldState): IndexedObjects {
   indexes.set(token, index);
   return index;
 }
+/** A private compound installs these exact placements into its caller before that caller
+ * finishes. Carry only membership, not publication proofs or material exposure results.
+ * docs/save-and-load.md#continuation-and-identity
+ */
+export function captureObjectPlacementIndex(
+  world: WorldState,
+): ((target: WorldState) => void) | undefined {
+  const index = indexes.get(world.objectState);
+  if (!index) return;
+  const { children, attachments } = index;
+  return (target) => indexes.set(target.objectState, { children, attachments });
+}
 /** The same placement index owns this derived weather subset. Trees are immutable between
  * edits; a successor receives its own cursors and cannot mutate an older world's membership.
  * Current positions, moisture and rain are never cached as geometric truth. */
@@ -188,6 +218,8 @@ export function exposedMaterialIds(world: WorldState, wetOnly = false): readonly
   const families =
     world.assemblyFamilies &&
     (isDraft(world.assemblyFamilies) ? current(world.assemblyFamilies) : world.assemblyFamilies);
+  const profiles =
+    world.contentsExposureProfiles && readOnlyDraftView(world.contentsExposureProfiles);
   const entityView = readOnlyDraftView(world.entities);
   const entity = (id: string) => {
     const value = entityGet(entityView, id);
@@ -208,12 +240,14 @@ export function exposedMaterialIds(world: WorldState, wetOnly = false): readonly
   const reusable =
     (isDraft(world) ? changed !== undefined : Object.isFrozen(world)) &&
     Object.isFrozen(definitions) &&
-    (!families || Object.isFrozen(families));
+    (!families || Object.isFrozen(families)) &&
+    (!profiles || Object.isFrozen(profiles));
   let membership = reusable ? index.materials : undefined;
   if (
     membership?.owner !== materialOwner(world) ||
     membership?.definitions !== definitions ||
-    membership?.families !== families
+    membership?.families !== families ||
+    membership?.profiles !== profiles
   )
     membership = undefined;
   const refresh = (current: MaterialMembership, id: string) => {
@@ -224,14 +258,22 @@ export function exposedMaterialIds(world: WorldState, wetOnly = false): readonly
     const material = descriptor && readOnlyDraftView(descriptor);
     const placement = item?.placement && readOnlyDraftView(item.placement);
     const parent = placement && placement.mode !== 'world' ? placement.parentEntityId : undefined;
+    const basket = parent ? entity(parent) : undefined;
+    const outer =
+      basket?.container && openContentsProfile(world, basket) && openContentsRoot(world, basket);
+    const rootId =
+      parent && eligibleRoot(parent)
+        ? parent
+        : outer && eligibleRoot(outer.id)
+          ? outer.id
+          : undefined;
     const nextParent =
       lot &&
       !item?.retirement &&
-      parent &&
-      eligibleRoot(parent) &&
+      rootId &&
       material &&
       (material.role === 'cover' || material.role === 'fiber')
-        ? parent
+        ? rootId
         : undefined;
     const oldParent = objectIndexGet(current.members, id);
     if (oldParent !== nextParent) {
@@ -254,12 +296,23 @@ export function exposedMaterialIds(world: WorldState, wetOnly = false): readonly
     }
     const family = material && families?.[material.familyId];
     const attributes = item?.attributes && readOnlyDraftView(item.attributes);
-    const moisture = family && attributes?.[family.moistureAttribute];
+    const moisture =
+      family?.implementation === 'four-corner-flexible-bays' &&
+      attributes?.[family.moistureAttribute];
     const wet = !!nextParent && !!moisture && Number(readOnlyDraftView(moisture).value) > 0;
     if (!!objectIndexGet(current.wet, id) !== wet) {
       current.wet = objectIndexSet(current.wet, id, wet ? true : undefined);
       delete current.wetIds;
     }
+  };
+  const refreshChildren = (membership: MaterialMembership, id: string) => {
+    refresh(membership, id);
+    const container = entity(id);
+    if (container?.container && openContentsProfile(world, container))
+      for (const [child] of objectIndexEntries(objectIndexGet(index.children, id))) {
+        countDomainWork('materialMembershipCandidates');
+        refresh(membership, child);
+      }
   };
   if (!membership) {
     countDomainWork('materialMembershipBuilds');
@@ -268,6 +321,7 @@ export function exposedMaterialIds(world: WorldState, wetOnly = false): readonly
       owner: materialOwner(world),
       definitions,
       families,
+      profiles,
       members: undefined,
       groups: undefined,
       wet: undefined,
@@ -294,9 +348,9 @@ export function exposedMaterialIds(world: WorldState, wetOnly = false): readonly
             ...objectIndexEntries(objectIndexGet(membership.groups, id)),
           ].map(([child]) => child),
         );
-        for (const child of children) refresh(membership, child);
+        for (const child of children) refreshChildren(membership, child);
       }
-      refresh(membership, id);
+      refreshChildren(membership, id);
     }
     if (rootsChanged) {
       membership.rootOrder = worldRootEntities(world, true)
@@ -640,6 +694,8 @@ export function mergeCompatible(world: WorldState, aId: string, bId: string): bo
     !second.assemblyClaim &&
     canonicalJson(first.materialOriginIds ?? null) ===
       canonicalJson(second.materialOriginIds ?? null) &&
+    canonicalJson(first.materialContributionIds ?? null) ===
+      canonicalJson(second.materialContributionIds ?? null) &&
     ((!lotCarriesState(a) && !lotCarriesState(b)) ||
       (homogeneousMaterialState(world, a) !== undefined &&
         homogeneousMaterialState(world, a) === homogeneousMaterialState(world, b))) &&
@@ -704,6 +760,7 @@ export function canReceiveSource(world: WorldState, id: string, definitionId: st
   return (
     !!lot &&
     !!definition &&
+    !tracksMaterialOrigins(definition) &&
     lot.individuality === 'homogeneous' &&
     !entity.container &&
     !lotCarriesState(entity) &&
@@ -737,7 +794,12 @@ export function createItemLot(
   )
     throw new Error('Invalid object source, identity, quantity or destination.');
   const materialRule = materialInventoryRule(world, definition);
-  if (parent.container && materialRule?.bagRefusal) throw new Error(materialRule.bagRefusal);
+  if (
+    parent.container &&
+    materialRule?.bagRefusal &&
+    !materialContainerAllowed(world, definition, parent)
+  )
+    throw new Error(materialRule.bagRefusal);
   const individual = !!definition.container || (!!materialRule && !materialRule.homogeneous);
   if (individual && quantity !== 1)
     throw new Error('Each individual object must have its own identity. Create one at a time.');
@@ -757,7 +819,7 @@ export function createItemLot(
   reserveEntityId(world, id);
   const lot: ItemLot = {
     definitionPin: pin,
-    ...(definition.assemblyMaterial ? { materialOriginIds: [id] } : {}),
+    ...(tracksMaterialOrigins(definition) ? { materialOriginIds: [id] } : {}),
     unitPin: { ...ITEM_COUNT_PIN },
     quantity,
     revision: 0,
@@ -804,7 +866,11 @@ interface QuantityChange {
   id: string;
   quantity: number;
 }
-function quantityPlan(world: WorldState, changes: readonly QuantityChange[]) {
+function quantityPlan(
+  world: WorldState,
+  changes: readonly QuantityChange[],
+  retiredMaterialId?: string,
+) {
   const deltas = new Map<string, number>(),
     parents = new Set<string>();
   const seen = new Set<string>();
@@ -827,6 +893,7 @@ function quantityPlan(world: WorldState, changes: readonly QuantityChange[]) {
       throw new Error('Empty this container before retiring it.');
     if (
       !quantity &&
+      id !== retiredMaterialId &&
       homogeneousMaterialState(world, entity) === undefined &&
       [entity.attributes, entity.mechanismFields, entity.statusEffects].some(
         (component) => component && Object.keys(component).length,
@@ -884,9 +951,10 @@ function changeItemQuantities(
   changes: readonly QuantityChange[],
   cause: string,
   history: 'consume' | 'split',
+  retiredMaterialId?: string,
 ): void {
   if (!changes.length) return;
-  const plan = quantityPlan(world, changes);
+  const plan = quantityPlan(world, changes, retiredMaterialId);
   // Claim planning still sees its own hold. Check backing only at publication,
   // after the claim owner settles consumption, including direct edits/retirement.
   // archive/07-technical-architecture/world-module-runtime.md#5-effects-ownership-and-deterministic-composition
@@ -976,6 +1044,10 @@ function splitHomogeneousLot(
   createItemLot(world, parentId, lot.definitionPin.id, quantity, resultId);
   if (lot.materialOriginIds)
     entityGet(world.entities, resultId)!.item!.materialOriginIds = [...lot.materialOriginIds];
+  if (lot.materialContributionIds)
+    entityGet(world.entities, resultId)!.item!.materialContributionIds = [
+      ...lot.materialContributionIds,
+    ];
   if (entity.attributes)
     entityGet(world.entities, resultId)!.attributes = Object.fromEntries(
       Object.entries(entity.attributes).map(([key, state]) => [key, { ...state }]),
@@ -1023,7 +1095,12 @@ function itemMovePlan(
     );
   const definition = lot && world.itemDefinitions[lot.definitionPin.id];
   const bagRefusal = definition && materialInventoryRule(world, definition)?.bagRefusal;
-  if (bagRefusal && destination?.container) throw new Error(bagRefusal);
+  if (
+    bagRefusal &&
+    destination?.container &&
+    !materialContainerAllowed(world, definition!, destination)
+  )
+    throw new Error(bagRefusal);
   if (
     !entity ||
     !lot ||
@@ -1032,6 +1109,22 @@ function itemMovePlan(
     !(destination.actor || destination.kind === 'item-pile' || destination.container)
   )
     throw new Error('Item or destination unavailable.');
+  if (
+    entity.container &&
+    openContentsProfile(world, entity) &&
+    !openContentsRoot(world, entity, destinationId)
+  )
+    for (const childId of directChildIds(world, id)) {
+      chargeWork({ candidates: 1 });
+      const child = entityGet(world.entities, childId)!;
+      if (
+        child.item &&
+        exposedContentsMaterial(world, world.itemDefinitions[child.item.definitionPin.id]!)
+      )
+        throw new Error(
+          'Keep an open basket with exposed materials directly carried or on supported ground.',
+        );
+    }
   if (quantity <= 0 || checked(quantity) > availableItemQuantity(world, id))
     throw new Error('That quantity is unavailable or reserved.');
   if (sourceId === destinationId)
@@ -1286,6 +1379,69 @@ export function equipLot(world: WorldState, actorId: string, id: string, cause: 
   publishDeltas(world, new Map(), [actorId]);
   return equippedId;
 }
+/** Operational receipt references survive quantity changes and actual manufacture.
+ * They never restore or create their separately stored use permissions. */
+export function validateMaterialContributionIds(
+  value: unknown,
+): asserts value is string[] | undefined {
+  if (
+    value !== undefined &&
+    (!Array.isArray(value) ||
+      !value.length ||
+      value.length > CONSTRUCTION_PERMISSION_LIMITS.materialOrigins ||
+      new Set(value).size !== value.length ||
+      !value.every(isSafeRecordId))
+  )
+    throw new Error('Invalid accepted material-contribution provenance.');
+}
+export function recordMaterialContribution(
+  world: WorldState,
+  itemId: string,
+  permissionId: string,
+): void {
+  const entity = entityGet(world.entities, itemId),
+    lot = entity?.item;
+  if (
+    !lot ||
+    entity.retirement ||
+    !tracksMaterialOrigins(world.itemDefinitions[lot.definitionPin.id]!)
+  )
+    throw new Error('Choose actual construction material for this contribution.');
+  const ids = [...new Set([...(lot.materialContributionIds ?? []), permissionId])].sort();
+  validateMaterialContributionIds(ids);
+  lot.materialContributionIds = ids;
+  lot.revision = bump(lot.revision);
+  itemAvailabilityChanged(world, itemId);
+}
+/** The complete native material-validation pass calls this for every live lot;
+ * SQL establishes omitted historical origins before marking a partial working set. */
+export function validateMaterialOrigins(
+  world: WorldState,
+  entity: Entity,
+  completeOrigins = completeObjectHistory(world.entities),
+): void {
+  const lot = entity.item;
+  if (!lot) return;
+  const definition = world.itemDefinitions[lot.definitionPin.id];
+  if (!definition) throw new Error('Material definition is unavailable.');
+  const origins = lot.materialOriginIds;
+  validateMaterialContributionIds(lot.materialContributionIds);
+  if (lot.materialContributionIds && !tracksMaterialOrigins(definition))
+    throw new Error('This definition does not retain construction contribution provenance.');
+  if (tracksMaterialOrigins(definition)) {
+    if (
+      !Array.isArray(origins) ||
+      !origins.length ||
+      new Set(origins).size !== origins.length ||
+      !origins.every(
+        (id) => isSafeRecordId(id) && (!completeOrigins || !!entityGet(world.entities, id)),
+      )
+    )
+      throw new Error('Invalid physical material provenance.');
+  } else if (origins !== undefined)
+    throw new Error('This definition does not support material provenance.');
+}
+
 export function validateObjects(world: WorldState): void {
   const slots = new Map<string, Set<string>>();
   const assemblySlots = new Map<string, Set<string>>();
@@ -1419,13 +1575,20 @@ export function validateObjects(world: WorldState): void {
         }
       }
     }
+    const activeAction = entity.actor?.action;
+    validateMaterialContributionIds(activeAction?.materialContributionIds);
+    if (
+      activeAction?.materialContributionIds &&
+      (activeAction.type !== 'craft' || activeAction.stage !== 'working')
+    )
+      throw new Error('Accepted contribution provenance needs actual active manufacture.');
     const lot = entity.item;
     if (!lot) continue;
     if (
       !hasRecordFields(
         lot,
         ['definitionPin', 'unitPin', 'quantity', 'individuality', 'revision'],
-        ['assemblyClaim', 'materialOriginIds'],
+        ['assemblyClaim', 'materialOriginIds', 'materialContributionIds'],
       )
     )
       throw new Error('Unsupported lot state.');
@@ -1573,6 +1736,26 @@ export function assemblyMovesReason(
   }
 }
 
+/** A qualified mechanism changes an existing attachment, never its custody or
+ * construction claim. The assembly compound owner supplies mechanical authority. */
+export function repositionAssemblyPart(
+  world: WorldState,
+  id: string,
+  rootId: string,
+  local: import('@open-legend/spatial').WorldPoint,
+): void {
+  const part = entityGet(world.entities, id),
+    placement = part?.placement;
+  if (
+    !part?.item ||
+    !isAssemblyPlacement(placement) ||
+    placement.parentEntityId !== rootId ||
+    part.item.assemblyClaim?.rootId !== rootId
+  )
+    throw new Error('The selected mechanism attachment is no longer present.');
+  part.placement = { ...placement, revision: bump(placement.revision), local: { ...local } };
+}
+
 export function detachAssemblyPart(
   world: WorldState,
   id: string,
@@ -1581,12 +1764,62 @@ export function detachAssemblyPart(
   retainClaim = false,
 ): void {
   const material = entityGet(world.entities, id),
-    claim = material?.item?.assemblyClaim;
+    claim = material?.item?.assemblyClaim,
+    sourceId = material && parentOf(material);
   if (!claim || claim.rootId !== rootId)
     throw new Error('The selected material is no longer part of this structure.');
   delete material!.item!.assemblyClaim;
   moveLot(world, id, destinationId, 1, 'assembly-reclaim', false);
   if (retainClaim) material!.item!.assemblyClaim = claim;
+  if (sourceId) retireEmptyItemPile(world, sourceId);
+}
+
+/** The caller records any observation of the source before retiring it. An empty
+ * ground pile must not leave a phantom footprint blocking later construction. */
+export function retireEmptyItemPile(world: WorldState, id: string): void {
+  if (entityGet(world.entities, id)?.kind !== 'item-pile' || !directChildIds(world, id).next().done)
+    return;
+  entityDelete(world.entities, id);
+  rootMembershipChanged(world, id);
+}
+
+/** Called inside the assembly owner's private compound. Only the exact exhausted
+ * material can retire with its physical state; ordinary consumption keeps refusing
+ * stateful/protected parts. Each protected output is one real reclaimable unit. */
+export function destroyAssemblyPart(
+  world: WorldState,
+  id: string,
+  rootId: string,
+  destinationId: string,
+  condition: StateAddress,
+  outputs: RecipeDefinition['outputs'],
+): string[] {
+  const source = entityGet(world.entities, id),
+    claim = source?.item?.assemblyClaim,
+    state = readState(world, condition, 'owner');
+  if (
+    !source?.item ||
+    source.item.quantity !== 1 ||
+    claim?.rootId !== rootId ||
+    condition.entityId !== id ||
+    state.status !== 'known' ||
+    state.value !== 0
+  )
+    throw new Error('Only the actual exhausted structural material can produce salvage.');
+  const origins = [...(source.item.materialOriginIds ?? [id])],
+    contributionIds = source.item.materialContributionIds;
+  detachAssemblyPart(world, id, rootId, destinationId);
+  changeItemQuantities(world, [{ id, quantity: 0 }], 'assembly-destroyed', 'consume', id);
+  return manufactureOutputLots(world, { outputs }, true).map((output) => {
+    const itemId = createItemLot(world, destinationId, output.definitionId, output.quantity),
+      item = entityGet(world.entities, itemId)!.item!;
+    item.individuality = 'individual';
+    item.assemblyClaim = { rootId: claim.rootId, family: { ...claim.family } };
+    item.materialOriginIds = [...origins];
+    if (contributionIds) item.materialContributionIds = [...contributionIds];
+    item.revision = bump(item.revision);
+    return itemId;
+  });
 }
 
 export function declareObjectOwner(

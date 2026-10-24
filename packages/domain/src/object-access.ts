@@ -7,7 +7,7 @@ import type { WorldState, ItemInstance } from './types.js';
 
 /** Physical access is separate from declared title and human-private knowledge.
  * docs/projects/completed/immediate-gameplay-limits.md#decisions */
-export function canAccessContainer(world: WorldState, actorId: string, id: string): boolean {
+export function containerAccessPermitted(world: WorldState, actorId: string, id: string): boolean {
   const actor = entityGet(world.entities, actorId),
     target = entityGet(world.entities, id);
   if (
@@ -29,8 +29,15 @@ export function canAccessContainer(world: WorldState, actorId: string, id: strin
   // Another person's carried inventory never opens here; items reach them only through
   // their accepted offer (docs/worlds/base/social.md#offering-and-accepting-possessions).
   if (root.actor && !root.remains && !grantedBag) return false;
+  return true;
+}
+export function canAccessContainer(world: WorldState, actorId: string, id: string): boolean {
+  if (!containerAccessPermitted(world, actorId, id)) return false;
+  const actor = entityGet(world.entities, actorId)!,
+    root = objectAncestors(world, id).at(-1)!;
   return (
-    seesEntity(world, actor, root) && canReachEntity(world, actor, root, world.itemHandling.reach)
+    root.id === actorId ||
+    (seesEntity(world, actor, root) && canReachEntity(world, actor, root, world.itemHandling.reach))
   );
 }
 export function accessiblePossession(world: WorldState, actorId: string, id: string): boolean {

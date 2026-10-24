@@ -658,7 +658,7 @@ export class WorldPresentation {
     this.protectionMaterials.delete(source);
   }
   lighting(view: GameView, remembered: GameView['entities'] = view.entities): void {
-    const { daylight, toSun } = sunlightAtHour(view.clock.hour);
+    const { daylight, toSun } = sunlightAtHour(view.clock.hour, view.clock.daylight);
     this.sunDirection.set(toSun.x, toSun.y, toSun.z);
     // PlayCanvas directional rays follow local −Y. Use world orientation so camera
     // motion cannot move the sun; received clock updates also handle pause/load/rewind.

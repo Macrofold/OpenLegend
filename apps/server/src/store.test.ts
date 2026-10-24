@@ -1,10 +1,11 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { readConfig, testRepository } from '../../../tests/fixtures/database.js';
 import { PLAYER_ID } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createItemLot, createWorld, executeCommand, inventoryFor } from '@open-legend/domain';
+import { createItemLot, executeCommand, inventoryFor } from '@open-legend/domain';
 import type { AiReceipt } from '@open-legend/ai';
 import { SqlGameRepository, type JobRecord, type SavedWorld } from './store.js';
 import { DecisionLedger, levelLimits } from './cognition-budget.js';
@@ -26,7 +27,7 @@ function diskPath(): string {
   return directory;
 }
 function save(): SavedWorld {
-  return { world: createWorld(73), speed: 1, manuallyPaused: false };
+  return { world: stockedCamp(73), speed: 1, manuallyPaused: false };
 }
 function receipt(requestId: string, overrides: Partial<AiReceipt> = {}): AiReceipt {
   return {

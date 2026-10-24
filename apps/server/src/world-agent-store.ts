@@ -44,6 +44,8 @@ export interface AgentSession {
   initialPurpose?: 'conversation' | 'invention' | 'creation';
   /** Application-owned opening identities survive every revision and provider retry. */
   openingIdentities?: import('@open-legend/domain').WorldOpeningIdentities;
+  /** A separate run keeps the original creation seed, never current RNG/progress. */
+  recoveryOpening?: { choiceId: string; seed: number };
   selectedDraft?: { id: string; revision: number };
   toolCalls?: number;
   packetRef?: string;

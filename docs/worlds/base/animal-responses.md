@@ -1,6 +1,11 @@
 # Native animal responses
 
-**Selected design, runtime pending — 2026-10-17.** This is the bundled world's authored animal policy for [combat and threat responses](../../projects/combat-and-threat-responses-feature-spec.md). Current ordinary animals still use the single remembered threat and short local steering described in [survival](survival.md#animal-escape). Completing this document does not claim that the replacement is running.
+**Implemented, qualification in progress — 2026-10-22.** The bundled world uses
+one installed native response profile for ground escape, bird flight and the
+territorial stag's relinquishing withdrawal. The [combat tracker](../../maintainers/combat-and-threat-responses.md)
+and [evidence](../../verification/combat-and-threat-responses.md) retain remaining
+population, rendered-gameplay and acceptance gaps. Passing component checks does
+not establish the complete world or independent player experience.
 
 ## Playable purpose
 
@@ -23,7 +28,7 @@ The first release supports ordinary grounded escape and the existing bird flight
 An ordinary animal enters an alarm episode when it personally receives any of the following evidence:
 
 - A harmful bodily contact, including an intercepted projectile. A blocked or harmless contact can still qualify as an observed attack attempt even when its injury is zero.
-- A visible, committed attack preparation or directed attack attempt against its own current body. Merely selecting, hovering over or considering an animal is not visible conduct and creates no alarm.
+- A personally visible released shot or executed attack attempt against its own current body. Drawing a bow, aiming and winding up an attack do not start or renew alarm. Merely selecting, hovering over or considering an animal is not visible conduct and creates no alarm.
 - A projectile's personally perceived passage within **1.5 metres of its body surface**, using the swept physical passage and that animal's actual perception. A shot elsewhere, an unseen archer's private target or the presence of a projectile in the world dictionary does not qualify.
 
 Existing territorial entry rules may start the stag's territorial episode independently. Generic noises, offspring danger, another animal's cry, grazing proximity, odor and distant combat do not start ordinary alarm in this slice. Their later designs must provide actual supported sensory evidence instead of assuming them from a label.
@@ -52,21 +57,25 @@ An unidentified impact/passage region uses the same **480-game-second retention 
 
 An unobserved source disappearing, dying or leaving does not retroactively provide that fact to the animal. Its estimate expires normally unless permitted evidence resolves it. Expiry means that this finite native policy has stopped treating that old estimate as a current local danger. It is not proof that no attacker exists in the world.
 
-There is **no nearest-attacker or top-N-danger cutoff**. All eligible dangers in the complete permitted local set affect safety and candidate scoring. A body estimate is keyed to the observed body life; a local passage/impact region is keyed to the exact committed attack or projectile source. Several observations of that same proximate source update one estimate. Only duplicate evidence about the same observed body/region coalesces: associating an arrow with a remembered shooter does not merge the arrow's local contact region into the shooter's remote body estimate. Distinct anonymous attacks retain their actual uncertainty. The existing complete-transition work budget handles excess work explicitly. Budget exhaustion cannot be turned into an empty danger set or a claim of safety.
+There is **no nearest-attacker or top-N-danger cutoff**. All eligible dangers in the complete permitted local set affect direction choice and settling. A body estimate is keyed to the observed body life; a local passage/impact region is keyed to the exact committed attack or projectile source. Several observations of that same proximate source update one estimate. Only duplicate evidence about the same observed body/region coalesces: associating an arrow with a remembered shooter does not merge the arrow's local contact region into the shooter's remote body estimate. Distinct anonymous attacks retain their actual uncertainty. The existing complete-transition work budget handles excess work explicitly. Budget exhaustion cannot be turned into an empty danger set or a claim of safety.
 
 ## Separation and settling
 
 The initial preferred avoidance radius is **12 metres from each dangerous body's physical surface**. For a remembered region, distance is measured to the nearest point of that region, with the observed body extent retained. A refuge is clear only when separation exceeds the avoidance radius by the **3-metre clearance margin**: at least **15 metres** from every current danger surface/region. Equality uses the existing spatial comparison tolerance; it does not oscillate because of floating-point residue.
 
-These are animal comfort distances, not universal weapon ranges or invulnerability. A bow can remain dangerous beyond this distance. Fresh perceived preparations, near passages and impacts renew alarm. The policy must not inspect an unseen opponent's inventory or select an arbitrary weapon's maximum range as knowledge the animal has acquired.
+These are animal comfort distances, not universal weapon ranges or invulnerability. A bow can remain dangerous beyond this distance. Fresh perceived executed attacks, near passages and impacts renew alarm. The policy must not inspect an unseen opponent's inventory or select an arbitrary weapon's maximum range as knowledge the animal has acquired.
 
 An alarm has three physical situations, all owned by one episode:
 
 | Situation | Native response                                                                                                             | Condition for leaving it                                                                                    |
 | --------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Escaping  | Keep a valid route to a chosen refuge; prefer increasing separation from the complete danger set.                           | Reach a supported, clear stopping location and have no current qualifying attack preparation/passage.       |
+| Escaping  | Keep a valid route to a chosen refuge; prefer increasing separation from the complete danger set.                           | Reach a supported, clear stopping location and have no current qualifying executed attack/passage.          |
 | Settling  | Stop ordinary roaming, remain visibly alert and continue local danger checks.                                               | Remain continuously clear for **240 game seconds**, with no fresh attack evidence; then end the episode.    |
 | Blocked   | Stay in a physically legal position or take an admitted improving route; retain alarm and show the actual blocked response. | A meaningful change permits a usable route or establishes the current supported position as a clear refuge. |
+
+Visible activity and look-closer text call blocked and settling animals **Alert**;
+escaping animals are **Fleeing**. Actual active work and territorial behavior keep
+their own more specific descriptions. No private danger identity is disclosed.
 
 At the normal base-world **60 game seconds per real second**, 240 game seconds is four real seconds. Pause freezes the interval. Faster simulation changes its real duration normally. A wall-clock timeout, number of rendering frames or number of Decision API completions must not determine when an animal calms.
 
@@ -82,48 +91,50 @@ For a grounded wandering animal, ending the episode schedules the next ordinary 
 
 ## Refuge selection and movement
 
-### Candidate construction
+### Sequential ground escape
 
-For ground escape at an eligible route review, retain the current refuge as the first candidate if it is **not yet reached** and its current support and route are still valid. A reached clear refuge enters settling before selection. A reached unsafe refuge cannot compete as a zero-length route or win continuity forever; construct the next leg. Construct up to **12 new local candidates** in the same prepared navigation request: eight bearings at 45-degree increments toward a **12-metre ring**, plus four bearings at 90-degree increments toward a **24-metre ring**. Orient the first bearing away from the nearest danger region; if tied, use the exact source key's canonical order. For an anonymous directional attack with no body estimate, use the away-from-incoming bearing. With no directional evidence, use the animal's current heading.
+Choose the middle of the widest angular gap between all personally perceived or
+retained threat bearings. Threats on opposite sides leave perpendicular choices;
+randomly break tied gaps. An unidentified incoming projectile supplies its
+perceived incoming bearing, never a hidden shooter position. With no directional
+evidence choose a random bearing. Draw one leg length uniformly from **10–15 m**
+and save it with the bearing and randomly selected left/right preference.
 
-Resolve each point to compatible support through the existing spatial owner. Do not copy the animal's current height to another horizontal coordinate, snap to another floor, create a proxy entity, ignore an obstacle or grant climbing. Omit unsupported candidates with a specific reason. Candidate bearings are a bounded search strategy, not an eight-direction movement rule: the chosen route retains continuous coordinates and arbitrary turns.
+Try directions sequentially: **0°, ±5°, ±30°, ±60°, ±90°, 180°**, with the saved
+side preference determining which side goes first. Admit at most one prepared
+path request at a time. Resolve an endpoint on actual compatible support; ordinary
+navigation may detour around a small wall. If the endpoint is unsupported or a
+route fails/is too long, retain a physically valid shorter prefix on that bearing.
+Exact support, body clearance, slope, floor and current geometry remain mandatory.
+The animal need not see every point of its route, and routes are not scored for
+optimal clearance from every threat. Physical navigation does not disclose hidden
+actors or grant remembered terrain knowledge.
 
-A new refuge endpoint and newly selected route must stay within the animal's currently permitted visual terrain scope. Apply its actual sight range and occlusion through the perception owner; a visible endpoint does not authorize a detour through unknown terrain. The still-retained current refuge and admitted route can survive temporary loss of sight, but the controller does not invent remembered dens or unseen destinations. Keep each candidate route within 24 metres of the current position. A route leaving that local scope is `outside-planning-scope`, not proof of unreachability. Physical geometry may refuse a route without turning the obstruction into personal knowledge. Learned terrain and long-range navigation remain deferred.
+Accept the first usable route achieving **75%** of the desired displacement. If
+none does, try at least **three angles** and accept the longest usable route
+achieving **50%**. Without one, continue to **ten angles total**, then take the
+longest physically usable result. A leg needs at least **0.5 m** progress. Limit
+path length to **1.5×** the desired displacement and the existing **24 m** local
+path bound. Progress is horizontal displacement, not distance spent on detours.
+The best short route is rechecked against current bodies before admission.
 
-If a full ring point lies beyond current terrain exposure, use at most one **visible frontier point on that same bearing**: stop before the first exposure boundary by the body's horizontal clearance radius plus **0.25 metres**, resolve compatible support, and require at least **0.5 metres** of horizontal advance from the current position. If that point is unsupported or too close, omit that bearing; do not probe hidden alternatives. Deduplicate coincident frontier points in canonical bearing order. This remains at most twelve new endpoints, not twelve additional searches. Such an endpoint is an intermediate escape leg and can remain unsafe. Reaching it exposes the next local region and permits another ordinary review. This is necessary for a usable exit around a nearby corner; fixed distant rings alone would strand an animal in some small rooms or bends despite a reachable local opening.
+### Navigation waits and continuation
 
-The previously selected refuge is retained outside the twelve-new-candidate allocation. It is evaluated directly from its exact identity/position and retained route instead of consuming another search request. No more than twelve fresh destinations enter a single ordinary navigation query.
+Each request selects **world** or **entity** waiting. Absence selects the existing
+world hold for ordinary callers. The animal profile selects entity-local waiting
+for escape and ordinary native travel: the animal stands still while other bodies,
+needs and the shared clock continue. Clock/needs updates do not replace its pending
+attempt. Current origin, body, life, map, proposal and timeline fence late answers;
+new danger or cancelled/obsolete work cannot resume from an old result. Waiting
+can therefore delay an animal under real server load; this is an explicit gameplay
+tradeoff, not simulated deliberation or a reason to drop elapsed world time.
 
-Prefer the shared direct-walk fast path where it proves full-body clearance and support. Otherwise use the existing Recast corridor and physical validation, sharing prepared body-profile meshes and the ordinary navigation coordinator. A visually attractive endpoint behind an uncrossable wall is not a valid refuge. A partial or exhausted route calculation is not proof of either arrival or unreachability.
-
-### Route comparison
-
-For each complete physically valid candidate route, evaluate the complete piecewise corridor against **all** retained danger regions. Use the same actual support and height semantics as physical movement. For each piecewise segment, calculate its minimum separation from each region; checking only endpoints can route an animal directly through a human between two safe-looking points.
-
-For each danger, let starting clearance be its current surface/region separation and route clearance be the minimum separation over the complete route. Its worsening is the positive part of `min(starting clearance, 15 metres) - route clearance - 0.25 metres`. The route's **worst worsening** is the largest value over all dangers. Its **arrival margin** is the smallest destination separation minus 15 metres, capped above at 6 metres. With no remaining dangers, worsening is zero and arrival margin is 6 metres.
-
-Rank candidates lexicographically in this order:
-
-1. **No avoidable worsening:** minimize worst worsening. An already close danger does not make every escape path invalid, since the comparison starts at the actual present separation. The **0.25-metre slack** allows supported turning; it never permits bodily collision. If every candidate has positive worsening, choose among the least-worsening reachable candidates and describe the result as escape under danger, not a safe route.
-2. **Safe arrival:** among equal-worsening candidates, a nonnegative arrival margin outranks a negative one. Being farther from the attacker cannot compensate for ending beside a second human.
-3. **Worst danger first:** maximize arrival margin. Capping it at **6 metres beyond the clear threshold** prevents needless pursuit of extreme distance when several useful refuges are available.
-4. **Continuity and controlled variety:** keep a valid current refuge unless a challenger improves the preceding safety class or improves arrival margin by at least **2 metres**. For new interchangeable refuges, use the weighted tie rule below.
-
-Values within the existing spatial numerical tolerance compare equal. Do not replace this ordering with one unconstrained weighted sum in which shorter travel can buy passage through a dangerous body. Body collision and support remain hard mechanical requirements. The comparison deliberately makes escaping from between several dangers possible: all candidates may initially approach one danger, and the least-worsening one can still leave the trap.
-
-For interchangeable new refuges with equal worst worsening, the same safe/unsafe arrival class and within **1 metre** of the best arrival margin, give each a weight `1 / (1 + routeLengthMetres / 12)`. Draw once from their normalized weights using the world's saved RNG, in canonical candidate order. Save the selected destination and draw result; do not redraw while following it. A sole candidate consumes no draw. The comparison and random choice happen only at a real decision boundary, never during previews, projection, restoration or incidental callback partitioning.
-
-Commit due animal choices in the existing canonical native sequence. A navigation callback only makes preparation available; it never draws or installs movement. If an earlier due animal still needs preparation, later refuge-selection commits at that same boundary remain staged through the existing native-work owner. Callback completion order cannot exchange the saved random draws assigned to two animals.
-
-### Meaningful route reviews
-
-Review immediately when a fresh attack arrives, the route becomes physically invalid, a new perceived danger intersects the current route's avoidance corridor, the animal reaches its refuge, a current threat becomes newly visible on that corridor, or a physical capability changes. Ordinary movement of an already known danger coalesces until the next review, no later than **12 game seconds** after the last review while escaping or settling. At normal speed that is 0.2 real seconds. Existing temporal crossing prediction must stop the movement interval sooner if a danger enters the immediate corridor; the cadence does not authorize crossing through it.
-
-Retain the current route during harmless refreshes. Do not rerun pathfinding because health feedback, weather elsewhere, a browser selection, a name or the global world revision changed. Geometry dependencies cover the actual supporting surfaces and obstructing parts. Danger dependencies cover the complete animal-scoped evidence set, its moving regions and their expiry deadlines.
-
-Upon reaching a still-unsafe candidate, select the next refuge. Upon reaching a clear candidate, start settling. If geometry invalidates the route, use the ordinary bounded replanning semantics; after those attempts fail, enter blocked state. Before another route request, apply the supported in-place settling rule above when danger has cleared. While still route-blocked, retry at most once per **60 game seconds** unless new danger/geometry evidence supplies a genuinely different candidate set. Repeated identical failed inputs do not produce new navigation requests or randomness. A trapped ordinary animal does not suddenly receive an invented bite, flight capability, wall passage or successful escape.
-
-The same movement owner predicts and executes the chosen path. Movement distance, energy use, projectile collision, sight/hearing crossings and presentation must all use the same speed and piecewise trajectory. The behavior owner cannot move the animal separately from the action/flight owner.
+Keep a usable admitted escape leg until arrival, physical obstruction or significant
+new personally perceived danger. The **12-game-second** safety review updates
+danger/settling without rebuilding the same route. Reaching an unsafe destination
+starts a fresh leg. A physically trapped animal retries after **60 game seconds**
+or a meaningful change. The clear-distance/continuous-settling rules above remain.
+Saved randomness belongs to actual decisions, never navigation callbacks or views.
 
 ## Species speeds
 
@@ -138,7 +149,7 @@ Replace the current universal `animalFleeTilesPerSecond = 0.055` with the select
 | Bird, grounded fallback      |                                      0.04 |                 0.075 |     4.5 m/s, 16.2 km/h | A grounded bird does not receive implausible mammal sprinting to compensate for missing flight coverage.                                        |
 | Bird, admitted escape flight | Existing flight profile's ordinary cruise |                  0.25 |    15.0 m/s, 54.0 km/h | Initial fictional woodland-bird tuning; requires an actually admitted flight route and body clearance.                                          |
 
-For comparison, the current ordinary person moves at **0.11 m/game second**, or **6.6 m/s** at normal speed, before injury/scars. This project changes animal profiles, not the person's whole locomotion design. Keep the existing body injury and scar factors exactly once. Escape speed is a policy mode, not an additional multiplier applied again by prediction or animation. Current evasion retains its own admitted speed. A body unable to move does not obtain motion from a positive profile speed.
+For comparison, the current ordinary person moves at **0.11 m/game second**, or **6.6 m/s** at normal speed, before injury/scars. This project changes animal profiles, not the person's whole locomotion design. The installed animal profile explicitly supplies the existing injury coefficient (1/200 per injury unit) and enables the existing scar adjustment. Apply these factors exactly once to ground travel, escape and flight; ordinary route climb constraints remain in force. Escape speed is a policy mode, not an additional multiplier applied again by prediction or animation. Current evasion retains its own admitted speed. A body unable to move does not obtain motion from a positive profile speed.
 
 These are selected **gameplay values awaiting playtest**, not measurements of the fictional species or a claim of calibrated biomechanics. National Park Service examples report white-tailed deer up to 30 mph, black-tailed jackrabbits up to 40 mph, Yellowstone wolves up to 35 mph, and Katmai bears faster than 30 mph. Those examples support a substantial short-chase advantage over an ordinary human; they do not establish one exact universal speed for all deer, hares, wolves or bears. No bird maximum is inferred from those mammal sources. See [research basis](#research-basis).
 
@@ -164,11 +175,13 @@ Intake the event's already-permitted alarm evidence before reconciling same-boun
 
 ### Territorial stag
 
-Do not apply the new deer escape speed to antler preparation, pursuit timing or all territorial movement through an accidental shared multiplier. Its current 0.75 factor over ordinary person travel corresponds to **0.0825 m/game second**, or **4.95 m/s** at normal speed. Preserve that deliberately readable encounter pursuit value in an explicit territorial locomotion profile for this slice; retain its existing antler timings and territory decisions. When its existing injury threshold selects withdrawal, hand movement to the shared escape response with deer escape speed and the complete danger set. Its former fixed refuge is a preferred candidate only when actually reachable and clear. After settling, the cache remains relinquished under the existing encounter policy.
+Do not apply the new deer escape speed to antler preparation, pursuit timing or all territorial movement through an accidental shared multiplier. Its current 0.75 factor over ordinary person travel corresponds to **0.0825 m/game second**, or **4.95 m/s** at normal speed. Preserve that deliberately readable encounter pursuit value in an explicit territorial locomotion profile for this slice; retain its existing antler timings and territory decisions. When its existing injury threshold selects withdrawal, hand movement to the shared escape response with deer escape speed and the complete danger set. Its former fixed refuge is captured as one known preferred candidate, outside the twelve generated local points. It still needs exposed terrain, compatible support and an actual route through the same complete batch. Unsafe arrival excludes it. Preference only breaks the existing interchangeable clear-choice band after corridor safety and retained-route continuity; it cannot buy a worse route. After settling, the cache remains relinquished under the existing encounter policy.
 
 ## Bird flight and unsupported routes
 
 An alarm must reach the bird controller even while a bird is perched on, waiting for or traversing its ordinary flight route. The current early return for any `spatial.flight` must not silently discard the episode. Existing airborne movement retains sole ownership of the body; record the alarm immediately and redirect only through a valid, swept connection in the admitted flight graph.
+
+The current authored graph contains west `(12, 34.5)` and east `(28, 20)` ground refuges, with height and support resolved by the initializer. Seeded rocks and decorative trees stay outside their authored 1.5-metre clearing radius. The ordinary deck loop remains selected; native danger-driven choices now use these corridors through the existing flight owner. Complete integration qualification remains with CTR03–CTR04.
 
 For the starting woodland bird, author at least two alternative escape destinations/perches and connections into the existing air corridors, on distinct sides of the clearing. Rank valid destinations against the same complete danger set using **three-dimensional body separation** and corridor clearance. A high perch is useful only when its physical position actually meets those tests. Its mere `perch` label does not make it safe.
 
@@ -180,7 +193,7 @@ Without safe aerial coverage, an airborne bird follows a valid remaining corrido
 
 ## Continuity, inspection and authoring
 
-Persist the exact policy pin, animal physical life, alarm start/cause references, mode, current danger estimates with original observation times, chosen refuge, current movement ownership reference, next review, `clearSince`, blocked-input signature and any consumed random selection. Paths continue in the existing movement/flight owner; do not add a second authoritative path to animal state. Transient candidate lists, threat-query indexes and navigation meshes are derived and rebuilt as needed.
+Persist the exact policy pin, animal physical life, alarm start/cause references, mode, current danger estimates with original observation times, chosen refuge, current movement ownership reference, next review, `clearSince`, blocked-input signature and any consumed random selection. Paths continue in the existing movement/flight owner; do not add a second authoritative path to animal state. The saved sequential attempt and best shorter path survive waits; threat-query indexes and navigation meshes are derived and rebuilt as needed.
 
 Validate the current format before installation: finite positions/times, compatible support, correct profile/life references, valid mode-specific fields and a bidirectional match to any active movement owner. A settling animal has a valid `clearSince` no later than the current simulation time; an escaping animal cannot claim settling completion. Historical evidence may outlive its physical source. Old source identities do not authorize new observations. Death ends living response, incapacity/falling suspends movement with its pending alarm retained under the body owner, and explicit compatible restoration resumes without replaying the initiating hit or drawing again. Current development saves follow [the current-format policy](../../save-and-load.md#current-format-validation); this feature adds no legacy reader or migration.
 

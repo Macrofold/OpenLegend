@@ -1,5 +1,7 @@
 import { entityHas } from './entity-collection.js';
+import { countDomainWork } from './diagnostic-counters.js';
 import type { WorldState } from './types.js';
+import { tracksMaterialOrigins } from './material-inventory.js';
 import {
   createItemLot,
   directChildIds,
@@ -18,10 +20,10 @@ export {
   NPC_ID,
   TRAIT_BANK,
   NATIVE_ITEMS,
-  NATIVE_PREPARATIONS,
 } from './worlds/base/world.js';
 
 export function nextRandom(world: WorldState): number {
+  countDomainWork('randomEvaluations');
   // State, including every random draw, is part of the committed snapshot.
   let x = world.rngState | 0;
   x ^= x << 13;
@@ -92,6 +94,8 @@ export function sourceItemId(
   definitionId: string,
   quantity: number,
 ) {
+  // An independent physical source must not inherit an earlier lot's permission.
+  if (tracksMaterialOrigins(world.itemDefinitions[definitionId]!)) return;
   for (const id of directChildIds(world, ownerId))
     if (
       canReceiveSource(world, id, definitionId) &&

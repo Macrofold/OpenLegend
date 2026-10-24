@@ -43,12 +43,12 @@ export function movingBodyContact(
     2 * (p.x * d.x + p.z * d.z),
     p.x * p.x + p.z * p.z - r * r,
   );
-  const vertical = slab(p.y, d.y, h > 2 * r ? r : 0, h > 2 * r ? h - r : h);
+  const vertical = slab(p.y, d.y, h >= 2 * r ? r : 0, h >= 2 * r ? h - r : h);
   if (horizontal && vertical) {
     const enter = Math.max(horizontal[0], vertical[0]);
     if (enter <= Math.min(horizontal[1], vertical[1])) candidates.push(enter);
   }
-  if (h > 2 * r)
+  if (h >= 2 * r)
     for (const center of [r, h - r]) {
       const y = p.y - center;
       const sphere = within(

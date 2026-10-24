@@ -1,0 +1,246 @@
+methods:
+  - id: base:clean-fibers
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Clean fibers
+    description: Clean raw plant fibers into usable prepared fibers.
+    workSeconds: 48
+    inputs:
+      - { role: fibers, item: raw_fiber, quantity: 2 }
+    retainedTools: []
+    outputs:
+      - { port: fibers, item: prepared_fiber, quantity: 2 }
+    learning: authored-elementary
+  - id: base:knap-cutting-stone
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Knap a cutting stone
+    description: Shape one flint piece into a cutting stone with a kept stone hammer.
+    workSeconds: 90
+    inputs:
+      - { role: flint, item: knappable_flint, quantity: 1 }
+    retainedTools:
+      - { role: hammer, quantity: 1, allowedItems: [stone] }
+    outputs:
+      - { port: cutter, item: stone_tool, quantity: 1 }
+    learning: authored-elementary
+  - id: base:trim-club
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Trim a club
+    description: Trim a branch into a club with a kept cutting tool.
+    workSeconds: 90
+    inputs:
+      - { role: branch, item: wood, quantity: 1 }
+    retainedTools:
+      - role: cutting-tool
+        quantity: 1
+        allowedItems: &cutting-tools [stone_tool, knife]
+    outputs:
+      - { port: club, item: wooden_club, quantity: 1 }
+    learning: authored-elementary
+  - id: base:twist-cord
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Twist cord
+    description: Twist prepared fibers into binding cord.
+    workSeconds: 60
+    inputs:
+      - { role: fibers, item: prepared_fiber, quantity: 2 }
+    retainedTools: []
+    outputs:
+      - { port: cord, item: cord, quantity: 1 }
+    learning: authored-elementary
+  - id: base:known-reed-comb
+    revision: 1
+    kind: family-candidate
+    family: { id: base:gathering-tool, version: 1 }
+    name: Make a reed comb
+    description: Bind a branch into a comb that gathers reed bundles together.
+    inputs:
+      - { role: body, definitionId: wood, quantity: 1 }
+      - { role: binding, definitionId: cord, quantity: 1 }
+    output: { name: Reed comb, description: A comb for collecting bundles of reeds. }
+    parameters: { resourceId: raw_fiber, quantity: 3, workSeconds: 120 }
+    learning: authored-elementary
+  - id: base:known-pole-hook
+    revision: 1
+    kind: family-candidate
+    family: { id: base:gathering-tool, version: 1 }
+    name: Make a pole hook
+    description: Bind two branches into a hook for collecting straight fallen poles.
+    inputs:
+      - { role: body, definitionId: wood, quantity: 2 }
+      - { role: binding, definitionId: cord, quantity: 1 }
+    output: { name: Pole hook, description: A hook for gathering fallen poles together. }
+    parameters: { resourceId: straight_pole, quantity: 3, workSeconds: 120 }
+    learning: authored-elementary
+  - id: base:known-branch-hook
+    revision: 1
+    kind: family-candidate
+    family: { id: base:gathering-tool, version: 1 }
+    name: Make a branch bundle hook
+    description: Bind a branch into a hook for collecting pairs of fallen branches.
+    inputs:
+      - { role: body, definitionId: wood, quantity: 1 }
+      - { role: binding, definitionId: cord, quantity: 1 }
+    output: { name: Branch bundle hook, description: A hook for gathering branches together. }
+    parameters: { resourceId: wood, quantity: 2, workSeconds: 120 }
+    learning: authored-elementary
+
+  - id: base:trim-canopy-post
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Trim a canopy post
+    description: Prepare a 2.30 metre canopy post from a straight pole with a kept cutting tool.
+    workSeconds: 90
+    inputs:
+      - { role: pole, item: straight_pole, quantity: 1 }
+    retainedTools:
+      - { role: cutting-tool, quantity: 1, allowedItems: *cutting-tools }
+    outputs:
+      - { port: post, item: canopy_post, quantity: 1 }
+    learning: authored-elementary
+  - id: base:dress-tall-canopy-post
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Dress a tall canopy post
+    description: Prepare a full-length 2.40 metre canopy post with a kept cutting tool.
+    workSeconds: 90
+    inputs:
+      - { role: pole, item: straight_pole, quantity: 1 }
+    retainedTools:
+      - { role: cutting-tool, quantity: 1, allowedItems: *cutting-tools }
+    outputs:
+      - { port: post, item: canopy_tall_post, quantity: 1 }
+    learning: authored-elementary
+  - id: base:weave-roof-mat
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Weave a roof mat
+    description: Weave prepared fibers and cord into a natural covering for four canopy posts.
+    workSeconds: 240
+    inputs:
+      - { role: fibers, item: prepared_fiber, quantity: 8 }
+      - { role: bindings, item: cord, quantity: 2 }
+    retainedTools: []
+    outputs:
+      - { port: mat, item: reed_mat, quantity: 1 }
+    learning: authored-elementary
+
+  - id: base:trim-camp-post
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Trim a camp post
+    description: Trim a short camp post and keep its usable branch offcut.
+    workSeconds: 90
+    inputs:
+      - { role: poles, item: straight_pole, quantity: 1 }
+    retainedTools:
+      - { role: cutting-tool, quantity: 1, allowedItems: *cutting-tools }
+    outputs:
+      - { port: part, item: camp_post, quantity: 1 }
+      - { port: offcut, item: wood, quantity: 1 }
+    learning: authored-elementary
+
+  - id: base:trim-camp-gate-post
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Trim a tall gate post
+    description: Trim a tall gate support from a straight pole.
+    workSeconds: 90
+    inputs:
+      - { role: poles, item: straight_pole, quantity: 1 }
+    retainedTools:
+      - { role: cutting-tool, quantity: 1, allowedItems: *cutting-tools }
+    outputs:
+      - { port: part, item: camp_gate_post, quantity: 1 }
+    learning: authored-elementary
+
+  - id: base:weave-wattle-panel
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Weave a wall panel
+    description: Weave a solid wall panel for two actual posts and two binding cords.
+    workSeconds: 180
+    inputs:
+      - { role: poles, item: straight_pole, quantity: 2 }
+      - { role: fibers, item: prepared_fiber, quantity: 4 }
+    retainedTools:
+      - { role: cutting-tool, quantity: 1, allowedItems: *cutting-tools }
+    outputs:
+      - { port: part, item: woven_wattle_panel, quantity: 1 }
+    learning: authored-elementary
+
+  - id: base:dress-gate-rail
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Dress a gate rail
+    description: Dress a straight pole into a rail for the supported sliding gate.
+    workSeconds: 90
+    inputs:
+      - { role: poles, item: straight_pole, quantity: 1 }
+    retainedTools:
+      - { role: cutting-tool, quantity: 1, allowedItems: *cutting-tools }
+    outputs:
+      - { port: part, item: gate_rail, quantity: 1 }
+    learning: authored-elementary
+
+  - id: base:weave-sliding-gate
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Weave a sliding gate
+    description: Weave a sliding gate leaf for three tall posts, two rails and six separate installation cords.
+    workSeconds: 240
+    inputs:
+      - { role: poles, item: straight_pole, quantity: 2 }
+      - { role: fibers, item: prepared_fiber, quantity: 6 }
+    retainedTools:
+      - { role: cutting-tool, quantity: 1, allowedItems: *cutting-tools }
+    outputs:
+      - { port: part, item: sliding_wattle_gate, quantity: 1 }
+    learning: authored-elementary
+
+  - id: base:weave-gate-access-panel
+    revision: 1
+    kind: fixed-transform
+    implementation: finite-material-transform
+    label: Weave a gate access panel
+    description: Weave a panel with a real hand opening for reaching a parked gate handle.
+    workSeconds: 180
+    inputs:
+      - { role: poles, item: straight_pole, quantity: 2 }
+      - { role: fibers, item: prepared_fiber, quantity: 4 }
+    retainedTools:
+      - { role: cutting-tool, quantity: 1, allowedItems: *cutting-tools }
+    outputs:
+      - { port: part, item: woven_gate_parking_panel, quantity: 1 }
+    learning: authored-elementary
+
+  - id: base:known-camp-basket
+    revision: 1
+    kind: family-candidate
+    family: { id: base:woven-container, version: 1 }
+    name: Weave a camp basket
+    description: Weave an open basket from prepared fibers and secure it with cord.
+    inputs:
+      - { role: pouch, definitionId: prepared_fiber, quantity: 6 }
+      - { role: binding, definitionId: cord, quantity: 3 }
+    output:
+      name: Open camp basket
+      description: An open woven basket for organizing possessions. Cloth and prepared fibers inside receive rain through its open rim; a roof can protect them.
+    parameters:
+      contentsExposureProfile: { id: base:open-woven-contents, version: 1 }
+    learning: authored-elementary

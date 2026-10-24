@@ -7,6 +7,9 @@ export const personalAccountRevision = (payload: string) =>
 
 export function personalEventEvidence(awareness: EventEvidence): EventEvidence {
   const {
+    retentionClass,
+    expiresAt,
+    sound,
     actorId,
     eventData,
     references,
@@ -16,13 +19,20 @@ export function personalEventEvidence(awareness: EventEvidence): EventEvidence {
     modality,
     sourceId,
     targetId,
-    intendedRecipientId,
     speech,
     importance,
     urgency,
     exposure,
+    recognized,
+    intelligible,
+    entityIds,
+    triggerKind,
+    change,
   } = awareness;
   return {
+    retentionClass,
+    expiresAt,
+    sound,
     actorId,
     eventData,
     references,
@@ -32,11 +42,15 @@ export function personalEventEvidence(awareness: EventEvidence): EventEvidence {
     modality,
     sourceId,
     targetId,
-    intendedRecipientId,
     speech,
     importance,
     urgency,
     exposure,
+    recognized,
+    intelligible,
+    entityIds,
+    triggerKind,
+    change,
   };
 }
 

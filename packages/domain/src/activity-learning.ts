@@ -1,10 +1,8 @@
+import { isNativeInputField } from './native-inputs.js';
+import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
 import { entityGet } from './entity-collection.js';
 import { commandEntityFields, nativeOutputBinding } from './native-command-contracts.js';
-import {
-  activityCommandFields,
-  isCookingInputField,
-  preparationDefinition,
-} from './food-preparation.js';
+import { preparationDefinition } from './food-preparation.js';
 import { canonicalJson, contentLabel } from './events.js';
 import { cloneValue } from './draft.js';
 import { isActivityCommand } from './agency.js';
@@ -191,18 +189,26 @@ export function normalizeActivity(
     const args: Extract<ActivityNode, { kind: 'invoke' }>['args'] = {};
     const entityFields = new Set(commandEntityFields(entry.command));
     for (const [field, value] of Object.entries(activityCommandFields(entry.command))) {
-      if (['id', 'actorId', 'type', 'purpose'].includes(field) || value === undefined) continue;
+      if (
+        ['id', 'actorId', 'type', 'purpose', 'chosenPurpose'].includes(field) ||
+        value === undefined
+      )
+        continue;
       // An absolute deadline belongs to one occasion, not a reusable method.
       if (entry.command.type === 'follow' && field === 'until') return;
       if (typeof value === 'string' && entityFields.has(field)) {
         const produced = outputs.get(value);
         if (produced && nativeOutputBinding(field)) {
           const required =
-            entry.command.type === 'cook' && isCookingInputField(field)
+            entry.command.type === 'cook' && isNativeInputField(field)
               ? (world.foodPreparations[entry.command.preparationId]?.inputs.find(
                   (input) => `input:${input.role}` === field,
                 )?.quantity ?? 1)
-              : 1;
+              : entry.command.type === 'craft' && isManufactureToolField(field)
+                ? (world.recipes[entry.command.recipeId]?.retainedTools.find(
+                    (tool) => `tool:${tool.role}` === field,
+                  )?.quantity ?? 1)
+                : 1;
           args[field] = { output: produced.step, port: produced.port, quantity: required };
           continue;
         }

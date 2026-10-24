@@ -1,3 +1,4 @@
+import type { WorldState } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -10,8 +11,13 @@ const databases = new Map<string, Awaited<ReturnType<typeof createDisposableData
 const ownedDirectories = new Set<string>();
 const repositories = new Set<SqlGameRepository>();
 
-/** A named directory reopens the same owned database until fixture cleanup. */
-export async function testRepository(directory?: string): Promise<SqlGameRepository> {
+/** A named directory reopens the same owned database until fixture cleanup.
+ * Isolated mechanic specimens may choose an explicit current opening; omission
+ * keeps ordinary startup and its real Main content. Never overwrite a retained run. */
+export async function testRepository(
+  directory?: string,
+  initialWorld?: WorldState,
+): Promise<SqlGameRepository> {
   if (!directory) {
     directory = mkdtempSync(join(tmpdir(), 'openlegend-fixture-'));
     ownedDirectories.add(directory);
@@ -29,6 +35,12 @@ export async function testRepository(directory?: string): Promise<SqlGameReposit
     await close();
     repositories.delete(repository);
   };
+  if (initialWorld) {
+    await repository.ready;
+    if (await repository.records.head())
+      throw new Error('An explicit fixture opening requires an empty owned database.');
+    await repository.commit(0, { world: initialWorld, speed: 1, manuallyPaused: false });
+  }
   return repository;
 }
 
@@ -47,10 +59,23 @@ export const readConfig = (env: NodeJS.ProcessEnv = {}) =>
 export async function closeTestDatabases(): Promise<void> {
   for (const repository of repositories) await repository.close();
   repositories.clear();
-  for (const [directory, database] of databases) {
-    await database.close();
-    databases.delete(directory);
+  // Each owned DROP can wait for a PostgreSQL checkpoint. A small bounded batch
+  // avoids serializing those waits across every specimen in one test file.
+  const owned = [...databases];
+  const failures: unknown[] = [];
+  for (let index = 0; index < owned.length; index += 4) {
+    const results = await Promise.allSettled(
+      owned.slice(index, index + 4).map(async ([directory, database]) => {
+        await database.close();
+        databases.delete(directory);
+      }),
+    );
+    for (const result of results) if (result.status === 'rejected') failures.push(result.reason);
   }
-  for (const directory of ownedDirectories) rmSync(directory, { recursive: true, force: true });
-  ownedDirectories.clear();
+  for (const directory of ownedDirectories)
+    if (!databases.has(directory)) {
+      rmSync(directory, { recursive: true, force: true });
+      ownedDirectories.delete(directory);
+    }
+  if (failures.length) throw new AggregateError(failures, 'Owned fixture database cleanup failed.');
 }

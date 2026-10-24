@@ -1,14 +1,14 @@
 # First-playable survival, useful making and earned options — feature specification
 
-| Status      | Current progress                                                                                                                                            | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Detailed design is selected; empty-handed survival, natural manufacturing, field hearths and complete player qualification remain to be delivered under SV. | 2026-10-17   |
+| Status      | Current progress                                                                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Empty-handed Main reaches tools, camps, fire, storage, chosen meals and a live-created hunting tool; combined verification, comparison and player evidence remain open. | 2026-10-22   |
 
 ## Purpose and status
 
 The player should be able to arrive with no equipment, understand how to stay alive, make useful things, choose what kind of camp to build, venture out for something worthwhile and recover from loss. The first meal must be possible without a model, another person's kindness or an item that requires itself to manufacture. Known methods make ordinary competence dependable; invention adds personally useful alternatives.
 
-This pair completes the survival/material/known-crafting/progression slice of [FPV02](../maintainers/first-playable-validation.md#fpv02--finish-the-necessary-detailed-design-in-existing-owners). It consumes the selected [first-playable target](../worlds/base/playable-openings.md#first-playable-game-target), [gameplay priorities](../repertoires/gameplay-priorities.md), existing bodily/custody/knowledge laws, and the [integrated technical design](first-playable-world-tech-design.md). It is a selected design, not runtime implementation, human enjoyment evidence or authorization to spend on a provider.
+This pair completes the survival/material/known-crafting/progression slice of [FPV02](../maintainers/first-playable-validation.md#fpv02--finish-the-necessary-detailed-design-in-existing-owners). It consumes the selected [first-playable target](../worlds/base/playable-openings.md#first-playable-game-target), [gameplay priorities](../repertoires/gameplay-priorities.md), existing bodily/custody/knowledge laws, and the [integrated technical design](first-playable-world-tech-design.md). The selected runtime is connected; remaining combined qualification and acceptance stay open in SV. This design does not establish human enjoyment or independently authorize provider spending.
 
 Research-derived scope intersects **ND06/DG19** for resource supply, **ND07/DG13** for camp materials and **ND11/DG07** for recovery. These slices receive concrete selected designs here and in [shelters](editable-shelters-feature-spec.md); the broad ecology, food-condition, richer settlement and recovery umbrellas remain distinct. No new ND identity is needed for an unregistered crafting synthesis heading.
 
@@ -19,7 +19,7 @@ The exact resource palette, quantities, recipes, tool effects, arrival values an
 Source inspection at development base `0543f9ec61301240c5c4ec3cd007063f4f1c25d6` establishes the following relevant baseline, not a new execution test:
 
 - Main currently starts the player with cutting tools, food-production materials and an authored canopy kit. Its two near berry patches contain zero berries. Current Main therefore cannot establish survival from empty hands.
-- Native gathering transfers finite resources; fiber/cord preparation and recipe manufacture exist. Existing preparation is a fixed fiber/cord union, while ordinary admitted recipe families produce one crafted object. Neither already supplies the required post-plus-offcut transformation, kept hammer/cutting prerequisites or place-targeted hearth construction.
+- Native gathering transfers finite resources. Authored fiber/cord methods now use shared recipe manufacture with retained-tool roles and multiple pinned outputs. The natural material catalogue, actual structural products and place-targeted hearth remain open.
 - Existing installed food preparation, fishing, harvest, fire tending, finite action composition, custody, equipment, recipe-record learning and useful expeditions are reusable owners.
 - The established death continuation uses actual campfires. With no usable campfire it refuses instead of inventing a spawn point. Initial recovery therefore needs a real public rest location and an explicit permission-gated fresh-start path or host assistance when creation is unavailable.
 - Open canopies are implemented, with real posts/cloth/ties, exposure and reclaim. The selected wall/entrance extension consumes the natural components defined here; that extension does not become delivered by linking it.

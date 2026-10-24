@@ -1,5 +1,4 @@
 import type { SurfacePoint } from '@open-legend/spatial';
-import { BASE_HANDOVER } from './handover.js';
 import { hasMemory } from '../../living.js';
 import type { OutingEndCause } from '../../outings.js';
 
@@ -9,8 +8,6 @@ export const BASE_OUTING = {
   // Native wildlife cannot retain or answer this social agreement. Capability, not
   // species/anatomy or player-vs-NPC control, leaves room for other authored people.
   participant: hasMemory,
-  offerSeconds: BASE_HANDOVER.offerSeconds,
-  pendingPerProposer: BASE_HANDOVER.pendingPerOfferer,
   family: 'base:outing-invite',
   label: 'Invite to travel',
   leaveLabel: 'Leave outing',

@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
@@ -35,6 +36,9 @@ afterEach(async () => {
 });
 async function service(path: string | undefined = undefined, god = true) {
   const store = await testRepository(path);
+  await store.ready;
+  if (!(await store.records.head()))
+    await store.commit(0, { world: stockedCamp(), speed: 1, manuallyPaused: false });
   opened.push(store);
   const config = readConfig({
     AI_BUDGET_USD: '100',
@@ -117,7 +121,7 @@ describe('fixture: cognition vertical slice', () => {
     );
     expect(next.context.acceptedMind.documents.some((d) => d.text.includes('helpful'))).toBe(true);
     expect(JSON.stringify(next.context)).not.toContain('I am cautiously interested.');
-  });
+  }, 60_000);
 
   it('offers reflection after evidence and suppresses it after accepted consolidation', async () => {
     const s = await service();
@@ -160,7 +164,7 @@ describe('fixture: cognition vertical slice', () => {
     expect(JSON.stringify(await projectView(s, 'test-fixture'))).not.toContain(p.thought);
     const disabled = await service(undefined, false);
     await expect(inspectGodMind(disabled, NPC_ID)).rejects.toThrow('disabled');
-  });
+  }, 60_000);
   it('rejects covert mind changes in fast schemas', () => {
     expect(
       thoughtOnlySchema.safeParse({
@@ -271,6 +275,138 @@ describe('fixture: cognition vertical slice', () => {
     expect(requests.filter((r) => /^\/v1\/(workers|sandboxes)/.test(r.path))).toHaveLength(0);
     expect(requests.filter((r) => r.path === '/v1/workspaces')).toHaveLength(1);
     expect(native[0]!.key).not.toBe(native[1]!.key);
+  });
+
+  it.each(['judgment', 'generation'])(
+    'retains the original %s receipt after cancellation without delivering its value',
+    async (kind) => {
+      const s = await service();
+      s.config.macrofoldBillingMode = 'managed';
+      const controller = new AbortController();
+      let entered!: () => void, release!: () => void;
+      const dispatched = new Promise<void>((resolve) => {
+        entered = resolve;
+      });
+      const returned = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const paths: string[] = [];
+      let transportSignal: AbortSignal | undefined;
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: string, init: RequestInit) => {
+          const path = new URL(input).pathname;
+          paths.push(path);
+          if (path === '/v1/inferences') {
+            transportSignal = init.signal!;
+            entered();
+            await returned;
+            transportSignal.throwIfAborted();
+            return Response.json({
+              run_id: 'cancelled-original',
+              kind: 'inference',
+              status: 'succeeded',
+              result: {
+                run_id: 'cancelled-original',
+                final: true,
+                execution_outcome: 'success',
+                inference: {
+                  outcome: 'value',
+                  provider_outcome: 'responded',
+                  billing: {
+                    billing_mode: 'managed',
+                    charged_micro_usd: '5',
+                    provisional: false,
+                  },
+                  value: {},
+                },
+              },
+            });
+          }
+          if (path === '/v1/runs/cancelled-original')
+            return Response.json({
+              id: 'cancelled-original',
+              kind: 'inference',
+              status: 'succeeded',
+              cost_micro_usd: '5',
+            });
+          if (path === '/v1/billing/usage') return Response.json({ data: [], next_cursor: null });
+          throw new Error(`Unexpected cancelled receipt request ${path}`);
+        }),
+      );
+      const backend = new MacrofoldBackend(s);
+      const pending =
+        kind === 'judgment'
+          ? backend.judge({
+              requestId: 'cancelled-judgment',
+              signal: controller.signal,
+              state: {},
+              questions: { notice: { type: 'noul', instructions: 'Did I notice it?' } },
+            })
+          : backend.generate({
+              requestId: 'cancelled-generation',
+              signal: controller.signal,
+              execution: 'fast',
+              task: 'npc_response',
+              instructions: 'Return a proposal.',
+              context: {},
+              schema: { type: 'object', properties: {}, required: [], additionalProperties: false },
+            });
+      await Promise.race([
+        dispatched,
+        pending.then((result) => {
+          throw new Error(`Request ended before dispatch: ${result.outcome}`);
+        }),
+      ]);
+      controller.abort();
+      expect(transportSignal!.aborted).toBe(false);
+      release();
+      const result = await pending;
+      expect(result.outcome).toBe('cancelled');
+      expect(result.receipt).toMatchObject({
+        dispatched: true,
+        completionUncertain: false,
+        providerRequestId: 'cancelled-original',
+        estimatedCostUsd: 0.000005,
+      });
+      expect(paths.filter((path) => path === '/v1/inferences')).toHaveLength(1);
+      expect(paths.some((path) => path.endsWith('/cancel'))).toBe(false);
+    },
+  );
+
+  it('keeps cancelled receipt observation inside the original request deadline', async () => {
+    const s = await service(),
+      controller = new AbortController();
+    let entered!: () => void;
+    const dispatched = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    let transportSignal: AbortSignal | undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_input: string, init: RequestInit) => {
+        transportSignal = init.signal!;
+        entered();
+        return new Promise<Response>((_resolve, reject) => {
+          transportSignal!.addEventListener('abort', () => reject(transportSignal!.reason), {
+            once: true,
+          });
+        });
+      }),
+    );
+    const pending = new MacrofoldBackend(s).judge({
+      requestId: 'cancelled-original-deadline',
+      signal: controller.signal,
+      deadlineMs: Date.now() + 100,
+      state: {},
+      questions: { notice: { type: 'noul', instructions: 'Did I notice it?' } },
+    });
+    await dispatched;
+    controller.abort();
+    const result = await pending;
+    expect(result.outcome).toBe('cancelled');
+    expect(transportSignal!.reason).toMatchObject({ kind: 'deadline_exceeded' });
+    expect(result.receipt).toMatchObject({ dispatched: true, completionUncertain: true });
   });
 
   it.each(['managed', 'byok'] as const)(

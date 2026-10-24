@@ -72,6 +72,7 @@ export function Icon({
       className="ol-icon-wrap"
       style={style}
       role={label ? 'img' : undefined}
+      aria-hidden={label ? undefined : true}
       aria-label={label}
     >
       {glyph}
@@ -600,6 +601,7 @@ export function Panel({
     const panel = panelElement.current;
     if (!panel) return;
     const keepHeaderReachable = () => {
+      if (panel.closest('[hidden]')) return;
       if (panel.closest('[data-narrow="true"]')) {
         setOffset((previous) => (previous.x || previous.y ? { x: 0, y: 0 } : previous));
         return;
@@ -617,6 +619,10 @@ export function Panel({
     keepHeaderReachable();
     const observer = new ResizeObserver(keepHeaderReachable);
     observer.observe(panel);
+    // Refitting open panels can move this panel's anchor without resizing it.
+    // Recheck after its dock changes too, rather than retaining an obsolete clamp.
+    const dock = panel.closest('.ol-dock');
+    if (dock) observer.observe(dock);
     window.addEventListener('resize', keepHeaderReachable);
     return () => {
       observer.disconnect();
@@ -668,6 +674,7 @@ export function Panel({
   return (
     <section
       ref={panelElement}
+      tabIndex={-1}
       id={id}
       className="ol-panel"
       data-wide={wide || undefined}

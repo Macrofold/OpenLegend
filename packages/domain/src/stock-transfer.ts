@@ -7,7 +7,11 @@ import {
   possessionItems,
 } from './object-access.js';
 import { custodian, directChildIds, itemFor, itemStockMovesReason, moveLot } from './objects.js';
-import { availableItemQuantity, itemHasReservations } from './resource-claims.js';
+import {
+  availableItemQuantity,
+  itemHasReservations,
+  type ResourceAvailability,
+} from './resource-claims.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { contributionSourceBound } from './status-capabilities.js';
@@ -108,6 +112,8 @@ function eligibleQuantity(
   item: ItemInstance,
   pin: DefinitionPin,
   ignoreActionId?: string,
+  singleUnit = false,
+  availability?: ResourceAvailability,
 ): number {
   const entity = entityGet(world.entities, item.id),
     lot = entity?.item,
@@ -116,18 +122,56 @@ function eligibleQuantity(
     !entity ||
     !lot ||
     item.container ||
-    item.individuality !== 'homogeneous' ||
+    (!singleUnit && item.individuality !== 'homogeneous') ||
     !sameDefinitionPin(lot.definitionPin, pin) ||
     !canAccessContainer(world, actorId, item.ownerId) ||
-    itemHasReservations(world, item.id) ||
+    (!singleUnit && itemHasReservations(world, item.id)) ||
     contributionSourceBound(world, item.id) ||
     Object.values(entity.statusEffects ?? {}).some((state) => state.active)
   )
     return 0;
   const completingOwnAction =
     !!ignoreActionId && action?.id === ignoreActionId && action.itemId === item.id;
-  if (!completingOwnAction && inventoryWorkReason(world, actorId, item.id)) return 0;
-  return availableItemQuantity(world, item.id);
+  if (!singleUnit && !completingOwnAction && inventoryWorkReason(world, actorId, item.id)) return 0;
+  return availableItemQuantity(world, item.id, undefined, availability);
+}
+
+/** Fresh finite consumption selects only direct contents of the chosen own scope.
+ * A remembered inspection identifies a bag; changing quantity after eating does
+ * not erase that identity. Access and current food meaning are checked again. */
+export function selectOwnConsumptionStock(
+  world: WorldState,
+  actorId: string,
+  sourceId: string,
+  pin: DefinitionPin,
+  maximum: number,
+  availability?: ResourceAvailability,
+): AvailableStockProof & { itemId?: string } {
+  if (
+    !currentDefinition(world, pin) ||
+    !canAccessContainer(world, actorId, sourceId) ||
+    (sourceId !== actorId &&
+      (custodian(world, sourceId) !== actorId ||
+        !entityGet(world.entities, sourceId)?.container ||
+        entityGet(world.entities, actorId)?.actor?.inventoryInspection?.containerId !== sourceId))
+  )
+    return { status: 'unavailable', available: 0, examined: 0 };
+  let examined = 0,
+    available = 0,
+    itemId: string | undefined;
+  for (const id of directChildIds(world, sourceId)) {
+    if (examined >= STOCK_TRANSFER_LIMITS.examined)
+      return { status: 'incomplete', available, examined, itemId };
+    examined++;
+    const item = itemFor(world, id);
+    if (!item) continue;
+    const quantity = eligibleQuantity(world, actorId, item, pin, undefined, true, availability);
+    if (!quantity) continue;
+    itemId ??= id;
+    available = Math.min(maximum, available + quantity);
+    if (available >= maximum) return { status: 'proved', available, examined, itemId };
+  }
+  return { status: available ? 'proved' : 'insufficient', available, examined, itemId };
 }
 function countOwn(
   world: WorldState,

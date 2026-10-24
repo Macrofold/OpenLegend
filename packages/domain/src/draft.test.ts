@@ -1,6 +1,6 @@
 import { createDraft, finishDraft } from 'immer';
 import { describe, expect, it } from 'vitest';
-import { cloneValue } from './draft.js';
+import { cloneValue, readOnlyDraftView } from './draft.js';
 
 // Protect the shared copy contract without depending on world content or event wording.
 describe('independent domain data copies', () => {
@@ -42,6 +42,17 @@ describe('independent domain data copies', () => {
     expect(2 in copy).toBe(false);
     copy[3]!.amount = 5;
     expect(source[3]!.amount).toBe(2);
+  });
+
+  it('reuses unchanged data after child inspection and sees later draft writes', () => {
+    const source = { records: [{ amount: 2 }] },
+      draft = createDraft(source);
+    void draft.records[0];
+    expect(readOnlyDraftView(draft)).toBe(source);
+    draft.records[0]!.amount = 3;
+    expect(readOnlyDraftView(draft).records[0]!.amount).toBe(3);
+    expect(source.records[0]!.amount).toBe(2);
+    finishDraft(draft);
   });
 
   it('copies nested draft values that remain usable after the draft is finished', () => {

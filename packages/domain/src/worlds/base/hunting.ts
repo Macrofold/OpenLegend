@@ -15,9 +15,9 @@ export const BASE_RANGED_POLICY: RangedPolicy = {
   conditionAdjustment: 'none',
   conditionAccuracyFactor: 0.85,
   windupSeconds: BASE_ACTION_DEFAULTS.shotSeconds,
-  approachBuffer:
-    BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond * BASE_ACTION_DEFAULTS.shotSeconds + 0.25,
-  minimumApproachRange: 0.5,
+  approachBuffer: 3.5,
+  // Short launchers must not demand a stance inside ordinary body/aim clearance.
+  minimumApproachRange: 2,
   invalidTargetText: 'Choose a living permitted target.',
   unavailableText: 'the target or ranged tool is no longer available.',
   targetLabel: 'a living permitted target',

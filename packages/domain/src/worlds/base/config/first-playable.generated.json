@@ -1,0 +1,1912 @@
+{
+  "ecology": {
+    "profiles": [
+      {
+        "id": "base:pasture-forager",
+        "version": 1,
+        "family": "perceived-forager",
+        "fullness": {
+          "attributeId": "wilderness:fullness",
+          "initial": 50,
+          "drainPerGameSecond": 0.0002,
+          "seekBelowDay": 50,
+          "seekBelowNight": 50,
+          "stopAt": 85
+        },
+        "diet": [{ "definitionId": "base:pasture", "sources": ["resource"], "workSeconds": 90 }],
+        "routine": { "choiceGameSeconds": 2400, "idleAtHomeWhenFedInDaylight": false }
+      },
+      {
+        "id": "base:wolf-forager",
+        "version": 1,
+        "family": "perceived-forager",
+        "fullness": {
+          "attributeId": "wilderness:fullness",
+          "initial": 55,
+          "drainPerGameSecond": 0.0006,
+          "seekBelowDay": 50,
+          "seekBelowNight": 65,
+          "stopAt": 80
+        },
+        "diet": [
+          { "definitionId": "raw_meat", "sources": ["item", "remains"], "workSeconds": 120 }
+        ],
+        "routine": { "choiceGameSeconds": 2400, "idleAtHomeWhenFedInDaylight": true },
+        "hunt": {
+          "preySpecies": ["hare", "deer"],
+          "bipedRule": {
+            "nightOnly": true,
+            "fullnessBelow": 35,
+            "otherVisiblePackmates": 1,
+            "packmateRadiusMetres": 12,
+            "otherBipedExclusionMetres": 8
+          },
+          "approach": {
+            "radiusMetres": 4,
+            "bearings": 6,
+            "improveSeparationMetres": 1,
+            "targetMovementMetres": 2,
+            "reviewGameSeconds": 12
+          },
+          "strikeId": "base:wolf-moving-bite",
+          "locomotionId": "base:wolf-pursuit",
+          "pursuit": { "gameSeconds": 1800, "routeMetres": 144, "reconsiderAfterGameSeconds": 600 },
+          "lostSight": {
+            "lastPointGameSeconds": 120,
+            "totalSearchGameSeconds": 300,
+            "candidateCount": 3,
+            "radiusMetres": 4
+          }
+        },
+        "regroup": {
+          "separationAboveMetres": 8,
+          "stopSeparationMetres": 6,
+          "legMetres": 12,
+          "legGameSeconds": 120,
+          "refreshDisplacementMetres": 2,
+          "reviewGameSeconds": 12
+        }
+      },
+      {
+        "id": "base:bear-forager",
+        "version": 1,
+        "family": "perceived-forager",
+        "fullness": {
+          "attributeId": "wilderness:fullness",
+          "initial": 70,
+          "drainPerGameSecond": 0.0004,
+          "seekBelowDay": 60,
+          "seekBelowNight": 60,
+          "stopAt": 85
+        },
+        "diet": [
+          { "definitionId": "berries", "sources": ["resource", "item"], "workSeconds": 120 },
+          { "definitionId": "raw_meat", "sources": ["remains"], "workSeconds": 120 }
+        ],
+        "routine": { "choiceGameSeconds": 2400, "idleAtHomeWhenFedInDaylight": false }
+      }
+    ],
+    "assignments": [
+      {
+        "species": "hare",
+        "profileId": "base:pasture-forager",
+        "anchors": [
+          [26, 36],
+          [50, 58],
+          [81, 74]
+        ],
+        "initialById": {
+          "hare-1": 44,
+          "hare-2": 54,
+          "woodland-hare-0": 42,
+          "woodland-hare-1": 58,
+          "woodland-hare-2": 50,
+          "woodland-hare-3": 46,
+          "woodland-hare-4": 56
+        },
+        "nearestAnchors": 2
+      },
+      {
+        "species": "deer",
+        "profileId": "base:pasture-forager",
+        "anchors": [
+          [26, 36],
+          [50, 58],
+          [81, 74]
+        ],
+        "initialById": {
+          "deer-1": 48,
+          "woodland-deer-5": 52,
+          "woodland-deer-6": 46,
+          "woodland-deer-7": 60,
+          "woodland-deer-8": 54,
+          "woodland-deer-9": 44
+        },
+        "nearestAnchors": 2
+      },
+      {
+        "species": "wolf",
+        "profileId": "base:wolf-forager",
+        "anchors": [
+          [71, 54],
+          [48, 72],
+          [75, 37],
+          [26, 36]
+        ],
+        "initialById": {},
+        "home": [99, 82],
+        "packId": "base:woodland-wolf-pack"
+      },
+      {
+        "species": "bear",
+        "profileId": "base:bear-forager",
+        "anchors": [
+          [71, 54],
+          [48, 72],
+          [20, 61]
+        ],
+        "initialById": {}
+      }
+    ],
+    "pasture": {
+      "definition": {
+        "id": "base:pasture",
+        "version": 1,
+        "name": "Pasture",
+        "nameForm": "mass",
+        "description": "Finite edible grasses for grazing animals.",
+        "icon": "resource.fiber",
+        "portable": false,
+        "properties": ["food"],
+        "nutrition": 30
+      },
+      "units": 240,
+      "anchors": [
+        [26, 36],
+        [50, 58],
+        [81, 74]
+      ]
+    },
+    "strikes": [
+      {
+        "id": "base:wolf-moving-bite",
+        "version": 1,
+        "label": "Bite",
+        "pastTense": "bit",
+        "range": 1.2,
+        "autoMoveToRange": false,
+        "workSeconds": 120,
+        "recoverySeconds": 240,
+        "damage": 18,
+        "accuracy": 0.85,
+        "animation": "melee",
+        "requiredBodyPlan": "quadruped",
+        "preparationMotion": {
+          "kind": "pursue-observed-target",
+          "startRange": 4,
+          "standOffRange": 0.6,
+          "locomotionProfileId": "base:wolf-pursuit"
+        }
+      },
+      {
+        "id": "base:bear-contact",
+        "version": 1,
+        "label": "Strike",
+        "pastTense": "struck with its forepaw",
+        "range": 1.5,
+        "approachRange": 1.5,
+        "autoMoveToRange": false,
+        "workSeconds": 180,
+        "recoverySeconds": 300,
+        "damage": 20,
+        "accuracy": 0.9,
+        "animation": "melee",
+        "requiredBodyPlan": "quadruped"
+      }
+    ],
+    "pursuitLocomotion": { "base:wolf-pursuit": { "travel": 0.28, "escape": 0.28 } },
+    "territories": [
+      {
+        "profileId": "base:bear-forager",
+        "policy": {
+          "id": "base:local-feeding-territory",
+          "version": 1,
+          "activation": "feeding-or-resting",
+          "pursuitMetres": 18,
+          "entryRadius": 4,
+          "territoryRadius": 8,
+          "pursuitSeconds": 600,
+          "reentryAfterTimeout": false,
+          "searchSeconds": 30,
+          "reviewSeconds": 12,
+          "refreshSeconds": 12,
+          "refreshDisplacement": 2,
+          "detours": 4,
+          "strikeDefinitionId": "base:bear-contact",
+          "attackRange": 1.5,
+          "movementFactor": 0.5454545454545454,
+          "targetControllers": ["player", "npc"],
+          "targetBodyPlans": ["biped"],
+          "windupText": "The bear lifts its forequarters and braces to strike.",
+          "withdrawalText": "The bear breaks off its local pursuit.",
+          "stopText": "The bear settles where it can stand."
+        }
+      }
+    ]
+  },
+  "opening": {
+    "id": "base:first-playable-main",
+    "revision": 1,
+    "seed": 73,
+    "extentMetres": { "width": 128, "depth": 112 },
+    "content": {
+      "clockOffsetHours": 8,
+      "actorBindings": {
+        "player": { "application": "player" },
+        "ada": { "application": "resident" },
+        "mercenary": { "entityId": "peacock-mercenary" },
+        "mara": { "entityId": "mara" },
+        "tavin": { "entityId": "tavin" },
+        "kest": { "entityId": "kest" },
+        "orin": { "entityId": "orin" }
+      },
+      "conditions": {
+        "player": { "fullness": 100, "energy": 100 },
+        "ada": { "fullness": 35, "energy": 85 },
+        "mercenary": { "fullness": 76, "energy": 85 },
+        "mara": { "fullness": 72, "energy": 85 },
+        "tavin": { "fullness": 74, "energy": 85 },
+        "kest": { "fullness": 76, "energy": 85 },
+        "orin": { "fullness": 76, "energy": 85 }
+      },
+      "watchpostOffset": { "x": 56, "z": 5 },
+      "wildlife": [
+        { "id": "woodland-wolf-10", "position": { "x": 96, "z": 80 } },
+        { "id": "woodland-wolf-11", "position": { "x": 99, "z": 82 } },
+        { "id": "woodland-wolf-12", "position": { "x": 102, "z": 78 } },
+        { "id": "woodland-bear-13", "position": { "x": 88, "z": 96 } },
+        { "id": "woodland-bear-14", "position": { "x": 58, "z": 94 } }
+      ],
+      "hearths": [
+        {
+          "id": "campfire",
+          "placeId": "camp-hearth",
+          "name": "Wayside hearth",
+          "description": "An old cold public hearth. Bring real fuel and tinder to make a fire. This resting place supplies neither food nor safety.",
+          "position": { "x": 11, "z": 10 }
+        },
+        {
+          "id": "southern-hearth",
+          "placeId": "southern-hearth",
+          "name": "Southern resting hearth",
+          "description": "A cold public stone hearth beside the southern meadow. Its ring remains a possible resting place; no fuel, food or protection is promised.",
+          "position": { "x": 15, "z": 58 }
+        }
+      ],
+      "repairStock": {
+        "id": "watchpost-repair-stock",
+        "name": "Watchpost repair stock",
+        "description": "Exposed repair supplies declared as Kest's possessions. The separate ground lots retain ordinary physical access, permission and transfer rules.",
+        "position": { "x": 103, "z": 29 },
+        "ownerRole": "kest",
+        "lots": [
+          {
+            "id": "repair:cloak",
+            "definitionId": "travel_cloak",
+            "quantity": 1,
+            "positions": [{ "x": 100, "z": 33 }]
+          },
+          {
+            "id": "repair:cloth",
+            "definitionId": "weather_cloth",
+            "quantity": 1,
+            "positions": [{ "x": 102, "z": 33 }]
+          },
+          {
+            "id": "repair:posts",
+            "definitionId": "canopy_post",
+            "quantity": 6,
+            "positions": [
+              { "x": 100, "z": 35 },
+              { "x": 102, "z": 35 },
+              { "x": 104, "z": 35 },
+              { "x": 106, "z": 35 },
+              { "x": 108, "z": 35 },
+              { "x": 110, "z": 35 }
+            ]
+          },
+          {
+            "id": "repair:tall-posts",
+            "definitionId": "canopy_tall_post",
+            "quantity": 2,
+            "positions": [
+              { "x": 108, "z": 33 },
+              { "x": 110, "z": 33 }
+            ]
+          },
+          {
+            "id": "repair:cord",
+            "definitionId": "cord",
+            "quantity": 11,
+            "positions": [{ "x": 104, "z": 33 }]
+          },
+          {
+            "id": "repair:stone-tool",
+            "definitionId": "stone_tool",
+            "quantity": 1,
+            "positions": [{ "x": 100, "z": 37 }]
+          },
+          {
+            "id": "repair:knife",
+            "definitionId": "knife",
+            "quantity": 1,
+            "positions": [{ "x": 102, "z": 37 }]
+          },
+          {
+            "id": "repair:fiber",
+            "definitionId": "prepared_fiber",
+            "quantity": 4,
+            "positions": [{ "x": 104, "z": 37 }]
+          },
+          {
+            "id": "repair:wood",
+            "definitionId": "wood",
+            "quantity": 2,
+            "positions": [{ "x": 106, "z": 37 }]
+          },
+          {
+            "id": "repair:stone",
+            "definitionId": "stone",
+            "quantity": 6,
+            "positions": [{ "x": 108, "z": 37 }]
+          }
+        ]
+      },
+      "introduction": "Arrive empty handed beside the wayside hearth. Inspect nearby food and materials; Gather, Make and a chosen meal use real finite supplies. You can pause while reading, stop unfinished work, speak to anyone who can hear, or act while another person is busy. Other residents choose their own lives. If this body dies, Continue uses an actual reachable resting hearth; your lost belongings remain in the world."
+    },
+    "gathering": { "bareHandQuantity": 1 },
+    "construction": {
+      "id": "base:first-playable-camp-building",
+      "boundaryFamily": "base:light-camp-boundary",
+      "structuralExposure": true,
+      "materialContributions": true,
+      "site": { "surfaceId": "terrain", "minX": 0, "maxX": 127, "minZ": 0, "maxZ": 111 },
+      "materialItems": ["raw_fiber", "wood", "stone", "straight_pole"],
+      "operations": [
+        "post",
+        "cover",
+        "lower",
+        "reclaim-post",
+        "reclaim-lowered",
+        "place-hearth",
+        "boundary-panel",
+        "boundary-gate",
+        "remove-boundary-panel",
+        "remove-boundary-gate",
+        "repair-boundary"
+      ],
+      "publicGateUseOperations": ["open", "close", "bar", "unbar"]
+    },
+    "sourceApproachClearanceMetres": 1.5,
+    "anchors": {
+      "arrival": { "xMetres": 11, "zMetres": 13, "support": "terrain" },
+      "food-near": { "xMetres": 8, "zMetres": 13, "support": "terrain" },
+      "food-river": { "xMetres": 19, "zMetres": 15, "support": "terrain" },
+      "pole-copse": { "xMetres": 20, "zMetres": 27, "support": "terrain" },
+      "fiber-bank": { "xMetres": 9, "zMetres": 38, "support": "terrain" },
+      "stone-bank": { "xMetres": 17, "zMetres": 31, "support": "terrain" },
+      "clay-bank": { "xMetres": 7, "zMetres": 43, "support": "terrain" },
+      "outer-forage-west": { "xMetres": 20, "zMetres": 61, "support": "terrain" },
+      "outer-forage-east": { "xMetres": 71, "zMetres": 54, "support": "terrain" },
+      "outer-fiber": { "xMetres": 48, "zMetres": 72, "support": "terrain" },
+      "outer-materials": { "xMetres": 75, "zMetres": 37, "support": "terrain" },
+      "central-fiber": { "xMetres": 30, "zMetres": 23, "support": "terrain" },
+      "wayside": { "xMetres": 11, "zMetres": 10, "support": "terrain" },
+      "southern-hearth": { "xMetres": 15, "zMetres": 58, "support": "terrain" }
+    },
+    "campReservations": [
+      {
+        "id": "east-clearing",
+        "revision": 1,
+        "label": "East clearing",
+        "description": "Near food and routes toward the lookout and workshop. Open approaches and a longer walk to the residents; no safety is promised.",
+        "minX": 23,
+        "maxX": 29,
+        "minZ": 17,
+        "maxZ": 23
+      },
+      {
+        "id": "western-supplies",
+        "revision": 1,
+        "label": "Western supplies approach",
+        "description": "Near the Reed-side Store and river supply routes. Other people may travel through; materials farther south still require trips.",
+        "minX": 14,
+        "maxX": 20,
+        "minZ": 19.5,
+        "maxZ": 25.5
+      },
+      {
+        "id": "south-meadow",
+        "revision": 1,
+        "label": "South meadow plateau",
+        "description": "Flat building ground near southern resource routes. Farther from the residents and wayside hearth, with roaming wildlife nearby.",
+        "minX": 41,
+        "maxX": 47,
+        "minZ": 48,
+        "maxZ": 54
+      }
+    ]
+  },
+  "workBatches": {
+    "id": "base:finite-survival-work",
+    "version": 1,
+    "maximumBatches": 16,
+    "commands": ["gather", "craft"],
+    "onceLabel": "Once",
+    "repeatLabel": "Repeat",
+    "countLabel": "Batches",
+    "startLabel": "Start",
+    "gatherLabel": "Gather from {source}",
+    "toolLabel": "Collect with",
+    "handsLabel": "Bare hands",
+    "automaticToolLabel": "Choose best available once",
+    "help": "Run only the chosen batches. Each checks its own materials and tool. Stop keeps completed goods and spent materials. No other source or tool is substituted; finishing never restarts."
+  },
+  "meal": {
+    "conditionId": "base:chosen-meal",
+    "maximumUnits": 16,
+    "oneLabel": "Eat one",
+    "mealLabel": "Eat meal",
+    "countLabel": "Units",
+    "startLabel": "Start",
+    "help": "Eat only this food and chosen quantity. Stop at full or a blocker. Food already eaten stays consumed; finishing never restarts."
+  },
+  "workRequests": {
+    "modeLabel": "Current work",
+    "foodLabel": "Food",
+    "gather": {
+      "id": "base:repeat-gather",
+      "label": "Gather a chosen number of batches",
+      "description": "Gather from one personally visible source for a chosen finite count. Keep the selected tool or bare hands; stop if the source, tool or native step becomes unavailable.",
+      "selectionLabel": "Gathering source"
+    },
+    "craft": {
+      "id": "base:repeat-craft",
+      "label": "Craft a chosen number of batches",
+      "description": "Repeat one known method for a chosen finite count. Each batch spends its own inputs and uses the chosen kept tools. Stop on a blocker; never choose another method or tool.",
+      "selectionLabel": "Known method"
+    },
+    "meal": {
+      "id": "base:eat-meal",
+      "label": "Eat a chosen meal",
+      "description": "Eat a chosen number of units of one edible definition from one own-stock location. Each unit uses ordinary Eat. Stop at full or a blocker; never substitute food or restart later.",
+      "selectionLabel": "Own-stock location"
+    }
+  },
+  "catalogue": {
+    "categoryLabel": "Purpose",
+    "allLabel": "All purposes",
+    "defaultCategoryId": "tools",
+    "categories": [
+      { "id": "food-fire", "label": "Food and fire" },
+      { "id": "tools", "label": "Tools and carrying" },
+      { "id": "camp", "label": "Camp components" }
+    ],
+    "rules": [
+      { "categoryId": "camp", "kind": "transform", "id": "base:trim-canopy-post" },
+      { "categoryId": "camp", "kind": "transform", "id": "base:dress-tall-canopy-post" },
+      { "categoryId": "camp", "kind": "transform", "id": "base:weave-roof-mat" },
+      { "categoryId": "camp", "kind": "transform", "id": "base:clean-fibers" },
+      { "categoryId": "camp", "kind": "transform", "id": "base:twist-cord" },
+      { "categoryId": "tools", "kind": "transform", "id": "base:knap-cutting-stone" },
+      { "categoryId": "tools", "kind": "transform", "id": "base:trim-club" },
+      { "categoryId": "food-fire", "kind": "family", "id": "base:fishing-line" },
+      { "categoryId": "camp", "kind": "family", "id": "base:cordage" }
+    ]
+  },
+  "methods": [
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:clean-fibers",
+        "version": 1,
+        "name": "Clean fibers",
+        "description": "Clean raw plant fibers into usable prepared fibers.",
+        "workSeconds": 48,
+        "inputs": [{ "role": "fibers", "definitionId": "raw_fiber", "quantity": 2 }],
+        "retainedTools": [],
+        "outputs": [{ "port": "fibers", "definitionId": "prepared_fiber", "quantity": 2 }]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:knap-cutting-stone",
+        "version": 1,
+        "name": "Knap a cutting stone",
+        "description": "Shape one flint piece into a cutting stone with a kept stone hammer.",
+        "workSeconds": 90,
+        "inputs": [{ "role": "flint", "definitionId": "knappable_flint", "quantity": 1 }],
+        "retainedTools": [{ "role": "hammer", "quantity": 1, "allowedDefinitionIds": ["stone"] }],
+        "outputs": [{ "port": "cutter", "definitionId": "stone_tool", "quantity": 1 }]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:trim-club",
+        "version": 1,
+        "name": "Trim a club",
+        "description": "Trim a branch into a club with a kept cutting tool.",
+        "workSeconds": 90,
+        "inputs": [{ "role": "branch", "definitionId": "wood", "quantity": 1 }],
+        "retainedTools": [
+          { "role": "cutting-tool", "quantity": 1, "allowedDefinitionIds": ["stone_tool", "knife"] }
+        ],
+        "outputs": [{ "port": "club", "definitionId": "wooden_club", "quantity": 1 }]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:twist-cord",
+        "version": 1,
+        "name": "Twist cord",
+        "description": "Twist prepared fibers into binding cord.",
+        "workSeconds": 60,
+        "inputs": [{ "role": "fibers", "definitionId": "prepared_fiber", "quantity": 2 }],
+        "retainedTools": [],
+        "outputs": [{ "port": "cord", "definitionId": "cord", "quantity": 1 }]
+      }
+    },
+    {
+      "id": "base:known-reed-comb",
+      "revision": 1,
+      "learning": "authored-elementary",
+      "candidate": {
+        "family": { "id": "base:gathering-tool", "version": 1 },
+        "name": "Make a reed comb",
+        "description": "Bind a branch into a comb that gathers reed bundles together.",
+        "inputs": [
+          { "role": "body", "definitionId": "wood", "quantity": 1 },
+          { "role": "binding", "definitionId": "cord", "quantity": 1 }
+        ],
+        "output": { "name": "Reed comb", "description": "A comb for collecting bundles of reeds." },
+        "parameters": { "resourceId": "raw_fiber", "quantity": 3, "workSeconds": 120 }
+      }
+    },
+    {
+      "id": "base:known-pole-hook",
+      "revision": 1,
+      "learning": "authored-elementary",
+      "candidate": {
+        "family": { "id": "base:gathering-tool", "version": 1 },
+        "name": "Make a pole hook",
+        "description": "Bind two branches into a hook for collecting straight fallen poles.",
+        "inputs": [
+          { "role": "body", "definitionId": "wood", "quantity": 2 },
+          { "role": "binding", "definitionId": "cord", "quantity": 1 }
+        ],
+        "output": {
+          "name": "Pole hook",
+          "description": "A hook for gathering fallen poles together."
+        },
+        "parameters": { "resourceId": "straight_pole", "quantity": 3, "workSeconds": 120 }
+      }
+    },
+    {
+      "id": "base:known-branch-hook",
+      "revision": 1,
+      "learning": "authored-elementary",
+      "candidate": {
+        "family": { "id": "base:gathering-tool", "version": 1 },
+        "name": "Make a branch bundle hook",
+        "description": "Bind a branch into a hook for collecting pairs of fallen branches.",
+        "inputs": [
+          { "role": "body", "definitionId": "wood", "quantity": 1 },
+          { "role": "binding", "definitionId": "cord", "quantity": 1 }
+        ],
+        "output": {
+          "name": "Branch bundle hook",
+          "description": "A hook for gathering branches together."
+        },
+        "parameters": { "resourceId": "wood", "quantity": 2, "workSeconds": 120 }
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:trim-canopy-post",
+        "version": 1,
+        "name": "Trim a canopy post",
+        "description": "Prepare a 2.30 metre canopy post from a straight pole with a kept cutting tool.",
+        "workSeconds": 90,
+        "inputs": [{ "role": "pole", "definitionId": "straight_pole", "quantity": 1 }],
+        "retainedTools": [
+          { "role": "cutting-tool", "quantity": 1, "allowedDefinitionIds": ["stone_tool", "knife"] }
+        ],
+        "outputs": [{ "port": "post", "definitionId": "canopy_post", "quantity": 1 }]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:dress-tall-canopy-post",
+        "version": 1,
+        "name": "Dress a tall canopy post",
+        "description": "Prepare a full-length 2.40 metre canopy post with a kept cutting tool.",
+        "workSeconds": 90,
+        "inputs": [{ "role": "pole", "definitionId": "straight_pole", "quantity": 1 }],
+        "retainedTools": [
+          { "role": "cutting-tool", "quantity": 1, "allowedDefinitionIds": ["stone_tool", "knife"] }
+        ],
+        "outputs": [{ "port": "post", "definitionId": "canopy_tall_post", "quantity": 1 }]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:weave-roof-mat",
+        "version": 1,
+        "name": "Weave a roof mat",
+        "description": "Weave prepared fibers and cord into a natural covering for four canopy posts.",
+        "workSeconds": 240,
+        "inputs": [
+          { "role": "fibers", "definitionId": "prepared_fiber", "quantity": 8 },
+          { "role": "bindings", "definitionId": "cord", "quantity": 2 }
+        ],
+        "retainedTools": [],
+        "outputs": [{ "port": "mat", "definitionId": "reed_mat", "quantity": 1 }]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:trim-camp-post",
+        "version": 1,
+        "name": "Trim a camp post",
+        "description": "Trim a short camp post and keep its usable branch offcut.",
+        "workSeconds": 90,
+        "inputs": [{ "role": "poles", "definitionId": "straight_pole", "quantity": 1 }],
+        "retainedTools": [
+          { "role": "cutting-tool", "quantity": 1, "allowedDefinitionIds": ["stone_tool", "knife"] }
+        ],
+        "outputs": [
+          { "port": "part", "definitionId": "camp_post", "quantity": 1 },
+          { "port": "offcut", "definitionId": "wood", "quantity": 1 }
+        ]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:trim-camp-gate-post",
+        "version": 1,
+        "name": "Trim a tall gate post",
+        "description": "Trim a tall gate support from a straight pole.",
+        "workSeconds": 90,
+        "inputs": [{ "role": "poles", "definitionId": "straight_pole", "quantity": 1 }],
+        "retainedTools": [
+          { "role": "cutting-tool", "quantity": 1, "allowedDefinitionIds": ["stone_tool", "knife"] }
+        ],
+        "outputs": [{ "port": "part", "definitionId": "camp_gate_post", "quantity": 1 }]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:weave-wattle-panel",
+        "version": 1,
+        "name": "Weave a wall panel",
+        "description": "Weave a solid wall panel for two actual posts and two binding cords.",
+        "workSeconds": 180,
+        "inputs": [
+          { "role": "poles", "definitionId": "straight_pole", "quantity": 2 },
+          { "role": "fibers", "definitionId": "prepared_fiber", "quantity": 4 }
+        ],
+        "retainedTools": [
+          { "role": "cutting-tool", "quantity": 1, "allowedDefinitionIds": ["stone_tool", "knife"] }
+        ],
+        "outputs": [{ "port": "part", "definitionId": "woven_wattle_panel", "quantity": 1 }]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:dress-gate-rail",
+        "version": 1,
+        "name": "Dress a gate rail",
+        "description": "Dress a straight pole into a rail for the supported sliding gate.",
+        "workSeconds": 90,
+        "inputs": [{ "role": "poles", "definitionId": "straight_pole", "quantity": 1 }],
+        "retainedTools": [
+          { "role": "cutting-tool", "quantity": 1, "allowedDefinitionIds": ["stone_tool", "knife"] }
+        ],
+        "outputs": [{ "port": "part", "definitionId": "gate_rail", "quantity": 1 }]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:weave-sliding-gate",
+        "version": 1,
+        "name": "Weave a sliding gate",
+        "description": "Weave a sliding gate leaf for three tall posts, two rails and six separate installation cords.",
+        "workSeconds": 240,
+        "inputs": [
+          { "role": "poles", "definitionId": "straight_pole", "quantity": 2 },
+          { "role": "fibers", "definitionId": "prepared_fiber", "quantity": 6 }
+        ],
+        "retainedTools": [
+          { "role": "cutting-tool", "quantity": 1, "allowedDefinitionIds": ["stone_tool", "knife"] }
+        ],
+        "outputs": [{ "port": "part", "definitionId": "sliding_wattle_gate", "quantity": 1 }]
+      }
+    },
+    {
+      "learning": "authored-elementary",
+      "definition": {
+        "id": "base:weave-gate-access-panel",
+        "version": 1,
+        "name": "Weave a gate access panel",
+        "description": "Weave a panel with a real hand opening for reaching a parked gate handle.",
+        "workSeconds": 180,
+        "inputs": [
+          { "role": "poles", "definitionId": "straight_pole", "quantity": 2 },
+          { "role": "fibers", "definitionId": "prepared_fiber", "quantity": 4 }
+        ],
+        "retainedTools": [
+          { "role": "cutting-tool", "quantity": 1, "allowedDefinitionIds": ["stone_tool", "knife"] }
+        ],
+        "outputs": [{ "port": "part", "definitionId": "woven_gate_parking_panel", "quantity": 1 }]
+      }
+    },
+    {
+      "id": "base:known-camp-basket",
+      "revision": 1,
+      "learning": "authored-elementary",
+      "candidate": {
+        "family": { "id": "base:woven-container", "version": 1 },
+        "name": "Weave a camp basket",
+        "description": "Weave an open basket from prepared fibers and secure it with cord.",
+        "inputs": [
+          { "role": "pouch", "definitionId": "prepared_fiber", "quantity": 6 },
+          { "role": "binding", "definitionId": "cord", "quantity": 3 }
+        ],
+        "output": {
+          "name": "Open camp basket",
+          "description": "An open woven basket for organizing possessions. Cloth and prepared fibers inside receive rain through its open rim; a roof can protect them."
+        },
+        "parameters": {
+          "contentsExposureProfile": {
+            "id": "base:open-woven-contents",
+            "version": 1,
+            "digest": "h8rpbv"
+          }
+        }
+      }
+    }
+  ],
+  "items": [
+    {
+      "revision": 1,
+      "definition": {
+        "id": "knappable_flint",
+        "version": 1,
+        "name": "Unworked flint",
+        "description": "A suitable flint piece. Knapping with a kept stone can make a cutting stone.",
+        "portable": true,
+        "packingLoad": 1,
+        "properties": ["rigid"],
+        "icon": "resource.flint"
+      }
+    },
+    {
+      "revision": 1,
+      "definition": {
+        "id": "straight_pole",
+        "version": 1,
+        "name": "Straight fallen pole",
+        "description": "A straight fallen pole with 2.40 metres of usable length.",
+        "portable": true,
+        "packingLoad": 3,
+        "properties": ["rigid", "shaft"],
+        "tracksMaterialOrigins": true,
+        "icon": "resource.branch",
+        "stockShape": { "usableLengthMeters": 2.4 }
+      }
+    },
+    {
+      "revision": 1,
+      "definition": {
+        "id": "wooden_club",
+        "version": 1,
+        "name": "Wooden club",
+        "description": "A trimmed wooden club held in one hand for close contact.",
+        "portable": true,
+        "packingLoad": 2,
+        "properties": ["rigid", "shaft"],
+        "icon": "resource.branch",
+        "equipment": { "ports": ["main-hand"], "uses": ["melee"] },
+        "melee": {
+          "damage": 6,
+          "accuracy": 0.75,
+          "range": 1.4,
+          "approachRange": 1,
+          "windupSeconds": 12,
+          "recoverySeconds": 24
+        }
+      }
+    },
+    {
+      "revision": 1,
+      "definition": {
+        "id": "reed_mat",
+        "version": 1,
+        "name": "Reed roof mat",
+        "description": "A flexible 1.80 by 2.40 metre woven mat, 0.02 metres thick. Fasten it to four qualified canopy posts with four real cords for rain cover.",
+        "portable": true,
+        "packingLoad": 2,
+        "properties": ["fiber", "flexible"],
+        "assemblyMaterial": {
+          "familyId": "base:light-canopy",
+          "role": "cover",
+          "coverProfile": { "id": "base:reed-mat-cover", "version": 1, "digest": "1wrh6ck" }
+        }
+      }
+    },
+    {
+      "revision": 1,
+      "definition": {
+        "id": "camp_post",
+        "version": 1,
+        "name": "Camp post",
+        "description": "A 1.80 metre camp upright, 0.10 metres square. It supports wall ties, not canopy roofs.",
+        "portable": true,
+        "packingLoad": 2,
+        "properties": ["rigid", "shaft"],
+        "assemblyMaterial": {
+          "familyId": "base:light-camp-boundary",
+          "role": "post",
+          "postHeight": 1.8
+        }
+      }
+    },
+    {
+      "revision": 1,
+      "definition": {
+        "id": "camp_gate_post",
+        "version": 1,
+        "name": "Tall camp gate post",
+        "description": "A 2.30 metre camp upright, 0.10 metres square, for gate and parking supports.",
+        "portable": true,
+        "packingLoad": 2,
+        "properties": ["rigid", "shaft"],
+        "assemblyMaterial": {
+          "familyId": "base:light-camp-boundary",
+          "role": "post",
+          "postHeight": 2.3
+        }
+      }
+    },
+    {
+      "revision": 1,
+      "definition": {
+        "id": "woven_wattle_panel",
+        "version": 1,
+        "name": "Woven wattle panel",
+        "description": "A solid woven panel, 1.90 metres wide, 1.70 metres high and 0.08 metres thick. It takes two real ties.",
+        "portable": true,
+        "packingLoad": 2,
+        "properties": ["rigid", "fiber"],
+        "assemblyMaterial": { "familyId": "base:light-camp-boundary", "role": "panel" }
+      }
+    },
+    {
+      "revision": 1,
+      "definition": {
+        "id": "woven_gate_parking_panel",
+        "version": 1,
+        "name": "Gate access panel",
+        "description": "A woven panel with an actual central 0.30 metre hand opening for reaching a parked gate handle.",
+        "portable": true,
+        "packingLoad": 2,
+        "properties": ["rigid", "fiber"],
+        "assemblyMaterial": { "familyId": "base:light-camp-boundary", "role": "panel" }
+      }
+    },
+    {
+      "revision": 1,
+      "definition": {
+        "id": "sliding_wattle_gate",
+        "version": 1,
+        "name": "Sliding wattle gate",
+        "description": "A 1.90 by 1.70 metre sliding leaf, 0.08 metres thick, with an integral inside bar and ground guide.",
+        "portable": true,
+        "packingLoad": 2,
+        "properties": ["rigid", "fiber"],
+        "assemblyMaterial": { "familyId": "base:light-camp-boundary", "role": "gate" }
+      }
+    },
+    {
+      "revision": 1,
+      "definition": {
+        "id": "gate_rail",
+        "version": 1,
+        "name": "Gate rail",
+        "description": "A 2.40 metre runner, 0.06 metres square, with complementary reversible lap ends.",
+        "portable": true,
+        "packingLoad": 2,
+        "properties": ["rigid", "shaft"],
+        "assemblyMaterial": { "familyId": "base:light-camp-boundary", "role": "rail" }
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "berries-west",
+      "revision": 1,
+      "placement": { "kind": "retained-opening", "entityId": "berries-west" },
+      "item": "berries",
+      "quantity": 24,
+      "workSeconds": 30,
+      "collection": "bare-hand",
+      "name": "Berry bush"
+    },
+    {
+      "id": "berries-east",
+      "revision": 1,
+      "placement": { "kind": "retained-opening", "entityId": "berries-east" },
+      "item": "berries",
+      "quantity": 36,
+      "workSeconds": 30,
+      "collection": "bare-hand",
+      "name": "Berry thicket"
+    },
+    {
+      "id": "forage-west",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "outer-forage-west",
+        "offsetMeters": { "x": 0, "z": 0 }
+      },
+      "item": "berries",
+      "quantity": 96,
+      "workSeconds": 30,
+      "collection": "bare-hand",
+      "name": "Berry thicket"
+    },
+    {
+      "id": "forage-east",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "outer-forage-east",
+        "offsetMeters": { "x": 0, "z": 0 }
+      },
+      "item": "berries",
+      "quantity": 84,
+      "workSeconds": 30,
+      "collection": "bare-hand",
+      "name": "Berry thicket"
+    },
+    {
+      "id": "reeds",
+      "revision": 1,
+      "placement": { "kind": "retained-opening", "entityId": "reeds" },
+      "item": "raw_fiber",
+      "quantity": 48,
+      "workSeconds": 36,
+      "collection": "bare-hand",
+      "name": "River reeds"
+    },
+    {
+      "id": "reeds-east",
+      "revision": 1,
+      "placement": { "kind": "retained-opening", "entityId": "reeds-east" },
+      "item": "raw_fiber",
+      "quantity": 30,
+      "workSeconds": 36,
+      "collection": "bare-hand",
+      "name": "River reeds"
+    },
+    {
+      "id": "fiber-bank",
+      "revision": 1,
+      "placement": { "kind": "anchor", "anchor": "fiber-bank", "offsetMeters": { "x": 0, "z": 0 } },
+      "item": "raw_fiber",
+      "quantity": 96,
+      "workSeconds": 36,
+      "collection": "bare-hand",
+      "name": "Dry plant fibers"
+    },
+    {
+      "id": "outer-fiber",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "outer-fiber",
+        "offsetMeters": { "x": 0, "z": 0 }
+      },
+      "item": "raw_fiber",
+      "quantity": 126,
+      "workSeconds": 36,
+      "collection": "bare-hand",
+      "name": "Dry plant fibers"
+    },
+    {
+      "id": "branches",
+      "revision": 1,
+      "placement": { "kind": "retained-opening", "entityId": "branches" },
+      "item": "wood",
+      "quantity": 36,
+      "workSeconds": 42,
+      "collection": "bare-hand",
+      "name": "Fallen branches"
+    },
+    {
+      "id": "copse-branches",
+      "revision": 1,
+      "placement": { "kind": "anchor", "anchor": "pole-copse", "offsetMeters": { "x": 0, "z": 0 } },
+      "item": "wood",
+      "quantity": 48,
+      "workSeconds": 42,
+      "collection": "bare-hand",
+      "name": "Fallen branches"
+    },
+    {
+      "id": "outer-branches",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "outer-materials",
+        "offsetMeters": { "x": 0, "z": 0 }
+      },
+      "item": "wood",
+      "quantity": 48,
+      "workSeconds": 42,
+      "collection": "bare-hand",
+      "name": "Fallen branches"
+    },
+    {
+      "id": "stones",
+      "revision": 1,
+      "placement": { "kind": "retained-opening", "entityId": "stones" },
+      "item": "stone",
+      "quantity": 60,
+      "workSeconds": 24,
+      "collection": "bare-hand",
+      "name": "Loose stones"
+    },
+    {
+      "id": "bank-stones",
+      "revision": 1,
+      "placement": { "kind": "anchor", "anchor": "stone-bank", "offsetMeters": { "x": 0, "z": 0 } },
+      "item": "stone",
+      "quantity": 40,
+      "workSeconds": 24,
+      "collection": "bare-hand",
+      "name": "Loose stones"
+    },
+    {
+      "id": "outer-stones",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "outer-materials",
+        "offsetMeters": { "x": 1.5, "z": 0 }
+      },
+      "item": "stone",
+      "quantity": 40,
+      "workSeconds": 24,
+      "collection": "bare-hand",
+      "name": "Loose stones"
+    },
+    {
+      "id": "bank-flint",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "stone-bank",
+        "offsetMeters": { "x": 1.5, "z": 0 }
+      },
+      "item": "knappable_flint",
+      "quantity": 12,
+      "workSeconds": 30,
+      "collection": "bare-hand",
+      "name": "Unworked flint"
+    },
+    {
+      "id": "clay-bank-flint",
+      "revision": 1,
+      "placement": { "kind": "anchor", "anchor": "clay-bank", "offsetMeters": { "x": 0, "z": 0 } },
+      "item": "knappable_flint",
+      "quantity": 18,
+      "workSeconds": 30,
+      "collection": "bare-hand",
+      "name": "Unworked flint"
+    },
+    {
+      "id": "outer-flint",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "outer-materials",
+        "offsetMeters": { "x": 0, "z": 1.5 }
+      },
+      "item": "knappable_flint",
+      "quantity": 18,
+      "workSeconds": 30,
+      "collection": "bare-hand",
+      "name": "Unworked flint"
+    },
+    {
+      "id": "copse-poles",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "pole-copse",
+        "offsetMeters": { "x": 1.5, "z": 0 }
+      },
+      "item": "straight_pole",
+      "quantity": 24,
+      "workSeconds": 60,
+      "collection": "bare-hand",
+      "name": "Fallen straight poles"
+    },
+    {
+      "id": "bank-poles",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "fiber-bank",
+        "offsetMeters": { "x": 1.5, "z": 0 }
+      },
+      "item": "straight_pole",
+      "quantity": 12,
+      "workSeconds": 60,
+      "collection": "bare-hand",
+      "name": "Fallen straight poles"
+    },
+    {
+      "id": "outer-poles",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "outer-materials",
+        "offsetMeters": { "x": 1.5, "z": 1.5 }
+      },
+      "item": "straight_pole",
+      "quantity": 24,
+      "workSeconds": 60,
+      "collection": "bare-hand",
+      "name": "Fallen straight poles"
+    },
+    {
+      "id": "marsh-poles",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "outer-fiber",
+        "offsetMeters": { "x": 1.5, "z": 0 }
+      },
+      "item": "straight_pole",
+      "quantity": 36,
+      "workSeconds": 60,
+      "collection": "bare-hand",
+      "name": "Fallen straight poles"
+    },
+    {
+      "id": "washed-bone",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "stone-bank",
+        "offsetMeters": { "x": 0, "z": 1.5 }
+      },
+      "item": "bone",
+      "quantity": 2,
+      "workSeconds": 30,
+      "collection": "bare-hand",
+      "name": "Washed bone fragments"
+    },
+    {
+      "id": "outer-bone",
+      "revision": 1,
+      "placement": {
+        "kind": "anchor",
+        "anchor": "outer-materials",
+        "offsetMeters": { "x": 3, "z": 0 }
+      },
+      "item": "bone",
+      "quantity": 6,
+      "workSeconds": 30,
+      "collection": "bare-hand",
+      "name": "Bone fragments"
+    }
+  ],
+  "hearths": [
+    {
+      "id": "base:stone-ring-hearth",
+      "version": 1,
+      "implementation": "campfire-ring",
+      "name": "Stone-ring hearth",
+      "description": "A permanent stone ring for an ordinary campfire.",
+      "actionLabel": "Lay a hearth",
+      "activityText": "laying a hearth",
+      "completedText": "Laid a cold hearth. It needs fuel and tinder before lighting.",
+      "help": "Choose clear, level ground. Four stones are held during the work and spent only when the cold hearth is complete.",
+      "radiusMetres": 0.45,
+      "heightMetres": 0.15,
+      "clearanceHeightMetres": 2,
+      "maximumHeightDifferenceMetres": 0.05,
+      "terrainOnly": true,
+      "workSeconds": 120,
+      "input": { "definitionId": "stone", "quantity": 4 }
+    }
+  ],
+  "materialContributions": {
+    "maximumSeconds": 14400,
+    "siteRadiusMetres": 4,
+    "operations": [
+      "post",
+      "cover",
+      "boundary-panel",
+      "boundary-gate",
+      "repair-boundary",
+      "place-hearth"
+    ],
+    "label": "Contribute for construction",
+    "siteLabels": { "terrain": "the reviewed building ground" },
+    "termsText": "Construction use: {operation} on {site} within ({minX}, {minZ})–({maxX}, {maxZ}), ending in {minutes} game minutes. Future use can be withdrawn; completed work remains."
+  },
+  "contentsExposureProfiles": [
+    {
+      "id": "base:open-woven-contents",
+      "version": 1,
+      "implementation": "open-single-level",
+      "transmission": 1,
+      "eligibleMaterialRoles": ["cover", "fiber"],
+      "footprint": "container-body-top",
+      "carriedHeight": "carrier-handling-height",
+      "labels": {
+        "name": "Open woven contents",
+        "description": "Eligible cloth and prepared fibers receive the rain reaching this open basket's rim. A roof can protect them; the basket itself is not waterproof."
+      }
+    }
+  ],
+  "dailyRain": {
+    "id": "base:first-playable-daily-rain",
+    "version": 1,
+    "implementation": "daily-vertical-rain",
+    "clock": "localTime",
+    "windowLocalHours": { "start": 16, "end": 18 },
+    "region": { "openingBoundsRef": "base:first-playable-main" },
+    "intensity": 1,
+    "overlap": "maximum",
+    "labels": { "raining": "Rain", "dry": "Dry weather" }
+  },
+  "coverProfiles": [
+    {
+      "id": "base:weather-cloth-cover",
+      "version": 1,
+      "implementation": "flexible-sheet",
+      "name": "Weather-cloth covering",
+      "width": 1.8,
+      "length": 2.4,
+      "thickness": 0.02,
+      "edge": 0.1,
+      "transmission": 0
+    },
+    {
+      "id": "base:reed-mat-cover",
+      "version": 1,
+      "implementation": "flexible-sheet",
+      "name": "Reed-mat covering",
+      "width": 1.8,
+      "length": 2.4,
+      "thickness": 0.02,
+      "edge": 0.1,
+      "transmission": 0
+    }
+  ],
+  "defaultCover": { "id": "base:weather-cloth-cover", "version": 1, "digest": "1lixs6m" },
+  "boundary": {
+    "family": {
+      "id": "base:light-camp-boundary",
+      "version": 1,
+      "implementation": "grounded-panel-boundary",
+      "name": "Wattle boundary",
+      "description": "Real posts and woven panels form a light camp boundary. Missing sections stay open.",
+      "geometry": {
+        "section": {
+          "spacing": 2,
+          "postSection": 0.1,
+          "postHeight": 1.8,
+          "gatePostHeight": 2.3,
+          "panelWidth": 1.9,
+          "panelHeight": 1.7,
+          "panelThickness": 0.08,
+          "accessOpening": { "width": 0.3, "bottom": 0.75, "top": 1.05 }
+        },
+        "gate": {
+          "travel": 2,
+          "width": 1.9,
+          "height": 1.7,
+          "thickness": 0.08,
+          "insideOffset": 0.17,
+          "railHeight": 2.27,
+          "railSection": 0.06,
+          "railLength": 2.4,
+          "hangerSection": 0.04,
+          "hangerHalfSpacing": 0.7,
+          "handleHeight": 0.9,
+          "insideHandleOffset": 0.23,
+          "outsideHandleOffset": 0.11
+        }
+      },
+      "roles": {
+        "post": "camp_post",
+        "gatePost": "camp_gate_post",
+        "panel": "woven_wattle_panel",
+        "parkingPanel": "woven_gate_parking_panel",
+        "gate": "sliding_wattle_gate",
+        "rail": "gate_rail",
+        "binding": "cord"
+      },
+      "postTools": ["stone_tool"],
+      "materials": { "post": "timber", "panel": "timber", "binding": "panel" },
+      "inventory": {
+        "post": {
+          "initialAttributes": ["base:camp-post-integrity"],
+          "stateAttributes": ["base:camp-post-integrity"],
+          "homogeneous": false,
+          "bagRefusal": null
+        },
+        "panel": {
+          "initialAttributes": ["base:camp-panel-integrity"],
+          "stateAttributes": ["base:camp-panel-integrity"],
+          "homogeneous": false,
+          "bagRefusal": null
+        },
+        "gate": {
+          "initialAttributes": ["base:camp-gate-integrity"],
+          "stateAttributes": ["base:camp-gate-integrity"],
+          "homogeneous": false,
+          "bagRefusal": null
+        },
+        "rail": {
+          "initialAttributes": ["base:camp-rail-integrity"],
+          "stateAttributes": ["base:camp-rail-integrity"],
+          "homogeneous": false,
+          "bagRefusal": null
+        }
+      },
+      "joints": {
+        "panelTies": [
+          { "end": 0, "height": 0.9 },
+          { "end": 1, "height": 0.9 }
+        ],
+        "panelContact": {
+          "min": { "x": -0.05, "y": -0.025, "z": -0.04 },
+          "max": { "x": 0.05, "y": 0.025, "z": 0.04 }
+        },
+        "runnerContact": {
+          "min": { "x": -0.05, "y": -0.03, "z": -0.15 },
+          "max": { "x": 0.05, "y": 0.03, "z": 0.03 }
+        },
+        "hangerContact": {
+          "min": { "x": -0.02, "y": -0.02, "z": -0.02 },
+          "max": { "x": 0.02, "y": 0.02, "z": 0.02 }
+        }
+      },
+      "workPoints": {
+        "clearance": 0.1,
+        "postHeight": 0.9,
+        "panelHeight": 0.9,
+        "runnerHeight": 2.27
+      },
+      "seconds": {
+        "post": 120,
+        "boundary-panel": 180,
+        "boundary-gate": 300,
+        "remove-boundary-panel": 120,
+        "remove-boundary-gate": 180,
+        "reclaim-post": 60,
+        "reclaim-lowered": 0,
+        "repair-boundary": 180,
+        "open": 120,
+        "close": 120,
+        "bar": 60,
+        "unbar": 60
+      },
+      "labels": {
+        "post": "Install a camp post",
+        "boundary-panel": "Fasten a wattle panel",
+        "boundary-gate": "Install a sliding gate",
+        "remove-boundary-panel": "Untie a wattle panel",
+        "remove-boundary-gate": "Remove a sliding gate",
+        "reclaim-post": "Reclaim an unloaded post",
+        "reclaim-lowered": "Reclaim lowered material",
+        "repair-boundary": "Repair a woven part",
+        "open": "Open the gate",
+        "close": "Close the gate",
+        "bar": "Bar the gate from inside",
+        "unbar": "Lift the inside bar"
+      },
+      "limits": { "sections": 16, "gates": 2, "parts": 96, "activeEdits": 1 },
+      "integrity": {
+        "post": "base:camp-post-integrity",
+        "panel": "base:camp-panel-integrity",
+        "gate": "base:camp-gate-integrity",
+        "rail": "base:camp-rail-integrity"
+      },
+      "repair": {
+        "roles": ["panel", "gate"],
+        "input": "prepared_fiber",
+        "quantity": 2,
+        "amount": 4,
+        "toolDefinitions": ["stone_tool"]
+      },
+      "damage": {
+        "implementation": "held-tool-impact",
+        "label": "Strike a boundary part",
+        "pastTense": "struck the boundary part",
+        "exposureText": "These barriers can be damaged while this world is running, even while you are away.",
+        "tools": [
+          {
+            "definition": "stone_tool",
+            "impact": 3,
+            "seconds": 180,
+            "reach": 1.5,
+            "recoverySeconds": 0
+          },
+          { "definition": "spear", "impact": 1, "seconds": 180, "reach": 1.8, "recoverySeconds": 0 }
+        ]
+      },
+      "salvage": {
+        "footprint": { "width": 0.5, "length": 0.5, "height": 0.2 },
+        "outputs": {
+          "post": [{ "port": "wood", "definition": "wood", "quantity": 1 }],
+          "panel": [
+            { "port": "wood", "definition": "wood", "quantity": 1 },
+            { "port": "fiber", "definition": "prepared_fiber", "quantity": 1 }
+          ],
+          "gate": [
+            { "port": "wood", "definition": "wood", "quantity": 1 },
+            { "port": "fiber", "definition": "prepared_fiber", "quantity": 2 }
+          ],
+          "rail": [{ "port": "wood", "definition": "wood", "quantity": 1 }]
+        }
+      },
+      "presentation": {
+        "postColor": "#715438",
+        "coverColor": "#bdae85",
+        "bindingSize": 0.04,
+        "loweredName": "Recoverable camp materials",
+        "failureText": "The light boundary lost support. Its surviving parts lie harmlessly on the ground for authorized recovery.",
+        "help": "Use real posts and panels. Construction needs permission for every selected material. Missing sections stay open; walls do not stop rain or sound.",
+        "exposureText": "Exposed to ordinary rain; vertical walls supply no roof.",
+        "unbarredText": "Unbarred",
+        "barredText": "Barred",
+        "condition": {
+          "nearlyBrokenFraction": 0.25,
+          "intact": "Intact",
+          "damaged": "Damaged",
+          "nearlyBroken": "Nearly broken"
+        },
+        "openText": "Open",
+        "closedText": "Closed",
+        "planLabels": {
+          "post": "Install a post",
+          "panel": "Fasten a panel",
+          "gate": "Install a sliding gate",
+          "remove": "Remove a part",
+          "repair": "Repair a woven part"
+        }
+      }
+    },
+    "attributes": [
+      {
+        "id": "base:camp-post-integrity",
+        "version": 1,
+        "implementation": "number-v1",
+        "name": "Post integrity",
+        "disclosure": "owner",
+        "presentation": { "icon": "meter.health", "color": "meter.health" },
+        "schema": { "kind": "number", "min": 0, "max": 10, "initial": 10, "unit": "points" }
+      },
+      {
+        "id": "base:camp-panel-integrity",
+        "version": 1,
+        "implementation": "number-v1",
+        "name": "Panel integrity",
+        "disclosure": "owner",
+        "presentation": { "icon": "meter.health", "color": "meter.health" },
+        "schema": { "kind": "number", "min": 0, "max": 12, "initial": 12, "unit": "points" }
+      },
+      {
+        "id": "base:camp-gate-integrity",
+        "version": 1,
+        "implementation": "number-v1",
+        "name": "Gate integrity",
+        "disclosure": "owner",
+        "presentation": { "icon": "meter.health", "color": "meter.health" },
+        "schema": { "kind": "number", "min": 0, "max": 16, "initial": 16, "unit": "points" }
+      },
+      {
+        "id": "base:camp-rail-integrity",
+        "version": 1,
+        "implementation": "number-v1",
+        "name": "Rail integrity",
+        "disclosure": "owner",
+        "presentation": { "icon": "meter.health", "color": "meter.health" },
+        "schema": { "kind": "number", "min": 0, "max": 6, "initial": 6, "unit": "points" }
+      }
+    ]
+  },
+  "opportunities": {
+    "actors": [
+      {
+        "actorId": "kest",
+        "methodRefs": ["base:clean-fibers", "base:twist-cord"],
+        "profile": {
+          "id": "base:kest-supply-considerations",
+          "version": 1,
+          "foodBelow": 36,
+          "ammunitionBelow": 4,
+          "maximumCandidates": 8,
+          "descriptions": {
+            "food": "My known available food restores only {available} nourishment; I may consider obtaining provisions.",
+            "ammunition": "My equipped bow has only {available} known available compatible shots; I may consider ammunition supplies.",
+            "material": "My currently chosen crafting work needs supplies I do not have available.",
+            "alternatives": "I may use my own stock, gather something actually seen, hunt seen prey, offer exchange, choose real travel, rest, abandon this consideration or continue another purpose. A place report promises no supply or route.",
+            "motive": "I value a secure provisioned stopping place and practical exchange, and dislike taking risks for strangers."
+          },
+          "places": [
+            { "id": "broken-watchpost", "purposes": ["food"], "materialIds": [] },
+            { "id": "base:eastern-berries", "purposes": ["food"], "materialIds": [] },
+            {
+              "id": "base:eastern-materials",
+              "purposes": ["ammunition", "material"],
+              "materialIds": ["wood", "stone", "cord", "prepared_fiber"]
+            },
+            {
+              "id": "base:central-fiber",
+              "purposes": ["material"],
+              "materialIds": ["raw_fiber", "cord", "prepared_fiber"]
+            },
+            {
+              "id": "riverside-workshop",
+              "purposes": ["ammunition", "material"],
+              "materialIds": ["wood", "stone", "cord", "prepared_fiber"]
+            }
+          ]
+        }
+      },
+      {
+        "actorId": "orin",
+        "methodRefs": ["base:clean-fibers", "base:twist-cord"],
+        "profile": {
+          "id": "base:orin-supply-considerations",
+          "version": 1,
+          "foodBelow": 36,
+          "ammunitionBelow": 4,
+          "maximumCandidates": 8,
+          "descriptions": {
+            "food": "My known available food restores only {available} nourishment; I may consider obtaining provisions.",
+            "ammunition": "My equipped bow has only {available} known available compatible shots; I may consider ammunition supplies.",
+            "material": "My currently chosen crafting work needs supplies I do not have available.",
+            "alternatives": "I may use my own stock, gather something actually seen, hunt seen prey, offer exchange, choose real travel, rest, abandon this consideration or continue another purpose. A place report promises no supply or route.",
+            "motive": "I value ammunition, a clear retreat and a chance to prove competence, and dislike avoidable injury."
+          },
+          "places": [
+            { "id": "broken-watchpost", "purposes": ["food"], "materialIds": [] },
+            { "id": "base:eastern-berries", "purposes": ["food"], "materialIds": [] },
+            {
+              "id": "base:eastern-materials",
+              "purposes": ["ammunition", "material"],
+              "materialIds": ["wood", "stone", "cord", "prepared_fiber"]
+            },
+            {
+              "id": "base:central-fiber",
+              "purposes": ["material"],
+              "materialIds": ["raw_fiber", "cord", "prepared_fiber"]
+            },
+            {
+              "id": "riverside-workshop",
+              "purposes": ["ammunition", "material"],
+              "materialIds": ["wood", "stone", "cord", "prepared_fiber"]
+            }
+          ]
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "base:eastern-berries",
+        "landmarkId": "forage-east",
+        "label": "Eastern berry habitat",
+        "description": "Old familiarity with a berry thicket. No current stock or occupants are known.",
+        "reportedBy": "Personal familiarity from earlier supply walks"
+      },
+      {
+        "id": "base:eastern-materials",
+        "landmarkId": "outer-branches",
+        "label": "Eastern material bank",
+        "description": "An old report of woodland materials. Actual stock, paths and people must be observed.",
+        "reportedBy": "An old supply report"
+      },
+      {
+        "id": "base:central-fiber",
+        "landmarkId": "woodland-patch-9",
+        "label": "Central fiber patch",
+        "description": "An old report of useful fibers near the central woodland. No camp or person is known there.",
+        "reportedBy": "An old material-gathering report"
+      }
+    ]
+  },
+  "cooperationHelpMethodRefs": [
+    "base:clean-fibers",
+    "base:knap-cutting-stone",
+    "base:trim-club",
+    "base:twist-cord",
+    "base:known-reed-comb",
+    "base:known-pole-hook",
+    "base:known-branch-hook",
+    "base:trim-canopy-post",
+    "base:dress-tall-canopy-post",
+    "base:weave-roof-mat",
+    "base:trim-camp-post",
+    "base:trim-camp-gate-post",
+    "base:weave-wattle-panel",
+    "base:dress-gate-rail",
+    "base:weave-sliding-gate",
+    "base:weave-gate-access-panel",
+    "base:known-camp-basket"
+  ],
+  "people": {
+    "ada": {
+      "id": "base:person:ada",
+      "actorRole": "ada",
+      "name": "Ada",
+      "description": "",
+      "identity": {
+        "initialGoals": [],
+        "personality": "Practical, curious, candid and assertive, with dry humor, cautious trust and reluctance to admit needing help. Values bodily autonomy and self-respect; willing to use proportionate physical force, and regards fear and decisive action as compatible.",
+        "backstory": "I am Ada, twenty-four. I grew up near woodland, in a household where making things last mattered more than owning many things. I learned to mend cord, tend a fire, gather familiar plants and prepare ordinary meals. I like understanding how a useful object works. I can handle a small cutting tool and understand how people obtain and prepare food, though I do not know every plant or animal I might meet.\n\nI speak plainly and usually think before promising something. I sometimes make a dry joke when I am uncomfortable. I would rather ask a specific question than pretend I understand, although admitting that I need help can take me longer than it should. I notice the work other people do and appreciate practical kindness. Trust grows through what someone actually does; a stranger is neither automatically a friend nor an enemy.\n\nI imagine having a settled place someday: a sound roof, tools I understand, meals shared with people whose company I enjoy. I am curious about what I could learn and who I might become. Pain frightens me, and I do not regard my future as disposable. I also dislike needless cruelty.\n\nI enjoy watching animals and quietly observing.",
+        "traits": [
+          {
+            "id": "ada-practical",
+            "name": "Practical",
+            "description": "I value useful work and learning how things work."
+          },
+          {
+            "id": "ada-curious",
+            "name": "Curious",
+            "description": "I want to understand this place and what I might become."
+          },
+          {
+            "id": "ada-considerate",
+            "name": "Considerate",
+            "description": "I appreciate practical kindness and dislike needless cruelty."
+          },
+          {
+            "id": "ada-self-respecting",
+            "name": "Self-respecting",
+            "description": "I value my bodily autonomy and independence. I am willing to use proportionate physical force; being afraid need not prevent decisive action."
+          }
+        ]
+      },
+      "startingKnowledge": {
+        "methodRefs": [
+          "base:clean-fibers",
+          "base:knap-cutting-stone",
+          "base:trim-club",
+          "base:twist-cord",
+          "base:known-reed-comb",
+          "base:known-pole-hook",
+          "base:known-branch-hook",
+          "base:trim-canopy-post",
+          "base:dress-tall-canopy-post",
+          "base:weave-roof-mat",
+          "base:trim-camp-post",
+          "base:trim-camp-gate-post",
+          "base:weave-wattle-panel",
+          "base:dress-gate-rail",
+          "base:weave-sliding-gate",
+          "base:weave-gate-access-panel",
+          "base:known-camp-basket"
+        ],
+        "knownPeople": [{ "personRole": "mercenary", "givenName": "Peacock Mercenary" }],
+        "generalBeliefs": ""
+      }
+    },
+    "mercenary": {
+      "id": "base:person:mercenary",
+      "actorRole": "mercenary",
+      "name": "Peacock Mercenary",
+      "description": "",
+      "identity": {
+        "initialGoals": [],
+        "personality": "Reserved and practical, with dry humor, respect for reliability and a strong preference for knowing what a risk involves.",
+        "backstory": "I am a travelling mercenary. I make my living through travel and practical work.\n\nTravel has taught me to value a dependable companion and an honest account of a risk. I take pleasure in a tool that feels well made, an unfamiliar route and a dry joke shared without ceremony. I like earning my keep, but I do not regard another person's plans as more important than my own life or freedom. A settled place appeals to me when it still leaves room to choose where I go.",
+        "traits": [
+          {
+            "id": "mercenary-reliable-company",
+            "name": "Reliable company",
+            "description": "I value companions who describe risks honestly and do what they have actually agreed to do."
+          },
+          {
+            "id": "mercenary-independent-traveler",
+            "name": "Independent traveler",
+            "description": "I enjoy travel, practical skill and the freedom to decide where my life goes."
+          }
+        ]
+      },
+      "startingKnowledge": {
+        "methodRefs": [
+          "base:clean-fibers",
+          "base:knap-cutting-stone",
+          "base:trim-club",
+          "base:twist-cord",
+          "base:known-reed-comb",
+          "base:known-pole-hook",
+          "base:known-branch-hook",
+          "base:trim-canopy-post",
+          "base:dress-tall-canopy-post",
+          "base:weave-roof-mat",
+          "base:trim-camp-post",
+          "base:trim-camp-gate-post",
+          "base:weave-wattle-panel",
+          "base:dress-gate-rail",
+          "base:weave-sliding-gate",
+          "base:weave-gate-access-panel",
+          "base:known-camp-basket"
+        ],
+        "knownPeople": [{ "personRole": "ada", "givenName": "Ada" }],
+        "generalBeliefs": ""
+      }
+    },
+    "mara": {
+      "id": "base:person:mara",
+      "actorRole": "mara",
+      "name": "Mara Reed",
+      "description": "A careful camp mender in a patched wool coat.",
+      "identity": {
+        "initialGoals": [],
+        "personality": "Careful, patient about practical work, and sensitive to being dismissed. Speaks plainly about what she has noticed and avoids guessing what she has not seen. Enjoys careful making and being taken seriously, while valuing her own time and belongings.",
+        "backstory": "I am Mara Reed. I learned to mend cordage, packs, and camp gear along the river crossings, keeping tools and work satchels neatly marked so shared supplies stay in good order.\n\nI enjoy understanding why a fastening or useful object failed, and finding a repair that will hold. Patient work is satisfying to me, especially when another person notices what made it good. I value a clear account of what happened and dislike being brushed aside. I would like a place where people can make useful things and treat one another's work with care, while keeping time and possessions of their own.",
+        "traits": [
+          {
+            "id": "mara-methodical",
+            "name": "Methodical mender",
+            "description": "I track repairs and materials by their physical markings and condition."
+          },
+          {
+            "id": "mara-plain-dealing",
+            "name": "Plain-dealing",
+            "description": "I state what I know directly and prefer honest dealing over guesswork."
+          }
+        ]
+      },
+      "startingKnowledge": {
+        "methodRefs": [
+          "base:clean-fibers",
+          "base:knap-cutting-stone",
+          "base:trim-club",
+          "base:twist-cord",
+          "base:known-reed-comb",
+          "base:known-pole-hook",
+          "base:known-branch-hook",
+          "base:trim-canopy-post",
+          "base:dress-tall-canopy-post",
+          "base:weave-roof-mat",
+          "base:trim-camp-post",
+          "base:trim-camp-gate-post",
+          "base:weave-wattle-panel",
+          "base:dress-gate-rail",
+          "base:weave-sliding-gate",
+          "base:weave-gate-access-panel",
+          "base:known-camp-basket"
+        ],
+        "knownPeople": [],
+        "generalBeliefs": "# Beliefs\nI left my red-stitched satchel at the Mending Clearing work spot beside the rough stone before a walk; when I returned, the bag was gone and a torn red fastening strap with blue cross-stitching remained. The satchel has “Mara Reed” stitched on the exterior flap and held two lengths of cord when I left it. I saw Tavin carrying a bundle earlier, though I did not see him take my satchel, and I suspect a connection."
+      }
+    },
+    "tavin": {
+      "id": "base:person:tavin",
+      "actorRole": "tavin",
+      "name": "Tavin Vale",
+      "description": "A practical camp traveler in a reed-woven vest.",
+      "identity": {
+        "initialGoals": [],
+        "personality": "Practical, tidy, and matter-of-fact. Values a clear work area, dislikes accusations, and can recognize a mistake. Enjoys routes and practical arrangements, with an independent streak and a preference for straightforward company.",
+        "backstory": "I am Tavin Vale. I worked river landings and camp clearings where sudden damp ruined cordage left on the ground, so I learned to keep work areas clear and dry stores orderly.\n\nI enjoy finding a dependable route and arranging supplies so they are easy to reach and keep dry. I like comparing practical solutions with people who say what they mean. I can change my view when I learn that I was mistaken, though an accusation can make me defensive. A useful camp matters to me, but so does being free to move on.",
+        "traits": [
+          {
+            "id": "tavin-dry-store-keeper",
+            "name": "Dry-store keeper",
+            "description": "I prefer a clear work area and well-kept dry stores."
+          },
+          {
+            "id": "tavin-direct-recorder",
+            "name": "Direct recorder",
+            "description": "I speak plainly, dislike unfounded accusations, and can admit an honest mistake."
+          }
+        ]
+      },
+      "startingKnowledge": {
+        "methodRefs": [
+          "base:clean-fibers",
+          "base:knap-cutting-stone",
+          "base:trim-club",
+          "base:twist-cord",
+          "base:known-reed-comb",
+          "base:known-pole-hook",
+          "base:known-branch-hook",
+          "base:trim-canopy-post",
+          "base:dress-tall-canopy-post",
+          "base:weave-roof-mat",
+          "base:trim-camp-post",
+          "base:trim-camp-gate-post",
+          "base:weave-wattle-panel",
+          "base:dress-gate-rail",
+          "base:weave-sliding-gate",
+          "base:weave-gate-access-panel",
+          "base:known-camp-basket"
+        ],
+        "knownPeople": [],
+        "generalBeliefs": "# Beliefs\nEarlier today I moved an unattended red-stitched bag from the Mending Clearing work spot beside the rough stone to the Reed-side Store beside the split stone while clearing room for my work, assuming it was shared equipment. Its red fastening strap snagged on the rough stone edge as I lifted it, and I left a sorting note at the work spot. I neither inspected the bag’s contents nor identified its owner."
+      }
+    }
+  },
+  "socialOfferPolicy": {
+    "id": "base:first-playable-social-offers",
+    "version": 1,
+    "implementation": "bounded-local-offers",
+    "outgoing": 3,
+    "incoming": 6,
+    "messages": {
+      "outgoing": "Withdraw an earlier offer before making another.",
+      "incoming": "That person cannot receive another offer now.",
+      "pair": "Review or withdraw the existing offer between you first."
+    },
+    "pendingSeconds": 7200,
+    "onePendingPerPair": true,
+    "cooperation": {
+      "episodeSeconds": 14400,
+      "arrivalMetres": 1,
+      "families": ["guide", "help", "hunt", "alliance", "ceasefire"],
+      "ceasefireSeconds": 7200,
+      "helpMethods": [],
+      "description": "Agree to one finite practical activity. Each person chooses their own work and route. Acceptance starts no movement and grants no materials or control. Either may leave; completed effects remain.",
+      "labels": {
+        "alliance": "Mutual alliance, without an expiry. Each person keeps independent choices and permissions; either may leave.",
+        "ceasefire": "Ceasefire for {seconds} game seconds. Acceptance stops our unreleased attacks on each other. Either may leave; a new chosen attack ends assent. Released effects remain.",
+        "releasedRisk": "An earlier released attack may still arrive.",
+        "propose": "Ask for guidance",
+        "accept": "Accept these terms; keep choosing my own work",
+        "decline": "Decline these terms",
+        "withdraw": "Withdraw my proposal",
+        "leave": "Leave this activity",
+        "conclude": "Conclude this activity without claiming success",
+        "help": "Ask for practical help",
+        "carry": "Ask to carry this offered object",
+        "takeCarry": "Accept the separate gift and take actual custody",
+        "hunt": "Invite to hunt",
+        "lastSeen": "Walk to where I last saw the quarry",
+        "huntTerms": "Hunt {quarry} together, meeting at {place}. You may be injured or killed. We choose our own actions and may stop. Division is decided from actual yield afterward.",
+        "carryTerms": "Carry {item} to {place}. This is a separate custody transfer and voluntary transport, without a loan or retrieval right.",
+        "huntAction": "Act for the agreed hunt",
+        "construct": "Start the agreed camp operation",
+        "placeCarry": "Put the agreed object down here",
+        "prepare": "Make one batch for this activity",
+        "walk": "Walk to the agreed place",
+        "acceptAmendment": "Accept revised terms and end unfinished work for the old terms",
+        "declineAmendment": "Decline amendment; keep the accepted activity"
+      }
+    }
+  }
+}

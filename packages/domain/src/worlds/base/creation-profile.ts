@@ -43,6 +43,7 @@ export const BASE_CREATION_PROFILE: WorldCreationProfile = {
   id: BASE_OPENING_PROFILE.id,
   version: BASE_OPENING_PROFILE.version,
   choices: BASE_OPENING_PROFILE.openings.filter((opening) => opening.id !== 'inhabited'),
+  recoveryOpeningId: 'main',
   identityKeys: [
     'player',
     'resident',
@@ -84,21 +85,23 @@ export const BASE_CREATION_PROFILE: WorldCreationProfile = {
     ],
   },
   validate: candidate,
-  create(value, choiceId) {
+  create(value, choiceId, seed) {
     // Describe a world starts with editable selected circumstances. Supplied
     // Main world explicitly selects the complete authored template instead.
     if (choiceId === undefined) return createBaseOpeningCandidate(identities(value));
     const choice = this.choices.find((opening) => opening.id === choiceId);
     if (!choice) throw new Error('The selected opening is unsupported by this profile.');
-    if (choice.id === 'main') return createBaseMainWorldCandidate(value);
+    if (choice.id === 'main') return createBaseMainWorldCandidate(value, seed);
     if (choice.id !== 'solitary') throw new Error('The selected supplied opening is unsupported.');
     return createBaseOpeningCandidate(identities(value), choice.id);
   },
-  assertSessionCandidate(value, allocated) {
+  assertSessionCandidate(value, allocated, selection) {
     const selected = candidate(value);
     const assigned = identities(allocated);
+    if (selection && selected.opening !== selection.choiceId)
+      throw new Error('Preserve the selected recovery opening.');
     if (selected.opening === 'main') {
-      const expected = createBaseMainWorldCandidate(allocated);
+      const expected = createBaseMainWorldCandidate(allocated, selection?.seed);
       if (
         selected.worldId !== expected.worldId ||
         selected.playerId !== expected.playerId ||

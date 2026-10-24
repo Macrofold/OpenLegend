@@ -420,9 +420,9 @@ try {
         signal: AbortSignal.timeout(31_000),
       });
       await store.settle(attemptId, result.receipt);
-      if (result.receipt.completionUncertain) lease.uncertain();
+      if (result.receipt.completionUncertain) lease.uncertain(attemptId);
     } catch (error) {
-      lease.uncertain();
+      lease.uncertain(attemptId);
       throw error;
     } finally {
       lease.release();

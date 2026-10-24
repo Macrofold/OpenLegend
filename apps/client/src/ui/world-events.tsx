@@ -11,7 +11,7 @@ import { Button, FilterButton, Icon, IconButton } from '../design-system/compone
 import { EventTime, clockParts } from './event-time';
 import { PerceivedEventText } from './perceived-event-text';
 import './world-events.css';
-import { formatDisplayNumber } from '@open-legend/language';
+import { formatDisplayNumber, namePhrase } from '@open-legend/language';
 import { LoadingIndicator } from '../design-system/loading';
 import { ConversationThread } from './conversation';
 import { getScoped, post } from '../api';
@@ -40,12 +40,14 @@ type Props = {
   visible?: boolean;
   view: GameView;
   inspectEntity?: (id: string) => void;
+  addressPerson?: (id: string, label: string) => void;
 };
 /** Keyed ownership clears old rows during the same render, not a later effect. The owner may
  * control the filter, for example to open Speech from the missed-caption notice. */
 export const WorldEvents = memo(function WorldEvents({
   view,
   inspectEntity,
+  addressPerson,
   type: controlledType,
   onTypeChange,
   ...props
@@ -61,6 +63,12 @@ export const WorldEvents = memo(function WorldEvents({
   const inspection = useRef(inspectEntity);
   inspection.current = inspectEntity;
   const inspectCurrent = useCallback((id: string) => inspection.current?.(id), []);
+  const address = useRef(addressPerson);
+  address.current = addressPerson;
+  const addressCurrent = useCallback(
+    (id: string, label: string) => address.current?.(id, label),
+    [],
+  );
   const [localType, setLocalType] = useState('all');
   const type = controlledType ?? localType;
   const setType = onTypeChange ?? setLocalType;
@@ -73,8 +81,10 @@ export const WorldEvents = memo(function WorldEvents({
       controlScope={view.access?.scope ?? ''}
       historyEpoch={view.historyEpoch ?? ''}
       day={view.clock.day}
+      viewerId={view.player.id}
       offsetHours={view.clock.offsetHours}
       inspectEntity={inspectEntity ? inspectCurrent : undefined}
+      addressPerson={addressPerson ? addressCurrent : undefined}
       type={type}
       setType={setType}
       query={query}
@@ -84,6 +94,7 @@ export const WorldEvents = memo(function WorldEvents({
 });
 
 type HistoryProps = Omit<Props, 'view'> & {
+  viewerId: string;
   day: number;
   offsetHours: number;
   controlScope: string;
@@ -94,6 +105,8 @@ type HistoryProps = Omit<Props, 'view'> & {
 // Only clock formatting/date bounds reach the historical reader; live positions and
 // meters must not rebuild all loaded event rows on every world update.
 const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
+  viewerId,
+  addressPerson,
   controlScope,
   historyEpoch,
   canShowAll,
@@ -211,6 +224,8 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
 
   return (
     <ScopedWorldEvents
+      viewerId={viewerId}
+      addressPerson={addressPerson}
       key={`${historyEpoch}:${canShowAll}`}
       scope={scope}
       controlScope={controlScope}
@@ -247,6 +262,8 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
 });
 
 function ScopedWorldEvents({
+  viewerId,
+  addressPerson,
   canShowAll,
   day,
   offsetHours,
@@ -583,7 +600,42 @@ function ScopedWorldEvents({
                     {event.attributeChange.unit}
                   </p>
                 )}
-                {event.speech?.recipient && <p>To {event.speech.recipient.nameAtTime}</p>}
+                {event.speech?.addressee && <p>To {event.speech.addressee.nameAtTime}</p>}
+                {event.speech && addressPerson && (
+                  <div className="ol-world-event-actions">
+                    {(event.references ?? [])
+                      .filter(
+                        (ref, index, refs) =>
+                          ref.id !== viewerId &&
+                          (ref.role === 'actor' || ref.role === 'target') &&
+                          refs.findIndex((candidate) => candidate.id === ref.id) === index,
+                      )
+                      .map((ref) => {
+                        const person =
+                          ref.role === 'actor' ? event.speech!.speaker : event.speech!.addressee;
+                        if (!person) return null;
+                        const label = namePhrase(
+                          {
+                            name: person.nameAtTime,
+                            nameForm: person.nameForm,
+                            indefiniteArticle: person.indefiniteArticle,
+                          },
+                          'indefinite',
+                        );
+                        return (
+                          <Button
+                            key={ref.id}
+                            size="sm"
+                            variant="secondary"
+                            isDisabled={!currentPage}
+                            onPress={() => addressPerson(ref.id, label)}
+                          >
+                            Speak to {label}
+                          </Button>
+                        );
+                      })}
+                  </div>
+                )}
                 {inspectEntity &&
                   (event.references ?? []).map((ref) => (
                     <button
@@ -622,7 +674,18 @@ function ScopedWorldEvents({
         ),
       };
     });
-  }, [events, slots, choosingSlot, type, query, inspectEntity, offsetHours, currentPage]);
+  }, [
+    events,
+    slots,
+    choosingSlot,
+    type,
+    query,
+    inspectEntity,
+    addressPerson,
+    viewerId,
+    offsetHours,
+    currentPage,
+  ]);
 
   const visibleSlotIndices = [0, 1] as const;
 

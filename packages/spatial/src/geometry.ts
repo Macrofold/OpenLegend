@@ -22,6 +22,22 @@ export const horizontalDistance = (
   a: Pick<WorldPoint, 'x' | 'z'>,
   b: Pick<WorldPoint, 'x' | 'z'>,
 ): number => Math.hypot(a.x - b.x, a.z - b.z);
+/** Horizontal angular admission shared by native sight and its public guide. */
+export function horizontalCone(origin: WorldPoint, heading: number, radians: number) {
+  if (radians >= 2 * Math.PI) return (_point: WorldPoint) => true;
+  const x = Math.sin(heading),
+    z = Math.cos(heading),
+    edge = Math.cos(radians / 2);
+  return (point: WorldPoint) => {
+    const dx = point.x - origin.x,
+      dz = point.z - origin.z,
+      length = Math.hypot(dx, dz);
+    // The cone includes its boundary. Account only for arithmetic/trigonometric
+    // rounding, not a world-authored angular or positional tolerance.
+    const rounding = 8 * Number.EPSILON * (Math.abs(dx) + Math.abs(dz) + length);
+    return dx * x + dz * z + rounding >= edge * length;
+  };
+}
 export function finitePoint(p: unknown): p is WorldPoint {
   if (!p || typeof p !== 'object') return false;
   const v = p as WorldPoint;
@@ -73,6 +89,31 @@ export function surfaceSupportsRectangle(
   for (let z = Math.floor(footprint.minZ + 0.5); z < Math.ceil(footprint.maxZ + 0.5); z++)
     for (let x = Math.floor(footprint.minX + 0.5); x < Math.ceil(footprint.maxX + 0.5); x++)
       if (!terrainWalkable(map, { x, y: 0, z })) return false;
+  return true;
+}
+/** A disk can touch a cell boundary without occupying the square beyond it. */
+export function surfaceSupportsDisk(
+  map: SpatialMap,
+  surface: WalkableSurface,
+  centre: Pick<WorldPoint, 'x' | 'z'>,
+  radius: number,
+): boolean {
+  if (!surfaceContains(surface, centre, radius)) return false;
+  if (!surface.terrain) return true;
+  if (
+    centre.x - radius < 0 ||
+    centre.z - radius < 0 ||
+    centre.x + radius > map.width - 1 ||
+    centre.z + radius > map.height - 1
+  )
+    return false;
+  for (let z = Math.floor(centre.z - radius + 0.5); z < Math.ceil(centre.z + radius + 0.5); z++)
+    for (let x = Math.floor(centre.x - radius + 0.5); x < Math.ceil(centre.x + radius + 0.5); x++) {
+      const dx = Math.max(Math.abs(centre.x - x) - 0.5, 0);
+      const dz = Math.max(Math.abs(centre.z - z) - 0.5, 0);
+      if (dx * dx + dz * dz < radius * radius && !terrainWalkable(map, { x, y: 0, z }))
+        return false;
+    }
   return true;
 }
 export function surfaceById(map: SpatialMap, id: string): WalkableSurface | undefined {
@@ -291,7 +332,23 @@ function surfaceBounds(s: WalkableSurface, topOnly = false): Bounds3 {
 function preparedShapes(map: SpatialMap) {
   const cached = shapeCache.get(map);
   if (cached?.revision === map.spatial.revision && cached.terrain === map.terrain) return cached;
-  const blockers: SpatialBlocker[] = [...map.spatial.blockers];
+  const pieceCount = map.spatial.blockers.reduce(
+    (count, blocker) => count + (blocker.boxes?.length ?? 1),
+    0,
+  );
+  if (pieceCount > SPATIAL_LIMITS.maxBlockers)
+    throw new Error('Spatial query geometry exceeds its complete-query budget.');
+  // Keep one source identity across exact pieces. Ray contacts and ignored IDs
+  // still name the real obstacle, while its enclosing bounds never fill a hole.
+  const blockers: SpatialBlocker[] = [];
+  for (const blocker of map.spatial.blockers) {
+    if (!blocker.boxes) blockers.push(blocker);
+    else {
+      const { boxes, ...properties } = blocker;
+      for (const bounds of boxes) blockers.push({ ...properties, bounds });
+    }
+  }
+
   const ground = map.spatial.surfaces.filter((surface) => surface.terrain);
   // Compile authored cell solids once with the map, never once per actor or query.
   const terrainNames = new Map<string, string>();
@@ -404,6 +461,26 @@ export function supportSurfaces(map: SpatialMap): readonly WalkableSurface[] {
 export function spatialBlockers(map: SpatialMap): readonly SpatialBlocker[] {
   return preparedShapes(map).blockers;
 }
+/** Conservative full-extent candidates from the existing physical shape index.
+ * Exact overlap, range, visibility and disclosure remain with each caller. */
+export function spatialBlockerCandidates(
+  map: SpatialMap,
+  bounds: Bounds3,
+): Array<{ id: string; bounds: Bounds3 }> {
+  const result: Array<{ id: string; bounds: Bounds3 }> = [];
+  preparedShapes(map).shapeIndex.visit(
+    (candidate) =>
+      (['x', 'y', 'z'] as const).every(
+        (axis) =>
+          candidate.min[axis] <= bounds.max[axis] && candidate.max[axis] >= bounds.min[axis],
+      ),
+    (shape) => {
+      if (shape.kind === 'blocker') result.push({ id: shape.id, bounds: shape.bounds });
+      return false;
+    },
+  );
+  return result;
+}
 function visitHits(
   map: SpatialMap,
   from: WorldPoint,
@@ -451,8 +528,313 @@ export function rayHits(
 // Direct and prepared sight queries must agree. docs/spatial-world.md#seeing-and-hearing-in-3d
 const blocksSight = (interval: readonly [number, number] | null): boolean =>
   !!interval && interval[0] < interval[1];
-export const clearSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean =>
-  !visitHits(map, from, to, 'sight', EMPTY_IDS, undefined, (_, interval) => blocksSight(interval));
+interface SightRegion {
+  from: Bounds3;
+  to: Bounds3;
+  bounds: Bounds3;
+  shapes: readonly PreparedShape[];
+  certain?: boolean;
+}
+const sightRegions = new WeakMap<object, Map<string, SightRegion>>();
+const sightAnswers = new WeakMap<object, Map<string, boolean>>();
+const sightKey = (from: WorldPoint, to: WorldPoint) =>
+  JSON.stringify([from.x, from.y, from.z, to.x, to.y, to.z]);
+function rememberSight(
+  geometry: PreparedGeometry,
+  from: WorldPoint,
+  to: WorldPoint,
+  seen: boolean,
+) {
+  let answers = sightAnswers.get(geometry);
+  if (!answers) sightAnswers.set(geometry, (answers = new Map()));
+  if (answers.size >= 8192) answers.delete(answers.keys().next().value!);
+  answers.set(sightKey(from, to), seen);
+}
+export interface SightRay {
+  from: WorldPoint;
+  to: WorldPoint;
+}
+export interface WalkingSegment {
+  from: SurfacePoint;
+  to: SurfacePoint;
+  body: BodyProfile;
+}
+export type GeometryBatch = { readonly map: SpatialMap } & (
+  | { readonly kind: 'sight'; readonly queries: readonly SightRay[] }
+  | { readonly kind: 'walking'; readonly queries: readonly WalkingSegment[] }
+);
+const pendingSight = new WeakMap<GeometryBatch, PreparedGeometry>();
+/** Cheap region proofs finish locally. Only unresolved rays need host computation.
+ * The immutable request owns exact geometry/points; no character knowledge crosses it. */
+export function prepareSightBatch(
+  map: SpatialMap,
+  rays: readonly SightRay[],
+): GeometryBatch | undefined {
+  const geometry = preparedShapes(map),
+    pending: SightRay[] = [],
+    pendingKeys = new Set<string>();
+  for (const ray of rays) {
+    const key = sightKey(ray.from, ray.to);
+    if (pendingKeys.has(key) || sightAnswers.get(geometry)?.has(key)) continue;
+    const region = sightRegion(geometry, ray.from, ray.to);
+    if (region && (region.certain !== undefined || region.shapes.length < 4)) {
+      rememberSight(geometry, ray.from, ray.to, clearRegion(region, ray.from, ray.to));
+      continue;
+    }
+    pendingKeys.add(key);
+    pending.push(
+      Object.freeze({ from: Object.freeze({ ...ray.from }), to: Object.freeze({ ...ray.to }) }),
+    );
+  }
+  if (!pending.length) return;
+  const batch = Object.freeze({ map, kind: 'sight' as const, queries: Object.freeze(pending) });
+  pendingSight.set(batch, geometry);
+  return batch;
+}
+export function evaluateGeometryBatch(batch: GeometryBatch): boolean[] {
+  return batch.kind === 'sight'
+    ? batch.queries.map((ray) => clearSegment(batch.map, ray.from, ray.to))
+    : batch.queries.map((segment) =>
+        canWalkSegment(batch.map, segment.from, segment.to, segment.body),
+      );
+}
+/** Install results of the trusted geometry executor only for its unchanged request.
+ * Public commands/model output never accept these host-owned preparations. */
+export function completeGeometryBatch(batch: GeometryBatch, results?: readonly boolean[]): void {
+  if (batch.kind === 'walking') {
+    const geometry = pendingWalking.get(batch);
+    if (!geometry) return;
+    results ??= evaluateGeometryBatch(batch);
+    if (
+      geometry !== preparedShapes(batch.map) ||
+      results.length !== batch.queries.length ||
+      results.some((v) => typeof v !== 'boolean')
+    )
+      throw new Error('Walking preparation changed or is incomplete.');
+    batch.queries.forEach((query, index) => rememberWalking(geometry, query, results![index]!));
+    pendingWalking.delete(batch);
+    return;
+  }
+  const geometry = pendingSight.get(batch);
+  if (!geometry && results === undefined) return;
+  results ??= evaluateGeometryBatch(batch);
+  if (
+    !geometry ||
+    geometry !== preparedShapes(batch.map) ||
+    results.length !== batch.queries.length ||
+    results.some((value) => typeof value !== 'boolean')
+  )
+    throw new Error('Sight preparation changed or is incomplete.');
+  batch.queries.forEach((ray, index) => rememberSight(geometry, ray.from, ray.to, results[index]!));
+  pendingSight.delete(batch);
+}
+const regionBounds = (p: WorldPoint): Bounds3 => {
+  const min = {
+    x: Math.floor(p.x / 2) * 2,
+    y: Math.floor(p.y * 8) / 8,
+    z: Math.floor(p.z / 2) * 2,
+  };
+  return { min, max: { x: min.x + 2, y: min.y + 0.125, z: min.z + 2 } };
+};
+const boxCorners = (b: Bounds3): WorldPoint[] =>
+  [b.min.x, b.max.x].flatMap((x) =>
+    [b.min.y, b.max.y].flatMap((y) => [b.min.z, b.max.z].map((z) => ({ x, y, z }))),
+  );
+/** Every segment between the two cells crosses one interior plane of this solid.
+ * Plane intersections are within the convex hull of the corner-pair intersections;
+ * proving those inside the solid proves the entire family, not just sampled rays. */
+function regionOccluded(region: SightRegion, shape: PreparedShape): boolean {
+  for (const axis of ['x', 'y', 'z'] as const) {
+    const plane = (shape.bounds.min[axis] + shape.bounds.max[axis]) / 2;
+    if (
+      !(
+        (region.from.max[axis] < plane - EPS && region.to.min[axis] > plane + EPS) ||
+        (region.to.max[axis] < plane - EPS && region.from.min[axis] > plane + EPS)
+      )
+    )
+      continue;
+    const first = boxCorners(region.from),
+      second = boxCorners(region.to);
+    let covered = true;
+    outer: for (const a of first)
+      for (const b of second) {
+        const t = (plane - a[axis]) / (b[axis] - a[axis]);
+        const p = interpolate(a, b, t);
+        if (
+          shape.planes.some(([x, y, z, limit]) => x * p.x + y * p.y + z * p.z > limit - 4 * EPS)
+        ) {
+          covered = false;
+          break outer;
+        }
+      }
+    if (covered) return true;
+  }
+  return false;
+}
+function sightRegion(
+  geometry: PreparedGeometry,
+  from: WorldPoint,
+  to: WorldPoint,
+): SightRegion | undefined {
+  const a = regionBounds(from),
+    b = regionBounds(to);
+  const first = [a.min.x, a.min.y, a.min.z],
+    second = [b.min.x, b.min.y, b.min.z];
+  const key = JSON.stringify(
+    JSON.stringify(first) < JSON.stringify(second) ? [first, second] : [second, first],
+  );
+  let regions = sightRegions.get(geometry);
+  if (!regions) sightRegions.set(geometry, (regions = new Map()));
+  const old = regions.get(key);
+  if (old) return old;
+  const bounds = {
+    min: {
+      x: Math.min(a.min.x, b.min.x),
+      y: Math.min(a.min.y, b.min.y),
+      z: Math.min(a.min.z, b.min.z),
+    },
+    max: {
+      x: Math.max(a.max.x, b.max.x),
+      y: Math.max(a.max.y, b.max.y),
+      z: Math.max(a.max.z, b.max.z),
+    },
+  };
+  const shapes: PreparedShape[] = [];
+  const overflow = geometry.shapeIndex.visit(
+    (v) =>
+      v.min.x <= bounds.max.x &&
+      v.max.x >= bounds.min.x &&
+      v.min.y <= bounds.max.y &&
+      v.max.y >= bounds.min.y &&
+      v.min.z <= bounds.max.z &&
+      v.max.z >= bounds.min.z,
+    (shape) => {
+      if (shape.sight) shapes.push(shape);
+      return shapes.length > 64;
+    },
+  );
+  // A diagonal region can enclose much more scenery than its actual ray. Stop
+  // collecting before regional reuse costs a whole-neighborhood scan; the exact
+  // indexed ray below remains authoritative, including for worker preparation.
+  if (overflow) return;
+  const region: SightRegion = { from: a, to: b, bounds, shapes };
+  if (!shapes.length) region.certain = true;
+  else if (shapes.some((shape) => regionOccluded(region, shape))) region.certain = false;
+  if (region.certain !== undefined) region.shapes = [];
+  if (regions.size >= 4096) regions.delete(regions.keys().next().value!);
+  regions.set(key, region);
+  return region;
+}
+export const clearSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean => {
+  const geometry = preparedShapes(map);
+  const prepared = sightAnswers.get(geometry)?.get(sightKey(from, to));
+  if (prepared !== undefined) return prepared;
+  const region = sightRegion(geometry, from, to);
+  return region
+    ? clearRegion(region, from, to)
+    : !visitHits(map, from, to, 'sight', EMPTY_IDS, undefined, (_shape, interval) =>
+        blocksSight(interval),
+      );
+};
+function clearRegion(region: SightRegion, from: WorldPoint, to: WorldPoint): boolean {
+  return (
+    region.certain ??
+    !region.shapes.some((shape) => blocksSight(clipSegment(from, to, shape.planes)))
+  );
+}
+/** One bounded caller-owned sight probe for unchanged geometry. A clear convex box
+ * certifies every contained segment; an old blocker can prove a negative directly.
+ * Neither result supplies character knowledge. Replace the probe when the map changes. */
+export interface SightProbe {
+  (from: WorldPoint, to: WorldPoint): boolean;
+  known(from: WorldPoint, to: WorldPoint): boolean | undefined;
+}
+export function createSightProbe(map: SpatialMap): SightProbe {
+  let geometry = preparedShapes(map),
+    blocker: PreparedShape | undefined,
+    clear: Bounds3 | undefined;
+  const inside = (point: WorldPoint, bounds: Bounds3) =>
+    point.x >= bounds.min.x &&
+    point.x <= bounds.max.x &&
+    point.y >= bounds.min.y &&
+    point.y <= bounds.max.y &&
+    point.z >= bounds.min.z &&
+    point.z <= bounds.max.z;
+  const synchronize = () => {
+    const latest = preparedShapes(map);
+    if (latest !== geometry) {
+      geometry = latest;
+      blocker = undefined;
+      clear = undefined;
+    }
+  };
+  const known = (from: WorldPoint, to: WorldPoint): boolean | undefined => {
+    synchronize();
+    if (clear && inside(from, clear) && inside(to, clear)) return true;
+    if (blocker && blocksSight(clipSegment(from, to, blocker.planes))) return false;
+    return sightAnswers.get(geometry)?.get(sightKey(from, to));
+  };
+  const rememberOpen = (from: WorldPoint, to: WorldPoint) => {
+    const bounds = {
+      min: {
+        x: Math.min(from.x, to.x) - 2,
+        y: Math.min(from.y, to.y),
+        z: Math.min(from.z, to.z) - 2,
+      },
+      max: {
+        x: Math.max(from.x, to.x) + 2,
+        y: Math.max(from.y, to.y),
+        z: Math.max(from.z, to.z) + 2,
+      },
+    };
+    if (
+      !geometry.shapeIndex.visit(
+        (b) =>
+          b.min.x <= bounds.max.x &&
+          b.max.x >= bounds.min.x &&
+          b.min.y <= bounds.max.y &&
+          b.max.y >= bounds.min.y &&
+          b.min.z <= bounds.max.z &&
+          b.max.z >= bounds.min.z,
+        (shape) => shape.sight,
+      )
+    )
+      clear = bounds;
+  };
+  const probe: SightProbe = (from, to) => {
+    synchronize();
+    if (clear && inside(from, clear) && inside(to, clear)) return true;
+    if (blocker && blocksSight(clipSegment(from, to, blocker.planes))) return false;
+    const prepared = sightAnswers.get(geometry)?.get(sightKey(from, to));
+    if (prepared === true) {
+      rememberOpen(from, to);
+      return true;
+    }
+    const region = sightRegion(geometry, from, to);
+    if (!region) {
+      return !visitHits(map, from, to, 'sight', EMPTY_IDS, undefined, (shape, interval) => {
+        if (!blocksSight(interval)) return false;
+        blocker = shape;
+        return true;
+      });
+    }
+    if (region.certain !== undefined) {
+      if (region.certain) clear = region.bounds;
+      return region.certain;
+    }
+    // Establish the local blocker even after a worker's negative answer. Otherwise
+    // each tiny movement would dispatch the same cheaply blocked pair again.
+    for (const shape of region.shapes)
+      if (blocksSight(clipSegment(from, to, shape.planes))) {
+        blocker = shape;
+        return false;
+      }
+    rememberOpen(from, to);
+    return true;
+  };
+  probe.known = known;
+  return probe;
+}
 /** Physical work cannot reach through a transparent movement blocker. End-face
  * contact uses the same shrunken planes as ordinary rays, without ignoring a part. */
 export const clearPhysicalSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean =>
@@ -509,10 +891,13 @@ function solidsOverlap(
 /** Positive-volume exact overlap. Contact qualification remains with the caller's
  * admitted family; bounds only prune candidates and never supply that permission. */
 export function solidOverlap(a: CollisionSolid, b: CollisionSolid): boolean {
+  if (a.boxes) return a.boxes.some((bounds) => solidOverlap({ bounds }, b));
+  if (b.boxes) return b.boxes.some((bounds) => solidOverlap(a, { bounds }));
   return solidsOverlap(solidGeometry(a), solidGeometry(b));
 }
 export function physicalIntersections(map: SpatialMap, solid: CollisionSolid) {
-  const query = solidGeometry(solid),
+  const queries = solid.boxes?.map((bounds) => solidGeometry({ bounds })),
+    query = queries ? undefined : solidGeometry(solid),
     hits: Array<{
       id: string;
       kind: 'surface' | 'blocker';
@@ -528,7 +913,12 @@ export function physicalIntersections(map: SpatialMap, solid: CollisionSolid) {
       b.min.z < solid.bounds.max.z &&
       b.max.z > solid.bounds.min.z,
     (shape) => {
-      if (shape.movement && solidsOverlap(query, shape))
+      if (
+        shape.movement &&
+        (queries
+          ? queries.some((piece) => solidsOverlap(piece, shape))
+          : solidsOverlap(query!, shape))
+      )
         hits.push({ id: shape.id, kind: shape.kind, bounds: shape.bounds, panel: shape.panel });
       return false;
     },
@@ -893,7 +1283,129 @@ export function canStand(map: SpatialMap, point: SurfacePoint, body: BodyProfile
   memo?.set(point, { radius: body.radius, height: body.height, maxSlope: body.maxSlope, allowed });
   return allowed;
 }
+const pendingWalking = new WeakMap<GeometryBatch, PreparedGeometry>();
+const walkingAnswers = new WeakMap<PreparedGeometry, Map<string, boolean>>();
+const walkingKey = (query: WalkingSegment) =>
+  JSON.stringify([
+    query.from.x,
+    query.from.y,
+    query.from.z,
+    query.from.surfaceId,
+    query.to.x,
+    query.to.y,
+    query.to.z,
+    query.to.surfaceId,
+    query.body.radius,
+    query.body.height,
+    query.body.maxSlope,
+  ]);
+function rememberWalking(geometry: PreparedGeometry, query: WalkingSegment, answer: boolean) {
+  let answers = walkingAnswers.get(geometry);
+  if (!answers) walkingAnswers.set(geometry, (answers = new Map()));
+  if (answers.size >= 8192) answers.delete(answers.keys().next().value!);
+  answers.set(walkingKey(query), answer);
+}
+/** Worker inputs contain static physical facts only. Exact geometry/body/endpoint
+ * keys are checked again by canWalkSegment when the movement owner consumes them. */
+export function prepareWalkingBatch(
+  map: SpatialMap,
+  segments: readonly WalkingSegment[],
+): GeometryBatch | undefined {
+  const geometry = preparedShapes(map),
+    pending = new Map<string, WalkingSegment>();
+  for (const query of segments) {
+    const key = walkingKey(query);
+    if (walkingAnswers.get(geometry)?.has(key)) continue;
+    const corridor = knownWalkingCorridor(map, geometry, query.from, query.to, query.body);
+    if (corridor !== undefined) {
+      rememberWalking(geometry, query, corridor);
+      continue;
+    }
+    pending.set(
+      key,
+      Object.freeze({
+        from: Object.freeze({ ...query.from }),
+        to: Object.freeze({ ...query.to }),
+        body: Object.freeze({ ...query.body }),
+      }),
+    );
+  }
+  if (!pending.size) return;
+  const batch = Object.freeze({
+    map,
+    kind: 'walking' as const,
+    queries: Object.freeze([...pending.values()]),
+  });
+  pendingWalking.set(batch, geometry);
+  return batch;
+}
+type WalkCorridor = { from: SurfacePoint; to: SurfacePoint };
+const walkCorridors = new WeakMap<object, Map<string, WalkCorridor[]>>();
+function corridorContains(corridor: WalkCorridor, point: SurfacePoint): boolean {
+  const a = corridor.from,
+    b = corridor.to;
+  if (point.surfaceId !== a.surfaceId) return false;
+  const dx = b.x - a.x,
+    dy = b.y - a.y,
+    dz = b.z - a.z;
+  const axis = Math.abs(dx) >= Math.abs(dz) ? 'x' : 'z';
+  const span = b[axis] - a[axis];
+  if (span === 0) return point.x === a.x && point.y === a.y && point.z === a.z;
+  const t = (point[axis] - a[axis]) / span;
+  // Exact collinearity only: a positional tolerance is not a clearance proof.
+  return (
+    t >= 0 &&
+    t <= 1 &&
+    point.x === a.x + dx * t &&
+    point.y === a.y + dy * t &&
+    point.z === a.z + dz * t
+  );
+}
+function knownWalkingCorridor(
+  map: SpatialMap,
+  geometry: PreparedGeometry,
+  from: SurfacePoint,
+  to: SurfacePoint,
+  body: BodyProfile,
+): boolean | undefined {
+  if (from.surfaceId !== to.surfaceId) return;
+  const key = JSON.stringify([from.surfaceId, body.radius, body.height, body.maxSlope]);
+  if (
+    walkCorridors
+      .get(geometry)
+      ?.get(key)
+      ?.some((c) => corridorContains(c, from) && corridorContains(c, to))
+  )
+    return !surfaceById(map, from.surfaceId)?.terrain || terrainSegmentWalkable(map, from, to);
+}
 export function canWalkSegment(
+  map: SpatialMap,
+  from: SurfacePoint,
+  to: SurfacePoint,
+  body: BodyProfile,
+): boolean {
+  const geometry = preparedShapes(map);
+  const prepared = walkingAnswers.get(geometry)?.get(walkingKey({ from, to, body }));
+  if (prepared !== undefined) return prepared;
+  let groups = walkCorridors.get(geometry);
+  if (!groups) walkCorridors.set(geometry, (groups = new Map()));
+  const key = JSON.stringify([from.surfaceId, body.radius, body.height, body.maxSlope]);
+  const corridors = groups.get(key);
+  const known = knownWalkingCorridor(map, geometry, from, to, body);
+  if (known !== undefined) return known;
+  if (!walkSegmentClear(map, from, to, body)) return false;
+  if (from.surfaceId === to.surfaceId) {
+    if (!corridors) {
+      if (groups.size >= 256) groups.delete(groups.keys().next().value!);
+      groups.set(key, []);
+    }
+    const current = groups.get(key)!;
+    if (current.length >= 32) current.shift();
+    current.push({ from: { ...from }, to: { ...to } });
+  }
+  return true;
+}
+function walkSegmentClear(
   map: SpatialMap,
   from: SurfacePoint,
   to: SurfacePoint,

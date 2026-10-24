@@ -72,7 +72,7 @@ The map supplies named terrain definitions: whether a cell supports walking, any
 
 Each entity saves its actual numeric body profile in its spatial record. That record owns radius, height, slope limit, and eye, ear and interaction anchors; an optional authored inactive profile defines a different posture after death. A body with no inactive profile retains its shape. Starting presets initialize these records once, so changing a preset does not silently resize existing people or objects. Supported live replacement must update this same spatial owner and its sensory/spatial dependencies, check affected support and active work, and never introduce a parallel catalogue. The installed item-handling policy supplies newly created object shapes. Flight routes carry the exact admitted shape rather than infer flight from a species name.
 
-Geometry and navigation entrypoints require the resolved body explicitly. Candidate queries retain the existing index and derive conservative bounds from its actual bodies, including large or changed profiles; exact clearance/reach still decides the result. Navigation workers reuse a bounded six-shape cache. On an existing map/timeline preparation, an idle worker may prepare one actual grounded body: the character designated by the saved world binding when eligible, otherwise the first eligible independently placed actor. This uses the current numeric body reader, with no species or preset dimensions, and does not grant movement permission. Sleep or temporary action restrictions do not replace that speculative shape. A real request already selected for dispatch uses its exact body instead; a different request arriving during an already-running speculative build may wait for that unused work before preparing its own shape. Body/map/result fences remain unchanged, and other shapes stay lazy. Terrain triangle preparation visits only cells overlapping each support patch, preserving exact clipping and triangle order instead of scanning the entire map once per patch. The first detour for an unprepared shape still pays construction cost.
+Geometry and navigation entrypoints require the resolved body explicitly. Candidate queries retain the existing index and derive conservative bounds from its actual bodies, including large or changed profiles; exact clearance/reach still decides the result. Navigation workers reuse a bounded six-shape cache. On an existing map/timeline preparation, an idle worker may prepare one actual grounded body: the character designated by the saved world binding when eligible, otherwise the first eligible independently placed actor. This uses the current numeric body reader, with no species or preset dimensions, and does not grant movement permission. Sleep or temporary action restrictions do not replace that speculative shape. A real request already selected for dispatch uses its exact body instead; a different request arriving during an already-running speculative build may wait for that unused work before preparing its own shape. Body/map/result fences remain unchanged, and other shapes stay lazy. Terrain triangle preparation visits only cells overlapping each support patch. Adjacent admitted cells in one row of the same affine support patch export as one planar strip, retaining exact clipped extents, gaps and heights while removing internal cell seams. Separate levels and blockers keep their physical geometry. The first detour for an unprepared shape still pays construction cost.
 
 The [bundled physical definitions](../packages/domain/src/worlds/base/spatial-definitions.ts) own its starting dimensions, inactive postures and terrain rules. The client consumes the same map definitions. Presentation currently selects the existing ground, earth or liquid artwork families; liquid colors and overview colors are authored data, while ground/earth textures remain the existing trusted artwork. This does not deliver generated physics, arbitrary renderer styles, a world loader, or a live body/terrain editor. Current-format validation requires the complete numeric shape and definitions, and rejects mismatched flight or pending-navigation bodies before installation.
 
@@ -92,7 +92,7 @@ A requested destination identifies its intended support. Projecting an imprecise
 
 Reach requires compatible physical contact, access and a reachable stance; ranged actions use their supported 3D range and obstruction rule. Horizontal proximity cannot permit punching a high bird, harvesting through a floor or cooking at an inaccessible fire. Current route and geometry bounds are recorded in [spatial limits](limits/spatial.md).
 
-Placement and locomotion use continuous world coordinates and arbitrary angles. Grid snapping may be offered for construction but is not mandatory; 8-direction graph search is not a gameplay target. Travel directly when clear, otherwise follow a Recast corridor with full-body-checked simplification. Preserve exact support seams so a shorter-looking line cannot cut through a ramp crest, floor or wall. Walking bodies have circular footprints (upright capsules or suitable short cylinders) from a shared movement profile.
+Placement and locomotion use continuous world coordinates and arbitrary angles. Grid snapping may be offered for construction but is not mandatory; 8-direction graph search is not a gameplay target. Travel directly when clear, otherwise follow a Recast corridor with full-body-checked simplification. Preserve exact support seams so a shorter-looking line cannot cut through a ramp crest, floor or wall. Walking bodies have circular footprints (upright capsules or suitable short cylinders) from a shared movement profile. Upright occupancy bounds therefore remain unchanged when the body turns; a horizontal body’s longer footprint rotates with its heading. Native surface-distance queries use those nominal shapes, with zero separation for overlapping volumes; the movement skin remains an additional obstruction-clearance margin. Height equal to diameter is a sphere-shaped capsule in both movement and projectile contact. Complete relative-motion pieces provide minimum separation and entry/exit intervals, including a visit absent at both endpoints. A linearly growing distance band can represent an observed region's uncertainty; its cap and expiry stay under the caller's temporal owner. The animal controller's use of these queries remains [CTR03–CTR04](maintainers/combat-and-threat-responses.md) implementation work.
 
 Collision and time-boundary predictions must follow the complete piecewise motion over the relevant interval, including turns and possible stopped/landing branches. A first waypoint or start/end chord is sufficient only when simulation stops at that segment boundary. Keep conservative candidates before exact contact, and qualify a route turn or support crossing against equivalent smaller advances. Unrelated distant turns must not subdivide every body's interval. [The rivals review](verification/rivals-and-contested-ground.md#continued-native-collision-and-continuation-review--october-14-2026) records the demonstrated projectile failure and correction.
 
@@ -100,9 +100,19 @@ Straight steering and direct destination requests can cross coincident rectangul
 
 Navigation approximates walkable space; physical support and collision decide the accepted result. A 1.5 cm support comparison is not placement fidelity. The [calibration contract](../archive/07-technical-architecture/spatial-world-runtime.md#movement-calibration) permits practical Recast raster resolution while retaining storey identity and continuous feet. A returned partial route is not success. Stop safely and replan within a small bound when geometry changes; do not alternate between small waypoints, overshoot an endpoint, smooth through obstacles or retry forever.
 
-Required route preparation is a technical hold outside the mutation lane, not paid deliberation or an authored action duration. The current world stops timed integration until admitted required data is ready, with ordinary commands/cancellation/read/pause/restore still available. Eligible real elapsed time is nevertheless retained as shared-world debt and caught up once the current route completes, refuses or is cancelled. This replaces the earlier policy that excluded preparation time from hunger and deadlines: a slower preparation can now make actors hungrier, advance deadlines and compress delayed travel during catch-up. It must not drop a whole previously busy host interval because a route is pending only at the later admission check. Pause, suspension, load and all body/map/action/timeline result fences keep their existing rules. Saved pending work can resume after load by reconstructing derived navigation data; loading clears old operational debt. [The current clock contract](architecture.md#navigation-preparation) owns this explicit fairness tradeoff.
+Host-owned preflight can request a complete supported path outside supplied
+foot-anchor bounds instead of a chosen destination. The caller expands those
+bounds for the actual body's clearance. The existing body-specific Recast query
+searches reachable polygon regions; every positive result still needs a complete
+physically checked corridor and exterior endpoint. Node/buffer exhaustion or
+untried candidate corridors remain incomplete, never a proof of no exit. This
+derived query does not become a character's saved movement destination. The
+[first-playable plan](projects/first-playable-world-tech-design.md#occupied-exits-through-shared-navigation)
+owns its pending construction/occupant integration.
 
-Special traversals require their own native actions and capabilities. Teleporting to a known valid destination does not need a walking route; planning an itinerary that uses portals belongs above ordinary ground navigation. Flight remains a separate constrained native family.
+Each navigation request selects a world hold (the default) or an entity-local wait. Entity-local waiting keeps only the requester stationary while game time, needs and other actors continue; the selected animal profile uses this for native travel and escape. Required world-blocking route preparation is a technical hold outside the mutation lane, not paid deliberation or an authored action duration. The current world stops timed integration until admitted required data is ready, with ordinary commands/cancellation/read/pause/restore still available. Eligible real elapsed time is nevertheless retained as shared-world debt and caught up once the current route completes, refuses or is cancelled. This replaces the earlier policy that excluded preparation time from hunger and deadlines: a slower preparation can now make actors hungrier, advance deadlines and compress delayed travel during catch-up. It must not drop a whole previously busy host interval because a route is pending only at the later admission check. Pause, suspension, load and all body/map/action/timeline result fences keep their existing rules. Saved pending work can resume after load by reconstructing derived navigation data; loading clears old operational debt. [The current clock contract](architecture.md#navigation-preparation) owns this explicit fairness tradeoff.
+
+Special traversals require their own native actions and capabilities. Teleporting to a known valid destination does not need a walking route; planning an itinerary that uses portals belongs above ordinary ground navigation. Flight remains a separate constrained native family. Its admitted route now explicitly loops, ends at supported rest or joins another route at the exact same mid-air point. Grounded handoff uses supported landing and resumption. A finite landing keeps the bird perched; a defined return must begin at that actual perch and waits while its native alarm remains active. Forecasts and execution use the same route successor, and candidate bounds include faster joined corridors. Actual relocation or a newly chosen ground approach retires a finished perched routine. The bundled bird still uses its ordinary loop until CTR03–CTR04 connects its finite escape alternatives.
 
 ## Physical-interaction design checks
 
@@ -122,11 +132,22 @@ Trace derived-geometry changes through physical queries, permitted observations,
 
 Sight queries share immutable compiled map shapes and prepare only the current ray family's hull. Ordered scalar plane and separating-axis projection avoids temporary iterator results and cross-product vectors while retaining the same candidate, fraction and final visibility/contact decisions. This is query-local arithmetic reuse, with no global scratch state or geometry-policy change; [exact comparisons and allocation evidence](verification/performance/03-saving-and-render-preparation.md#scalar-ray-projection) do not establish full-game frame or simulation capacity.
 
+An obstacle may contain a finite union of disjoint axis-aligned boxes. Its outer
+bounds must equal the pieces' union bounds; the empty space between pieces is not
+a solid. Shape preparation expands the pieces once under the original obstacle
+identity, preserving contact and ignored-object meaning. Direct body/overlap
+queries, rays and navigation consume the same pieces. Each physical box counts
+against the existing complete geometry allowance, including terrain. Rendering
+retains each piece separately while picking the same original object. Overlapping
+interiors, mixed panel/box shapes and inconsistent bounds refuse at admission.
+
 ## Flying creatures
 
 Initial flight uses a **bounded graph of three-dimensional air corridors**, with explicit takeoff, vertical transition, cruising, descent, and landing connections. The corridors may be generated by trusted code from admitted geometry or authored as world data. They are not restricted to a single altitude, and each edge has real clearance rather than being an invisible teleport between points.
 
 An initial flight profile can choose a few useful cruise heights and permitted perch/landing surfaces. The engine checks the swept body volume along an edge, overhead barriers, climb/descent limits, and the landing footprint. A route above a bridge and one below it are different routes. Aerial graph coverage being absent is a supported-capability or navigation-coverage limitation, not proof that the space is physically blocked.
+
+Saved corridor definitions are checked against their authored world geometry. Later construction can obstruct a landing or edge without corrupting that definition or preventing restoration. Actual flight still checks the current built geometry at every sweep and landing, stopping or choosing again when blocked.
 
 Flight is a mechanical capability. An image of wings does not grant it. An invented creature needs an admitted body, locomotion profile, and sensory capabilities before it participates in these systems; its generated sprite can arrive later. One admitted animal family with a flight profile is enough to establish the path without implementing arbitrary biological invention.
 
@@ -135,6 +156,31 @@ Loss of flight, death, or a disappearing perch uses an explicit native recovery/
 ## Seeing and hearing in 3D
 
 Sight starts at an actor's permitted eye anchors and tests the world's physical occluders and the target's exposed extent. Floors, walls, elevation, and available openings matter. Looking down from a hill may create a real line of sight; rotating the player's camera around a wall cannot create one for the body.
+
+Installed vision may specify a horizontal field of view in radians; omission means
+360°. Heading zero faces +Z, with positive angles toward +X. Current sensing,
+continuous crossing checks and the public range guide share this convention.
+Crossing checks include cone edges and movement turns. The bundled world retains
+360° vision; this mechanism does not install a narrower view for performance.
+
+Geometry-only sight reuse is separate from what any observer knows. Small endpoint
+regions can prove complete openness or complete occlusion by a convex solid;
+uncertain regions retain exact ray tests. Per-pair readers reuse an empty convex
+box or the last blocking solid. Map preparation replacement invalidates all such
+proofs. Unresolved rays can be prepared in bounded host batches, with exact local
+fallback; only the ordinary perception owner applies observations in canonical
+order. [NW18](limits/native-work.md#nw18--derived-spatial-and-read-reuse) owns
+retention and execution bounds.
+
+A grounded panel assembly is noticed through its actual installed solid surfaces,
+using coarse nearest-face and face-centre samples. Its root anchor is not another
+body or a visible point inside a post. Nearby candidates include full physical
+piece extents through the existing shape index, then exact range and sight decide
+exposure. Candidate merging preserves root order. Ordinary observations and native
+noticing share this result; seeing a wall does not reveal a person behind it.
+Material attachments, installed family geometry, map changes and observer pose/senses
+remain the dependencies. Public rendering and picking retain each actual piece,
+including empty hand openings, under the original material identity.
 
 An isolated clipped endpoint or corner contact does not hide that surface; positive-length traversal through the sight solid still blocks. Direct sight (`clearSegment`) and prepared sight (`clearOf`) share that exact predicate, including when predicting moving endpoints. Physical contact/collision retains its separate rules. A face-coincident segment is not promised clear merely because it lies at a boundary. [Rivals evidence](verification/rivals-and-contested-ground.md#ordinary-guard-choices-and-physical-projectile-records--october-13-2026) checks an actual wall contact and a point beyond it through both callers.
 

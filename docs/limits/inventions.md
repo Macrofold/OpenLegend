@@ -200,11 +200,11 @@ Original recommendation: **Review**.
 
 ## LA114
 
-**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
+**Current — source checked 2026-10-22 · Restrictiveness: Safe.**
 
-The installed base-world flex launcher family retains damage 16–28 health points, range 4–10 metres and base accuracy 0.6–0.9. Its body material must also be rigid. These are authored recipe parameters, not a general limit on other worlds or proof that every target is supported.
+The installed base-world flex launcher family retains damage 16–28 health points, range 4–30 metres and base accuracy 0.6–0.9. Its body material must also be rigid. These are authored recipe parameters, not a general limit on other worlds or proof that every target is supported.
 
-**Reason / tradeoff:** Review these weapon values as authored game balance rather than a general limit on extensible worlds.
+**Reason / tradeoff:** The owner expanded the previous 10-metre ceiling on October 22 so bows can reach beyond ordinary prey avoidance. Longer shots also strengthen armed encounters; finite flight, visibility, cover, ammunition and current admission remain strict. These values remain authored game balance rather than a general engine limit.
 
 [World-owned launcher schema and rigidity check](../../packages/domain/src/worlds/base/recipe-families.ts).
 

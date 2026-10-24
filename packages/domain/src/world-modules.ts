@@ -1,3 +1,16 @@
+import { validateSensoryProgress } from './perception-timing.js';
+import { validatePersonalSocialEvidence } from './personal-social.js';
+import { validateSupplyOpportunities } from './supply-opportunities.js';
+import { validateNativeFeeding } from './native-feeding.js';
+import { validateStrikeMotion } from './strikes.js';
+import { validateNativeForagingProfiles } from './native-foraging.js';
+import { validateCooperationExperience, validateCooperationMethods } from './cooperation.js';
+import { validateSocialCompacts } from './social-compacts.js';
+import { validateSocialOfferPolicy } from './social-offer-policy.js';
+import { validateSocialOffers } from './social-offers.js';
+import { validateCraftCatalogue } from './craft-catalogue.js';
+import { validExperienceSummary } from './experience-sources.js';
+import { validateNativeResponse } from './native-response.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { validateEntityCollection } from './entity-collection.js';
 import { validateOrderedRecord } from './ordered-record.js';
@@ -11,6 +24,11 @@ import {
 } from './practical-competence.js';
 import { validateCoaching } from './coaching.js';
 import { validateAssemblies } from './assembly-validation.js';
+import {
+  validateHearthDefinitions,
+  validatePlacedHearth,
+  validateHearthAction,
+} from './hearths.js';
 import { validNarrationTemplate, formatDisplayNumber } from '@open-legend/language';
 import {
   narrationTemplate,
@@ -49,12 +67,17 @@ import { DEFAULT_ACOUSTICS, validateAcoustics, type AcousticPolicy } from './aco
 import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
 import { validateItemHandling } from './item-handling.js';
-import { validateGatheringTools } from './gathering.js';
+import {
+  validateGatheringTools,
+  validateGatheringPolicy,
+  validateGatheringBinding,
+} from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
+import { validateWorkBatchPolicy } from './work-batches.js';
 import { validateFoodPreparations } from './food-preparation.js';
 import { validateFiniteCasts } from './finite-casts.js';
 import { validateActionExperience } from './action-experience.js';
-import { validateActivityHostPins } from './activity-hosts.js';
+import { validateActivityHostPins, validateInstalledActivityRequests } from './activity-hosts.js';
 import { nativeCommandSupported, activityHostForCommand } from './activity-hosts.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { isFuel } from './worlds/base/fire.js';
@@ -62,6 +85,8 @@ import { validateAgency } from './agency.js';
 import { assertReservedStock, validateResourceReservations } from './resource-claims.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
 import { bodyPolicy, validateBodyPolicy, type BodyPolicy } from './body-policy.js';
+import { validateCombatEncounters } from './combat-encounters.js';
+import { validateNativeResponseProfiles } from './native-response.js';
 import { validateReincarnation } from './reincarnation.js';
 import { validateTerritorialThreats } from './territorial-threat.js';
 import { validateCognitionPolicy } from './cognition-policy.js';
@@ -83,8 +108,13 @@ import { validateEvasion } from './evasion.js';
 import { validateRanged } from './ranged.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
-import { validateOutings, validateCombatHelpReference } from './outings.js';
+import {
+  validateOutings,
+  validateCooperationReference,
+  validateCombatHelpReference,
+} from './outings.js';
 import { validateSocialPolicy } from './social-policy.js';
+import { validateSocialPerception, type SocialPerceptionPolicy } from './social-perception.js';
 import { readOnlyDraftView } from './draft.js';
 
 export type AttributeValue = number | string;
@@ -170,6 +200,8 @@ export interface WorldModuleManifest {
   sensePins: DefinitionPin[];
   acoustics: AcousticPolicy;
   acousticsPin: DefinitionPin;
+  socialPerception: SocialPerceptionPolicy | null;
+  socialPerceptionPin: DefinitionPin | null;
   rangedPolicy: RangedPolicy | null;
   rangedPolicyPin: DefinitionPin | null;
   activityHosts: DefinitionPin[];
@@ -273,6 +305,7 @@ export function createModuleManifest(
   recipeFamilies: readonly DefinitionPin[],
   activityHosts: readonly DefinitionPin[] = [],
   rangedPolicy: RangedPolicy | null = null,
+  socialPerception: SocialPerceptionPolicy | null = null,
 ): WorldModuleManifest {
   const manifest: WorldModuleManifest = {
     appraisals: structuredClone(BASE_APPRAISAL_POLICY),
@@ -287,6 +320,8 @@ export function createModuleManifest(
     sensePins: senses.map(definitionPin),
     acoustics: structuredClone(DEFAULT_ACOUSTICS),
     acousticsPin: definitionPin(DEFAULT_ACOUSTICS),
+    socialPerception: socialPerception && structuredClone(socialPerception),
+    socialPerceptionPin: socialPerception && definitionPin(socialPerception),
     recipeFamilies: recipeFamilies.map((pin) => ({ ...pin })),
     activityHosts: activityHosts.map((pin) => ({ ...pin })),
     rangedPolicy: rangedPolicy && structuredClone(rangedPolicy),
@@ -368,6 +403,8 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     'appraisals',
     'acoustics',
     'acousticsPin',
+    'socialPerception',
+    'socialPerceptionPin',
     'activityHosts',
     'recipeFamilies',
     'rangedPolicy',
@@ -410,6 +447,14 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
   )
     throw new Error('Invalid sense bindings.');
   validateAcoustics(manifest.acoustics);
+  validateSocialPerception(manifest.socialPerception);
+  if (
+    manifest.socialPerception === null
+      ? manifest.socialPerceptionPin !== null
+      : !isDefinitionPin(manifest.socialPerceptionPin) ||
+        !sameDefinitionPin(manifest.socialPerceptionPin, definitionPin(manifest.socialPerception))
+  )
+    throw new Error('Missing exact social perception dependency.');
   if (canonicalJson(manifest.acousticsPin) !== canonicalJson(definitionPin(manifest.acoustics)))
     throw new Error('Missing exact acoustic policy dependency.');
   const senseIds = new Set<string>(),
@@ -419,13 +464,40 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       sense,
       sense.implementation === 'hearing-db-v1'
         ? ['id', 'version', 'implementation', 'hearingFloorDbSpl']
-        : ['id', 'version', 'implementation', 'radius'],
+        : sense.implementation === 'vision-geometry-v1'
+          ? [
+              'id',
+              'version',
+              'implementation',
+              'radius',
+              'sampleSeconds',
+              'fieldOfViewRadians',
+              'routineTiming',
+            ]
+          : ['id', 'version', 'implementation', 'radius', 'awarenessTiming', 'sampleSeconds'],
     );
     if (
       !namespace.test(sense.id) ||
       senseIds.has(sense.id) ||
       sense.version !== 1 ||
       !SENSE_IMPLEMENTATIONS.includes(sense.implementation) ||
+      (sense.implementation === 'vision-geometry-v1' &&
+        (!['boundary', 'cadence'].includes(sense.routineTiming) ||
+          (sense.routineTiming === 'cadence' && sense.sampleSeconds === undefined))) ||
+      (sense.implementation === 'body-contact-v1' &&
+        (!['crossing', 'sampled'].includes(sense.awarenessTiming) ||
+          (sense.awarenessTiming === 'sampled' &&
+            (sense.sampleSeconds === undefined ||
+              !finite(sense.sampleSeconds) ||
+              sense.sampleSeconds <= 0)))) ||
+      (sense.implementation === 'vision-geometry-v1' &&
+        sense.sampleSeconds !== undefined &&
+        (!finite(sense.sampleSeconds) || sense.sampleSeconds <= 0)) ||
+      (sense.implementation === 'vision-geometry-v1' &&
+        sense.fieldOfViewRadians !== undefined &&
+        (!finite(sense.fieldOfViewRadians) ||
+          sense.fieldOfViewRadians <= 0 ||
+          sense.fieldOfViewRadians > 2 * Math.PI)) ||
       (sense.implementation === 'hearing-db-v1'
         ? !finite(sense.hearingFloorDbSpl) ||
           sense.hearingFloorDbSpl < -120 ||
@@ -630,11 +702,21 @@ export function attributeDefinitions(world: {
   const manifest = readOnlyDraftView(world).moduleManifest;
   return (isDraft(manifest) ? current(manifest) : manifest).definitions;
 }
+const attributeIndexes = new WeakMap<object, ReadonlyMap<string, AttributeDefinition>>();
 export function attributeDefinition(
   world: { moduleManifest: Pick<WorldModuleManifest, 'definitions'> },
   id: string,
 ): AttributeDefinition | undefined {
-  return attributeDefinitions(world).find((d) => d.id === id);
+  const definitions = attributeDefinitions(world);
+  if (!isImmutableData(definitions)) return definitions.find((d) => d.id === id);
+  let index = attributeIndexes.get(definitions);
+  if (!index) {
+    const entries = new Map<string, AttributeDefinition>();
+    for (const definition of definitions)
+      if (!entries.has(definition.id)) entries.set(definition.id, definition);
+    attributeIndexes.set(definitions, (index = entries));
+  }
+  return index.get(id);
 }
 /** One synchronous forecast's installed-rule facts. Never retain dynamic actor values. */
 export interface AttributeForecastPreparation {
@@ -643,12 +725,16 @@ export interface AttributeForecastPreparation {
   byId: ReadonlyMap<string, AttributeDefinition>;
   healthIds: ReadonlySet<string>;
 }
+const attributeForecasts = new WeakMap<object, AttributeForecastPreparation>();
 export function prepareAttributeForecast(world: WorldState): AttributeForecastPreparation {
   const latest = attributeDefinitions(world);
   const manifest = readOnlyDraftView(world).moduleManifest;
   // Preserve the existing authoring distinction: clock bounds inspect original installed
   // rules, while predicate metadata and health classification inspect the latest rules.
   const installed = isDraft(manifest) ? original(manifest)!.definitions : manifest.definitions;
+  const reusable = latest === installed && isImmutableData(latest),
+    previous = reusable ? attributeForecasts.get(latest) : undefined;
+  if (previous) return previous;
   const numeric: AttributeDefinition[] = [];
   const native: Array<{ definition: AttributeDefinition; thresholds: number[] }> = [];
   const byId = new Map<string, AttributeDefinition>();
@@ -669,7 +755,9 @@ export function prepareAttributeForecast(world: WorldState): AttributeForecastPr
       ]) ?? [];
     native.push({ definition, thresholds });
   }
-  return { numeric, native, byId, healthIds };
+  const prepared = { numeric, native, byId, healthIds };
+  if (reusable) attributeForecasts.set(latest, prepared);
+  return prepared;
 }
 export function readAttribute(
   world: WorldState,
@@ -1028,6 +1116,11 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  if (world.socialOfferPolicy !== undefined) validateSocialOfferPolicy(world.socialOfferPolicy);
+  if (Object.hasOwn(world, 'conversations'))
+    throw new Error(
+      'Current worlds contain personal speech evidence, not ordinary social membership records.',
+    );
   if (world.pendingNativeIntegration !== undefined) {
     // Validate the existing anchors before any pending operation is read, then the
     // exact continuation and its current view. Neither validation installs a twin
@@ -1056,13 +1149,49 @@ export function validateWorldModules(world: WorldState): void {
   );
   if (
     world.presentation !== undefined &&
-    (!hasRecordFields(world.presentation, ['worldName', 'locationName', 'timeLabel']) ||
-      Object.values(world.presentation).some((value) => typeof value !== 'string' || !value.trim()))
+    (!hasRecordFields(
+      world.presentation,
+      ['worldName', 'locationName', 'timeLabel'],
+      ['crafting', 'introduction', 'daylight'],
+    ) ||
+      [
+        world.presentation.worldName,
+        world.presentation.locationName,
+        world.presentation.timeLabel,
+      ].some((value) => typeof value !== 'string' || !value.trim()))
   )
     throw new Error('Invalid world presentation.');
+  if (
+    world.presentation?.introduction !== undefined &&
+    (typeof world.presentation.introduction !== 'string' ||
+      !world.presentation.introduction.trim() ||
+      world.presentation.introduction.length > 4000)
+  )
+    throw new Error('Invalid world introduction.');
+  const daylight = world.presentation?.daylight;
+  if (
+    daylight !== undefined &&
+    (!hasRecordFields(daylight, ['startTime', 'endTime', 'noonElevationDegrees']) ||
+      !Object.hasOwn(world.statusEffectPolicy.namedTimes, daylight.startTime) ||
+      !Object.hasOwn(world.statusEffectPolicy.namedTimes, daylight.endTime) ||
+      world.statusEffectPolicy.namedTimes[daylight.startTime] ===
+        world.statusEffectPolicy.namedTimes[daylight.endTime] ||
+      typeof daylight.noonElevationDegrees !== 'number' ||
+      !Number.isFinite(daylight.noonElevationDegrees) ||
+      daylight.noonElevationDegrees <= 0 ||
+      daylight.noonElevationDegrees > 90)
+  )
+    throw new Error('Invalid authored daylight presentation.');
+  if (world.presentation?.crafting !== undefined)
+    validateCraftCatalogue(world.presentation.crafting);
   for (const entries of Object.values(world.experience?.awareness ?? {}))
     for (const entry of entries) validateEventEvidence(entry);
+  for (const [actorId, entries] of Object.entries(world.experience?.summaries ?? {}))
+    for (const entry of entries)
+      if (!validExperienceSummary(entry, actorId))
+        throw new Error('Invalid current experience summary.');
   validateSocialPolicy(world);
+  validateCombatEncounters(world);
   for (const event of world.events)
     if (event.narration !== undefined) validateNarration(event.narration);
   const interval = world.nativeInterval;
@@ -1090,6 +1219,7 @@ export function validateWorldModules(world: WorldState): void {
   validateStatusEffects(world);
   validateNativeWork(world);
   validateAssemblies(world);
+  validateHearthDefinitions(world);
   validateSpatialWorld(world);
   validatePerceptionState(world);
   validatePlaces(world);
@@ -1097,6 +1227,9 @@ export function validateWorldModules(world: WorldState): void {
   validateInventionAttribution(world);
   validateInstalledRecipes(world);
   validateGatheringTools(world);
+  validateGatheringPolicy(world.gatheringPolicy);
+  if (world.workBatchPolicy !== undefined) validateWorkBatchPolicy(world.workBatchPolicy);
+  validateInstalledActivityRequests(world);
   validateEquipment(world);
   validateContactDefense(world);
   validateRanged(world);
@@ -1104,6 +1237,16 @@ export function validateWorldModules(world: WorldState): void {
   validateFoodPreparations(world);
   validateFiniteCasts(world);
   for (const definition of Object.values(world.itemDefinitions)) {
+    if (definition.tracksMaterialOrigins !== undefined && definition.tracksMaterialOrigins !== true)
+      throw new Error('Invalid material-origin capability.');
+    if (
+      definition.stockShape !== undefined &&
+      (!hasRecordFields(definition.stockShape, ['usableLengthMeters']) ||
+        typeof definition.stockShape.usableLengthMeters !== 'number' ||
+        !Number.isFinite(definition.stockShape.usableLengthMeters) ||
+        definition.stockShape.usableLengthMeters <= 0)
+    )
+      throw new Error('Invalid finite material stock dimensions.');
     if (
       (definition.icon !== undefined && typeof definition.icon !== 'string') ||
       (definition.gatherLabel !== undefined && typeof definition.gatherLabel !== 'string')
@@ -1141,6 +1284,10 @@ export function validateWorldModules(world: WorldState): void {
   }
   validateAgency(world);
   validateOutings(world);
+  validateSocialCompacts(world);
+  validateCooperationExperience(world);
+  validateCooperationMethods(world);
+  validateSocialOffers(world);
   validateActionExperience(world);
   validatePractice(world);
   validateCoaching(world);
@@ -1152,6 +1299,10 @@ export function validateWorldModules(world: WorldState): void {
     world.itemDefinitions,
   );
   validateCognitionPolicy(world, world.cognitionPolicy);
+  validateNativeResponseProfiles(world);
+  validateNativeForagingProfiles(world);
+  validateSupplyOpportunities(world);
+  validatePersonalSocialEvidence(world);
   validateReincarnation(world);
   validateRangedActions(world);
   validateNativeStrikes(world);
@@ -1160,17 +1311,33 @@ export function validateWorldModules(world: WorldState): void {
     (definition) => definition.implementation === 'native-health-v1',
   );
   for (const e of entityValues(world.entities)) {
+    validateSensoryProgress(e);
+    validateGatheringBinding(world, e);
+    if (
+      e.actor?.capabilities &&
+      (!hasRecordFields(e.actor.capabilities, [
+        'cognition',
+        'memory',
+        'innerWorld',
+        'speech',
+        'language',
+      ]) ||
+        Object.values(e.actor.capabilities).some((value) => typeof value !== 'boolean'))
+    )
+      throw new Error('Invalid actor capabilities.');
     if (e.icon !== undefined && typeof e.icon !== 'string')
       throw new Error('Invalid entity presentation.');
     if (!validName(e)) throw new Error('Invalid canonical entity name or name grammar.');
     if (
       e.actor &&
-      (['fullness', 'energy', 'fullnessRevision', 'energyRevision'].some((key) =>
+      (['fullness', 'energy', 'fullnessRevision', 'energyRevision', 'knownTradeLots'].some((key) =>
         Object.hasOwn(e.actor!, key),
       ) ||
         (e.actor.capabilities && Object.hasOwn(e.actor.capabilities, 'needs')))
     )
-      throw new Error('Incompatible native meter aliases.');
+      throw new Error('Unsupported actor storage fields.');
+    validatePlacedHearth(world, e);
+    validateHearthAction(world, e);
     if (
       e.resource &&
       (!Number.isSafeInteger(e.resource.quantity) ||
@@ -1201,33 +1368,7 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Invalid authoritative body health.');
     if (e.actor?.body && !world.moduleManifest.bodyPolicy)
       throw new Error('Living bodies require an installed body policy.');
-    if (e.animal) {
-      const animal = e.animal;
-      if (
-        !Number.isFinite(animal.reviewAt) ||
-        animal.reviewAt < 0 ||
-        !Number.isFinite(animal.danger) ||
-        animal.danger < 0 ||
-        animal.danger > 1 ||
-        !Number.isFinite(animal.calmRate) ||
-        animal.calmRate < 0 ||
-        !animal.wander ||
-        typeof animal.wander !== 'object' ||
-        ('dueAt' in animal.wander
-          ? Object.keys(animal.wander).length !== 1 || !Number.isFinite(animal.wander.dueAt)
-          : !hasRecordFields(animal.wander, ['remainingSeconds'], ['running']) ||
-            !Number.isFinite(animal.wander.remainingSeconds) ||
-            (animal.wander.running !== undefined && animal.wander.running !== true)) ||
-        (animal.escapeHeading !== null && !Number.isFinite(animal.escapeHeading)) ||
-        (animal.threatPosition !== null &&
-          ![animal.threatPosition?.x, animal.threatPosition?.y, animal.threatPosition?.z].every(
-            Number.isFinite,
-          )) ||
-        (animal.threatId !== null && (typeof animal.threatId !== 'string' || !animal.threatId)) ||
-        (animal.danger > 0 && animal.threatPosition === null)
-      )
-        throw new Error('Invalid saved animal threat memory.');
-    }
+    validateNativeResponse(world, e);
     if (e.actor?.body && !e.actor.alive && !e.remains && !e.actor.pendingDeath)
       throw new Error('Dead bodies require saved remains.');
     if (e.remains) {
@@ -1369,6 +1510,9 @@ export function validateWorldModules(world: WorldState): void {
     const activeAction = e.actor?.action;
     if (
       activeAction?.targetLife !== undefined &&
+      // Follow's required participant binding is validated with its complete
+      // continuation record by validateAgency above.
+      activeAction.type !== 'follow' &&
       (!['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
         !Number.isSafeInteger(activeAction.targetLife) ||
         activeAction.targetLife < 0)
@@ -1387,7 +1531,10 @@ export function validateWorldModules(world: WorldState): void {
       )
         throw new Error('Invalid saved lethal permission.');
     }
-    if (activeAction) validateCombatHelpReference(world, e.id, activeAction);
+    if (activeAction) {
+      validateCombatHelpReference(world, e.id, activeAction);
+      validateCooperationReference(world, e.id, activeAction);
+    }
     if (
       activeAction?.requiresLethalReview !== undefined &&
       (!['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
@@ -1417,6 +1564,8 @@ export function validateWorldModules(world: WorldState): void {
             e.actor.combatReadyAt === undefined)))
     )
       throw new Error('Invalid saved melee phase.');
+    validateStrikeMotion(world, e);
+    validateNativeFeeding(world, e);
     if (
       e.actor?.action?.type === 'replenish' &&
       (!attributeDefinition(world, e.actor.action.attributeId ?? '')?.reservoir ||

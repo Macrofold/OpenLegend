@@ -1,13 +1,18 @@
 import { countDomainWork } from './diagnostic-counters.js';
+import { takeNativeChanges } from './native-change-feed.js';
 import { chargeWork } from './work-budget.js';
+import { entityDraftAudit, entityGet, entityOrdering } from './entity-collection.js';
+import { changedDraftEntityIds, readOnlyDraftView } from './draft.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
-import { worldRootEntities } from './entity-index.js';
-import { isDraft } from 'immer';
+import { physicalRoot, worldRootEntities } from './entity-index.js';
+import { isDraft, original } from 'immer';
 import {
   MOVEMENT,
+  spatialBlockerCandidates,
   canStand,
   bodyIntersects,
+  bodySweepFraction,
   clearSegment,
   clearPhysicalSegment,
   distance3D,
@@ -25,12 +30,52 @@ import {
 import { bodyProfile, bodySpace, spatialMap, supportedPosition } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
 
+const CANDIDATE_CELL_SIZE = 28;
+// Physical body queries are much shorter than discovery queries. Cell size changes
+// only conservative candidates; admitted extents and exact collision remain below.
+const BODY_CANDIDATE_CELL_SIZE = 8;
+/** Foot-indexed candidates cover either pose, including a wide reclining body.
+ * The exact occupied shape remains bodySpace's responsibility. */
+function candidateBodyExtent(body: BodyProfile): number {
+  return Math.max(body.height + body.radius, 2 * body.radius);
+}
+function candidateCells(position: Position, radius: number, cellSize: number) {
+  return {
+    low: [position.x - radius, position.y - radius, position.z - radius].map((v) =>
+      Math.floor(v / cellSize),
+    ),
+    high: [position.x + radius, position.y + radius, position.z + radius].map((v) =>
+      Math.floor(v / cellSize),
+    ),
+  };
+}
+function inCandidateCells(
+  position: Position,
+  cells: ReturnType<typeof candidateCells>,
+  cellSize: number,
+) {
+  return [position.x, position.y, position.z].every((value, axis) => {
+    const cell = Math.floor(value / cellSize);
+    return cell >= cells.low[axis]! && cell <= cells.high[axis]!;
+  });
+}
+
 /** Owned, unsaved point bins. Changes replace copied inputs; queries preserve the
  * authoritative root order and still require exact geometry and disclosure checks. */
 export class SpatialCandidateIndex<T extends { id: string; position: Position; order: number }> {
-  private readonly cells = new Map<string, Map<string, T>>();
+  private readonly cells = new Map<string, { coordinates: number[]; entries: Map<string, T> }>();
   private readonly entries = new Map<string, T>();
-  constructor(private readonly cellSize = 28) {
+  private readonly rangeWaits = new Map<
+    string,
+    {
+      at: number;
+      position: Position;
+      speed: number;
+      radius: number;
+      until: Map<string, number>;
+    }
+  >();
+  constructor(private readonly cellSize = CANDIDATE_CELL_SIZE) {
     countDomainWork('spatialBuilds');
   }
   private key(position: Position) {
@@ -41,8 +86,8 @@ export class SpatialCandidateIndex<T extends { id: string; position: Position; o
     if (!old) return;
     const key = this.key(old.position),
       cell = this.cells.get(key)!;
-    cell.delete(id);
-    if (!cell.size) this.cells.delete(key);
+    cell.entries.delete(id);
+    if (!cell.entries.size) this.cells.delete(key);
     this.entries.delete(id);
   }
   set(value: T): void {
@@ -50,39 +95,90 @@ export class SpatialCandidateIndex<T extends { id: string; position: Position; o
     this.delete(value.id);
     const key = this.key(value.position);
     let cell = this.cells.get(key);
-    if (!cell) this.cells.set(key, (cell = new Map()));
-    cell.set(value.id, value);
+    if (!cell)
+      this.cells.set(key, (cell = { coordinates: key.split(',').map(Number), entries: new Map() }));
+    cell.entries.set(value.id, value);
     this.entries.set(value.id, value);
     countDomainWork('spatialEntriesPrepared');
   }
   /** Query an already bounded changed-ID set with the same cell envelope and ordering as
    * the ordinary query. This does not replace the consumer's exact geometry check. */
   querySelected(position: Position, radius: number, ids: ReadonlySet<string>): T[] {
-    const low = [position.x - radius, position.y - radius, position.z - radius].map((value) =>
-      Math.floor(value / this.cellSize),
-    );
-    const high = [position.x + radius, position.y + radius, position.z + radius].map((value) =>
-      Math.floor(value / this.cellSize),
-    );
+    const cells = candidateCells(position, radius, this.cellSize);
     const found: T[] = [];
     for (const id of ids) {
       chargeWork({ tests: 1 });
       const entry = this.entries.get(id);
       if (!entry) continue;
-      const point = entry.position;
-      if (
-        [point.x, point.y, point.z].every((value, axis) => {
-          const cell = Math.floor(value / this.cellSize);
-          return cell >= low[axis]! && cell <= high[axis]!;
-        })
-      )
-        found.push(entry);
+      if (inCandidateCells(entry.position, cells, this.cellSize)) found.push(entry);
     }
     countDomainWork('spatialQueries');
     countDomainWork('spatialCandidates', found.length);
     return found.sort((a, b) => a.order - b.order);
   }
+  /** Cell membership stays live. A body leaving a rejected cell is considered in
+   * its new cell; no all-pairs table or assumption about target speed is needed. */
+  querySphere(
+    position: Position,
+    radius: number,
+    clock?: { id: string; at: number; speed: number },
+  ): T[] {
+    let wait = clock ? this.rangeWaits.get(clock.id) : undefined;
+    if (clock) {
+      const elapsed = wait ? clock.at - wait.at : -1;
+      const travel = elapsed * clock.speed;
+      if (
+        !wait ||
+        elapsed < 0 ||
+        wait.speed !== clock.speed ||
+        wait.radius !== radius ||
+        (position.x - wait.position.x) ** 2 +
+          (position.y - wait.position.y) ** 2 +
+          (position.z - wait.position.z) ** 2 >
+          travel ** 2
+      ) {
+        wait = {
+          at: clock.at,
+          position: { ...position },
+          speed: clock.speed,
+          radius,
+          until: new Map(),
+        };
+        if (this.rangeWaits.size >= 128 && !this.rangeWaits.has(clock.id))
+          this.rangeWaits.delete(this.rangeWaits.keys().next().value!);
+        this.rangeWaits.set(clock.id, wait);
+      } else {
+        // Validate each inter-query movement, not a growing envelope around an
+        // old origin which could conceal a later teleport inside that envelope.
+        wait.at = clock.at;
+        wait.position = { ...position };
+      }
+    }
+    return this.queryCells(position, radius, (cell) => {
+      const key = cell.coordinates.join(',');
+      if (clock && wait && clock.at < (wait.until.get(key) ?? -Infinity)) return false;
+      const values = [position.x, position.y, position.z];
+      const separation = Math.hypot(
+        ...cell.coordinates.map((v, i) =>
+          Math.max(v * this.cellSize - values[i]!, values[i]! - (v + 1) * this.cellSize, 0),
+        ),
+      );
+      if (separation <= radius) return true;
+      if (clock && wait) {
+        if (wait.until.size >= 512) wait.until.delete(wait.until.keys().next().value!);
+        wait.until.set(key, clock.at + (separation - radius) / clock.speed);
+      }
+      return false;
+    });
+  }
   query(position: Position, radius: number): T[] {
+    return this.queryCells(position, radius);
+  }
+  private queryCells(
+    position: Position,
+    radius: number,
+    eligible?: (cell: { coordinates: number[]; entries: Map<string, T> }) => boolean,
+  ): T[] {
     const found: T[] = [];
     const min = [position.x - radius, position.y - radius, position.z - radius].map((v) =>
       Math.floor(v / this.cellSize),
@@ -90,17 +186,17 @@ export class SpatialCandidateIndex<T extends { id: string; position: Position; o
     const max = [position.x + radius, position.y + radius, position.z + radius].map((v) =>
       Math.floor(v / this.cellSize),
     );
-    const include = (cell: Map<string, T> | undefined) => {
-      chargeWork({ tests: 1, candidates: cell?.size ?? 0 });
+    const include = (cell: { coordinates: number[]; entries: Map<string, T> } | undefined) => {
+      if (cell && eligible && !eligible(cell)) return;
+      chargeWork({ tests: 1, candidates: cell?.entries.size ?? 0 });
       // A populated cell has no independent count cap; avoid JS argument limits.
-      if (cell) for (const entry of cell.values()) found.push(entry);
+      if (cell) for (const entry of cell.entries.values()) found.push(entry);
     };
     const volume = (max[0]! - min[0]! + 1) * (max[1]! - min[1]! + 1) * (max[2]! - min[2]! + 1);
     if (volume > this.cells.size) {
-      for (const [key, cell] of this.cells) {
+      for (const cell of this.cells.values()) {
         chargeWork({ tests: 1 });
-        const coordinates = key.split(',').map(Number);
-        if (coordinates.every((v, i) => v >= min[i]! && v <= max[i]!)) include(cell);
+        if (cell.coordinates.every((v, i) => v >= min[i]! && v <= max[i]!)) include(cell);
       }
     } else {
       for (let x = min[0]!; x <= max[0]!; x++)
@@ -181,14 +277,72 @@ export function occupiedBodySweepClear(
   from: Position,
   to: Position,
 ): boolean {
-  const profile = bodyProfile(actor),
-    travel = distance3D(from, to);
-  for (const other of nearbyBodyEntities(world, from, travel + profile.radius)) {
-    if (other.id === actor.id || !other.actor || !activelyParticipates(other)) continue;
-    chargeWork({ tests: 1 });
-    if (bodyIntersects({ bounds: bodySpace(world, other) }, from, to, profile)) return false;
-  }
-  return true;
+  return occupiedBodySweepQuery(world, actor, from, to).clear(to);
+}
+
+/** Bind one unchanged physical read. Endpoints must lie on the segment from `from`
+ * to `furthest`; do not retain across body, position or participation changes.
+ * Static support/solids still belong to canWalkSegment. Lazy shapes preserve the
+ * ordinary first-blocker shortcut and are reused by a blocked walk's stopping search.
+ * docs/spatial-world.md#what-a-location-means
+ */
+export function occupiedBodySweepQuery(
+  world: WorldState,
+  actor: Entity,
+  from: Position,
+  furthest: Position,
+): { clear: (to: Position) => boolean; firstContactFraction: () => number | undefined } {
+  return occupiedBodySweepReader(world, actor)(from, furthest);
+}
+/** Share only one unchanged physical read phase, never across movement, body or
+ * membership edits. Lazy preparation preserves unsupported/empty-route shortcuts;
+ * each segment still selects conservative candidates and tests exact swept bodies.
+ * Includes dead actors; static geometry remains under spatialMap.
+ * docs/spatial-world.md#what-a-location-means */
+export function occupiedBodySweepReader(
+  world: WorldState,
+  actor: Entity,
+): (from: Position, furthest: Position) => ReturnType<typeof occupiedBodySweepQuery> {
+  let profile: BodyProfile | undefined;
+  let index: ReturnType<typeof workingBodyIndex> | undefined;
+  let solids: WeakMap<Entity, CollisionSolid> | undefined;
+  return (from, furthest) => {
+    const body = (profile ??= bodyProfile(actor)),
+      bodies = (index ??= workingBodyIndex(world, true)),
+      origin = { ...from },
+      candidates = bodies(
+        from,
+        distance3D(from, furthest) + Math.max(body.radius, body.height) + bodies.bodyExtent,
+      )
+        .map(({ entity }) => entity)
+        .filter((other) => other.id !== actor.id && other.actor && activelyParticipates(other));
+    const solidAt = (index: number) => {
+      const entity = candidates[index]!,
+        cached = solids?.get(entity);
+      if (cached) return cached;
+      const solid = { bounds: bodySpace(world, entity) };
+      (solids ??= new WeakMap()).set(entity, solid);
+      return solid;
+    };
+    return {
+      clear: (to) => {
+        for (let index = 0; index < candidates.length; index++) {
+          chargeWork({ tests: 1 });
+          if (bodyIntersects(solidAt(index), origin, to, body)) return false;
+        }
+        return true;
+      },
+      firstContactFraction: () => {
+        let first: number | undefined;
+        for (let index = 0; index < candidates.length; index++) {
+          chargeWork({ tests: 1 });
+          const hit = bodySweepFraction(solidAt(index), origin, furthest, body);
+          if (hit !== undefined && (first === undefined || hit < first)) first = hit;
+        }
+        return first;
+      },
+    };
+  };
 }
 export function physicalWorkPointAvailable(
   world: WorldState,
@@ -390,7 +544,10 @@ export function sameSurfacePoint(
 
 /** Ephemeral 3D point index for observed entity anchors. Exact body/geometry checks follow it.
  * Large static solids use the separate complete, bounded geometry provider, not this index. */
-export function spatialCandidates<T extends { position: Position }>(entities: T[], cellSize = 28) {
+export function spatialCandidates<T extends { position: Position }>(
+  entities: T[],
+  cellSize = CANDIDATE_CELL_SIZE,
+) {
   type Entry = { entity: T; order: number };
   type Cell = { x: number; y: number; z: number; entries: Entry[] };
   const cells = new Map<string, Cell>();
@@ -429,7 +586,7 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
           cell.z <= maxZ
         ) {
           chargeWork({ candidates: cell.entries.length });
-          found.push(...cell.entries);
+          for (const entry of cell.entries) found.push(entry);
         }
       }
     } else {
@@ -438,7 +595,7 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
           for (let z = minZ; z <= maxZ; z++) {
             const entries = cells.get(`${x},${y},${z}`)?.entries ?? [];
             chargeWork({ tests: 1, candidates: entries.length });
-            found.push(...entries);
+            for (const entry of entries) found.push(entry);
           }
     }
     countDomainWork('spatialQueries');
@@ -542,42 +699,194 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
   return candidates;
 }
 
-const entityIndexes = new WeakMap<
-  WorldState['entities'],
-  ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>> & {
-    bodyExtent: number;
-    interactionHeight: number;
-  }
->();
-const livingEntityIndexes = new WeakMap<
-  WorldState['entities'],
-  ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>> & {
-    bodyExtent: number;
-    interactionHeight: number;
-  }
->();
-function entityIndex(world: WorldState, livingOnly = false) {
-  const indexes = livingOnly ? livingEntityIndexes : entityIndexes;
+type EntityCandidateIndex = ReturnType<
+  typeof spatialCandidates<{ entity: Entity; position: Position }>
+> & {
+  bodyExtent: number;
+  livingBodyExtent: number;
+  interactionHeight: number;
+  order: ReadonlyMap<string, number>;
+};
+const entityIndexes = new WeakMap<WorldState['entities'], EntityCandidateIndex>();
+const actorEntityIndexes = new WeakMap<WorldState['entities'], EntityCandidateIndex>();
+function entityIndex(world: WorldState, actorsOnly = false, rebuildRoots = false) {
+  const indexes = actorsOnly ? actorEntityIndexes : entityIndexes;
   let index =
-    !isDraft(world.entities) && Object.isFrozen(world.entities)
+    !rebuildRoots && !isDraft(world.entities) && Object.isFrozen(world.entities)
       ? indexes.get(world.entities)
       : undefined;
   if (!index) {
-    const entries = worldRootEntities(world, true)
-      .filter((entity) => activelyParticipates(entity) && (!livingOnly || entity.actor?.alive))
+    const entries = worldRootEntities(world, true, rebuildRoots)
+      .filter((entity) => activelyParticipates(entity) && (!actorsOnly || !!entity.actor))
       .map((entity) => ({ entity, position: worldPosition(entity) }));
     let bodyExtent = 0,
+      livingBodyExtent = 0,
       interactionHeight = 0;
     for (const { entity } of entries) {
       const body = bodyProfile(entity);
-      bodyExtent = Math.max(bodyExtent, body.height + body.radius);
+      const extent = candidateBodyExtent(body);
+      bodyExtent = Math.max(bodyExtent, extent);
+      if (entity.actor?.alive) livingBodyExtent = Math.max(livingBodyExtent, extent);
       interactionHeight = Math.max(interactionHeight, body.interactionHeight);
     }
-    index = Object.assign(spatialCandidates(entries), { bodyExtent, interactionHeight });
+    index = Object.assign(
+      spatialCandidates(entries, actorsOnly ? BODY_CANDIDATE_CELL_SIZE : CANDIDATE_CELL_SIZE),
+      {
+        bodyExtent,
+        livingBodyExtent,
+        interactionHeight,
+        order: new Map(entries.map(({ entity }, order) => [entity.id, order])),
+      },
+    );
     if (!isDraft(world.entities) && Object.isFrozen(world.entities))
       indexes.set(world.entities, index);
   }
   return index;
+}
+type BodyCandidatePoint = {
+  id: string;
+  entity: Entity;
+  position: Position;
+  order: number;
+  extent: number;
+  livingExtent: number;
+};
+type BodyCandidates = ((position: Position, radius: number) => BodyCandidatePoint[]) & {
+  bodyExtent: number;
+  livingBodyExtent: number;
+  order: ReadonlyMap<string, number>;
+};
+type WorkingBodyIndex = {
+  points: Map<string, BodyCandidatePoint>;
+  ordering: Map<string, string>;
+  bins: SpatialCandidateIndex<BodyCandidatePoint>;
+  query: BodyCandidates;
+};
+const workingActorBodies = new WeakMap<WorldState, WorkingBodyIndex>();
+const workingRootBodies = new WeakMap<WorldState, WorkingBodyIndex>();
+/** Movement and local perception repeatedly query the same working world. Reuse its bins,
+ * updating only proven entity writes; neither copied positions nor draft references
+ * escape this draft's lifetime. Unknown/structural edits use actual root enumeration.
+ * Exact collision, participation and living-body filters remain with their callers. */
+function workingBodyIndex(world: WorldState, actorsOnly: boolean) {
+  if (!isDraft(world)) return entityIndex(world, actorsOnly);
+  const frames = actorsOnly ? workingActorBodies : workingRootBodies;
+  let frame = frames.get(world);
+  const changed = (frame && takeNativeChanges(world, frame, true)) ?? changedDraftEntityIds(world),
+    entities = readOnlyDraftView(world).entities,
+    audit = entityDraftAudit(entities);
+  if (!changed) {
+    frames.delete(world);
+    return entityIndex(world, actorsOnly, true);
+  }
+  if (!audit) return entityIndex(original(world)!, actorsOnly);
+  // Replacing the value at an existing identity preserves root order. Only an
+  // actual removal/reinsertion requires fresh ordinals. Recheck the collection
+  // owner's exact key, rather than treating every native-value write as a rebuild.
+  for (const id of audit.removed ?? [])
+    if (frame?.points.has(id) && entityOrdering(entities, id)?.key !== frame.ordering.get(id)) {
+      frames.delete(world);
+      frame = undefined;
+      break;
+    }
+  let boundsChanged = false;
+  if (!frame) {
+    const bins = new SpatialCandidateIndex<BodyCandidatePoint>(
+        actorsOnly ? BODY_CANDIDATE_CELL_SIZE : CANDIDATE_CELL_SIZE,
+      ),
+      points = new Map<string, BodyCandidatePoint>(),
+      ordering = new Map<string, string>(),
+      query = Object.assign(
+        (position: Position, radius: number) => {
+          const candidates = bins.query(position, radius);
+          // Current nonphysical fields belong to the selected entity, not the cached
+          // geometric point. Refresh only returned neighbors, without reinserting them.
+          for (const point of candidates)
+            point.entity = entityGet(readOnlyDraftView(world.entities), point.id)!;
+          return candidates;
+        },
+        {
+          bodyExtent: 0,
+          livingBodyExtent: 0,
+          order: new Map<string, number>(),
+        },
+      );
+    for (const entity of worldRootEntities(world, true, audit.assigned.size > 0)) {
+      if ((actorsOnly && !entity.actor) || !activelyParticipates(entity)) continue;
+      const body = bodyProfile(entity),
+        extent = candidateBodyExtent(body),
+        point = {
+          id: entity.id,
+          entity,
+          position: { ...worldPosition(entity) },
+          order: points.size,
+          extent,
+          livingExtent: entity.actor?.alive ? extent : 0,
+        };
+      points.set(entity.id, point);
+      ordering.set(entity.id, entityOrdering(entities, entity.id)!.key);
+      query.order.set(entity.id, point.order);
+      bins.set(point);
+    }
+    frame = { bins, points, ordering, query };
+    frames.set(world, frame);
+    takeNativeChanges(world, frame, true);
+    boundsChanged = true;
+  }
+  for (const id of changed) {
+    const value = entityGet(entities, id),
+      entity = value && readOnlyDraftView(value),
+      previous = frame.points.get(id);
+    if (
+      !entity ||
+      (actorsOnly && !entity.actor) ||
+      !physicalRoot(entity) ||
+      !activelyParticipates(entity)
+    ) {
+      if (previous) {
+        frame.points.delete(id);
+        frame.bins.delete(id);
+        boundsChanged = true;
+      }
+      continue;
+    }
+    if (!previous) {
+      // A contained body becoming a root can change its relative ordering.
+      frames.delete(world);
+      return entityIndex(world, actorsOnly, true);
+    }
+    const position = worldPosition(entity),
+      body = bodyProfile(entity),
+      extent = candidateBodyExtent(body),
+      livingExtent = entity.actor?.alive ? extent : 0;
+    if (
+      previous.position.x !== position.x ||
+      previous.position.y !== position.y ||
+      previous.position.z !== position.z ||
+      previous.extent !== extent ||
+      previous.livingExtent !== livingExtent
+    ) {
+      const point = {
+        ...previous,
+        entity,
+        position: { ...position },
+        extent,
+        livingExtent,
+      };
+      frame.points.set(id, point);
+      frame.bins.set(point);
+      boundsChanged ||= previous.extent !== extent || previous.livingExtent !== livingExtent;
+    } else previous.entity = entity;
+  }
+  if (boundsChanged) {
+    frame.query.bodyExtent = 0;
+    frame.query.livingBodyExtent = 0;
+    for (const point of frame.points.values()) {
+      frame.query.bodyExtent = Math.max(frame.query.bodyExtent, point.extent);
+      frame.query.livingBodyExtent = Math.max(frame.query.livingBodyExtent, point.livingExtent);
+    }
+  }
+  return frame.query;
 }
 const entityMembershipKeys = new WeakMap<
   ReturnType<typeof entityIndex>,
@@ -612,8 +921,78 @@ export function spatialCandidateMembershipKey(
   }
   return cached.key;
 }
+/** Structural pieces may be near while their one root anchor is farther away.
+ * Read the same full-extent shape index used by collision; never scan all roots. */
+export function nearbySolidAssemblies(
+  world: WorldState,
+  position: Position,
+  radius: number,
+): Entity[] {
+  if (!world.assemblyGeometryRevision) return [];
+  const found = new Map<string, Entity>(),
+    materials = new Set<string>();
+  for (const hit of spatialBlockerCandidates(spatialMap(world), {
+    min: { x: position.x - radius, y: position.y - radius, z: position.z - radius },
+    max: { x: position.x + radius, y: position.y + radius, z: position.z + radius },
+  })) {
+    if (materials.has(hit.id)) continue;
+    materials.add(hit.id);
+    chargeWork({ tests: 1 });
+    const material = entityGet(world.entities, hit.id),
+      rootId = material?.item?.assemblyClaim?.rootId,
+      root = rootId && entityGet(world.entities, rootId);
+    if (
+      root &&
+      root.assembly?.implementation === 'grounded-panel-boundary' &&
+      !root.assembly.retired &&
+      root.assembly.parts[hit.id] &&
+      activelyParticipates(root)
+    )
+      found.set(root.id, root);
+  }
+  return [...found.values()];
+}
 export function nearbyEntities(world: WorldState, position: Position, radius: number): Entity[] {
-  return entityIndex(world)(position, radius).map(({ entity }) => entity);
+  const index = workingBodyIndex(world, false),
+    ordinary = index(position, radius).map(({ entity }) => entity),
+    assemblies = nearbySolidAssemblies(world, position, radius);
+  if (!assemblies.length) return ordinary;
+  const found = new Map(ordinary.map((entity) => [entity.id, entity]));
+  for (const root of assemblies) found.set(root.id, root);
+  return [...found.values()].sort((a, b) => index.order.get(a.id)! - index.order.get(b.id)!);
+}
+/** Exact known identities need no whole-root/index preparation. Keep the ordinary
+ * query's conservative cell envelope and assembly extents, then canonical order.
+ * This selects physical candidates only; the consumer still proves actual perception. */
+export function nearbySelectedEntities(
+  world: WorldState,
+  position: Position,
+  radius: number,
+  ids: ReadonlySet<string>,
+): Entity[] {
+  countDomainWork('spatialQueries');
+  if (!ids.size) return [];
+  const cells = candidateCells(position, radius, CANDIDATE_CELL_SIZE),
+    entities = readOnlyDraftView(world.entities),
+    found = new Map<string, Entity>();
+  for (const id of ids) {
+    chargeWork({ tests: 1 });
+    const entity = entityGet(entities, id);
+    if (
+      entity &&
+      physicalRoot(entity) &&
+      activelyParticipates(entity) &&
+      inCandidateCells(worldPosition(entity), cells, CANDIDATE_CELL_SIZE)
+    )
+      found.set(id, entity);
+  }
+  for (const root of nearbySolidAssemblies(world, position, radius))
+    if (ids.has(root.id)) found.set(root.id, root);
+  countDomainWork('spatialCandidates', found.size);
+  return [...found.values()]
+    .map((entity) => ({ entity, order: entityOrdering(entities, entity.id)!.key }))
+    .sort((a, b) => (a.order < b.order ? -1 : a.order > b.order ? 1 : 0))
+    .map((value) => value.entity);
 }
 /** Expand foot-indexed candidates using their actual full body dimensions. The bound is
  * prepared with the existing root index, so larger authored bodies cannot disappear. */
@@ -623,8 +1002,12 @@ export function nearbyBodyEntities(
   radius: number,
   livingOnly = false,
 ): Entity[] {
-  const index = entityIndex(world, livingOnly);
-  return index(position, radius + index.bodyExtent).map(({ entity }) => entity);
+  const index = workingBodyIndex(world, livingOnly);
+  const bodies = index(
+    position,
+    radius + (livingOnly ? index.livingBodyExtent : index.bodyExtent),
+  ).map(({ entity }) => entity);
+  return livingOnly ? bodies.filter((entity) => entity.actor!.alive) : bodies;
 }
 /** Safety checks need living bodies, not every inert object in conservative grid cells. */
 export function nearbyLivingEntities(
@@ -632,7 +1015,9 @@ export function nearbyLivingEntities(
   position: Position,
   radius: number,
 ): Entity[] {
-  return entityIndex(world, true)(position, radius).map(({ entity }) => entity);
+  return workingBodyIndex(world, true)(position, radius).flatMap(({ entity }) =>
+    entity.actor!.alive ? [entity] : [],
+  );
 }
 export function nearbyEntityPage(
   world: WorldState,

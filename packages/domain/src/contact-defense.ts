@@ -10,6 +10,7 @@ import { emit } from './events.js';
 import { subjectNarration } from './narration.js';
 import { guardContactResult } from './worlds/base/shield-defense.js';
 import { activelyParticipates } from './participation-state.js';
+import { retainCombatRecovery } from './combat-encounters.js';
 
 /** Finite contact-only capability; tuning and wording belong to the authored world. */
 export interface ContactDefenseProfile {
@@ -93,7 +94,7 @@ export function currentGuardProfile(
 /** Pure calculation after an admitted contact hit; no extra roll or independent damage effect. */
 export function contactImpact(
   world: WorldState,
-  source: Entity,
+  source: Entity | undefined,
   defender: Entity,
   rawInjury: number,
   incomingDirection?: Position,
@@ -122,10 +123,21 @@ export function contactImpact(
     defender.actor.incapacitated
   )
     return ordinary;
-  const from = worldPosition(source),
-    to = worldPosition(defender);
-  const dx = incomingDirection?.x ?? from.x - to.x,
-    dz = incomingDirection?.z ?? from.z - to.z,
+  // A released effect retains its incoming direction after its source has disappeared.
+  // docs/worlds/base/ranged-counterplay.md#release-is-the-commitment-boundary
+  const to = worldPosition(defender);
+  const direction =
+    incomingDirection ??
+    (source
+      ? {
+          x: worldPosition(source).x - to.x,
+          y: worldPosition(source).y - to.y,
+          z: worldPosition(source).z - to.z,
+        }
+      : undefined);
+  if (!direction) return ordinary;
+  const dx = direction.x,
+    dz = direction.z,
     length = Math.hypot(dx, dz);
   if (
     length <= 1e-8 ||
@@ -154,6 +166,7 @@ export function recoverGuard(world: WorldState, defender: Entity, at = world.sim
   action.totalSeconds = profile.recoverySeconds;
   action.remainingSeconds = Math.max(0, until - world.simTime);
   actor.combatReadyAt = Math.max(actor.combatReadyAt ?? 0, until);
+  retainCombatRecovery(world, defender, 'combat', actor.combatReadyAt);
 }
 export function combatRecoveryDeadline(world: WorldState, entity: Entity): number {
   const guard = entity.actor?.action?.guard;
@@ -212,7 +225,7 @@ export function validateContactDefense(world: WorldState): void {
  * susceptibility, scars, clamping, interruption and death still belong to the body owner. */
 export function commitContactImpact(
   world: WorldState,
-  source: Entity,
+  source: Entity | undefined,
   defender: Entity,
   rawInjury: number,
   cause: string,

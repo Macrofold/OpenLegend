@@ -7,4 +7,5 @@ export const DEFAULT_ACOUSTICS: AcousticPolicy = {
   sourceLevelDbSplAt1m: { whisper: 40, normal: 60, shout: 75 },
   backgroundLevelDbSpl: 28,
   thresholdsDb: { detect: 0, partial: 6, clear: 12 },
+  sensoryLifetimeSeconds: 900,
 };

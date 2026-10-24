@@ -1,3 +1,4 @@
+import { reconcileNativeControl } from './native-response-controller.js';
 import { entityGet } from './entity-collection.js';
 import { orderedRecordGet, orderedRecordSet } from './ordered-record.js';
 import { person } from './narration.js';
@@ -55,6 +56,11 @@ export function canSpeak(entity: Entity | undefined): boolean {
   const capabilities = actor?.capabilities && readOnlyDraftView(actor.capabilities);
   return !!actor && (capabilities?.speech ?? actor.controller !== 'native');
 }
+/** Understanding words is independently installed; a mute person can still understand. */
+export function understandsSpeech(entity: Entity | undefined): boolean {
+  const stored = entity && readOnlyDraftView(entity).actor;
+  return stored?.capabilities?.language === true;
+}
 // Stable composition exports; authored defaults have one base-world owner.
 export { livingBody, nativeActor } from './worlds/base/bodies.js';
 /** All health/condition/lifecycle changes reconcile through this native mutation. */
@@ -93,11 +99,12 @@ export function reconcileBody(
     else {
       actor.alive = false;
       if (entity.animal) {
-        entity.animal.danger = 0;
-        entity.animal.threatPosition = null;
-        entity.animal.threatId = null;
-        entity.animal.escapeHeading = null;
-        entity.animal.calmRate = 0;
+        delete entity.animal.episode;
+        if (entity.animal.foraging) {
+          delete entity.animal.foraging.work;
+          delete entity.animal.foraging.proposal;
+          entity.animal.foraging.mode = 'resting';
+        }
       }
       const decay = bodyPolicy(world)?.remains;
       entity.remains = {
@@ -112,6 +119,7 @@ export function reconcileBody(
       separateDeadLife(world, entity, events);
     }
     if (!actor.alive) {
+      delete actor.encounters;
       // Death ends live sensory continuity, not retained knowledge or historical evidence.
       // docs/knowledge.md#subject-binding
       if (actor.contacts && Object.keys(actor.contacts).length) actor.contacts = {};
@@ -133,6 +141,7 @@ export function reconcileBody(
       { significant: true, cause },
     );
   }
+  reconcileNativeControl(world, entity);
   reconcileConditions(world, entity, events);
   if (world.innerWorlds?.[entity.id]) world.innerWorlds[entity.id]!.reconsiderationRequired = true;
 }

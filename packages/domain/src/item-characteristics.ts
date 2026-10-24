@@ -68,7 +68,7 @@ export function itemCharacteristics(
 ): ItemCharacteristic[] {
   if (definition.recipeId) {
     const recipe = getOwn(world.recipes, definition.recipeId);
-    return recipe?.outputDefinitionId === definition.id
+    return recipe?.outputs.some((output) => output.definition.id === definition.id)
       ? recipe.facts.map(({ id: key, ...fact }) => ({ key, ...fact }))
       : [];
   }

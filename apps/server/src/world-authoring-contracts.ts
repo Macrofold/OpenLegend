@@ -262,6 +262,7 @@ export const sessionRequest = z.object({ sessionId: id, worldId: id }).strict();
 export const sessionOpenRequest = sessionRequest.extend({
   budgetUsd: z.number().finite().min(0).max(5).optional(),
   purpose: z.enum(['conversation', 'invention', 'creation']).optional(),
+  freshRecovery: z.boolean().optional(),
 });
 export const sessionDecisionRequest = sessionRequest.extend({
   planId: id,

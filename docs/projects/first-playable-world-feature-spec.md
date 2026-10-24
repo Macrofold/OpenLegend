@@ -1,8 +1,10 @@
 # Complete first-playable world: feature specification
 
-| Status      | Current progress                                                                                                                                       | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The complete selected opening and its required subsystems are designed; implementation, integrated qualification and real player evidence remain open. | 2026-10-18   |
+| Status      | Current progress                                                                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The complete Main opening, combat, speech, survival, camps, cooperation and roaming runtime are connected; integrated qualification, independent behavior and human acceptance remain open. | 2026-10-23   |
+
+**Behavior alignment updated:** `2026-10-23T06:11:21Z` (owner-approved bow reach and routine sampled sight; [combat scope](combat-and-threat-responses-feature-spec.md#playable-scope), [time fidelity](../worlds/base/time.md#spatial-fidelity)).
 
 ## The game this design delivers
 

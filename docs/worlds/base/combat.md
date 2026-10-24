@@ -18,11 +18,11 @@ The exact contact-injury/prevention report is participant-private; observers rec
 
 ## Accepted lethal-action direction
 
-Human-issued supported strikes/hunts/shot releases currently require [one exact potentially lethal attack confirmation](player-danger.md#final-blow-confirmation), and the [territorial stag](first-threat-encounter.md) uses an explicitly granted natural-contact profile through the same attack owner. Player death uses [corpse/half-type/scar continuity](player-death.md); NPC and animal deaths persist without ordinary revival. The October 17 selected revision permits human PvP and actual projectile collateral under [world participation](lifecycle-and-protection.md#human-conflict-and-recovery) and [contact consequences](ranged-counterplay.md#selected-contact-consequences); implementation remains CTR01. Broader indirect hazards, rescue and property policy remain BW14/D07; NPC ghosts/ordinary revival remain BW15. These are installed world choices rather than universal strike laws.
+Human-issued supported strikes/hunts/shot releases currently require [one exact potentially lethal attack confirmation](player-danger.md#final-blow-confirmation), and the [territorial stag](first-threat-encounter.md) uses an explicitly granted natural-contact profile through the same attack owner. Player death uses [corpse/half-type/scar continuity](player-death.md); NPC and animal deaths persist without ordinary revival. The October 17 selected revision permits human PvP and actual projectile collateral under [world participation](lifecycle-and-protection.md#human-conflict-and-recovery) and [contact consequences](ranged-counterplay.md#selected-contact-consequences); the shared implementation is installed and its remaining qualification stays in CTR01. Broader indirect hazards, rescue and property policy remain BW14/D07; NPC ghosts/ordinary revival remain BW15. These are installed world choices rather than universal strike laws.
 
 ## Selected threat and encounter continuity
 
-**Selected October 17, 2026; not yet implemented.** The [combat-response project](../../projects/combat-and-threat-responses-feature-spec.md) extends the current physical actions and Command-click implementation. A short encounter concerns particular physical participants and personally available evidence. It is not a global combat flag, moral judgement, relationship score or permission to act.
+**Implemented; complete qualification remains open.** The [combat-response project](../../projects/combat-and-threat-responses-feature-spec.md) extends the current physical actions and Command-click implementation. A short encounter concerns particular physical participants and personally available evidence. It is not a global combat flag, moral judgement, relationship score or permission to act.
 
 ### Separate facts the player can understand
 
@@ -55,6 +55,12 @@ The bundled world deliberately makes **current physical attack preparation, held
 Use existing permitted activity/event presentation for the cue, with world-authored wording such as **Ada is preparing to strike you** or **Ada is aiming at you**. It is physical activity, not a line Ada said or access to her thoughts. Humanlike cognition and native animals receive the same permitted physical evidence through their respective consumers. The generic animation descriptor remains target-free; the directed relationship belongs to this observer-scoped world cue. No new global target-lock display or algorithm guessing intent from facing angles is required.
 
 Renewed visibility of the **same already known preparation/aim commitment** restores its observed-active association but is not a new hostile occurrence and does not clear a deliberate Speak override. Use the existing admitted observation/occurrence identity to establish prior exposure, even if the short UI grace already expired. A first observation of previously unknown directed preparation, a new commitment, a newly witnessed release or a fresh qualifying outcome can advance hostility. When renewed exposure later ends, use the actual last-known boundary for grace; neither repeated visibility updates nor incidental phase rendering renew it. Private plans and ordinary approach remain undisclosed even when the server knows their eventual target.
+
+Actual physical contact is personally felt even when the performer cannot be
+seen. The recipient retains the impact and their own bodily result; an unseen
+performer, weapon and location remain unidentified. Their personal danger record
+and any native interpretation preserve that uncertainty. Merely observing another
+person does not disclose that person's private danger records or chosen methods.
 
 ### Recent-hostility grace
 

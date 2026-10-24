@@ -42,16 +42,21 @@ export function useInventoryCommand({
   recoveryScope?: string;
   epoch?: string;
   connected: boolean;
-  task?: 'construction';
+  task?: 'construction' | 'hearth' | 'work-batch';
   command: CommandDispatcher;
-  onResolved(result: ApiResult): void;
+  onResolved(result: ApiResult, request: PendingCommand): void;
 }) {
   const storageKey = inventoryCommandStorageKey(recoveryScope, worldId, actorId, timeline, task);
-  const taskName = task ?? 'inventory';
+  const taskName = task === 'work-batch' ? 'selected work' : (task ?? 'inventory');
   const [pending, setPending] = useState<PendingState | undefined>(() =>
     storageKey ? restore(storageKey) : undefined,
   );
-  const [message, setMessage] = useState('');
+  const messageOwner = JSON.stringify([storageKey, scope]);
+  const [messageState, setMessageState] = useState({ owner: messageOwner, text: '' });
+  const message = messageState.owner === messageOwner ? messageState.text : '';
+  // Public command results can still name private possessions. An old async
+  // callback cannot show them after the permitted character/scope changes.
+  const setMessage = (text: string) => setMessageState({ owner: messageOwner, text });
   const guard = useRef(!!pending);
   const activeCommandId = useRef(pending?.request?.commandId);
   const pendingRef = useRef(pending);
@@ -135,7 +140,7 @@ export function useInventoryCommand({
     if (alive.current) {
       setPending(undefined);
       setMessage(result.message);
-      onResolved(result);
+      onResolved(result, request);
     }
   }
 
@@ -162,7 +167,7 @@ export function useInventoryCommand({
           : 'Reconnect with current character control before acting. Nothing was sent.',
       };
     if (!storageKey) {
-      const message = `Refresh character access before ${task ? 'starting construction' : 'changing possessions'}.`;
+      const message = `Refresh character access before ${task ? 'starting this work' : 'changing possessions'}.`;
       setMessage(message);
       return {
         ok: false,

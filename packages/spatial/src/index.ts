@@ -7,4 +7,10 @@ export { BoundsIndex } from './bounds-index.js';
 export * from './coverage.js';
 export * from './finite-panel.js';
 export * from './projectile-contact.js';
-export { bodyIntersects, type CollisionSolid } from './body-query.js';
+export * from './body-separation.js';
+export {
+  bodyIntersects,
+  bodySweepFraction,
+  cylinderIntersects,
+  type CollisionSolid,
+} from './body-query.js';

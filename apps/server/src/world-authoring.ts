@@ -275,22 +275,22 @@ export class WorldAuthoringService {
     const selected = selectedCreationProfileForWorld(this.service.world);
     if (profile.id !== selected.id || profile.version !== selected.version)
       throw new AuthoringRequestError('The candidate uses a different selected creation profile.');
-    profile.assertSessionCandidate(candidate, identities);
+    profile.assertSessionCandidate(candidate, identities, session.recoveryOpening);
   }
 
   openingChoices(scope = this.service.localScope) {
     this.service.assertScope(scope, 'create');
     this.service.assertScope(scope, 'inspect');
+    const profile = selectedCreationProfileForWorld(this.service.world);
     return workResult(
       'ok',
       undefined,
-      selectedCreationProfileForWorld(this.service.world).choices.map(
-        ({ id, label, description }) => ({
-          id,
-          label,
-          description,
-        }),
-      ),
+      profile.choices.map(({ id, label, description }) => ({
+        id,
+        label,
+        description,
+        recovery: id === profile.recoveryOpeningId,
+      })),
     );
   }
 
@@ -317,7 +317,13 @@ export class WorldAuthoringService {
           throw new AuthoringRequestError(
             'Select a supported prepared opening in a creation session.',
           );
-        const payload = profile.create(session.openingIdentities, choice.id);
+        if (session.recoveryOpening && choice.id !== session.recoveryOpening.choiceId)
+          throw new AuthoringRequestError('This recovery draft retains its selected opening.');
+        const payload = profile.create(
+          session.openingIdentities,
+          choice.id,
+          session.recoveryOpening?.seed,
+        );
         const response = await this.dispatch(
           {
             name: 'ol_draft_create',
@@ -1132,6 +1138,7 @@ export class WorldAuthoringService {
     budgetUsd?: number,
     scope = this.service.localScope,
     purpose?: AgentSession['initialPurpose'],
+    freshRecovery = false,
   ) {
     this.service.assertScope(scope, 'create');
     this.service.assertScope(scope, 'inspect');
@@ -1147,6 +1154,8 @@ export class WorldAuthoringService {
             );
           if (budgetUsd !== undefined && budgetUsd !== s.budgetUsd)
             throw new AuthoringRequestError('Reopening does not change the admitted allowance.');
+          if (freshRecovery && !s.recoveryOpening)
+            throw new AuthoringRequestError('An existing session cannot become a recovery run.');
           if (purpose !== undefined && purpose !== s.initialPurpose)
             throw new AuthoringRequestError('Reopening does not change the original purpose.');
         } else {
@@ -1171,6 +1180,21 @@ export class WorldAuthoringService {
                 : purpose === 'creation'
                   ? 'world-opening'
                   : 'discovery',
+          };
+        }
+        if (freshRecovery && !s.recoveryOpening) {
+          const profile = selectedCreationProfileForWorld(this.service.world);
+          if (
+            purpose !== 'creation' ||
+            !profile.recoveryOpeningId ||
+            !this.creationClient.targets(scope.accountId).length
+          )
+            throw new AuthoringRequestError(
+              'Ask the host to prepare an empty destination and creation access. Your original run is unchanged.',
+            );
+          s.recoveryOpening = {
+            choiceId: profile.recoveryOpeningId,
+            seed: this.service.world.seed,
           };
         }
         if (purpose === 'creation' && !s.openingIdentities) {
@@ -1282,6 +1306,7 @@ export class WorldAuthoringService {
     return {
       sessionId: id,
       ...(current.initialPurpose ? { purpose: current.initialPurpose } : {}),
+      ...(current.recoveryOpening ? { recoveryOpening: current.recoveryOpening } : {}),
       workRevision,
       available: this.permitted(current, scope),
       closed: current.closed,

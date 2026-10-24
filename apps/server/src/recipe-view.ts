@@ -1,4 +1,10 @@
-import { recipeFamily, type RecipeDefinition, type WorldState } from '@open-legend/domain';
+import {
+  craftCatalogueCategory,
+  manufactureInputQuantities,
+  recipeFamily,
+  type RecipeDefinition,
+  type WorldState,
+} from '@open-legend/domain';
 import type { RecipeDetailsView } from '@open-legend/protocol';
 
 /** Exact method facts, without inventor identity, private history or dependency closure. */
@@ -7,19 +13,35 @@ export function recipeDetailsView(
   recipe: RecipeDefinition,
   quantity: (definitionId: string) => number,
 ): RecipeDetailsView {
-  const family = recipeFamily(world, recipe.sourceCandidate.family.id)!;
+  const family =
+    recipe.source.kind === 'family'
+      ? recipeFamily(world, recipe.source.candidate.family.id)
+      : undefined;
   return {
     name: recipe.name,
+    category: craftCatalogueCategory(world, recipe),
     description: recipe.description,
-    output: recipe.output,
+    outputs: recipe.outputs.map(({ port, definition, quantity }) => ({
+      port,
+      quantity,
+      name: world.itemDefinitions[definition.id]!.name,
+      description: world.itemDefinitions[definition.id]!.description,
+    })),
     facts: recipe.facts,
-    limitations: [family.definition.limitation],
-    family: family.definition.name,
-    ingredients: recipe.inputs.map((input) => ({
-      name: world.itemDefinitions[input.definitionId]!.name,
-      quantity: input.quantity,
-      available: quantity(input.definitionId),
-      role: input.role,
+    limitations: family ? [family.definition.limitation] : [],
+    family: family?.definition.name ?? 'Material transformation',
+    ingredients: [...manufactureInputQuantities(recipe)].map(([definitionId, required]) => ({
+      name: world.itemDefinitions[definitionId]!.name,
+      quantity: required,
+      available: quantity(definitionId),
+    })),
+    retainedTools: recipe.retainedTools.map((tool) => ({
+      role: tool.role,
+      quantity: tool.quantity,
+      choices: tool.allowedDefinitions.map((pin) => ({
+        name: world.itemDefinitions[pin.id]!.name,
+        available: quantity(pin.id),
+      })),
     })),
     workSeconds: recipe.workSeconds,
   };

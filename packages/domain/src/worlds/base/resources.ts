@@ -4,6 +4,7 @@
  * docs/worlds/base/time.md#everyday-work-durations
  * docs/worlds/base/playable-openings.md#fresh-construction
  */
+export const BASE_GATHERING_POLICY = { bareHandQuantity: 2 } as const;
 export const BASE_RESOURCE_GATHERING_SECONDS = {
   raw_fiber: 720,
   wood: 840,

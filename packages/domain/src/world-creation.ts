@@ -57,12 +57,19 @@ export interface WorldCreationProfile {
   version: number;
   choices: readonly { id: string; label: string; description: string }[];
   identityKeys: readonly string[];
+  /** Optional selected opening offered for a separate recovery run. */
+  recoveryOpeningId?: string;
   metadata: Readonly<Record<string, unknown>>;
   validate(value: unknown): WorldCreationCandidate;
-  create(identities: WorldOpeningIdentities, choiceId?: string): WorldCreationCandidate;
+  create(
+    identities: WorldOpeningIdentities,
+    choiceId?: string,
+    seed?: number,
+  ): WorldCreationCandidate;
   assertSessionCandidate(
     candidate: WorldCreationCandidate,
     identities: WorldOpeningIdentities,
+    selection?: { choiceId: string; seed: number },
   ): void;
   controlledActor(candidate: WorldCreationCandidate): string;
   build(

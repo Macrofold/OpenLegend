@@ -341,6 +341,18 @@ export async function journalConstraints(
     for (const [id, row] of placed)
       if (removedBy(row.table, row.id, entry.changes)) placed.delete(id);
   }
+  // Finite plans discard completed steps and move retained steps in the same
+  // transition that appends the next one. Check their final positions: a slot
+  // vacated by a retained step is available to the new step in this commit.
+  for (const [table, rows] of changes.writes)
+    if (positions.has(table))
+      for (const row of rows)
+        placed.set(key(table, row.id), {
+          table,
+          id: row.id,
+          parent: row.parent,
+          position: row.position,
+        });
   const slots = new Map<string, Set<string>>();
   for (const row of placed.values()) {
     if (removedBy(row.table, row.id, changes)) continue;

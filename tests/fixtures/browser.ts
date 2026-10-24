@@ -1,3 +1,4 @@
+import { initialCamera, updateCamera } from '../../apps/client/src/world-camera.js';
 import { expect, type Page } from '@playwright/test';
 
 /** Network lifecycle qualification stays loopback-only. Missing external art
@@ -28,4 +29,27 @@ export async function enterGame(page: Page): Promise<void> {
   await expect(page.locator('.ol-entry')).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Game is paused.', exact: true })).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
+}
+
+/** Pick the real public deck after framing it with ordinary camera controls.
+ * Read the renderer's pitch and reuse its zoom owner instead of old default numbers.
+ */
+export async function lookoutDeckPoint(page: Page, player: { x: number; y: number; z: number }) {
+  await page.getByRole('button', { name: 'Center on player', exact: true }).click();
+  let camera = initialCamera();
+  for (let n = 0; n < 4; n++) {
+    await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
+    camera = updateCamera(camera, { type: 'zoom', delta: 2 });
+  }
+  const canvas = page.locator('#world');
+  await expect(canvas).toHaveAttribute('data-camera-yaw', '0');
+  const pitch = Number(await canvas.getAttribute('data-camera-pitch'));
+  const rect = (await canvas.boundingBox())!;
+  const scale = rect.height / (camera.zoom * 2);
+  return {
+    x: rect.width / 2 + (24 - player.x) * scale,
+    y:
+      rect.height / 2 -
+      ((3 - player.y) * Math.cos(pitch) + (player.z - 6) * Math.sin(pitch)) * scale,
+  };
 }

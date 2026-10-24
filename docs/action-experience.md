@@ -2,6 +2,13 @@
 
 Characters record their own attempted actions, notice their actual results, and can learn connected methods during eligible downtime. A learned method is a tentative way to attempt something. It neither assigns a goal nor guarantees its outcome.
 
+A completed speech step links its result to the speaker's actual utterance when
+recorded; an additional private result, when needed, retains native speaker
+attribution. The speaker's own words and that completion remain readable history,
+but do not themselves initiate another autonomous decision. Another
+person's actually heard words and subsequent physical results remain separate
+possible causes for reconsideration.
+
 ## Maintained records
 
 - Implementation and acceptance: [AE01–AE10](maintainers/action-experience.md).
@@ -93,11 +100,26 @@ Changes to action selection, first-step availability or execution follow [Action
 
 Each ready step passes through the existing kernel and its current authority, access, range and resource checks. Outputs bind only when actually committed. A completed step is not replayed on continuation or same-version restore. Failed native steps require a new choice; an explicitly blocked control may be reconsidered with current bindings. Unknown predicates stop honestly. Another actor's response or cooperation cannot be executed as the learner's action.
 
-Restoration distinguishes retained results from work that may continue. Active, paused and nonterminal blocked activities require their current installed command/observation support; a resumable learned method also requires its exact current manifest. Completed or cancelled activities and terminal watches can retain their history after that support is removed. Their command structure, personal bindings, exact trusted observation meaning and spending receipts still validate. This permits an ended watch to explain what it spent without granting another attempt or replaying its effects.
+Requested and learned activities retain the original sighting associations for privately bound people, including later steps that have not yet been prepared. Native dispatch and explicit return to paused work check those saved associations. Seeing an unfamiliar person again cannot silently substitute a new encounter into old work. An independently selected new binding can establish its own association. Text and historical places grant no actor reference. Current-format validation requires these saved associations.
+
+Restoration distinguishes retained results from work that may continue. Active, paused and nonterminal blocked activities require their current installed command/observation support; a resumable learned method also requires its exact current manifest. Completed or cancelled activities and terminal watches can retain their history after that support is removed. Their command structure, personal bindings, exact trusted observation meaning and spending receipts still validate. This permits an ended watch to explain what it spent without granting another attempt or replaying its effects. A mixed action list finishes when its remaining independent steps finish, even if other steps were cancelled by ending consent. Cancelled steps retain their own unsuccessful outcomes and never count as completed production.
 
 Selecting a plan checks only its next action through the same read-only native prerequisite owner used by execution. Later equipment and typed earlier-output dependencies remain deferred until their step starts; selection neither consumes materials nor promises success. Inspected learned-method pages and their continuations survive a feasibility refresh only for the same actor, inspection and timeline. Current bindings are rebuilt; revoked methods disappear and a changed catalogue offers fresh inspection rather than reusing a stale continuation.
 
 An explicitly selected one-session watch is requested control, not a learned conditional method. Its saved execution holds the chosen observation, absolute simulation deadline, access/reach requirements, fuel-attempt and actual-spending counters, and whether attendance was interrupted. Deadline-safe cancellation alone grants no spending support. A counted action requires an installed exact support definition that declares its argument restriction and conservative maximum debit; admission checks remaining allowance, and successful completion must supply a valid actual spending receipt. Generic stock movement has no counted-spending support. Failure feedback about a selected personal stock guard remains actor-private; witnesses receive only the visible stop. No-effect admitted fuel attempts count toward the attempt limit but spend no unit; committed receipts account for actual spending once. Suspension preserves the deadline and counters, while a restarted native fuel step is a new attempt. Stopping after a cache unit was already taken leaves that real unit in the actor's possessions. Completed steps and receipts survive current-format restart without replay. Watch control, guarded fuel steps, thresholds and unseen branches are excluded from finite-method normalization. The bundled world's supported first watch and its fuel observations are owned by [camp routines](worlds/base/camp-routines.md).
+
+A finite chosen quantity uses that same requested activity. Its saved request
+retains the original count and native command family; actual successful step
+completions update a separate completed count, including timed work. Entering a
+repeat iteration is not evidence of consumption or production. A repeat can
+explicitly finish successfully at its maximum, while existing condition-required
+repeats retain their ordinary blocked-at-limit meaning. Exact definition
+requirements can guard control nodes before their predicates as well as native
+steps; already cancelled work needs no further prerequisite. Selected meals use
+this mechanism for their own body's full-meter stop and fresh exact-food binding.
+Requested batch/meal controls do not create learned automatic habits. Native
+occurrences retain the actual consumed lot; an uncertain original receipt cannot
+consume a second unit.
 
 Own action history and personally learned activities are available through explicit cognition inspection and the existing private-mind UI, with separate history/method pages. The private panel reports whether learning is pending, including its need for safe idle time, storage and an authorized model budget. The server rechecks actor/account/timeline scope around asynchronous reads. Creator inspection cannot access another human's private mind. Ordinary public views never publish private action history or other actors' acquisitions.
 

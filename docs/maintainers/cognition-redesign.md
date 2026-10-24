@@ -353,7 +353,7 @@ Depends on DE01 and existing CR01/CR02 accounting/admission.
 
 Exit: one useful native choice can follow the stronger result through ordinary admission; simultaneous foreground work progresses, capacity failures are explicit, and any second escalation for the same opportunity is refused.
 
-Implementation: the direct-route transport/schema fixture passes and native choices publish through the existing response owner. Runtime defaults to apply for the configured primary origin, with explicit opt-out and existing credential/price/funding checks. Actual Low access and bounded gameplay progress are recorded in the October 17 live checks; fixtures alone establish neither.
+Implementation: the direct-route transport/schema fixture passes and native choices publish through the existing response owner. Runtime defaults to apply for the configured primary origin, with explicit opt-out and existing credential/price/funding checks. Actual Low access and bounded gameplay progress are recorded in the October 17 live checks; fixtures alone establish neither. The shared background allowance is now 100 operations per process at Mike's October 22 request; exact uncertain-attempt accounting and existing monetary/actor/deadline limits remain. See [DE-L02](../limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention); live provider capacity at 100 remains unqualified.
 
 ### DE03 — Freshness, independent effects and recovery
 

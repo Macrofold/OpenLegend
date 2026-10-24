@@ -8,7 +8,7 @@ import {
   type LinkedDecisionAttempt,
   type ExecutionClass,
 } from './decision-state.js';
-import type { ConstructionPermission } from '@open-legend/domain';
+import type { ConstructionPermission, ConstructionPermissionChanges } from '@open-legend/domain';
 import {
   usdToMicroUsd,
   microUsdToUsd,
@@ -87,7 +87,7 @@ import type { AiReceipt } from '@open-legend/ai';
 import type { AiJobView, PlayerProfile, PlayerPreferencePatch } from '@open-legend/protocol';
 
 export const COGNITION_PENDING_EXECUTIONS_SQL =
-  "SELECT DISTINCT l.execution_class FROM attempts a JOIN cognition_attempt_links l ON l.attempt_id=a.id WHERE a.status IN ('reserved','uncertain') AND l.dispatch_intent AND (a.receipt IS NULL OR (a.receipt::jsonb ->> 'completionUncertain')='true')";
+  "SELECT a.id,l.execution_class FROM attempts a JOIN cognition_attempt_links l ON l.attempt_id=a.id WHERE a.status IN ('reserved','uncertain') AND l.dispatch_intent AND (a.receipt IS NULL OR (a.receipt::jsonb ->> 'completionUncertain')='true')";
 // Keep the link lookup dependent on each unfinished attempt. Without the bounded
 // lateral lookup, stale statistics can scan all completed links during recovery.
 export const COGNITION_UNSENT_ATTEMPTS_SQL =
@@ -155,8 +155,9 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
   return { where: clauses.join(' AND '), params };
 }
 import { digest } from './content-digest.js';
+import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '16';
+export const DATABASE_SCHEMA = '18';
 
 export interface AttemptBudget {
   id: string;
@@ -318,7 +319,9 @@ export interface WorldStore {
       authority?: AuthorityFence;
       authorityBindings?: readonly AccountBinding[];
       constructionSeeds?: readonly ConstructionPermission[];
+      constructionChanges?: ConstructionPermissionChanges;
       constructionFences?: readonly { id: string; revision: number }[];
+      campAssetFences?: readonly { id: string; revision: number }[];
       authorityOwners?: ReadonlyMap<string, string>;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
       controlChange?: {
@@ -391,7 +394,7 @@ export interface GameRepository extends WorldStore {
     except: string,
   ): Promise<boolean>;
   decisionAttempts(rootJobId: string): Promise<LinkedDecisionAttempt[]>;
-  occupiedDecisionSlots(): Promise<ExecutionClass[]>;
+  occupiedDecisionSlots(): Promise<Pick<LinkedDecisionAttempt, 'attemptId' | 'executionClass'>[]>;
   onSettlement(listener: () => void): () => void;
   budgetAvailable(actorId: string, amountUsd: number, ceilingUsd: number): Promise<boolean>;
   markDecisionDispatch(attemptId: string): Promise<boolean>;
@@ -896,7 +899,9 @@ export class SqlGameRepository implements GameRepository {
       authority?: AuthorityFence;
       authorityBindings?: readonly AccountBinding[];
       constructionSeeds?: readonly ConstructionPermission[];
+      constructionChanges?: ConstructionPermissionChanges;
       constructionFences?: readonly { id: string; revision: number }[];
+      campAssetFences?: readonly { id: string; revision: number }[];
       authorityOwners?: ReadonlyMap<string, string>;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
       controlChange?: {
@@ -926,6 +931,12 @@ export class SqlGameRepository implements GameRepository {
     // runs (refused admission, a fence failure), the released baseline must come back: a later
     // commit diffing the released live world against the complete one would delete cold rows.
     const releasedBaseline = this.acceptedState;
+    if (
+      historyProjection?.restore &&
+      releasedBaseline &&
+      state.world.nextId < releasedBaseline.world.nextId
+    )
+      throw new Error('Restoration must preserve already allocated native identities.');
     const restoreBaseline = historyProjection?.restore
       ? ((await this.records.load())?.state ?? null)
       : undefined;
@@ -1008,11 +1019,29 @@ export class SqlGameRepository implements GameRepository {
         if (this.applicationFailure) throw this.applicationFailure;
         for (const permission of historyProjection?.constructionSeeds ?? [])
           await this.authority.seedConstruction(permission);
-        if (historyProjection?.constructionFences?.length)
+        if (historyProjection?.constructionChanges) {
+          const timelineKey = `world-timeline:${state.world.id}`;
+          let timelineId = historyProjection.restore?.timeline;
+          if (!timelineId) {
+            timelineId = (await this.getIntegration(timelineKey)) as string | undefined;
+            if (!timelineId) {
+              timelineId = randomUUID();
+              await this.putIntegration(timelineKey, timelineId);
+            }
+          }
+          await this.authority.applyConstructionChanges(
+            state.world,
+            historyProjection.constructionChanges,
+            historyProjection.constructionFences ?? [],
+            timelineId,
+          );
+        } else if (historyProjection?.constructionFences?.length)
           await this.authority.assertConstruction(
             state.world.id,
             historyProjection.constructionFences,
           );
+        if (historyProjection?.campAssetFences?.length)
+          await this.authority.assertCampAssets(state.world.id, historyProjection.campAssetFences);
         for (const binding of historyProjection?.authorityBindings ?? [])
           await this.authority.provision(state.world.id, binding);
         for (const [actorId, accountId] of historyProjection?.authorityOwners ?? [])
@@ -1139,7 +1168,9 @@ export class SqlGameRepository implements GameRepository {
       !projection?.participationChange &&
       !projection?.operationalChange &&
       !projection?.constructionSeeds?.length &&
+      !projection?.constructionChanges &&
       !projection?.constructionFences?.length &&
+      !projection?.campAssetFences?.length &&
       !projection?.authorityBindings?.length &&
       !projection?.authorityOwners?.size &&
       !Object.values(invalidated ?? {}).some((ids) => ids.length) &&
@@ -1173,8 +1204,7 @@ export class SqlGameRepository implements GameRepository {
         !write.before ||
         !inputs.previous ||
         inputs.previous.storyPolicyRevision !== inputs.world.storyPolicyRevision ||
-        inputs.previous.authorship !== inputs.world.authorship ||
-        inputs.previous.conversations?.transitions !== inputs.world.conversations?.transitions
+        inputs.previous.authorship !== inputs.world.authorship
       )
         return;
       if (write.revision !== revision || write.state.world.id !== range.worldId)
@@ -1356,6 +1386,7 @@ export class SqlGameRepository implements GameRepository {
             result.recipeId || null,
             id,
           );
+        if (written) this.invalidateRead(this.recentJobReads, this.db);
         if (written && written['fingerprint'] !== written['body_fingerprint'])
           throw new Error('A request ID cannot be reused with different input.');
       }
@@ -1501,7 +1532,8 @@ export class SqlGameRepository implements GameRepository {
             ELSE '{}'::jsonb END)::text END
           WHERE jobs.fingerprint=excluded.fingerprint RETURNING fingerprint`,
       )
-      .get(job.id, job.fingerprint, JSON.stringify(job), job.createdAt, job.status);
+      .get(job.id, job.fingerprint, JSON.stringify(job), job.createdAt, job.status)
+      .finally(() => this.invalidateRead(this.recentJobReads, this.rawDb));
     if (!written) throw new Error('A request ID cannot be reused with different input.');
   }
 
@@ -1590,10 +1622,15 @@ export class SqlGameRepository implements GameRepository {
     }));
   }
 
-  async occupiedDecisionSlots(): Promise<ExecutionClass[]> {
+  async occupiedDecisionSlots(): Promise<
+    Pick<LinkedDecisionAttempt, 'attemptId' | 'executionClass'>[]
+  > {
     await this.ready;
     const rows = await this.db.prepare(COGNITION_PENDING_EXECUTIONS_SQL).all();
-    return rows.map((row) => row['execution_class'] as ExecutionClass);
+    return rows.map((row) => ({
+      attemptId: String(row['id']),
+      executionClass: row['execution_class'] as ExecutionClass,
+    }));
   }
 
   async markDecisionDispatch(attemptId: string): Promise<boolean> {
@@ -1650,14 +1687,37 @@ export class SqlGameRepository implements GameRepository {
     ).map((row) => JSON.parse(String(row['payload'])) as JobRecord);
   }
 
+  private readonly recentJobReads = new Map<number, Promise<JobRecord[]>>();
+  private canShareRead(): boolean {
+    // A transaction must read its own snapshot, never newer committed cache data.
+    return this.db.transactionActive === false && !!this.db.afterCommit && !!this.db.afterRollback;
+  }
+  private invalidateRead(cache: { clear(): void }, db: SqlDatabase): void {
+    const invalidate = () => cache.clear();
+    invalidate();
+    // Fence reads prepared during an enclosing transaction as well as before it.
+    db.afterCommit?.(invalidate);
+    db.afterRollback?.(invalidate);
+  }
   async recentJobs(limit = 12): Promise<JobRecord[]> {
     await this.ready;
-
-    return (
-      await this.db
+    const shared = this.canShareRead();
+    let pending = shared ? this.recentJobReads.get(limit) : undefined;
+    if (!pending) {
+      if (shared && this.recentJobReads.size >= 8)
+        this.recentJobReads.delete(this.recentJobReads.keys().next().value!);
+      pending = this.db
         .prepare('SELECT payload FROM jobs ORDER BY created_at DESC, id DESC LIMIT ?')
         .all(limit)
-    ).map((row) => JSON.parse(String(row['payload'])) as JobRecord);
+        .then((rows) => rows.map((row) => JSON.parse(String(row['payload'])) as JobRecord));
+      if (shared) this.recentJobReads.set(limit, pending);
+    }
+    try {
+      return structuredClone(await pending);
+    } catch (error) {
+      if (this.recentJobReads.get(limit) === pending) this.recentJobReads.delete(limit);
+      throw error;
+    }
   }
 
   async getIntegration(key: string): Promise<unknown> {
@@ -1763,7 +1823,7 @@ export class SqlGameRepository implements GameRepository {
           );
       return true;
     });
-    if (accepted) this.usageCache = undefined;
+    if (accepted) this.invalidateRead(this.usageCache, this.db);
     return accepted;
   }
 
@@ -1846,7 +1906,7 @@ export class SqlGameRepository implements GameRepository {
       if (this.db.afterCommit) this.db.afterCommit(notify);
       else notify();
     });
-    this.usageCache = undefined;
+    this.invalidateRead(this.usageCache, this.db);
   }
 
   /** A restart never resends an admitted call whose external outcome is unknown. */
@@ -1898,7 +1958,7 @@ export class SqlGameRepository implements GameRepository {
     await this.db.exec(
       "UPDATE attempts SET status='uncertain', spent=reserved WHERE status='reserved'",
     );
-    this.usageCache = undefined;
+    this.invalidateRead(this.usageCache, this.db);
     // The partial index contains only unfinished work; retained history never enters memory.
     // docs/architecture.md#bounded-invention-history-and-recovery
     for (;;) {
@@ -1947,6 +2007,7 @@ export class SqlGameRepository implements GameRepository {
               )
               .get(JSON.stringify(interrupted), job.id);
             if (!written) return;
+            this.invalidateRead(this.recentJobReads, this.db);
             const diagnostic = await this.intelligenceCall(job.id);
             if (diagnostic?.status !== 'running') return;
             await this.db
@@ -1969,26 +2030,27 @@ export class SqlGameRepository implements GameRepository {
     }
   }
 
-  private usageCache?: {
-    period: string;
-    ceiling: number;
-    value: ReturnType<SqlGameRepository['readUsage']>;
-  };
+  private readonly usageCache = new Map<string, ReturnType<SqlGameRepository['readUsage']>>();
 
   async usage(ceilingUsd: number, actorId?: string) {
-    if (actorId) return this.readUsage(ceilingUsd, actorId);
     const period = new Date().toISOString().slice(0, 7);
-    let cached = this.usageCache;
-    if (!cached || cached.period !== period || cached.ceiling !== ceilingUsd) {
+    const key = JSON.stringify([period, ceilingUsd, actorId]);
+    const shared = this.canShareRead();
+    let cached = shared ? this.usageCache.get(key) : undefined;
+    if (!cached) {
       // Display-only totals change with accounting writes, not movement or job progress.
       // Budget admission still queries the ledger: docs/performance.md#browser-and-provider-polling.
-      cached = { period, ceiling: ceilingUsd, value: this.readUsage(ceilingUsd) };
-      this.usageCache = cached;
+      cached = this.readUsage(ceilingUsd, actorId);
+      if (shared) {
+        if (this.usageCache.size >= 128)
+          this.usageCache.delete(this.usageCache.keys().next().value!);
+        this.usageCache.set(key, cached);
+      }
     }
     try {
-      return structuredClone(await cached.value);
+      return structuredClone(await cached);
     } catch (error) {
-      if (this.usageCache === cached) this.usageCache = undefined;
+      if (this.usageCache.get(key) === cached) this.usageCache.delete(key);
       throw error;
     }
   }

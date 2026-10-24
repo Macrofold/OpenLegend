@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { perceivedEventType } from '@open-legend/domain';
 import type { Awareness, EventEvidence, WorldEvent } from '@open-legend/domain';
 import type { StorySource } from './history.js';
 import { HistoryBatch } from './history-batch.js';
@@ -11,17 +12,9 @@ export interface AppendHistoryInput {
 }
 
 /** Only observer-permitted identities enter participant indexes. */
-export function perspectiveColumns(source: StorySource, actorId: string): unknown[] {
+export function perspectiveColumns(source: StorySource): unknown[] {
   const { sourceId, targetId } = source.evidence;
-  const peer =
-    source.type !== 'speech'
-      ? null
-      : sourceId === actorId && targetId
-        ? targetId
-        : targetId === actorId || targetId == null
-          ? (sourceId ?? null)
-          : null;
-  return [source.order, source.type, sourceId ?? null, targetId ?? null, peer];
+  return [source.order, perceivedEventType(source.evidence), sourceId ?? null, targetId ?? null];
 }
 
 /** Shared exact append-row owner. It consumes permitted accounts, never selects a
@@ -40,7 +33,6 @@ export class HistoryAppendWriter extends HistoryBatch {
     const pending = this.add('history_events', [
       this.worldId,
       event.id,
-      event.conversationId ?? null,
       position,
       encoded,
       typeof event.data?.['responseId'] === 'string' ? event.data['responseId'] : null,
@@ -81,7 +73,7 @@ export class HistoryAppendWriter extends HistoryBatch {
         event.id,
         actorId,
         account.payload,
-        ...perspectiveColumns(source, actorId),
+        ...perspectiveColumns(source),
         event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
       ]);
     const pending =

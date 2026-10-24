@@ -212,6 +212,12 @@ The October 9 [DG35 decision brief](../projects/platform-and-offline-decision-br
 
 ## SW12 — Bounded aerial navigation and native flight
 
+CTR03–CTR04 now adds explicit loop/finite-landing/mid-air-join continuation through
+the existing flight owner. Native/SQL checks preserve supported terminal rest,
+actual joins and forecast equivalence; 27 existing spatial/simulation checks pass.
+Danger-driven flight selection, broader graph coverage and the remaining SW12
+exit criteria stay open in [CTR](combat-and-threat-responses.md).
+
 **Owners:** server graph provider, domain locomotion/body. **Depends on:** SW01–SW07 and SW08 for exposure. **Touchpoints:** native animal controller, route contracts, body capability profiles, surface/air graph generation.
 
 - [ ] **SW12.1** Define bounded 3D air regions/nodes/corridors, explicit altitude bands, vertical edges, clearance, and directed costs using the qualified graph adapter. Keep graph coverage limitations distinct from physical obstruction.

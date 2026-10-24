@@ -21,6 +21,8 @@ import { decisionValidity } from './decision-validity.js';
 import { resolveResponseEntities } from './entity-references.js';
 import type { RecallService } from './recall.js';
 import { digest, type JobRecord } from './store.js';
+import { compileDecisionTask, prepareDecisionTask, type DecisionTask } from './decision-task.js';
+import { DECISION_LIMITS } from './decision-state.js';
 import type { WorldService } from './world-service.js';
 
 /** The same response owner handles a supplied action on either model route. */
@@ -30,10 +32,11 @@ export function knownDecisionResponse(
 ): ActorResponse {
   if (!Object.hasOwn(prepared.binding.actions, selected))
     throw new Error('Unknown offered action.');
-  if (prepared.binding.actions[selected] === null) return { operations: [] };
+  const choice = prepared.binding.actions[selected]!;
+  if (choice.invocation === null && !choice.purpose) return { operations: [] };
   return actionResponse({
     kind: 'known',
-    mode: prepared.replaceChosenPlan ? 'replace' : 'enqueue',
+    mode: choice.transition === 'continue' ? 'enqueue' : choice.transition,
     actionId: selected,
     verb: null,
     targetEntityId: null,
@@ -41,15 +44,24 @@ export function knownDecisionResponse(
   });
 }
 
-/** Rebuild only permitted native/cached evidence; this route can never buy preparation. */
+export interface RetainedDecisionPreparation {
+  rootId: string;
+  generation: string;
+  validity: string;
+  prepared: Awaited<ReturnType<typeof prepareDecision>>;
+}
+
+/** Reuse this decision's permitted evidence, or rebuild natively after a meaningful change. */
 export async function prepareReconsideration(
   service: WorldService,
   recall: RecallService,
   job: JobRecord,
   signal: AbortSignal,
+  retained?: RetainedDecisionPreparation,
 ): Promise<PreparedReconsideration> {
   const state = job.decision;
   if (!state?.higher) throw new Error('Missing admitted reconsideration.');
+  const higher = state.higher;
   const actorId = state.actorId,
     generation = service.generation;
   const evidenceIds = [
@@ -58,13 +70,24 @@ export async function prepareReconsideration(
       ...(job.triggerEvidenceId ? [job.triggerEvidenceId] : []),
     ]),
   ];
-  const sourceTime = service.world.simTime;
-  const prepared = fallbackDecisionActions(
-    await prepareDecision(
+  // Routing has already paid for the complete actor-scoped read. Keep its exact
+  // source proofs through handoff; unrelated publications do not invalidate them.
+  // The existing conversation/source guards and current native admission remain
+  // mandatory. This is request-owned, never restored or shared across decisions.
+  const reusable =
+    retained?.rootId === job.id &&
+    retained.generation === generation &&
+    retained.validity === decisionValidity(service.world, actorId)
+      ? retained.prepared
+      : undefined;
+  if (reusable) await reusable.validateConversation(false);
+  const base =
+    reusable ??
+    (await prepareDecision(
       service,
       recall,
       actorId,
-      state.higher.id,
+      higher.id,
       job.request.text,
       evidenceIds,
       async () => {
@@ -77,7 +100,10 @@ export async function prepareReconsideration(
       job.triggerEvidenceId ?? job.playerSpeechEventId,
       undefined,
       'native-only',
-    ),
+    ));
+  const sourceTime = base.diagnostics.sourceTime;
+  const prepared = fallbackDecisionActions(
+    { ...base, binding: { ...base.binding, decisionId: higher.id } },
     'Native candidates for one reconsideration',
   );
   const validity = decisionValidity(service.world, actorId);
@@ -87,10 +113,11 @@ export async function prepareReconsideration(
     ? await bindDecisionAppraisals(
         service,
         actorId,
-        state.higher.id,
+        higher.id,
         prepared.binding.evidenceIds ?? evidenceIds,
         prepared.entityReferences,
         job.triggerEvidenceId ?? job.playerSpeechEventId,
+        { sharedExperiences: prepared.sharedExperiences },
       )
     : undefined;
   const response = Object.values(state.groups).some(
@@ -99,19 +126,22 @@ export async function prepareReconsideration(
   const appraisalOnly = state.groups['q0']?.kind === 'appraisal';
   if (appraisalOnly && !appraisal?.schema)
     throw new Error('No installed decision appraisal is available.');
-  const schema = boundResponseSchema(
-    Object.keys(prepared.entityReferences),
-    Object.keys(prepared.binding.actions),
-    {
-      speech: canSpeak(entityGet(service.world.entities, actorId)),
-      expressions: supportsManualWork(entityGet(service.world.entities, actorId)),
-      proposals: false,
-    },
-    Object.keys(prepared.binding.knowledgeReferences ?? {}),
-    namedClockTimes(service.world),
-    activityRequestDescriptors(service.world),
-    appraisal?.schema,
-  );
+  const responseSchemaFor = (offered: typeof prepared.offered) =>
+    boundResponseSchema(
+      Object.keys(prepared.entityReferences),
+      Object.keys(prepared.binding.actions).filter(
+        (id) => !/^a\d+$/.test(id) || offered.some((option) => option.id === id),
+      ),
+      {
+        speech: canSpeak(entityGet(service.world.entities, actorId)),
+        expressions: supportsManualWork(entityGet(service.world.entities, actorId)),
+        proposals: false,
+      },
+      Object.keys(prepared.binding.knowledgeReferences ?? {}),
+      namedClockTimes(service.world),
+      activityRequestDescriptors(service.world),
+      appraisal?.schema,
+    );
   const current = async () => {
     if (
       signal.aborted ||
@@ -127,7 +157,7 @@ export async function prepareReconsideration(
       validity === decisionValidity(service.world, actorId)
     );
   };
-  return {
+  const inputFor = (offered: typeof prepared.offered) => ({
     tasks: {
       q0: appraisalOnly
         ? {
@@ -141,27 +171,54 @@ export async function prepareReconsideration(
               kind: 'response',
               question:
                 'Propose the still-unresolved response to this initiating situation. Speech is optional unless an addressed reply is needed. Use only supplied operations and handles.',
-              valueSchema: schema,
+              valueSchema: responseSchemaFor(offered),
             }
           : {
               kind: 'choice',
               question:
                 'Choose the personally suitable, currently offered action or deliberate continuation. Abstain if no offered choice is suitable.',
-              choices: Object.fromEntries(
-                prepared.offered.map((option) => [option.id, option.description]),
-              ),
+              choices: Object.fromEntries(offered.map((option) => [option.id, option.description])),
             },
-    },
+    } satisfies Record<string, DecisionTask>,
     context: JSON.stringify({
       sourceTime,
       observationPolicy:
         'Continuous meters and feeling decay are observations from sourceTime; their meaningful conditions must remain unchanged. All current execution prerequisites are checked again.',
       character: prepared.context,
-      ...(response ? { choices: prepared.offered } : {}),
+      ...(response ? { choices: offered } : {}),
       appraisals: appraisal?.context,
-      reconsiderationReason: state.higher.reason,
+      reconsiderationReason: higher.reason,
     }),
     instructions: JSON.stringify(prepared.actionGuidance),
+  });
+  const fits = (offered: typeof prepared.offered) => {
+    const input = inputFor(offered);
+    const compiled = compileDecisionTask(input.tasks, input.context, input.instructions);
+    return (
+      Buffer.byteLength(compiled.instructions) + Buffer.byteLength(compiled.context) <=
+        DECISION_LIMITS.inputBytes &&
+      Buffer.byteLength(JSON.stringify(compiled.schema)) <= DECISION_LIMITS.schemaBytes
+    );
+  };
+  let offered = prepared.offered;
+  // The higher-decision wrapper escapes the context and adds its own questions.
+  // Fit optional actions against that complete consumer, preserving all personal
+  // evidence and mandatory busy choices rather than lifting either byte limit.
+  // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
+  if (prepared.choiceCoverage === 'optional' && !fits(offered)) {
+    let low = 0,
+      high = offered.length;
+    while (low < high) {
+      const count = Math.ceil((low + high) / 2);
+      if (fits(prepared.offered.slice(0, count))) low = count;
+      else high = count - 1;
+    }
+    offered = prepared.offered.slice(0, low);
+  }
+  const input = inputFor(offered);
+  prepareDecisionTask(input.tasks, input.context, input.instructions);
+  return {
+    ...input,
     bindingDigest: digest({ binding: prepared.binding, validity }),
     sourceTime,
     current,
@@ -250,6 +307,7 @@ export async function prepareReconsideration(
               prepared.binding.evidenceIds,
               prepared.binding.knowledgeReferences,
               appraisal?.bindings,
+              service.nativeExecutionPermissions,
             );
           },
           undefined,

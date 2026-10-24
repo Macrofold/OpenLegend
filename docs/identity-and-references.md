@@ -16,6 +16,16 @@ The application allocates durable identities; generated prose cannot create or r
 
 Application-assigned or authored entity identities can coexist with later native allocations from the world's saved number sequence. A sequence counter alone does not prove the proposed key is free: an initial possession can already be `item-1`. Entity creation must use the existing allocator to probe its actual entity dictionary with constant-time key membership and advance the saved sequence deterministically until that owner has a free key. At trusted authored entity admission, also advance that same saved sequence past a supplied canonical native-looking numeric suffix before the entity can become cold history. Otherwise a consumed `item-1000` can leave the active dictionary before later allocation reaches its number. Preserve the original ID, references and RNG; only the counter advances, once per admitted key. Nonnumeric or noncanonical spellings, and numbers the safe allocator cannot emit, need no number reservation. These operations apply to the entity owner, not every event, memory, action or historical record that happens to use the same text. Do not scan retained history, add a tombstone registry or impose a universal ID namespace. [Fresh-opening construction](worlds/base/playable-openings.md#fresh-construction) records the concrete consumer; restoration still follows the current saved-reference contract above.
 
+Deliberately restoring an earlier gameplay checkpoint preserves the greater of
+its saved allocation counter and the current world's already-issued number range.
+Operational grants and receipts survive gameplay rewind; a new native item must
+not reuse an identity they already reference. Apply this bound before any native
+reconciliation of the restored candidate, and refuse an unsafe lower-counter
+installation at the repository boundary. Ordinary cold reopening uses its stored
+counter. No historical scan, additional namespace or tombstone registry is needed.
+Existing restored identities and the saved random state remain intact; newly
+allocated IDs after rewind reflect the already-issued range.
+
 ## Actor context
 
 Current narrative context uses English. Its References section identifies permitted entities with observer-scoped opaque handles and permitted labels, not raw stored entity IDs. It also binds self/trigger relationships and supplies current positions only where the actor is allowed to perceive them. Unrecognized sources receive generic labels; historical awareness must not reveal their current location or identify a new encounter without supported recognition. Offered action IDs are scoped to the prepared decision, not permanent capabilities.

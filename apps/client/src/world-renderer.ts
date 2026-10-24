@@ -13,8 +13,10 @@ export interface SceneCallbacks {
   select(entity: EntityView | null, at?: ScreenPoint, ground?: SurfacePoint): void;
   move(position: SurfacePoint): void;
   target(entity: EntityView): void;
-  primaryAction(entity: EntityView): void;
-  hover(entity: EntityView | null, at: ScreenPoint): void;
+  beginPrimaryAction(entity: EntityView): string | null;
+  commitPrimaryAction(gestureId: string, entity: EntityView): void;
+  cancelPrimaryAction(): void;
+  hover(entity: EntityView | null, at: ScreenPoint, primary: boolean): void;
   selectionDenied(message: string): void;
   cameraChanged?(state: CameraState): void;
 }
@@ -64,6 +66,8 @@ export interface WorldRenderer {
   setCaptionOptions(options: SpeechCaptionOptions): void;
   resetTransientCaptions(): void;
   setView(view: GameView): void;
+  /** Select an already server-observed subject, including a named HUD entry.
+   * Camera picking and highlight visibility retain their own presentation limits. */
   select(id: string | null): boolean;
   center(): void;
   setZoom(delta: number): void;

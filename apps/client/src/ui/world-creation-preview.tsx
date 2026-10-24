@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import type { WorldCreationPreview } from '@open-legend/protocol';
+import { formatDisplayNumber } from '@open-legend/language';
 import './world-creation.css';
 
 /** This is authored setup, never a projection or command target in the source world. */
@@ -40,15 +41,16 @@ export function WorldCreationPreviewView({ preview }: { preview: WorldCreationPr
           </g>
         ))}
       </svg>
-      <p className="ol-caption">Top view. Exact positions and height are included below.</p>
+      <p className="ol-caption">Top view. Positions and heights are listed below.</p>
       <ol className="ol-world-creation-entries">
         {preview.entries.map((entry) => (
           <li key={entry.id}>
             <strong>{entry.label}</strong>
             <p>{entry.description}</p>
             <p className="ol-caption">
-              Position ({entry.position.x}, {entry.position.y}, {entry.position.z})
-              {entry.quantity !== undefined && ` · Quantity ${entry.quantity}`}
+              Position ({formatDisplayNumber(entry.position.x)},{' '}
+              {formatDisplayNumber(entry.position.y)}, {formatDisplayNumber(entry.position.z)}) m
+              {entry.quantity !== undefined && ` · Quantity ${formatDisplayNumber(entry.quantity)}`}
             </p>
           </li>
         ))}

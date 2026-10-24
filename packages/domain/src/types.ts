@@ -5,17 +5,19 @@ import type { SurfacePoint, SpatialMap, WorldPoint } from '@open-legend/spatial'
 export type Position = WorldPoint;
 export type Terrain = import('@open-legend/spatial').Terrain;
 export interface WorldMap extends SpatialMap {}
-export type MaterialProperty =
-  | 'fiber'
-  | 'binding'
-  | 'flexible'
-  | 'rigid'
-  | 'shaft'
-  | 'pouch'
-  | 'point'
-  | 'projectile'
-  | 'food'
-  | 'fuel';
+export const MATERIAL_PROPERTIES = [
+  'fiber',
+  'binding',
+  'flexible',
+  'rigid',
+  'shaft',
+  'pouch',
+  'point',
+  'projectile',
+  'food',
+  'fuel',
+] as const;
+export type MaterialProperty = (typeof MATERIAL_PROPERTIES)[number];
 export interface Launcher {
   mechanism: 'swing' | 'flex';
   ammunitionKind: 'stone' | 'arrow';
@@ -35,6 +37,8 @@ export interface ItemDefinition extends Named {
   gatherLabel?: string;
   mechanismFields?: Record<string, Record<string, number>>;
   assemblyMaterial?: import('./assembly-types.js').AssemblyMaterial;
+  /** Exact input provenance can be retained before a material becomes a part. */
+  tracksMaterialOrigins?: true;
   /** Authored labels project existing components; they never duplicate component values. */
   characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
@@ -45,7 +49,10 @@ export interface ItemDefinition extends Named {
   gatheringTool?: { resourceId: string; quantity: number };
   fishingTool?: { kind: string };
   packingLoad?: number;
+  /** Authored finite stock dimensions; no general item physics is inferred. */
+  stockShape?: { usableLengthMeters: number };
   container?: { capacity: number; maximumDepth: number };
+  contentsExposure?: { profile: import('./world-modules.js').DefinitionPin };
   id: string;
   version: number;
   description: string;
@@ -110,25 +117,54 @@ export interface AuthoredRecipeProvenance {
   source: 'authored-world';
   profile: { id: string; version: number };
 }
+/** Trusted authored conversion, never an option in player-generated family JSON. */
+export interface FixedTransformDefinition {
+  id: string;
+  version: number;
+  name: string;
+  description: string;
+  workSeconds: number;
+  inputs: RecipeInput[];
+  retainedTools: Array<{ role: string; quantity: number; allowedDefinitionIds: string[] }>;
+  outputs: Array<{ port: string; definitionId: string; quantity: number }>;
+}
 export interface RecipeDefinition {
   name: string;
   description: string;
   inputs: RecipeInput[];
   workSeconds: number;
-  output: { name: string; description: string };
-  sourceCandidate: RecipeCandidate;
-  familyPin: import('./world-modules.js').DefinitionPin;
+  /** Ordered physical results; an output's meaning includes its exact definition. */
+  outputs: Array<{
+    port: string;
+    definition: import('./world-modules.js').DefinitionPin;
+    quantity: number;
+  }>;
+  source:
+    | {
+        kind: 'family';
+        candidate: RecipeCandidate;
+        familyPin: import('./world-modules.js').DefinitionPin;
+      }
+    | {
+        kind: 'fixed-transform';
+        definition: FixedTransformDefinition;
+        implementationPin: import('./world-modules.js').DefinitionPin;
+      };
+  retainedTools: Array<{
+    role: string;
+    quantity: number;
+    allowedDefinitions: import('./world-modules.js').DefinitionPin[];
+  }>;
   dependencyReferences: import('./invention-families.js').RecipeDependencyReference[];
   facts: import('./invention-families.js').RecipeFact[];
   id: string;
   version: 1;
   digest: string;
-  outputDefinitionId: string;
   admittedAt: number;
   provenance: DeclarationProvenance | AuthoredRecipeProvenance;
 }
-export type NativePreparation = 'fiber' | 'cord';
 export type ActionType =
+  | 'feed'
   | 'aim'
   | 'shoot-once'
   | 'guard'
@@ -138,7 +174,6 @@ export type ActionType =
   | 'move'
   | 'evade'
   | 'gather'
-  | 'prepare'
   | 'craft'
   | 'hunt'
   | 'practice-shot'
@@ -150,8 +185,17 @@ export type ActionType =
   | 'treat-scar'
   | 'replenish'
   | 'tend-fire'
-  | 'assemble';
+  | 'place-hearth'
+  | 'assemble'
+  | 'impact-boundary'
+  | 'operate-gate';
 export interface Action {
+  feeding?: import('./native-feeding.js').NativeFeedingBinding;
+  gathering?: import('./gathering.js').GatheringBinding;
+  nativeLocomotion?: import('./native-response.js').NativeLocomotion;
+  /** Exact personal cue receipts for this committed activity, never target authority. */
+  attackObservers?: Record<string, import('./combat-encounters.js').AttackObservationReceipt>;
+  cooperation?: import('./cooperation.js').CooperationPurposeBinding;
   combatHelpId?: string;
   evasion?: import('./evasion.js').EvasionState;
   ranged?: import('./ranged.js').AimState;
@@ -159,19 +203,33 @@ export interface Action {
   rangedPolicyPin?: import('./world-modules.js').DefinitionPin;
   coachingEpisodeId?: string;
   assemblyPhase?: import('./assembly-types.js').AssemblyPhase;
+  /** Required host preparation holds this native action; no installed part or
+   * parallel movement path is saved. Answers are rebuilt after restoration. */
+  assemblyExitPending?: 'admission' | 'commit';
+  gateWork?: import('./boundary-types.js').GateWork;
+  boundaryImpact?: import('./boundary-types.js').BoundaryImpactWork;
+  hearthWork?: import('./hearths.js').HearthWork;
   assemblyCorner?: number;
   constructionGrant?: { id: string; revision: number };
+  materialPermission?: import('./construction-permissions.js').MaterialPermissionBinding;
   materialOriginIds?: string[];
+  materialContributionIds?: string[];
   requiresLethalReview?: boolean;
-  /** A physical life, rather than the continuing identity, is an attack's target. */
+  /** The selected physical participant of an attack or follow, independent of continuing identity. */
   targetLife?: number;
   lethalPermission?: import('./combat-consent.js').LethalPermission;
   scarId?: string;
   /** The manufacturing meaning chosen when work started, independent of later authoring. */
   recipePin?: import('./world-modules.js').DefinitionPin;
+  manufactureTools?: import('./manufacture.js').ManufactureToolBinding[];
   foodPreparation?: import('./food-preparation.js').FoodPreparationBinding;
   fishing?: import('./finite-casts.js').CastBinding;
   strikePhase?: 'windup' | 'recovery';
+  strikeMotion?: {
+    locomotion: import('./native-response.js').NativeLocomotion;
+    releaseAt: number;
+    observed: { point: SurfacePoint; at: number };
+  };
   strikeOutcome?: 'hit' | 'miss';
   guard?: import('./contact-defense.js').GuardState;
   follow?: {
@@ -191,6 +249,8 @@ export interface Action {
     pursuing?: boolean;
     /** Absolute simulation deadline; reaching it completes the activity. */
     until?: number;
+    /** Finite proximity movement ends on actual arrival, rather than holding. */
+    complete?: true;
   };
   id: string;
   type: ActionType;
@@ -213,7 +273,6 @@ export interface Action {
   /** Exact units a pickup moves from its one selected stack. */
   quantity?: number;
   recipeId?: string;
-  preparation?: NativePreparation;
   itemId?: string;
   weaponItemId?: string;
   ammoItemId?: string;
@@ -230,6 +289,8 @@ export interface CharacterTrait {
 }
 
 export interface ActorComponent {
+  /** Personally acquired short-lived danger and own offense; never public actor data. */
+  encounters?: import('./combat-encounters.js').PersonalEncounters;
   practice?: Record<string, import('./practical-competence.js').PracticeProgress>;
   coachingEpisodeId?: string;
   /** Authored natural actions for bodies that do not use the manual-work family. */
@@ -243,8 +304,6 @@ export interface ActorComponent {
   combatReadyAt?: number;
   evasionReadyAt?: number;
   inventoryInspection?: import('./inventory-inspection.js').InventoryInspection;
-  /** Explicitly disclosed offer terms, not a live view of another person's inventory. */
-  knownTradeLots?: Record<string, Record<string, import('./handover.js').KnownTradeLot>>;
   participation?: import('./participation-state.js').ParticipationState;
   senses?: string[];
   /** Receiver-private provenance, never part of a contact projection. */
@@ -266,6 +325,7 @@ export interface ActorComponent {
     memory: boolean;
     innerWorld: boolean;
     speech: boolean;
+    language: boolean;
   };
   health: number;
   alive: boolean;
@@ -276,16 +336,7 @@ export interface ActorComponent {
   action: Action | null;
   planGeneration: number;
 }
-export interface AnimalComponent {
-  threatPosition: Position | null;
-  threatId: string | null;
-  danger: number;
-  escapeHeading: number | null;
-  calmRate: number;
-  reviewAt: number;
-  /** Exactly one clock mode: waiting while eligible, paused while another activity owns movement. */
-  wander: { dueAt: number } | { remainingSeconds: number; running?: true };
-}
+export type AnimalComponent = import('./native-response.js').NativeResponseState;
 export interface ResourceComponent {
   cast?: import('./finite-casts.js').CastSource;
   revision?: number;
@@ -307,6 +358,8 @@ export interface HeatComponent {
   lit: boolean;
 }
 export interface Entity extends Named {
+  sensoryProgress?: import('./perception-timing.js').SensoryProgress;
+  hearth?: import('./hearths.js').PlacedHearth;
   /** Authored appearance hint only; never evidence of capability or identity. */
   icon?: string;
   practiceTarget?: { attributeId: string };
@@ -385,7 +438,6 @@ export interface WorldEvent {
   /** Committed occurrence origin, never recomputed from a source's later position. */
   origin?: Position;
   order?: number;
-  conversationId?: string;
   id: string;
   sequence: number;
   at: number;
@@ -419,8 +471,19 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  hearthDefinitions?: Record<string, import('./hearths.js').HearthDefinition>;
+  socialOfferPolicy?: import('./social-offer-policy.js').SocialOfferPolicy;
+  workBatchPolicy?: import('./work-batches.js').WorkBatchPolicy;
+  gatheringPolicy: import('./gathering.js').GatheringPolicy | null;
   /** Optional authored public wording; unnamed worlds use generic interface headings. */
-  presentation?: { worldName: string; locationName: string; timeLabel: string };
+  presentation?: {
+    worldName: string;
+    locationName: string;
+    timeLabel: string;
+    introduction?: string;
+    daylight?: { startTime: string; endTime: string; noonElevationDegrees: number };
+    crafting?: import('./craft-catalogue.js').CraftCataloguePolicy;
+  };
   projectiles?: Record<string, import('./ranged.js').ProjectileFlight>;
   places: Record<string, import('./places.js').PlaceDefinition>;
   /** Currently exposed definition revisions; derived perception, never remembered knowledge. */
@@ -428,6 +491,11 @@ export interface WorldState {
   coachingEpisodes?: Record<string, import('./coaching.js').CoachingEpisode>;
   assemblyFamilies?: Record<string, import('./assembly-types.js').AssemblyFamily>;
   assemblyGeometryRevision?: number;
+  contentsExposureProfiles?: Record<
+    string,
+    import('./contents-exposure.js').ContentsExposureProfile
+  >;
+  dailyRainDefinitions?: Record<string, import('./assembly-types.js').DailyRainDefinition>;
   finiteRain?: import('./assembly-types.js').FiniteRain;
   actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
@@ -443,6 +511,7 @@ export interface WorldState {
   resourceReservations?: Record<string, import('./resource-claims.js').ResourceReservation>;
   /** Live exact consent, separate from each participant's ordinary movement plan. */
   outings?: Record<string, import('./outings.js').Outing>;
+  socialCompacts?: Record<string, import('./social-compacts.js').SocialCompact>;
   /** Pending offers only, bounded per offerer; saved with the world settings record. */
   itemOffers?: Record<string, import('./handover.js').ItemOffer>;
   knowledgeRevisions?: Record<string, number>;
@@ -462,12 +531,11 @@ export interface WorldState {
   moduleManifest: import('./world-modules.js').WorldModuleManifest;
   storyPolicy?: import('./story-selection.js').StoryPolicy;
   storyPolicyRevision?: number;
-  socialPolicy?: { conversationInactivitySeconds: number; notableThreshold: number };
+  socialPolicy?: { notableThreshold: number };
   constructionProfile?: import('./assembly-types.js').ConstructionProfile;
   appraisals?: Record<string, Record<string, import('./appraisals.js').Appraisal>>;
   appraisalProcesses?: Record<string, import('./appraisals.js').AppraisalProcess>;
   familyTree?: import('./worlds/base/family.js').FamilyTree;
-  conversations?: import('./conversations.js').ConversationState;
   responseReceipts?: Record<string, import('./response.js').ResponseReceipt>;
   experience?: import('./experience.js').ExperienceState;
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
@@ -486,6 +554,13 @@ export interface WorldState {
   map: WorldMap;
   flightRoutes: Record<string, import('./spatial-state.js').FlightRoute>;
   nativeStrikes?: Record<string, import('./strikes.js').StrikeDefinition>;
+  /** Exact installed native-family definitions, including referenced authored revisions. */
+  supplyOpportunities?: Record<
+    string,
+    import('./supply-opportunities.js').SupplyOpportunityProfile
+  >;
+  nativeForagingProfiles?: Record<string, import('./native-foraging.js').NativeForagingProfile>;
+  nativeResponseProfiles?: Record<string, import('./native-response.js').NativeResponseProfile>;
   entities: import('./entity-collection.js').EntityCollection;
   objectState: { revision: number };
   objectLineage?: Record<string, import('./objects.js').ObjectLineage>;
@@ -515,11 +590,13 @@ export interface WorldState {
 }
 interface Envelope {
   /** Exact revocable purpose; trusted callers bind this from current consent. */
+  cooperation?: import('./cooperation.js').CooperationPurposeBinding;
   combatHelpId?: string;
   /** Trusted caller classification; never accepted from a public command body. */
   humanInitiated?: true;
   /** Selected meaning only; never native effect authority. */
   purpose?: string;
+  chosenPurpose?: import('./action-capabilities.js').ResponsePurposeBinding;
   id: string;
   actorId: string;
 }
@@ -533,6 +610,11 @@ export interface ExactInventorySource {
 export type Command = Envelope &
   (
     | import('./outings.js').OutingCommand
+    | {
+        type: 'encounter-preference';
+        operation: 'speak' | 'stop';
+        binding: import('./combat-encounters.js').EncounterPreferenceBinding;
+      }
     | { type: 'practice-shot'; targetId: string; weaponItemId?: string; ammoItemId?: string }
     | {
         type: 'coaching';
@@ -542,6 +624,15 @@ export type Command = Envelope &
         episodeId?: string;
       }
     | ({ type: 'assemble' } & import('./assembly-types.js').AssemblyPhase)
+    | ({ type: 'operate-gate' } & import('./boundary-types.js').GateUseIntent)
+    | ({ type: 'impact-boundary' } & import('./boundary-types.js').BoundaryImpactIntent)
+    | {
+        type: 'place-hearth';
+        definitionId: string;
+        definitionVersion: number;
+        definitionDigest: string;
+        destination: SurfacePoint;
+      }
     | {
         type: 'activity';
         methodId: string;
@@ -558,15 +649,10 @@ export type Command = Envelope &
         bindings: Record<string, import('./action-experience.js').ActivityBinding>;
         mode: 'enqueue' | 'replace' | 'interrupt';
         control?: import('./activity-execution.js').ChosenActivityControl;
+        selectionQuantity?: import('./action-experience.js').ActivityQuantity;
         /** Things the request is about that no step names (e.g. where a walk goes). Used
          * only for target matching and encounter pins; grants nothing. */
         subjects?: string[];
-      }
-    | {
-        type: 'conversation';
-        operation: 'join' | 'leave';
-        conversationId: string;
-        generation: number;
       }
     /** quantity picks up exactly that many from one divisible stack (itemId required). */
     | { type: 'pickup'; targetId: string; itemId?: string; quantity?: number }
@@ -603,11 +689,16 @@ export type Command = Envelope &
         relation?: 'behind' | 'beside' | 'left' | 'right';
         onLost?: 'last-seen';
         until?: number;
+        complete?: true;
       }
-    | { type: 'gather'; targetId: string; itemId?: string }
+    | {
+        type: 'gather';
+        targetId: string;
+        itemId?: string;
+        gatheringMode?: 'bare-hands' | 'carried-tool';
+      }
     | { type: 'harvest'; targetId: string }
-    | { type: 'prepare'; preparation: NativePreparation }
-    | { type: 'craft'; recipeId: string }
+    | { type: 'craft'; recipeId: string; tools?: Record<string, string> }
     | {
         type: 'learn-record';
         itemId: string;
@@ -615,8 +706,31 @@ export type Command = Envelope &
         placementRevision: number;
         recordPin: import('./world-modules.js').DefinitionPin;
       }
+    | { type: 'feed'; targetId: string; itemId?: string }
     | { type: 'replenish'; targetId: string; attributeId: string }
-    | { type: 'equip' | 'eat'; itemId: string }
+    | { type: 'equip'; itemId: string }
+    | ({ type: 'eat' } & (
+        | {
+            itemId: string;
+            sourceId?: never;
+            definitionId?: never;
+            definitionVersion?: never;
+            definitionDigest?: never;
+            bodyPolicyId?: never;
+            bodyPolicyVersion?: never;
+            bodyPolicyDigest?: never;
+          }
+        | {
+            itemId?: never;
+            sourceId: string;
+            definitionId: string;
+            definitionVersion: number;
+            definitionDigest: string;
+            bodyPolicyId: string;
+            bodyPolicyVersion: number;
+            bodyPolicyDigest: string;
+          }
+      ))
     | { type: 'guard'; itemId: string; targetId?: string; facing?: number; autoEquip?: boolean }
     | {
         type: 'strike';
@@ -661,6 +775,7 @@ export type Command = Envelope &
         expectedContentsRevision?: number;
         targetRevision?: number;
         requested?: import('./handover.js').RequestedLot;
+        constructionUse?: import('./construction-contributions.js').ConstructionContributionTerms;
         offerId?: string;
         expectedOfferRevision?: number;
       }
@@ -670,6 +785,13 @@ export type Command = Envelope &
         targetId: string;
         offerId: string;
         expectedOfferRevision: number;
+      }
+    | {
+        type: 'handover';
+        operation: 'withdraw-use';
+        targetId: string;
+        permissionId: string;
+        expectedRevision: number;
       }
     | {
         type: 'tend-fire';
@@ -701,13 +823,13 @@ export type Command = Envelope &
       }
     | { type: 'inspect-activities'; after: number; methodAfter?: number }
     | { type: 'cancel'; expectedActionId?: string }
+    | { type: 'resume-work'; planId: string; expectedRevision: number }
     | { type: 'recover' }
     | { type: 'respawn' }
     | {
         type: 'say';
         text: string;
         targetId?: string;
-        intendedRecipientId?: string;
         selfIntroduction?: string;
         volume?: import('./acoustics.js').SpeechVolume;
       }
@@ -720,6 +842,28 @@ export interface Transition {
   events: WorldEvent[];
   outcome: Outcome;
   invalidatedMemoryIds?: Record<string, string[]>;
+  /** Private candidate facts for same-transaction operational authority. These
+   * propose no permission and never enter player/model projections. */
+  materialAcquisitions?: MaterialAcquisitionFact[];
+  constructionEffects?: import('./construction-permissions.js').ConstructionPermissionEffect[];
+  constructionUpdates?: import('./construction-permissions.js').ConstructionPermissionUpdate[];
+  constructionCreations?: import('./assembly-types.js').ConstructionPermission[];
+}
+
+export interface MaterialAcquisitionFact {
+  actionId: string;
+  actorId: string;
+  physicalLife: number;
+  at: number;
+  operation: 'gather' | 'craft';
+  sourceId?: string;
+  outputs: Array<{
+    port: string;
+    itemId: string;
+    definition: import('./world-modules.js').DefinitionPin;
+    quantity: number;
+    originIds: string[];
+  }>;
 }
 
 export type GodSpawnType =
@@ -777,6 +921,7 @@ export interface GodPersonEdit {
 export interface ActorObservation {
   worldId: string;
   at: number;
+  gatheringPolicy: import('./gathering.js').GatheringPolicy | null;
   actor: Entity;
   visibleEntities: Entity[];
   contacts: import('./perception.js').ContactView[];

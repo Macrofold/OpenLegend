@@ -1,0 +1,172 @@
+import {
+  decodeJudge,
+  validateJudgmentSize,
+  validateQuestions,
+  InvalidData,
+  type JudgeValue,
+  type TypedQuestionMap,
+} from '@open-legend/ai';
+import type { compilePreparedResponses, PreparedResponseProfile } from '@open-legend/domain';
+import { ContextBudgetError } from './context.js';
+import { offerPreparedActions, type prepareDecision } from './decision-context.js';
+
+type Prepared = Awaited<ReturnType<typeof prepareDecision>>;
+type Catalogue = NonNullable<ReturnType<typeof compilePreparedResponses>>;
+export type PurposeRelevance = Record<string, 'uncertain' | 'relevant' | 'irrelevant'>;
+
+/** Keep complete required questions or refuse before dispatch. Both transport
+ * adapters use these existing limits and the same offered-key Choice decoder. */
+function checkedRequest(state: Record<string, unknown>, questions: TypedQuestionMap) {
+  validateQuestions(questions);
+  try {
+    validateJudgmentSize(state, questions);
+  } catch (error) {
+    if (!(error instanceof InvalidData)) throw error;
+    throw new ContextBudgetError(
+      `Complete supplied-response judgment cannot fit: ${error.code}; ${JSON.stringify({ state, questions }).length} serialized characters.`,
+    );
+  }
+  return { state, questions };
+}
+
+function requestState(prepared: Prepared, offered?: { id: string; description: string }[]) {
+  return {
+    decisionContext: Object.fromEntries(
+      Object.entries(prepared.context).filter(
+        // This closed strategy selects exact supplied invocations. Freeform
+        // activity forms belong to the independent generated-response route;
+        // current agreements and every offered physical choice remain here.
+        ([key]) =>
+          !['knowledgeInstructions', 'navigation', 'planOffers', 'activityRequests'].includes(key),
+      ),
+    ),
+    // One full authored rubric is shared, rather than copied into every independent
+    // question. Default Noul yes/no still judges these exact supplied meanings.
+    personalChoiceRubric: prepared.actionGuidance,
+    ...(offered
+      ? { choices: Object.fromEntries(offered.map((choice) => [choice.id, choice.description])) }
+      : {}),
+  };
+}
+
+export function preparedResponseRelevanceRequest(
+  prepared: Prepared,
+  catalogue: Catalogue,
+  profile: PreparedResponseProfile,
+  appraisals?: { context: unknown; questions: TypedQuestionMap },
+) {
+  if (prepared.choiceCoverage !== 'complete-required')
+    throw new Error('This strategy requires complete supplied choices.');
+  const descriptions = new Map<string, string>();
+  for (const candidate of prepared.actionCandidates)
+    if (candidate.purposeHandle && candidate.purposeDescription)
+      descriptions.set(candidate.purposeHandle, candidate.purposeDescription);
+  const questions: TypedQuestionMap = {};
+  for (const [index, purpose] of catalogue.purposes.entries()) {
+    const description = descriptions.get(`p${index}`);
+    if (!description) throw new Error('The supplied purpose has no permitted descriptive meaning.');
+    questions[`p${index}`] = {
+      type: 'choice',
+      instructions: `${profile.relevance.question} Purpose p${index}: ${description} Consider its exact bound people and available first actions in this same supplied situation.`,
+      criteria: {
+        // Insertion and canonical order agree. Uncertainty wins a tie containing it;
+        // relevant wins a relevant/irrelevant tie above uncertainty.
+        a_uncertain: profile.relevance.uncertain,
+        b_relevant: profile.relevance.relevant,
+        c_irrelevant: profile.relevance.irrelevant,
+      },
+    };
+  }
+  if (appraisals)
+    for (const [handle, question] of Object.entries(appraisals.questions)) {
+      if (Object.hasOwn(questions, handle))
+        throw new Error('An appraisal question reused a purpose handle.');
+      questions[handle] = question;
+    }
+  return checkedRequest(
+    {
+      ...requestState(
+        prepared,
+        prepared.actionCandidates.map((candidate, index) => ({
+          id: `a${index}`,
+          description: candidate.description,
+        })),
+      ),
+      ...(appraisals ? { appraisals: appraisals.context } : {}),
+    },
+    questions,
+  );
+}
+
+export function preparedResponseRelevance(
+  value: JudgeValue,
+  questions: TypedQuestionMap,
+  catalogue: Catalogue,
+): PurposeRelevance {
+  // Reuse offered-score selection, including partial-score refusal and exact ties;
+  // a claimed choice label never substitutes for the supplied finite scores.
+  const decoded = decodeJudge(
+    value,
+    Object.fromEntries(
+      catalogue.purposes.map((_, index) => [`p${index}`, questions[`p${index}`]!]),
+    ),
+  );
+  return Object.fromEntries(
+    catalogue.purposes.map((_, index) => {
+      const handle = `p${index}`,
+        answer = decoded.answers[handle];
+      if (answer?.type !== 'choice') throw new InvalidData('invalid_purpose_relevance');
+      return [
+        handle,
+        answer.choice === 'a_uncertain'
+          ? 'uncertain'
+          : answer.choice === 'b_relevant'
+            ? 'relevant'
+            : 'irrelevant',
+      ];
+    }),
+  );
+}
+
+export function preparedResponseChoiceRequest(prepared: Prepared, relevance: PurposeRelevance) {
+  const retained = prepared.actionCandidates.filter(
+    (candidate) =>
+      !candidate.purposeHandle ||
+      relevance[candidate.purposeHandle] === 'relevant' ||
+      relevance[candidate.purposeHandle] === 'uncertain',
+  );
+  const selected = offerPreparedActions(
+    {
+      ...prepared,
+      context: { ...prepared.context, purposeRelevance: relevance },
+    },
+    retained,
+    'Supplied purpose relevance; uncertain purposes retained',
+  );
+  const questions: TypedQuestionMap = Object.fromEntries(
+    selected.offered.map(({ id }, index) => [
+      id,
+      {
+        type: 'noul' as const,
+        // The actual purpose and action belong in each question, rather than two
+        // layers of opaque references. Shared tables still retain full meanings,
+        // control/cost facts and exact bindings; no offered alternative is removed.
+        instructions: (() => {
+          const candidate = retained[index]!;
+          if (
+            candidate.purpose &&
+            (!candidate.firstActionDescription || !candidate.purposeDescription)
+          )
+            throw new Error('The supplied first action has no descriptive meaning.');
+          return candidate.purpose
+            ? `${candidate.id}: ${candidate.purposeDescription}. First action: ${candidate.firstActionDescription}. Would I choose this now?`
+            : `${candidate.description} Would I choose this now?`;
+        })(),
+      },
+    ]),
+  );
+  return {
+    prepared: selected,
+    request: checkedRequest(requestState(selected), questions),
+  };
+}

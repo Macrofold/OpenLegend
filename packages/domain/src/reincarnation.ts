@@ -5,7 +5,6 @@ import { bodyPolicy, bodyNarration } from './body-policy.js';
 import { validNameTemplate } from '@open-legend/language';
 import { nextEntityId, nextRandom } from './data.js';
 import { seedAgency, cancelPlan, discardSuspended } from './agency.js';
-import { leaveConversation } from './conversations.js';
 import { recordSemanticChange } from './dependencies.js';
 import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
 import { emit, outcome } from './events.js';
@@ -87,7 +86,6 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
   if (actor.action) releaseInvocationResources(world, actor.action.id);
   cancelPlan(world, actor, entity.id);
   discardSuspended(world, actor, entity.id);
-  leaveConversation(world, entity.id, 'disconnect');
   actor.action = null;
   for (const item of equippedItems(world, entity.id)) unequipLot(world, entity.id, item.id);
   delete actor.combatReadyAt;
@@ -105,7 +103,13 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
     actor: {
       controller: 'native',
       species: actor.species,
-      capabilities: { cognition: false, memory: false, innerWorld: false, speech: false },
+      capabilities: {
+        cognition: false,
+        memory: false,
+        innerWorld: false,
+        speech: false,
+        language: false,
+      },
       body: {
         ...body,
         conditions: { ...body.conditions },
@@ -198,6 +202,18 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
     },
     'private',
   );
+}
+
+/** Resolve physical custody, not observer recognition. A captured old body must
+ * follow death's exact corpse link, never a replacement life on the same person. */
+export function physicalBodyForLife(
+  world: WorldState,
+  entity: Entity,
+  life: number,
+): Entity | undefined {
+  if (!entity.actor || (entity.actor.physicalLife ?? 0) !== life) return undefined;
+  const corpseId = entity.actor.pendingDeath?.corpseId;
+  return corpseId ? entityGet(world.entities, corpseId) : entity;
 }
 
 function spawnCandidates(

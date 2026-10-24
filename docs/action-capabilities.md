@@ -170,7 +170,9 @@ Retrieve metadata from an actor-scoped capability view using installed family/in
 
 ### Prepared choices and prospective work transitions
 
-**Accepted target; implementation and qualification remain tracked.** A prepared choice preserves what the initiator is choosing, what can begin, and what that choice means for existing work. It is one request's read-only preparation under this capability contract, not another goal store, plan, queue or permission. [Agency response preparation](../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) owns operation composition and the admitted decision job's selected strategy, lifecycle and accounting.
+**Implemented preparation; complete qualification remains tracked.** Native prospective work preparation and ordinary response-plan admission share pause refusal, exact resource release and subsequent native prerequisites. Ordinary NPC preparation now keeps physical choices while busy, with work consequences and explained recovery; exact work bindings survive selection and response admission. Purpose/role/source bindings now reach selected native compositions, private action history and current-format validation. Complete required choice sets refuse overflow rather than trim, and cannot enter ordinary optional relevance/fallback. The installed threat catalogue/strategy and its remaining qualification stay [CTR05](maintainers/combat-and-threat-responses.md#ctr05--complete-choices-while-working) work. A prepared choice preserves what the initiator is choosing, what can begin, and what that choice means for existing work. It is one request's read-only preparation under this capability contract, not another goal store, plan, queue or permission. [Agency response preparation](../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) owns operation composition and the admitted decision job's selected strategy, lifecycle and accounting.
+
+Explicit return to paused work binds its exact saved plan ID/revision, checks the remaining first action before ending the intervention, and uses the existing resumption owner. Original outputs, attempt/debit ceilings and stopping limits survive. Refusal preserves the intervening and paused work. Ordinary Stop or replacement still discards paused work.
 
 Retain these meanings through discovery, selection, grounding and native response admission:
 
@@ -182,11 +184,28 @@ Retain these meanings through discovery, selection, grounding and native respons
 | Finite conditions | The selected completion, stopping, waiting and reconsideration conditions where the method needs them, including original deadlines and permitted observations. An instantaneous choice need not invent continuing work. |
 | Dependencies      | The relevant actor/control, reference/recognition, selected definition, existing work and current mechanical dependencies retained by their owners for subsequent checks.                                                |
 
+The existing chosen-activity owner supports both counted resource care and finite physical work. Finite work retains its original simulation deadline, optional world-position distance boundary and exact currently visible participant lives through interruption and current-format restoration. A selected proximity stop may refer to one of those participants; it requires both the selected distance and a clear interaction path. Native travel predicts the first crossing along the actual piecewise routes, including two moving people and changes to that interaction path. No second mover is introduced. These controls do not supply a chosen purpose, an automatic attack or an unavailable child. Their threat-response consumers remain tracked below.
+
+Purpose roles and sources describe the chosen meaning; they do not create native
+targets or permission to read a hidden body. Exact physical targets and visible
+participant lives remain in their invocation and finite-control owners. A movement
+to a personally recorded point need not acquire a live target merely because its
+purpose mentions the person previously seen there.
+
 Purpose is optional. A human choosing an exact Gather offer or a native controller selecting a supported movement does not need generated intention prose, a new operational goal, or a relevance/choice API call. An autonomous character can choose a purpose whose means begin with that same invocation. Publishing a goal or other private change still requires the corresponding explicit agency operation. The selected strategy determines whether native selection, supplied-option assessment or genuine interpretation is needed; this contract does not prescribe a universal sequence of model calls.
 
 Interruption is a general prospective work transition. Prepare replacing gathering with cooking through the same owner that prepares replacing gathering with defense. Identify the exact active, queued or suspended work affected; whether its transition is allowed; committed progress and consumed inputs; retainable progress; released reservations/resources; and the resulting availability of the proposed next action. Checking only the unchanged initial inventory can incorrectly reject work whose authorized replacement releases a required resource. Preparation never cancels work, spends resources, consumes randomness, allocates durable work, or promises future admission. Do not temporarily stop and restart real work to obtain the answer. The [existing availability contract](#action-availability-and-temporary-execution) still owns any necessary isolated disposable evaluation and its qualification; it grants no committed effects. Revalidate actual dependencies and the supported transition at admission. Refusal preserves existing work unless an explicitly independent operation was actually accepted.
 
 Deduplicate semantic alternatives only when their invocation, optional purpose/subject, transition and finite conditions have the same meaning. Two motives beginning with one punch remain separate choices. Share actor/tool prerequisites, geometry, material assignment and other physical preparation only within the same synchronous unchanged-world read unless the existing owner proves broader dependency-correct reuse. Retain immutable descriptions and exact bindings across waits; recompute expired prerequisite preparation and revalidate current admission.
+
+The shared actor combat-means query prepares native/equippable strikes, supported
+launchers, compatible available ammunition and shields before target expansion.
+It uses native equipment and reservation checks with the caller's exact prospective
+resource view. Ammunition stays grouped by admitted kind until actual targets are
+offered. Each compatible exact lot remains a distinct choice, including different
+admitted damage profiles; a first lot cannot hide the others. This read grants no
+permission, releases no hold and promises no future action. Exact native admission
+still proves each selected combination.
 
 The requesting consumer declares whether its finite supplied options are **complete-required** or **optional suggestions**. Admit the required set's size and work before provider dispatch, rejecting provably excessive construction before needless expansion. Preserve the complete-required set or report preparation as incomplete/refused; byte fitting, ranking or ordinary retrieval must not silently delete its members. This does not require enumerating every possible world action or argument. Optional suggestions may retain their documented selection policy, while scoped capability discovery and unlisted attempts remain available. Carry the selected full binding through response admission; converting it back to a bare command must not discard the initiator's chosen meaning.
 

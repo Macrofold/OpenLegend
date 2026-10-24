@@ -1,3 +1,5 @@
+import { readOnlyDraftView } from './draft.js';
+import { isImmutableData } from './records.js';
 import { isDraft, original } from 'immer';
 import {
   objectIndexEntries,
@@ -7,12 +9,17 @@ import {
 } from './object-index.js';
 import type { Appraisal } from './appraisals.js';
 import type { WorldState } from './types.js';
+import type { DefinitionPin } from './world-modules.js';
 
-type Entry = { actorId: string; id: string; at?: number };
+type Entry = { actorId: string; id: string; scope: string; at?: number };
 interface Index {
   active?: ObjectIndexNode<string>;
   due?: ObjectIndexNode<Entry>;
   locations?: ObjectIndexNode<Entry>;
+  scoped?: ObjectIndexNode<string>;
+}
+function scopeKey(actorId: string, pin: DefinitionPin, targetId: string | null): string {
+  return `${JSON.stringify([actorId, pin.id, pin.version, pin.digest, targetId])}\0`;
 }
 const snapshots = new WeakMap<object, Index>();
 const drafts = new WeakMap<WorldState, Index>();
@@ -26,6 +33,7 @@ function add(index: Index, record: Appraisal): void {
   const previous = objectIndexGet(index.locations, record.id);
   if (previous) {
     index.active = objectIndexSet(index.active, `${previous.actorId}\0${record.id}`, undefined);
+    index.scoped = objectIndexSet(index.scoped, `${previous.scope}${record.id}`, undefined);
     if (previous.at !== undefined)
       index.due = objectIndexSet(index.due, dueKey(previous), undefined);
   }
@@ -34,9 +42,11 @@ function add(index: Index, record: Appraisal): void {
     next = {
       actorId: record.actorId,
       id: record.id,
+      scope: scopeKey(record.actorId, record.definitionPin, record.targetId),
       ...(record.nextAt !== undefined ? { at: record.nextAt } : {}),
     };
     index.active = objectIndexSet(index.active, `${record.actorId}\0${record.id}`, record.id);
+    index.scoped = objectIndexSet(index.scoped, `${next.scope}${record.id}`, record.id);
     if (next.at !== undefined) index.due = objectIndexSet(index.due, dueKey(next), next);
   }
   index.locations = objectIndexSet(index.locations, record.id, next);
@@ -79,6 +89,20 @@ export function* activeAppraisalIds(
     yield id;
   }
 }
+/** Exact owner/definition/subject membership, independent of retained history and
+ * the convenience page. Values and permission remain with the appraisal owner. */
+export function* scopedAppraisalIds(
+  world: WorldState,
+  actorId: string,
+  pin: DefinitionPin,
+  targetId: string | null,
+): Generator<string> {
+  const prefix = scopeKey(actorId, pin, targetId);
+  for (const [key, id] of objectIndexEntries(indexFor(world).scoped, prefix)) {
+    if (!key.startsWith(prefix)) break;
+    yield id;
+  }
+}
 export function nextDueAppraisal(world: WorldState): Entry | undefined {
   const first = objectIndexEntries(indexFor(world).due).next().value?.[1];
   return first && first.at! <= world.simTime ? first : undefined;
@@ -93,4 +117,21 @@ export function captureAppraisalIndex(world: WorldState): (result: WorldState) =
   return (result) => {
     if (pending && result.appraisals) snapshots.set(result.appraisals, pending);
   };
+}
+
+const processDeadlines = new WeakMap<object, number>();
+/** A process table changes only on enrolment/retirement or its own due occurrence.
+ * Reuse its numeric minimum between unrelated movement/need boundaries. */
+export function nextAppraisalProcessDeadline(world: WorldState): number {
+  const processes = readOnlyDraftView(world).appraisalProcesses;
+  if (!processes) return Infinity;
+  const values = readOnlyDraftView(processes),
+    stable = isImmutableData(values);
+  const cached = stable ? processDeadlines.get(values) : undefined;
+  if (cached !== undefined) return cached;
+  let next = Infinity;
+  for (const process of Object.values(values))
+    next = Math.min(next, readOnlyDraftView(process).nextAt);
+  if (stable) processDeadlines.set(values, next);
+  return next;
 }

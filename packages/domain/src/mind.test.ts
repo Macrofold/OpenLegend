@@ -1,10 +1,11 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from './entity-collection.js';
+import { bindNativeChoice } from './action-capabilities.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
 import { describe, it, expect } from 'vitest';
 import {
-  createWorld,
   executeCommand,
   advanceWorld,
   commitCognition,
@@ -19,7 +20,7 @@ import {
 import { appendMemory } from './events.js';
 
 function encounter() {
-  let world = createWorld(42);
+  let world = stockedCamp(42);
   world.paused = false;
   setSpatialPosition(
     world,
@@ -50,7 +51,7 @@ function setup() {
     evidenceIds: recall.entries.map((e) => e.id),
     entityIds: [NPC_ID, PLAYER_ID],
     expectedPlan: entityGet(world.entities, NPC_ID)!.actor!.planGeneration,
-    actions: { continue: null },
+    actions: { continue: bindNativeChoice(world, NPC_ID, null, 'continue') },
     restEpisode: null,
     bodyEligibility: bodyEligibilityRevision(world, entityGet(world.entities, NPC_ID)!),
   };
@@ -192,7 +193,12 @@ describe('fixture: bounded authored minds', () => {
   });
   it('rejects coupled invalid actions without committing a thought or mind', () => {
     const { world, binding, proposal } = setup();
-    binding.actions.bad = { id: 'bad', actorId: NPC_ID, type: 'gather', targetId: 'missing' };
+    binding.actions.bad = bindNativeChoice(
+      world,
+      NPC_ID,
+      { id: 'bad', actorId: NPC_ID, type: 'gather', targetId: 'missing' },
+      'replace',
+    );
     proposal.actionId = 'bad';
     const result = commitCognition(world, binding, proposal);
     expect(result.outcome.ok).toBe(false);
@@ -220,7 +226,7 @@ describe('fixture: bounded authored minds', () => {
     expect(mindFor(result.world, NPC_ID).lastDreamEpisode).toBe(binding.restEpisode);
   });
   it('records person encounters natively without repeated per-step records', () => {
-    let world = createWorld(4);
+    let world = stockedCamp(4);
     world.paused = false;
     setSpatialPosition(
       world,

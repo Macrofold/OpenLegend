@@ -1,3 +1,7 @@
+import { readOnlyDraftView } from './draft.js';
+import { assemblyShapes } from './assembly-geometry.js';
+import { canonicalJson, contentLabel } from './events.js';
+import { isImmutableData } from './records.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { chargeWork } from './work-budget.js';
@@ -9,15 +13,20 @@ import {
   BoundsIndex,
   canWalkSegment,
   clearSegment,
+  createSightProbe,
+  horizontalCone,
   distance3D,
   resolveSupport,
   soundTransmission,
   SPATIAL_LIMITS,
   type SurfacePoint,
+  type SightRay,
 } from '@open-legend/spatial';
 import {
   acousticExposure,
+  acousticExposureAtLevel,
   acousticReach,
+  acousticReachAtLevel,
   type AcousticExposure,
   SPEECH_VOLUMES,
   type SpeechVolume,
@@ -25,7 +34,6 @@ import {
 import { bodyProfile, spatialMap } from './spatial-state.js';
 import { current, isDraft } from 'immer';
 import { distance } from './spatial.js';
-import { hasMemory } from './living.js';
 import type { Entity, Position, WorldState } from './types.js';
 
 export { PERCEPTION_RULES } from './worlds/base/senses.js';
@@ -37,8 +45,19 @@ export const SENSE_IMPLEMENTATIONS = [
 ] as const;
 export type SenseImplementation = (typeof SENSE_IMPLEMENTATIONS)[number];
 export type SenseDefinition = { id: string; version: 1 } & (
-  | { implementation: 'vision-geometry-v1'; radius: number }
-  | { implementation: 'body-contact-v1'; radius: number }
+  | {
+      implementation: 'vision-geometry-v1';
+      routineTiming: 'boundary' | 'cadence';
+      radius: number;
+      sampleSeconds?: number;
+      fieldOfViewRadians?: number;
+    }
+  | {
+      implementation: 'body-contact-v1';
+      radius: number;
+      awarenessTiming: 'crossing' | 'sampled';
+      sampleSeconds?: number;
+    }
   | { implementation: 'hearing-db-v1'; hearingFloorDbSpl: number }
 );
 export { DEFAULT_SENSES } from './worlds/base/senses.js';
@@ -46,6 +65,7 @@ export const COARSE_TOUCH: SenseDefinition = {
   id: 'contact:touch',
   version: 1,
   implementation: 'body-contact-v1',
+  awarenessTiming: 'crossing',
   radius: 0,
 };
 /** Body profiles are upright cylinders; contact uses their surfaces, never a sense radius.
@@ -83,29 +103,61 @@ export interface ContactView {
 type ResolvedSenses = {
   definitions: SenseDefinition[];
   vision: number;
+  visionAngle: number;
+  visionCadence?: number;
+  routine: RoutineSensePolicy;
   hearingFloor: number | null;
   policy: WorldState['moduleManifest']['acoustics'];
   reaches: Record<SpeechVolume, number>;
 };
+export interface RoutineSensePolicy {
+  sight?: { key: string; mode: 'boundary' | 'cadence'; seconds?: number };
+  contact?: { key: string; mode: 'crossing' | 'sampled'; seconds?: number };
+}
 const resolvedSenses = new WeakMap<object, Map<string, ResolvedSenses>>();
+const senseBindingKeys = new WeakMap<object, string>();
 function resolveSenses(world: WorldState, entity: Entity): ResolvedSenses {
   // Capture the current definition snapshot; mutable authoring never populates the cache.
   // docs/hearing-and-speech.md#performance-and-invalidation
   const manifest = senseManifest(world);
-  const reusable = Object.isFrozen(manifest);
+  const reusable = isImmutableData(manifest);
   let byBinding = reusable ? resolvedSenses.get(manifest) : undefined;
   if (!byBinding) {
     byBinding = new Map();
     if (reusable) resolvedSenses.set(manifest, byBinding);
   }
   const bindings = entity.actor?.senses;
-  const key = bindings?.join('|') ?? 'default';
+  const stableBindings = bindings && readOnlyDraftView(bindings);
+  let key = stableBindings ? senseBindingKeys.get(stableBindings) : '';
+  if (key === undefined) {
+    key = JSON.stringify(stableBindings);
+    if (isImmutableData(stableBindings)) senseBindingKeys.set(stableBindings!, key);
+  }
   let result = byBinding.get(key);
   if (!result) {
     const ids = bindings ?? manifest.defaultSenses;
     const definitions = manifest.senses.filter((s) => ids.includes(s.id));
     const floor =
       definitions.find((s) => s.implementation === 'hearing-db-v1')?.hearingFloorDbSpl ?? null;
+    const vision = definitions.find((s) => s.implementation === 'vision-geometry-v1');
+    const contact = definitions.find((s) => s.implementation === 'body-contact-v1');
+    const routine: RoutineSensePolicy = {
+      sight: vision && {
+        key: contentLabel(
+          canonicalJson(definitions.filter((s) => s.implementation === 'vision-geometry-v1')),
+        ),
+        mode: vision.routineTiming,
+        seconds: vision.sampleSeconds,
+      },
+      contact: contact && {
+        key: contentLabel(
+          canonicalJson(definitions.filter((s) => s.implementation === 'body-contact-v1')),
+        ),
+        mode: contact.awarenessTiming,
+        seconds: contact.sampleSeconds,
+      },
+    };
+    if (reusable) Object.freeze(definitions);
     result = {
       definitions,
       policy: manifest.acoustics,
@@ -115,7 +167,10 @@ function resolveSenses(world: WorldState, entity: Entity): ResolvedSenses {
           floor === null ? 0 : acousticReach(manifest.acoustics, floor, volume),
         ]),
       ) as Record<SpeechVolume, number>,
-      vision: definitions.find((s) => s.implementation === 'vision-geometry-v1')?.radius ?? 0,
+      vision: vision?.radius ?? 0,
+      visionAngle: vision?.fieldOfViewRadians ?? 2 * Math.PI,
+      visionCadence: vision?.sampleSeconds,
+      routine,
       hearingFloor: floor,
     };
     byBinding.set(key, result);
@@ -152,7 +207,7 @@ function receiverIndex(world: WorldState, entities: WorldState['entities']): Rec
   if (existing) return existing;
   const entries: Receiver[] = [];
   for (const entity of entityValues(entities)) {
-    if (!hasMemory(entity) || !activelyParticipates(entity)) continue;
+    if (!entity.actor?.alive || !activelyParticipates(entity)) continue;
     chargeWork({ candidates: 1 });
     entries.push({
       id: entity.id,
@@ -285,20 +340,28 @@ export function visionRadius(world: WorldState, entity: Entity): number {
   if (capabilityBlocked(world, entity, 'perception')) return 0;
   return resolveSenses(world, entity).vision;
 }
+export function visionFieldOfView(world: WorldState, entity: Entity): number {
+  return resolveSenses(world, entity).visionAngle;
+}
 interface SightTarget {
-  id: string;
+  assemblyId?: string;
+  id?: string;
   position: Position;
   height: number;
 }
 interface SightResult {
+  from: Position;
+  probe?: ReturnType<typeof createSightProbe>;
+  assemblyId?: string;
   position: Position;
   height: number;
   seen: boolean;
 }
 interface ObserverSight {
-  from: Position;
   radius: number;
   eyeHeight: number;
+  angle: number;
+  heading?: number;
   targets: Map<string, SightResult>;
 }
 // Bounded memoization only, never an exposure limit. Uncached targets use exact geometry.
@@ -316,15 +379,34 @@ export function visionQuery(world: WorldState, observer: Entity): (source: Sight
     return () => false;
   return unblockedVisionQuery(world, observer);
 }
-function unblockedVisionQuery(
+/** Installed routine policy, including while perception is temporarily restricted. */
+export function routineSensePolicy(world: WorldState, observer: Entity): RoutineSensePolicy {
+  return resolveSenses(world, observer).routine;
+}
+/** Optional authored awareness cadence. Actions and event-time speech still query
+ * current geometry; this only schedules routine noticing during clock advancement. */
+export function sightSampleSeconds(world: WorldState, observer: Entity): number | undefined {
+  return resolveSenses(world, observer).visionCadence;
+}
+/** Terrain exposure uses the same eye, range and occlusion as ordinary sight.
+ * Geometric points have no entity identity and never enter the entity sight cache. */
+export function pointVisionQuery(
   world: WorldState,
   observer: Entity,
-): (source: SightTarget) => boolean {
-  const radius = resolveSenses(world, observer).vision;
+): (point: Position) => boolean {
+  const sees = visionQuery(world, observer);
+  return (position) => sees({ position, height: 0 });
+}
+function sightContext(world: WorldState, observer: Entity) {
+  const senses = resolveSenses(world, observer),
+    radius = senses.vision,
+    angle = senses.visionAngle;
   const position = worldPosition(observer);
   const from = { x: position.x, y: position.y, z: position.z };
   const eyeHeight = bodyProfile(observer).eyeHeight;
   const eye = { x: from.x, y: from.y + eyeHeight, z: from.z };
+  const heading = angle < 2 * Math.PI ? observer.spatial.heading : undefined;
+  const inCone = horizontalCone(from, heading ?? 0, angle);
   const observerId = observer.id;
   const map = spatialMap(world);
   let cached: Map<string, SightResult> | undefined;
@@ -335,36 +417,120 @@ function unblockedVisionQuery(
     // Stable admission avoids crowd scans evicting every cached observer.
     if (
       (!entry ||
-        !samePoint(entry.from, from) ||
         entry.radius !== radius ||
-        entry.eyeHeight !== eyeHeight) &&
+        entry.eyeHeight !== eyeHeight ||
+        entry.angle !== angle ||
+        entry.heading !== heading) &&
       (entry || observers.size < SIGHT_CACHE_LIMITS.observers)
     ) {
-      entry = { from, radius, eyeHeight, targets: new Map() };
+      entry = { radius, eyeHeight, angle, heading, targets: new Map() };
       observers.set(observerId, entry);
     }
     cached = entry?.targets;
   }
+  return { radius, from, eye, observerId, map, cached, inCone };
+}
+function sameSight(old: SightResult | undefined, source: SightTarget, from: Position): boolean {
+  return (
+    !!old &&
+    samePoint(old.from, from) &&
+    old.assemblyId === source.assemblyId &&
+    samePoint(old.position, source.position) &&
+    old.height === source.height
+  );
+}
+/** Batch only genuinely unresolved geometry; existing pair/open-space/blocker
+ * proofs are cheaper than scheduling that work a second time on another thread. */
+export function sightPreparationQuery(
+  world: WorldState,
+  observer: Entity,
+): (source: SightTarget) => SightRay | undefined {
+  const { radius, from, eye, observerId, cached, inCone } = sightContext(world, observer);
+  return (source) => {
+    if (source.assemblyId || source.id === observerId || radius <= 0 || !inCone(source.position))
+      return;
+    const old = source.id === undefined ? undefined : cached?.get(source.id);
+    if (sameSight(old, source, from)) return;
+    const to = {
+      ...source.position,
+      y: source.position.y + source.height * SIGHT_BODY_FRACTIONS[0]!,
+    };
+    if (old?.probe?.known(eye, to) !== undefined) return;
+    return { from: eye, to };
+  };
+}
+function unblockedVisionQuery(
+  world: WorldState,
+  observer: Entity,
+): (source: SightTarget) => boolean {
+  const { radius, from, eye, observerId, map, cached, inCone } = sightContext(world, observer);
   return (source) => {
     chargeWork({ tests: 1 });
     const p = source.position;
-    if (radius <= 0 || distance(from, p) > radius) return false;
+    if (
+      radius <= 0 ||
+      (!source.assemblyId &&
+        (from.x - p.x) ** 2 + (from.y - p.y) ** 2 + (from.z - p.z) ** 2 > radius ** 2)
+    )
+      return false;
     if (source.id === observerId) return true;
-    const old = cached?.get(source.id);
-    if (old && samePoint(old.position, p) && old.height === source.height) {
+    if (!source.assemblyId && !inCone(p)) return false;
+    const old = source.id === undefined ? undefined : cached?.get(source.id);
+    if (old && sameSight(old, source, from)) {
       countDomainWork('senseCacheHits');
       return old.seen;
     }
     countDomainWork('senseTests');
+    const probe = source.assemblyId ? undefined : (old?.probe ?? createSightProbe(map));
     // Extent samples provide coarse exposure, not recognition or private-state disclosure.
-    const seen = SIGHT_BODY_FRACTIONS.some((fraction) =>
-      clearSegment(map, eye, { x: p.x, y: p.y + source.height * fraction, z: p.z }),
-    );
+    const structure = source.assemblyId ? entityGet(world.entities, source.assemblyId) : undefined;
+    const seen = source.assemblyId
+      ? !!structure &&
+        assemblyShapes(world, structure).posts.some((solid) =>
+          (solid.boxes ?? [solid.bounds]).some((bounds) => {
+            const closest = {
+                x: Math.max(bounds.min.x, Math.min(bounds.max.x, eye.x)),
+                y: Math.max(bounds.min.y, Math.min(bounds.max.y, eye.y)),
+                z: Math.max(bounds.min.z, Math.min(bounds.max.z, eye.z)),
+              },
+              middle = {
+                x: (bounds.min.x + bounds.max.x) / 2,
+                y: (bounds.min.y + bounds.max.y) / 2,
+                z: (bounds.min.z + bounds.max.z) / 2,
+              };
+            const visible = (point: Position) => {
+              chargeWork({ tests: 1 });
+              return (
+                distance(from, point) <= radius && inCone(point) && clearSegment(map, eye, point)
+              );
+            };
+            if (visible(closest)) return true;
+            return (['x', 'y', 'z'] as const).some(
+              (axis) =>
+                visible({ ...middle, [axis]: bounds.min[axis] }) ||
+                visible({ ...middle, [axis]: bounds.max[axis] }),
+            );
+          }),
+        )
+      : SIGHT_BODY_FRACTIONS.some((fraction) =>
+          probe!(eye, { x: p.x, y: p.y + source.height * fraction, z: p.z }),
+        );
     // Keep the admitted stable transforms when a dense scan exceeds capacity. Evicting
     // its first entry on every miss makes a 513-target scan miss all 512 entries forever.
     // docs/performance.md#simulation-cpu-and-growing-history
-    if (cached && (cached.has(source.id) || cached.size < SIGHT_CACHE_LIMITS.targets)) {
-      cached.set(source.id, { position: { x: p.x, y: p.y, z: p.z }, height: source.height, seen });
+    if (
+      source.id !== undefined &&
+      cached &&
+      (cached.has(source.id) || cached.size < SIGHT_CACHE_LIMITS.targets)
+    ) {
+      cached.set(source.id, {
+        from,
+        ...(probe ? { probe } : {}),
+        position: { x: p.x, y: p.y, z: p.z },
+        height: source.height,
+        seen,
+        ...(source.assemblyId ? { assemblyId: source.assemblyId } : {}),
+      });
     }
     return seen;
   };
@@ -384,6 +550,9 @@ export function entityVisionQuery(
     const position = worldPosition(source);
     return sees({
       id: source.id,
+      ...(source.assembly?.implementation === 'grounded-panel-boundary'
+        ? { assemblyId: source.id }
+        : {}),
       position: isDraft(position) ? current(position) : position,
       height: bodyProfile(source).height,
     });
@@ -401,12 +570,14 @@ export function hearingReferenceRadius(world: WorldState, observer: Entity): num
  * only the already-public spatial layout; docs/spatial-world.md#perception-range-guides. */
 export function perceptionGuide(world: WorldState, observer: Entity) {
   const body = bodyProfile(observer);
-  const { hearingFloor: floor, policy } = resolveSenses(world, observer);
+  const { hearingFloor: floor, policy, visionAngle } = resolveSenses(world, observer);
   const enabled =
     activelyParticipates(observer) && !capabilityBlocked(world, observer, 'perception');
   return {
     vision: {
       enabled,
+      fieldOfViewRadians: visionAngle,
+      ...(visionAngle < 2 * Math.PI ? { heading: observer.spatial.heading } : {}),
       eyeHeight: body.eyeHeight,
       targetHeights: SIGHT_BODY_FRACTIONS.map((fraction) => fraction * body.height),
     },
@@ -421,33 +592,54 @@ export function perceptionGuide(world: WorldState, observer: Entity) {
   };
 }
 
-function physicalSpeechExposure(
+export interface AcousticEmission {
+  origin: Position;
+  sourceLevelDbSplAt1m: number;
+  /** The current emitting body, never historical authorship of a detached effect. */
+  emitterId?: string;
+}
+function physicalSoundExposure(
   world: WorldState,
   observer: Entity,
-  source: Entity,
-  volume: SpeechVolume = 'normal',
+  emission: AcousticEmission,
 ): AcousticExposure {
-  const { hearingFloor: floor, policy, reaches } = resolveSenses(world, observer);
+  const { hearingFloor: floor, policy } = resolveSenses(world, observer);
   const silent: AcousticExposure = {
     detail: 'undetected',
     receivedLevelDbSpl: null,
     clarityMarginDb: null,
   };
   chargeWork({ tests: 1 });
-  if (floor === null || !activelyParticipates(observer) || !activelyParticipates(source))
-    return silent;
+  if (floor === null || !observer.actor?.alive || !activelyParticipates(observer)) return silent;
   const listener = soundOrigin(observer),
-    origin = soundOrigin(source);
+    origin = emission.origin;
   const separation = distance3D(listener, origin);
-  // Cheap rejection precedes all barrier work; listener sensitivity is part of this bound.
-  if (separation > Math.max(0.25, reaches[volume])) return silent;
-  return acousticExposure(
+  const reach = acousticReachAtLevel(policy, floor, emission.sourceLevelDbSplAt1m);
+  if (separation > Math.max(0.25, reach)) return silent;
+  const emitter = emission.emitterId ? entityGet(world.entities, emission.emitterId) : undefined;
+  const actual = emitter && soundOrigin(emitter);
+  const transmission =
+    emitter && actual && actual.x === origin.x && actual.y === origin.y && actual.z === origin.z
+      ? speechTransmission(world, observer, emitter)
+      : soundTransmission(spatialMap(world), listener, origin);
+  return acousticExposureAtLevel(
     policy,
     floor,
-    volume,
+    emission.sourceLevelDbSplAt1m,
     separation,
-    speechTransmission(world, observer, source),
+    transmission,
   );
+}
+export function speechEmission(
+  world: WorldState,
+  source: Entity,
+  volume: SpeechVolume,
+): AcousticEmission {
+  return {
+    origin: soundOrigin(source),
+    emitterId: source.id,
+    sourceLevelDbSplAt1m: world.moduleManifest.acoustics.sourceLevelDbSplAt1m[volume],
+  };
 }
 export function speechExposure(
   world: WorldState,
@@ -455,22 +647,15 @@ export function speechExposure(
   source: Entity,
   volume: SpeechVolume = 'normal',
 ): AcousticExposure {
-  if (capabilityBlocked(world, observer, 'perception'))
+  if (!activelyParticipates(source) || capabilityBlocked(world, observer, 'perception'))
     return { detail: 'undetected', receivedLevelDbSpl: null, clarityMarginDb: null };
-  return physicalSpeechExposure(world, observer, source, volume);
+  return physicalSoundExposure(world, observer, speechEmission(world, source, volume));
 }
-/** One synchronous listener query owns permission plus both sensory channels. It may be
- * reused for the intended recipient in this same utterance, not across world changes.
- * docs/hearing-and-speech.md#performance-and-invalidation */
-export function speechPerception(
-  world: WorldState,
-  observer: Entity,
-  source: Entity,
-  volume: SpeechVolume,
-) {
+/** One synchronous query owns actual contact and sight; consumers reuse this exact result. */
+export function soundPerception(world: WorldState, observer: Entity, emission: AcousticEmission) {
   if (
+    !observer.actor?.alive ||
     !activelyParticipates(observer) ||
-    !activelyParticipates(source) ||
     capabilityBlocked(world, observer, 'perception')
   )
     return null;
@@ -484,16 +669,17 @@ export function speechPerception(
       height: bodyProfile(entity).height,
     });
   };
-  return { detail: physicalSpeechExposure(world, observer, source, volume).detail, sees };
+  return { ...physicalSoundExposure(world, observer, emission), sees };
 }
-/** Conversation continuity ignores temporary incapacity; it never grants heard evidence. */
-export function withinHearingRange(
+export function speechPerception(
   world: WorldState,
   observer: Entity,
   source: Entity,
-  volume: SpeechVolume = 'normal',
-): boolean {
-  return physicalSpeechExposure(world, observer, source, volume).detail !== 'undetected';
+  volume: SpeechVolume,
+) {
+  return activelyParticipates(source)
+    ? soundPerception(world, observer, speechEmission(world, source, volume))
+    : null;
 }
 /** Eligibility helpers retain the strong meaning of understanding ordinary speech.
  * Detection/partial evidence is delivered separately at emission, never through this boolean. */

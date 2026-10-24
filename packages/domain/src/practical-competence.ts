@@ -205,7 +205,10 @@ export function toolPracticeDefinition(
   const recipe = tool.recipeId && world.recipes[tool.recipeId];
   return recipe
     ? world.moduleManifest.definitions.find(
-        (d) => d.practice && sameDefinitionPin(d.practice.family, recipe.familyPin),
+        (d) =>
+          d.practice &&
+          recipe.source.kind === 'family' &&
+          sameDefinitionPin(d.practice.family, recipe.source.familyPin),
       )
     : undefined;
 }

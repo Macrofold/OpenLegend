@@ -12,11 +12,11 @@ Retained private NPC preview constraints are owned by [NPV01](interface.md#npv01
 
 ## SSP-N01 — One optional addressee
 
-**Proposed — accepted SPK target; runtime not delivered. Restrictiveness: Medium — deliberate first scope.** Ordinary speech has one speaker and either one intended addressee or none. Multiple explicit addressees are deferred; ambient speech can still be heard and answered by many actors. Refuse an unsupported multi-target submission rather than inventing group membership, selecting one silently or duplicating the utterance. The restriction keeps a clear first interaction without capping the acoustic audience. Expand only through a selected multiple-addressee use. [Speech contract](../narration-and-conversations.md#player-speak-and-descriptive-act), [SPK feature specification](../projects/speech-and-social-perception-feature-spec.md) and [implementation tracker](../maintainers/speech-and-social-perception.md).
+**Source-checked under SPK01/SPK06. Restrictiveness: Medium — deliberate first scope.** Ordinary speech has one speaker and either one intended addressee or none. Multiple explicit addressees are deferred; ambient speech can still be heard and answered by many actors. Refuse an unsupported multi-target submission rather than inventing group membership, selecting one silently or duplicating the utterance. The restriction keeps a clear first interaction without capping the acoustic audience. Expand only through a selected multiple-addressee use. [Speech contract](../narration-and-conversations.md#player-speak-and-descriptive-act), [SPK feature specification](../projects/speech-and-social-perception-feature-spec.md) and [implementation tracker](../maintainers/speech-and-social-perception.md).
 
 ## SSP-N02 — Ordinary exchanges without membership
 
-**Proposed removal — accepted SPK target; current lifecycle remains implemented. Restrictiveness: — (proposed removal) — removes an unnecessary social restriction.** Ordinary Speak, Speak-to and NPC speech no longer require Conversation joining, merging, a single active group or timed group departure. Opening/closing a reading view is presentation, not social consent. Genuine private-channel, travel, activity and agreement consent remain with those mechanics. Preserve actor-permitted context, chronological paging, exact recent speech and faithful older summaries through source-linked selection; group removal cannot silently erase history or grant earlier unheard words. LA180/LA181 retain current lifecycle evidence until cutover. No replacement authoritative semantic grouping engine or lifetime-history scan is selected. [Lifecycle target](../narration-and-conversations.md#6-durable-conversation-lifecycle) and [SPK](../maintainers/speech-and-social-perception.md).
+**Removed under SPK05. Restrictiveness: — removes an unnecessary social restriction.** Ordinary Speak, Speak-to and NPC speech no longer require Conversation joining, merging, a single active group or timed group departure. Opening/closing a reading view is presentation, not social consent. Genuine private-channel, travel, activity and agreement consent remain with those mechanics. Preserve actor-permitted context, chronological paging, exact recent speech and faithful older summaries through source-linked selection; group removal cannot silently erase history or grant earlier unheard words. LA180/LA181 retain removal history and the independent presence limit. No replacement authoritative semantic grouping engine or lifetime-history scan is selected. [Lifecycle target](../narration-and-conversations.md#6-durable-conversation-lifecycle) and [SPK](../maintainers/speech-and-social-perception.md).
 
 ## SSP-N03 — No semantic reply linkage
 
@@ -208,33 +208,20 @@ Original recommendation: **Keep**.
 
 ## LA180
 
-**Source-checked · Restrictiveness: Safe.**
-
-The playing browser reports presence every 5 wall-clock seconds. Conversation inactivity defaults to 1,800 game seconds, configurable from 60 to 86,400; paused worlds do not accrue simulated inactivity. These are separate clocks and consumers.
-
-**Accepted target disposition:** SSP-N02 removes ordinary conversation inactivity/departure semantics; browser presence keeps its independent connection owner. This row remains current-source/historical evidence until the SPK cutover, not a target lifetime for the new exchange context.
-
-**Reason / tradeoff:** Review connection traffic and conversation lifetime separately so a useful conversation does not end merely because a timing default is too short.
-
-[Implementation source](../../apps/server/src/config.ts).
-
-[Browser presence](../../apps/client/src/api.ts) and native [conversation processing](../../packages/domain/src/conversations.ts) use the distinct timings.
-
-Original recommendation: **Review**.
+**Source-checked · Restrictiveness: Safe.** The playing browser reports presence
+every 5 wall-clock seconds through its independent [connection owner](../../apps/client/src/api.ts).
+Ordinary conversation inactivity is removed under SSP-N02/SPK05. The earlier
+1,800-game-second default and 60–86,400 override range are historical, with no
+replacement speech lifetime. Actual control, participation and source validity
+remain independent. This removes a social restriction without granting consent.
 
 ## LA181
 
-**Source-checked · Restrictiveness: Safe.**
-
-A disconnected participant retains membership for 60 wall-clock seconds by default, configurable from 5 to 600 seconds, before native departure.
-
-**Accepted target disposition:** SSP-N02 removes ordinary membership and this conversation-specific disconnect grace. Actual access, body, timeline and connection policies remain independently authoritative. Runtime removal is still SPK implementation work.
-
-**Reason / tradeoff:** Keep time for brief reconnects while ensuring abandoned conversations eventually close.
-
-[Implementation source](../../apps/server/src/config.ts).
-
-Original recommendation: **Review**.
+**Removed under SSP-N02/SPK05.** Ordinary speech has no conversation-specific
+disconnect grace or native departure. The earlier default of 60 wall-clock seconds
+and 5–600-second override range are historical. Browser presence, access, body and
+participation policies retain their own owners. [SPK05](../maintainers/speech-and-social-perception.md#spk05--ordinary-dialogue-without-membership)
+tracks qualification; brief reconnects preserve retained personal evidence.
 
 ## LA234
 

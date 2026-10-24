@@ -49,6 +49,7 @@ const common = {
   fireId: entity('Fire', 'spatial'),
   definitionId: {
     type: 'definition' as const,
+    definitionKind: 'item' as const,
     label: 'Fuel material',
     required: true as const,
     discovery: { source: 'materials' as const, sourceField: 'sourceId' },
@@ -347,6 +348,7 @@ function compile(
     mode,
     bindings: { fire: fireId, ...(cache ? { supply: sourceId, self: actorId } : {}) },
     control: {
+      kind: 'counted',
       deadline,
       observation: { definition: activityHostPin(host), role: 'fire' },
       accessRoles: cache ? ['supply'] : [],
@@ -467,7 +469,7 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
       }
       definitions.push(world.itemDefinitions[next.value.definitionId]);
     }
-    const yieldLimit = gatheringYield(definitions, definition.id);
+    const yieldLimit = gatheringYield(world, definitions, definition.id);
     if (proof.status === 'insufficient' && complete && proof.available + yieldLimit < required)
       notes.push(
         `Known shortfall under current conditions: even a full ${yieldLimit}-unit gathering batch would leave this request short. Change the quantity or supplies before expecting completion.`,

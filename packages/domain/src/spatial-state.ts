@@ -1,12 +1,17 @@
 import { entityValues } from './entity-collection.js';
 import { recordSemanticChange } from './dependencies.js';
+import { isStatusDefinitionActive, statusDefinitions } from './status-capabilities.js';
 import { assemblySpatialMap } from './assembly-geometry.js';
 import { activelyParticipates } from './participation-state.js';
+import { hasRecordFields, isImmutableData } from './records.js';
+import { canonicalJson, contentLabel } from './events.js';
+import { NATIVE_RESPONSE_LIMITS } from './native-response.js';
 import {
   canFlySegment,
   canStand,
   finitePoint,
   horizontalDistance,
+  distance3D,
   resolveSupport,
   surfaceById,
   SPATIAL_LIMITS,
@@ -26,6 +31,27 @@ export interface FlightProgress {
   routeId: string;
   next: number;
   waitSeconds: number;
+  /** A finite admitted flight has actually reached supported rest. */
+  atRest?: true;
+  nativeLocomotion?: import('./native-response.js').NativeFlightLocomotion;
+  awaitingChoice?: true;
+  stopAtLanding?: true;
+}
+export interface FlightConnection {
+  kind: 'landing' | 'transit';
+  routeId: string;
+  next: number;
+}
+const flightDigests = new WeakMap<FlightRoute, string>();
+/** Reuse only exact deeply immutable definitions; authoring drafts and mutable
+ * builders must see current corridor edits. No world or body is retained. */
+export function flightRouteDigest(route: FlightRoute): string {
+  const snapshot = isDraft(route) ? current(route) : route;
+  const cached = flightDigests.get(snapshot);
+  if (cached) return cached;
+  const digest = contentLabel(canonicalJson(snapshot));
+  if (isImmutableData(snapshot)) flightDigests.set(snapshot, digest);
+  return digest;
 }
 export interface EntitySpatial {
   /** The current physical shape, initialized from authored content and saved with this body. */
@@ -44,6 +70,11 @@ export interface FlightRoute {
   body: BodyProfile;
   speed: number;
   climbSpeed: number;
+  continuation:
+    | { kind: 'loop' }
+    | { kind: 'land'; resumeRouteId?: string }
+    | { kind: 'join'; routeId: string; next: number };
+  responseConnections?: FlightConnection[];
   points: Array<{ position: WorldPoint; landingSurfaceId?: string; waitSeconds: number }>;
 }
 export type Placement =
@@ -120,7 +151,7 @@ export function bodyProfile(entity: Entity): BodyProfile {
       }
     : resolved;
 }
-function sameBody(a: BodyProfile, b: BodyProfile): boolean {
+export function sameBodyProfile(a: BodyProfile, b: BodyProfile): boolean {
   return (
     a.id === b.id &&
     a.radius === b.radius &&
@@ -143,30 +174,59 @@ export function setSpatialPosition(
   entity: Entity,
   point: WorldPoint,
   supportSurfaceId: string | null,
+  movement?: { steps: number; heading: number },
 ): void {
   if (!finitePoint(point)) throw new Error('Invalid authoritative position.');
-  const dx = point.x - worldPosition(entity).x,
-    dz = point.z - worldPosition(entity).z;
-  if (Math.hypot(dx, dz) > 1e-8) entity.spatial.heading = Math.atan2(dx, dz);
-  const placement = entity.placement;
-  if (placement?.mode !== 'world' || !Number.isSafeInteger(placement.revision + 1))
-    throw new Error('Invalid spatial placement revision.');
+  const before = worldPosition(entity),
+    dx = point.x - before.x,
+    dz = point.z - before.z,
+    heading =
+      movement?.heading ??
+      (Math.hypot(dx, dz) > 1e-8 ? Math.atan2(dx, dz) : entity.spatial.heading),
+    steps = movement?.steps ?? 1,
+    placement = entity.placement;
   if (
-    point.x === placement.position.x &&
-    point.y === placement.position.y &&
-    point.z === placement.position.z &&
-    supportSurfaceId === placement.supportSurfaceId
+    placement?.mode !== 'world' ||
+    !Number.isSafeInteger(placement.revision + steps) ||
+    !Number.isSafeInteger(steps) ||
+    steps < 1 ||
+    !Number.isFinite(heading)
   )
+    throw new Error('Invalid spatial placement revision.');
+  const changed =
+    point.x !== before.x ||
+    point.y !== before.y ||
+    point.z !== before.z ||
+    supportSurfaceId !== placement.supportSurfaceId;
+  if (!changed && !movement) {
+    if (heading !== entity.spatial.heading) entity.spatial.heading = heading;
     return;
+  }
   recordSemanticChange(world, {
     kind: 'spatial',
     entityId: entity.id,
-    before: placement.position,
+    before,
     after: point,
   });
-  placement.position = { x: point.x, y: point.y, z: point.z };
-  placement.supportSurfaceId = supportSurfaceId;
-  placement.revision++;
+  // One owned placement avoids proxy writes at every waypoint. Keep the physical
+  // component attached: flight/fall controllers may hold its mutable progress.
+  // Previously published poses stay immutable through the existing draft owner.
+  // docs/projects/performance-overhaul/animal-execution.md#42-current-read-views-and-cheaper-physical-writes
+  entity.placement = {
+    ...readOnlyDraftView(placement),
+    position: { x: point.x, y: point.y, z: point.z },
+    supportSurfaceId,
+    revision: placement.revision + steps,
+  };
+  if (heading !== entity.spatial.heading) entity.spatial.heading = heading;
+  releaseGroundedFlight(entity);
+}
+
+/** A newly chosen ground approach or actual relocation replaces a finished
+ * perched routine; its old route cannot restart from a different ground point. */
+export function releaseGroundedFlight(entity: Entity, approaching = false): void {
+  if (entity.spatial.flight?.atRest || (approaching && worldSupport(entity) !== null))
+    delete entity.spatial.flight;
 }
 /** Unchanged Immer map branches reuse derived geometry/navigation caches. A modified candidate
  * receives its own snapshot; querying an original map would ignore uncommitted geometry edits. */
@@ -177,6 +237,10 @@ export { starterSpatialLayout, starterFlightRoutes } from './worlds/base/spatial
 
 export function validateSpatialWorld(world: WorldState): void {
   const map = spatialMap(world);
+  // A later wall can obstruct an authored corridor without corrupting its
+  // definition. Flight execution checks current sweeps and landing clearance;
+  // saved definitions retain their original world geometry requirements.
+  const flightMap = world.map;
   validateSpatialMap(map);
   if (!world.flightRoutes) throw new Error('Invalid flight route registry.');
   for (const [routeId, route] of Object.entries(world.flightRoutes)) {
@@ -193,6 +257,13 @@ export function validateSpatialWorld(world: WorldState): void {
       !Number.isFinite(route.climbSpeed) ||
       route.climbSpeed <= 0 ||
       route.climbSpeed > route.speed ||
+      !route.continuation ||
+      !['loop', 'land', 'join'].includes(route.continuation.kind) ||
+      !hasRecordFields(
+        route.continuation,
+        route.continuation.kind === 'join' ? ['kind', 'routeId', 'next'] : ['kind'],
+        route.continuation.kind === 'land' ? ['resumeRouteId'] : [],
+      ) ||
       !Array.isArray(route.points) ||
       route.points.length < 2 ||
       route.points.some(
@@ -202,12 +273,92 @@ export function validateSpatialWorld(world: WorldState): void {
           p.waitSeconds < 0 ||
           p.waitSeconds > 86400 ||
           (p.landingSurfaceId !== undefined &&
-            !resolveSupport(map, p.position, p.landingSurfaceId)),
+            !resolveSupport(flightMap, p.position, p.landingSurfaceId)),
       )
     )
       throw new Error('Invalid native flight route.');
     validateBodyProfile(route.body);
-    for (let index = 0; index < route.points.length; index++) {
+    const connections = route.responseConnections;
+    if (connections !== undefined) {
+      if (
+        !Array.isArray(connections) ||
+        connections.length + 1 > NATIVE_RESPONSE_LIMITS.maximumCandidates ||
+        new Set(
+          connections.map((connection) =>
+            JSON.stringify([connection.kind, connection.routeId, connection.next]),
+          ),
+        ).size !== connections.length
+      )
+        throw new Error('Invalid native flight connections.');
+      for (const connection of connections) {
+        const destination =
+          typeof connection.routeId === 'string' &&
+          Object.hasOwn(world.flightRoutes, connection.routeId)
+            ? world.flightRoutes[connection.routeId]
+            : undefined;
+        if (
+          !hasRecordFields(connection, ['kind', 'routeId', 'next']) ||
+          !destination ||
+          !sameBodyProfile(route.body, destination.body) ||
+          !Number.isSafeInteger(connection.next) ||
+          connection.next < 0 ||
+          connection.next >= destination.points.length ||
+          !['landing', 'transit'].includes(connection.kind) ||
+          (connection.kind === 'landing'
+            ? destination.continuation.kind !== 'land'
+            : destination.points[connection.next]!.landingSurfaceId !== undefined)
+        )
+          throw new Error('Invalid native flight connection target.');
+      }
+    }
+    for (const point of route.points)
+      if (
+        point.landingSurfaceId &&
+        !canStand(flightMap, { ...point.position, surfaceId: point.landingSurfaceId }, route.body)
+      )
+        throw new Error('Flight landing has no valid stance.');
+    const terminal = route.points.at(-1)!;
+    if (route.continuation.kind === 'land') {
+      if (!terminal.landingSurfaceId || terminal.waitSeconds !== 0)
+        throw new Error('A finite flight must end at supported rest.');
+      const resumeId = route.continuation.resumeRouteId,
+        resume =
+          typeof resumeId === 'string' && Object.hasOwn(world.flightRoutes, resumeId)
+            ? world.flightRoutes[resumeId]
+            : undefined;
+      if (
+        resumeId !== undefined &&
+        (!resume ||
+          !sameBodyProfile(route.body, resume.body) ||
+          !resume.points.length ||
+          distance3D(terminal.position, resume.points[0]!.position) > SPATIAL_LIMITS.epsilon ||
+          terminal.landingSurfaceId !== resume.points[0]!.landingSurfaceId)
+      )
+        throw new Error('A resting flight continuation must begin on its actual perch.');
+    } else if (route.continuation.kind === 'join') {
+      const join = route.continuation,
+        destination =
+          typeof join.routeId === 'string' && Object.hasOwn(world.flightRoutes, join.routeId)
+            ? world.flightRoutes[join.routeId]
+            : undefined,
+        previous =
+          destination?.points[join.next === 0 ? destination.points.length - 1 : join.next - 1];
+      if (
+        terminal.landingSurfaceId !== undefined ||
+        !destination ||
+        !sameBodyProfile(route.body, destination.body) ||
+        !Number.isSafeInteger(join.next) ||
+        join.next < 0 ||
+        join.next >= destination.points.length ||
+        (join.next === 0 && destination.continuation.kind !== 'loop') ||
+        !previous ||
+        distance3D(terminal.position, previous.position) > SPATIAL_LIMITS.epsilon ||
+        terminal.landingSurfaceId !== previous.landingSurfaceId
+      )
+        throw new Error('A flight join must retain its exact physical position and support.');
+    }
+    const edgeCount = route.points.length - (route.continuation.kind === 'loop' ? 0 : 1);
+    for (let index = 0; index < edgeCount; index++) {
       const from = route.points[index]!,
         to = route.points[(index + 1) % route.points.length]!;
       // This small family uses vertical takeoff/landing and prevalidated public corridors.
@@ -219,7 +370,7 @@ export function validateSpatialWorld(world: WorldState): void {
         throw new Error('Native takeoff and landing must be vertical.');
       if (
         !canFlySegment(
-          map,
+          flightMap,
           from.position,
           to.position,
           route.body,
@@ -227,11 +378,6 @@ export function validateSpatialWorld(world: WorldState): void {
         )
       )
         throw new Error('Flight corridor intersects geometry.');
-      if (
-        to.landingSurfaceId &&
-        !canStand(map, { ...to.position, surfaceId: to.landingSurfaceId }, route.body)
-      )
-        throw new Error('Flight landing has no valid stance.');
     }
   }
   for (const entity of entityValues(world.entities)) {
@@ -281,14 +427,34 @@ export function validateSpatialWorld(world: WorldState): void {
         ? world.flightRoutes[s.flight.routeId]
         : undefined;
       if (
+        !hasRecordFields(
+          s.flight,
+          ['routeId', 'next', 'waitSeconds'],
+          ['atRest', 'nativeLocomotion', 'awaitingChoice', 'stopAtLanding'],
+        ) ||
         !route ||
-        !sameBody(bodyProfile(entity), route.body) ||
+        !sameBodyProfile(bodyProfile(entity), route.body) ||
         !Number.isSafeInteger(s.flight.next) ||
         s.flight.next < 0 ||
         s.flight.next >= route.points.length ||
         !Number.isFinite(s.flight.waitSeconds) ||
         s.flight.waitSeconds < 0 ||
-        s.flight.waitSeconds > 86400
+        s.flight.waitSeconds > 86400 ||
+        (s.flight.awaitingChoice !== undefined &&
+          (s.flight.awaitingChoice !== true ||
+            !s.flight.nativeLocomotion ||
+            !!s.flight.atRest ||
+            !!s.flight.stopAtLanding)) ||
+        (s.flight.stopAtLanding !== undefined && s.flight.stopAtLanding !== true) ||
+        (s.flight.atRest !== undefined &&
+          (s.flight.atRest !== true ||
+            (route.continuation.kind === 'land' &&
+              !s.flight.stopAtLanding &&
+              s.flight.next !== route.points.length - 1) ||
+            s.flight.waitSeconds !== 0 ||
+            worldSupport(entity) !== route.points[s.flight.next]!.landingSurfaceId ||
+            distance3D(worldPosition(entity), route.points[s.flight.next]!.position) >
+              SPATIAL_LIMITS.epsilon))
       )
         throw new Error('Invalid flight progress.');
     }
@@ -313,10 +479,12 @@ export function validateSpatialWorld(world: WorldState): void {
         const request = a.navigation.request;
         if (
           !request ||
+          (request.wait !== undefined && !['world', 'entity'].includes(request.wait)) ||
           !finitePoint(request.from) ||
           typeof request.from.surfaceId !== 'string' ||
           !Number.isSafeInteger(request.geometryRevision) ||
           request.geometryRevision < 0 ||
+          request.outsideBounds !== undefined ||
           !Array.isArray(request.destinations) ||
           !request.destinations.length ||
           request.destinations.length > 12 ||
@@ -324,7 +492,7 @@ export function validateSpatialWorld(world: WorldState): void {
             (p) => !finitePoint(p) || typeof p.surfaceId !== 'string' || p.surfaceId.length > 120,
           ) ||
           !request.body ||
-          !sameBody(request.body, bodyProfile(entity)) ||
+          !sameBodyProfile(request.body, bodyProfile(entity)) ||
           (a.navigation.failure !== undefined &&
             (typeof a.navigation.failure !== 'string' || a.navigation.failure.length > 300))
         )
@@ -345,12 +513,8 @@ export function validateSpatialWorld(world: WorldState): void {
 export function bodySpace(
   world: WorldState,
   entity: Entity,
-  horizontal = world.statusEffectPolicy.definitions.some(
-    (d) =>
-      d.presentation?.pose === 'horizontal' &&
-      Object.entries(entity.statusEffects ?? {}).some(
-        ([id, state]) => state.active && (state.contribution?.definitionId ?? id) === d.id,
-      ),
+  horizontal = statusDefinitions(world).some(
+    (d) => d.presentation?.pose === 'horizontal' && isStatusDefinitionActive(entity, d.id),
   ),
   heading = entity.spatial.heading,
   margin = 0,
@@ -359,8 +523,15 @@ export function bodySpace(
     profile = bodyProfile(entity);
   const width = profile.radius * 2 + margin * 2,
     length = (horizontal ? profile.height : profile.radius * 2) + margin * 2;
-  const x = (Math.abs(Math.cos(heading)) * width + Math.abs(Math.sin(heading)) * length) / 2;
-  const z = (Math.abs(Math.sin(heading)) * width + Math.abs(Math.cos(heading)) * length) / 2;
+  // Upright bodies have a round footprint. Rotating its bounding square would
+  // enlarge occupancy when a builder turns and invalidate an admitted stance.
+  // A horizontal body's longer footprint really does rotate with its heading.
+  const x = horizontal
+    ? (Math.abs(Math.cos(heading)) * width + Math.abs(Math.sin(heading)) * length) / 2
+    : width / 2;
+  const z = horizontal
+    ? (Math.abs(Math.sin(heading)) * width + Math.abs(Math.cos(heading)) * length) / 2
+    : width / 2;
   return {
     min: { x: point.x - x, y: point.y, z: point.z - z },
     max: {

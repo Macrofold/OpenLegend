@@ -1,6 +1,8 @@
 import { entityKeys } from '@open-legend/domain';
 import type { NameArticle } from '@open-legend/language';
-import { observerDescription, recognizesSubject } from '@open-legend/domain';
+import { observerDescription, recognizesSubject, canonicalJson } from '@open-legend/domain';
+import type { EncounterPreferenceBinding } from '@open-legend/domain';
+import type { CatalogueAction } from '@open-legend/protocol';
 import type {
   ActorResponse,
   ActivityRequestDescriptor,
@@ -13,6 +15,72 @@ const cache = new WeakMap<WorldState, Map<string, Map<string, string>>>();
 // A life count has a small guessable range. A process-local key keeps the
 // presentation reference opaque; restart invalidation grants no authority.
 const bodyReferenceKey = randomBytes(32);
+/** Private life/recognition metadata never becomes wire fields. Restart invalidates
+ * previews; committed requests still recover through their original receipts. */
+export function encounterControlReference(
+  scope: string,
+  operation: 'speak' | 'stop',
+  binding: EncounterPreferenceBinding,
+): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(canonicalJson(['encounter-control', scope, operation, binding]))
+    .digest('hex');
+}
+export function primaryActionReference(
+  scope: string,
+  actor: Entity,
+  target: Entity,
+  binding: EncounterPreferenceBinding | undefined,
+  action: CatalogueAction,
+  bindingFacts: CatalogueAction['facts'],
+): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(
+      canonicalJson([
+        'primary-action',
+        scope,
+        actor.id,
+        actor.actor?.physicalLife ?? null,
+        target.id,
+        target.actor?.physicalLife ?? null,
+        target.actor?.alive ?? null,
+        target.actor?.incapacitated ?? null,
+        binding ?? null,
+        action.id,
+        action.label,
+        action.description,
+        bindingFacts ?? null,
+        action.intent,
+        action.enabled,
+        action.reason ?? null,
+      ]),
+    )
+    .digest('hex');
+}
+/** Constant-sized player-owned meaning only. No hidden target activity, location,
+ * inventory or meters invalidate the permitted hover preview. */
+export function contextActionRevision(
+  scope: string,
+  world: WorldState,
+  actor: Entity,
+  target: Entity,
+  binding: EncounterPreferenceBinding | undefined,
+): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(
+      canonicalJson([
+        'context-preview',
+        scope,
+        world.moduleManifest.revision,
+        actor.actor?.physicalLife ?? null,
+        target.actor?.physicalLife ?? null,
+        binding ?? null,
+        (actor.actor?.combatReadyAt ?? 0) > world.simTime,
+        actor.actor?.action?.ranged?.ready ?? null,
+      ]),
+    )
+    .digest('hex');
+}
 
 /** Presentation freshness for one permitted body, without exposing its life count.
  * Unlike body revision, this stays stable through ordinary injury and healing. */
@@ -31,13 +99,24 @@ export function entityHandles(
 ): Map<string, string> {
   const cached = cache.get(world)?.get(observerId);
   if (cached) return cached;
-  const hashes = entityKeys(world.entities).map(
+  const hashes = [
+    ...new Set([
+      ...entityKeys(world.entities),
+      ...Object.keys(world.observerIdentities?.[observerId] ?? {}),
+    ]),
+  ].map(
     (id) =>
       [
         id,
         createHash('sha256')
           .update(
-            `${observerId}:${id}:${world.perceptionEpisodes?.[observerId]?.[id] ?? (recognizesSubject(world, observerId, id) ? 'known' : world.sequence)}`,
+            canonicalJson([
+              observerId,
+              id,
+              recognizesSubject(world, observerId, id)
+                ? 'known'
+                : (world.perceptionEpisodes?.[observerId]?.[id] ?? world.sequence),
+            ]),
           )
           .digest('hex'),
       ] as const,
@@ -86,6 +165,32 @@ export function entityReferenceMap(
       return [handle, id];
     }),
   );
+}
+
+/** Selected historical evidence can name a departed person or consumed item. These
+ * references bind that permitted identity only; they supply no current body facts. */
+export function experienceEntityReferences(
+  world: WorldState,
+  observerId: string,
+  ids: Iterable<string>,
+): Map<string, string> {
+  const current = entityHandles(world, observerId);
+  const references = new Map<string, string>();
+  for (const id of ids) {
+    if (references.has(id)) continue;
+    const known = current.get(id);
+    if (known) {
+      references.set(id, known);
+      continue;
+    }
+    const hash = createHash('sha256')
+      .update(canonicalJson([observerId, id, 'remembered']))
+      .digest('hex');
+    // This namespace cannot collide with ordinary hexadecimal body references.
+    const reference = `remembered-${hash}`;
+    references.set(id, reference);
+  }
+  return references;
 }
 
 export function resolveEntityMarkers(text: string, references: Record<string, string>): string {
@@ -137,7 +242,13 @@ export function resolveResponseEntities(
           }
         : {}),
       ...(op.name ? { name: { ...op.name, subjectId: resolve(op.name.subjectId) } } : {}),
-      talk: op.talk ? { ...op.talk, addresseeEntityId: resolve(op.talk.addresseeEntityId) } : null,
+      talk: op.talk
+        ? {
+            ...op.talk,
+            addresseeEntityId:
+              op.talk.addresseeEntityId === null ? null : resolve(op.talk.addresseeEntityId),
+          }
+        : null,
       act: op.act
         ? {
             ...op.act,
@@ -214,9 +325,10 @@ export function awarenessBindsSubject(
 ): boolean {
   if (subjectId === observerId) return true;
   if (
-    aware.recognized &&
-    subjectId === aware.sourceId &&
-    recognizesSubject(world, observerId, subjectId)
+    recognizesSubject(world, observerId, subjectId) &&
+    (subjectId === aware.sourceId ||
+      subjectId === aware.targetId ||
+      aware.entityIds.includes(subjectId))
   )
     return true;
   const episode = aware.entityEpisodes?.[subjectId];

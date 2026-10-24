@@ -68,6 +68,8 @@ export interface SpatialBlocker {
   id: string;
   bounds: Bounds3;
   panel?: FinitePanel;
+  /** Disjoint finite boxes belonging to this one obstacle; bounds enclose their union. */
+  boxes?: Bounds3[];
   movement: boolean;
   sight: boolean;
   acousticTransmission: number;
@@ -125,8 +127,13 @@ export const MOVEMENT = {
   maxReplans: 2,
 } as const;
 export interface NavigationRequest {
+  /** Absent/world holds simulation; entity holds only its requester. */
+  wait?: 'world' | 'entity';
   from: SurfacePoint;
   destinations: SurfacePoint[];
+  /** An existential supported exit, with no chosen destination. These derived
+   * checks use empty destinations and never become an actor's saved movement. */
+  outsideBounds?: Bounds3;
   body: BodyProfile;
   geometryRevision: number;
 }
@@ -146,7 +153,7 @@ export const SPATIAL_LIMITS = {
   supportTolerance: 0.015,
   maxExtent: 512,
   maxSurfaces: 32,
-  maxBlockers: 128,
+  maxBlockers: 256,
   maxScenery: 4096,
   maxGraphNodes: 16384,
   maxPathPoints: 2048,

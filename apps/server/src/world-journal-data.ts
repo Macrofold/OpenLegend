@@ -42,7 +42,6 @@ const eventSchema: z.ZodType<WorldEvent> = z
       .strict()
       .optional(),
     order: safeInteger.optional(),
-    conversationId: z.string().optional(),
     importance: z.number().finite().optional(),
     urgency: z.number().finite().optional(),
     data: z

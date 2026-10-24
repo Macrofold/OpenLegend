@@ -1,6 +1,6 @@
 import R from '@dimforge/rapier3d-compat';
-import { installBodySweep, type CollisionSolid } from './body-query.js';
-import { MOVEMENT, type BodyProfile, type WorldPoint } from './types.js';
+import { installBodySweep, type CollisionSolid, type RoundVolume } from './body-query.js';
+import { MOVEMENT, type WorldPoint } from './types.js';
 import { panelGeometry } from './finite-panel.js';
 
 const rotation = { x: 0, y: 0, z: 0, w: 1 };
@@ -9,15 +9,16 @@ const solids = new WeakMap<CollisionSolid, { shape: R.Shape; position: WorldPoin
 const bodies = new Map<string, R.Shape>();
 let ready: Promise<void> | undefined;
 
-function bodyShape(body: BodyProfile): R.Shape {
-  const key = `${body.radius}:${body.height}`;
+function bodyShape(body: RoundVolume): R.Shape {
+  const key = `${body.shape ?? 'body'}:${body.radius}:${body.height}`;
   let shape = bodies.get(key);
   if (!shape) {
-    const radius = body.radius + MOVEMENT.skin;
+    const skin = body.shape === 'cylinder' ? 0 : MOVEMENT.skin;
+    const radius = body.radius + skin;
     shape =
-      body.height >= 2 * body.radius
+      body.shape !== 'cylinder' && body.height >= 2 * body.radius
         ? new R.Capsule(body.height / 2 - body.radius, radius)
-        : new R.Cylinder(body.height / 2 + MOVEMENT.skin, radius);
+        : new R.Cylinder(body.height / 2 + skin, radius);
     if (bodies.size >= 32) bodies.delete(bodies.keys().next().value!);
     bodies.set(key, shape);
   }
@@ -59,6 +60,51 @@ function solidShape(solid: CollisionSolid) {
   solids.set(solid, entry);
   return entry;
 }
+/** Point bins and map cells are conservative. Reject only plainly disjoint box
+ * sweeps before allocating shapes or crossing into WASM; Rapier still owns contact.
+ * Its f32 positions and iterative solver need generous rounding/tolerance padding.
+ * Surface/panel geometry can extend beyond a caller's box, so keep its exact path.
+ * docs/spatial-world.md#what-a-location-means */
+function disjointBoxSweep(
+  solid: CollisionSolid,
+  from: WorldPoint,
+  to: WorldPoint,
+  body: RoundVolume,
+): boolean {
+  if (solid.surface || solid.panel) return false;
+  const { min, max } = solid.bounds;
+  const skin = body.shape === 'cylinder' ? 0 : MOVEMENT.skin;
+  const padding = Math.max(
+    1e-3,
+    2 ** -20 *
+      Math.max(
+        Math.abs(from.x),
+        Math.abs(from.y),
+        Math.abs(from.z),
+        Math.abs(to.x),
+        Math.abs(to.y),
+        Math.abs(to.z),
+        Math.abs(min.x),
+        Math.abs(min.y),
+        Math.abs(min.z),
+        Math.abs(max.x),
+        Math.abs(max.y),
+        Math.abs(max.z),
+        body.radius,
+        body.height,
+      ),
+  );
+  const radius = body.radius + skin + padding;
+  return (
+    Math.max(from.x, to.x) + radius < min.x ||
+    Math.min(from.x, to.x) - radius > max.x ||
+    Math.max(from.z, to.z) + radius < min.z ||
+    Math.min(from.z, to.z) - radius > max.z ||
+    Math.max(from.y, to.y) + body.height + skin + padding < min.y ||
+    Math.min(from.y, to.y) - skin - padding > max.y
+  );
+}
+
 /** Shape-level queries deliberately reuse our static broad phase, not a second mutable
  * Rapier world whose query index could lag a collider edit. Support contact remains an
  * explicit OpenLegend rule; this adapter answers round-body obstruction only.
@@ -67,6 +113,7 @@ function solidShape(solid: CollisionSolid) {
 export function initializeCollisionRuntime(): Promise<void> {
   return (ready ??= R.init().then(() => {
     installBodySweep((solid, from, to, body) => {
+      if (disjointBoxSweep(solid, from, to, body)) return;
       const other = solidShape(solid),
         shape = bodyShape(body);
       const centre = { x: from.x, y: from.y + body.height / 2, z: from.z };
@@ -80,9 +127,9 @@ export function initializeCollisionRuntime(): Promise<void> {
           rotation,
           0,
         );
-        return !!contact && contact.distance < -1e-5;
+        return contact && contact.distance < -1e-5 ? 0 : undefined;
       }
-      return !!shape.castShape(
+      return shape.castShape(
         centre,
         rotation,
         velocity,
@@ -93,7 +140,7 @@ export function initializeCollisionRuntime(): Promise<void> {
         0,
         1,
         true,
-      );
+      )?.time_of_impact;
     });
   }));
 }

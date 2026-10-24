@@ -8,6 +8,11 @@ The HUD should help the player notice, inspect and act, not cover the scene with
 
 Separate **camera focus**, **selected entity**, **controlled actor**, **action target** and **current floor/surface**. A camera move is not a character move. The body's supporting floor remains physical world information; it is not selected by a camera dropdown. Held Option (Alt) temporarily reveals already perceived subjects through scenery under the [presentation contract](../world-presentation.md#local-read-through), without granting new sight. Looking at an object is not permission to know its private state. Show the selected subject and active mode clearly enough that a player can predict where the next action goes.
 
+Selecting a named entry in **In view** opens its server-permitted details even
+outside the camera's sharp-focus area. Pixel picking and selection-marker
+visibility keep their narrower presentation limits. Remembered or no-longer-observed
+objects cannot become current selections; inspection grants no action permission.
+
 Current camera bindings belong to the existing owners, not this handbook. The accepted production guide documents Shift + right-drag or middle-drag for pan, right-drag for orbit/tilt, a stationary secondary click for actions, and focused-canvas keyboard alternatives. Preserve those meanings; a reference game is not permission to swap them without an explicit design change.
 
 ## Object opening and contextual activity
@@ -28,7 +33,7 @@ These paths are implemented, with actual observations and their limits in the [g
 
 ## Selected combat-sensitive Command action
 
-**Design complete, October 17; implementation pending CTR09.** Extend the existing Command-click preview and serialized preferred-choice check through the same contextual catalogue. The [ordered world table](../worlds/base/combat.md#contextual-action-decision-table) distinguishes ordinary Gather/Speak, current/recent personally observed attack, own offensive intention, exact held-shot release, deliberate Speak override and invalid/blocked targets. Its ten-normal-second continuity is an authored simulation-time rule, not a UI constant, permanent combat flag or emotional state.
+**Implemented paths under qualification in CTR09.** The existing Command-click preview and serialized preferred-choice check use the same contextual catalogue. Shortcut meaning and consequence facts appear immediately before an eligible click; ordinary supplementary hover retains its existing delay and fade. The [ordered world table](../worlds/base/combat.md#contextual-action-decision-table) distinguishes ordinary Gather/Speak, current/recent personally observed attack, own offensive intention, exact held-shot release, deliberate Speak override and invalid/blocked targets. Its ten-normal-second continuity is an authored simulation-time rule, not a UI constant, permanent combat flag or emotional state.
 
 Capture the displayed exact target life, action and tool at pointer-down. Recheck that binding at release/admission; changed meaning is stale, never an undisclosed damaging substitute. Recovery keeps the disclosed action disabled; one click does not enqueue repeat attacks. **Approach and strike…** states a real approach. **Stop attacking this person** clears only one's own future offensive commitment and retained method/deadline through its scoped work owner; incoming threats, costs and released effects remain. A deliberate Speak override has explicit priority until fresh hostile evidence or a new admitted attack. Ordinary movement/hover cannot renew hostility or revoke it.
 

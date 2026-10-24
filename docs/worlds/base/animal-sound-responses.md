@@ -1,12 +1,12 @@
 # Animal reactions to sound
 
-**Selected design, runtime pending — 2026-10-17.** This is the bundled world's acoustic policy for [speech and social perception](../../projects/speech-and-social-perception-feature-spec.md). Ordinary animals use native rules and saved randomness. They require no Decision API, thought, reflection, narration-generation or memory-consolidation calls.
+**Core implementation installed; qualification incomplete — 2026-10-18.** This is the bundled world's acoustic policy for [speech and social perception](../../projects/speech-and-social-perception-feature-spec.md). Ordinary animals use native rules and saved randomness. They require no Decision API, thought, reflection, narration-generation or memory-consolidation calls.
 
 ## One existing animal controller
 
-This extends the selected [native animal response owner](animal-responses.md) and its [CTR03–CTR04 execution design](../../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04). Those designs are documented here; their native controller remains an implementation dependency, not integrated runtime. The generic-noise exclusion in that design is narrowed here: personally detected ordinary speech now supplies a selected native alarm input. Other noises require an actual admitted emitter; this does not silently enable footsteps or impact sound.
+This extends the selected [native animal response owner](animal-responses.md) and its [CTR03–CTR04 execution design](../../projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04). The combat phase supplies the installed controller; this acoustic extension uses that same owner. The generic-noise exclusion in that design is narrowed here: personally detected ordinary speech now supplies a selected native alarm input. Other noises require an actual admitted emitter; this does not silently enable footsteps or impact sound.
 
-SPK08 depends on the relevant CTR03–CTR04 installed controller, perception, movement, species-profile and continuation seams. If that implementation is unavailable, the acoustic adapter remains pending. Do not introduce temporary duplicate escape state or import unrelated combat/PvP/appraisal work to satisfy the dependency.
+SPK08 depends on the relevant CTR03–CTR04 installed controller, perception, movement, species-profile and continuation seams. The installed acoustic intake has focused native/SQL evidence; flight, dense and combined acceptance remains open in SPK08/SPK11. Do not introduce temporary duplicate escape state or import unrelated combat/PvP/appraisal work to satisfy the dependency.
 
 The installed native response profile remains the single policy selection. Its controller owns routine, escaping, settling and blocked behavior, permitted danger estimates, current cue/cause, refuge, pending proposal generation and exact movement reference. Navigation, flight, body, status and lifecycle keep their existing authority. This acoustic extension adds no second controller, action family, path, fear meter or model scheduler.
 

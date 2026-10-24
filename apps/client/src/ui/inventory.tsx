@@ -29,6 +29,7 @@ import { inventoryPresentation, type InventoryPresentation } from './inventory-p
 type InventoryProps = {
   view: GameView;
   addItem(): void;
+  chooseWork?(item: InventoryItemView): void;
   browseActions?(
     item: InventoryItemSummary,
     opener: Element,
@@ -133,6 +134,7 @@ export function Inventory(props: InventoryProps) {
   const callbacks = useMemo(
     () => ({
       addItem: () => latest.current.addItem(),
+      chooseWork: (item: InventoryItemView) => latest.current.chooseWork?.(item),
       browseActions: (
         item: InventoryItemSummary,
         opener: Element,
@@ -165,6 +167,7 @@ export function Inventory(props: InventoryProps) {
       key={privateOwner}
       {...props}
       {...callbacks}
+      chooseWork={props.chooseWork ? callbacks.chooseWork : undefined}
       browseActions={props.browseActions ? callbacks.browseActions : undefined}
       onTalkAbout={props.onTalkAbout ? callbacks.onTalkAbout : undefined}
       view={view}
@@ -178,6 +181,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
   view,
   addItem,
   browseActions,
+  chooseWork,
   contextMenu,
   command,
   connected,
@@ -1297,6 +1301,18 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                             Explore uses and targets
                           </Button>
                         )}
+                      {item.workBatch && chooseWork && (
+                        <Button
+                          variant="quiet"
+                          disabled={!connected || !view.access?.controlling || busy}
+                          onPress={() => {
+                            chooseWork(item);
+                            closeDetail();
+                          }}
+                        >
+                          {item.workBatch.label}
+                        </Button>
+                      )}
                       {item.actions.map((action) => (
                         <div key={action.id}>
                           <Button

@@ -1,6 +1,7 @@
 import { entityGet, entityHas } from '@open-legend/domain';
 import {
   activityRequestHost,
+  activityHostRequests,
   activityHostForCommand,
   accessiblePossession,
   canAccessContainer,
@@ -70,13 +71,26 @@ export function projectActivityStatus(
     name: execution.request?.name ?? 'My selected method',
     status: waiting ? 'waiting' : plan!.status,
     ...(reason ? { reason } : {}),
+    ...(execution.request?.quantity
+      ? {
+          quantity: {
+            requested: execution.request.quantity.requested,
+            completed: execution.completedUnits ?? 0,
+            unitLabel: execution.request.quantity.unitLabel,
+          },
+        }
+      : {}),
     ...(execution.control
       ? {
-          spent: execution.spent ?? 0,
-          maximumSpent: execution.control.budget.maximumSpent,
-          spendingUnit: activityHostForCommand(world, execution.control.budget.command)?.definition
-            .spending?.unit,
-          attempts: execution.attempts ?? 0,
+          ...(execution.control.kind === 'counted'
+            ? {
+                spent: execution.spent ?? 0,
+                maximumSpent: execution.control.budget.maximumSpent,
+                spendingUnit: activityHostForCommand(world, execution.control.budget.command)
+                  ?.definition.spending?.unit,
+                attempts: execution.attempts ?? 0,
+              }
+            : {}),
           interrupted: execution.interrupted ?? false,
           deadline: execution.control.deadline,
         }
@@ -172,9 +186,9 @@ export function activityChoicePage(
   const world = service.world,
     actor = entityGet(world.entities, scope.actorId)!;
   const host = activityRequestHost(world, request.family);
-  const field = host?.definition.requests?.find((entry) => entry.id === request.family)?.fields[
-    request.field
-  ];
+  const field = (
+    host && activityHostRequests(world, host).find((entry) => entry.id === request.family)
+  )?.fields[request.field];
   if (!host?.requestChoice || !field?.discovery)
     throw new HistoryCursorError('Choose an installed searchable activity field.');
   const source = field.discovery.source;

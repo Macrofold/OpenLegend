@@ -4,7 +4,7 @@ import {
   batchedAttentionQuestions,
   decisionQuestions,
 } from '../../apps/server/src/jev-questions.js';
-import { DEFAULT_COGNITION_POLICY } from '../../packages/domain/src/worlds/base/cognition.js';
+import { baseCognitionPolicy } from '../../packages/domain/src/worlds/base/cognition.js';
 import { check, choice, noul, scene, score } from './authoring.js';
 import type { BenchmarkScene } from './types.js';
 import type { JsonValue } from '@open-legend/ai';
@@ -796,14 +796,14 @@ function values(
   const questions = batchedAttentionQuestions(
     Object.keys(candidates),
     'choose-action',
-    DEFAULT_COGNITION_POLICY.actionGuidance,
+    baseCognitionPolicy().actionGuidance,
   );
   return scene(
     id,
     'needs-values-and-enough',
     title,
     {
-      attentionPolicy: DEFAULT_COGNITION_POLICY.actionGuidance.reasons,
+      attentionPolicy: baseCognitionPolicy().actionGuidance.reasons,
       candidates,
       ...state,
     },

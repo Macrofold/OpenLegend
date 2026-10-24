@@ -85,7 +85,7 @@ export function authoringGuide(
     ? {
         kind,
         family: family.definition,
-        schema: selectedRecipeCandidateSchema(family),
+        schema: selectedRecipeCandidateSchema(family, world),
         notes:
           'Supply only the selected family candidate. Native compilation derives all real output components; submission saves an exact review, not a crafted item.',
       }

@@ -1,3 +1,4 @@
+import { navigationMembershipChanged } from './entity-index.js';
 import { entityGet, entityHas } from './entity-collection.js';
 import { seesEntity } from './perception.js';
 import { canReachEntity, distance, findApproachPath, findPath, isWalkable } from './spatial.js';
@@ -60,6 +61,7 @@ export function followState(
   }
   if (command.onLost) state.onLost = command.onLost;
   if (command.until !== undefined) state.until = command.until;
+  if (command.complete) state.complete = true;
   return state;
 }
 
@@ -73,6 +75,10 @@ function perceived(world: WorldState, actor: Entity, action: Action): Entity | u
   // After a disappearance, a new sighting is the same subject only through recognition,
   // never because the server knows it is the same entity.
   const episode = action.follow?.episode;
+  // A native follower may have no episodic-memory association. Once sight was
+  // broken, absence of that proof cannot become permission to re-identify a body.
+  if (episode === undefined && action.follow?.pursuing)
+    return subjectReferenceCurrent(world, actor.id, target.id, undefined) ? target : undefined;
   return episode === undefined || subjectReferenceCurrent(world, actor.id, target.id, episode)
     ? target
     : undefined;
@@ -94,6 +100,8 @@ export function followUnavailable(world: WorldState, actor: Entity, action: Acti
       ? null
       : 'the followed target is no longer perceived.';
   if (!target.actor?.alive) return 'the followed actor is no longer alive.';
+  if ((target.actor.physicalLife ?? 0) !== action.targetLife)
+    return 'the physical participant selected for following has changed.';
   return null;
 }
 
@@ -158,7 +166,7 @@ function pendingRouteCurrent(world: WorldState, actor: Entity, action: Action): 
   const profile = bodyProfile(actor);
   return (
     !!request &&
-    request.geometryRevision === world.map.spatial.revision &&
+    request.geometryRevision === spatialMap(world).spatial.revision &&
     request.body.radius === profile.radius &&
     request.body.height === profile.height &&
     request.body.maxSlope === profile.maxSlope &&
@@ -183,6 +191,7 @@ function pursue(world: WorldState, actor: Entity, action: Action): string | null
     if (!path || (path.status !== 'reached' && path.status !== 'pending'))
       return 'no supported route reaches where the target was last seen.';
     action.path = path.path;
+    navigationMembershipChanged(world, actor.id);
     action.navigation = path.status === 'pending' ? { request: path.request } : undefined;
   }
   return null;
@@ -209,16 +218,18 @@ export function updateFollowPath(
   }
   const slot = relationSlot(world, actor, action, target);
   const holding = action.stage === 'working';
-  const held = slot
-    ? distance(worldPosition(actor), slot) <=
-        FOLLOW_RULES.slotTolerance + (holding ? FOLLOW_RULES.resumeMargin : 0) &&
-      canReachEntity(world, actor, target, follow.distance + FOLLOW_RULES.slotTolerance)
-    : canReachEntity(
-        world,
-        actor,
-        target,
-        follow.distance + (holding ? FOLLOW_RULES.resumeMargin : 0),
-      );
+  const held = follow.complete
+    ? canReachEntity(world, actor, target, follow.distance)
+    : slot
+      ? distance(worldPosition(actor), slot) <=
+          FOLLOW_RULES.slotTolerance + (holding ? FOLLOW_RULES.resumeMargin : 0) &&
+        canReachEntity(world, actor, target, follow.distance + FOLLOW_RULES.slotTolerance)
+      : canReachEntity(
+          world,
+          actor,
+          target,
+          follow.distance + (holding ? FOLLOW_RULES.resumeMargin : 0),
+        );
   if (held) {
     action.stage = 'working';
     delete action.navigation;
@@ -244,6 +255,7 @@ export function updateFollowPath(
         ? 'the follow route exceeds the current navigation budget.'
         : 'no supported route to the perceived target remains.';
     action.path = path.path;
+    navigationMembershipChanged(world, actor.id);
     action.navigation = path.status === 'pending' ? { request: path.request } : undefined;
     follow.lastObservedPosition = { ...worldPosition(target) };
     follow.nextRepathAt = world.simTime + FOLLOW_RULES.repathSeconds;

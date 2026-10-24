@@ -14,13 +14,20 @@ export function WorldHover({
   name,
   point,
   contents,
+  primaryAction,
 }: {
   name: string;
   point: { x: number; y: number };
   contents?: EntityView['contents'];
+  primaryAction?: {
+    label: string;
+    facts?: Array<[string, string]>;
+    reason?: string;
+    enabled: boolean;
+  };
 }) {
   const card = useRef<HTMLDivElement>(null);
-  // Runs after each pointer update; the card is at most PREVIEW_STACKS + 2 lines tall.
+  // Runs after each pointer update, including changed contextual action facts.
   useLayoutEffect(() => {
     const element = card.current;
     if (!element) return;
@@ -38,14 +45,27 @@ export function WorldHover({
     <div
       ref={card}
       className="ol-world-hover"
+      data-primary={!!primaryAction || undefined}
       style={
         {
-          '--world-hover-delay': `${WORLD_HOVER_DELAY_MS}ms`,
-          '--world-hover-fade': `${WORLD_HOVER_FADE_MS}ms`,
+          '--world-hover-delay': primaryAction ? '0ms' : `${WORLD_HOVER_DELAY_MS}ms`,
+          // A ready shortcut's consequences must already be readable when clicked.
+          '--world-hover-fade': primaryAction ? '0ms' : `${WORLD_HOVER_FADE_MS}ms`,
         } as CSSProperties
       }
     >
       <div>{name}</div>
+      {primaryAction?.label && (
+        <div>
+          <strong>Command-click: {primaryAction.label}</strong>
+        </div>
+      )}
+      {primaryAction?.reason && <div className="ol-muted">{primaryAction.reason}</div>}
+      {primaryAction?.facts?.map(([label, value]) => (
+        <div key={label} className="ol-world-hover-fact">
+          {label}: {value}
+        </div>
+      ))}
       {shown.map((item) => (
         <div key={item.id}>
           {item.name} × {item.quantity}

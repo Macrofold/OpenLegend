@@ -12,11 +12,13 @@ import {
   mindFor,
   reconcileConditions,
   reconcileConstructionAuthority,
+  reconcileCampAssetAuthority,
   updateWorld,
   validateStoryPolicy,
   type WorldCreationCandidate,
   type InitialWorldPreparation,
   type ConstructionPermission,
+  type CampAssetPermission,
 } from '@open-legend/domain';
 import type { AccountBinding } from './authority.js';
 import type { AppConfig } from './config.js';
@@ -35,6 +37,7 @@ export function prepareWorldForStartup(
   actorOwners: ReadonlyMap<string, string>,
   constructionPermissions: readonly ConstructionPermission[],
   fresh: boolean,
+  campAssetPermissions: readonly CampAssetPermission[],
 ): SavedWorld {
   const world = updateWorld(saved.world, (world) => {
     world.storyPolicy ??= defaultStoryPolicy();
@@ -47,8 +50,6 @@ export function prepareWorldForStartup(
     initializeActorTraits(world);
     validateSocialPolicy(world);
     world.socialPolicy = { ...selectedSocialPolicy(world) };
-    if (config.conversationInactivitySeconds !== undefined)
-      world.socialPolicy.conversationInactivitySeconds = config.conversationInactivitySeconds;
     for (const [actorId, accountId] of actorOwners) {
       const actor = entityGet(world.entities, actorId)?.actor;
       if (!actor) continue;
@@ -61,6 +62,7 @@ export function prepareWorldForStartup(
     }
     world.paused = true;
     reconcileConstructionAuthority(world, constructionPermissions);
+    reconcileCampAssetAuthority(world, campAssetPermissions);
   });
   validateCurrentWorldState(world);
   return { ...saved, world };
@@ -85,6 +87,7 @@ export async function prepareCreatedWorld(
     authorityOwners,
     initial.constructionSeeds,
     false,
+    [],
   );
   freezeWorld(savedWorld.world);
   const readiness = await prepareOpeningReadiness(candidate, savedWorld.world);

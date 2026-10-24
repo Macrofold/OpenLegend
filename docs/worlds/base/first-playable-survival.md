@@ -1,6 +1,6 @@
 # First-playable food, materials and making
 
-**Selected design, October 17, 2026; implementation and play qualification remain open.** This is the base world's exact content owner for the survival-first [Main opening](playable-openings.md#first-playable-game-target). The [feature specification](../../projects/first-playable-survival-feature-spec.md) explains the experience; the [technical design](../../projects/first-playable-survival-tech-design.md) defines execution. Existing Main currently grants a kit and has empty nearby berry patches; neither establishes this target.
+**Runtime installed in ordinary Main, October 19, 2026; complete natural-journey and player qualification remain open.** This is the base world's exact content owner for the survival-first [Main opening](playable-openings.md#first-playable-game-target). The [feature specification](../../projects/first-playable-survival-feature-spec.md) explains the experience; the [technical design](../../projects/first-playable-survival-tech-design.md) defines execution. Ordinary Main starts empty handed with the selected finite berry/material supplies; component evidence does not establish the complete camp-and-recovery experience.
 
 ## Arrival and ordinary bodily rules
 
@@ -105,6 +105,8 @@ The two local pole patches together contain 36 poles; the initial existing reeds
 With a reed comb and pole hook, 94 fibers need at least 32 collections and 30 poles need 10, instead of 124 one-unit collections. Preparation still needs 47 fiber batches and 26 cord batches. Those cleaning/twisting batches take 3,816 game seconds, or 63.6 real seconds at normal speed. Adding 32 reed collections and ten pole collections gives 5,568 game seconds, or 92.8 real seconds, before making/installing parts, travel or player deliberation. Thirty-two full three-unit reed collections produce 96 units, leaving two beyond the 94-unit build requirement; those real leftovers remain available. This is intentionally visible work rather than instant menus, but repeated identical clicks add no value; use the explicit finite batches below. Exact total journey time is unmeasured and must include controls, movement, delays and food, not only this arithmetic.
 
 ## Deliberate batches
+
+`config/first-playable/activities.yaml` owns the selected finite-work count and control wording.
 
 An ordinary known action offers **Once** or **Repeat**, with an explicit integer of 1–16 batches and default one. Show the meaning before Start: for example, “Clean fibers 8 times: use 16 reed bundles, make 16 prepared bundles; 384 game seconds before interruptions.” A collection repeat names the actual source and a maximum potential yield, never promises unseen future stock. The existing bounded activity executor starts each real action in turn, checks prerequisites again and stops on the first refusal, interruption, death, loss of control or explicit Stop. Completed goods and spent inputs remain; queued future batches spend nothing. Finishing sixteen batches never silently starts another sixteen.
 

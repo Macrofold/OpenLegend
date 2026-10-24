@@ -1,3 +1,4 @@
+import { baseAnimalResponse } from './animal-response-profile.js';
 import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { baseSpatial } from './spatial-definitions.js';
@@ -131,15 +132,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
             (definition) => definition.id === 'wilderness:energy',
           ),
         ),
-        animal: {
-          threatPosition: null,
-          threatId: null,
-          escapeHeading: null,
-          calmRate: 0,
-          reviewAt: 0,
-          danger: 0,
-          wander: { remainingSeconds: draft.type === 'hare' ? 150 : 200 },
-        },
+        animal: baseAnimalResponse(world, draft.type, draft.type === 'hare' ? 150 : 200),
       };
   }
 }

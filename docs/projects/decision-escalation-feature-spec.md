@@ -1,10 +1,10 @@
 # Better decisions without stopping the game — feature specification
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Luna Low is enabled by default and verified in live gameplay; broader release and character-quality review remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Luna Low is enabled by default; background concurrency is expanded to 100, with broader release qualification open. | 2026-10-22   |
 
-Specification updated **2026-10-17T20:58:12Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
+Specification updated **2026-10-22T21:59:22Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
 
 ## Purpose
 
@@ -107,7 +107,7 @@ Preparing that fallback cannot silently buy other AI calls for memory ranking, s
 
 Only an operator may choose the provider/model and permit the extra spending. A character's thoughts, a player message or a generated world description cannot grant it. A cheaper replacement, different billing mode or different data-sharing route requires explicit configuration rather than silent substitution.
 
-Queues and concurrent execution are bounded under [DE-L02](../limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention). Native simulation and ordinary player interaction must remain responsive under overload. Declining additional optional deliberation is preferable to accumulating an unlimited backlog of obsolete answers. The inspector records why a request was declined, cancelled, unusable or still financially uncertain.
+The server permits 100 simultaneous background operations, shared across character reconsideration, maintenance/indexing and urgent decisions, plus its separate primary-inference allowance. Each uncertain execution occupies one position; unrelated work can use the remainder without discarding possible charges. Queues and concurrent execution are bounded under [DE-L02](../limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention). Native simulation and ordinary player interaction must remain responsive under overload. Declining additional optional deliberation is preferable to accumulating an unlimited backlog of obsolete answers. The inspector records why a request was declined, cancelled, unusable or still financially uncertain.
 
 Pausing, shutdown and restart end unfinished delayed decisions. Resuming or restarting does not automatically send or apply them again. Completed actions and real spending records survive; a later genuine event may create a new decision. If a provider might still be executing, its occupied execution capacity remains accounted for until completion is known, even across restart. Missing price alone retains the financial allowance without occupying execution capacity forever.
 

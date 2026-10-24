@@ -5,6 +5,23 @@ export function modalOwnsInput(): boolean {
   );
 }
 
+/** Enter at the appropriate end before wrapping between rows. Native-disabled
+ * controls cannot take focus; aria-disabled rows retain their explanations.
+ */
+export function movePickerFocus(container: HTMLElement, key: 'ArrowDown' | 'ArrowUp'): void {
+  const rows = Array.from(
+    container.querySelectorAll<HTMLButtonElement>('[data-picker-row]'),
+  ).filter((row) => !row.disabled);
+  const index = rows.indexOf(document.activeElement as HTMLButtonElement);
+  const next =
+    index < 0
+      ? key === 'ArrowDown'
+        ? 0
+        : rows.length - 1
+      : (index + (key === 'ArrowDown' ? 1 : rows.length - 1)) % rows.length;
+  rows[next]?.focus();
+}
+
 /** World shortcuts must not compete with text entry or an open child choice.
  * Escape remains with each overlay's dismissal owner.
  * docs/ui-ux/controls.md#text-composition-and-game-shortcuts

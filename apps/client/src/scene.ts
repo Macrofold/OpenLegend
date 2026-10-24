@@ -225,7 +225,7 @@ export class WildernessScene implements WorldRenderer {
   private orientedYaw = NaN;
   private orientedPitch = NaN;
   private nextHoverAt = 0;
-  private lastHover?: { entity: EntityView | null; x: number; y: number };
+  private lastHover?: { entity: EntityView | null; x: number; y: number; primary: boolean };
   private initialized = false;
   private visionBlur: VisionBlur;
   private readonly perception: PerceptionOverlay;
@@ -241,6 +241,7 @@ export class WildernessScene implements WorldRenderer {
     orbit: boolean;
     moved: boolean;
     primaryAction: boolean;
+    primaryGesture?: string;
   } | null = null;
   // Some browsers emit contextmenu on press, others after release. Pointer
   // gestures own their menu; suppress that native duplicate until the next press.
@@ -770,12 +771,23 @@ export class WildernessScene implements WorldRenderer {
       let entry = this.actors.get(entity.id);
       if (entry?.observed && entry.view === entity) continue;
       this.movingEntries.add(entity.id);
-      const signature = `${
+      const baseSignature = `${
         entity.contents
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
       }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(studyAppearance(entity.appearance, this.artSettings.assetSources))?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      // Restoring another valid construction branch can retain the same edit
+      // count. The actual permitted pieces/palette decide appearance and picking.
+      const signature = entity.assembly
+        ? JSON.stringify([
+            baseSignature,
+            entity.assembly.familyId,
+            entity.assembly.implementation,
+            entity.assembly.presentation,
+            entity.assembly.shapes,
+          ])
+        : baseSignature;
       if (entry && entry.root.tags.list()[0] !== signature) {
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
@@ -854,7 +866,10 @@ export class WildernessScene implements WorldRenderer {
   }
   select(id: string | null): boolean {
     const entry = id ? this.actors.get(id) : undefined;
-    if (id && (!entry || !this.identifiable(entry))) {
+    // A named entry in the server-permitted list can be inspected outside the
+    // camera's sharp focus. Pixel picking and the marker retain their narrower
+    // presentation checks; remembered or no-longer-observed entries still refuse.
+    if (id && !entry?.observed) {
       this.denySelection();
       return false;
     }
@@ -964,8 +979,8 @@ export class WildernessScene implements WorldRenderer {
         if (!p || p.x < 0 || p.x > width || p.y < 0 || p.y > height) return null;
         return { x: p.x, y: p.y - 54, source: p };
       },
-      direction: (speech, captionWidth, captionHeight) => {
-        const speaker = speech.speaker ? this.actors.get(speech.speaker.entityId) : undefined;
+      direction: (speech, captionWidth, captionHeight, sourceId) => {
+        const speaker = sourceId ? this.actors.get(sourceId) : undefined;
         let dx: number,
           dy: number,
           approximate = false;
@@ -1371,7 +1386,7 @@ export class WildernessScene implements WorldRenderer {
       b = shape.max;
     return this.primitive(
       shape.id,
-      'box',
+      shape.geometry ?? 'box',
       material,
       parent,
       (a.x + b.x) / 2 - origin.x,
@@ -1425,12 +1440,17 @@ export class WildernessScene implements WorldRenderer {
     this.app.root.addChild(root);
     root.setPosition(view.position.x, view.position.y, view.position.z);
     if (view.assembly) {
-      const key = `assembly:${view.assembly.familyId}`;
+      const key = JSON.stringify([
+        'assembly',
+        view.assembly.familyId,
+        view.assembly.implementation,
+        view.assembly.presentation,
+      ]);
       let asset = this.appearanceAssets.get(key);
       if (!asset) {
         const cloth = this.material(view.assembly.presentation.coverColor);
-        cloth.opacity = 0.64;
-        cloth.blendType = pc.BLEND_NORMAL;
+        cloth.opacity = view.assembly.presentation.coverOpacity;
+        cloth.blendType = cloth.opacity < 1 ? pc.BLEND_NORMAL : pc.BLEND_NONE;
         cloth.update();
         asset = {
           materials: [this.material(view.assembly.presentation.postColor), cloth],
@@ -1445,7 +1465,14 @@ export class WildernessScene implements WorldRenderer {
         this.constructionPart(
           shape,
           root,
-          asset!.materials[shape.role === 'cover' ? 1 : 0]!,
+          asset!.materials[
+            shape.role === 'cover' ||
+            shape.role === 'panel' ||
+            shape.role === 'access-panel' ||
+            shape.role === 'gate'
+              ? 1
+              : 0
+          ]!,
           view.position,
         ),
       );
@@ -1776,8 +1803,13 @@ export class WildernessScene implements WorldRenderer {
       { id: string; signature: string; build(resource: LandscapeResource): void }
     >();
     const authoredBlockers = new Set(map.spatial.blockers.map((blocker) => blocker.id));
+    const pieceOrdinals = new Map<string, number>();
     for (const blocker of spatialBlockers(map)) {
-      desired.set(JSON.stringify(['blocker', blocker.id]), {
+      const ordinal = pieceOrdinals.get(blocker.id) ?? 0;
+      pieceOrdinals.set(blocker.id, ordinal + 1);
+      // Several exact solids can belong to one physical object. Keep every
+      // render resource while picking still identifies that original object.
+      desired.set(JSON.stringify(['blocker', blocker.id, ordinal]), {
         id: blocker.id,
         signature: JSON.stringify([blocker, authoredBlockers.has(blocker.id)]),
         build: (resource) => {
@@ -2408,7 +2440,7 @@ export class WildernessScene implements WorldRenderer {
       this.updateReadThrough(entry, dt);
     }
     const selected = this.selected ? this.actors.get(this.selected) : undefined;
-    if (this.selected && (!selected || !this.identifiable(selected))) {
+    if (this.selected && !selected?.observed) {
       this.selected = null;
       this.callbacks.select(null);
     }
@@ -2570,7 +2602,15 @@ export class WildernessScene implements WorldRenderer {
   private setModifiers(command: boolean, reveal: boolean): void {
     if (this.commandHeld !== command) {
       this.commandHeld = command;
+      if (!command && this.drag?.primaryAction) this.cancelDrag();
       this.updateCursor();
+      if (this.hoverPoint && !this.drag) {
+        const rect = this.canvas.getBoundingClientRect();
+        this.publishHover(
+          this.hoverEntity(this.hoverPoint.x - rect.left, this.hoverPoint.y - rect.top),
+          this.hoverPoint,
+        );
+      }
     }
     if (this.revealHeld === reveal) return;
     this.revealHeld = reveal;
@@ -2624,6 +2664,7 @@ export class WildernessScene implements WorldRenderer {
     );
   }
   private publishHover(entity: EntityView | null, point: { x: number; y: number }): void {
+    const primary = this.commandHeld && !this.targeting && !this.constructionPlacement;
     const id = entity?.id ?? null;
     if (id !== this.hoveredId) {
       this.hoveredId = id;
@@ -2661,11 +2702,12 @@ export class WildernessScene implements WorldRenderer {
     if (
       this.lastHover?.entity === entity &&
       this.lastHover.x === point.x &&
-      this.lastHover.y === point.y
+      this.lastHover.y === point.y &&
+      this.lastHover.primary === primary
     )
       return;
-    this.lastHover = { entity, ...point };
-    this.callbacks.hover(entity, point);
+    this.lastHover = { entity, ...point, primary };
+    this.callbacks.hover(entity, point, primary);
   }
   private clearHover = (): void => {
     this.hoverPoint = null;
@@ -2908,6 +2950,12 @@ export class WildernessScene implements WorldRenderer {
       moved: false,
       primaryAction: event.button === 0 && event.metaKey,
     };
+    if (this.drag.primaryAction && !this.targeting && !this.constructionPlacement) {
+      const point = this.local(event),
+        entry = this.pick(point.x, point.y);
+      if (entry && this.identifiable(entry))
+        this.drag.primaryGesture = this.callbacks.beginPrimaryAction(entry.view) ?? undefined;
+    }
     this.canvas.setPointerCapture(event.pointerId);
     this.publishHover(null, { x: event.clientX, y: event.clientY });
   };
@@ -2952,8 +3000,11 @@ export class WildernessScene implements WorldRenderer {
   private pointerUp = (event: PointerEvent): void => {
     const drag = this.drag;
     if (!drag || event.pointerId !== drag.pointerId) return;
-    this.cancelDrag();
-    if (drag.moved || event.button !== drag.button) return;
+    this.cancelDrag(true);
+    if (drag.moved || event.button !== drag.button) {
+      this.callbacks.cancelPrimaryAction();
+      return;
+    }
     if (drag.button === 2) {
       if (this.constructionPlacement) {
         this.constructionPlacement.cancel();
@@ -2962,7 +3013,10 @@ export class WildernessScene implements WorldRenderer {
       this.openContextMenu(event);
       return;
     }
-    if (drag.button !== 0 || event.ctrlKey) return;
+    if (drag.button !== 0 || event.ctrlKey) {
+      this.callbacks.cancelPrimaryAction();
+      return;
+    }
     const local = this.local(event);
     if (this.constructionPlacement) {
       const point = this.groundPoint(local.x, local.y);
@@ -2980,7 +3034,9 @@ export class WildernessScene implements WorldRenderer {
       return;
     }
     if (drag.primaryAction) {
-      if (entry) this.callbacks.primaryAction(entry.view);
+      if (entry && event.metaKey && drag.primaryGesture)
+        this.callbacks.commitPrimaryAction(drag.primaryGesture, entry.view);
+      else this.callbacks.cancelPrimaryAction();
       return;
     }
     if (entry) this.callbacks.select(entry.view);
@@ -3051,11 +3107,12 @@ export class WildernessScene implements WorldRenderer {
     event.preventDefault();
     event.stopPropagation();
   };
-  private cancelDrag(): void {
+  private cancelDrag(releasing = false): void {
     const drag = this.drag;
     this.drag = null;
     this.updateCursor();
     if (!drag) return;
+    if (!releasing || drag.moved) this.callbacks.cancelPrimaryAction();
     if (drag.button === 2) this.pointerContextHandled = true;
     this.saveCameraPreferences();
     if (this.canvas.hasPointerCapture(drag.pointerId))

@@ -1,8 +1,10 @@
 # First playable — cooperation technical design
 
-| Status      | Current progress                                                                                                                                               | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Exact cooperation, authored people, disclosure, lifecycle and implementation contracts are designed; CP01–CP10 runtime delivery and qualification remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Four residents, finite cooperation, exact compacts and ordinary controls are connected; remaining disclosure, integration and independent/player qualification stay open. | 2026-10-22   |
+
+**Implementation reference recorded:** `2026-10-22T16:03:00Z` (combined branch implementation/review).
 
 ## Scope, existing owners and missing computation
 
@@ -63,6 +65,18 @@ type CooperationProfile = {
 `DefinitionPin` means the existing exact installed definition identity/revision/content binding, not a new version scheme. Method references are actual learned-method or recipe identities resolved by their knowledge owner. Profiles name admitted native support; omission removes its discovery and admission. The compiler validates duplicate actor/trait IDs, required fields, valid methods, supported families and safe explicit collection/string sizes at the existing authored-definition boundary. It must not add arbitrary new biographies or trim content to make a schema pass. Existing selected character text and limits remain their owners.
 
 Runtime world construction uses the same shared main initializer and existing actor allocator. Resolve person roles and known-person roles through the exact opening bindings after identities are allocated: Ada uses the supplied `residentId` (`entity-0002` in ordinary startup), while the other current residents keep their existing fixed keys. No literal `ada` entity or name lookup replaces that binding, and two roles resolving to one actor refuse before installation. Move the four seed identities into the compiled data with their useful prior content intact; do not keep two writable sources. Keep physical positions, stock and resource quantities in their existing opening/resource owners. The [people profile](../worlds/base/first-playable-people.md#authored-fields-and-assembly) specifies the exact text additions and starting acquaintances. Copy the current missing-belonging beliefs as authored first-person knowledge; do not turn them into biography, deterministic goals or fabricated witnessed events. Existing saved minds are not reseeded on load.
+
+The current compiler reads one `people.yaml` source for names, identity, traits,
+empty initial goals, incident beliefs and selected acquaintances. `methodSet`
+selects the elementary catalogue; compilation resolves its source method IDs,
+and the initializer records each actual installed recipe through the knowledge
+owner. The prepared bundle carries these people in memory, so generation and
+world construction do not substitute yesterday's generated authorship. The default
+supplied opening reads the generated copy of the same identity source. The prepared
+first-playable candidate additionally installs the four-person method/acquaintance
+selection. It resolves roles to the actual resident and retained actor IDs before
+starting content; duplicate bindings refuse. This initial seeding never runs on
+restoration. Physical conditions/holdings remain with the opening/incident owners.
 
 ## Finite episode record and commands
 
@@ -150,7 +164,7 @@ Acceptance records agreement and a purpose available to independent choices; it 
 
 Explicit decline/withdraw/leave may execute during deliberate manual pause, subject to exact current control/participant/revision and existing maintenance/storage/absence holds. No range, current ability to travel or old work prerequisite blocks ending one's consent. It never starts new work. Accepted cooperation ends on the deadline, a participant's physical-life loss/departure, changed incompatible selected definition, or explicit replacement of the helper's owned purpose. Quiet conversation, inspecting and different conversation membership do not end it. Required continuation receives actual invalidation through the existing owner, not a full-world polling loop.
 
-Ending cancels only exact still-owned unfinished plans/activities and releases their unspent claims. Unrelated new work survives. Completed material contributions, settled gifts, injuries, consumed resources, recovery and released projectiles survive. A deadline is a bound on this purpose, not permission for a native action to claim completion without effects. A currently committed non-cancellable phase finishes under its own owner and receives no follow-on action from the expired agreement.
+Ending cancels only exact still-owned unfinished plans/activities and releases their unspent claims. Unrelated new work survives. Completed material contributions, settled gifts, injuries, consumed resources, recovery and released projectiles survive. A deadline is a bound on this purpose, not permission for a native action to claim completion without effects. A currently committed non-cancellable phase finishes under its own owner and receives no follow-on action from the expired agreement. A mixed action list can finish after its remaining independent work completes; cancelled cooperative steps retain their recorded cancellation and cannot keep an otherwise finished list active or count as successful output.
 
 Before removing a terminal episode, detach any such continuing action/recovery from **live cooperation ownership** in the same transaction. Keep its original action identity, phase, inputs, due time, effect permissions and immutable source-occurrence reference; remove the live episode/plan continuation dependency. Its existing physical action owner alone finishes it. Historical purpose attribution is an occurrence reference, not a dangling live episode reference or a new retained terminal contract. No continuing effect acquires new material permission or a next step from detachment. Terminal work counts only as an actual later outcome, never retroactively keeps assent alive. Current-format validation permits this ordinary detached work and still rejects an active cooperation-owned action whose live episode is missing. Exercise expiry and withdrawal during committed work/recovery, then save and restore before that work ends.
 
@@ -209,6 +223,14 @@ Cancellation is allowed even if the other person has left hearing range. It imme
 
 Every native occurrence supplies actor, participants, time/order, terms revision, explicit choice versus automatic cause, exact attempted/committed effects and source uncertainty to the existing recording owner before publication. Each actor receives one source-linked account in their own perspective; a plan references it instead of storing another narrative. Speech remains an attributed utterance; an offer is an offer; acceptance is agreement; completed work and a transfer are separate events. Public observers may see an interaction under world perception, but never receive private inventories, hidden terms or the recipient's thoughts.
 
+Exact native agreement notices use the existing protected personal-source category.
+Automatic prose consolidation cannot replace their typed terms or endings;
+deliberate forgetting remains available and fences both the reader and later
+notices. This retains more exact historical evidence, which CP09 must include in
+its historical-data measurements. Live consent and received evidence remain
+separate: ending one's own remembered participation creates a new private choice,
+without reconstructing a missing live agreement or learning the counterpart's cause.
+
 Preparation consumes the current identity, full relevant bodily situation, chosen goals/work, actual permitted possibilities, active accepted terms and relevant shared experience through existing cognition assembly. Required commitment/ending facts precede optional recall under the existing input budget. No new prompt says to help the player, prefer a named person, follow a script or maximize agreement acceptance. Reuse Jev selection for supplied possibilities and generation for actual language/novel proposals; native execution advances chosen known work. Unknown/abstention or unavailable decision service does not mean acceptance. Existing admitted work may continue; no new choice or automatic paid retry is fabricated.
 
 The four residents receive fair ordinary scheduling through the existing attention/continuing-lives owners. A direct request is eligible evidence for its recipient; other people are not all prompted about it. Received invitations do not override immediate threat or physiological urgency. Quiet time, unfinished intention, meaningful new perception, task outcomes and deadlines supply existing wake-ups. No per-second polling model call or global “conversation all residents” pass is added. Parent CE/attention qualification must retain refusal, independent non-player activity, quiet enjoyment and stopping after a motive changes.
@@ -220,6 +242,18 @@ The protocol projection contains safe person labels/opaque references, known ter
 Build the participant's list from their own eligible received/accepted/ended evidence plus locally knowable deadlines, not by enumerating the native world's currently live compacts and exposing missing rows. Only an actually received/perceived ending or that person's own ending updates their known status. While separated, show the last known terms and the explicit unconfirmed-participation label. A read/refresh cannot silently learn a remote withdrawal by hiding the row or changing its count. A new attempted use still rechecks the authoritative live owner and may produce the generic unavailable result described above. This distinction needs an actual unseen-withdrawal and delayed-read privacy check; filtering private reason text alone is insufficient.
 
 Use one shared detail component in Character/Promises, person actions and conversation attachments. Keyboard operation, focus restoration and non-drag alternatives follow the existing UI handbook. Keep readable content during refresh, disable stale consequential controls, preserve drafts and distinguish no offers from loading/error/unavailable. The accepted operation receipt, not an optimistic message, updates status. Nobody has to enter coordinates, native IDs or an invented social score to act.
+
+Received-agreement controls retain the exact native request before dispatch,
+keep focus in the owning panel and recover through the existing read-only receipt
+endpoint. They reuse private retained-request helpers and access cleanup; an
+unknown result permits no automatic replacement or resubmission. Native admission,
+assents and committed work remain unchanged. Recovery preparation follows pending
+request changes, rather than routine world updates, and reveals at most 40 rows
+before an explicit request for more. An unrelated work request cannot disable
+these separate consent controls. Actual keyboard acceptance, lost acknowledgement,
+reload/recovery, unavailable storage and narrow use pass the
+[connected browser journey](../verification/first-playable-world.md#agreement-focus-and-exact-request-recovery--october-22);
+the broader CP08 matrix remains tracked separately.
 
 ## Persistence, definitions and performance
 

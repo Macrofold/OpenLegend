@@ -14,7 +14,7 @@ import { BASE_CORDAGE_FAMILY } from './cordage-family.js';
 import { BASE_GATHER_EQUIPMENT, BASE_LAUNCHER_EQUIPMENT } from './equipment.js';
 import { BASE_SHIELD_FAMILY } from './shield-family.js';
 import { RIVER_LINE_FAMILY } from './river-fishing.js';
-import { BASE_PROJECTILE_SPEED } from './ranged-counterplay.js';
+import { BASE_PROJECTILE_SPEED, BASE_PROJECTILE_CONTACT_WARNING } from './ranged-counterplay.js';
 
 const number = (minimum: number, maximum: number): RecipeParameterSchema => ({
   type: 'number',
@@ -171,7 +171,7 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
     {
       workSeconds: work,
       damage: swing ? number(10, 20) : number(16, 28),
-      range: swing ? number(3, 7) : number(4, 10),
+      range: swing ? number(3, 7) : number(4, 30),
       accuracy: number(0.6, 0.9),
     },
     [
@@ -182,9 +182,11 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
     ],
     {
       ...weaponConsumer,
-      limitation: swing
-        ? 'Straight point-projectile shots at permitted living targets and inert practice targets; no arcs, piercing or collateral injury.'
-        : 'Uses compatible arrows with straight point-projectile flight; no arcs, piercing or collateral injury.',
+      limitation: `${
+        swing
+          ? 'Straight point-projectile shots at permitted living targets and inert practice targets; no arcs or piercing.'
+          : 'Uses compatible arrows with straight point-projectile flight; no arcs or piercing.'
+      } ${BASE_PROJECTILE_CONTACT_WARNING}`,
     },
     {
       mechanism,

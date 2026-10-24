@@ -97,7 +97,7 @@ export function rangedAccuracy(world: WorldState, target: Entity, accuracy: numb
     policy.conditionAdjustment === 'danger-or-return' &&
     (target.threat
       ? target.threat.mode === 'return' && !!target.actor?.action
-      : (target.animal?.danger ?? 0) > 0);
+      : !!target.animal?.episode);
   return accuracy * (adjusted ? policy.conditionAccuracyFactor : 1);
 }
 export function rangedApproachRange(world: WorldState, range: number): number {

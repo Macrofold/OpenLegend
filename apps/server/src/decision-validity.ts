@@ -6,9 +6,53 @@ import {
   bodyEligibilityRevision,
   projectAttributes,
   requiredOutcomeMemoryIds,
+  scopedAppraisals,
+  type AppraisalScope,
   type WorldState,
 } from '@open-legend/domain';
 import { digest } from './content-digest.js';
+
+/** Additive personally experienced blows remain evidence for the next opportunity,
+ * not an automatic veto of a still-legal choice after the one funded refresh.
+ * Physical capability, exact work and selected subjects are checked again at admission. */
+export function preparedResponseValidity(
+  world: WorldState,
+  actorId: string,
+  scopes: readonly AppraisalScope[],
+): string {
+  const entity = entityGet(world.entities, actorId),
+    actor = entity?.actor;
+  return digest({
+    world: world.id,
+    policy: world.cognitionPolicy,
+    modules: world.moduleManifest.revision,
+    status: world.statusEffectPolicy.revision,
+    identity: [
+      entity?.name,
+      entity?.description,
+      actor?.species,
+      actor?.traits,
+      actor?.personality,
+      actor?.backstory,
+    ],
+    life: actor?.physicalLife,
+    controller: actor?.controller,
+    alive: actor?.alive,
+    incapacitated: actor?.incapacitated,
+    capabilities: actor?.capabilities,
+    goals: actor?.agency.goals,
+    mind: world.innerWorlds?.[actorId]?.revision ?? world.minds?.[actorId]?.revision,
+    forgotten: world.experience?.forgotten[actorId],
+    corrections: world.experience?.corrections?.[actorId],
+    // The appraisal owner advances revisions at actual subscribed decay boundaries,
+    // explicit interpretation and resolution. Reclassifying its continuously read
+    // value here would invent an immediate boundary for a newly selected 0.5.
+    feelings: scopedAppraisals(world, actorId, scopes).map(({ id, revision }) => ({
+      id,
+      revision,
+    })),
+  });
+}
 
 /** Task-local semantic facts: no history bodies or whole-world revision in this fingerprint. */
 export function decisionValidity(world: WorldState, actorId: string): string {
@@ -49,17 +93,6 @@ export function decisionValidity(world: WorldState, actorId: string): string {
     }
     return feeling;
   });
-  const conversationId = world.conversations?.active[actorId];
-  const conversation = conversationId ? world.conversations?.records[conversationId] : undefined;
-  const awareness = world.experience?.awareness[actorId] ?? [];
-  let latestSpeech: string | undefined;
-  for (let index = awareness.length - 1; index >= 0; index--) {
-    const evidence = awareness[index]!;
-    if (evidence.triggerKind === 'addressed_speech' && evidence.intelligible) {
-      latestSpeech = evidence.eventId;
-      break;
-    }
-  }
   return digest({
     // Installed rules and authored identity shape the meaning of the prepared question.
     // Their revisions change independently of the plan or selected memory sources.
@@ -92,13 +125,5 @@ export function decisionValidity(world: WorldState, actorId: string): string {
     forgotten: world.experience?.forgotten[actorId],
     corrections: world.experience?.corrections?.[actorId],
     outcomes: requiredOutcomeMemoryIds(world, actorId),
-    conversation: conversation
-      ? {
-          id: conversation.id,
-          generation: conversation.generation,
-          endedAt: conversation.endedAt,
-          latestSpeech,
-        }
-      : null,
   });
 }

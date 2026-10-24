@@ -18,7 +18,17 @@ export function visibleFeature(entity: Entity): { feature: string; detail: strin
     entity.appearance ?? 'sprite',
     ...outwardStates(entity),
   ];
-  const value = { feature: JSON.stringify(facts), detail: facts.filter(Boolean).join(', ') };
+  const action = entity.actor?.action;
+  // Physical posture changes wake the existing exposure owner. Target identity stays
+  // out of this generic descriptor; the personal cue adapter checks both exposures.
+  const posture =
+    action && ['strike', 'hunt', 'aim', 'shoot-once'].includes(action.type)
+      ? [action.id, action.type, action.stage, action.strikePhase ?? 'preparing']
+      : null;
+  const value = {
+    feature: JSON.stringify([facts, posture]),
+    detail: facts.filter(Boolean).join(', '),
+  };
   if (Object.isFrozen(entity)) features.set(entity, value);
   return value;
 }

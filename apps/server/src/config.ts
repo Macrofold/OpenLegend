@@ -190,13 +190,6 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
             ? `macrofold/${macrofoldJudgmentModel({ ...generation, macrofoldJevModel })}`
             : `jev/${jevModel}`,
         ),
-    // Absence preserves the world's authored timeout; this records only an explicit override.
-    conversationInactivitySeconds:
-      env['CONVERSATION_INACTIVITY_SECONDS'] === undefined
-        ? undefined
-        : numberSetting(env, 'CONVERSATION_INACTIVITY_SECONDS', 60, 60, 86400),
-    conversationDisconnectMs:
-      numberSetting(env, 'CONVERSATION_DISCONNECT_SECONDS', 60, 5, 600) * 1000,
     narrationBatchMs: numberSetting(env, 'NARRATION_BATCH_MS', 750, 0, 10000),
     // New workshop-root default; unified session/art funding remains a separate integration.
     // docs/world-agent-runtime.md#8-shared-5-allowance-and-external-runs

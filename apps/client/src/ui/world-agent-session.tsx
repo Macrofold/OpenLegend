@@ -57,6 +57,7 @@ export function WorldAgentSession({
   seed,
   purpose,
   nativeCreation,
+  freshRecovery,
   onCreated,
   controls,
   onStatusPolicyChanged,
@@ -69,6 +70,7 @@ export function WorldAgentSession({
   seed?: { id: string; text: string } | null;
   purpose?: 'invention' | 'creation';
   nativeCreation?: boolean;
+  freshRecovery?: boolean;
   onCreated(): void;
   controls?: ReactNode;
   onStatusPolicyChanged(): void;
@@ -90,10 +92,16 @@ export function WorldAgentSession({
       nativeCreation ??
       readLocal(recordKey('native-creation'), false, (v): v is boolean => typeof v === 'boolean'),
   );
+  const [initialFreshRecovery] = useState(
+    () =>
+      freshRecovery ??
+      readLocal(recordKey('fresh-recovery'), false, (v): v is boolean => typeof v === 'boolean'),
+  );
   useEffect(() => {
+    writeLocal(recordKey('fresh-recovery'), initialFreshRecovery);
     writeLocal(recordKey('purpose'), initialPurpose);
     writeLocal(recordKey('native-creation'), initialNativeCreation);
-  }, [key, initialPurpose, initialNativeCreation]);
+  }, [key, initialPurpose, initialNativeCreation, initialFreshRecovery]);
   const [text, setText] = useState(() =>
     readLocal(recordKey('draft'), '', (v): v is string => typeof v === 'string'),
   );
@@ -440,6 +448,7 @@ export function WorldAgentSession({
         ...prefix,
         budgetUsd: initialNativeCreation ? 0 : (status?.availability.sessionAllowanceUsd ?? 0),
         ...(initialPurpose ? { purpose: initialPurpose } : {}),
+        ...(initialFreshRecovery ? { freshRecovery: true } : {}),
       });
       if (!reply.ok) throw new Error(reply.message ?? 'Session could not be created.');
       onCreated();
@@ -711,6 +720,7 @@ export function WorldAgentSession({
               worldId={worldId}
               sessionId={sessionId}
               connected={connected}
+              freshRecovery={initialFreshRecovery || !!session?.recoveryOpening}
               visible={readingVisible && view === 'conversation'}
               mutationReason={
                 session && !session.available
@@ -725,7 +735,12 @@ export function WorldAgentSession({
                 }
                 const reply = await post<{ ok: boolean; message?: string }>(
                   '/api/world-agent/session/open',
-                  { ...prefix, purpose: 'creation', budgetUsd: 0 },
+                  {
+                    ...prefix,
+                    purpose: 'creation',
+                    budgetUsd: 0,
+                    ...(initialFreshRecovery ? { freshRecovery: true } : {}),
+                  },
                 );
                 if (!reply.ok)
                   throw new Error(reply.message ?? 'The creation workspace could not be opened.');
@@ -961,19 +976,21 @@ export function WorldAgentSession({
                   </p>
                 )}
               </div>
-              <p className="ol-caption" role="status">
-                {!connected
-                  ? 'Reconnect to send a request. Your draft is kept.'
-                  : !session.available
-                    ? 'This history is read only. Start a new conversation to make another request.'
-                    : session.question
-                      ? 'Answer the current question before sending a different request.'
-                      : !status.availability.configured
-                        ? status.availability.reason
-                        : session.budget.availableUsd <= 0
-                          ? 'This conversation has no remaining allowance for a new request.'
-                          : ''}
-              </p>
+              {view === 'conversation' && !nativeOpeningSession && (
+                <p className="ol-caption" role="status">
+                  {!connected
+                    ? 'Reconnect to send a request. Your draft is kept.'
+                    : !session.available
+                      ? 'This history is read only. Start a new conversation to make another request.'
+                      : session.question
+                        ? 'Answer the current question before sending a different request.'
+                        : !status.availability.configured
+                          ? status.availability.reason
+                          : session.budget.availableUsd <= 0
+                            ? 'This conversation has no remaining allowance for a new request.'
+                            : ''}
+                </p>
+              )}
             </>
           )}
           {error && <p role="alert">{error}</p>}

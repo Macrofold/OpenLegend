@@ -1,3 +1,4 @@
+import { nativeForagingActive, nativeForagingState } from './native-foraging.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { countDomainWork, domainCountersEnabled } from './diagnostic-counters.js';
 import { narrationTemplate } from './narration.js';
@@ -5,7 +6,6 @@ import { admitStatusWork, chargeStatusWork, statusWork } from './native-work.js'
 import {
   currentAttributeState,
   retainNativeIntegration,
-  NATIVE_VALUE_SEGMENTS,
   type NativeValueBinding,
   type NativeValueAttribute,
 } from './native-values.js';
@@ -66,7 +66,16 @@ export type StatusCondition =
   | {
       field: {
         target: EntityReference;
-        name: 'controller' | 'alive' | 'incapacitated' | 'grounded' | 'activeWork' | 'kind';
+        name:
+          | 'controller'
+          | 'alive'
+          | 'incapacitated'
+          | 'grounded'
+          | 'activeWork'
+          | 'nativeResponseActive'
+          | 'nativeForagingActive'
+          | 'controllerProfileId'
+          | 'kind';
         operator: 'equal' | 'notEqual';
         value: string | boolean;
       };
@@ -228,6 +237,29 @@ function compare(
       return typeof a === 'number' && typeof b === 'number' && a >= b;
   }
 }
+/** Shared dependency reader for the compiled evaluator and native retained preparation. */
+export function statusFieldValue(
+  entity: Entity,
+  name: Extract<StatusCondition, { field: unknown }>['field']['name'],
+): number | string | boolean | undefined {
+  const actor = entity.actor && readOnlyDraftView(entity.actor);
+  if (name === 'controllerProfileId') {
+    const pin = actor?.controller === 'native' && nativeForagingState(entity)?.profile;
+    return pin ? readOnlyDraftView(pin).id : '';
+  }
+  if (name === 'nativeForagingActive') return nativeForagingActive(entity);
+  if (name === 'kind') return entity.kind;
+  if (name === 'grounded') return worldSupport(entity) !== null;
+  if (name === 'nativeResponseActive')
+    return !!(entity.animal && readOnlyDraftView(entity.animal).episode);
+  if (name === 'activeWork')
+    return (
+      !!actor?.action ||
+      worldSupport(entity) === null ||
+      !!(entity.animal && readOnlyDraftView(entity.animal).episode)
+    );
+  return actor?.[name];
+}
 type StatusPredicate = (world: WorldState, bindings: EffectBindings) => boolean;
 const predicates = new WeakMap<StatusCondition, StatusPredicate>();
 /** Prepare the trusted condition operators, never generated code or a cached truth value.
@@ -271,20 +303,11 @@ function prepareCondition(condition: StatusCondition): {
     const c = condition.field;
     immutable &&= Object.isFrozen(c);
     const { target, name, operator, value } = c;
-    const read =
-      name === 'kind'
-        ? (e: Entity) => e.kind
-        : name === 'grounded'
-          ? (e: Entity) => worldSupport(e) !== null
-          : name === 'activeWork'
-            ? (e: Entity) =>
-                !!(e.actor && readOnlyDraftView(e.actor).action) ||
-                worldSupport(e) === null ||
-                !!(e.animal && readOnlyDraftView(e.animal).danger)
-            : (e: Entity) => (e.actor ? readOnlyDraftView(e.actor)[name] : undefined);
     matches = (_world, bindings) => {
       const entity = resolve(target, bindings);
-      return !!entity && compare(read(readOnlyDraftView(entity)), operator, value);
+      return (
+        !!entity && compare(statusFieldValue(readOnlyDraftView(entity), name), operator, value)
+      );
     };
   } else if ('dailyWindow' in condition) {
     const c = condition.dailyWindow;
@@ -292,7 +315,7 @@ function prepareCondition(condition: StatusCondition): {
     const { start, end } = c;
     matches = (world) => {
       const hour = localHour(world);
-      return start < end ? hour >= start && hour < end : hour >= start || hour < end;
+      return inDailyWindow(hour, start, end);
     };
   } else {
     const c = condition.statusActive;
@@ -311,6 +334,9 @@ function prepareCondition(condition: StatusCondition): {
   };
   if (immutable) predicates.set(condition, matches);
   return { matches, immutable };
+}
+export function inDailyWindow(hour: number, start: number, end: number): boolean {
+  return start < end ? hour >= start && hour < end : hour >= start || hour < end;
 }
 /** Local hour in [0, 24). The daily-window matcher and its forecast share this expression so
  * a floating-point residue cannot put the forecast on an edge the matcher has not reached. */
@@ -334,8 +360,7 @@ interface NegativeCondition {
   threshold: number;
   from: number;
   rate: number;
-  segmentCount: number;
-  segment: WeakRef<object>;
+  elapsed: number;
   remaining: number;
 }
 // One weakly owned answer per retained arithmetic operation/immutable condition.
@@ -384,8 +409,15 @@ function conditionArithmetic(
     operation.max !== definition.schema.max
   )
     return;
-  const segments = readOnlyDraftView(window.segments);
-  return { entity, definition, anchor, anchorValue: anchor.value, binding, operation, segments };
+  return {
+    entity,
+    definition,
+    anchor,
+    anchorValue: anchor.value,
+    binding,
+    operation,
+    elapsed: window.elapsedSeconds,
+  };
 }
 function reuseNegativeCondition(
   world: WorldState,
@@ -399,7 +431,7 @@ function reuseNegativeCondition(
   if (!input) return false;
   const cached = answers.get(input.operation);
   if (!cached) return false;
-  const { entity, definition, anchor, binding, operation, segments } = input;
+  const { entity, definition, anchor, binding, operation, elapsed } = input;
   if (
     cached.entityId !== entity.id ||
     cached.definition !== definition ||
@@ -408,22 +440,13 @@ function reuseNegativeCondition(
     cached.threshold !== statusComparisonValue(world, bindings, condition.compare) ||
     cached.from !== binding.from ||
     cached.rate !== operation.rates[0] ||
-    segments.length < cached.segmentCount ||
-    cached.segment.deref() !== readOnlyDraftView(segments[cached.segmentCount - 1]!)
+    elapsed < cached.elapsed
   )
     return false;
-  // The saved arithmetic owner only appends segments; replacing/materializing a
-  // binding or restoring JSON loses this exact prefix/operation witness. A fork
-  // behind the cursor therefore evaluates normally instead of sharing a cursor.
-  let remaining = cached.remaining;
-  for (let index = cached.segmentCount; index < segments.length; index++)
-    remaining -= readOnlyDraftView(segments[index]!).seconds;
+  const remaining = cached.remaining - (elapsed - cached.elapsed);
   if (!(remaining > 0)) return false;
-  const segment = readOnlyDraftView(segments[segments.length - 1]!);
-  if (isDraft(segment)) return false;
   cached.remaining = remaining;
-  cached.segmentCount = segments.length;
-  cached.segment = new WeakRef(segment);
+  cached.elapsed = elapsed;
   return true;
 }
 /** Share the existing forecast's negative leaf answer with later reconciliation.
@@ -442,9 +465,8 @@ export function retainNegativeStatusCondition(
   if (!predicates.has(condition)) return;
   const input = conditionArithmetic(world, bindings, condition.compare);
   if (!input || input.operation.rates[0] !== rate) return;
-  const { entity, definition, anchor, binding, operation, segments } = input,
-    segment = segments.length && readOnlyDraftView(segments[segments.length - 1]!);
-  if (!segment || isDraft(segment) || value < operation.min || value > operation.max) return;
+  const { entity, definition, anchor, binding, operation, elapsed } = input;
+  if (value < operation.min || value > operation.max) return;
   let remaining = Infinity;
   if (afterSeconds === Infinity) {
     // Infinity can also result from overflowing a very distant crossing time.
@@ -466,10 +488,9 @@ export function retainNegativeStatusCondition(
         Math.abs(operation.min),
         Math.abs(operation.max),
       ),
-      slack = 32 * (NATIVE_VALUE_SEGMENTS + 1) * Number.EPSILON * scale;
-    // A single monotone rate has at most 64 multiply/add roundings before its
-    // owner materializes. Keep three quarters of the measured gap unused, and
-    // require that gap to exceed a conservative bound on all their rounding.
+      slack = 64 * Number.EPSILON * scale;
+    // Anchored evaluation uses a bounded multiply/add calculation. Keep three
+    // quarters of the measured gap unused and exceed its rounding allowance.
     // Near a threshold, serial/clamped rate mixtures and unknown data use the
     // original current-value reader; a tolerance never decides predicate truth.
     if (!Number.isFinite(distance) || !(distance > slack) || !rate) return;
@@ -486,8 +507,7 @@ export function retainNegativeStatusCondition(
     threshold,
     from: binding.from,
     rate,
-    segmentCount: segments.length,
-    segment: new WeakRef(segment),
+    elapsed,
     remaining,
   });
 }
@@ -724,6 +744,45 @@ const automaticRosters = new WeakMap<
   StatusEffectDefinition[],
   Map<string | undefined, Map<string, AutomaticStatusRoster>>
 >();
+const subjectLocalRules = new WeakMap<StatusEffectDefinition[], boolean>();
+/** At an unchanged clock/installed-world boundary, these predicates depend only
+ * on their subject's recorded changes. Rules reading other subjects and contribution lifetimes
+ * retain complete reconciliation; this is rule metadata, never predicate truth.
+ * docs/projects/first-playable-world-tech-design.md#remaining-native-preparation-measurements
+ */
+export function statusRulesAreSubjectLocal(world: WorldState): boolean {
+  const definitions = statusDefinitions(world);
+  if (!isImmutableData(definitions)) return false;
+  const cached = subjectLocalRules.get(definitions);
+  if (cached !== undefined) return cached;
+  const local = definitions.every((definition) => {
+    if (
+      definition.contribution ||
+      definition.whileActive.some((operation) => {
+        const change = statusNumericChange(operation);
+        return change ? change.target !== '$subject' : !('restrictCapabilities' in operation);
+      })
+    )
+      return false;
+    let own = true;
+    for (const { condition, sourcePath } of statusDefinitionConditions(definition))
+      visitStatusCondition(condition, sourcePath, (part) => {
+        if ('all' in part || 'any' in part || 'dailyWindow' in part) return;
+        const leaf =
+          'compare' in part
+            ? part.compare
+            : 'field' in part
+              ? part.field
+              : 'hasAttribute' in part
+                ? part.hasAttribute
+                : part.statusActive;
+        if (leaf.target !== '$subject') own = false;
+      });
+    return own;
+  });
+  subjectLocalRules.set(definitions, local);
+  return local;
+}
 /** Only controller/kind facts can prune this static roster. Every current status operation
  * leaves them unchanged; numeric/body/clock/status inputs remain live and all active rules
  * are merged back below. No second predicate compiler or cached negative meter is added. */
@@ -1558,6 +1617,11 @@ export function admitStatusEffectPolicy(
 ): Transition {
   try {
     validateStatusEffectPolicy(input, proposed);
+    if (
+      Object.keys(input.dailyRainDefinitions ?? {}).length > 0 &&
+      proposed.clockOffsetHours !== input.statusEffectPolicy.clockOffsetHours
+    )
+      throw new Error('The installed daily rain requires its exact local clock.');
     validateBodyPolicy(
       input.moduleManifest.bodyPolicy,
       input.moduleManifest.definitions,
@@ -1647,6 +1711,7 @@ export { validateStatusEffectPolicy };
 
 export {
   capabilityBlocked,
+  statusEffectsReadToken,
   activeStatusEffects,
   projectStatusEffects,
   activeContributionId,

@@ -10,7 +10,7 @@ export function basePlaytestMilestones(
 ) {
   const known = (world.knowledge[actorId] ?? []).flatMap(({ recipeId }) => {
     const recipe = world.recipes[recipeId];
-    return recipe ? [world.itemDefinitions[recipe.outputDefinitionId]] : [];
+    return recipe ? [world.itemDefinitions[recipe.outputs[0]!.definition.id]] : [];
   });
   const equipped = equippedItem(world, actorId, 'ranged');
   const launcher = equipped && world.itemDefinitions[equipped.definitionId]?.launcher;
@@ -35,15 +35,16 @@ export function basePlaytestMilestones(
             event.actorId === actorId &&
             event.data?.source === 'live-model' &&
             world.itemDefinitions[
-              world.recipes[String(event.data.recipeId)]?.outputDefinitionId ?? ''
+              world.recipes[String(event.data.recipeId)]?.outputs[0]!.definition.id ?? ''
             ]?.launcher?.mechanism === 'swing',
         ) ||
         (world.knowledge[actorId] ?? []).some(
           (knowledge) =>
             knowledge.source === 'invented' &&
             world.declarationReceipts[knowledge.evidenceId]?.source === 'live-model' &&
-            world.itemDefinitions[world.recipes[knowledge.recipeId]?.outputDefinitionId ?? '']
-              ?.launcher?.mechanism === 'swing',
+            world.itemDefinitions[
+              world.recipes[knowledge.recipeId]?.outputs[0]!.definition.id ?? ''
+            ]?.launcher?.mechanism === 'swing',
         ),
     },
     {

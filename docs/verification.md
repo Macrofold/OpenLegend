@@ -1,10 +1,12 @@
 # Verification
 
-- [Production custom models](verification/custom-models.md) — implemented NPC routing, shared inference and benchmark support; configuration, actual Macrofold API and native gameplay fixture evidence are distinguished from remaining live hosted-model operating acceptance.
+- [Production custom models](verification/custom-models.md) — implemented native judgment/NPC chat routing, shared inference and benchmark support; configuration, protocol fixtures, actual Macrofold API and native gameplay evidence remain distinct from current Kev/Huihui access and live operating acceptance.
 
 [Macrofold efficiency follow-through](verification/macrofold-efficiency-followup.md) records shared inference receipts, bounded diagnostics, narrow PostgreSQL reads and authoring revision checks, including requested-review fixes and the integrated private-inspection ordering correction.
 
 - [Network request waiting](verification/bounded-network-requests.md) — shared lifetime and resource ownership, actual browser journeys, pinned SDK fixtures, generated cloud source and anonymous public-asset verification. The October 18 macOS review passed all 937 tests and the complete check/build chain; the later [Linux fixture failure and repair](verification/bounded-network-requests.md#linux-fixture-portability-and-ci--october-24-2026) records the historical blocker, imported portable setup and passing integrated Linux gate. NET11's focused follow-up is complete.
+
+- [Combat and threat responses](verification/combat-and-threat-responses.md) — connected actual contact, personal threat choices, contextual controls and native animal escape, with native/PostgreSQL/browser evidence distinguished from remaining independent-response, performance and player qualification.
 
 - [Optional performance collection](verification/performance/profiling-controls.md) — default-off server/worker collection, capture cleanup, tool modes, actual functional checks and required overhead-comparison limits.
 - [Asset storage and preservation](verification/game-asset-storage.md) — exact publication, shared-cache failures, real public/private delivery, historical preservation, asset-free builds and recovery evidence; incomplete migration/browser/restore gates remain explicit.
@@ -39,6 +41,8 @@ This index links recorded checks and measurements by topic. Each report retains 
 Add detailed evidence to the relevant report under `docs/verification/`, following the [documentation policy](../.agents/rules/documentation.md#verification-reports). Keep this page for navigation and the shared playtest protocol.
 
 Historical migration/recovery observations in the linked reports describe the pinned implementations that ran. Current development compatibility is governed only by the [root policy](../AGENTS.md#development-save-policy); past evidence is not new work authorization.
+
+Current animal-execution continuation: [all 21 dispositions, current 10/20/50 server measurements and residual limits](verification/performance/2026-10/animal-execution.md). Focused software checks pass; twenty and fifty added animals still miss normal speed.
 
 Current overhaul implementation: [readable combined results and remaining qualification](verification/performance/overhaul-implementation.md), with owner records for [saving](verification/performance/overhaul-storage-implementation.md), [simulation](verification/performance/overhaul-simulation-implementation.md) and [presentation/thinking](verification/performance/overhaul-presentation-implementation.md). Implementation remains in progress; the first timed observation fails and its copied-source package bindings limit before/after attribution.
 
@@ -120,6 +124,7 @@ Current 3× scene investigation: [plain-language results, before/after tables an
 - [Native performance investigation](verification/performance-investigation.md): query amplification, mature worlds, snapshots and population measurements.
 - [Immediate gameplay limits](verification/immediate-gameplay-limits.md): work admission, publication, history and measured limits.
 - [Consolidation pressure and content limits](verification/consolidation-and-content-limits.md): continued walking, memory work and removed content ceilings.
+- [Speech and social perception implementation](verification/speech-and-social-perception.md): single-address evidence, stable unnamed recognition and current-format native/SQL/browser checks, with remaining speech stages explicit.
 - [Hearing runtime and reviews](verification/hearing-runtime-and-reviews.md): privacy, persistence, query work, captions and stress measurements.
 - [Hearing at eight-times speed](verification/hearing-eight-times.md) and [continued qualification](verification/hearing-8x-continuation.md).
 - [Hearing cache review](verification/hearing-cache-review.md) and [integration with main](verification/hearing-main-integration.md).

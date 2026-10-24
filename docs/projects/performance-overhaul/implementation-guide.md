@@ -1,11 +1,13 @@
 # Performance overhaul: instructions for an implementer
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Ordinary candidate dispositions and initial compromise trials are recorded; smooth 3× remains unmet. | 2026-10-16   |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Animal continuation design is complete in PF09; earlier implementations/evidence are retained and runtime qualification remains open. | 2026-10-24   |
 
 **Implementation authorized October 16, 2026.** The latest instruction starts implementation and replaces per-candidate full performance runs with at most five batched non-compromise runs. Follow the [execution plan](execution.md); dated documentation-only restrictions below describe the earlier assignment.
 [Plain-language overview](../performance-overhaul-feature-spec.md) · [Design and order](../performance-overhaul-tech-design.md) · [Candidate status: PF17](../../maintainers/performance.md#pf17--performance-overhaul-ideas) · [Measurement and adoption rules](evaluation.md)
+
+**Current animal continuation — 2026-10-24:** the [21-item design](animal-execution.md) and [implementation packets](animal-execution-tasks.md) specify the selected follow-through from the October 23 profile. Use their connected batches and PF09 checklist for this work. Earlier PF17 experiments/dispositions remain historical evidence, not instructions to rerun unchanged trials or recreate delivered mechanisms.
 
 ## What these instructions can and cannot establish
 

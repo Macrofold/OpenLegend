@@ -1,3 +1,4 @@
+import { commandFacts } from '../../apps/server/src/action-descriptions.js';
 import { entityGet } from '../../packages/domain/src/index.js';
 import { enterGame } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
@@ -9,6 +10,9 @@ import { readConfig } from '../fixtures/database.js';
 test('scoped React action search, contextual facts and known unavailable choices (native fixture)', async ({
   page,
 }, info) => {
+  // Cold software-rendered entry, reload and screenshots exceed one minute for
+  // this complete journey. Individual interaction deadlines remain unchanged.
+  test.setTimeout(120_000);
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
     store: await testRepository(),
@@ -43,7 +47,12 @@ test('scoped React action search, contextual facts and known unavailable choices
     await expect(tip).toBeVisible();
     const gatheringSeconds = entityGet(game.service.world.entities, 'reeds')?.resource?.workSeconds;
     expect(gatheringSeconds).toBeDefined();
-    await expect(tip).toContainText(`${gatheringSeconds} game seconds`);
+    const time = commandFacts(
+      { type: 'gather', targetId: 'reeds' },
+      game.service.observe(PLAYER_ID)!,
+    ).find(([label]) => label === 'Time')?.[1];
+    expect(time).toBeDefined();
+    await expect(tip).toContainText(time!);
     await expect(tip).toContainText('Yields');
     await page.keyboard.press('Escape');
     // Ground context stays scoped; it does not supply the global hunting catalogue.
@@ -61,6 +70,11 @@ test('scoped React action search, contextual facts and known unavailable choices
     // The complete catalogue also contains berry and branch gathering choices.
     await search.fill('gather river reeds');
     await search.press('ArrowDown');
+    // Finite gathering is another matching choice; enter at the first row,
+    // then use the opposite edge to reach the known blocked native action.
+    await expect(menu.locator('[data-picker-row]').first()).toBeFocused();
+    await search.focus();
+    await search.press('ArrowUp');
     await expect(gather).toBeFocused();
     await expect(tip).toContainText('Resume the world');
     await page.keyboard.press('Enter');

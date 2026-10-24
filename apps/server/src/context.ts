@@ -1,13 +1,16 @@
+import { constructionHelpPlans } from './construction.js';
+import { seesEntity, knownCeasefireConsequence } from '@open-legend/domain';
+import { contributionWithdrawals } from './handover-actions.js';
+import { manufactureInputQuantities, prepareManufactureChoices } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import { nativeCommandKind } from './native-command-kind.js';
 import { nativeCommandSupported, rangedTargetAllowed, rangedPolicy } from '@open-legend/domain';
 
 import { combatHelpBinding, combatHelpFor, BASE_COMBAT_HELP } from '@open-legend/domain';
 import { domainCommand } from './cognition.js';
-import { outingActions } from './outing-view.js';
+import { outingActions, cooperationProposals, cooperativePurposeChoice } from './outing-view.js';
 import {
   isEquipped,
-  equipmentProblem,
   combatRecoveryDeadline,
   guardDescription,
   guardChoiceLabel,
@@ -16,6 +19,7 @@ import {
 import { competenceOptions, competenceContext } from './competence-actions.js';
 import { cookingOptions, fishingOptions, fishingTools } from './food-actions.js';
 import { cookingPreparations } from '@open-legend/domain';
+import { resourcesAfterEnding } from '@open-legend/domain';
 import { namePhrase, type Named } from '@open-legend/language';
 import { learnedActivityCandidates } from './activity-context.js';
 import { consumptionDescription } from './body-services.js';
@@ -37,7 +41,7 @@ import { dropItemReason } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import {
-  availableStrikes,
+  prepareCombatMeans,
   strikeDefinition,
   huntingDescription,
   rangedChoiceLabel,
@@ -59,13 +63,14 @@ import {
   recipeFamily,
 } from '@open-legend/domain';
 import { attributeDefinition, readAttribute, offerRecipientProblem } from '@open-legend/domain';
-import { hearsEntity, visionRadius } from '@open-legend/domain';
-import { fireCareOptions } from './fire-actions.js';
+import { visionRadius } from '@open-legend/domain';
+import { fireCareOptions, hearthPlacementOptions } from './fire-actions.js';
+import { gateUseOptions, prepareBoundaryImpactOptions } from './construction.js';
+import { constructionProfile } from '@open-legend/domain';
 import { handoverOptions } from './handover-actions.js';
 import {
   BASE_FIRE_CARE,
   findPath,
-  NATIVE_PREPARATIONS,
   queryMemories,
   mindFor,
   SIMULATION_RULES,
@@ -89,7 +94,7 @@ function gatherDescription(
   return gatheringDescription(
     entity.name,
     service.world.itemDefinitions[resource.definitionId]?.name ?? 'material',
-    Math.min(resource.quantity, gatheringYield(tools, resource.definitionId)),
+    Math.min(resource.quantity, gatheringYield(service.world, tools, resource.definitionId)),
     resource.quantity,
     resource.workSeconds,
     completeInventory,
@@ -137,6 +142,7 @@ function describeTargets(
               description: BASE_COMBAT_HELP.separateActionDescription(candidate.description),
             },
         {
+          ...candidate,
           id: `help:${index}`,
           description: BASE_COMBAT_HELP.actionDescription(
             help!.combat!.labels[actorId]!,
@@ -148,8 +154,30 @@ function describeTargets(
     });
   return choices.map((candidate) => {
     const command = candidate.command;
+    candidate = {
+      ...candidate,
+      transition: candidate.transition ?? suggestedWorkTransition(command),
+    };
+    if (entityGet(service.world.entities, actorId)?.actor?.action && command)
+      candidate.description +=
+        candidate.transition === 'replace'
+          ? ' Choosing this replaces my current work; spent materials and committed effects remain.'
+          : candidate.transition === 'interrupt'
+            ? ' Choosing this pauses the supported current plan; its unfinished step restarts later.'
+            : candidate.transition === 'enqueue'
+              ? ' Choosing this queues it after my current work.'
+              : ' This choice keeps my current work.';
     const id = command && 'targetId' in command ? command.targetId : undefined;
-    const target = id ? entityGet(service.world.entities, id) : undefined;
+    const consequence =
+      command && knownCeasefireConsequence(service.world, actorId, command.type, id);
+    if (consequence) candidate.description += ' ' + consequence;
+    const candidateTarget = id ? entityGet(service.world.entities, id) : undefined;
+    const target =
+      candidateTarget &&
+      (id === actorId ||
+        seesEntity(service.world, entityGet(service.world.entities, actorId)!, candidateTarget))
+        ? candidateTarget
+        : undefined;
     if (target && !health.has(target.id)) {
       health.set(target.id, observedBodyHealth(service.world, actorId, target.id));
       positions.set(target.id, effectivePosition(service.world, target.id));
@@ -242,7 +270,12 @@ export function buildContext(
           }
         : {}),
       ...(entity.animal
-        ? { animal: { alive: entity.actor!.alive, fleeing: entity.animal.danger > 0 } }
+        ? {
+            animal: {
+              alive: entity.actor!.alive,
+              fleeing: entity.animal.episode?.mode === 'escaping',
+            },
+          }
         : {}),
       ...(entity.actor
         ? {
@@ -304,7 +337,7 @@ export function buildContext(
       description: excerpt(recipe.description, 120),
       inputs: recipe.inputs,
       workSeconds: recipe.workSeconds,
-      family: recipe.sourceCandidate.family,
+      family: recipe.source.kind === 'family' ? recipe.source.candidate.family : null,
       facts: recipe.facts,
     })),
     memories: (retained ?? queryMemories(service.world, actorId, { text: query, limit: 12 })).map(
@@ -397,20 +430,136 @@ export interface CandidateAction {
   id: string;
   description: string;
   command: CommandInput | null;
+  /** A trusted world compiler can bind a native finite composition directly. */
+  nativeInvocation?: import('@open-legend/domain').Command;
+  subjectIds?: string[];
+  purpose?: import('@open-legend/domain').ResponsePurposeBinding;
+  /** Request-local supplied-purpose question, never an entity or executable command. */
+  purposeHandle?: string;
+  /** Permitted model-facing people labels; never persisted as the native purpose. */
+  purposeDescription?: string;
+  purposeMeaning?: string;
+  firstActionDescription?: string;
+  /** Once offered, retain the initiator's exact handling of current work. */
+  transition?: import('@open-legend/domain').WorkTransitionMode;
+}
+
+function suggestedWorkTransition(
+  command: CommandInput | null,
+): import('@open-legend/domain').WorkTransitionMode {
+  if (command?.type === 'outing' && command.outingOperation === 'work')
+    return command.outingMode ?? 'replace';
+  return !command ||
+    [
+      'say',
+      'release-shot',
+      'inspect-inventory',
+      'inspect-activities',
+      'learn-record',
+      'teach',
+      'handover',
+      'outing',
+      'transfer-item',
+      'withdraw-attempt',
+      'confirm-attempt',
+    ].includes(command.type)
+    ? 'continue'
+    : 'replace';
+}
+
+export function candidateChoice(
+  candidate: CandidateAction,
+  actorId: string,
+  decisionId: string,
+  expectedWork: import('@open-legend/domain').ProspectiveWork['expected'],
+): import('@open-legend/domain').ActionChoice {
+  return {
+    invocation: candidate.nativeInvocation
+      ? {
+          ...candidate.nativeInvocation,
+          actorId,
+          id: decisionId,
+          ...(candidate.purpose ? { chosenPurpose: candidate.purpose } : {}),
+        }
+      : candidate.command
+        ? {
+            ...domainCommand(candidate.command, actorId, decisionId),
+            ...(candidate.purpose ? { chosenPurpose: candidate.purpose } : {}),
+          }
+        : null,
+    ...(candidate.purpose ? { purpose: candidate.purpose } : {}),
+    transition: candidate.transition ?? suggestedWorkTransition(candidate.command),
+    expectedWork,
+  };
 }
 export function npcCandidates(
   service: WorldService,
   actorId = service.availableDefaultResidentEntityId,
   observed = actorId ? decisionObservation(service.world, actorId) : undefined,
+  coverage: 'suggestions' | 'complete-physical' = 'suggestions',
 ): CandidateAction[] {
   const actor = observed?.actor.actor;
   // Explicit player-action callers share these native suggestions. Only implicit
   // resident selection may be absent; never substitute the controlled person.
   if (!actorId || !observed || !actor?.alive || actor.incapacitated || service.paused) return [];
+  const craftCommand = prepareManufactureChoices(service.world, actorId);
+  const personallyThreatened =
+    Object.keys(actor.encounters?.unknown ?? {}).length > 0 ||
+    Object.values(actor.encounters?.pairs ?? {}).some(
+      (pair) =>
+        Object.keys(pair.active).length > 0 || (pair.incomingUntil ?? 0) > service.world.simTime,
+    );
+  const temporary = new WeakMap<CommandInput, { message: string; nextAt?: number }>();
+  const checked = new WeakMap<CommandInput, ReturnType<WorldService['previewCommand']>>();
+  const previewChoice = (command: CommandInput) => {
+    const prior = checked.get(command);
+    if (prior) return prior;
+    const result = service.prepareCommandChoice(command, actorId, suggestedWorkTransition(command));
+    const available = 'outcome' in result ? result.outcome : result;
+    checked.set(command, available);
+    return available;
+  };
+  const canOfferPhysical = (command: CommandInput) => {
+    const result = service.prepareCommandChoice(command, actorId, 'replace');
+    const available = 'outcome' in result ? result.outcome : result;
+    checked.set(command, available);
+    if (available.ok) return true;
+    if (!['combat-recovery', 'evasion-recovery'].includes(available.code ?? '')) return false;
+    temporary.set(command, {
+      message: available.message ?? 'Temporarily unavailable.',
+      ...('nextAt' in result ? { nextAt: result.nextAt } : {}),
+    });
+    return true;
+  };
+  const finishChoices = (choices: CandidateAction[]) =>
+    describeTargets(
+      service,
+      actorId,
+      choices
+        .filter(
+          (candidate) =>
+            !candidate.command ||
+            temporary.has(candidate.command) ||
+            previewChoice(candidate.command).ok,
+        )
+        .map((candidate) => {
+          const blocker = candidate.command && temporary.get(candidate.command);
+          return blocker
+            ? {
+                ...candidate,
+                description: `${candidate.description} Temporarily unavailable: ${blocker.message}${blocker.nextAt !== undefined ? ` Recovery ends at game time ${blocker.nextAt}.` : ''}`,
+              }
+            : candidate;
+        }),
+    );
   const definitions = new Map(
     observed.itemDefinitions.map((definition) => [definition.id, definition]),
   );
   const inventory = observed.inventory.filter((item) => item.quantity > 0);
+  const afterReplacement = resourcesAfterEnding(
+    service.world,
+    actor.action ? [actor.action.id] : [],
+  );
   let shotView: ReturnType<typeof nativeActivityViews> | undefined;
   const castTools = fishingTools(service.world, inventory);
   const gatheringTools = carriedGatheringTools(observed);
@@ -431,7 +580,7 @@ export function npcCandidates(
       targetId: target.id,
       attributeId: definition.id,
     };
-    return service.previewCommand(command, actorId, false).ok
+    return previewChoice(command).ok
       ? [
           {
             id: `replenish-${target.id}`,
@@ -478,7 +627,7 @@ export function npcCandidates(
     ...inspectedRecipeRecords(service.world, actorId).flatMap(({ definition, recipe, command }) => {
       if (service.world.knowledge[actorId]?.some((record) => record.recipeId === recipe.id))
         return [];
-      return service.previewCommand(command, actorId, false).ok
+      return previewChoice(command).ok
         ? [
             {
               id: `learn-record-${command.itemId}`,
@@ -490,9 +639,7 @@ export function npcCandidates(
     }),
     ...replenishments,
     ...observed.visibleEntities.flatMap((target) =>
-      pickupActions(service.world, observed.actor, target, (command) =>
-        service.previewCommand(command, actorId, false),
-      )
+      pickupActions(service.world, observed.actor, target, (command) => previewChoice(command))
         .filter((option) => option.availability.ok)
         .map((option) => ({
           id: option.id,
@@ -530,6 +677,24 @@ export function npcCandidates(
       command: null,
     },
   ];
+  if (actor.action?.ranged?.manual && actor.action.targetId) {
+    const command: CommandInput = { type: 'release-shot', aimId: actor.action.id };
+    if (previewChoice(command).ok) {
+      const view = nativeActivityViews(
+        service.world,
+        inventory,
+      )(domainCommand(command, actorId, 'offered-held-release'));
+      const label = rangedChoiceLabel('release-shot', view.target!, view.tool!);
+      actions.push({
+        id: `release-shot:${actor.action.id}`,
+        firstActionDescription: label,
+        description: `${label}. ${view.facts.map((fact) => `${fact.name}: ${String(fact.value)}`).join('; ')}`,
+        command,
+        subjectIds: [actor.action.targetId],
+        transition: 'continue',
+      });
+    }
+  }
   // Discover only known appearances, then let the actor select one exact container.
   // Its inspected page supplies take/pack choices, never an item × all-bags product.
   const knownContainers = new Map<string, Named>();
@@ -593,7 +758,7 @@ export function npcCandidates(
         if (item.ownerId === destination || item.id === destination) continue;
         const available = availableItemQuantity(service.world, item.id);
         if (!available) continue;
-        const command: CommandInput = {
+        let command: CommandInput = {
           type: 'transfer-item',
           itemId: item.id,
           quantity: available,
@@ -604,10 +769,10 @@ export function npcCandidates(
         };
         // The same native owner checks unknown load, nesting, reservations and access.
         // If the whole lot will not fit, offer one exact unit only when it is admitted.
-        if (!service.previewCommand(command, actorId, false).ok) {
+        if (!previewChoice(command).ok) {
           if (available === 1) continue;
-          command.quantity = 1;
-          if (!service.previewCommand(command, actorId, false).ok) continue;
+          command = { ...command, quantity: 1 };
+          if (!previewChoice(command).ok) continue;
         }
         suggestions++;
         const name = service.world.itemDefinitions[item.definitionId]!.name;
@@ -628,48 +793,18 @@ export function npcCandidates(
         command: null,
       });
   }
-  for (const target of observed.visibleEntities
-    .filter((e) => e.actor?.alive && e.id !== actorId)
-    .slice(0, 4)) {
+  const followTargets = observed.visibleEntities.filter((e) => e.actor?.alive && e.id !== actorId);
+  for (const target of coverage === 'complete-physical'
+    ? followTargets
+    : followTargets.slice(0, 4)) {
     const command: CommandInput = { type: 'follow', targetId: target.id };
-    if (service.previewCommand(command, actorId, false).ok)
+    if (previewChoice(command).ok)
       actions.push({
         id: `follow:${target.id}`,
         description: `Follow ${namePhrase(target, 'definite')} while visible; no stealth or automatic sunset stop.`,
         command,
       });
   }
-  const activeId = service.world.conversations?.active[actorId];
-  if (activeId) {
-    const active = service.world.conversations!.records[activeId]!;
-    actions.push({
-      id: 'leave-conversation',
-      description: 'Leave the current conversation while others may continue.',
-      command: {
-        type: 'conversation',
-        operation: 'leave',
-        conversationId: activeId,
-        generation: active.generation,
-      },
-    });
-  }
-  const nearbyConversations = new Map<string, string>();
-  for (const entity of observed.visibleEntities) {
-    const id = service.world.conversations?.active[entity.id];
-    if (id && id !== activeId && hearsEntity(service.world, observed.actor, entity))
-      nearbyConversations.set(id, namePhrase(entity, 'definite'));
-  }
-  for (const [id, name] of nearbyConversations)
-    actions.push({
-      id: `join:${id}`,
-      description: `Join the conversation involving ${name}.`,
-      command: {
-        type: 'conversation',
-        operation: 'join',
-        conversationId: id,
-        generation: service.world.conversations!.records[id]!.generation,
-      },
-    });
   for (const item of inventory) {
     const definition = definitions.get(item.definitionId);
     if (definition?.nutrition && applicableConsumption(service.world, observed.actor))
@@ -706,35 +841,72 @@ export function npcCandidates(
     for (const option of handoverOptions(service.world, actorId, inventory, person, {
       offers: offering,
       maxLots: typed ? 12 : 4,
+      contributions: true,
+      permissions: service.store.authority!.constructionPermissions(service.world.id),
     })) {
       const isOffer =
         option.command.handoverOperation === 'offer' ||
         option.command.handoverOperation === 'counter';
       if (isOffer && offerCandidates >= (typed ? 24 : 12)) continue;
-      if (!service.previewCommand(option.command, actorId, false).ok) continue;
+      if (option.received)
+        checked.set(option.command, {
+          ok: true,
+          code: 'available',
+          message: 'Attempt the last personally received offer terms.',
+        });
+      else if (!previewChoice(option.command).ok) continue;
       if (isOffer) offerCandidates++;
       actions.push({ id: option.id, description: option.description, command: option.command });
     }
   }
+  for (const option of contributionWithdrawals(
+    service.world,
+    actorId,
+    service.store.authority!.constructionPermissions(service.world.id),
+  ))
+    if (previewChoice(option.command).ok)
+      actions.push({ id: option.id, description: option.description, command: option.command });
+  const helpingPlans = constructionHelpPlans(
+    service.world,
+    actorId,
+    inventory,
+    service.store.authority!.constructionPermissions(service.world.id),
+    observed.visibleEntities,
+  );
+  for (const target of observed.visibleEntities) {
+    if (!target.actor || target.id === actorId) continue;
+    for (const choice of cooperationProposals(service.world, actorId, target.id, helpingPlans))
+      if (previewChoice(choice.command).ok)
+        actions.push({
+          id: choice.id,
+          description: `${choice.label}. ${choice.description}`,
+          command: choice.command,
+        });
+  }
   for (const choice of outingActions(service.world, actorId)) {
-    if (service.previewCommand(choice.command, actorId, false).ok)
+    if (choice.received)
+      checked.set(choice.command, {
+        ok: true,
+        code: 'available',
+        message:
+          'Attempt using the last terms I personally received; current availability is checked when I act.',
+      });
+    if (previewChoice(choice.command).ok)
       actions.push({ id: choice.id, description: choice.description, command: choice.command });
   }
-  // Starting another timed task would discard actual work/materials. The actor can
-  // explicitly cancel work; listing alternatives must not silently interrupt it.
+  // Timed alternatives declare their handling of current work; admission rechecks
+  // the exact action before a transition can stop that work.
   const practiceContext = competenceContext(service.world, observed.actor);
   for (const target of observed.visibleEntities)
     for (const option of competenceOptions(service.world, actorId, target, inventory))
-      if (
-        !(actor.action && option.command.type === 'practice-shot') &&
-        service.previewCommand(option.command, actorId, false).ok
-      )
+      if (previewChoice(option.command).ok)
         actions.push({
           id: option.id,
           description: `${option.description} ${practiceContext}`,
           command: option.command,
         });
   if (
+    personallyThreatened ||
     observed.visibleEntities.some(
       (e) => e.actor?.alive && observedCombatActivity(service.world, observed.actor, e),
     ) ||
@@ -742,14 +914,14 @@ export function npcCandidates(
   )
     for (const choice of evasionChoices(service.world, observed.actor)) {
       const command: CommandInput = { type: 'evade', position: choice.destination };
-      if (service.previewCommand(command, actorId, false).ok)
+      if (canOfferPhysical(command))
         actions.push({
           id: `evade:${choice.label}`,
+          firstActionDescription: choice.label,
           description: `${choice.label}. ${choice.description} ${BASE_EVASION_TEXT.destinationScope}`,
           command,
         });
     }
-  if (actor.action) return describeTargets(service, actorId, actions);
 
   if (visionRadius(service.world, observed.actor) === 0) {
     // Offer probes independently of hidden walkability; native admission supplies blocked feedback.
@@ -773,7 +945,23 @@ export function npcCandidates(
             ) ?? undefined,
         },
       });
-    return describeTargets(service, actorId, actions);
+    for (const action of [...actions]) {
+      if (!action.command) continue;
+      const choice = cooperativePurposeChoice(service.world, actorId, action.command);
+      if (!choice) continue;
+      // The ordinary physical option is already prepared. Missing live consent is
+      // learned by an attempted use, never by an option disappearing remotely.
+      checked.set(choice.command, previewChoice(action.command));
+      const priorTemporary = temporary.get(action.command);
+      if (priorTemporary) temporary.set(choice.command, priorTemporary);
+      actions.push({
+        ...action,
+        id: JSON.stringify(['cooperative-purpose', choice.agreementId, action.id]),
+        command: choice.command,
+        description: `${choice.label}. ${choice.description} ${action.description}`,
+      });
+    }
+    return finishChoices(actions);
   }
   // Locomotion is available to every capable body, independently of hand/tool work.
   // Bind a perceived destination, not continuous tracking: docs/agent-agency.md#5-trying-something-outside-the-shortlist.
@@ -796,37 +984,60 @@ export function npcCandidates(
       approach?.status === 'pending' ? approach.request.destinations[0] : approach?.path.at(-1);
     if (!position) continue;
     const command: CommandInput = { type: 'move', position };
-    if (service.previewCommand(command, actorId, false).ok)
+    if (previewChoice(command).ok)
       actions.push({
         id: `approach:${entity.id}`,
+        subjectIds: [entity.id],
+        firstActionDescription: `Move once near ${observerDescription(service.world, actorId, entity.id, 'definite')}'s observed position`,
         description: `Move near the currently observed position of ${observerDescription(service.world, actorId, entity.id, 'definite')}, currently ${Math.hypot(worldPosition(observed.actor).x - worldPosition(entity).x, worldPosition(observed.actor).y - worldPosition(entity).y, worldPosition(observed.actor).z - worldPosition(entity).z).toFixed(1)} m away. Stop at the selected reachable place within ${SIMULATION_RULES.interactionRadius} m of that observed position; route length is not known. This moves to that location once; it does not follow later movement.`,
         command,
       });
   }
-  if (!supportsManualWork(observed.actor)) return describeTargets(service, actorId, actions);
-  for (const [preparation, recipe] of Object.entries(NATIVE_PREPARATIONS)) {
-    if (quantity(recipe.input) >= recipe.inputQuantity)
-      actions.push({
-        id: `prepare:${preparation}`,
-        description:
-          preparation === 'fiber'
-            ? 'Clean raw plant fibers into usable prepared fibers.'
-            : 'Twist prepared fibers into binding cord.',
-        command: { type: 'prepare', preparation: preparation as 'fiber' | 'cord' },
-      });
+  const manualWork = supportsManualWork(observed.actor);
+  if (manualWork) {
+    const impactOptions = prepareBoundaryImpactOptions(service.world, actorId, inventory);
+    for (const entity of observed.visibleEntities)
+      for (const option of impactOptions(entity))
+        if (previewChoice(option.command).ok)
+          actions.push({
+            id: option.id,
+            subjectIds: [entity.id],
+            firstActionDescription: option.label,
+            description: option.description,
+            command: option.command,
+          });
+    for (const entity of observed.visibleEntities)
+      for (const option of gateUseOptions(service.world, entity))
+        if (previewChoice(option.command).ok)
+          actions.push({
+            id: option.id,
+            subjectIds: [entity.id],
+            firstActionDescription: option.label,
+            description: option.description,
+            command: option.command,
+          });
+    actions.push(
+      ...hearthPlacementOptions(
+        service.world,
+        actorId,
+        constructionProfile(service.world)?.profile.suggested,
+      ).map((option) => ({
+        id: option.id,
+        description: option.description,
+        command: option.command,
+      })),
+    );
   }
-  const ammunitionByKind = new Map<string, (typeof inventory)[number]>();
-  for (const item of inventory) {
-    const kind = definitions.get(item.definitionId)?.ammunition?.kind;
-    if (kind && !ammunitionByKind.has(kind)) ammunitionByKind.set(kind, item);
-  }
-  const compatibleAmmo = (kind: string) => ammunitionByKind.get(kind);
-  const combatActor = entityGet(service.world.entities, actorId);
-  const readyForCombat =
-    !!combatActor && combatRecoveryDeadline(service.world, combatActor) <= service.world.simTime;
+  const { launchers, strikes, shields, ammunitionByKind } = prepareCombatMeans(
+    service.world,
+    actorId,
+    inventory,
+    afterReplacement,
+  );
+  const compatibleAmmo = (kind: string) => ammunitionByKind.get(kind)?.length;
   // Offers reuse current native admission: a carried component does not grant a supported
   // equipment use, permission to move reserved gear, or freedom from committed recovery.
-  for (const item of inventory) {
+  for (const item of manualWork ? inventory : []) {
     const definition = definitions.get(item.definitionId);
     if (
       definition &&
@@ -837,7 +1048,7 @@ export function npcCandidates(
         (definition.launcher && compatibleAmmo(definition.launcher.ammunitionKind)))
     ) {
       const command: CommandInput = { type: 'equip', itemId: item.id };
-      if (!service.previewCommand(command, actorId, false).ok) continue;
+      if (!previewChoice(command).ok) continue;
       actions.push({
         id: `equip:${item.id}`,
         description: `Equip ${namePhrase(definition)}: ${definition.description}`,
@@ -845,45 +1056,23 @@ export function npcCandidates(
       });
     }
   }
-  const launchers = (readyForCombat ? inventory : []).flatMap((item) => {
-    const definition = definitions.get(item.definitionId);
-    const launcher = definition?.launcher;
-    const ammunition = launcher && compatibleAmmo(launcher.ammunitionKind);
-    return definition &&
-      launcher &&
-      ammunition &&
-      !equipmentProblem(service.world, actorId, item.id, 'ranged') &&
-      (isEquipped(service.world, actorId, item.id) || item.quantity === 1)
-      ? [{ item, definition, launcher, ammunition }]
-      : [];
-  });
-  const cuttingTool = inventory.some((item) =>
-    definitions.get(item.definitionId)?.properties.includes('point'),
-  );
-  const strikes = readyForCombat
-    ? [
-        ...availableStrikes(service.world, actorId),
-        ...inventory
-          .filter(
-            (item) =>
-              !isEquipped(service.world, actorId, item.id) &&
-              item.quantity === 1 &&
-              definitions.get(item.definitionId)?.melee &&
-              !equipmentProblem(service.world, actorId, item.id, 'melee'),
-          )
-          .flatMap((item) => {
-            const strike = strikeDefinition(item.definitionId, service.world, item.id);
-            return strike ? [strike] : [];
-          }),
-      ]
-    : [];
+  const cuttingTool =
+    manualWork &&
+    inventory.some((item) => definitions.get(item.definitionId)?.properties.includes('point'));
   // Visible contact or ranged preparation makes supported defense relevant here. A guard
   // offer neither selects it nor binds an unperceived attacker or future pursuit.
-  const shields = (readyForCombat ? inventory : []).filter(
-    (item) =>
-      definitions.get(item.definitionId)?.contactDefense &&
-      !equipmentProblem(service.world, actorId, item.id, 'guard'),
-  );
+  if (personallyThreatened)
+    for (const shield of shields) {
+      const profile = definitions.get(shield.definitionId)!.contactDefense!;
+      const command: CommandInput = { type: 'guard', itemId: shield.id, autoEquip: true };
+      if (canOfferPhysical(command))
+        actions.push({
+          id: `guard:${shield.id}:current-facing`,
+          firstActionDescription: guardChoiceLabel(definitions.get(shield.definitionId)!.name),
+          description: `${equipmentChangeDescription(service.world, actorId, shield.id)}${guardChoiceLabel(definitions.get(shield.definitionId)!.name)}. ${guardDescription(profile)}`,
+          command,
+        });
+    }
   for (const target of observed.visibleEntities.filter(
     (e) => e.actor?.alive && observedAttackPreparation(service.world, observed.actor, e),
   ))
@@ -895,9 +1084,13 @@ export function npcCandidates(
         targetId: target.id,
         autoEquip: true,
       };
-      if (service.previewCommand(command, actorId, false).ok)
+      if (canOfferPhysical(command))
         actions.push({
           id: `guard:${shield.id}:${target.id}`,
+          firstActionDescription: guardChoiceLabel(
+            definitions.get(shield.definitionId)!.name,
+            target.name,
+          ),
           description: `${equipmentChangeDescription(service.world, actorId, shield.id)}${guardChoiceLabel(definitions.get(shield.definitionId)!.name, target.name)}. ${guardDescription(profile)}`,
           command,
         });
@@ -910,7 +1103,7 @@ export function npcCandidates(
     // for contact. Equal ranges share geometry work within this observed snapshot.
     if (rangedTargetAllowed(service.world, entity) && entity.id !== actorId) {
       const reachable = new Map<number, boolean>();
-      for (const { item, definition, launcher, ammunition } of launchers) {
+      for (const { item, definition, launcher, ammunition: ammunitionLots } of launchers) {
         const description =
           huntingDescription(entity.actor?.species, 'launcher', entity, definition) ??
           `${rangedChoiceLabel('shoot-once', namePhrase(entity), namePhrase(definition))}.`;
@@ -921,40 +1114,46 @@ export function npcCandidates(
               !!findApproachPath(service.world, observed.actor, entity, launcher.range),
           );
         if (!reachable.get(launcher.range)) continue;
-        const command: CommandInput = {
-          type: entity.animal ? 'hunt' : 'shoot-once',
-          autoEquip: true,
-          targetId: entity.id,
-          itemId: item.id,
-          ammunitionId: ammunition.id,
-        };
-        if (!service.previewCommand(command, actorId, false).ok) continue;
-        actions.push({
-          id: `shot:${item.id}:${entity.id}`,
-          description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${(shotView ??=
-            nativeActivityViews(service.world, [...possessionItems(service.world, actorId)]))(
-            domainCommand(command, actorId, 'offered-shot'),
-          )
-            .facts.map((fact) => `${fact.name}: ${String(fact.value)}`)
-            .join('; ')}`,
-          command,
-        });
+        for (const ammunition of ammunitionLots) {
+          const command: CommandInput = {
+            type: entity.animal ? 'hunt' : 'shoot-once',
+            autoEquip: true,
+            targetId: entity.id,
+            itemId: item.id,
+            ammunitionId: ammunition.id,
+          };
+          if (!canOfferPhysical(command)) continue;
+          actions.push({
+            id: `shot:${JSON.stringify([item.id, ammunition.id, entity.id])}`,
+            firstActionDescription: `${rangedChoiceLabel(
+              'shoot-once',
+              namePhrase(entity),
+              namePhrase(definition),
+            )} using ${namePhrase(service.world.itemDefinitions[ammunition.definitionId]!)}`,
+            description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${(shotView ??=
+              nativeActivityViews(service.world, [...possessionItems(service.world, actorId)]))(
+              domainCommand(command, actorId, 'offered-shot'),
+            )
+              .facts.map((fact) => `${fact.name}: ${String(fact.value)}`)
+              .join('; ')}`,
+            command,
+          });
+        }
       }
     }
-    const route = approaches.get(entity.id);
-    if (!route) continue;
-    const path = route.path;
-    if (entity.actor?.alive && entity.id !== actorId && supportsManualWork(observed.actor)) {
+    if (entity.actor?.alive && entity.id !== actorId) {
       for (const definition of strikes) {
         // Authored intent describes the same finite command; equipment capability
         // supplies the variants, never a knife-name or hunger-specific rule.
         const tool = definition.weaponItemId ? definitions.get(definition.id)?.name : undefined;
-        const description = huntingDescription(
-          entity.actor.species,
-          definition.weaponItemId ? 'melee' : 'unarmed',
-          entity,
-          definition.weaponItemId ? definitions.get(definition.id) : undefined,
-        );
+        const description = manualWork
+          ? huntingDescription(
+              entity.actor.species,
+              definition.weaponItemId ? 'melee' : 'unarmed',
+              entity,
+              definition.weaponItemId ? definitions.get(definition.id) : undefined,
+            )
+          : undefined;
         const command: CommandInput = {
           type: 'strike',
           autoEquip: true,
@@ -963,14 +1162,38 @@ export function npcCandidates(
           itemId: definition.weaponItemId,
           targetId: entity.id,
         };
-        if (!service.previewCommand(command, actorId, false).ok) continue;
+        if (!canOfferPhysical(command)) continue;
+        const selectedStrike = strikeDefinition(
+            definition.id,
+            service.world,
+            definition.weaponItemId,
+            entity,
+          )!,
+          attackText =
+            description ??
+            `${selectedStrike.label}. ${definition.autoMoveToRange ? 'Approach and attempt one attack.' : 'Attempt one attack from my current position.'}`,
+          equipmentText = definition.weaponItemId
+            ? equipmentChangeDescription(service.world, actorId, definition.weaponItemId)
+            : '',
+          toolText = definition.weaponItemId
+            ? `${tool}: ${definitions.get(definition.id)!.description}`
+            : `${definition.label}.`;
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
-          description: `${definition.weaponItemId ? equipmentChangeDescription(service.world, actorId, definition.weaponItemId) : ''}${description ?? `${strikeDefinition(definition.id, service.world, definition.weaponItemId, entity)?.label ?? definition.label}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
+          firstActionDescription: definition.weaponItemId
+            ? selectedStrike.label
+            : `${definition.label} ${namePhrase(entity, 'definite')}`,
+          description: `${equipmentText}${attackText} ${toolText} ${describeAttack(definition)}`,
           command,
         });
       }
     }
+    // Natural attacks have their own anatomy and reach checks. A route for
+    // hand-work proximity neither grants nor rules out physical contact.
+    if (!manualWork) continue;
+    const route = approaches.get(entity.id);
+    if (!route) continue;
+    const path = route.path;
     if (entity.resource && !entity.resource.cast && entity.resource.quantity > 0)
       actions.push({
         id: `gather:${entity.id}`,
@@ -1000,7 +1223,7 @@ export function npcCandidates(
         command: { type: 'harvest', targetId: entity.id },
       });
     for (const option of fishingOptions(service.world, castTools, entity))
-      if (service.previewCommand(option.command, actorId, false).ok)
+      if (previewChoice(option.command).ok)
         actions.push({
           id: option.id,
           description: `${option.label} at ${entity.name}. ${option.description}`,
@@ -1009,7 +1232,7 @@ export function npcCandidates(
     // Fire care is offered per perceived fire from current state; native admission rechecks it.
     if (entity.heat)
       for (const option of fireCareOptions(service.world, inventory, entity))
-        if (service.previewCommand(option.command, actorId, false).ok)
+        if (previewChoice(option.command).ok)
           actions.push({ id: option.id, description: option.description, command: option.command });
     if (entity.heat?.lit) {
       let previous = worldPosition(observed.actor);
@@ -1034,32 +1257,48 @@ export function npcCandidates(
     }
   }
   fires.sort((a, b) => a.travelSeconds - b.travelSeconds || a.id.localeCompare(b.id));
-  for (const preparation of fires.length ? cookingPreparations(service.world, inventory) : []) {
+  for (const preparation of fires.length
+    ? cookingPreparations(service.world, inventory, undefined, afterReplacement)
+    : []) {
     const cookingFire = fires.find(
       (fire) => fire.fuelSeconds > fire.travelSeconds + preparation.definition.workSeconds + 2,
     );
     if (!cookingFire) continue;
     const option = cookingOptions([preparation], cookingFire.id)[0]!;
     const command = option.command;
-    if (service.previewCommand(command, actorId, false).ok)
+    if (previewChoice(command).ok)
       actions.push({
         id: option.id,
         description: `${option.definition.description} Work takes ${option.definition.workSeconds} game seconds after approach; spent inputs are not returned on interruption.`,
         command,
       });
   }
-  for (const recipe of observed.knownRecipes) {
-    const required = new Map<string, number>();
-    for (const input of recipe.inputs)
-      required.set(input.definitionId, (required.get(input.definitionId) ?? 0) + input.quantity);
+  for (const recipe of manualWork ? observed.knownRecipes : []) {
+    const required = manufactureInputQuantities(recipe);
     if ([...required].every(([definitionId, amount]) => quantity(definitionId) >= amount))
       actions.push({
         id: `craft:${recipe.id}`,
         description: `Craft the learned ${recipe.name} using the materials already carried.`,
-        command: { type: 'craft', recipeId: recipe.id },
+        command: craftCommand(recipe),
       });
   }
-  return describeTargets(service, actorId, actions);
+  for (const action of [...actions]) {
+    if (!action.command) continue;
+    const choice = cooperativePurposeChoice(service.world, actorId, action.command);
+    if (!choice) continue;
+    // The ordinary physical option is already prepared. Missing live consent is
+    // learned by an attempted use, never by an option disappearing remotely.
+    checked.set(choice.command, previewChoice(action.command));
+    const priorTemporary = temporary.get(action.command);
+    if (priorTemporary) temporary.set(choice.command, priorTemporary);
+    actions.push({
+      ...action,
+      id: JSON.stringify(['cooperative-purpose', choice.agreementId, action.id]),
+      command: choice.command,
+      description: `${choice.label}. ${choice.description} ${action.description}`,
+    });
+  }
+  return finishChoices(actions);
 }
 
 /** Known techniques are valid planning vocabulary before their materials are owned.
@@ -1071,8 +1310,18 @@ export function planningCandidates(
   observed = decisionObservation(service.world, actorId),
 ): CandidateAction[] {
   if (!observed || !supportsManualWork(observed.actor)) return [];
+  const craftCommand = prepareManufactureChoices(service.world, actorId);
   const gatheringTools = carriedGatheringTools(observed);
   return describeTargets(service, actorId, [
+    ...hearthPlacementOptions(
+      service.world,
+      actorId,
+      constructionProfile(service.world)?.profile.suggested,
+    ).map((option) => ({
+      id: `plan-${option.id}`,
+      description: option.description,
+      command: option.command,
+    })),
     ...observed.visibleEntities
       .filter((entity) => entity.resource && !entity.resource.cast && entity.resource.quantity > 0)
       .map((entity) => ({
@@ -1085,12 +1334,6 @@ export function planningCandidates(
         ),
         command: { type: 'gather' as const, targetId: entity.id },
       })),
-    ...Object.entries(NATIVE_PREPARATIONS).map(([preparation, recipe]) => ({
-      id: `plan-prepare:${preparation}`,
-      description: `Prepare ${recipe.outputQuantity} ${service.world.itemDefinitions[recipe.output]?.name ?? 'material'}; needs ${recipe.inputQuantity} ${service.world.itemDefinitions[recipe.input]?.name ?? 'material'} at start, ${recipe.workSeconds} work seconds.`,
-      command: { type: 'prepare' as const, preparation: preparation as 'fiber' | 'cord' },
-    })),
-    // Fuel and tinder may be gathered by earlier steps; each step rechecks at dispatch.
     ...observed.visibleEntities
       .filter((entity) => entity.heat)
       .flatMap((entity) => [
@@ -1119,8 +1362,8 @@ export function planningCandidates(
       ]),
     ...observed.knownRecipes.map((recipe) => ({
       id: `plan-craft:${recipe.id}`,
-      description: `Craft one ${service.world.itemDefinitions[recipe.outputDefinitionId]?.name ?? recipe.name} (${recipe.name}); ${recipe.workSeconds} work seconds, needs ${recipe.inputs.map((input) => `${input.quantity} ${service.world.itemDefinitions[input.definitionId]?.name ?? 'material'}`).join(', ')} at start.`,
-      command: { type: 'craft' as const, recipeId: recipe.id },
+      description: `Craft ${recipe.outputs.map((output) => `${output.quantity} ${service.world.itemDefinitions[output.definition.id]!.name}`).join(', ')} (${recipe.name}); ${recipe.workSeconds} work seconds, needs ${recipe.inputs.map((input) => `${input.quantity} ${service.world.itemDefinitions[input.definitionId]?.name ?? 'material'}`).join(', ')} at start.`,
+      command: craftCommand(recipe),
     })),
   ]);
 }

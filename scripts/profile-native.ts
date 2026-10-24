@@ -37,7 +37,11 @@ const setupAt = performance.now();
 const parsed = input === '-' && scenario ? {} : JSON.parse(await readFile(input, 'utf8'));
 const saved = parsed.tables?.world?.[0]?.payload;
 let world: WorldState = (saved ? JSON.parse(saved) : parsed).world;
-if (scenario) world = populateScenario(world, scenario);
+if (scenario) {
+  if (scenario.nativePressure !== 'none')
+    throw new Error('Native pressure requires the running-server profiler.');
+  world = populateScenario(world, scenario).world;
+}
 if (!world || !Number.isFinite(world.simTime) || !world.entities || !Array.isArray(world.events))
   throw new Error('Expected a SavedWorld or backup-world.ts backup containing a world snapshot.');
 world.paused = false;

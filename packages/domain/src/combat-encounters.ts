@@ -1,0 +1,1147 @@
+import { distance3D, SPATIAL_LIMITS } from '@open-legend/spatial';
+import { entityGet, entityValues } from './entity-collection.js';
+import { bodyPolicy } from './body-policy.js';
+import { seesEntity, visionQuery } from './perception.js';
+import { activelyParticipates } from './participation-state.js';
+import { worldPosition, worldSupport } from './spatial-state.js';
+import { subjectReferenceCurrent, observerDescription } from './worlds/base/knowledge.js';
+import { emitPrivateObservation, outcome } from './events.js';
+import { stopOwnedOffense, ownedOffenseContinues } from './agency.js';
+import { person, subjectNarration } from './narration.js';
+import { hasRecordFields, isSafeRecordId } from './records.js';
+import type { Action, Command, Entity, Position, WorldEvent, WorldState } from './types.js';
+import type { Awareness } from './experience.js';
+import { hasMemory } from './living.js';
+import { preparedResponseProfile, preparedResponseObservation } from './world-composition.js';
+import { prepareCombatMeans } from './combat-means.js';
+import { possessionItems } from './object-access.js';
+import { resourcesAfterEnding } from './resource-claims.js';
+import { canReachEntity } from './spatial.js';
+import type { DefinitionPin } from './world-modules.js';
+import type { PreparedResponseObservation } from './prepared-responses.js';
+import { countDomainWork } from './diagnostic-counters.js';
+import { chargeWork } from './work-budget.js';
+
+interface ObservationBand<T> {
+  value: T;
+  pending?: { value: T; since: number };
+}
+interface EncounterWatch {
+  definition: DefinitionPin;
+  sight: ObservationBand<boolean>;
+  preparation?: ObservationBand<string | null>;
+  movement?: ObservationBand<'closing' | 'withdrawing' | 'lateral' | 'still'>;
+  range?: { distance: number; band: ObservationBand<boolean> };
+}
+
+export interface AttackObservationReceipt {
+  life: number;
+  episode: string | null;
+}
+export interface PersonalEncounter {
+  otherLife: number;
+  episode: string | null;
+  preferenceRevision: number;
+  hostileRevision: number;
+  movementRevision: number;
+  movement?: 'closing' | 'withdrawing' | 'lateral';
+  lastCause?: { id: string; at: number; kind: 'preparation' | 'release' | 'attempt' | 'contact' };
+  incomingUntil?: number;
+  active: Record<string, { kind: 'action' | 'projectile'; id: string }>;
+  lastObserved?: {
+    point: Position;
+    surfaceId: string | null;
+    label: string;
+    at: number;
+    distance: number;
+  };
+  own?: {
+    intentionId: string;
+    revision: number;
+    invocationId: string;
+    planId?: string;
+    method: Pick<Action, 'type' | 'definitionId' | 'weaponItemId' | 'ammoItemId'>;
+    until?: number;
+  };
+  speak?: { hostileRevision: number; controller: 'player' | 'npc' | 'native' };
+  watch?: EncounterWatch;
+}
+export interface PersonalEncounters {
+  life: number;
+  pairs: Record<string, PersonalEncounter>;
+  unknown: Record<string, { at: number; until: number; sequence: number }>;
+  nextAt?: number;
+  recovery?: { definition: DefinitionPin; combatUntil?: number; evasionUntil?: number };
+}
+export interface EncounterPreferenceBinding {
+  actorLife: number;
+  targetId: string;
+  targetLife: number;
+  episode: string | null;
+  revision: number;
+  hostileRevision: number;
+}
+function advanceEncounterPreference(pair: PersonalEncounter): void {
+  if (!Number.isSafeInteger(pair.preferenceRevision + 1))
+    throw new Error('Encounter preference revision exhausted.');
+  pair.preferenceRevision++;
+}
+
+/** Only permitted current subjects supply a new control binding. Historical
+ * references can retire already-owned work, never reveal a hidden location. */
+export function encounterPreferenceBinding(
+  world: WorldState,
+  actorId: string,
+  targetId: string,
+): EncounterPreferenceBinding | undefined {
+  const actor = entityGet(world.entities, actorId),
+    other = entityGet(world.entities, targetId);
+  if (!actor || !other || !seesEntity(world, actor, other)) return;
+  return perceivedEncounterPreferenceBinding(world, actor, other);
+}
+/** Projection callers have already selected this observer's actually perceived
+ * subjects. Reuse that proof without repeating sight geometry for every row. */
+export function perceivedEncounterPreferenceBinding(
+  world: WorldState,
+  actor: Entity,
+  other: Entity,
+): EncounterPreferenceBinding | undefined {
+  if (
+    !policy(world) ||
+    !actor.actor?.alive ||
+    !other.actor?.alive ||
+    actor.id === other.id ||
+    !activelyParticipates(actor) ||
+    !activelyParticipates(other)
+  )
+    return;
+  const pair = currentPair(world, actor, other);
+  if (!pair && actor.actor.encounters?.pairs[other.id]?.own) return;
+  return {
+    actorLife: life(actor),
+    targetId: other.id,
+    targetLife: life(other),
+    episode: pair ? pair.episode : (world.perceptionEpisodes?.[actor.id]?.[other.id] ?? null),
+    revision: pair?.preferenceRevision ?? 0,
+    hostileRevision: pair?.hostileRevision ?? 0,
+  };
+}
+export function encounterPreferenceProblem(
+  world: WorldState,
+  actorId: string,
+  binding: EncounterPreferenceBinding,
+): import('./types.js').Outcome | null {
+  if (
+    !hasRecordFields(binding, [
+      'actorLife',
+      'targetId',
+      'targetLife',
+      'episode',
+      'revision',
+      'hostileRevision',
+    ]) ||
+    !isSafeRecordId(binding.targetId) ||
+    ![binding.actorLife, binding.targetLife, binding.revision, binding.hostileRevision].every(
+      (value) => Number.isSafeInteger(value) && value >= 0,
+    ) ||
+    (binding.episode !== null && !isSafeRecordId(binding.episode))
+  )
+    return outcome(false, 'invalid-command', 'Choose an exact current encounter preference.');
+  const actor = entityGet(world.entities, actorId),
+    other = entityGet(world.entities, binding.targetId);
+  const stale = () =>
+    outcome(
+      false,
+      'stale-encounter-preference',
+      'This encounter changed. Review its current controls.',
+    );
+  if (
+    !policy(world) ||
+    !actor?.actor?.alive ||
+    !other?.actor?.alive ||
+    actorId === binding.targetId ||
+    !activelyParticipates(actor) ||
+    !activelyParticipates(other) ||
+    life(actor) !== binding.actorLife ||
+    life(other) !== binding.targetLife
+  )
+    return stale();
+  const pair = currentPair(world, actor, other);
+  // A changed recognition episode cannot overwrite an older owned commitment
+  // and then claim it was stopped. Its exact work controls remain authoritative.
+  if (!pair && actor.actor.encounters?.pairs[binding.targetId]?.own) return stale();
+  if (
+    pair
+      ? binding.revision !== pair.preferenceRevision ||
+        binding.hostileRevision !== pair.hostileRevision ||
+        binding.episode !== pair.episode
+      : binding.revision !== 0 ||
+        binding.hostileRevision !== 0 ||
+        !seesEntity(world, actor, other) ||
+        binding.episode !== (world.perceptionEpisodes?.[actorId]?.[other.id] ?? null)
+  )
+    return stale();
+  return null;
+}
+export function changeEncounterPreference(
+  world: WorldState,
+  actorId: string,
+  binding: EncounterPreferenceBinding,
+  operation: 'speak' | 'stop',
+): import('./types.js').Outcome {
+  const problem = encounterPreferenceProblem(world, actorId, binding);
+  if (problem) return problem;
+  const actor = entityGet(world.entities, actorId)!,
+    other = entityGet(world.entities, binding.targetId)!;
+  const pair = pairFor(world, actor, other)!;
+  if (operation === 'stop' && pair.own)
+    stopOwnedOffense(world, actorId, binding.targetId, binding.targetLife, pair.own);
+  if (operation === 'speak')
+    pair.speak = { hostileRevision: pair.hostileRevision, controller: actor.actor!.controller };
+  else delete pair.own;
+  advanceEncounterPreference(pair);
+  reschedule(world, actor.actor!.encounters!);
+  return outcome(
+    true,
+    'encounter-preference-changed',
+    operation === 'speak'
+      ? policy(world)!.controls.speak.success
+      : policy(world)!.controls.stop.success,
+  );
+}
+
+const life = (entity: Entity) => entity.actor?.physicalLife ?? 0;
+const policy = (world: WorldState) => bodyPolicy(world)?.combat?.encounters;
+const offensive = (action: Pick<Action, 'type'> | undefined | null) =>
+  !!action && ['strike', 'hunt', 'aim', 'shoot-once'].includes(action.type);
+
+/** One adapter for observable preparation. Approach and recovery disclose no target. */
+export function attackPreparation(world: WorldState, source: Entity): Action | undefined {
+  const action = source.actor?.action;
+  return policy(world)?.visiblePreparation &&
+    source.actor?.alive &&
+    activelyParticipates(source) &&
+    offensive(action) &&
+    action?.stage === 'working' &&
+    action.strikePhase !== 'recovery'
+    ? action
+    : undefined;
+}
+export function attackPreparationLabel(world: WorldState, source: Entity): string {
+  const action = attackPreparation(world, source);
+  const p = policy(world);
+  return action && p ? (action.type === 'strike' ? p.preparingStrike : p.aiming) : '';
+}
+function owner(world: WorldState, observer: Entity): PersonalEncounters | undefined {
+  if (!policy(world) || !observer.actor?.alive || !activelyParticipates(observer)) return;
+  if (!observer.actor.encounters || observer.actor.encounters.life !== life(observer))
+    observer.actor.encounters = { life: life(observer), pairs: {}, unknown: {} };
+  return observer.actor.encounters;
+}
+function currentPair(
+  world: WorldState,
+  observer: Entity,
+  other: Entity,
+): PersonalEncounter | undefined {
+  const state = observer.actor?.encounters;
+  const pair = state?.pairs[other.id];
+  return pair &&
+    state?.life === life(observer) &&
+    pair.otherLife === life(other) &&
+    subjectReferenceCurrent(world, observer.id, other.id, pair.episode)
+    ? pair
+    : undefined;
+}
+function pairFor(
+  world: WorldState,
+  observer: Entity,
+  other: Entity,
+): PersonalEncounter | undefined {
+  const state = owner(world, observer);
+  if (!state) return;
+  let pair = currentPair(world, observer, other);
+  if (!pair)
+    state.pairs[other.id] = pair = {
+      otherLife: life(other),
+      episode: world.perceptionEpisodes?.[observer.id]?.[other.id] ?? null,
+      preferenceRevision: 0,
+      hostileRevision: 0,
+      movementRevision: 0,
+      active: {},
+    };
+  const pin = world.cognitionPolicy.preparedResponses;
+  if (!pair.watch && pin && preparedResponseProfile(pin))
+    pair.watch = { definition: { ...pin }, sight: { value: true } };
+  return pair;
+}
+
+/** The same finite commitment binds execution and passive observation. An unseen
+ * protected person is not a failed physical prerequisite for striking an assailant.
+ * docs/worlds/base/threat-response-options.md#5-first-delivery-commitments-and-reconsideration-tuning */
+function selectedSubjects(world: WorldState, observer: Entity) {
+  const selected = new Map<
+    string,
+    {
+      physicalLife: number;
+      episode: string | null;
+      rangeRelevant: boolean;
+    }
+  >();
+  const agency = observer.actor?.agency;
+  for (const plan of [agency?.plan, agency?.suspended]) {
+    const activity = plan?.activity,
+      control = activity?.control;
+    const purpose = activity?.request?.chosenPurpose;
+    const profile = purpose && preparedResponseProfile(purpose.definition);
+    if (
+      !plan ||
+      !['active', 'blocked'].includes(plan.status) ||
+      control?.kind !== 'finite' ||
+      control.deadline <= world.simTime ||
+      !purpose ||
+      !profile
+    )
+      continue;
+    // Current work takes precedence over a paused frontier with an older binding.
+    for (const [id, binding] of Object.entries(control.subjects))
+      if (!selected.has(id))
+        selected.set(id, {
+          ...binding,
+          rangeRelevant: purpose.roles[profile.observations.rangeRole] === id,
+        });
+  }
+  return selected;
+}
+
+function changedBand<T>(
+  world: WorldState,
+  band: ObservationBand<T>,
+  value: T,
+  seconds: number,
+  immediate = false,
+): boolean {
+  if (band.value === value) {
+    delete band.pending;
+    return false;
+  }
+  if (immediate) {
+    band.value = value;
+    delete band.pending;
+    return true;
+  }
+  if (band.pending?.value !== value) band.pending = { value, since: world.simTime };
+  if (world.simTime < band.pending.since + seconds) return false;
+  band.value = value;
+  delete band.pending;
+  return true;
+}
+
+function observeChanges(
+  world: WorldState,
+  observer: Entity,
+  other: Entity | undefined,
+  pair: PersonalEncounter,
+  visible: boolean,
+  exposed: ReadonlySet<string>,
+  means: ReturnType<typeof prepareCombatMeans>,
+  events: WorldEvent[],
+  selectedOpponent: boolean,
+): void {
+  const watch = pair.watch,
+    profile = watch && preparedResponseProfile(watch.definition);
+  if (!watch || !profile) {
+    // Personal encounter history also serves native controls when the optional
+    // deliberation strategy is omitted. Its observations must still advance.
+    if (visible && other) {
+      const point = worldPosition(other),
+        previous = pair.lastObserved;
+      const distance = distance3D(worldPosition(observer), point);
+      if (previous && distance3D(point, previous.point) > SPATIAL_LIMITS.epsilon) {
+        const delta = distance - distance3D(worldPosition(observer), previous.point);
+        pair.movement =
+          delta > SPATIAL_LIMITS.epsilon
+            ? 'withdrawing'
+            : delta < -SPATIAL_LIMITS.epsilon
+              ? 'closing'
+              : 'lateral';
+        pair.movementRevision++;
+      }
+      pair.lastObserved = {
+        point: { ...point },
+        surfaceId: worldSupport(other),
+        label: observerDescription(world, observer.id, other.id).slice(0, 120),
+        at: world.simTime,
+        distance,
+      };
+    }
+    return;
+  }
+  const label = pair.lastObserved?.label;
+  const emit = (change: PreparedResponseObservation, range?: number) => {
+    if (!label) return;
+    // Loss of sight is this person's own observation. Using the hidden body as
+    // event source would grant a fresh reference that the person no longer has.
+    emitPrivateObservation(
+      world,
+      events,
+      'response-observation',
+      observer,
+      preparedResponseObservation(watch.definition, change, label, range),
+      visible && other ? other : observer,
+      undefined,
+      {
+        semanticTrigger: true,
+        ...(change === 'range-entered'
+          ? profile.observations.enteredReach
+          : profile.observations.ordinary),
+      },
+    );
+  };
+  if (changedBand(world, watch.sight, visible, profile.limits.stableSeconds, visible))
+    emit(visible ? 'reacquired-sight' : 'lost-sight');
+  if (!visible || !other) {
+    // Unknown is not evidence that preparation, movement or an interaction ray ended.
+    if (watch.preparation) delete watch.preparation.pending;
+    if (watch.movement) delete watch.movement.pending;
+    if (watch.range) delete watch.range.band.pending;
+    return;
+  }
+  const action = attackPreparation(world, other);
+  const preparation = !action
+    ? null
+    : action.targetId === observer.id || (action.targetId && exposed.has(action.targetId))
+      ? action.id
+      : undefined;
+  if (preparation !== undefined) {
+    if (!watch.preparation) watch.preparation = { value: preparation };
+    else if (
+      changedBand(
+        world,
+        watch.preparation,
+        preparation,
+        profile.limits.stableSeconds,
+        preparation !== null,
+      ) &&
+      preparation === null
+    )
+      emit('preparation-ended');
+  } else if (watch.preparation) delete watch.preparation.pending;
+  const previous = pair.lastObserved;
+  const point = worldPosition(other),
+    distance = distance3D(worldPosition(observer), point);
+  if (previous && world.simTime > previous.at) {
+    const displaced = distance3D(point, previous.point) > SPATIAL_LIMITS.epsilon;
+    const delta = distance - distance3D(worldPosition(observer), previous.point);
+    const movement = !displaced
+      ? 'still'
+      : delta > SPATIAL_LIMITS.epsilon
+        ? 'withdrawing'
+        : delta < -SPATIAL_LIMITS.epsilon
+          ? 'closing'
+          : 'lateral';
+    if (!watch.movement) watch.movement = { value: movement };
+    else if (changedBand(world, watch.movement, movement, profile.limits.stableSeconds))
+      emit(movement);
+    if (displaced && pair.movement !== movement) {
+      pair.movement = movement === 'still' ? undefined : movement;
+      pair.movementRevision++;
+    }
+  }
+  const own = pair.own?.until === undefined ? pair.own?.method : undefined;
+  const selectedStrike =
+    own?.type === 'strike' &&
+    means.strikes.find(
+      (strike) => strike.id === own.definitionId && strike.weaponItemId === own.weaponItemId,
+    );
+  const selectedLauncher =
+    own &&
+    own.type !== 'strike' &&
+    means.launchers.find(
+      (launcher) =>
+        launcher.item.id === own.weaponItemId &&
+        launcher.ammunition.some((item) => item.id === own.ammoItemId),
+    );
+  const relevantRange =
+    selectedOpponent || pair.lastCause || pair.own || Object.keys(pair.active).length;
+  const range = !relevantRange
+    ? undefined
+    : selectedStrike
+      ? selectedStrike.range
+      : selectedLauncher
+        ? selectedLauncher.launcher.range
+        : means.strikes.length
+          ? Math.min(...means.strikes.map((strike) => strike.range))
+          : undefined;
+  if (range === undefined) delete watch.range;
+  else {
+    const within = canReachEntity(world, observer, other, range);
+    if (!watch.range || watch.range.distance !== range)
+      watch.range = { distance: range, band: { value: within } };
+    else {
+      const band = watch.range.band;
+      const value =
+        within ||
+        (band.value && canReachEntity(world, observer, other, range + profile.limits.rangeMargin));
+      if (changedBand(world, band, value, profile.limits.stableSeconds, value))
+        emit(value ? 'range-entered' : 'range-left', range);
+    }
+  }
+  pair.lastObserved = {
+    point: { ...point },
+    surfaceId: worldSupport(other),
+    label: observerDescription(world, observer.id, other.id).slice(0, 120),
+    at: world.simTime,
+    distance,
+  };
+}
+function nextDeadline(world: WorldState, state: PersonalEncounters): number | undefined {
+  let at = Infinity;
+  if (state.recovery?.combatUntil !== undefined) at = Math.min(at, state.recovery.combatUntil);
+  if (state.recovery?.evasionUntil !== undefined) at = Math.min(at, state.recovery.evasionUntil);
+  for (const pair of Object.values(state.pairs)) {
+    if (pair.incomingUntil !== undefined) at = Math.min(at, pair.incomingUntil);
+    if (pair.own?.until !== undefined) at = Math.min(at, pair.own.until);
+    const watch = pair.watch;
+    if (!watch) continue;
+    let since = Infinity;
+    for (const band of [watch.sight, watch.preparation, watch.movement, watch.range?.band])
+      if (band?.pending) since = Math.min(since, band.pending.since);
+    if (!Number.isFinite(since)) continue;
+    const profile = preparedResponseProfile(watch.definition);
+    if (profile) at = Math.min(at, since + profile.limits.stableSeconds);
+  }
+  for (const unknown of Object.values(state.unknown)) at = Math.min(at, unknown.until);
+  return Number.isFinite(at) ? at : undefined;
+}
+
+function hasSelectedResponse(world: WorldState, observer: Entity): boolean {
+  return [observer.actor?.agency.plan, observer.actor?.agency.suspended].some(
+    (plan) =>
+      !!(
+        plan &&
+        ['active', 'blocked'].includes(plan.status) &&
+        plan.activity?.control?.kind === 'finite' &&
+        plan.activity.control.deadline > world.simTime &&
+        plan.activity.request?.chosenPurpose &&
+        preparedResponseProfile(plan.activity.request.chosenPurpose.definition)
+      ),
+  );
+}
+
+/** The body/action owner supplies its already committed deadline. This observes
+ * availability once; it neither shortens recovery nor starts another action. */
+export function retainCombatRecovery(
+  world: WorldState,
+  actor: Entity,
+  kind: 'combat' | 'evasion',
+  until: number,
+): void {
+  const pin = world.cognitionPolicy.preparedResponses;
+  if (
+    !pin ||
+    !preparedResponseProfile(pin) ||
+    !hasMemory(actor) ||
+    !(Object.keys(actor.actor?.encounters?.pairs ?? {}).length || hasSelectedResponse(world, actor))
+  )
+    return;
+  const state = owner(world, actor);
+  if (!state || until <= world.simTime) return;
+  const recovery = (state.recovery ??= { definition: { ...pin } });
+  if (kind === 'combat') recovery.combatUntil = Math.max(recovery.combatUntil ?? 0, until);
+  else recovery.evasionUntil = Math.max(recovery.evasionUntil ?? 0, until);
+  reschedule(world, state);
+}
+
+function observeRecovery(world: WorldState, observer: Entity, events: WorldEvent[]): void {
+  const state = observer.actor?.encounters,
+    recovery = state?.recovery;
+  if (!state || !recovery) return;
+  const relevant = hasSelectedResponse(world, observer);
+  const profile = preparedResponseProfile(recovery.definition)!;
+  for (const [field, change] of [
+    ['combatUntil', 'combat-ready'],
+    ['evasionUntil', 'evasion-ready'],
+  ] as const) {
+    const until = recovery[field];
+    if (until === undefined || until > world.simTime) continue;
+    const current =
+      field === 'combatUntil' ? observer.actor!.combatReadyAt : observer.actor!.evasionReadyAt;
+    if ((current ?? 0) > world.simTime) {
+      recovery[field] = current!;
+      continue;
+    }
+    delete recovery[field];
+    if (!relevant) continue;
+    emitPrivateObservation(
+      world,
+      events,
+      'response-observation',
+      observer,
+      preparedResponseObservation(recovery.definition, change, ''),
+      observer,
+      undefined,
+      { semanticTrigger: true, ...profile.observations.ordinary },
+    );
+  }
+  if (recovery.combatUntil === undefined && recovery.evasionUntil === undefined)
+    delete state.recovery;
+}
+function reschedule(world: WorldState, state: PersonalEncounters): void {
+  const at = nextDeadline(world, state);
+  if (at !== undefined) state.nextAt = at;
+  else delete state.nextAt;
+}
+function hostile(
+  world: WorldState,
+  pair: PersonalEncounter,
+  cause: NonNullable<PersonalEncounter['lastCause']>,
+  revision: number,
+): void {
+  if (pair.lastCause?.id === cause.id) return;
+  advanceEncounterPreference(pair);
+  pair.lastCause = cause;
+  pair.hostileRevision = Math.max(pair.hostileRevision + 1, revision);
+  pair.incomingUntil = cause.at + policy(world)!.recentSeconds;
+  delete pair.speak;
+}
+
+/** Intake only the observation admitted by the existing event/experience owner.
+ * Raw IDs bind integrity after source/subject disclosure, never establish recognition. */
+export function acquireCombatObservation(
+  world: WorldState,
+  observation: Awareness,
+  event: Readonly<WorldEvent>,
+): void {
+  const observer = entityGet(world.entities, observation.actorId);
+  const p = policy(world);
+  if (!observer?.actor?.alive || !p || !activelyParticipates(observer)) return;
+  const projectileContact = event.type === 'projectile-contact' && event.targetId === observer.id;
+  const feltContact =
+    projectileContact ||
+    (event.type === 'struck' &&
+      event.targetId === observer.id &&
+      event.data?.['contactInjury'] === true);
+  const directed =
+    observation.targetId === observer.id &&
+    observation.sourceId !== observer.id &&
+    ['struck', 'shot-released', 'attack-cue'].includes(observation.eventType ?? '');
+  if (!feltContact && !directed) return;
+  const sourceId = projectileContact ? event.data?.['contactSourceId'] : observation.sourceId;
+  const source = typeof sourceId === 'string' ? entityGet(world.entities, sourceId) : undefined;
+  const state = owner(world, observer);
+  if (!state) return;
+  if (!source || !seesEntity(world, observer, source)) {
+    if (feltContact)
+      state.unknown[event.id] = {
+        at: event.at,
+        until: event.at + p.recentSeconds,
+        sequence: event.order ?? observation.sequence,
+      };
+    reschedule(world, state);
+    return;
+  }
+  const pair = pairFor(world, observer, source);
+  if (!pair) return;
+  const kind = feltContact
+    ? 'contact'
+    : event.type === 'shot-released'
+      ? 'release'
+      : event.type === 'attack-cue'
+        ? 'preparation'
+        : 'attempt';
+  hostile(world, pair, { id: event.id, at: event.at, kind }, event.order ?? observation.sequence);
+  if (kind === 'release' && typeof event.data?.['projectileId'] === 'string') {
+    const id = event.data['projectileId'];
+    pair.active[JSON.stringify(['projectile', id])] = { kind: 'projectile', id };
+  }
+  pair.lastObserved = {
+    point: { ...worldPosition(source) },
+    surfaceId: worldSupport(source),
+    label: observerDescription(world, observer.id, source.id).slice(0, 120),
+    at: event.at,
+    distance: distance3D(worldPosition(observer), worldPosition(source)),
+  };
+  reschedule(world, state);
+}
+
+/** Accepted commands alone retain own offense. A preview/refusal never calls this. */
+export function selectOffense(
+  world: WorldState,
+  actor: Entity,
+  action: Action,
+  command: Command,
+): void {
+  if (!hasMemory(actor) || !offensive(action) || !action.targetId) return;
+  const other = entityGet(world.entities, action.targetId);
+  if (!other?.actor || !seesEntity(world, actor, other)) return;
+  const pair = pairFor(world, actor, other);
+  if (!pair) return;
+  advanceEncounterPreference(pair);
+  const plan = actor.actor!.agency.plan;
+  pair.own = {
+    intentionId: command.id,
+    revision: (pair.own?.revision ?? 0) + 1,
+    invocationId: action.id,
+    ...(plan?.steps.some((step) => step.id === command.id) ? { planId: plan.id } : {}),
+    method: {
+      type: action.type,
+      ...(action.definitionId ? { definitionId: action.definitionId } : {}),
+      ...(action.weaponItemId ? { weaponItemId: action.weaponItemId } : {}),
+      ...(action.ammoItemId ? { ammoItemId: action.ammoItemId } : {}),
+    },
+  };
+  delete pair.speak;
+  reschedule(world, actor.actor!.encounters!);
+}
+
+/** The action-result owner supplies its exact terminal boundary, including replacement,
+ * failure and cancellation. Re-reading a completed result never renews this deadline. */
+export function endOwnOffense(
+  world: WorldState,
+  actorId: string,
+  targetId: string,
+  invocationId: string,
+): void {
+  const state = entityGet(world.entities, actorId)?.actor?.encounters;
+  const own = state?.pairs[targetId]?.own;
+  const p = policy(world);
+  if (!state || !own || own.invocationId !== invocationId || own.until !== undefined || !p) return;
+  own.until = world.simTime + p.recentSeconds;
+  reschedule(world, state);
+}
+export function reconcileOwnOffenseCommitments(world: WorldState, observer: Entity): void {
+  const state = observer.actor?.encounters,
+    p = policy(world);
+  if (!state || !p) return;
+  let changed = false;
+  for (const [targetId, pair] of Object.entries(state.pairs)) {
+    if (!pair.own) continue;
+    if (ownedOffenseContinues(world, observer.id, targetId, pair.otherLife, pair.own)) {
+      if (pair.own.until !== undefined) {
+        delete pair.own.until;
+        changed = true;
+      }
+    } else if (pair.own.until === undefined) {
+      pair.own.until = world.simTime + p.recentSeconds;
+      changed = true;
+    }
+  }
+  // Every other deadline mutation reschedules at its own owner. Unchanged work
+  // cannot move a retained absolute deadline merely because another action ran.
+  if (changed) reschedule(world, state);
+}
+
+/** Existing sensory preparation supplies only the observer's currently exposed people.
+ * Work grows with those people and this observer's retained pairs, never world history. */
+export function reconcileCombatSight(
+  world: WorldState,
+  observer: Entity,
+  visible: readonly string[],
+  events: WorldEvent[],
+): void {
+  const p = policy(world);
+  if (!p || !observer.actor?.alive || !activelyParticipates(observer)) {
+    if (observer.actor?.encounters) delete observer.actor.encounters;
+    return;
+  }
+  const exposed = new Set(visible);
+  for (const id of visible) {
+    const source = entityGet(world.entities, id);
+    if (!source?.actor) continue;
+    const action = attackPreparation(world, source);
+    const target = action?.targetId ? entityGet(world.entities, action.targetId) : undefined;
+    if (
+      !action ||
+      !target?.actor ||
+      action.targetLife !== life(target) ||
+      (target.id !== observer.id && !exposed.has(target.id))
+    )
+      continue;
+    const old = action.attackObservers?.[observer.id];
+    const known =
+      old?.life === life(observer) &&
+      subjectReferenceCurrent(world, observer.id, source.id, old.episode);
+    if (!known) {
+      (action.attackObservers ??= {})[observer.id] = {
+        life: life(observer),
+        episode: world.perceptionEpisodes?.[observer.id]?.[source.id] ?? null,
+      };
+      // The ordinary event owner retains precise personally exposed cause and target.
+      emitPrivateObservation(
+        world,
+        events,
+        'attack-cue',
+        observer,
+        subjectNarration(source, [
+          `${attackPreparationLabel(world, source)} `,
+          person(target, 'object'),
+          '.',
+        ]),
+        source,
+        target.id,
+        {
+          actionId: action.id,
+          sourceLife: life(source),
+          targetLife: life(target),
+          semanticTrigger: true,
+          ...bodyPolicy(world)?.combat?.impactAttention,
+        },
+      );
+    }
+    if (target.id === observer.id) {
+      const pair = pairFor(world, observer, source);
+      const token = JSON.stringify(['action', action.id]);
+      if (pair && !pair.active[token]) pair.active[token] = { kind: 'action', id: action.id };
+    }
+  }
+  const selected = selectedSubjects(world, observer);
+  for (const [id, binding] of selected) {
+    const other = entityGet(world.entities, id);
+    if (
+      other?.actor &&
+      exposed.has(id) &&
+      life(other) === binding.physicalLife &&
+      subjectReferenceCurrent(world, observer.id, id, binding.episode)
+    )
+      pairFor(world, observer, other);
+  }
+  const state = observer.actor.encounters;
+  if (!state) return;
+  observeRecovery(world, observer, events);
+  if (!Object.keys(state.pairs).length) {
+    expireCombatEncounters(world, observer);
+    return;
+  }
+  countDomainWork('combatObservationPreparations');
+  const means = prepareCombatMeans(
+    world,
+    observer.id,
+    [...possessionItems(world, observer.id)],
+    resourcesAfterEnding(world, observer.actor.action ? [observer.actor.action.id] : []),
+  );
+  for (const [id, pair] of Object.entries(state.pairs)) {
+    countDomainWork('combatObservedPairs');
+    chargeWork({ tests: 1 });
+    const other = entityGet(world.entities, id);
+    // Only current exposure can resolve the remembered participant. An unseen
+    // removal or new body is world truth, not a new observation by this person.
+    if (other && exposed.has(id) && (!other.actor || pair.otherLife !== life(other))) {
+      delete state.pairs[id];
+      continue;
+    }
+    const visibleNow = !!other && exposed.has(id) && currentPair(world, observer, other) === pair;
+    const hadActive = Object.keys(pair.active).length > 0;
+    for (const [token, active] of Object.entries(pair.active)) {
+      const action =
+        visibleNow && active.kind === 'action' ? attackPreparation(world, other) : undefined;
+      const flight = active.kind === 'projectile' ? world.projectiles?.[active.id] : undefined;
+      const current =
+        active.kind === 'action'
+          ? visibleNow &&
+            action?.id === active.id &&
+            action.targetId === observer.id &&
+            action.targetLife === life(observer)
+          : flight &&
+            flight.sourceLife === pair.otherLife &&
+            visionQuery(world, observer)({ id: flight.id, position: flight.position, height: 0 });
+      if (!current) delete pair.active[token];
+    }
+    if (hadActive && !Object.keys(pair.active).length) {
+      pair.incomingUntil = world.simTime + p.recentSeconds;
+      pair.movementRevision++;
+    }
+    observeChanges(
+      world,
+      observer,
+      other,
+      pair,
+      visibleNow,
+      exposed,
+      means,
+      events,
+      selected.get(id)?.rangeRelevant === true,
+    );
+  }
+  expireCombatEncounters(world, observer);
+  reschedule(world, state);
+}
+
+/** Due work uses original absolute deadlines. Speak survives ordinary grace expiry. */
+export function expireCombatEncounters(world: WorldState, observer: Entity): void {
+  const state = observer.actor?.encounters;
+  if (!state) return;
+  if (
+    !policy(world) ||
+    state.life !== life(observer) ||
+    !observer.actor?.alive ||
+    !activelyParticipates(observer)
+  ) {
+    delete observer.actor!.encounters;
+    return;
+  }
+  const selected = selectedSubjects(world, observer);
+  reconcileOwnOffenseCommitments(world, observer);
+  for (const [id, pair] of Object.entries(state.pairs)) {
+    if (pair.incomingUntil !== undefined && pair.incomingUntil <= world.simTime) {
+      delete pair.incomingUntil;
+      advanceEncounterPreference(pair);
+    }
+    if (pair.own?.until !== undefined && pair.own.until <= world.simTime) {
+      delete pair.own;
+      advanceEncounterPreference(pair);
+    }
+    const binding = selected.get(id);
+    const watched = binding?.physicalLife === pair.otherLife && binding.episode === pair.episode;
+    if (!watched && !pair.incomingUntil && !pair.own && !Object.keys(pair.active).length) {
+      if (!pair.speak && pair.preferenceRevision === 0) delete state.pairs[id];
+      else {
+        // A deliberate social preference needs its exact pair/revision, not expired
+        // attack details or a second permanent history of the encounter.
+        delete pair.lastCause;
+        delete pair.lastObserved;
+        delete pair.watch;
+      }
+    }
+  }
+  for (const [id, unknown] of Object.entries(state.unknown))
+    if (unknown.until <= world.simTime) delete state.unknown[id];
+  reschedule(world, state);
+}
+
+export function personalEncounter(
+  world: WorldState,
+  observerId: string,
+  otherId: string,
+): PersonalEncounter | undefined {
+  const observer = entityGet(world.entities, observerId),
+    other = entityGet(world.entities, otherId);
+  return policy(world) &&
+    observer?.actor?.alive &&
+    other?.actor?.alive &&
+    activelyParticipates(observer) &&
+    activelyParticipates(other) &&
+    seesEntity(world, observer, other)
+    ? currentPair(world, observer, other)
+    : undefined;
+}
+
+/** Revocation changes only this observer's derived short-lived account. Real work,
+ * committed effects and other observers' evidence keep their own lifetimes. */
+export function revokeCombatEvidence(
+  world: WorldState,
+  observerId: string,
+  affected: ReadonlySet<string>,
+): void {
+  const state = entityGet(world.entities, observerId)?.actor?.encounters;
+  if (!state) return;
+  for (const pair of Object.values(state.pairs))
+    if (pair.lastCause && affected.has(pair.lastCause.id)) {
+      advanceEncounterPreference(pair);
+      delete pair.lastCause;
+      delete pair.incomingUntil;
+      pair.active = {};
+      delete pair.speak;
+    }
+  for (const id of affected) delete state.unknown[id];
+  reschedule(world, state);
+}
+
+export function validateCombatEncounters(world: WorldState): void {
+  const dictionary = (value: unknown): boolean =>
+    !!value && typeof value === 'object' && !Array.isArray(value);
+  const validBand = (band: unknown, accepts: (value: unknown) => boolean): boolean => {
+    if (!hasRecordFields(band, ['value'], ['pending'])) return false;
+    const record = band as { value: unknown; pending?: { value: unknown; since: number } };
+    return (
+      accepts(record.value) &&
+      (record.pending === undefined ||
+        (hasRecordFields(record.pending, ['value', 'since']) &&
+          accepts(record.pending.value) &&
+          record.pending.value !== record.value &&
+          Number.isFinite(record.pending.since) &&
+          record.pending.since >= 0 &&
+          record.pending.since <= world.simTime))
+    );
+  };
+  const boolean = (value: unknown) => typeof value === 'boolean';
+  for (const observer of entityValues(world.entities)) {
+    const receipts = observer.actor?.action?.attackObservers;
+    if (receipts !== undefined) {
+      if (!dictionary(receipts)) throw new Error('Invalid attack observation receipts.');
+      for (const [id, receipt] of Object.entries(receipts))
+        if (
+          !isSafeRecordId(id) ||
+          !hasRecordFields(receipt, ['life', 'episode']) ||
+          !Number.isSafeInteger(receipt.life) ||
+          receipt.life < 0 ||
+          (receipt.episode !== null && (typeof receipt.episode !== 'string' || !receipt.episode))
+        )
+          throw new Error('Invalid attack observation receipt.');
+    }
+    const state = observer.actor?.encounters;
+    if (!state) continue;
+    if (
+      !policy(world) ||
+      !hasRecordFields(state, ['life', 'pairs', 'unknown'], ['nextAt', 'recovery']) ||
+      state.life !== life(observer) ||
+      !dictionary(state.pairs) ||
+      !dictionary(state.unknown) ||
+      (state.nextAt !== undefined && (!Number.isFinite(state.nextAt) || state.nextAt < 0))
+    )
+      throw new Error('Invalid personal encounter owner.');
+    const recovery = state.recovery;
+    if (
+      recovery !== undefined &&
+      (!hasRecordFields(recovery, ['definition'], ['combatUntil', 'evasionUntil']) ||
+        !preparedResponseProfile(recovery.definition) ||
+        (recovery.combatUntil === undefined && recovery.evasionUntil === undefined) ||
+        [recovery.combatUntil, recovery.evasionUntil].some(
+          (until) => until !== undefined && (!Number.isFinite(until) || until < 0),
+        ))
+    )
+      throw new Error('Invalid personal recovery observation.');
+    for (const [id, pair] of Object.entries(state.pairs)) {
+      if (
+        !isSafeRecordId(id) ||
+        !hasRecordFields(
+          pair,
+          [
+            'otherLife',
+            'episode',
+            'preferenceRevision',
+            'hostileRevision',
+            'movementRevision',
+            'active',
+          ],
+          ['lastCause', 'incomingUntil', 'lastObserved', 'movement', 'own', 'speak', 'watch'],
+        ) ||
+        ![
+          pair.otherLife,
+          pair.preferenceRevision,
+          pair.hostileRevision,
+          pair.movementRevision,
+        ].every((n) => Number.isSafeInteger(n) && n >= 0) ||
+        (pair.episode !== null && (typeof pair.episode !== 'string' || !pair.episode)) ||
+        !dictionary(pair.active) ||
+        (pair.movement !== undefined &&
+          !['closing', 'withdrawing', 'lateral'].includes(pair.movement))
+      )
+        throw new Error('Invalid personal encounter pair.');
+      const watch = pair.watch;
+      if (
+        watch !== undefined &&
+        (!hasRecordFields(watch, ['definition', 'sight'], ['preparation', 'movement', 'range']) ||
+          !preparedResponseProfile(watch.definition) ||
+          !validBand(watch.sight, boolean) ||
+          (watch.preparation !== undefined &&
+            !validBand(watch.preparation, (value) => value === null || isSafeRecordId(value))) ||
+          (watch.movement !== undefined &&
+            !validBand(
+              watch.movement,
+              (value) =>
+                typeof value === 'string' &&
+                ['closing', 'withdrawing', 'lateral', 'still'].includes(value),
+            )) ||
+          (watch.range !== undefined &&
+            (!hasRecordFields(watch.range, ['distance', 'band']) ||
+              !Number.isFinite(watch.range.distance) ||
+              watch.range.distance <= 0 ||
+              !validBand(watch.range.band, boolean))))
+      )
+        throw new Error('Invalid personal encounter observation watch.');
+      for (const [token, active] of Object.entries(pair.active))
+        if (
+          !hasRecordFields(active, ['kind', 'id']) ||
+          !['action', 'projectile'].includes(active.kind) ||
+          !isSafeRecordId(active.id) ||
+          token !== JSON.stringify([active.kind, active.id])
+        )
+          throw new Error('Invalid observed attack binding.');
+      if (
+        pair.incomingUntil !== undefined &&
+        (!Number.isFinite(pair.incomingUntil) || pair.incomingUntil < 0)
+      )
+        throw new Error('Invalid incoming encounter deadline.');
+      if (
+        pair.lastCause &&
+        (!hasRecordFields(pair.lastCause, ['id', 'at', 'kind']) ||
+          !isSafeRecordId(pair.lastCause.id) ||
+          !['preparation', 'release', 'attempt', 'contact'].includes(pair.lastCause.kind) ||
+          !Number.isFinite(pair.lastCause.at) ||
+          pair.lastCause.at < 0 ||
+          pair.lastCause.at > world.simTime)
+      )
+        throw new Error('Invalid encounter cause.');
+      if (
+        pair.lastObserved &&
+        (!hasRecordFields(pair.lastObserved, ['point', 'surfaceId', 'label', 'at', 'distance']) ||
+          (pair.lastObserved.surfaceId !== null && !isSafeRecordId(pair.lastObserved.surfaceId)) ||
+          typeof pair.lastObserved.label !== 'string' ||
+          !pair.lastObserved.label.trim() ||
+          pair.lastObserved.label.length > 120 ||
+          !pair.lastObserved.point ||
+          ![
+            pair.lastObserved.point.x,
+            pair.lastObserved.point.y,
+            pair.lastObserved.point.z,
+            pair.lastObserved.at,
+            pair.lastObserved.distance,
+          ].every(Number.isFinite) ||
+          pair.lastObserved.at < 0 ||
+          pair.lastObserved.at > world.simTime ||
+          pair.lastObserved.distance < 0)
+      )
+        throw new Error('Invalid observed encounter position.');
+      if (
+        pair.own &&
+        (!hasRecordFields(
+          pair.own,
+          ['intentionId', 'revision', 'invocationId', 'method'],
+          ['until', 'planId'],
+        ) ||
+          !isSafeRecordId(pair.own.intentionId) ||
+          !isSafeRecordId(pair.own.invocationId) ||
+          (pair.own.planId !== undefined && !isSafeRecordId(pair.own.planId)) ||
+          !Number.isSafeInteger(pair.own.revision) ||
+          pair.own.revision < 1 ||
+          !hasRecordFields(
+            pair.own.method,
+            ['type'],
+            ['definitionId', 'weaponItemId', 'ammoItemId'],
+          ) ||
+          !offensive(pair.own.method) ||
+          (pair.own.method.type === 'strike'
+            ? !isSafeRecordId(pair.own.method.definitionId)
+            : !isSafeRecordId(pair.own.method.weaponItemId) ||
+              !isSafeRecordId(pair.own.method.ammoItemId)) ||
+          Object.entries(pair.own.method).some(
+            ([key, value]) => key !== 'type' && !isSafeRecordId(value),
+          ) ||
+          (pair.own.until !== undefined &&
+            (!Number.isFinite(pair.own.until) || pair.own.until < 0)))
+      )
+        throw new Error('Invalid own offensive preference.');
+      if (
+        pair.speak &&
+        (!hasRecordFields(pair.speak, ['hostileRevision', 'controller']) ||
+          pair.speak.hostileRevision !== pair.hostileRevision ||
+          !['player', 'npc', 'native'].includes(pair.speak.controller))
+      )
+        throw new Error('Invalid deliberate speech preference.');
+    }
+    for (const [id, unknown] of Object.entries(state.unknown))
+      if (
+        !isSafeRecordId(id) ||
+        !hasRecordFields(unknown, ['at', 'until', 'sequence']) ||
+        ![unknown.at, unknown.until].every(Number.isFinite) ||
+        unknown.at < 0 ||
+        unknown.at > world.simTime ||
+        unknown.until < unknown.at ||
+        !Number.isSafeInteger(unknown.sequence) ||
+        unknown.sequence < 0
+      )
+        throw new Error('Invalid anonymous danger evidence.');
+    if (state.nextAt !== nextDeadline(world, state))
+      throw new Error('Invalid personal encounter scheduling deadline.');
+  }
+}

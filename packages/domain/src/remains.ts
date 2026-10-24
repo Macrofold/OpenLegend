@@ -1,3 +1,4 @@
+import { canonicalJson } from './events.js';
 import { entityGet } from './entity-collection.js';
 import { bodyPolicy, bodyNarration } from './body-policy.js';
 import { rootMembershipChanged } from './entity-index.js';
@@ -52,4 +53,33 @@ export function advanceRemains(
     }
   }
   return removed;
+}
+
+/** Exact remaining yields, never a second inventory or a recreated harvest list. */
+export function remainingYieldDigest(entity: import('./types.js').Entity): string {
+  return canonicalJson(entity.remains);
+}
+export function consumeRemainingYield(
+  entity: import('./types.js').Entity,
+  definitionId: string,
+  quantity: number,
+  expectedDigest: string,
+): boolean {
+  const remains = entity.remains,
+    row = remains?.yields.find((yielded) => yielded.definitionId === definitionId);
+  if (
+    !remains ||
+    remains.phase !== 'fresh' ||
+    remains.harvested ||
+    remainingYieldDigest(entity) !== expectedDigest ||
+    !Number.isSafeInteger(quantity) ||
+    quantity <= 0 ||
+    !row ||
+    row.quantity < quantity
+  )
+    return false;
+  row.quantity -= quantity;
+  if (!row.quantity) remains.yields = remains.yields.filter((yielded) => yielded !== row);
+  if (!remains.yields.length) remains.harvested = true;
+  return true;
 }

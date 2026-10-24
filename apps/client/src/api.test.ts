@@ -288,6 +288,7 @@ function publicView(): import('@open-legend/protocol').GameView {
       offsetHours: 0,
     },
     player: {
+      knowledgeRevision: 0,
       id: 'person:1',
       name: 'Person',
       position: { x: 0, y: 0, z: 0 },
@@ -522,9 +523,12 @@ it('clears private drafts on logout or ownership replacement, but preserves ordi
   const draft = { text: 'Unfinished private text', revision: 'edit-1' };
   const key = composerDraftKey(composerDraftScope(view), 'act', null);
   saveDraft(key, draft);
+  const agreementKey = 'open-legend:agreement-command:original-private-request';
+  storage.setItem(agreementKey, JSON.stringify({ requestId: 'original-agreement' }));
   const resumed = { ...view, access: { ...view.access!, scope: 'scope:2', controlGeneration: 2 } };
   acceptAccess(resumed);
   expect(readDraft(key)).toEqual(draft);
+  expect(storage.getItem(agreementKey)).not.toBeNull();
   for (const replace of [
     () => clearAccess(),
     () =>
@@ -540,7 +544,9 @@ it('clears private drafts on logout or ownership replacement, but preserves ordi
     () => acceptAccess({ ...view, historyEpoch: 'new:1', saveTimeline: 'timeline:2' }),
   ]) {
     saveDraft(key, draft);
+    storage.setItem(agreementKey, JSON.stringify({ requestId: 'original-agreement' }));
     replace();
+    expect(storage.getItem(agreementKey)).toBeNull();
     expect(readDraft(key)).toEqual(emptyDraft());
     expect(storage.getItem(key!)).toBeNull();
   }

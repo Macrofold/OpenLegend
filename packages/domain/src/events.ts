@@ -1,3 +1,4 @@
+import { acquireNativeResponseEvent, acquireNativeSound } from './native-response-controller.js';
 import { entityGet } from './entity-collection.js';
 import { observeEvent } from './event-observation.js';
 import { reconcileCoaching } from './coaching.js';
@@ -18,16 +19,18 @@ import { capabilityBlocked } from './status-capabilities.js';
 import { perceiveSpeech, prepareSpeechWords } from './speech.js';
 import { isSpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
-import { soundOrigin, speechObservers, seesEntity } from './perception.js';
+import { soundOrigin, speechObservers, seesEntity, pointVisionQuery } from './perception.js';
 import { appraiseEvent } from './worlds/base/appraisals.js';
 import { mutateExperience, acquireEventAwareness, type ExperienceMutation } from './experience.js';
-import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';
-import { finishWorld, cloneValue, appendEvents, readOnlyDraftView } from './draft.js';
+import { finishTransitionWorld, cloneValue, appendEvents, readOnlyDraftView } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import { selectedSocialPolicy } from './social-policy.js';
+import { selectedEventDisclosure } from './world-composition.js';
+import { activelyParticipates } from './participation-state.js';
+import { acquireCombatObservation } from './combat-encounters.js';
 import type {
   Entity,
   MemoryRecord,
@@ -115,6 +118,7 @@ export function emit(
           source,
           scope,
           data?.['targetMustBeVisible'] === true ? targetId : undefined,
+          data?.['effectMustBeVisible'] === true ? origin : undefined,
         ),
     source,
     targetId,
@@ -167,6 +171,7 @@ function eventAudience(
   source: Entity | undefined,
   scope: EventScope,
   visibleTargetId?: string,
+  visibleEffect?: WorldEvent['origin'],
 ): string[] {
   // A control notice has no perceiver, not even its subject.
   if (scope === 'system') return [];
@@ -179,6 +184,10 @@ function eventAudience(
       ? audience.filter((id) => seesEntity(world, entityGet(world.entities, id)!, target))
       : [];
   }
+  if (visibleEffect)
+    audience = audience.filter((id) =>
+      pointVisionQuery(world, entityGet(world.entities, id)!)(visibleEffect),
+    );
   if (source && hasMemory(source) && !audience.includes(source.id)) audience.push(source.id);
   return audience;
 }
@@ -359,6 +368,18 @@ function recordEvent(
     importancePolicy: 'native-v1',
     importanceReason: data?.['significant'] ? 'significant' : type,
   };
+  const feltTargetId = selectedEventDisclosure(world).feltTarget(event);
+  const feltTarget = feltTargetId && entityGet(world.entities, feltTargetId);
+  if (
+    scope === 'external' &&
+    feltTarget &&
+    hasMemory(feltTarget) &&
+    activelyParticipates(feltTarget) &&
+    !audience.includes(feltTarget.id)
+  ) {
+    audience.push(feltTarget.id);
+    event.audience = [...audience];
+  }
   const speechAwareness = new Map<string, Awareness>();
   if (type === 'speech' && source && scope !== 'system') {
     const volume = isSpeechVolume(data?.['volume']) ? data['volume'] : 'normal';
@@ -375,24 +396,6 @@ function recordEvent(
       }
     }
     event.audience = [...audience];
-  }
-  // Being addressed is not permission to join a conversation one could not perceive.
-  const conversationId =
-    type === 'speech' && source
-      ? engageConversation(
-          world,
-          source.id,
-          targetId && speechAwareness.get(targetId)?.triggerKind === 'addressed_speech'
-            ? targetId
-            : undefined,
-        )
-      : (type === 'expression' || data?.['conversationRelevant'] === true) && source
-        ? world.conversations?.active[source.id]
-        : undefined;
-  if (conversationId) {
-    event.conversationId = conversationId;
-    const conversation = world.conversations?.records[conversationId];
-    if (conversation) conversation.lastActivityAt = world.simTime;
   }
   chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
   countDomainWork('eventsRecorded');
@@ -437,6 +440,7 @@ function recordEvent(
     if (experience && type === 'speech' && speechAwareness.has(experience.actorId))
       experience.resultMemoryId = event.id;
   }
+  let nativeSounds: Awareness[] = [];
   if (world.experience) {
     countDomainWork('awarenessWritten', audience.length);
     const acquired: Awareness[] = [];
@@ -452,6 +456,7 @@ function recordEvent(
       const perceived = observeEvent(world, event, actorId);
       const perceivedText = perceived.text;
       const awareness: Awareness = {
+        retentionClass: 'memory',
         ...(event.exposure ? { exposure: cloneValue(event.exposure) } : {}),
         eventId: event.id,
         actorId,
@@ -459,24 +464,29 @@ function recordEvent(
         at: event.at,
         sequence: world.nextId,
         modality:
-          scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
-            ? type === 'contact'
-              ? 'felt'
-              : type === 'encounter'
-                ? 'observed'
-                : 'internal'
-            : type === 'speech'
-              ? 'heard'
-              : 'observed',
+          feltTargetId === actorId
+            ? 'felt'
+            : scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
+              ? type === 'contact'
+                ? 'felt'
+                : type === 'encounter'
+                  ? 'observed'
+                  : 'internal'
+              : type === 'speech'
+                ? 'heard'
+                : 'observed',
         entityEpisodes: Object.fromEntries(
-          [perceived.sourceId, perceived.targetId].flatMap((id) => {
+          [...new Set(perceived.references.map((reference) => reference.id))].flatMap((id) => {
             const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
             return id && episode ? [[id, episode]] : [];
           }),
         ),
-        recognized: type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
+        recognized:
+          type !== 'contact' &&
+          !!perceived.sourceId &&
+          recognizesSubject(world, actorId, perceived.sourceId),
         intelligible: true,
-        entityIds: [perceived.sourceId, perceived.targetId].filter((id): id is string => !!id),
+        entityIds: [...new Set(perceived.references.map((reference) => reference.id))],
         importance: event.importance ?? importance,
         urgency: event.urgency ?? urgency,
         eventType: perceived.eventType,
@@ -501,16 +511,21 @@ function recordEvent(
           ? { change: data['change'] }
           : {}),
       };
+      acquireCombatObservation(world, awareness, event);
       if (awarenessBatch)
         awarenessBatch.push({ operation: 'add', entry: { source: 'awareness', value: awareness } });
       else acquired.push(awareness);
     }
-    acquireEventAwareness(world, acquired);
+    nativeSounds = acquireEventAwareness(world, acquired);
   }
   learnSpeechIntroduction(world, event);
   // Finalize optional native metadata before handing an immutable record to persistence.
   if (audience.length || importance >= selectedSocialPolicy(world).notableThreshold)
     appendEvents(world, [cloneValue(event)]);
+  // Finish the cause and every observer's record before an outward reaction emits
+  // another occurrence. Nested intake must not reverse a bystander's chronology.
+  acquireNativeResponseEvent(world, event, events);
+  for (const cue of nativeSounds) acquireNativeSound(world, cue, events);
   // Control notices are not occurrences characters can appraise, promise on or fulfil.
   if (scope !== 'system') {
     appraiseEvent(world, event);
@@ -525,15 +540,28 @@ export function finish(
   result: Outcome,
   beforePublication?: () => void,
 ): Transition {
+  const transition = finishInDraft(world, events, result, beforePublication);
+  transition.world = finishTransitionWorld(world);
+  return transition;
+}
+
+/** Complete an ordered operation inside an owned batch. The batch must publish through
+ * finishWorld before returning; per-operation reconciliation and sequence remain exact.
+ */
+export function finishInDraft(
+  world: WorldState,
+  events: WorldEvent[],
+  result: Outcome,
+  beforePublication?: () => void,
+): Transition {
   reconcileCoaching(world, events);
   advanceCommitments(world, events);
-  reconcileConversations(world);
   // Native preparation observes the exact final owner writes before publication
   // clears private revision counters; this callback grants no gameplay authority.
   beforePublication?.();
   world.sequence++;
   const committedEvents = cloneValue(events);
-  return { world: finishWorld(world), events: committedEvents, outcome: result };
+  return { world, events: committedEvents, outcome: result };
 }
 
 /** Observed conversation events may be native state narration, not an actor reply. */

@@ -534,12 +534,20 @@ Original recommendation: **Replace**.
 
 **Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
-The scheduler for immediate AI responses runs only one interactive or spontaneous-cognition job at a time.
+The scheduler admits at most **two immediate pipelines per world**, **one per
+actor** and **one ordinary pipeline**. Two urgent actors can occupy both positions.
+Urgent execution shares the existing background provider lease, preserving two
+total executions across immediate decisions, higher reasoning and maintenance.
+Deferral records timing while the running job retains its admission position;
+completion or handoff releases only its own position. Uncertain execution retains
+its actual financial lease class across restart. Controlled native coverage
+includes ordinary plus urgent, two urgent, no third slot and exact cancellation;
+complete live fairness and latency qualification remain open under
+[CTR08/CTR10](../maintainers/combat-and-threat-responses.md).
 
-**Selected target, October 17, 2026 — implementation open:** [CTR08](../projects/combat-and-threat-responses-tech-design.md#bounded-urgent-concurrency) permits at most **two immediate pipelines per world**, at most **one per actor**, and at most **one ordinary pipeline**. The second capacity is available for urgent threat response; two urgent pipelines may use both slots. Retain the existing shared monetary/request/provider ceilings, fair coalesced queue and serialized native publication. Each actor/job owns its exact cancellation, reservations, captured evidence and completion handle; an old callback cannot clear another run. This replaces the earlier unselected-concurrency direction for the named threat consumer, not the current single-slot runtime or the need for measured fairness and latency. [CTR-L03](combat-and-threat-responses.md#ctr-l03--two-stage-work-and-urgent-capacity) records the selected bound and its complete-path qualification.
-
-**Reason / tradeoff:** The current shared slot bounds concurrent work but can delay an urgent reaction behind an unrelated provider call. The selected target limits that wait with bounded concurrency; qualification must measure actual queue delay, fairness and complete cost while retaining shared admission and serialized native effects.
-
+**Reason / tradeoff:** One long ordinary deliberation no longer owns both immediate
+positions. Shared funding and provider capacity still limit dispatch, and each
+actor/job retains its own evidence, reservations and cancellation.
 [Implementation starting point](../../apps/server/src/ai-director.ts).
 
 Original recommendation: **Review**.

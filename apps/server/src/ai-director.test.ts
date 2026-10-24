@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
@@ -143,7 +144,7 @@ async function harness(
     }),
     ...options.config,
   };
-  const store = await testRepository();
+  const store = await testRepository(undefined, stockedCamp());
   const service = new WorldService(store, config, () => now);
   await enterLocalWorld(service);
   await service.setPresence('fixture-browser', true);
@@ -242,7 +243,9 @@ describe('AI director with explicit fixtures, no live calls', () => {
       h.service.world.knowledge[NPC_ID]!.filter((record) => record.source === 'invented'),
     ).toHaveLength(0);
     expect(
-      allItems(h.service.world).some((item) => item.definitionId === recipe?.outputDefinitionId),
+      allItems(h.service.world).some(
+        (item) => item.definitionId === recipe?.outputs[0]!.definition.id,
+      ),
     ).toBe(false);
     expect(h.calls.generations).toHaveLength(1);
   });
@@ -376,7 +379,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     expect((await h.inventNew('no-keys', 'A sling.')).code).toBe('unconfigured');
     h.director.considerThought();
     await h.service.control({ paused: true });
-    expect((await h.submit('chat', 'pause', 'Hello.')).code).toBe('paused');
+    expect((await h.submit('chat', 'pause', 'Hello.', NPC_ID)).code).toBe('paused');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(0);
     expect(h.calls.generations).toHaveLength(0);

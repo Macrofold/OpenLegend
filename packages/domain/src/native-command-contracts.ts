@@ -1,12 +1,86 @@
-import type { ActivityNode, ActivityBinding } from './action-experience.js';
+import {
+  boundaryRepairInputFields,
+  validBoundaryRepairInputFields,
+} from './boundary-repair-inputs.js';
+import { isNativeInputField } from './native-inputs.js';
+import type { ActivityNode, ActivityBinding, ActivityArgument } from './action-experience.js';
 import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
 import { isSafeRecordId } from './records.js';
 import type { Command } from './types.js';
-import { activityCommandFields, isCookingInputField } from './food-preparation.js';
 
-export const invocationFields: Partial<
+/** Family parameters exclude the trusted command envelope. Keep unknown family
+ * fields so each owning strict validator still refuses unsupported parameters. */
+type OperationFields<C extends Command> = C extends Command
+  ? Omit<
+      C,
+      | 'id'
+      | 'actorId'
+      | 'type'
+      | 'purpose'
+      | 'chosenPurpose'
+      | 'humanInitiated'
+      | 'combatHelpId'
+      | 'cooperation'
+    >
+  : never;
+export function nativeOperationFields<C extends Command>(command: C): OperationFields<C>;
+export function nativeOperationFields(command: Command) {
+  const {
+    id,
+    actorId,
+    type,
+    purpose,
+    chosenPurpose,
+    humanInitiated,
+    combatHelpId,
+    cooperation,
+    ...fields
+  } = command;
+  return fields;
+}
+
+/** Flatten native exact role maps only for the existing finite activity language. */
+export function activityCommandFields(command: Command): Record<string, unknown> {
+  if (command.type === 'cook') {
+    const { inputs, ...fields } = command;
+    return {
+      ...fields,
+      ...Object.fromEntries(Object.entries(inputs).map(([role, id]) => [`input:${role}`, id])),
+    };
+  }
+  if (command.type === 'craft') {
+    const { tools, ...fields } = command;
+    return {
+      ...fields,
+      ...Object.fromEntries(Object.entries(tools ?? {}).map(([role, id]) => [`tool:${role}`, id])),
+    };
+  }
+  return command as unknown as Record<string, unknown>;
+}
+export const isManufactureToolField = (field: string) =>
+  field.startsWith('tool:') && isSafeRecordId(field.slice(5));
+
+const invocationFields: Partial<
   Record<Command['type'], { required: string[]; optional?: string[] }>
 > = {
+  'impact-boundary': {
+    required: ['assemblyId', 'itemId', 'toolId', 'familyId', 'familyVersion', 'familyDigest'],
+  },
+  'operate-gate': {
+    required: [
+      'assemblyId',
+      'itemId',
+      'operation',
+      'familyId',
+      'familyVersion',
+      'familyDigest',
+      'expectedRevision',
+    ],
+    optional: ['side'],
+  },
+  'place-hearth': {
+    required: ['definitionId', 'definitionVersion', 'definitionDigest', 'destination'],
+  },
   assemble: {
     required: [
       'operation',
@@ -29,15 +103,29 @@ export const invocationFields: Partial<
   evade: { required: ['destination'] },
   // Requested activities may end a follow at an absolute deadline; learning refuses to
   // generalize one (activity-learning.ts), since a past deadline is not reusable.
-  follow: { required: ['targetId'], optional: ['distance', 'relation', 'onLost', 'until'] },
-  gather: { required: ['targetId'], optional: ['itemId'] },
+  follow: {
+    required: ['targetId'],
+    optional: ['distance', 'relation', 'onLost', 'until', 'complete'],
+  },
+  gather: { required: ['targetId'], optional: ['itemId', 'gatheringMode'] },
   harvest: { required: ['targetId'] },
-  prepare: { required: ['preparation'] },
   craft: { required: ['recipeId'] },
   replenish: { required: ['targetId', 'attributeId'] },
   equip: { required: ['itemId'] },
   guard: { required: ['itemId'], optional: ['targetId', 'facing', 'autoEquip'] },
-  eat: { required: ['itemId'] },
+  eat: {
+    required: [],
+    optional: [
+      'itemId',
+      'sourceId',
+      'definitionId',
+      'definitionVersion',
+      'definitionDigest',
+      'bodyPolicyId',
+      'bodyPolicyVersion',
+      'bodyPolicyDigest',
+    ],
+  },
   'inspect-inventory': {
     required: [],
     optional: ['containerId', 'after', 'expectedRevision', 'expectedScope'],
@@ -77,8 +165,86 @@ export const invocationFields: Partial<
     required: ['targetId', 'definitionId', 'operation'],
     optional: ['facingHeading', 'restingPlaceId', 'restingBay'],
   },
-  say: { required: ['text'], optional: ['targetId', 'intendedRecipientId', 'volume'] },
+  say: { required: ['text'], optional: ['targetId', 'volume'] },
 };
+/** Native boundary phases and finite activities use the same operation fields. */
+export function boundaryOperationFields(
+  operation: unknown,
+  values?: object,
+): { required: string[]; optional?: string[] } | undefined {
+  switch (operation) {
+    case 'post':
+      return { required: ['toolId'] };
+    case 'boundary-panel':
+      return { required: ['fromSlot', 'toSlot', 'sectionId', 'binding1', 'binding2'] };
+    case 'boundary-gate':
+      return {
+        required: [
+          'fromSlot',
+          'toSlot',
+          'thirdSlot',
+          'sectionId',
+          'parkingSectionId',
+          'rail1Id',
+          'rail2Id',
+          'binding1',
+          'binding2',
+          'binding3',
+          'binding4',
+          'binding5',
+          'binding6',
+        ],
+      };
+    case 'repair-boundary':
+      return validBoundaryRepairInputFields(values)
+        ? { required: ['toolId', ...boundaryRepairInputFields(values)] }
+        : undefined;
+    case 'remove-boundary-panel':
+    case 'remove-boundary-gate':
+    case 'reclaim-post':
+    case 'reclaim-lowered':
+      return { required: [], optional: ['destinationId', 'sectionId'] };
+  }
+}
+/** A family discriminator is fixed in the method, never a private object binding. */
+export function activityInvocationFields(
+  command: Command['type'],
+  args: Record<string, ActivityArgument> | undefined,
+): { required: string[]; optional?: string[] } | undefined {
+  const implementation = args?.implementation;
+  if (
+    command === 'assemble' &&
+    implementation &&
+    'literal' in implementation &&
+    implementation.literal === 'grounded-panel-boundary'
+  ) {
+    const operation = args?.operation;
+    const fields =
+      operation && 'literal' in operation
+        ? boundaryOperationFields(operation.literal, args)
+        : undefined;
+    if (!fields) return;
+    return {
+      required: [
+        'implementation',
+        'operation',
+        'familyId',
+        'familyVersion',
+        'familyDigest',
+        'requestId',
+        'editId',
+        'expectedRevision',
+        'destination',
+        'heading',
+        'slot',
+        'itemId',
+        ...fields.required,
+      ],
+      optional: ['rootId', 'permissionId', ...(fields.optional ?? [])],
+    };
+  }
+  return invocationFields[command];
+}
 export function exactFields(value: object, fields: string[]): void {
   if (
     !value ||
@@ -96,25 +262,35 @@ const entityFields = new Set([
   'heatId',
   'sourceId',
   'destinationId',
-  'intendedRecipientId',
   'containerId',
   'rootId',
+  'assemblyId',
   'binding1',
   'binding2',
   'binding3',
   'binding4',
+  'binding5',
+  'binding6',
+  'toolId',
+  'rail1Id',
+  'rail2Id',
   'restingPlaceId',
 ]);
 /** Closed native parameter meaning, shared by history and private sequence bindings.
- * This classifies an admitted field; invocationFields still validates supported operations.
+ * This classifies an admitted field; activityInvocationFields validates supported operations.
  * Immediate transactions retain their real references without becoming reusable leaves. */
 export function nativeBindingKind(field: string): 'object' | 'place' | 'text' | undefined {
-  if (entityFields.has(field) || isCookingInputField(field)) return 'object';
+  if (entityFields.has(field) || isNativeInputField(field) || isManufactureToolField(field))
+    return 'object';
   if (field === 'destination') return 'place';
   if (field === 'text') return 'text';
 }
 export function nativeOutputBinding(field: string): boolean {
-  return ['itemId', 'weaponItemId', 'ammoItemId'].includes(field) || isCookingInputField(field);
+  return (
+    ['itemId', 'weaponItemId', 'ammoItemId'].includes(field) ||
+    isNativeInputField(field) ||
+    isManufactureToolField(field)
+  );
 }
 export function commandEntityFields(command: Command): string[] {
   return Object.keys(activityCommandFields(command)).filter(
@@ -127,6 +303,22 @@ export function commandBindingFields(command: Command): string[] {
   );
 }
 
+/** Entity references selected for an activity. Text and places never become
+ * entity IDs; future produced outputs bind separately at their native dispatch. */
+export function activityEntityReferences(
+  root: ActivityNode,
+  bindings: Record<string, ActivityBinding>,
+): string[] {
+  return [
+    ...new Set(
+      [...activityRoleKinds(root)].flatMap(([role, kind]) => {
+        const value = bindings[role];
+        return kind === 'object' && typeof value === 'string' ? [value] : [];
+      }),
+    ),
+  ];
+}
+
 export function activityRoleKinds(
   node: ActivityNode,
   roles = new Map<string, 'object' | 'place' | 'text'>(),
@@ -136,6 +328,8 @@ export function activityRoleKinds(
       throw new Error('An activity role has incompatible parameter meanings.');
     roles.set(role, kind);
   };
+  for (const requirement of node.requirements ?? [])
+    if ('role' in requirement) add(requirement.role, 'object');
   if (node.kind === 'invoke') {
     for (const [field, arg] of Object.entries(node.args))
       if ('role' in arg) add(arg.role, nativeBindingKind(field));

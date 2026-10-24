@@ -35,7 +35,9 @@ export const DEFAULT_SENSES: SenseDefinition[] = [
     id: 'wilderness:vision',
     version: 1,
     implementation: 'vision-geometry-v1',
+    routineTiming: 'cadence',
     radius: 28,
+    sampleSeconds: 3,
   },
   { id: 'wilderness:hearing', version: 1, implementation: 'hearing-db-v1', hearingFloorDbSpl: 0 },
 ];

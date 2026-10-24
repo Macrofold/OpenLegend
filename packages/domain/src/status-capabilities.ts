@@ -2,10 +2,12 @@ import { entityGet, entityValues } from './entity-collection.js';
 import { isDraft, original } from 'immer';
 import type { Entity, WorldState } from './types.js';
 import type { Capability, StatusEffectDefinition, StatusPresentation } from './status-effects.js';
-import { objectAncestors } from './objects.js';
+import { objectAncestors, directChildIds, parentOf } from './objects.js';
+import { isImmutableData } from './records.js';
 import { activelyParticipates } from './participation-state.js';
 import { chargeWork } from './work-budget.js';
 import { readOnlyDraftView } from './draft.js';
+import { countDomainWork } from './diagnostic-counters.js';
 
 // Definitions are replaced only at admission; never traverse readonly rules through draft proxies.
 // docs/status-effects.md#admission-and-persistence
@@ -16,7 +18,7 @@ export function statusDefinitions(world: WorldState): StatusEffectDefinition[] {
 const restrictionDefinitions = new WeakMap<StatusEffectDefinition[], Map<Capability, string[]>>();
 function restrictions(world: WorldState, capability: Capability): string[] {
   const definitions = statusDefinitions(world);
-  const reusable = Object.isFrozen(definitions);
+  const reusable = isImmutableData(definitions);
   let compiled = reusable ? restrictionDefinitions.get(definitions) : undefined;
   if (!compiled) {
     compiled = new Map();
@@ -51,16 +53,61 @@ function sourceBindings(entity: Entity | undefined): Array<[string, SourceBindin
   );
 }
 function sources(entities: WorldState['entities']): SourceIndex {
-  let index = Object.isFrozen(entities) ? sourceIndexes.get(entities) : undefined;
-  if (index) return index;
-  index = new Map();
+  const cached = isImmutableData(entities) ? sourceIndexes.get(entities) : undefined;
+  if (cached) return cached;
+  const index = new Map<string, SourceBinding[]>();
   for (const entity of entityValues(entities)) {
     chargeWork({ candidates: 1 });
-    for (const [source, binding] of sourceBindings(entity))
-      index.set(source, [...(index.get(source) ?? []), binding]);
+    for (const [source, binding] of sourceBindings(entity)) {
+      let bindings = index.get(source);
+      if (!bindings) index.set(source, (bindings = []));
+      bindings.push(binding);
+    }
   }
-  if (Object.isFrozen(entities)) sourceIndexes.set(entities, index);
+  if (isImmutableData(entities)) sourceIndexes.set(entities, index);
   return index;
+}
+/** Source changes can alter a sustained restriction on an unchanged target.
+ * Changed participation or custody also affects sources contained below it. */
+export function* contributionDependentIds(
+  world: WorldState,
+  baseline: WorldState,
+  changed: ReadonlySet<string>,
+): Generator<string> {
+  if (!changed.size || !statusDefinitions(world).some((definition) => definition.contribution))
+    return;
+  const sourceIds = new Set(changed),
+    hierarchyChanges: string[] = [],
+    currentEntities = readOnlyDraftView(world).entities;
+  for (const id of changed) {
+    const before = entityGet(baseline.entities, id),
+      after = entityGet(currentEntities, id);
+    if (
+      activelyParticipates(before) === activelyParticipates(after) &&
+      parentOf(before) === parentOf(after)
+    )
+      continue;
+    hierarchyChanges.push(id);
+  }
+  for (const snapshot of [baseline, world]) {
+    const pending = [...hierarchyChanges],
+      seen = new Set<string>();
+    while (pending.length) {
+      const parent = pending.pop()!;
+      if (seen.has(parent)) continue;
+      seen.add(parent);
+      for (const child of directChildIds(snapshot, parent)) {
+        sourceIds.add(child);
+        pending.push(child);
+      }
+    }
+  }
+  const base = isDraft(world) ? original(world)! : world;
+  const index = sources(base.entities);
+  for (const id of sourceIds) for (const binding of index.get(id) ?? []) yield binding.targetId;
+  for (const targetId of pendingSources.get(world) ?? [])
+    if (sourceBindings(entityGet(world.entities, targetId)).some(([id]) => sourceIds.has(id)))
+      yield targetId;
 }
 /** Reverse membership is derived once, then maintained from the authoritative write
  * set. Carried sources cannot be merged away merely because their target owns the state. */
@@ -86,26 +133,33 @@ export function captureContributionSources(
   pendingSources.delete(draft);
   return (result, changed) => {
     if (!prior || base.entities === result.entities) return;
-    let index = prior;
+    const changes = new Map<string, { removed: Set<string>; added: SourceBinding[] }>();
+    const change = (source: string) => {
+      let entry = changes.get(source);
+      if (!entry) changes.set(source, (entry = { removed: new Set(), added: [] }));
+      return entry;
+    };
     for (const id of changed) {
       if (
         entityGet(base.entities, id)?.statusEffects ===
         entityGet(result.entities, id)?.statusEffects
       )
         continue;
-      const before = sourceBindings(entityGet(base.entities, id)),
-        after = sourceBindings(entityGet(result.entities, id));
-      if (!before.length && !after.length) continue;
-      if (index === prior) index = new Map(prior);
-      for (const source of new Set(before.map(([source]) => source))) {
-        const bindings = (index.get(source) ?? []).filter((binding) => binding.targetId !== id);
-        if (bindings.length) index.set(source, bindings);
-        else index.delete(source);
-      }
-      for (const [source, binding] of after)
-        index.set(source, [...(index.get(source) ?? []), binding]);
+      for (const [source] of sourceBindings(entityGet(base.entities, id)))
+        change(source).removed.add(id);
+      for (const [source, binding] of sourceBindings(entityGet(result.entities, id)))
+        change(source).added.push(binding);
     }
-    sourceIndexes.set(result.entities, index);
+    const index = changes.size ? new Map(prior) : prior;
+    for (const [source, delta] of changes) {
+      const bindings = [
+        ...(prior.get(source) ?? []).filter((binding) => !delta.removed.has(binding.targetId)),
+        ...delta.added,
+      ];
+      if (bindings.length) index.set(source, bindings);
+      else index.delete(source);
+    }
+    if (isImmutableData(result.entities)) sourceIndexes.set(result.entities, index);
   };
 }
 function effectiveContribution(world: WorldState, state: States[string] | undefined): boolean {
@@ -142,7 +196,7 @@ function contributionIndex(states: States): Map<string, string[]> {
     keys.push(id);
     index.set(definition, keys);
   }
-  if (isDraft(states) || Object.isFrozen(states)) contributionIndexes.set(states, index);
+  if (isDraft(states) || isImmutableData(states)) contributionIndexes.set(states, index);
   return index;
 }
 export function invalidateContributionIndex(entity: Entity, world?: WorldState): void {
@@ -196,21 +250,91 @@ export function isStatusDefinitionActive(
   const states = readOnlyDraftView(entity).statusEffects;
   return !!states && definitionActive(states, definitionId, contributionIndex(states), world);
 }
+const capabilityBits: Record<Capability, number> = {
+  actions: 1,
+  locomotion: 2,
+  speech: 4,
+  perception: 8,
+};
+type CapabilityPreparation = {
+  from: number;
+  until: number;
+  mask: number;
+  active: StatusEffectDefinition[];
+  dynamic: boolean;
+  public?: Array<{ id: string; label: string } & StatusPresentation>;
+  owner?: Array<{ id: string; label: string } & StatusPresentation>;
+};
+const capabilityPreparations = new WeakMap<
+  States,
+  WeakMap<StatusEffectDefinition[], CapabilityPreparation>
+>();
+function currentStatusPreparation(world: WorldState, entity: Entity): CapabilityPreparation {
+  const states = readOnlyDraftView(readOnlyDraftView(entity).statusEffects!),
+    definitions = statusDefinitions(world),
+    reusable = isImmutableData(states) && isImmutableData(definitions),
+    cached = reusable ? capabilityPreparations.get(states)?.get(definitions) : undefined;
+  if (cached && world.simTime >= cached.from && world.simTime < cached.until) {
+    countDomainWork('nativeCapabilityReuses');
+    return cached;
+  }
+  const independent = contributionIndex(states);
+  let until = Infinity,
+    dynamic = false,
+    mask = 0;
+  for (const stored of Object.values(states)) {
+    const state = readOnlyDraftView(stored);
+    if (!state.active) continue;
+    const contribution = state.contribution && readOnlyDraftView(state.contribution),
+      lifetime = contribution && readOnlyDraftView(contribution.lifetime);
+    if (lifetime?.kind === 'source-sustained') dynamic = true;
+    if (lifetime?.kind === 'fixed' && lifetime.expiresAt > world.simTime)
+      until = Math.min(until, lifetime.expiresAt);
+  }
+  const active = definitions.filter((d) => definitionActive(states, d.id, independent, world));
+  for (const definition of active)
+    for (const operation of definition.whileActive)
+      if ('restrictCapabilities' in operation)
+        for (const capability of operation.restrictCapabilities.capabilities)
+          mask |= capabilityBits[capability];
+  Object.freeze(active);
+  const result: CapabilityPreparation = { from: world.simTime, until, mask, active, dynamic };
+  if (reusable && !dynamic) {
+    let entries = capabilityPreparations.get(states);
+    if (!entries) capabilityPreparations.set(states, (entries = new WeakMap()));
+    entries.set(definitions, result);
+  }
+  countDomainWork('nativeCapabilityPreparations');
+  return result;
+}
+/** Installed restrictions determine eligibility. The same preparation supplies
+ * current display facts; foreign sustained sources deliberately remain current.
+ * docs/projects/performance-overhaul/animal-execution.md#43-capabilities-and-bodily-dependencies */
 export function capabilityBlocked(
   world: WorldState,
   entity: Entity | undefined,
   capability: Capability,
 ): boolean {
   entity = entity ? (entityGet(readOnlyDraftView(world.entities), entity.id) ?? entity) : undefined;
-  entity = entity && readOnlyDraftView(entity);
-  const states = entity?.statusEffects;
+  const states = entity && readOnlyDraftView(entity).statusEffects;
   if (!states) return false;
-  const independent = contributionIndex(states);
-  // Immutable rule membership is reusable; current contribution lifetime and state are not.
-  for (const id of restrictions(world, capability))
-    if (definitionActive(states, id, independent, world)) return true;
-  return false;
+  if (!isImmutableData(readOnlyDraftView(states)) || !isImmutableData(statusDefinitions(world))) {
+    const independent = contributionIndex(states);
+    return restrictions(world, capability).some((id) =>
+      definitionActive(states, id, independent, world),
+    );
+  }
+  return !!(currentStatusPreparation(world, entity!).mask & capabilityBits[capability]);
 }
+/** Dependency token, never authority: includes all active restrictions, expires
+ * with fixed contributions, and is intentionally fresh for foreign lifetimes. */
+export function statusEffectsReadToken(world: WorldState, entity: Entity): object | undefined {
+  const current = entityGet(readOnlyDraftView(world.entities), entity.id) ?? entity;
+  return readOnlyDraftView(current).statusEffects
+    ? currentStatusPreparation(world, current)
+    : undefined;
+}
+
 export function activeStatusEffects(
   world: WorldState,
   entity: Entity | undefined,
@@ -218,17 +342,19 @@ export function activeStatusEffects(
   entity = entity ? (entityGet(readOnlyDraftView(world.entities), entity.id) ?? entity) : undefined;
   entity = entity && readOnlyDraftView(entity);
   if (!entity?.statusEffects) return [];
-  const independent = contributionIndex(entity.statusEffects);
-  return statusDefinitions(world).filter((d) =>
-    definitionActive(entity.statusEffects!, d.id, independent, world),
-  );
+  return currentStatusPreparation(world, entity).active;
 }
 export function projectStatusEffects(
   world: WorldState,
   entity: Entity | undefined,
   audience: 'owner' | 'public' = 'public',
 ): Array<{ id: string; label: string } & StatusPresentation> {
-  return activeStatusEffects(world, entity)
+  entity = entity ? (entityGet(readOnlyDraftView(world.entities), entity.id) ?? entity) : undefined;
+  if (!entity || !readOnlyDraftView(entity).statusEffects) return [];
+  const prepared = currentStatusPreparation(world, entity);
+  const retained = prepared[audience];
+  if (retained) return retained;
+  const result = prepared.active
     .filter(
       (d) =>
         (d.presentation || d.actions || (audience === 'owner' && d.contribution)) &&
@@ -247,4 +373,8 @@ export function projectStatusEffects(
         ...d.presentation,
       };
     });
+  for (const row of result) Object.freeze(row);
+  Object.freeze(result);
+  prepared[audience] = result;
+  return result;
 }

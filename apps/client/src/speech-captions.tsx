@@ -1,5 +1,10 @@
 import { createRoot, type Root } from 'react-dom/client';
-import type { GameView, PublicEvent, PerceivedSpeech } from '@open-legend/protocol';
+import type {
+  GameView,
+  PublicEvent,
+  PerceivedSpeech,
+  SpeechPresentation,
+} from '@open-legend/protocol';
 import { Icon } from './design-system/components';
 import { ProgressRing, progressFraction } from './design-system/progress-ring';
 import {
@@ -19,13 +24,18 @@ export type CaptionPoint = {
 };
 export type CaptionProjection = {
   head(id: string): CaptionPoint | null;
-  direction(speech: PerceivedSpeech, width: number, height: number): CaptionPoint | null;
+  direction(
+    speech: PerceivedSpeech,
+    width: number,
+    height: number,
+    sourceId?: string,
+  ): CaptionPoint | null;
   neutral(index: number): CaptionPoint;
   width: number;
   height: number;
 };
 type Entry = {
-  event: PublicEvent & { speech: PerceivedSpeech };
+  event: PublicEvent & { speech: PerceivedSpeech; speechPresentation: SpeechPresentation };
   chunks: string[];
   chunk: number;
   lifetime: PresentationLifetime;
@@ -57,7 +67,7 @@ function chunks(text: string): string[] {
           break;
         }
     }
-    result.push(graphemes.slice(start, end).join('').trim());
+    result.push(graphemes.slice(start, end).join(''));
     start = end;
   }
   return result.length ? result : [''];
@@ -71,10 +81,10 @@ export const captionScope = (view: GameView) =>
     view.player.id,
     view.historyEpoch,
   ]);
-const captionText = (event: PublicEvent & { speech: PerceivedSpeech }) =>
+const captionText = (event: Entry['event']) =>
   event.speech.intelligibility === 'none'
-    ? event.text
-    : event.speech.segments
+    ? event.speechPresentation.personalText
+    : event.speechPresentation.segments
         .map((segment) => (segment.kind === 'heard' ? segment.text : '[…]'))
         .join(' ');
 
@@ -195,16 +205,14 @@ export class SpeechCaptions {
     for (const event of view.events) {
       if (this.seen.has(event.id)) continue;
       this.seen.add(event.id);
-      if (!event.speech || !this.options.enabled) continue;
+      if (!event.speech || !event.speechPresentation || !this.options.enabled) continue;
       if (document.hidden) {
         this.drop(event);
         continue;
       }
-      const speaker = event.speech.speaker?.entityId;
+      const speaker = event.actorId;
       const queueSize = speaker
-        ? [...this.active, ...this.pending].filter(
-            (e) => e.event.speech.speaker?.entityId === speaker,
-          ).length
+        ? [...this.active, ...this.pending].filter((e) => e.event.actorId === speaker).length
         : 0;
       // Overflow stays available in durable World Events; these are presentation limits only.
       if (queueSize >= 3) {
@@ -301,8 +309,8 @@ export class SpeechCaptions {
     if (this.options.enabled && !document.hidden) {
       for (let i = 0; this.active.length < 8 && i < this.pending.length; ) {
         const entry = this.pending[i]!;
-        const speaker = entry.event.speech.speaker?.entityId;
-        if (speaker && this.active.some((e) => e.event.speech.speaker?.entityId === speaker)) {
+        const speaker = entry.event.actorId;
+        if (speaker && this.active.some((e) => e.event.actorId === speaker)) {
           i++;
           continue;
         }
@@ -322,14 +330,16 @@ export class SpeechCaptions {
                 key={`${entry.event.id}:${entry.chunk}`}
                 className="ol-speech-caption"
                 role={entry.chunk === 0 ? 'status' : undefined}
-                aria-label={entry.chunk === 0 ? entry.event.text : undefined}
+                aria-label={
+                  entry.chunk === 0 ? entry.event.speechPresentation?.accessibilityText : undefined
+                }
                 aria-hidden={entry.chunk > 0 ? true : undefined}
                 ref={entry.attach}
               >
                 <div aria-hidden="true">
                   <div className="ol-speech-caption-meta">
                     <span>
-                      {speech.speaker?.nameAtTime ?? 'Someone nearby'}
+                      {entry.event.speechPresentation?.speakerLabel ?? 'Someone nearby'}
                       {speech.delivery === 'whisper'
                         ? ' (whispering)'
                         : speech.delivery === 'shout'
@@ -353,9 +363,9 @@ export class SpeechCaptions {
                       ➜
                     </span>
                   </div>
-                  {speech.recipient && (
+                  {entry.event.speechPresentation?.directionLabel && (
                     <div className="ol-speech-caption-recipient">
-                      To {speech.recipient.nameAtTime}:
+                      {entry.event.speechPresentation.directionLabel}
                     </div>
                   )}
                   <span
@@ -403,7 +413,7 @@ export class SpeechCaptions {
       const node = entry.node;
       if (!node) continue;
       const speech = entry.event.speech;
-      const head = speech.speaker ? p.head(speech.speaker.entityId) : null;
+      const head = entry.event.actorId ? p.head(entry.event.actorId) : null;
       const { width, height } = entry;
       if (!width || !height) continue;
       const inBounds = (point: CaptionPoint) =>
@@ -411,7 +421,7 @@ export class SpeechCaptions {
         point.x + width / 2 <= p.width - 8 &&
         point.y - height >= 8 &&
         point.y <= p.height - 8;
-      const direction = p.direction(speech, width, height);
+      const direction = p.direction(speech, width, height, entry.event.actorId);
       const candidates = [head, direction, p.neutral(index)].filter(
         (point): point is CaptionPoint => !!point && inBounds(point),
       );

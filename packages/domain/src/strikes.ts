@@ -1,13 +1,32 @@
+import { TIME_EPSILON } from './simulation-time.js';
+import {
+  bodySurfaceDistance,
+  resolveSupport,
+  SPATIAL_LIMITS,
+  type SurfacePoint,
+} from '@open-legend/spatial';
+import { bodyProfile, supportedPosition, worldPosition, spatialMap } from './spatial-state.js';
+import { hasLineOfEffect } from './spatial.js';
+import { definitionPin } from './world-modules.js';
+import { hasRecordFields, isSafeRecordId } from './records.js';
+import { finitePoint } from '@open-legend/spatial';
+import { nativeResponseProfile } from './native-response.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { weaponStrikeWording } from './worlds/base/strikes.js';
 import { itemFor } from './objects.js';
 import { equippedItems } from './equipment.js';
-import type { Entity, WorldState } from './types.js';
+import type { Action, Entity, WorldState } from './types.js';
 /** Trusted targeted-strike definitions; data selects only this finite native family.
  * docs/targeted-actions.md#targeted-strikes
  */
 export interface StrikeDefinition {
+  preparationMotion?: {
+    kind: 'pursue-observed-target';
+    startRange: number;
+    standOffRange: number;
+    locomotionProfileId: string;
+  };
   requiredBodyPlan?: import('./living.js').LivingBody['plan'];
   weaponItemId?: string;
   approachRange?: number;
@@ -136,6 +155,15 @@ export function validateNativeStrikes(world: WorldState): void {
         (!Number.isFinite(strike.accuracy) || strike.accuracy < 0 || strike.accuracy > 1)) ||
       (strike.requiredBodyPlan !== undefined &&
         !['biped', 'quadruped', 'avian'].includes(strike.requiredBodyPlan)) ||
+      (strike.preparationMotion !== undefined &&
+        (strike.preparationMotion.kind !== 'pursue-observed-target' ||
+          ![strike.preparationMotion.startRange, strike.preparationMotion.standOffRange].every(
+            (n) => Number.isFinite(n) && n > 0,
+          ) ||
+          strike.preparationMotion.startRange < strike.range ||
+          strike.preparationMotion.standOffRange >= strike.range ||
+          !strike.recoverySeconds ||
+          !strikeLocomotion(world, strike))) ||
       !['punch', 'melee'].includes(strike.animation) ||
       typeof strike.autoMoveToRange !== 'boolean' ||
       ![strike.label, strike.pastTense].every(
@@ -150,4 +178,115 @@ export function validateNativeStrikes(world: WorldState): void {
         entity.actor.naturalStrikeIds.some((id) => !world.nativeStrikes?.[id]))
     )
       throw new Error('Invalid natural strike capability.');
+}
+
+/** A preparation keeps the ordinary action's single physical path. Generic
+ * actors can use it without an animal or hunt controller. */
+export function actionHasMotion(action: Action | null | undefined): boolean {
+  return (
+    !!action &&
+    (action.stage === 'approaching' || (!!action.strikeMotion && action.strikePhase === 'windup'))
+  );
+}
+export function strikeLocomotion(
+  world: WorldState,
+  definition: StrikeDefinition,
+): import('./native-response.js').NativeLocomotion | undefined {
+  const id = definition.preparationMotion?.locomotionProfileId;
+  if (!id) return;
+  const profiles = Object.values(world.nativeResponseProfiles ?? {}).filter(
+    (profile) => profile.locomotion[id],
+  );
+  if (!profiles.length) return;
+  const first = profiles[0]!;
+  if (profiles.some((profile) => profile.locomotion[id]!.travel !== first.locomotion[id]!.travel))
+    return;
+  return { profile: definitionPin(first), locomotion: id, mode: 'travel' };
+}
+export function validateStrikeMotion(world: WorldState, entity: Entity): void {
+  const action = entity.actor?.action,
+    motion = action?.strikeMotion;
+  const definition = action && strikeDefinition(action.definitionId, world, action.weaponItemId);
+  if (!motion) {
+    if (
+      action?.type === 'strike' &&
+      action.stage === 'working' &&
+      action.strikePhase === 'windup' &&
+      definition?.preparationMotion
+    )
+      throw new Error('Moving strike preparation lost its physical continuation.');
+    return;
+  }
+  const locomotion = motion.locomotion;
+  if (
+    !action ||
+    action.type !== 'strike' ||
+    action.stage !== 'working' ||
+    action.strikePhase !== 'windup' ||
+    !definition?.preparationMotion ||
+    !hasRecordFields(motion, ['locomotion', 'releaseAt', 'observed']) ||
+    !Number.isFinite(motion.releaseAt) ||
+    motion.releaseAt < 0 ||
+    motion.releaseAt < world.simTime - TIME_EPSILON ||
+    action.totalSeconds !== definition.workSeconds ||
+    !Number.isFinite(action.remainingSeconds) ||
+    action.remainingSeconds < 0 ||
+    action.remainingSeconds > definition.workSeconds + TIME_EPSILON ||
+    Math.abs(action.remainingSeconds - Math.max(0, motion.releaseAt - world.simTime)) >
+      TIME_EPSILON ||
+    !hasRecordFields(motion.observed, ['point', 'at']) ||
+    !finitePoint(motion.observed.point) ||
+    !isSafeRecordId(motion.observed.point.surfaceId) ||
+    !Number.isFinite(motion.observed.at) ||
+    motion.observed.at < 0 ||
+    motion.observed.at > world.simTime ||
+    !locomotion ||
+    !hasRecordFields(locomotion, ['profile', 'locomotion', 'mode']) ||
+    locomotion.mode !== 'travel' ||
+    locomotion.locomotion !== definition.preparationMotion.locomotionProfileId ||
+    !nativeResponseProfile(world, locomotion.profile)?.locomotion[locomotion.locomotion] ||
+    action.targetLife === undefined
+  )
+    throw new Error('Invalid saved moving strike preparation.');
+}
+
+/** Moving contact definitions name surface separation, unlike ordinary interaction
+ * anchors. Prediction, stances, admission and contact must use this same meaning. */
+export function movingStrikeInReach(
+  world: WorldState,
+  actor: Entity,
+  target: Entity,
+  reach: number,
+  origin = worldPosition(actor),
+): boolean {
+  return (
+    bodySurfaceDistance(origin, bodyProfile(actor), worldPosition(target), bodyProfile(target)) <=
+      reach + SPATIAL_LIMITS.epsilon && hasLineOfEffect(world, actor, target, origin)
+  );
+}
+export function movingStrikeStance(
+  world: WorldState,
+  actor: Entity,
+  target: Entity,
+  standOff: number,
+): SurfacePoint | undefined {
+  const from = supportedPosition(actor),
+    targetPoint = supportedPosition(target);
+  if (!from || !targetPoint) return;
+  const dx = from.x - targetPoint.x,
+    dz = from.z - targetPoint.z,
+    length = Math.hypot(dx, dz),
+    radius = bodyProfile(actor).radius + bodyProfile(target).radius + standOff,
+    angle = length > 0 ? Math.atan2(dz, dx) : actor.spatial.heading;
+  return (
+    resolveSupport(
+      spatialMap(world),
+      {
+        x: targetPoint.x + Math.cos(angle) * radius,
+        y: targetPoint.y,
+        z: targetPoint.z + Math.sin(angle) * radius,
+      },
+      targetPoint.surfaceId,
+    ) ?? undefined
+  );
 }

@@ -1,9 +1,45 @@
-import type { WorldPoint } from '@open-legend/spatial';
+import { quadraticRoots, SPATIAL_LIMITS, type WorldPoint } from '@open-legend/spatial';
 import { nextRandom } from '../../data.js';
 import type { WorldState } from '../../types.js';
 
+/** Predict from a personally observed executed segment, never the target's route.
+ * No feasible intercept inside existing range means ordinary observed-point aim. */
+export function baseObservedAimPoint(
+  origin: WorldPoint,
+  point: WorldPoint,
+  motion: { fromAt: number; at: number; from: WorldPoint; to: WorldPoint } | undefined,
+  now: number,
+  speed: number,
+  range: number,
+): WorldPoint {
+  if (!motion || motion.at !== now || motion.at <= motion.fromAt) return point;
+  if (
+    Math.hypot(point.x - motion.to.x, point.y - motion.to.y, point.z - motion.to.z) >
+    SPATIAL_LIMITS.epsilon
+  )
+    return point;
+  const elapsed = motion.at - motion.fromAt;
+  const v = {
+    x: (motion.to.x - motion.from.x) / elapsed,
+    y: (motion.to.y - motion.from.y) / elapsed,
+    z: (motion.to.z - motion.from.z) / elapsed,
+  };
+  const d = { x: point.x - origin.x, y: point.y - origin.y, z: point.z - origin.z };
+  const a = v.x * v.x + v.y * v.y + v.z * v.z - speed * speed,
+    b = 2 * (d.x * v.x + d.y * v.y + d.z * v.z),
+    c = d.x * d.x + d.y * d.y + d.z * d.z;
+  const roots: number[] = [];
+  quadraticRoots(a, b, c, roots);
+  const t = roots.filter((time) => time > 0 && time <= range / speed).sort((x, y) => x - y)[0];
+  return t === undefined
+    ? point
+    : { x: point.x + v.x * t, y: point.y + v.y * t, z: point.z + v.z * t };
+}
+
 /** Bundled straight-flight tuning. See docs/worlds/base/ranged-counterplay.md. */
-export const BASE_PROJECTILE_SPEED = { stone: 0.5, arrow: 0.75 } as const;
+export const BASE_PROJECTILE_SPEED = { stone: 0.5, arrow: 3 } as const;
+export const BASE_PROJECTILE_CONTACT_WARNING =
+  'This shot can injure any body in its path, including someone other than your target. Once fired, it cannot be recalled.';
 
 /** The current native launcher families use this world's two-radius, uniformly angled
  * release error. The flight owner retains only its chosen direction; alternate error
@@ -55,11 +91,9 @@ export const BASE_RANGED_TEXT = {
   aimingLabel: 'Aiming',
   shootingLabel: 'Preparing a shot',
   aimDescription:
-    'Approach a perceived opponent and prepare an aim with the selected tool and one held projectile. Aim stays ready until you shoot, cancel or lose sight or range. Holding longer gives no accuracy bonus.',
-  shotDescription:
-    'Approach a perceived opponent and release one projectile after preparation. The projectile travels straight until a body or solid cover stops it. Only the selected opponent can be injured.',
-  releaseDescription:
-    'Release the projectile held by this prepared aim. The shot travels independently; later movement or cancellation does not recall it.',
+    'Approach a perceived opponent and prepare an aim with the selected tool and one held projectile. Release leads motion you have actually seen; later turns can still make it miss. Aim stays ready until you shoot, cancel or lose sight or range. Holding longer gives no accuracy bonus.',
+  shotDescription: `Approach a perceived opponent and release one projectile after preparation, leading motion you have actually seen. Later turns can make it miss. The projectile travels straight until a body or solid cover stops it. ${BASE_PROJECTILE_CONTACT_WARNING}`,
+  releaseDescription: `Release the projectile held by this prepared aim, leading motion you have actually seen. Later turns can make it miss. ${BASE_PROJECTILE_CONTACT_WARNING}`,
   released: 'released one shot. One projectile was spent; its outcome is not yet known.',
   stopped: 'could not observe where the released shot ended.',
   ready: 'Aim is prepared. Shoot releases one projectile; cancel spends none.',
@@ -81,13 +115,12 @@ export const BASE_RANGED_TEXT = {
   releaseCompleted: 'One projectile was released; its outcome is not yet known.',
   contactHit: 'was contacted by a projectile.',
   contactStopped: 'stopped a projectile without injury.',
+  contactSource: ' The projectile came from ',
   observedHit: 'hit ',
   observedNoInjury: 'did not injure ',
   observedCover: 'saw the projectile stop against solid cover.',
   observedRangeEnd: 'saw the projectile finish its range without contact.',
   injuryInterrupted: 'Injury interrupted preparation; no shot was released.',
-  reviewedAttackChanged: 'The reviewed attack changed after release.',
-  concurrentLethal: 'Concurrent injury made this unreviewed shot potentially lethal.',
 };
 
 export const BASE_EVASION_KEYWORDS = ['evade', 'dodge'];
@@ -110,11 +143,11 @@ export const BASE_EVASION_TEXT = {
 };
 
 export function rangedChoiceLabel(
-  type: 'aim' | 'shoot-once',
+  type: 'aim' | 'shoot-once' | 'release-shot',
   target: string,
   tool: string,
 ): string {
-  return `${type === 'aim' ? BASE_RANGED_TEXT.aimName : BASE_RANGED_TEXT.shotName} at ${target} with ${tool}`;
+  return `${type === 'aim' ? BASE_RANGED_TEXT.aimName : type === 'release-shot' ? BASE_RANGED_TEXT.shootingName : BASE_RANGED_TEXT.shotName} at ${target} with ${tool}`;
 }
 
 /** Small local choices are examples, not an assertion that other destinations are impossible. */

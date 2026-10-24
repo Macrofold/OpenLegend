@@ -1,3 +1,10 @@
+import {
+  constructionPermissionBatch,
+  absorbConstructionPermissionBatch,
+  finishConstructionPermissionBatch,
+  type NativeExecutionPermissions,
+} from './construction-permissions.js';
+import { reconcileCompacts } from './social-compacts.js';
 import { entityGet, entityHas, entityOwn } from './entity-collection.js';
 import { changeAppraisal, type AppraisalChange, type AppraisalBindings } from './appraisals.js';
 import { accessiblePossession } from './object-access.js';
@@ -29,6 +36,8 @@ import {
   type IntentSlots,
   type ActionInvocation,
   type ActionFulfillment,
+  choiceWorkCurrent,
+  type ActionChoice,
 } from './action-capabilities.js';
 import { discardSuspended, proposeActionRevision } from './agency.js';
 import { isSpeechVolume, type SpeechVolume } from './acoustics.js';
@@ -41,11 +50,12 @@ import {
   changeGoal,
   type GoalChange,
   type PlannedCommand,
+  isActivityCommand,
 } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { current, isDraft } from 'immer';
 import { appendSnapshot, appendedEventCount, cloneValue, draftWorld } from './draft.js';
-import { executeCommand, nativeOperationAvailable, SIMULATION_RULES } from './kernel.js';
+import { executeCommand, prepareNativeChoice, SIMULATION_RULES } from './kernel.js';
 import { appendMemory, canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { seesEntity } from './perception.js';
 import { distance, hasLineOfSight } from './spatial.js';
@@ -61,7 +71,7 @@ export interface ResponseOperation {
   requiresAccepted: string[];
   talk: {
     text: string;
-    addresseeEntityId: string;
+    addresseeEntityId: string | null;
     volume: SpeechVolume;
     selfIntroduction?: string | null;
   } | null;
@@ -163,7 +173,7 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
       ) ||
         !isSpeechVolume(op.talk.volume) ||
         !text(op.talk.text) ||
-        !text(op.talk.addresseeEntityId) ||
+        !nullableText(op.talk.addresseeEntityId) ||
         (op.talk.selfIntroduction !== undefined && !nullableText(op.talk.selfIntroduction)))
     )
       return false;
@@ -252,20 +262,6 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
 }
 export const RESPONSE_RECEIPT_LIMIT = 300;
 
-/** Only the next selected action must be possible now. Later steps may depend on
- * earlier equipment or typed outputs; their native owner rechecks when they start.
- * docs/projects/parallel-batch-01-playable-week-tech-design.md#admission-before-execution
- */
-function admitPlan(...args: Parameters<typeof arrangePlan>): Outcome {
-  const [world, , , commands] = args;
-  const first = commands[0];
-  if (first && !('itemFromStep' in first)) {
-    const available = nativeOperationAvailable(world, first);
-    if (!available.ok) return available;
-  }
-  return arrangePlan(...args);
-}
-
 /** Stopping conditions of a composition, counting a follow's deadline as a time condition. */
 function activityConditions(node: ActivityNode): ActivityPredicate[] {
   if (node.kind === 'invoke') {
@@ -317,7 +313,7 @@ export function unmetSlots(
     )
   )
     unmet.push('the requested tool');
-  if (slots.recipientId && !uses(slots.recipientId, ['targetId', 'intendedRecipientId']))
+  if (slots.recipientId && !uses(slots.recipientId, ['targetId']))
     unmet.push('the requested recipient');
   if (
     slots.quantity !== null &&
@@ -345,7 +341,7 @@ export function commitActorResponse(
   id: string,
   actorId: string,
   response: ActorResponse,
-  actions: Record<string, Command | null>,
+  actions: Record<string, ActionChoice>,
   entityIds: string[],
   expectedPlan: number,
   attemptBindings: AttemptBinding[] = [],
@@ -353,6 +349,7 @@ export function commitActorResponse(
   evidenceIds: string[] = [],
   knowledgeReferences: Record<string, string> = {},
   appraisalBindings?: AppraisalBindings,
+  permissions: NativeExecutionPermissions = {},
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -421,30 +418,46 @@ export function commitActorResponse(
       entityIds.map((targetId) => [targetId, expectedEncounters[targetId] ?? null]),
     );
   let world = draftWorld(input);
+  const construction = constructionPermissionBatch(
+    input.id,
+    permissions.constructionPermissions ?? [],
+    permissions.campAssetPermissions ?? [],
+  );
+
   const events: Transition['events'] = [];
   const components: ResponseReceipt['components'] = {};
   let localId = '';
   let appendOnlyCommands = true;
+  /** Only the next selected action must be possible now. Later steps may depend on
+   * earlier equipment or typed outputs; their native owner rechecks when they start.
+   * docs/projects/parallel-batch-01-playable-week-tech-design.md#admission-before-execution
+   */
+  const admitPlan = (...args: Parameters<typeof arrangePlan>): Outcome => {
+    const [world, , , commands, mode] = args;
+    const first = commands[0];
+    if (first && !('itemFromStep' in first)) {
+      const prepared = prepareNativeChoice(
+        world,
+        first.actorId,
+        first,
+        mode,
+        construction.permissions,
+        undefined,
+        construction.campAssets,
+      );
+      const available = 'ok' in prepared ? prepared : prepared.outcome;
+      if (!available.ok) return available;
+    }
+    return arrangePlan(...args);
+  };
+
   const command = (part: 'talk' | 'act', value: Command) => {
     const beforeEvents = isDraft(world.events) ? current(world.events) : world.events;
-    let transition = executeCommand(world, value);
-    // Speaking aloud preserves intent without claiming the recipient heard or joined.
-    // docs/narration-and-conversations.md#speech-intent-and-audience
-    if (
-      part === 'talk' &&
-      value.type === 'say' &&
-      !transition.outcome.ok &&
-      transition.outcome.code === 'not-heard'
-    )
-      transition = executeCommand(world, {
-        id: value.id,
-        actorId: value.actorId,
-        type: 'say',
-        text: value.text,
-        ...(value.selfIntroduction ? { selfIntroduction: value.selfIntroduction } : {}),
-        intendedRecipientId: value.targetId,
-        volume: value.volume,
-      });
+    const transition = executeCommand(world, value, {
+      constructionPermissions: construction.permissions,
+      campAssetPermissions: construction.campAssets,
+    });
+    absorbConstructionPermissionBatch(construction, transition);
     world = draftWorld(transition.world);
     const emitted = new Set(transition.events.map((event) => event.id));
     const appended = appendedEventCount(beforeEvents, transition.world.events);
@@ -493,7 +506,10 @@ export function commitActorResponse(
             actorId,
             op.appraise,
             'appraisal-response-' + contentLabel(canonicalJson([id, localId])),
-            appraisalBindings,
+            {
+              ...appraisalBindings,
+              publication: { ...appraisalBindings.publication, responseId: id },
+            },
             appraisalEvents,
           )
         : outcome(false, 'appraisal-rejected', 'Decision appraisal changes are unavailable.');
@@ -508,10 +524,12 @@ export function commitActorResponse(
     };
     const actionCommands: ActionTarget[] =
       op.act?.kind === 'known'
-        ? [actions[op.act.actionId ?? '']].filter((c): c is Command => !!c)
+        ? [actions[op.act.actionId ?? '']?.invocation].filter((c): c is Command => !!c)
         : op.plan
           ? op.plan.steps.flatMap((step) =>
-              step.actionId && actions[step.actionId] ? [actions[step.actionId]!] : [],
+              step.actionId && actions[step.actionId]?.invocation
+                ? [actions[step.actionId]!.invocation!]
+                : [],
             )
           : [];
     const directTarget =
@@ -614,14 +632,15 @@ export function commitActorResponse(
     }
     if (op.talk) {
       const validTarget =
-        permitted.has(op.talk.addresseeEntityId) &&
-        entityHas(world.entities, op.talk.addresseeEntityId);
+        op.talk.addresseeEntityId === null ||
+        (permitted.has(op.talk.addresseeEntityId) &&
+          entityHas(world.entities, op.talk.addresseeEntityId));
       if (!op.talk.text.trim() || op.talk.text.length > 1200 || !validTarget)
         components[localId] = outcome(
           false,
           'invalid-speech',
           !validTarget
-            ? 'talk.addresseeEntityId must reference a permitted existing entity ID.'
+            ? 'talk.addresseeEntityId must be null for ambient speech or a permitted existing entity ID.'
             : 'Speech must contain 1–1200 characters.',
         );
       else
@@ -632,7 +651,7 @@ export function commitActorResponse(
           text: op.talk.text,
           ...(op.talk.selfIntroduction ? { selfIntroduction: op.talk.selfIntroduction } : {}),
           volume: op.talk.volume,
-          targetId: op.talk.addresseeEntityId,
+          ...(op.talk.addresseeEntityId === null ? {} : { targetId: op.talk.addresseeEntityId }),
         });
     }
     const act = op.act;
@@ -671,9 +690,15 @@ export function commitActorResponse(
         entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (bound.type === 'outing' && bound.operation === 'help') command('act', bound);
+      else if (
+        bound.type === 'outing' &&
+        bound.operation !== 'invite' &&
+        bound.operation !== 'accept' &&
+        bound.operation !== 'work'
+      )
+        command('act', bound);
       else if (bound.type === 'compose' || bound.type === 'outing') {
-        if (bound.mode !== act.mode)
+        if (('mode' in bound ? bound.mode : undefined) !== act.mode)
           components[localId] = outcome(
             false,
             'activity-choices',
@@ -697,39 +722,72 @@ export function commitActorResponse(
         'The proposed action was not offered.',
       );
     } else if (act?.kind === 'known') {
-      const selected = actions[act.actionId!];
+      const choice = actions[act.actionId!]!,
+        selected = choice.invocation;
       if (
-        act.mode !== 'enqueue' &&
-        entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
+        !choiceWorkCurrent(world, actorId, choice) ||
+        (choice.transition !== 'continue' && act.mode !== choice.transition) ||
+        (act.mode !== 'enqueue' &&
+          entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan)
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (
+      else if (selected && choice.transition === 'continue' && isActivityCommand(selected)) {
+        const prepared = prepareNativeChoice(
+          world,
+          actorId,
+          selected,
+          'continue',
+          construction.permissions,
+          undefined,
+          construction.campAssets,
+        );
+        const available = 'ok' in prepared ? prepared : prepared.outcome;
+        if (!available.ok) components[localId] = available;
+        else command('act', { ...selected, actorId, id: `${id}:${localId}` });
+      } else if (
         selected &&
         [
           'activity',
+          'compose',
           'inspect-activities',
-          'conversation',
           'teach',
           'handover',
           'outing',
           'transfer-item',
           'cancel',
+          'resume-work',
           'recover',
+          'release-shot',
           'withdraw-attempt',
           'confirm-attempt',
         ].includes(selected.type)
       ) {
-        if (selected.type === 'activity' && !selected.resume && act.mode === 'replace')
+        const beforeAction = world,
+          beforeEventCount = events.length;
+        const beforeAppendOnly: boolean = appendOnlyCommands;
+        let start = true;
+        if (selected.type === 'activity' && !selected.resume && act.mode === 'replace') {
           command('act', { type: 'cancel', actorId, id: `${id}:${localId}:cancel` });
+          start = components[localId]?.ok === true;
+        }
         // The kernel pauses and starts together, so a refused start leaves work running.
-        command('act', {
-          ...selected,
-          ...(selected.type === 'activity' && !selected.resume && act.mode === 'interrupt'
-            ? { interrupt: true }
-            : {}),
-          actorId,
-          id: `${id}:${localId}`,
-        });
+        if (start)
+          command('act', {
+            ...selected,
+            ...(selected.type === 'activity' && !selected.resume && act.mode === 'interrupt'
+              ? { interrupt: true }
+              : {}),
+            actorId,
+            id: `${id}:${localId}`,
+          });
+        // A chosen method may become unavailable during the decision wait. Its
+        // replacement and start form one operation; retain independently accepted
+        // speech, but never commit just the cancellation when the start refuses.
+        if (!components[localId]?.ok && selected.type === 'activity') {
+          world = beforeAction;
+          events.length = beforeEventCount;
+          appendOnlyCommands = beforeAppendOnly;
+        }
       } else if (selected)
         components[localId] = admitPlan(
           world,
@@ -740,7 +798,14 @@ export function commitActorResponse(
           entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
           null,
         );
-      else components[localId] = outcome(true, 'continued', 'Existing behavior continues.');
+      else
+        components[localId] = outcome(
+          true,
+          'continued',
+          choice.purpose
+            ? `Selected purpose: ${choice.purpose.description}. Existing behavior continues.`
+            : 'Existing behavior continues.',
+        );
     } else if (act?.kind === 'expression') {
       const source = entityGet(world.entities, actorId)!;
       const target = act.targetEntityId ? entityGet(world.entities, act.targetEntityId) : undefined;
@@ -940,7 +1005,6 @@ export function commitActorResponse(
         else if (
           selected.length === 1 &&
           [
-            'conversation',
             'teach',
             'handover',
             'outing',
@@ -1039,7 +1103,9 @@ export function commitActorResponse(
       const goalId = goalRef(op.plan.goalId);
       if (
         goalId === undefined ||
-        op.plan.steps.some((step) => step.actionId !== null && !getOwn(actions, step.actionId))
+        op.plan.steps.some(
+          (step) => step.actionId !== null && !getOwn(actions, step.actionId)?.invocation,
+        )
       )
         components[localId] = outcome(
           false,
@@ -1067,7 +1133,27 @@ export function commitActorResponse(
             'Future dispatch cancelled; goals and spent resources retained.',
           );
         }
-      } else
+      } else if (
+        op.plan.steps.some(
+          (step) =>
+            step.actionId !== null && !choiceWorkCurrent(world, actorId, actions[step.actionId]!),
+        )
+      )
+        components[localId] = outcome(
+          false,
+          'stale-plan',
+          'The work affected by this choice changed.',
+        );
+      else if (
+        op.plan.steps[0]?.actionId &&
+        actions[op.plan.steps[0].actionId]!.transition !== op.plan.mode
+      )
+        components[localId] = outcome(
+          false,
+          'work-transition',
+          'The plan must preserve the selected first action’s handling of current work.',
+        );
+      else
         components[localId] = admitPlan(
           world,
           component,
@@ -1076,7 +1162,7 @@ export function commitActorResponse(
             (step, index): PlannedCommand =>
               step.actionId !== null
                 ? {
-                    ...actions[step.actionId]!,
+                    ...actions[step.actionId]!.invocation!,
                     actorId,
                     id: `${id}:${localId}:${index}`,
                   }
@@ -1096,6 +1182,7 @@ export function commitActorResponse(
   // A selected replacement plan is saved before its first physical step. Retire any
   // superseded trip here so its consent never points at work the actor no longer owns.
   reconcileOutings(world, events, { changedOnly: true });
+  reconcileCompacts(world, events);
   if (appendOnlyCommands && world.events !== input.events) {
     // All command prefixes were proved; expressions only append. Seal the composed suffix
     // once so intermediate metadata forks do not force durable history to diff the old prefix.
@@ -1124,7 +1211,7 @@ export function commitActorResponse(
   // world events, durable jobs and conversation history keep their own retention.
   for (const oldId of Object.keys(receipts).slice(0, -RESPONSE_RECEIPT_LIMIT))
     delete receipts[oldId];
-  return finish(world, events, overall);
+  return finishConstructionPermissionBatch(finish(world, events, overall), construction);
 }
 
 /** Player-authored fiction has one event, never an executable command. Participants stay

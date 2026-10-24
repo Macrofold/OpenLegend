@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { enterGame } from '../fixtures/browser.js';
+import { enterGame, lookoutDeckPoint } from '../fixtures/browser.js';
+import { stockedCamp } from '../fixtures/world.js';
+import { entityGet, worldPosition } from '@open-legend/domain';
 import { testRepository, closeTestDatabases, readConfig } from '../fixtures/database.js';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { draftWorld } from '../../packages/domain/src/draft.js';
@@ -102,7 +104,7 @@ test('edited landscape recovers its graphics context, drawing, picking and camer
   const now = Date.now();
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: await testRepository(),
+    store: await testRepository(undefined, stockedCamp()),
     production: true,
     tick: false,
     now: () => now,
@@ -186,13 +188,11 @@ test('edited landscape recovers its graphics context, drawing, picking and camer
     await expect
       .poll(async () => Number(await canvas.getAttribute('data-landscape-resource-build-count')))
       .toBe(builds + 1);
-    const rect = (await canvas.boundingBox())!;
-    const scale = rect.height / 24;
     await canvas.click({
-      position: {
-        x: rect.width / 2 + (24 - 11) * scale,
-        y: rect.height / 2 - (3 * Math.cos(0.88) + 6 * Math.sin(0.88)) * scale,
-      },
+      position: await lookoutDeckPoint(
+        page,
+        worldPosition(entityGet(game.service.world.entities, game.service.controlledEntityId)!),
+      ),
     });
     await expect.poll(() => commands.length).toBe(1);
     expect(commands[0]).toMatchObject({

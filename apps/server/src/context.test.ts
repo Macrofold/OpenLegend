@@ -1,6 +1,8 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
-import { enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
+import { advanceWithNavigation } from '../../../tests/fixtures/navigation.js';
 import { NPC_ID } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
@@ -9,6 +11,9 @@ import {
   inventoryFor,
   navigationBlocked,
   quantityOf,
+  setSpatialPosition,
+  worldPosition,
+  worldSupport,
   type DeclarationDraft,
 } from '@open-legend/domain';
 import { readConfig } from '../../../tests/fixtures/database.js';
@@ -25,7 +30,7 @@ import { domainCommand } from './cognition.js';
 
 const stores: SqlGameRepository[] = [];
 async function setup(): Promise<WorldService> {
-  const store = await testRepository();
+  const store = await testRepository(undefined, stockedCamp());
   stores.push(store);
   const service = new WorldService(
     store,
@@ -143,13 +148,26 @@ describe('actor-scoped native decision candidates', () => {
     );
     await service.transition((world) => advanceWorld(world, 60));
     const tool = inventoryFor(service.world, NPC_ID).find(
-      (item) => item.definitionId === recipe.outputDefinitionId,
+      (item) => item.definitionId === recipe.outputs[0]!.definition.id,
     );
     expect(tool).toBeDefined();
     await perform(
       service,
       select(service, 'equip', (action) => action.command?.itemId === tool!.id),
     );
+    // This scoped candidate/custody fixture needs a real release and meal, not
+    // an ordinary hunt balance result. Missing prey vision prevents anticipatory
+    // escape; a close real stance avoids adding an approach to preparation time.
+    await editWorld(service, (world) => {
+      const prey = entityGet(world.entities, 'hare-1')!;
+      prey.actor!.senses = [];
+      setSpatialPosition(
+        world,
+        entityGet(world.entities, NPC_ID)!,
+        { ...worldPosition(prey), x: worldPosition(prey).x - 1 },
+        worldSupport(prey),
+      );
+    });
     await perform(
       service,
       select(
@@ -158,7 +176,7 @@ describe('actor-scoped native decision candidates', () => {
         (action) => action.command?.targetId === 'hare-1' && action.command.itemId === tool!.id,
       ),
     );
-    await service.transition((world) => advanceWorld(world, 18));
+    await service.transition((world) => advanceWithNavigation(world, 18));
     expect(
       service.world.events.some(
         (event) =>
@@ -173,7 +191,7 @@ describe('actor-scoped native decision candidates', () => {
     expect(flight).toBeDefined();
     const before = service.world.simTime;
     const result = await service.transition((world) =>
-      advanceWorld(world, flight!.remainingRange / flight!.speed),
+      advanceWithNavigation(world, flight!.remainingRange / flight!.speed),
     );
     const evidence = JSON.stringify({
       result,
@@ -192,10 +210,10 @@ describe('actor-scoped native decision candidates', () => {
       service,
       select(service, 'harvest', (action) => action.command?.targetId === 'hare-1'),
     );
-    await service.transition((world) => advanceWorld(world, 120));
+    await service.transition((world) => advanceWithNavigation(world, 120));
     expect(quantityOf(service.world, NPC_ID, 'raw_meat')).toBe(2);
     await perform(service, select(service, 'cook'));
-    await service.transition((world) => advanceWorld(world, 200));
+    await service.transition((world) => advanceWithNavigation(world, 200));
     const cooked = inventoryFor(service.world, NPC_ID).find(
       (item) => item.definitionId === 'cooked_meat',
     )!;

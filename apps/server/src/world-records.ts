@@ -13,6 +13,7 @@ import {
 import { randomUUID, createHash } from 'node:crypto';
 import {
   EXPERIENCE_LIMITS,
+  RESPONSE_LIMITS,
   orderedRecordEntries,
   orderedRecordGet,
   orderedRecordChangedKeys,
@@ -38,6 +39,7 @@ import {
   markPartialObjectHistory,
   completeObjectHistory,
   isSafeRecordId,
+  isImmutableData,
   type Appraisal,
   type Entity,
   type ItemInstance,
@@ -86,6 +88,45 @@ function body(node: RecordNode, value: Value): Value {
     if (part !== undefined && part !== null) copy[field] = child.mode === 'list' ? [] : {};
   }
   return copy;
+}
+// Only small frequently changed projections are retained, weakly by immutable
+// source identity. Excluded child records are not traversed or copied to prove
+// this projection immutable; their own records keep their existing owner.
+const encodedRecords = new WeakMap<object, WeakMap<RecordNode, string>>();
+const reusableTables = new Set([
+  'sim_placements',
+  'sim_entity_geometry',
+  'sim_actors',
+  'sim_processes',
+  'sim_actor_attributes',
+  'sim_actor_conditions',
+  'sim_status_effects',
+  'sim_work_invocations',
+  'sim_native_response_episodes',
+]);
+function encodedBody(node: RecordNode, value: Value): string {
+  const reusable =
+    !!value &&
+    typeof value === 'object' &&
+    Object.isFrozen(value) &&
+    reusableTables.has(node.table);
+  const cached = reusable ? encodedRecords.get(value)?.get(node) : undefined;
+  if (cached !== undefined) return cached;
+  const projected = body(node, value),
+    payload = JSON.stringify(projected);
+  if (
+    reusable &&
+    payload.length <= 65536 &&
+    Object.entries(projected as JsonRecord).every(
+      ([key, field]) =>
+        !!node.children?.[key] || !field || typeof field !== 'object' || isImmutableData(field),
+    )
+  ) {
+    let entries = encodedRecords.get(value);
+    if (!entries) encodedRecords.set(value, (entries = new WeakMap()));
+    entries.set(node, payload);
+  }
+  return payload;
 }
 function put(object: Value, key: string, value: Value) {
   if (!object || typeof object !== 'object') throw new Error('Invalid record parent.');
@@ -267,12 +308,12 @@ export class WorldRecords {
         changes.deletes.set(node.table, ids);
         return;
       }
-      const payload = JSON.stringify(body(node, next));
+      const payload = encodedBody(node, next);
       if (
         old === undefined ||
         (this.needsHotPrune && node.table === 'world_settings') ||
         oldPosition !== position ||
-        payload !== JSON.stringify(body(node, old))
+        payload !== encodedBody(node, old)
       ) {
         const rows = changes.writes.get(node.table) ?? [];
         rows.push({
@@ -548,6 +589,63 @@ export class WorldRecords {
     changes: RecordChanges,
     writes = new SqlWriteBatch(this.db),
   ) {
+    // This metadata is derived from canonical personal records, inside the same
+    // transaction. Journal replay takes this path too. A new ordinary observation
+    // needs no relationship query; only changed social sources/revocations do.
+    const agreementGroups = new Map<string, { actor_id: string; agreement_key: string }>(),
+      sourceRefs: Array<{ actor_id: string; source_id: string }> = [];
+    const group = (actor: unknown, key: unknown) => {
+      if (typeof actor === 'string' && typeof key === 'string')
+        agreementGroups.set(JSON.stringify([actor, key]), { actor_id: actor, agreement_key: key });
+    };
+    for (const table of ['mind_awareness', 'mind_forgotten', 'mind_corrections']) {
+      const rows = changes.writes.get(table) ?? [],
+        fields = Object.keys(RECORD_NODES.get(table)!.columns!),
+        actor = fields.indexOf('actor_id');
+      for (const row of rows)
+        if (table === 'mind_awareness')
+          group(row.extra[actor], row.extra[fields.indexOf('agreement_key')]);
+        else
+          sourceRefs.push({
+            actor_id: String(row.extra[actor]),
+            source_id: String(row.extra[fields.indexOf('source_id')]),
+          });
+      const priorIds = [
+        ...(changes.deletes.get(table) ?? []),
+        ...rows.filter((row) => !row.create).map((row) => row.id),
+      ];
+      for (let offset = 0; offset < priorIds.length; offset += 800) {
+        const prior = await this.db
+          .prepare(
+            `SELECT a.actor_id,a.agreement_key FROM ${table} t
+             JOIN mind_awareness a ON a.world_id=t.world_id AND ${
+               table === 'mind_awareness'
+                 ? 'a.id=t.id'
+                 : 'a.actor_id=t.actor_id AND a.source_id=t.source_id'
+             }
+             WHERE t.world_id=? AND t.id IN (SELECT jsonb_array_elements_text(?::jsonb))
+             AND a.agreement_key IS NOT NULL`,
+          )
+          .all(worldId, JSON.stringify(priorIds.slice(offset, offset + 800)));
+        for (const row of prior) group(row['actor_id'], row['agreement_key']);
+      }
+      if (table !== 'mind_awareness') {
+        // Clearing the whole correction/forgetting owner cascades its children;
+        // those sources can become eligible even without individual leaf deletes.
+        const parents = changes.deletes.get(`${table}_owners`) ?? [];
+        for (let offset = 0; offset < parents.length; offset += 800) {
+          const rows = await this.db
+            .prepare(
+              `SELECT a.actor_id,a.agreement_key FROM ${table} t JOIN mind_awareness a
+               ON a.world_id=t.world_id AND a.actor_id=t.actor_id AND a.source_id=t.source_id
+               WHERE t.world_id=? AND t.parent_id IN (SELECT jsonb_array_elements_text(?::jsonb))
+               AND a.agreement_key IS NOT NULL`,
+            )
+            .all(worldId, JSON.stringify(parents.slice(offset, offset + 800)));
+          for (const row of rows) group(row['actor_id'], row['agreement_key']);
+        }
+      }
+    }
     // Schema preorder guarantees parents exist before children, including brand-new actors.
     for (const [table, node] of RECORD_NODES) {
       const changed = changes.writes.get(table);
@@ -618,7 +716,45 @@ export class WorldRecords {
           )
           .run(worldId, ...batch);
       }
+    if (sourceRefs.length)
+      for (let offset = 0; offset < sourceRefs.length; offset += 800) {
+        const rows = await this.db
+          .prepare(
+            `SELECT a.actor_id,a.agreement_key FROM
+             jsonb_to_recordset(?::jsonb) r(actor_id TEXT,source_id TEXT)
+             JOIN mind_awareness a ON a.world_id=? AND a.actor_id=r.actor_id AND a.source_id=r.source_id
+             WHERE a.agreement_key IS NOT NULL`,
+          )
+          .all(JSON.stringify(sourceRefs.slice(offset, offset + 800)), worldId);
+        for (const row of rows) group(row['actor_id'], row['agreement_key']);
+      }
+    const groups = [...agreementGroups.values()];
+    for (let offset = 0; offset < groups.length; offset += 800) {
+      const keys = JSON.stringify(groups.slice(offset, offset + 800));
+      await this.db
+        .prepare(
+          `UPDATE mind_awareness a SET agreement_head=0 FROM
+           jsonb_to_recordset(?::jsonb) g(actor_id TEXT,agreement_key TEXT)
+           WHERE a.world_id=? AND a.actor_id=g.actor_id AND a.agreement_key=g.agreement_key AND a.agreement_head=1`,
+        )
+        .run(keys, worldId);
+      await this.db
+        .prepare(
+          `UPDATE mind_awareness SET agreement_head=1 WHERE world_id=? AND id IN (
+           SELECT a.id FROM jsonb_to_recordset(?::jsonb) g(actor_id TEXT,agreement_key TEXT)
+           CROSS JOIN LATERAL (
+             SELECT a.id FROM mind_awareness a WHERE a.world_id=? AND a.actor_id=g.actor_id AND a.agreement_key=g.agreement_key
+             AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=a.world_id AND f.actor_id=a.actor_id AND f.source_id=a.source_id)
+             AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=a.world_id AND c.actor_id=a.actor_id AND c.source_id=a.source_id)
+             ORDER BY a.position DESC LIMIT 1
+           ) a)`,
+        )
+        .run(worldId, keys, worldId);
+    }
   }
+  /** `active` selects only the working set; cold history/retirements remain in SQL.
+   * Portable copies use GameSaves, including the other repositories.
+   * docs/save-and-load.md#current-history-capture-boundary */
   async load(active = false): Promise<{ revision: number; state: SavedWorld } | null> {
     return this.db.readTransaction
       ? this.db.readTransaction(() => this.readRecords(active))
@@ -642,9 +778,8 @@ export class WorldRecords {
           .prepare('SELECT payload FROM world_settings WHERE world_id=?')
           .get(head.worldId)
       : undefined;
-    const cutoff = settings
-      ? Number(JSON.parse(String(settings['payload'])).simTime) - EXPERIENCE_LIMITS.rawHours * 3600
-      : 0;
+    const simTime = settings ? Number(JSON.parse(String(settings['payload'])).simTime) : 0,
+      cutoff = simTime - EXPERIENCE_LIMITS.rawHours * 3600;
     const groups = new Map<string, Map<string, JsonRecord[]>>();
     // Startup recovery loads the simulation working set. Ordinary feature reads use
     // scoped repositories below, not this complete reconstruction path.
@@ -690,9 +825,12 @@ export class WorldRecords {
           FROM mind_awareness_owners o CROSS JOIN LATERAL (
             SELECT id,parent_id,slot,position,payload FROM mind_awareness
             WHERE world_id=o.world_id AND actor_id=o.slot ORDER BY position DESC LIMIT ${HOT_AWARENESS_ROWS}
-          ) a WHERE o.world_id=?`,
+          ) a WHERE o.world_id=?
+          UNION SELECT id,parent_id,slot,position,payload FROM mind_awareness
+          WHERE world_id=? AND agreement_head=1 AND agreement_open=1
+            AND (agreement_until IS NULL OR agreement_until>?)`,
           )
-          .all(head.worldId);
+          .all(head.worldId, head.worldId, simTime);
       } else if (partial && table === 'mind_memories') {
         rows = await this.db
           .prepare(
@@ -1094,7 +1232,8 @@ export class WorldRecords {
     actorId: string,
     ids: readonly string[],
   ): Promise<Record<string, Appraisal>> {
-    if (ids.length > 8) throw new Error('Too many appraisal outcome bindings.');
+    if (ids.length > RESPONSE_LIMITS.operations)
+      throw new Error('Too many appraisal outcome bindings.');
     if (!ids.length) return {};
     const rows = await this.db
       .prepare(

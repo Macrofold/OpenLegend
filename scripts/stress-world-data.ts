@@ -82,28 +82,30 @@ try {
   };
   const seed = createWorld(73);
   const base = entityValues(seed.entities);
-  let world = await measure('setup', () =>
-    populateScenario(
-      seed,
-      parseScenario({
-        seed: 73,
-        layout: half ? 'crowded' : 'scattered',
-        people:
-          targets.humans +
-          targets.agents -
-          base.filter((entry) => entry.actor && entry.kind !== 'animal').length,
-        animals: targets.animals - base.filter((entry) => entry.kind === 'animal').length,
-        objects: [
-          {
-            count: targets.objects - base.filter((entry) => !entry.actor).length,
-            name: 'Benchmark material',
-            properties: ['rigid'],
-            quantity: 3,
-            workSeconds: 1,
-          },
-        ],
-      }),
-    ),
+  let world = await measure(
+    'setup',
+    () =>
+      populateScenario(
+        seed,
+        parseScenario({
+          seed: 73,
+          layout: half ? 'crowded' : 'scattered',
+          people:
+            targets.humans +
+            targets.agents -
+            base.filter((entry) => entry.actor && entry.kind !== 'animal').length,
+          animals: targets.animals - base.filter((entry) => entry.kind === 'animal').length,
+          objects: [
+            {
+              count: targets.objects - base.filter((entry) => !entry.actor).length,
+              name: 'Benchmark material',
+              properties: ['rigid'],
+              quantity: 3,
+              workSeconds: 1,
+            },
+          ],
+        }),
+      ).world,
   );
   const people = entityValues(world.entities).filter(
     (entry) => entry.actor && entry.kind !== 'animal',

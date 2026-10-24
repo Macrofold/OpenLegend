@@ -1,12 +1,14 @@
 # First-playable survival, useful making and earned options — technical design
 
-| Status      | Current progress                                                                                                                              | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Ownership, configuration, manufacture, hearth, recovery and verification contracts are selected; implementation remains open under SV01–SV10. | 2026-10-17   |
+| Status      | Current progress                                                                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Empty-handed Main reaches tools, camps, fire, storage, chosen meals and a live-created hunting tool; combined verification, comparison and player evidence remain open. | 2026-10-22   |
+
+**Implementation reference recorded:** `2026-10-22T07:41:33Z` (combined branch implementation/review).
 
 ## Scope, authority and design basis
 
-Implement the [feature specification](first-playable-survival-feature-spec.md) with exact choices from [the world profile](../worlds/base/first-playable-survival.md). This is design-only work: no runtime or generated configuration is changed by this pair. It contributes the selected ND06/DG19 material-supply, ND07/DG13 construction-input and ND11/DG07 recovery slices; it does not complete the broader [needs-design entries](../maintainers/needs-design.md).
+Implement the [feature specification](first-playable-survival-feature-spec.md) with exact choices from [the world profile](../worlds/base/first-playable-survival.md). The selected survival runtime is implemented; remaining combined qualification and acceptance stay open in SV. It contributes the selected ND06/DG19 material-supply, ND07/DG13 construction-input and ND11/DG07 recovery slices; it does not complete the broader [needs-design entries](../maintainers/needs-design.md).
 
 Apply [the boundary decision procedure](../engine-and-world-boundaries.md#5-a-repeatable-boundary-decision), P01–P12, [complete-operation authorization](../engine-and-world-boundaries.md#complete-operation-authorization), [current-format continuity](../save-and-load.md#continuation-and-identity), [identity](../identity-and-references.md#contract), [action availability](../action-capabilities.md#action-availability-and-temporary-execution) and [physical-interaction checks](../spatial-world.md#physical-interaction-design-checks). These remain controlling over examples below.
 
@@ -123,6 +125,23 @@ The fixed-transform compiler supports 1–4 spent input roles, 0–2 retained-to
 `authored-elementary` is a content grouping used once by the opening initializer to issue ordinary source-bearing recipe-knowledge grants to its exact selected people. It is not a runtime bypass, body-level omniscience or permission for every future person to know every installed method. The physical field-sling record is excluded. Initial grants identify authored setup and the actual method, with no invented-by attribution, fake action occurrence or output stock.
 
 Gathering-family admission currently requires a matching actual resource entity, not only an item definition (`worlds/base/recipe-families.ts`). Preserve that check. Validate authored source/method references first, construct native definitions and the real finite sources in the isolated candidate, and only then admit its source-dependent family candidates. Initial knowledge follows successful recipe installation. Do not solve the ordering dependency by weakening live invention validation, creating temporary dummy sources, admitting against yesterday's generated bundle or seeding the source twice. A missing new pole source must refuse its pole-hook candidate in this same build path.
+
+Raw input provenance is installed by each exact item definition. The selected
+raw fiber, branch, stone and pole inputs retain independent origins before they
+become structural goods. New source quantities create fresh lots; native crafting
+carries the spent origins into every tracked output. Split/movement preserve
+origins and merging requires exact equivalence. This prevents a later unapproved
+collection from inheriting rights on an earlier stack. Physical provenance alone
+grants no operational construction permission; the integrated authority owner
+must still publish approved changes with gameplay atomically.
+
+Gather/craft completion also returns private candidate facts with its actual
+action, actor/life, source, output definitions/quantities and origin snapshots.
+Native intervals retain their completion order even when a later selected step
+consumes an earlier result before publication. These facts are neither personal
+memory nor a grant; they stay out of the saved world and public API. The integrated
+server/authority transaction must still derive and persist allowed rights before
+publishing the candidate.
 
 ## Manufacture transaction and lifecycle
 

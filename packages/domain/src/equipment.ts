@@ -1,7 +1,7 @@
 import { entityGet, entityValues } from './entity-collection.js';
 import { accessiblePossession } from './object-access.js';
 import { attachedItemIds, itemFor } from './objects.js';
-import { itemHasReservations } from './resource-claims.js';
+import { itemHasReservations, type ResourceAvailability } from './resource-claims.js';
 import { definitionPin } from './world-modules.js';
 import { sameDefinitionPin } from './state-owners.js';
 import { isSafeRecordId, hasRecordFields } from './records.js';
@@ -112,6 +112,7 @@ export function equipmentProblem(
   actorId: string,
   itemId: string,
   use?: EquipmentUse,
+  availability?: ResourceAvailability,
 ): string | undefined {
   const actor = entityGet(world.entities, actorId)?.actor;
   const item = itemFor(world, itemId);
@@ -123,9 +124,9 @@ export function equipmentProblem(
   if (profile.ports.some((port) => !actor.body!.equipmentPorts.some((p) => p.id === port)))
     return 'This body cannot hold this equipment.';
   if (
-    itemHasReservations(world, itemId) ||
+    itemHasReservations(world, itemId, availability) ||
     equipmentConflicts(world, actorId, itemId).some((conflict) =>
-      itemHasReservations(world, conflict.id),
+      itemHasReservations(world, conflict.id, availability),
     )
   )
     return 'Finish work or release the reserved equipment before changing these attachments.';

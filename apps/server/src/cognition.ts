@@ -1,4 +1,7 @@
+import { compactCommandInput, cooperationProposalInput } from './cooperation-input.js';
+import { validContributionTerms } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
+import { currentWorkIdentity } from '@open-legend/domain';
 import { dreamStatus } from '@open-legend/domain';
 import { bodyThinkingBlocked, bodyEligibilityRevision } from '@open-legend/domain';
 import { z } from 'zod';
@@ -12,7 +15,7 @@ import {
   type MindProposal,
 } from '@open-legend/domain';
 import type { CommandInput } from '@open-legend/protocol';
-import { buildContext, npcCandidates } from './context.js';
+import { buildContext, npcCandidates, candidateChoice } from './context.js';
 import type { WorldService } from './world-service.js';
 
 export const COGNITION_INSTRUCTIONS_VERSION = 'open-legend-cognition-v1';
@@ -98,14 +101,35 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     ...(input.purpose ? { purpose: input.purpose } : {}),
     ...(input.autoEquip ? { autoEquip: true } : {}),
     ...(input.combatHelpId ? { combatHelpId: input.combatHelpId } : {}),
+    ...(input.cooperation ? { cooperation: input.cooperation } : {}),
   };
   switch (input.type) {
     case 'construction':
+    case 'repeat-work':
     case 'construction-rest':
     case 'activity-request':
+    case 'encounter-preference':
       throw new Error(
         'Requested activity parameters require the scoped world binder, not a prebuilt action candidate.',
       );
+    case 'impact-boundary':
+      if (!input.boundaryImpact)
+        throw new Error('An exact structural part and qualified tool are required.');
+      return { ...base, type: 'impact-boundary', ...input.boundaryImpact };
+    case 'operate-gate':
+      if (!input.gateUse) throw new Error('An exact selected gate and operation are required.');
+      return { ...base, type: 'operate-gate', ...input.gateUse };
+    case 'place-hearth':
+      if (!input.hearthPlan)
+        throw new Error('A selected construction definition and site are required.');
+      return {
+        ...base,
+        type: 'place-hearth',
+        definitionId: input.hearthPlan.definition.id,
+        definitionVersion: input.hearthPlan.definition.version,
+        definitionDigest: input.hearthPlan.definition.digest,
+        destination: input.hearthPlan.site,
+      };
     case 'activity':
       return {
         ...base,
@@ -120,14 +144,6 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         type: 'say',
         text: input.text!,
         ...(input.targetId ? { targetId: input.targetId } : {}),
-      };
-    case 'conversation':
-      return {
-        ...base,
-        type: 'conversation',
-        operation: input.operation!,
-        conversationId: input.conversationId!,
-        generation: input.generation!,
       };
     case 'pickup':
       return {
@@ -164,6 +180,8 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         type: 'follow',
         targetId: input.targetId!,
         ...(input.distance !== undefined ? { distance: input.distance } : {}),
+        ...(input.completeFollow ? { complete: true as const } : {}),
+        ...(input.followUntil !== undefined ? { until: input.followUntil } : {}),
       };
     case 'gather':
       return {
@@ -175,9 +193,17 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     case 'harvest':
       return { ...base, type: input.type, targetId: input.targetId! };
     case 'cancel':
+      return { ...base, type: 'cancel', expectedActionId: input.expectedActionId };
     case 'recover':
     case 'respawn':
       return { ...base, type: input.type };
+    case 'resume-work':
+      return {
+        ...base,
+        type: 'resume-work',
+        planId: input.planId!,
+        expectedRevision: input.expectedRevision!,
+      };
     case 'treat-scar':
       return { ...base, type: 'treat-scar', targetId: input.targetId!, scarId: input.scarId! };
     case 'unequip':
@@ -195,10 +221,13 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         targetId: input.targetId!,
         attributeId: input.attributeId!,
       };
-    case 'prepare':
-      return { ...base, type: 'prepare', preparation: input.preparation! };
     case 'craft':
-      return { ...base, type: 'craft', recipeId: input.recipeId! };
+      return {
+        ...base,
+        type: 'craft',
+        recipeId: input.recipeId!,
+        ...(input.tools ? { tools: input.tools } : {}),
+      };
     case 'guard':
       return {
         ...base,
@@ -276,6 +305,36 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     case 'fish':
       return { ...base, type: 'fish', targetId: input.targetId!, itemId: input.itemId! };
     case 'outing':
+      if (compactCommandInput(input)) return { ...base, ...compactCommandInput(input)! };
+      if (input.outingOperation === 'work')
+        return {
+          ...base,
+          type: 'outing',
+          operation: 'work',
+          outingId: input.outingId!,
+          expectedRevision: input.expectedRevision!,
+          mode: input.outingMode!,
+        };
+      if (input.outingOperation === 'propose' || input.outingOperation === 'revise') {
+        const proposal = cooperationProposalInput(input);
+        if (!proposal) throw new Error('Missing reviewed cooperative terms.');
+        return input.outingOperation === 'propose'
+          ? {
+              ...base,
+              type: 'outing',
+              operation: 'propose',
+              recipientId: input.targetId!,
+              ...proposal,
+            }
+          : {
+              ...base,
+              type: 'outing',
+              operation: 'revise',
+              outingId: input.outingId!,
+              expectedRevision: input.expectedRevision!,
+              ...proposal,
+            };
+      }
       if (input.outingOperation === 'help')
         return {
           ...base,
@@ -298,12 +357,29 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         : {
             ...base,
             type: 'outing',
-            operation: input.outingOperation as 'accept' | 'decline' | 'leave',
+            operation: input.outingOperation as
+              | 'accept'
+              | 'decline'
+              | 'leave'
+              | 'withdraw'
+              | 'conclude',
             outingId: input.outingId!,
             expectedRevision: input.expectedRevision!,
             mode: input.outingMode,
+            amendmentRevision: input.amendmentRevision,
           };
     case 'handover':
+      if (input.constructionUse && !validContributionTerms(input.constructionUse))
+        throw new Error('Invalid construction-use candidate.');
+      if (input.handoverOperation === 'withdraw-use')
+        return {
+          ...base,
+          type: 'handover',
+          operation: 'withdraw-use',
+          targetId: input.targetId!,
+          permissionId: input.contributionPermissionId!,
+          expectedRevision: input.expectedRevision!,
+        };
       return input.handoverOperation === 'offer' || input.handoverOperation === 'counter'
         ? {
             ...base,
@@ -316,6 +392,7 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
             placementRevision: input.placementRevision,
             expectedContentsRevision: input.expectedContentsRevision,
             ...(input.requestedItem ? { requested: input.requestedItem } : {}),
+            ...(input.constructionUse ? { constructionUse: input.constructionUse } : {}),
             ...(input.offerId ? { offerId: input.offerId } : {}),
             ...(input.expectedOfferRevision !== undefined
               ? { expectedOfferRevision: input.expectedOfferRevision }
@@ -430,7 +507,7 @@ export function cognitionContext(
     actions: Object.fromEntries(
       candidates.map((c) => [
         c.id,
-        c.command ? domainCommand(c.command, actorId, decisionId) : null,
+        candidateChoice(c, actorId, decisionId, currentWorkIdentity(service.world, actorId)),
       ]),
     ),
     restEpisode:

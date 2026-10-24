@@ -2,6 +2,7 @@ import { entityGet } from '../../entity-collection.js';
 import { isEquipped } from '../../equipment.js';
 import { activelyParticipates } from '../../participation-state.js';
 import { seesEntity } from '../../perception.js';
+import { personalEncounter } from '../../combat-encounters.js';
 import type { Action, Command, Entity, WorldState } from '../../types.js';
 
 /** Presentation preferences for this world, not new action admission or a saved combat
@@ -34,12 +35,7 @@ function attacksBody(action: Action | null | undefined, target: Entity): boolean
   );
 }
 
-export function baseContextActions(
-  world: WorldState,
-  actorId: string,
-  targetId?: string,
-  observedLaunches: ReadonlySet<number> = new Set(),
-) {
+export function baseContextActions(world: WorldState, actorId: string, targetId?: string) {
   const actor = entityGet(world.entities, actorId);
   const target = targetId ? entityGet(world.entities, targetId) : undefined;
   const livingPair =
@@ -51,51 +47,78 @@ export function baseContextActions(
     seesEntity(world, actor, target);
   const ownAttack =
     livingPair && attacksBody(actor.actor?.action, target) ? actor.actor!.action : undefined;
-  // An enemy's private queued plan, remembered hostility or pursuit goal is not evidence.
-  // Current native preparation/approach/recovery is a visible committed attack. Released
-  // projectiles retain their independent exact source/target lives until flight ends.
-  const combat = !!(
-    livingPair &&
-    (ownAttack ||
-      attacksBody(target.actor?.action, actor) ||
-      Object.values(world.projectiles ?? {}).some(
-        (flight) =>
-          !flight.practice &&
-          ((flight.sourceId === actorId &&
-            flight.targetId === target.id &&
-            flight.sourceLife === (actor.actor?.physicalLife ?? 0) &&
-            flight.targetLife === (target.actor?.physicalLife ?? 0)) ||
-            (flight.sourceId === target.id &&
-              flight.targetId === actorId &&
-              observedLaunches.has(flight.launchedAt) &&
-              flight.sourceLife === (target.actor?.physicalLife ?? 0) &&
-              flight.targetLife === (actor.actor?.physicalLife ?? 0))),
-      ))
-  );
+  // Only this observer's acquired facts identify an opponent. Selection, approach,
+  // another person's fight and hidden action targets cannot create incoming hostility.
+  const pair = target ? personalEncounter(world, actorId, target.id) : undefined;
+  const speaking =
+    !!pair?.speak &&
+    pair.speak.hostileRevision === pair.hostileRevision &&
+    pair.speak.controller === actor?.actor?.controller;
+  const heldAim = ownAttack?.type === 'aim' && !!ownAttack.ranged?.manual;
+  const combat =
+    !speaking &&
+    !!(
+      livingPair &&
+      (heldAim ||
+        (pair &&
+          (Object.keys(pair.active).length ||
+            (pair.incomingUntil ?? -1) > world.simTime ||
+            (pair.own && (pair.own.until === undefined || pair.own.until > world.simTime)))))
+    );
   return (choice: {
     command?: Command['type'];
     definitionId?: string;
     itemId?: string;
+    ammoItemId?: string;
     speech?: boolean;
+    label?: string;
+    facts?: Array<[string, string]>;
+    approach?: boolean;
   }) => {
     const attack = !!choice.command && attacks.has(choice.command);
+    const method = pair?.own?.method;
     const exactCurrent =
-      !!ownAttack &&
-      ((choice.command === ownAttack.type &&
-        choice.itemId === ownAttack.weaponItemId &&
-        (choice.command !== 'strike' || choice.definitionId === ownAttack.definitionId)) ||
-        (choice.command === 'release-shot' && !!ownAttack.ranged?.manual));
+      !!method &&
+      choice.command === method.type &&
+      choice.itemId === method.weaponItemId &&
+      choice.ammoItemId === method.ammoItemId &&
+      (choice.command !== 'strike' || choice.definitionId === method.definitionId);
+    const release = heldAim && choice.command === 'release-shot';
     const equipped = !!choice.itemId && isEquipped(world, actorId, choice.itemId);
+    const contact = choice.command === 'strike';
     return {
+      // Current distance/bearing describe the observed scene, not a different
+      // selected action. Ordinary movement must not invalidate an unchanged
+      // command; its actual reach and line of effect are still admitted natively.
+      bindingFacts: choice.facts?.filter(([name]) => name !== 'Distance' && name !== 'Direction'),
+      ...(choice.label
+        ? {
+            label: choice.approach
+              ? `Approach and ${choice.label[0]!.toLowerCase()}${choice.label.slice(1)}`
+              : choice.label,
+          }
+        : {}),
       priority:
         combat && attack
-          ? 1000 + (exactCurrent ? 200 : equipped ? 100 : 0) + (priorities[choice.command!] ?? 0)
+          ? 1000 +
+            (release
+              ? 30000
+              : exactCurrent
+                ? 20000
+                : contact && equipped
+                  ? 200
+                  : contact && !choice.itemId
+                    ? 100
+                    : 0) +
+            (priorities[choice.command!] ?? 0)
           : choice.speech
             ? 100
             : ((choice.command && priorities[choice.command]) ?? 0),
-      primary: combat
-        ? attack
-        : choice.speech || (!!choice.command && !standard.has(choice.command)),
+      primary: speaking
+        ? !!choice.speech
+        : combat
+          ? attack
+          : choice.speech || (!!choice.command && !standard.has(choice.command)),
     };
   };
 }

@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-This document specifies the delivered finite audible-speech contract and explicitly named future extensions. The accepted [speech and social perception feature specification](projects/speech-and-social-perception-feature-spec.md) and [technical design](projects/speech-and-social-perception-tech-design.md) select the changes to direct addressing, reliable recognition and native sound reactions described below; those changes remain implementation work in [SPK](maintainers/speech-and-social-perception.md). Numerical defaults are reversible gameplay tuning, owned by the [hearing limits inventory](limits/hearing-and-speech.md). [Architecture](architecture.md#hearing-captions-and-perceived-events), [integration evidence](verification/hearing-main-integration.md) and [the hearing tracker](maintainers/hearing-and-speech.md) distinguish delivered behavior and scoped checks from remaining full-scene, accessibility and live-provider qualification.
+This document specifies the delivered finite audible-speech contract and explicitly named future extensions. The accepted [speech and social perception feature specification](projects/speech-and-social-perception-feature-spec.md) and [technical design](projects/speech-and-social-perception-tech-design.md) select the changes to direct addressing, reliable recognition and native sound reactions described below. The speech, recognition, memory, native sound and interface paths are installed; integrated and live qualification remains open in [SPK](maintainers/speech-and-social-perception.md). Numerical defaults are reversible gameplay tuning, owned by the [hearing limits inventory](limits/hearing-and-speech.md). [Architecture](architecture.md#hearing-captions-and-perceived-events), [integration evidence](verification/hearing-main-integration.md) and [the hearing tracker](maintainers/hearing-and-speech.md) distinguish delivered behavior and scoped checks from remaining full-scene, accessibility and live-provider qualification.
 
 This document owns acoustic quantities, speech-perception tiers, volume, listener-specific linguistic evidence, and spatial speech-caption behavior. It specializes the [sensory design](../archive/07-technical-architecture/perception-and-attention.md). [EPR](events-perception-and-reactions.md) retains occurrence scope, acquisition episodes, reaction intake, and scheduling. [Narration and conversations](narration-and-conversations.md) retains ordinary speech interaction, source-linked history and Narrator authority, including the accepted removal of ordinary conversation membership. [Perceived World Events](perceived-world-events.md) owns the player-facing comprehensive event viewer. [Timed UI](timed-ui.md) owns reusable presentation lifetimes and progress rings. No second event bus, speech database, reaction scheduler, or writable copy of world truth is introduced.
 
@@ -99,11 +99,11 @@ The generic acoustic result supports the accepted SPK target for native animal s
 
 ## 4. Speech volume and admission
 
-The selected [shared speech-composition contract](narration-and-conversations.md#admission-ordering-and-memory) brings human-entered, authored-choice and generated utterances through this same native boundary; authored-choice integration remains open in CTR. Selecting or generating words grants neither additional hearing reach nor different audience authority.
+The [shared speech-composition contract](narration-and-conversations.md#admission-ordering-and-memory) brings human-entered, authored-choice and generated utterances through this same native boundary. Selecting or generating words grants neither additional hearing reach nor different audience authority.
 
 Use `whisper | normal | shout` as the initial player/agent delivery modes. They resolve through an installed source profile; an LLM may choose a supported mode, not an arbitrary source level, listener list, range, or private scope.
 
-Volume is already part of the existing talk operation and native speech admission, not another command family. The following describes the **current runtime fields**, before the SPK cutover to one optional addressee and ambient NPC speech. The [SPK technical design](projects/speech-and-social-perception-tech-design.md) owns that accepted contract and coordinated caller changes. The strict model operation also supplies nullable `selfIntroduction` under [the naming contract](entity-names.md), while native callers may omit that optional claim:
+Volume is already part of the existing talk operation and native speech admission, not another command family. The current runtime has one nullable addressee; null means ambient speech. The [SPK technical design](projects/speech-and-social-perception-tech-design.md) owns that contract and its coordinated callers. The strict model operation also supplies nullable `selfIntroduction` under [the naming contract](entity-names.md), while native callers may omit that optional claim:
 
 ```ts
 type SpeechVolume = 'whisper' | 'normal' | 'shout';
@@ -111,7 +111,7 @@ type SpeechVolume = 'whisper' | 'normal' | 'shout';
 // Current speech fields within the existing agent talk operation.
 talk: {
   text: string;
-  addresseeEntityId: string;
+  addresseeEntityId: string | null;
   volume: SpeechVolume;
   selfIntroduction: string | null;
 }
@@ -129,7 +129,7 @@ The address cue grants no missing words, canonical name, exact location, full de
 
 The target actor may answer, act, think, defer or continue without responding under its existing cognition and native behavior policies. Ambient and overheard speech may also prompt a voluntary response when the content, situation and character warrant it. No ordinary speech field enrolls a social group or purchases a mandatory reply. [SSP-H01](limits/hearing-and-speech.md#ssp-h01--received-direct-addressing) owns the restriction and its current-runtime gap. Player composition availability is the separate [Speak/Act admission policy](narration-and-conversations.md#player-speak-and-descriptive-act).
 
-An out-of-range addressed reply may still be spoken aloud. The accepted one-target contract records its original intended recipient directly, removing the current not-heard/intendedRecipientId fallback rather than renaming it. Preserve whisper/shout mode and all emission semantics; never escalate volume or teleport words to the recipient. Revalidate the speaker's capability, life/sleep state and event-time geometry when committing a generated reply. For NST, first publication owns that hearing snapshot; later appends retain current actor/request authority checks without rerunning geometry. A valid intended recipient need not possess memory, speech or effective hearing. The actual dispatch guards must admit a heard direct call with no understood words so clarification is possible; an undetected or seen-only cue creates no directed reply request. Use the existing independent component-outcome and paid-execution boundaries.
+An out-of-range addressed reply may still be spoken aloud. The accepted one-target contract records its original intended recipient directly, using the same optional target rather than a second recipient field or fallback. Preserve whisper/shout mode and all emission semantics; never escalate volume or teleport words to the recipient. Revalidate the speaker's capability, life/sleep state and event-time geometry when committing a generated reply. For NST, first publication owns that hearing snapshot; later appends retain current actor/request authority checks without rerunning geometry. A valid intended recipient need not possess memory, speech or effective hearing. The actual dispatch guards must admit a heard direct call with no understood words so clarification is possible; an undetected or seen-only cue creates no directed reply request. Use the existing independent component-outcome and paid-execution boundaries.
 
 The speaker does not receive an omniscient list of listeners. Likewise, an actual recipient ID is not automatically a _perceived_ recipient identity for an eavesdropper. Addressed/overheard reaction cues must be derived from evidence available to that listener, without exposing hidden communicative intent.
 
@@ -137,7 +137,7 @@ The speaker does not receive an omniscient list of listeners. Likewise, an actua
 
 Speech remains `WorldEvent.type === 'speech'`. The world event contains actual utterance data and the existing immutable event-time origin, identity, order, and scope. Add resolved volume, source profile/version and source level to its typed speech data; do not duplicate common event-envelope fields or create a parallel speech log.
 
-For each eligible listener, native perception produces one actor/event awareness result, with different fields permitted for different listeners. Hearing detection is not the same as speaker recognition, spatial localization, or intelligibility.
+For each eligible listener, native perception produces one actor/event awareness result, with different fields permitted for different listeners. Hearing detection is not the same as speaker recognition, spatial localization, or intelligibility. Omitting the linguistic social policy preserves actually detected acoustic evidence without words, addressing or inferred recognition. A sound-only record uses the same sound projection and retention owner as other nonlinguistic detections. Memory, model input and history/display classification use the acquired payload; the private source event being speech does not turn sound-only evidence into language.
 
 The following is a conceptual **safe projection**, not a second persisted event schema:
 
@@ -145,18 +145,20 @@ The following is a conceptual **safe projection**, not a second persisted event 
 type SpeechSegment = { kind: 'heard'; text: string } | { kind: 'unintelligible' };
 
 type PerceivedSpeech = {
+  // The full current type distinguishes seen-only from self/heard acquisition.
+  perception: 'heard' | 'seen' | 'self';
+  addressing: 'ambient' | 'directed' | null; // null only for seen-only
   intelligibility: 'none' | 'partial' | 'clear';
   segments: SpeechSegment[];
-  speaker: { entityId: string; nameAtTime: string } | null;
+  speaker: { nameAtTime: string /* permitted grammar */ } | null;
+  addressee: { nameAtTime: string /* permitted grammar */ } | null;
   delivery: SpeechVolume | null;
-  direction: {
-    sector: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-    elevation: 'above' | 'level' | 'below' | 'unknown';
-  } | null;
+  direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
+  listenerPosition: Position;
 };
 ```
 
-The host stores sufficient immutable observer-local facts to reproduce that projection: permitted fragments, recognition/association, permitted delivery, coarse bearing, listener pose at acquisition if needed, and policy version. Under the accepted SPK target this includes the observer's permitted speaker/addressee roles and identity/name distinctions; the example above is the current projection, not the complete target schema. Reuse the existing awareness/perspective persistence boundary. The raw occurrence may keep private source/target metadata; safe DTOs and model references may not simply spread that metadata. The full structured permitted experience survives memory hydration and consolidation under the [memory contract](memory-architecture.md#structured-permitted-experience); a colloquial caption or memory sentence is a reusable rendering of that evidence, never its sole semantic source.
+The host stores sufficient immutable observer-local facts to reproduce that projection: permitted fragments, recognition/association, permitted delivery, coarse bearing, listener pose at acquisition if needed, and policy version. The current record includes permitted speaker/addressee roles and identity/name distinctions. Speaker and addressee IDs live only in the owning source/target fields; labels carry no second identity. Seen-only speech has null addressing, no recipient and no heard words. A shared selector derives the retained wording and references. Reuse the existing awareness/perspective persistence boundary. The raw occurrence may keep private source/target metadata; safe DTOs and model references may not simply spread that metadata. The full structured permitted experience survives memory hydration and consolidation under the [memory contract](memory-architecture.md#structured-permitted-experience); a colloquial caption or memory sentence is a reusable rendering of that evidence, never its sole semantic source.
 
 Exact dB measurements, source level, exact hidden coordinates, hidden source/target IDs, original word offsets/counts, mask seed and full unredacted text are not required in the public projection. Ordinary hearing does not become a rangefinder or a technical inspection tool. Administrative diagnostics remain separately authorized and never teach an actor.
 
@@ -164,7 +166,7 @@ The controlled actor, NPCs, context builders, attention, recall, embeddings, sum
 
 ### Source and delivery recognition
 
-The **current runtime** associates an utterance with a speaker when permitted visual evidence at emission establishes that source, or an already-supported recognition mechanism does so. The accepted SPK target's [base-world stable recognition policy](worlds/base/knowledge.md#identity-and-recognition) establishes or reuses a stable individual speaker identity for every actual ordinary linguistic hearing detector, including first encounter, unseen speech and zero intelligible words. Neither previous familiarity nor visual association is a prerequisite. The identity means the same individual can be distinguished later; it supplies no proper name, location, inventory or other hidden facts. The native selected policy grants this association explicitly, and generic projections still cannot spread raw source IDs as a fallback. A nonlinguistic animal or a world selecting a different supported policy can retain an unidentified source. Physical face/voice analysis, disguise and mistaken-identity simulation remain separate extensions.
+The installed [base-world stable recognition policy](worlds/base/knowledge.md#identity-and-recognition) establishes or reuses a stable individual speaker identity for every actual ordinary linguistic hearing detector, including first encounter, unseen speech and zero intelligible words. Neither previous familiarity nor visual association is a prerequisite. The identity means the same individual can be distinguished later; it supplies no proper name, location, inventory or other hidden facts. The native selected policy grants this association explicitly, and generic projections still cannot spread raw source IDs as a fallback. A nonlinguistic animal or a world selecting a different supported policy can retain an unidentified source. Physical face/voice analysis, disguise and mistaken-identity simulation remain separate extensions.
 
 Delivery labels require a permitted delivery cue. A faint ordinary voice is not a whisper. Current v1 exposes the authored delivery mode for the speaker’s own utterance, or when another listener visually associates the source and detects its speech; otherwise delivery is absent. Clear words alone do not grant hidden-speaker identity or delivery mode. Visual-only detection does not justify “John is whispering.” A later acoustic delivery-recognition rule needs its own supported policy; a model cannot supply another listener’s recognition result.
 
@@ -188,11 +190,17 @@ The current ordinary native animal constructor disables cognition, autobiographi
 
 ### Selected animal hearing and choices — accepted target
 
+**Runtime checkpoint:** memory-independent hearing, typed sound-only observer records,
+current-format storage, shared generic presentation, recall exclusion and exact
+sensory expiry are installed. Acoustic reaction patterns and their integration with
+the existing combat animal controller remain in SPK08. See the
+[verification record](verification/speech-and-social-perception.md#sound-only-hearing-checkpoint).
+
 Physical acoustic eligibility is independent of autobiographical memory, linguistic understanding, cognition and speech capability. Reuse one physical exposure calculation and the existing actor/event awareness owner. Speech is the first production emitter: the same occurrence supplies linguistic evidence where supported and an animal's sound-only evidence. A native non-speech fixture proves the generic contract; other production noises remain separately selected emitter work. [SSP-H02](limits/hearing-and-speech.md#ssp-h02--sound-reactions-without-autobiographical-memory) owns this distinction.
 
 A bundled ordinary animal receives actual intensity/margins, coarse direction or null and any legitimately associated visible source. It receives no words, intended addressee, proper human name, hidden source ID/coordinates or inferred source distance/delivery. Identical supported acoustics/visible facts cannot make it distinguish a spoken threat from a greeting. One sound-only awareness record remains valid when the source occurrence is speech. Validators, SQL, public projection and rendering must admit this representation without fabricating a linguistic payload or substituting raw world-event text. The shared sound renderer presents only permitted acoustic meaning.
 
-Ordinary animals keep native control and disabled cognition, autobiographical memory, inner-world writing, language and speech. The [bundled animal acoustic policy](worlds/base/animal-sound-responses.md) extends the single selected native response profile with exact hearing/reaction bindings. The [CTR03–CTR04 native animal design](projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) owns the shared alarm, complete perceived danger set, reachable refuges, speeds, continuous-safe settling and movement/flight continuation. Its documentation is integrated; its native controller remains an implementation dependency, not delivered runtime. SPK supplies its now-selected ordinary-speech trigger without importing unrelated combat work.
+Ordinary animals keep native control and disabled cognition, autobiographical memory, inner-world writing, language and speech. The [bundled animal acoustic policy](worlds/base/animal-sound-responses.md) extends the single selected native response profile with exact hearing/reaction bindings. The [CTR03–CTR04 native animal design](projects/combat-and-threat-responses-tech-design.md#native-animal-execution-ctr03ctr04) owns the shared alarm, complete perceived danger set, reachable refuges, speeds, continuous-safe settling and movement/flight continuation. Its native controller is installed by the combat phase; the acoustic extension remains unfinished. SPK supplies its now-selected ordinary-speech trigger without importing unrelated combat work.
 
 Initial outcomes are continue current behavior or enter/update that shared alarm. A skittish profile can flee from detected speech while a calmer profile continues until its acoustic threshold is met. Native policy can produce actual retreat, alert settling or blocked behavior without narrating human thoughts. Distinct curiosity approaches, listening holds and exceptional cognitive creatures remain documented future repertoire.
 
@@ -268,7 +276,7 @@ Deduplicate transient captions by world, controlled actor, save timeline/generat
 
 ## 10. Persistence, cutover, and integration boundaries
 
-Store speech metadata and event-time projections through existing event/awareness/perspective transactions and current-format saves. Policy pins and privacy fields participate in validation and snapshot capture. Development compatibility follows the [root policy](../AGENTS.md#development-save-policy). Current-format restart/restore preserves listener evidence. Never recompute historical audiences, remask stored utterances or silently reset unsupported state; no parallel legacy runtime or hearing-specific format is introduced.
+Store speech metadata and event-time projections through existing event/awareness/perspective transactions and current-format saves. Policy pins and privacy fields participate in validation and snapshot capture. Development compatibility follows the [root policy](../AGENTS.md#development-save-policy). Current-format restart/restore preserves listener evidence. A clear-hearing record cannot contain an unintelligible segment; rebuilding its displayed text does not make that contradictory claim valid. Never recompute historical audiences, remask stored utterances or silently reset unsupported state; no parallel legacy runtime or hearing-specific format is introduced.
 
 The accepted NST path saves every approved prefix synchronously before publication, using a trusted native speech amendment that preserves one history identity. Generic text editing remains prohibited. Captures retain lifecycle, exact accepted text, frozen observer segments, mask continuation and terminal readiness through the same owners, including any native acoustic consequences committed at begin. [Save/load](save-and-load.md#progressive-public-speech--accepted-target) closes a captured open utterance as interrupted without replaying generation or native acoustic intake; it does not restore an unscreened suffix or live provider session.
 

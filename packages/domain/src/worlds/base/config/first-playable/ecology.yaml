@@ -1,0 +1,233 @@
+{
+  'profiles':
+    [
+      {
+        'id': 'base:pasture-forager',
+        'version': 1,
+        'family': 'perceived-forager',
+        'fullness':
+          {
+            'attributeId': 'wilderness:fullness',
+            'initial': 50,
+            'drainPerGameSecond': 0.0002,
+            'seekBelowDay': 50,
+            'seekBelowNight': 50,
+            'stopAt': 85,
+          },
+        'diet': [{ 'definitionId': 'base:pasture', 'sources': ['resource'], 'workSeconds': 90 }],
+        'routine': { 'choiceGameSeconds': 2400, 'idleAtHomeWhenFedInDaylight': false },
+      },
+      {
+        'id': 'base:wolf-forager',
+        'version': 1,
+        'family': 'perceived-forager',
+        'fullness':
+          {
+            'attributeId': 'wilderness:fullness',
+            'initial': 55,
+            'drainPerGameSecond': 0.0006,
+            'seekBelowDay': 50,
+            'seekBelowNight': 65,
+            'stopAt': 80,
+          },
+        'diet':
+          [{ 'definitionId': 'raw_meat', 'sources': ['item', 'remains'], 'workSeconds': 120 }],
+        'routine': { 'choiceGameSeconds': 2400, 'idleAtHomeWhenFedInDaylight': true },
+        'hunt':
+          {
+            'preySpecies': ['hare', 'deer'],
+            'bipedRule':
+              {
+                'nightOnly': true,
+                'fullnessBelow': 35,
+                'otherVisiblePackmates': 1,
+                'packmateRadiusMetres': 12,
+                'otherBipedExclusionMetres': 8,
+              },
+            'approach':
+              {
+                'radiusMetres': 4,
+                'bearings': 6,
+                'improveSeparationMetres': 1,
+                'targetMovementMetres': 2,
+                'reviewGameSeconds': 12,
+              },
+            'strikeId': 'base:wolf-moving-bite',
+            'locomotionId': 'base:wolf-pursuit',
+            'pursuit':
+              { 'gameSeconds': 1800, 'routeMetres': 144, 'reconsiderAfterGameSeconds': 600 },
+            'lostSight':
+              {
+                'lastPointGameSeconds': 120,
+                'totalSearchGameSeconds': 300,
+                'candidateCount': 3,
+                'radiusMetres': 4,
+              },
+          },
+        'regroup':
+          {
+            'separationAboveMetres': 8,
+            'stopSeparationMetres': 6,
+            'legMetres': 12,
+            'legGameSeconds': 120,
+            'refreshDisplacementMetres': 2,
+            'reviewGameSeconds': 12,
+          },
+      },
+      {
+        'id': 'base:bear-forager',
+        'version': 1,
+        'family': 'perceived-forager',
+        'fullness':
+          {
+            'attributeId': 'wilderness:fullness',
+            'initial': 70,
+            'drainPerGameSecond': 0.0004,
+            'seekBelowDay': 60,
+            'seekBelowNight': 60,
+            'stopAt': 85,
+          },
+        'diet':
+          [
+            { 'definitionId': 'berries', 'sources': ['resource', 'item'], 'workSeconds': 120 },
+            { 'definitionId': 'raw_meat', 'sources': ['remains'], 'workSeconds': 120 },
+          ],
+        'routine': { 'choiceGameSeconds': 2400, 'idleAtHomeWhenFedInDaylight': false },
+      },
+    ],
+  'assignments':
+    [
+      {
+        'species': 'hare',
+        'profileId': 'base:pasture-forager',
+        'anchors': [[26, 36], [50, 58], [81, 74]],
+        'initialById':
+          {
+            'hare-1': 44,
+            'hare-2': 54,
+            'woodland-hare-0': 42,
+            'woodland-hare-1': 58,
+            'woodland-hare-2': 50,
+            'woodland-hare-3': 46,
+            'woodland-hare-4': 56,
+          },
+        'nearestAnchors': 2,
+      },
+      {
+        'species': 'deer',
+        'profileId': 'base:pasture-forager',
+        'anchors': [[26, 36], [50, 58], [81, 74]],
+        'initialById':
+          {
+            'deer-1': 48,
+            'woodland-deer-5': 52,
+            'woodland-deer-6': 46,
+            'woodland-deer-7': 60,
+            'woodland-deer-8': 54,
+            'woodland-deer-9': 44,
+          },
+        'nearestAnchors': 2,
+      },
+      {
+        'species': 'wolf',
+        'profileId': 'base:wolf-forager',
+        'anchors': [[71, 54], [48, 72], [75, 37], [26, 36]],
+        'initialById': {},
+        'home': [99, 82],
+        'packId': 'base:woodland-wolf-pack',
+      },
+      {
+        'species': 'bear',
+        'profileId': 'base:bear-forager',
+        'anchors': [[71, 54], [48, 72], [20, 61]],
+        'initialById': {},
+      },
+    ],
+  'pasture':
+    {
+      'definition':
+        {
+          'id': 'base:pasture',
+          'version': 1,
+          'name': 'Pasture',
+          'nameForm': 'mass',
+          'description': 'Finite edible grasses for grazing animals.',
+          'icon': 'resource.fiber',
+          'portable': false,
+          'properties': ['food'],
+          'nutrition': 30,
+        },
+      'units': 240,
+      'anchors': [[26, 36], [50, 58], [81, 74]],
+    },
+  'strikes':
+    [
+      {
+        'id': 'base:wolf-moving-bite',
+        'version': 1,
+        'label': 'Bite',
+        'pastTense': 'bit',
+        'range': 1.2,
+        'autoMoveToRange': false,
+        'workSeconds': 120,
+        'recoverySeconds': 240,
+        'damage': 18,
+        'accuracy': 0.85,
+        'animation': 'melee',
+        'requiredBodyPlan': 'quadruped',
+        'preparationMotion':
+          {
+            'kind': 'pursue-observed-target',
+            'startRange': 4,
+            'standOffRange': 0.6,
+            'locomotionProfileId': 'base:wolf-pursuit',
+          },
+      },
+      {
+        'id': 'base:bear-contact',
+        'version': 1,
+        'label': 'Strike',
+        'pastTense': 'struck with its forepaw',
+        'range': 1.5,
+        'approachRange': 1.5,
+        'autoMoveToRange': false,
+        'workSeconds': 180,
+        'recoverySeconds': 300,
+        'damage': 20,
+        'accuracy': 0.9,
+        'animation': 'melee',
+        'requiredBodyPlan': 'quadruped',
+      },
+    ],
+  'pursuitLocomotion': { 'base:wolf-pursuit': { 'travel': 0.28, 'escape': 0.28 } },
+  'territories':
+    [
+      {
+        'profileId': 'base:bear-forager',
+        'policy':
+          {
+            'id': 'base:local-feeding-territory',
+            'version': 1,
+            'activation': 'feeding-or-resting',
+            'pursuitMetres': 18,
+            'entryRadius': 4,
+            'territoryRadius': 8,
+            'pursuitSeconds': 600,
+            'reentryAfterTimeout': false,
+            'searchSeconds': 30,
+            'reviewSeconds': 12,
+            'refreshSeconds': 12,
+            'refreshDisplacement': 2,
+            'detours': 4,
+            'strikeDefinitionId': 'base:bear-contact',
+            'attackRange': 1.5,
+            'movementFactor': 0.5454545454545454,
+            'targetControllers': ['player', 'npc'],
+            'targetBodyPlans': ['biped'],
+            'windupText': 'The bear lifts its forequarters and braces to strike.',
+            'withdrawalText': 'The bear breaks off its local pursuit.',
+            'stopText': 'The bear settles where it can stand.',
+          },
+      },
+    ],
+}

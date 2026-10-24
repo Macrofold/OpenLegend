@@ -108,22 +108,32 @@ export function renderNameTemplate(
 
 /** Participant grammar shared by native experience and observer-aware narration. */
 export type PersonRole = 'subject' | 'object' | 'possessive' | 'reflexive';
-export function personalPronoun(role: PersonRole): string {
-  return { subject: 'I', object: 'me', possessive: 'my', reflexive: 'myself' }[role];
+export function personalPronoun(role: PersonRole, person: 'first' | 'second' = 'first'): string {
+  return (
+    person === 'second'
+      ? { subject: 'you', object: 'you', possessive: 'your', reflexive: 'yourself' }
+      : { subject: 'I', object: 'me', possessive: 'my', reflexive: 'myself' }
+  )[role];
 }
 export function personPhrase(
   named: Named,
   role: PersonRole,
   self: boolean,
   article: NameArticle,
+  grammaticalPerson: 'first' | 'second' = 'first',
 ): string {
-  if (self) return personalPronoun(role);
+  if (self) return personalPronoun(role, grammaticalPerson);
   if (role === 'reflexive') return named.nameForm === 'plural' ? 'themselves' : 'themself';
   const phrase = namePhrase(named, article);
   return `${phrase}${role === 'possessive' ? (named.nameForm === 'plural' && phrase.endsWith('s') ? '’' : '’s') : ''}`;
 }
-export function presentTense(verb: string, first: boolean, plural: boolean): string {
-  if (verb === 'be') return first ? 'am' : plural ? 'are' : 'is';
+export function presentTense(
+  verb: string,
+  first: boolean,
+  plural: boolean,
+  person: 'first' | 'second' = 'first',
+): string {
+  if (verb === 'be') return first ? (person === 'first' ? 'am' : 'are') : plural ? 'are' : 'is';
   if (first || plural) return verb;
   if (verb === 'have') return 'has';
   if (verb === 'do') return 'does';

@@ -1,3 +1,5 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
+import { flexibleAssemblyFamily } from './assemblies.js';
 import {
   entityGet,
   entityKeys,
@@ -15,9 +17,11 @@ import {
   freezeWorld,
   changedEntityIds,
   changedDraftEntityIds,
+  entityChangesBetween,
   sensoryDraftWrites,
 } from './draft.js';
 import { executeCommand } from './kernel.js';
+import { worldRootEntities } from './entity-index.js';
 import { observeDomainCounters, type DomainCounters } from './diagnostic-counters.js';
 import {
   renewQuietTerritorialReview,
@@ -26,7 +30,14 @@ import {
 } from './territorial-threat.js';
 import { setSpatialPosition, worldPosition } from './spatial-state.js';
 import { captureMaterialExposure, integrateMaterialExposure } from './material-exposure.js';
-import { createItemLot, exposedMaterialIds, moveLot, retireItem } from './objects.js';
+import {
+  createItemLot,
+  directChildIds,
+  exposedMaterialIds,
+  moveLot,
+  retireItem,
+} from './objects.js';
+import { atomicObjects } from './item-handling.js';
 import { attributeDefinition, setAttribute } from './world-modules.js';
 import { prepareExposure, snapshotEncounters } from './encounter-cache.js';
 import {
@@ -36,12 +47,12 @@ import {
 } from './status-effects.js';
 import { reconcileStatusEffects } from './status-effects.js';
 import {
-  advanceAnimal,
+  nativeWanderRoute,
   advanceAnimalWanderClock,
   animalWanderRemaining,
   reconcileAnimalWander,
-} from './worlds/base/animal-behavior.js';
-import { AnimalWanderQueue } from './worlds/base/animal-wander-queue.js';
+} from './native-response-controller.js';
+import { AnimalWorkQueue } from './animal-work-queue.js';
 
 function result<T>(iterator: Generator<void, T>): T {
   for (;;) {
@@ -51,6 +62,26 @@ function result<T>(iterator: Generator<void, T>): T {
 }
 
 describe('simulation overhaul ownership and continuation', () => {
+  it('installs exact contents before another read or nested transfer in the same transition', () => {
+    const base = freezeWorld(createWorld()),
+      world = draftWorld(base),
+      itemId = createItemLot(world, PLAYER_ID, 'berries', 1);
+    expect([...directChildIds(world, PLAYER_ID)]).toContain(itemId);
+    atomicObjects(world, (candidate) => moveLot(candidate, itemId, NPC_ID, 1, 'test', false));
+    expect([...directChildIds(world, PLAYER_ID)]).not.toContain(itemId);
+    expect([...directChildIds(world, NPC_ID)]).toContain(itemId);
+    atomicObjects(world, (candidate) =>
+      atomicObjects(candidate, (inner) => moveLot(inner, itemId, PLAYER_ID, 1, 'test', false)),
+    );
+    expect([...directChildIds(world, PLAYER_ID)]).toContain(itemId);
+    expect([...directChildIds(world, NPC_ID)]).not.toContain(itemId);
+    const published = freezeWorld(finishWorld(world), { completedTransition: true }),
+      cold = freezeWorld(structuredClone(published));
+    for (const id of [PLAYER_ID, NPC_ID])
+      expect([...directChildIds(published, id)]).toEqual([...directChildIds(cold, id)]);
+    expect([...directChildIds(base, PLAYER_ID)]).not.toContain(itemId);
+  });
+
   it('reuses owned entity lookup paths and invalidates only replaced or removed keys', () => {
     const base = freezeWorld(createWorld()),
       world = draftWorld(base),
@@ -78,6 +109,27 @@ describe('simulation overhaul ownership and continuation', () => {
       entityGet(base.entities, PLAYER_ID)!.name,
     );
     expect(changedEntityIds(finishWorld(world))?.has(PLAYER_ID)).toBe(true);
+  });
+
+  it('keeps late builder edits outside published membership and change-lineage proofs', () => {
+    const original = freezeWorld(createWorld());
+    worldRootEntities(original, true);
+    const draft = draftWorld(original);
+    entityGet(draft.entities, PLAYER_ID)!.name = 'Builder edit';
+    const builder = finishWorld(draft);
+    expect(Object.isFrozen(builder)).toBe(false);
+    const added = structuredClone(entityGet(original.entities, 'stones')!);
+    added.id = 'late-builder-root';
+    entitySet(builder.entities, added.id, added);
+    entityDelete(builder.entities, 'branches');
+    freezeWorld(builder);
+    const roots = worldRootEntities(builder, true).map((entity) => entity.id);
+    expect(roots).toContain(added.id);
+    expect(roots).not.toContain('branches');
+    // An absent proof deliberately makes storage compare the complete current collection.
+    expect(entityChangesBetween(original.entities, builder.entities)).toBeUndefined();
+    expect(entityKeys(builder.entities)).toContain(added.id);
+    expect(entityKeys(original.entities)).not.toContain(added.id);
   });
 
   it('renews only an empty idle territory deadline and keeps possible encounters on the full path', () => {
@@ -210,8 +262,8 @@ describe('simulation overhaul ownership and continuation', () => {
     expect(entityGet(base.entities, 'replacement-animal')).toBeUndefined();
   });
 
-  it('pauses one animal wait during incapacity and preserves an overdue one-hop remainder', () => {
-    const world = createWorld(),
+  it('pauses one animal wait during incapacity and preserves an overdue one-intention remainder', () => {
+    const world = stockedCamp(),
       hare = entityGet(world.entities, 'hare-1')!;
     hare.animal!.wander = { remainingSeconds: 150 };
     reconcileAnimalWander(world, hare);
@@ -228,14 +280,14 @@ describe('simulation overhaul ownership and continuation', () => {
     const reference = structuredClone(world);
     nextRandom(reference);
     const wait = 120 + Math.floor(nextRandom(reference) * 120);
-    advanceAnimal(world, hare, 500);
+    nativeWanderRoute(world, hare);
     expect(world.rngState).toBe(reference.rngState);
     expect(animalWanderRemaining(world, hare)).toBe(prior + wait);
     expect(animalWanderRemaining(world, hare)).toBeLessThan(0);
   });
 
   it('keeps waiting clocks and older snapshots independent through current JSON restoration', () => {
-    const world = createWorld(),
+    const world = stockedCamp(),
       hare = entityGet(world.entities, 'hare-1')!;
     reconcileAnimalWander(world, hare);
     const restored = JSON.parse(JSON.stringify(world)) as typeof world;
@@ -248,7 +300,7 @@ describe('simulation overhaul ownership and continuation', () => {
   });
 
   it('selects due animals in the original tied order and forks large-clock preparation independently', () => {
-    const world = createWorld();
+    const world = stockedCamp();
     world.simTime = 2 ** 40;
     const animal = entityGet(world.entities, 'hare-1')!;
     const ids = ['animal-z', 'animal-a'];
@@ -257,7 +309,7 @@ describe('simulation overhaul ownership and continuation', () => {
       specimen.animal!.wander = { dueAt: world.simTime + 1 };
       entitySet(world.entities, id, specimen);
     }
-    const queue = new AnimalWanderQueue();
+    const queue = new AnimalWorkQueue();
     queue.synchronize(world, ids);
     const preparation = queue.snapshot();
     world.simTime += 0.5;
@@ -268,17 +320,17 @@ describe('simulation overhaul ownership and continuation', () => {
     for (const id of ['animal-a', 'animal-z']) {
       nextRandom(reference);
       const wait = 120 + Math.floor(nextRandom(reference) * 120);
-      advanceAnimal(world, entityGet(world.entities, id)!, 1);
+      nativeWanderRoute(world, entityGet(world.entities, id)!);
       expect(animalWanderRemaining(world, entityGet(world.entities, id)!)).toBe(wait);
     }
     expect(world.rngState).toBe(reference.rngState);
     queue.synchronize(world, ids);
     expect(queue.due(world, 0)).toEqual([]);
-    expect(new AnimalWanderQueue(preparation).due(world, 0)).toEqual(['animal-a', 'animal-z']);
+    expect(new AnimalWorkQueue(preparation).due(world, 0)).toEqual(['animal-a', 'animal-z']);
   });
 
   it('retains serial subtraction when a large clock cannot represent a short animal wait', () => {
-    const world = createWorld(),
+    const world = stockedCamp(),
       animal = entityGet(world.entities, 'hare-1')!;
     world.simTime = 2 ** 40;
     const wait = 0.0001;
@@ -288,7 +340,7 @@ describe('simulation overhaul ownership and continuation', () => {
     expect(animal.animal!.wander).toEqual({ remainingSeconds: wait, running: true });
     advanceAnimalWanderClock(animal, 0.00005);
     expect(animalWanderRemaining(world, animal)).toBe(wait - 0.00005);
-    const queue = new AnimalWanderQueue();
+    const queue = new AnimalWorkQueue();
     queue.synchronize(world, [animal.id]);
     expect(queue.due(world, 0.00005)).toEqual([]);
     animal.actor!.incapacitated = true;
@@ -303,7 +355,7 @@ describe('simulation overhaul ownership and continuation', () => {
     const reference = structuredClone(world);
     nextRandom(reference);
     const nextWait = 120 + Math.floor(nextRandom(reference) * 120);
-    advanceAnimal(world, animal, 0.00006);
+    nativeWanderRoute(world, animal);
     expect(animalWanderRemaining(world, animal)).toBe(wait - 0.00005 - 0.00006 + nextWait);
     expect(world.rngState).toBe(reference.rngState);
   });
@@ -316,8 +368,10 @@ describe('simulation overhaul ownership and continuation', () => {
     expect(exposedMaterialIds(world)).toContain(id);
     expect(exposedMaterialIds(world, true)).not.toContain(id);
     captureMaterialExposure(world);
-    const family =
-      world.assemblyFamilies![world.itemDefinitions.weather_cloth!.assemblyMaterial!.familyId]!;
+    const family = flexibleAssemblyFamily(
+      world,
+      world.itemDefinitions.weather_cloth!.assemblyMaterial!.familyId,
+    )!;
     const moisture = attributeDefinition(world, family.moistureAttribute)!;
     setAttribute(world, entityGet(world.entities, id)!, moisture, 0.6, [], 'transition', {
       silent: true,
@@ -386,7 +440,8 @@ describe('simulation overhaul ownership and continuation', () => {
     (seed.visiblePeople ??= {})[PLAYER_ID] = [target.id];
     const first = draftWorld(freezeWorld(seed));
     result(prepareExposure(first, snapshotEncounters(seed)));
-    const warm = freezeWorld(finishWorld(first));
+    // This fixture owns immediate publication, as the native completion path does.
+    const warm = freezeWorld(finishWorld(first), { completedTransition: true });
     const moved = draftWorld(warm),
       baseline = snapshotEncounters(warm);
     setSpatialPosition(
@@ -398,7 +453,7 @@ describe('simulation overhaul ownership and continuation', () => {
     const frame = result(prepareExposure(moved, baseline));
     expect(frame.affected.has(PLAYER_ID)).toBe(true);
     expect(frame.changedPeople(PLAYER_ID)?.has(target.id)).toBe(true);
-    const current = freezeWorld(finishWorld(moved));
+    const current = freezeWorld(finishWorld(moved), { completedTransition: true });
     const shifted = draftWorld(current),
       before = snapshotEncounters(current);
     setSpatialPosition(

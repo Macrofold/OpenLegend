@@ -1,8 +1,18 @@
+import {
+  worldPosition,
+  worldSupport,
+  describeConstructionUse,
+  constructionPermissionCurrent,
+  prepareConstructionPermissions,
+  prepareConstructionContribution,
+  type ConstructionPermission,
+  type ConstructionContributionTerms,
+} from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
   BASE_HANDOVER,
-  offersBetween,
+  perceivedOffersBetween,
   knownTradeLots,
   describeItemOffer,
   describeOfferLot,
@@ -23,10 +33,78 @@ import type {
 
 export interface HandoverOption {
   id: string;
+  received?: true;
   label: string;
   shortLabel: string;
   description: string;
   command: CommandInput;
+}
+/** Public authored proposal choices. These disclose no other person's grants;
+ * the handover owner still checks both complete current permissions on submission. */
+export function contributionChoices(world: WorldState, actorId: string) {
+  const policy = world.constructionProfile?.materialContributions,
+    actor = entityGet(world.entities, actorId);
+  if (!policy || !actor) return [];
+  const p = worldPosition(actor),
+    surfaceId = worldSupport(actor),
+    r = policy.siteRadiusMetres;
+  if (!surfaceId || !policy.siteLabels[surfaceId]) return [];
+  return policy.operations.map((operation) => {
+    const terms: ConstructionContributionTerms = {
+      operation,
+      site: { surfaceId, minX: p.x - r, maxX: p.x + r, minZ: p.z - r, maxZ: p.z + r },
+      expiresAt: world.simTime + policy.maximumSeconds,
+    };
+    const detail = describeConstructionUse(world, terms);
+    return {
+      id: operation,
+      label: detail,
+      terms,
+      durationSeconds: policy.maximumSeconds,
+      detail: describeConstructionUse(world, terms, true),
+    };
+  });
+}
+export function contributionWithdrawals(
+  world: WorldState,
+  actorId: string,
+  permissions: readonly ConstructionPermission[],
+): HandoverOption[] {
+  return (
+    prepareConstructionPermissions(world.id, permissions).contributionsByParticipant.get(actorId) ??
+    []
+  )
+    .map((entry) => permissions[entry.index]!)
+    .filter(
+      (p) =>
+        p.worldId === world.id &&
+        p.contribution &&
+        constructionPermissionCurrent(world, p) &&
+        [p.actorId, p.contribution.donorId].includes(actorId),
+    )
+    .map((p) => {
+      const targetId = p.actorId === actorId ? p.contribution!.donorId : p.actorId;
+      const detail = describeConstructionUse(world, {
+        site: p.site,
+        operation: p.operations[0]!,
+        expiresAt: p.contribution!.expiresAt,
+      });
+      return {
+        id: 'withdraw-construction-use:' + p.id + ':' + p.revision,
+        label: 'Withdraw material use — ' + detail,
+        shortLabel: 'Withdraw material use',
+        description:
+          detail +
+          ' Ending this permission stops its unfinished work; completed construction and possessions remain.',
+        command: {
+          type: 'handover',
+          handoverOperation: 'withdraw-use',
+          targetId,
+          contributionPermissionId: p.id,
+          expectedRevision: p.revision,
+        },
+      };
+    });
 }
 const pins = (lot: OfferLot) => ({
   itemId: lot.itemId,
@@ -46,13 +124,21 @@ export function handoverOptions(
     offers = true,
     maxLots = BASE_HANDOVER.candidateLots,
     includeNested = false,
-  }: { offers?: boolean; maxLots?: number; includeNested?: boolean } = {},
+    contributions = false,
+    permissions = [],
+  }: {
+    offers?: boolean;
+    maxLots?: number;
+    includeNested?: boolean;
+    contributions?: boolean;
+    permissions?: readonly ConstructionPermission[];
+  } = {},
 ): HandoverOption[] {
   if (!person.actor?.alive || person.id === actorId) return [];
   const describedPerson = observerName(world, actorId, person.id);
   const personLabel = namePhrase(describedPerson, 'definite');
   const name = (id: string) => world.itemDefinitions[id]?.name ?? 'item';
-  const { incoming, outgoing } = offersBetween(world, actorId, person.id);
+  const { incoming, outgoing } = perceivedOffersBetween(world, actorId, person.id);
   const options: HandoverOption[] = [];
   for (const offer of incoming) {
     const what = describeItemOffer(world, offer);
@@ -62,6 +148,7 @@ export function handoverOptions(
       const label = operation === 'accept' ? BASE_HANDOVER.text.accept : BASE_HANDOVER.text.decline;
       options.push({
         id: 'offer-' + operation + ':' + offer.id + ':' + offer.revision,
+        received: true,
         label: BASE_HANDOVER.text.actionLabel(label, what, personLabel, true),
         shortLabel: label + ' ' + what,
         description:
@@ -92,6 +179,7 @@ export function handoverOptions(
     const what = describeItemOffer(world, offer);
     options.push({
       id: 'offer-withdraw:' + offer.id + ':' + offer.revision,
+      received: true,
       label: BASE_HANDOVER.text.actionLabel(BASE_HANDOVER.text.withdraw, what, personLabel, false),
       shortLabel: BASE_HANDOVER.text.withdraw + ' ' + what,
       description: BASE_HANDOVER.text.withdrawDescription(what),
@@ -104,7 +192,7 @@ export function handoverOptions(
       },
     });
   }
-  if (!offers) return options;
+  if (!offers || !world.socialOfferPolicy) return options;
   const lots = inventory
     .filter(
       (item) =>
@@ -118,6 +206,7 @@ export function handoverOptions(
     )
     .slice(0, maxLots);
   const known = knownTradeLots(world, actorId, person.id);
+  const useChoices = contributions ? contributionChoices(world, actorId) : [];
   for (const item of lots) {
     const amounts =
       item.quantity > 1 && item.individuality !== 'individual' && !item.container
@@ -134,6 +223,49 @@ export function handoverOptions(
           ? (entityGet(world.entities, item.id)?.inventoryRevision ?? 0)
           : undefined,
       };
+      if (contributions) {
+        const role = world.itemDefinitions[item.definitionId]?.assemblyMaterial?.role;
+        const uses = useChoices.filter((choice) =>
+          role === 'post'
+            ? choice.terms.operation === 'post'
+            : role === 'cover'
+              ? choice.terms.operation === 'cover'
+              : role === 'panel'
+                ? choice.terms.operation === 'boundary-panel'
+                : role === 'gate' || role === 'rail'
+                  ? choice.terms.operation === 'boundary-gate'
+                  : role === 'binding'
+                    ? ['boundary-panel', 'boundary-gate'].includes(choice.terms.operation)
+                    : role === 'fiber'
+                      ? choice.terms.operation === 'repair-boundary'
+                      : false,
+        );
+        for (const choice of uses) {
+          const consent = prepareConstructionContribution(
+            world,
+            permissions,
+            actorId,
+            person.id,
+            item.id,
+            choice.terms,
+          );
+          if ('ok' in consent) continue;
+          const description = what + ' — ' + describeConstructionUse(world, choice.terms);
+          options.push({
+            id: 'contribute:' + person.id + ':' + item.id + ':' + quantity + ':' + choice.id,
+            label: description,
+            shortLabel: world.constructionProfile!.materialContributions!.label,
+            description,
+            command: {
+              type: 'handover',
+              handoverOperation: 'offer',
+              targetId: person.id,
+              ...own,
+              constructionUse: choice.terms,
+            },
+          });
+        }
+      }
       // A reply replaces the existing proposal rather than promising its item twice.
       for (const prior of incoming) {
         const terms = BASE_HANDOVER.text.terms(what, describeOfferLot(world, prior.offered));
@@ -199,7 +331,7 @@ export function handoverOptions(
           description: BASE_HANDOVER.text.giftDescription(
             what,
             personLabel,
-            BASE_HANDOVER.offerSeconds / 60,
+            world.socialOfferPolicy.pendingSeconds / 60,
           ),
           command: { type: 'handover', handoverOperation: 'offer', targetId: person.id, ...own },
         });
@@ -254,12 +386,10 @@ export function itemTradeView(
   replies: readonly ActionOption[],
 ): ItemTradeView {
   const labels = BASE_HANDOVER.text;
-  const { incoming, outgoing } = offersBetween(world, actorId, person.id);
+  const { incoming, outgoing } = perceivedOffersBetween(world, actorId, person.id);
   const remembered = knownTradeLots(world, actorId, person.id);
   const termView = (lot: OfferLot, own: boolean): TradeLotView => {
-    const saved = entityGet(world.entities, actorId)?.actor?.knownTradeLots?.[person.id]?.[
-      lot.itemId
-    ];
+    const saved = remembered.find((entry) => entry.lot.itemId === lot.itemId);
     const named = own
       ? ownLots.find((item) => item.id === lot.itemId)
       : saved && disclosedView(saved, remembered.indexOf(saved));
@@ -308,6 +438,9 @@ export function itemTradeView(
       changed: labels.changed,
       unknown: labels.unknown,
     },
+    ...(world.constructionProfile?.materialContributions
+      ? { contributionChoices: contributionChoices(world, actorId) }
+      : {}),
     ownLots: [...ownLots],
     knownLots: remembered.map(disclosedView),
     offers: [...incoming, ...outgoing].map((offer) => {
@@ -318,6 +451,14 @@ export function itemTradeView(
         id: offer.id,
         revision: offer.revision,
         incoming: isIncoming,
+        ...(offer.constructionUse
+          ? {
+              constructionUse: {
+                terms: offer.constructionUse.terms,
+                detail: describeConstructionUse(world, offer.constructionUse.terms, true),
+              },
+            }
+          : {}),
         ...(give ? { give: termView(give, true) } : {}),
         ...(receive ? { receive: termView(receive, false) } : {}),
         expiresAt: offer.expiresAt,

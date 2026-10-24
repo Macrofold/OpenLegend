@@ -1,12 +1,14 @@
 # Combat and threat responses: technical design
 
-| Status      | Current progress                                               | Last updated |
-| ----------- | -------------------------------------------------------------- | ------------ |
-| In progress | Design complete; implementation and qualification remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                                               | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Physical combat, animal responses and busy-character choices are installed; Ada’s counterattacks and final combined qualification remain open. | 2026-10-22   |
+
+**Implementation reference recorded:** `2026-10-22T22:45:16Z` (current branch implementation/review).
 
 ## Design baseline and integration
 
-The implementation baseline is `Macrofold/OpenLegend` main at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. The [feature specification](combat-and-threat-responses-feature-spec.md) defines the accepted scope; [repertoire scope](combat-and-threat-responses-repertoire-review.md) relates it to broader possibilities. Implementation crosses domain mechanics, world policy, server cognition and player controls, so delivery requires staged integration and separate runtime qualification.
+The active implementation baseline is `https://github.com/Macrofold/OpenLegend.git`, local `main` and freshly fetched `origin/main` at `19a0c303a89d3cb278db1cbbbe5b95e2e6e26fe1`, containing the reviewed `d261c94f50875edd88e8eb4a69cf8f4a413563cb`. Implementation uses `codex/implement-complete-first-playable`. The [feature specification](combat-and-threat-responses-feature-spec.md) defines the accepted scope; [repertoire scope](combat-and-threat-responses-repertoire-review.md) relates it to broader possibilities. Implementation crosses domain mechanics, world policy, server cognition and player controls, so delivery requires staged integration and separate runtime qualification.
 
 Implementation must measure actual calls, receipts, latency and costs. A faster model alone does not establish faster complete reactions.
 
@@ -60,6 +62,337 @@ Cost grows with nearby living density, active danger relations, route candidates
 Invalidate reuse for the actual entity life, control or timeline, observed evidence, physical/navigation dependencies, chosen objective, relevant authored definitions and elapsed deadlines. A whole-world revision is not a substitute for identifying those dependencies. Budget exhaustion means incomplete work, not safety, lack of witnesses or unreachable terrain.
 
 Measure complete caller paths, including cold preparation, dense danger, obstacle invalidation, provider-stage delay and persisted continuation. Retain deterministic native ordering and saved random choices. Report planned targets separately from measured results.
+
+### Active worker and density qualification
+
+Use the existing disposable PostgreSQL server profiler for ordinary cold/warm
+progress and command waits, with provider dispatch disabled. The exact Main
+initializer stays unchanged; an expanded-map preliminary run is separate evidence.
+No baseline speedup follows from different geometry or instrumentation settings.
+The ordinary current-source 8× request falls behind and remains failed acceptance.
+
+Extend the single evolving native scenario, approximately 80–150 diagnostic logic
+lines, to drive an actual perceived punch preparation beside an admitted low
+barrier. Require a complete pending refuge batch, let the persistent navigation
+worker answer it, and consume the result through the service's existing native
+advance. Confirm supported physical movement, RNG ownership, exact pending-profile
+and geometry invalidation, then cold reconstruction through PostgreSQL. This
+checks the real worker separately from the synchronous backend fixture. Preparation
+cost grows with complete route candidates and local dangers; static geometry is
+shared by the existing worker, answers retire with proposals/map/timeline, and no
+new gameplay authority or movement owner is added. Do not substitute a manually
+supplied route for an observed worker result. The broader 100/500-animal matrix
+remains required after this connected proof.
+
+### Native movement admission cost follow-through
+
+The calm +100/+500 server runs fail progress and expose a long unyielding native
+calculation. The +100 native CPU isolation identifies repeated state copies in
+nested walk preview and selection. Trial approximately 5–15 logic lines in the
+existing kernel: allow a validated native movement preview to return after its
+complete read-only operation/route/controller checks, and avoid a disposable
+selection draft when exactly one route is available and no random draw occurs.
+Keep ordinary final command admission, costs, exact path/profile/life checks,
+weighted choice, all alternatives, work allowance and rollback semantics.
+Other nested action previews retain their existing execution path. No world rule,
+clock, speed, perception, population or candidate bound changes.
+
+Cost grows with admitted animal walks times copied live state; preview shares the
+same exact prepared move and route in its current request. No retained cache or
+new invalidation scheme is introduced. First record three unsampled finite
+400-game-second +100 runs and complete world/event digests; compare the identical
+runs after the trial. Also repeat the sampled diagnosis and real server density
+caller before retaining an alleged improvement. Refused/native controller and
+route cases must still refuse without mutation or random draws. Reuse connected
+worker/profile/restore coverage and recheck affected native behavior. A smaller
+finite cost does not close speed, dense alarm or sustained server acceptance.
+
+The first two-copy reduction preserves exact finite outcomes and improves that
+finite native mean by 19.7% elapsed / 17.7% CPU, but server results are mixed and the
++500 burst still stalls. A separate 200-game-second +500 CPU isolation completes
+in 25.323 seconds and locates 7.388 seconds sampled self time in immutable-state
+finalization, including finishing each animal's growing command/movement result.
+
+Trial a further 10–25 logic lines at those same owners: after successful private
+native movement publication, freeze that completed snapshot only when the native
+call began with an immutable input. Existing mutable builders retain their current
+ownership; never freeze the live outer draft or a rejected original. This lets the
+next animal's ordinary finalizer skip already completed immutable branches, using
+the existing freezer rather than an alternate command executor or writable cache.
+Add ordinary generator yields between animal decisions and wander starts; they
+permit I/O scheduling but are not coherent world-publication boundaries and cannot
+change simulation time or decision order. Recheck frozen and mutable input ownership,
+full native digests, actual worker/SQL continuation and the same whole-server
+caller. Do not present a smaller unyielding segment as completed clock progress.
+
+### Active alarm-density workload
+
+Extend the existing generated-scene profiler, approximately 70–120 diagnostic logic
+lines, with an explicit 0–100 percent alarmed fraction of its added deer cohort.
+Keep the ordinary Main content as background and report total native population
+separately from cohort size. Construct alarms through actual admitted unarmed
+preparations and cancellations, recording each animal's real local observation
+before moving the fixture performer to the next supported clear setup stance.
+Restore the performer to its initial position afterward. These deliberate setup
+placements are a controlled diagnostic, not ordinary player travel or human
+acceptance. Reject an unavailable stance/preparation rather than silently dropping
+animals or creating synthetic danger records. No source/model call or game law is
+added. Use the existing animal controller and native perception owner throughout.
+
+Setup grows with admitted cohort size and exact body-clearance/perception reads;
+all event/history effects are real and retained, so alarm percentages are complete
+workloads, not isolated controller-cost comparisons. Existing immutable geometry
+and spatial candidates serve those checks. The benchmark shares its existing
+worker, persistence and command paths; no new recurring scan or cache is introduced.
+Record initial/final actual alarm counts because a finite danger can legitimately
+end during measurement. Compare only identical configuration/source when claiming
+an implementation improvement, and retain failed progress/requests. Extend the existing clock-free optional tallies (approximately 10–25 logic lines)
+for random-number evaluations, ground-route preparation, retained-route checks,
+stale proposals and retired worker answers. These count actual work, including a
+tentative random evaluation if its surrounding transaction later refuses; saved
+world randomness remains authoritative. Disabled observation performs no report
+preparation or retention. Prove identical finite world results with recording on
+and off before using these counters. Complete 10%/all-alarm, two-danger-group,
+geometry/cold and optional counter coverage remains open until actually run.
+
+### Dense alarm sight-preparation follow-through
+
+The measured +100 all-alarm run completes only 0.100/0.512 game seconds in its
+1×/8× phases, despite no final navigation backlog. Its latter phase evaluates
+105,052 crossing pairs, retaining about 6,675. Source review finds native alarm
+observers predicting visibility changes for neutral animals and objects that the
+installed danger controller never consumes. Ordinary character sight and physical
+contact remain separate consumers and must retain all their existing candidates.
+
+The fixed one-game-second native/backend +100 all-alarm input/result and CPU
+profile are retained. This fixture drains native calls with a one-interval hint;
+it does not emulate the server's timed publication requests. The implementation
+uses approximately 60–120 logic lines: let the existing native
+danger owner prepare a request-scoped source predicate from the installed profile
+and exact retained body/life records. The movement predictor uses it only for
+memoryless native alarm sight. Keep every possible dangerous body and every exact
+old body/corpse that can resolve retained evidence; missing preparation stays
+conservative. Do not prune ordinary character sight, contact, selected-person
+reach or danger-distance/uncertainty crossings. Retired cached native-sight pairs
+must use the same current predicate. No global cache, fixed source cutoff, new
+world law or independent decision system is introduced.
+
+Cost grows with local physical candidates plus complete retained danger records;
+prepare profile/retained-source membership once per observer/query, not per ray.
+Invalidate with the current query's life, profile, body/action/category, danger
+records and geometry through the existing owners. Check actual known/unknown
+sources, ordinary neutral animals becoming naturally aggressive, source death and
+exact old-life remains, controller/memory changes, current-format continuation,
+whole/split observable outcomes and the full server caller. Changed optional
+sampling subdivisions are not permission to change native effects, RNG order,
+privacy or meaningful evidence. Keep failures and diagnose any outcome difference.
+
+### Repeated encounter-deadline preparation
+
+The full-server +100-all-alarm CPU capture finds repeated encounter scheduling
+and content hashing, rather than nearby-body indexing, as the largest identified
+JavaScript cost. Its 28.428-second process capture includes startup and idle time;
+4.785 seconds fall under deadline calculation and 3.013 seconds under response
+profile lookup, with overlap. Source inspection confirms that every retained
+opponent re-hashes the same mutable authored constant, even without a pending
+observation band, and own-offense reconciliation recalculates unchanged deadlines.
+
+Change approximately 20–50 logic lines at the authored response definition and
+existing encounter owner: deeply freeze the static trusted definition so the
+existing exact-pin cache can reuse it; resolve a stabilization duration only when
+a pending observation actually needs it; reschedule owned offense only when its
+retained deadline changes. Authoring continues by installing supported selections
+or copied data, not mutating the linked trusted template. Do not change any pin,
+tuning, deadline, observed cause or save field. No new cache or scheduler is needed.
+
+Compare the fixed native input/result exactly, including whole/split and SQL
+continuation, actual own-offense expiry/return and existing encounter cases. Then
+repeat the complete running-server caller with the same declared workload. Keep
+CPU-profiled diagnosis separate from unsampled speed qualification and retain
+failed density measurements. Broaden only for a demonstrated changed assumption.
+
+### Active implementation sequence for the connected human response
+
+The delivered work-transition and scoped-feeling foundations precede the following
+connected changes. The ordinary profile is now installed with its connected native and
+decision consumers; qualify the complete selected repertoire and shared behavior.
+
+1. Extend the existing chosen-activity control with optional observation/counting
+   requirements and an exact selected distance boundary. Preserve its original
+   deadline, cancellation, actual-cost and completing-child rules. Reuse native
+   movement and boundary prediction, including complete route segments; no second
+   mover or pursuit loop is introduced. Preserve exact physical-life references
+   through prepared attack/follow selection and final native admission.
+2. Connect the catalogue's authored data through the cognition policy and a
+   selected-world compiler at the existing world-composition seam. Purpose/role,
+   source, exact method, work handling and finite terms remain one offered binding;
+   admitted plans/activities and action records retain that selected meaning.
+3. Extend decision preparation with an explicitly complete-required set before any
+   provider callback. Preserve its members or refuse preparation; optional ordinary
+   suggestions keep their existing policy. Select this strategy before ordinary
+   routing and action retrieval.
+4. Use the existing accounted job for the required relevance/appraisal call,
+   source-bound native appraisal publication and independent Noul action choice.
+   Revalidate post-publication from accepted feeling revisions, preserve newer
+   external evidence, and suppress only this pipeline's own derived receipts.
+   No routing/generation gate or automatic paid fallback is added.
+5. Enable the profile, target-stacked interpreted fear/anger and the selected new
+   Ada dispositions together with removal of both automatic fear producers. Run
+   the twelve ordinary baselines and complete reaction timings at this first
+   connected minimum, before expanding animal/species breadth. Retain failures.
+6. Finish bounded refresh, meaningful subscriptions and two immediate job slots
+   through the existing scheduling/execution owners, then continue the remaining
+   combat controls, animal breadth and qualification.
+
+The remaining repertoire work uses the existing native command and agency owners.
+Complete threat preparation requests all permitted physical follow targets rather
+than the compact ordinary suggestions. Ranged one-shot children declare safe
+deadline cancellation in their installed world host: unreleased ammunition remains
+unspent, and a released projectile continues through its independent native owner.
+Explicit return to paused work needs an exact paused-plan ID/revision operation,
+not the ordinary Stop operation, which deliberately discards paused work. Its
+read-only preflight examines the remaining frontier and original control before
+ending the intervention; refusal preserves both. Admission reuses the existing
+resumption owner and personal result records. This is approximately 200–300 logic
+lines across agency/activity inspection, native admission and the public command
+boundary. Verify actual interruption/resumption, lost target or material,
+expired original limits and a stale paused-plan selection without discarding work.
+Review also requires retaining original actor-reference associations for activity
+steps not yet expanded when an intervention begins. Extend the existing saved
+activity binding/validation owner and shared dispatch/resumption checks; a later
+sighting cannot silently rebind an unfamiliar person. Do not add another history
+store or reconstruct forgotten identity from world truth. This adds approximately
+100–150 logic lines and needs native loss/reacquisition and cold-storage checks.
+Last-seen preparation distinguishes a remembered point from a currently
+identifiable body. Record the personally observed support and label with the
+existing encounter point. A historical-point purpose binds that point and its
+actual source, with no live actor role or targeting grant. Its instance identity
+includes the historical observation, and continuation inherits the matching
+original pursuit's time/distance bounds. Check unseen relocation, loss of an
+unfamiliar-person association and cold restoration through actual native movement.
+
+The CTR08 movement slice extends the existing follow owner with explicitly finite
+arrival: a selected distance, original absolute deadline, actual sight/identity
+and an arrival result distinct from reaching the time limit. Ordinary relational
+following retains its existing minimum separation and continuing behavior; finite
+proximity movement may close to a real available strike's reach, with native body
+clearance still controlling its route. The threat compiler selects that physical
+distance from existing methods and supplies no automatic attack. This is roughly
+150–250 logic lines across follow preparation, saved action validation, shared
+native composition and public command binding. Actual approach/arrival, source
+movement, cancellation, original deadline, lost sight/life and cold restoration
+have focused native coverage. Complete pursuit and reconsideration qualification
+remain open.
+
+Fixed-point pursuit uses an optional selected proximity stop on the existing
+finite control, bound to one of its exact visible participants. The compiler
+supplies the currently offered method's distance; remembered-place searches keep
+their separate point-only meaning. Native continuation checks the same reach and
+line-of-effect owner. The existing piecewise motion-crossing owner now includes
+that interaction-anchor sphere/ray predicate so two moving people cannot pass
+through the stopping interval between samples. It reuses body/geometry/track
+certificates and bounded active participants, without a second trajectory cache.
+This is approximately 150–250 logic lines across finite-control validation,
+world-owned compilation, movement boundaries and descriptions. Actual static and
+crossing approaches, an intervening low wall, split clocks, original limits and
+PostgreSQL restoration have native coverage. Current-format validation refuses an
+unbound stopping participant. The same finite participant checks retain their
+sight/life boundaries. A stop offers a new choice; it never attacks or retargets
+automatically. Broader source/capability races and complete subscriptions remain
+required.
+
+Meaningful observation subscriptions then extend the existing private encounter
+index, temporal due calculation, world-selected response adapter and ordinary
+intake. Capture passive selected participants separately from prerequisites that
+must remain true for physical execution. Persist stable/pending visibility,
+preparation, movement and actual-method reach bands with original game-time
+deadlines and exact native sources. Emit one actor-private native change receipt
+per stable transition; immediate actual harm/preparation remains independent.
+Never infer ceased preparation from lost sight, or erase historical evidence
+because an unseen body changed elsewhere. This is approximately 500–800 logic
+lines; no second mover, decision queue or history store is planned. Native checks
+must cover band jitter/reversal, the 0.75 m/12-game-second exit rule, brief and real
+sight loss, changed protected people, source/body loss, old-source forgetting,
+clock splits and PostgreSQL restart without duplicate notices. Measure work on
+the actually affected observers and route/geometry owner; do not scan all history
+or create a paid call on each movement update. Full dynamic crossing and shared
+combat qualification remain required before closing CTR08.
+
+Before those subscriptions, the current actor/tool preparation is extracted from
+the server catalogue into one domain read query for catalogue and observation
+preparation. It preserves native equipment/reservation/body checks and supplied
+permitted inventory; group ammunition by admitted kind once, without crossing
+every lot with every perceived target during actor preparation. All compatible
+available lots are retained, expanded only for actual offered targets, with each
+exact combination receiving a structured identity. Native admission remains the
+authority. This is roughly 100–150 logic lines plus caller reconciliation. Real
+catalogue/native cases cover distinct lots and admitted damage profiles, actual
+aiming holds, a pure replacement view and the unchanged ordinary complete request.
+Broader inventory scaling remains part of complete qualification.
+
+The ordinary-route hazard specimen also exposed cause selection: a later incidental
+sighting could headline an unread actual blow. Reuse the existing actor-scoped
+urgent-evidence read and actual selected physical result to choose their newest
+personal cause before incidental newer records. Preserve the remaining
+coalesced records and their original evidence cut. This is a small scheduling repair,
+not a new urgency rule or queue. The ordinary-route specimen explicitly omits the
+optional threat strategy; both routes require their own qualification.
+
+The observation slice distinguishes hard execution participants from passively
+watched selected people in the same finite-control owner. Preflight proves both
+at selection; continued execution stops only for its hard requirements. Native
+encounter records retain profile-pinned stable/pending sight, observed preparation,
+movement and actual supported-method reach bands. Temporal due work and the
+existing piecewise crossing owner establish their real boundaries; private native
+notices enter ordinary intake. Include current and paused finite commitments
+without rebuilding identity from hidden bodies. Recovery observation takes its
+original deadline from the existing body/action owner, survives Stop and emits
+once only for a still-relevant selected response. The actor pass that prepares
+sensory crossings also bounds newly pending observation deadlines inside retained
+physical forecasts; it does not rebuild unrelated mechanics to service a notice.
+Combined with shared actor/tool
+preparation this is approximately 900–1,200 logic lines. Cost grows with active
+observers' own admitted means and relevant pairs/ranges, not retained history or
+every world resident. Share actor preparation once per observation pass and
+retain only certified geometric runs; equipment/custody/holds, body, geometry,
+perception, profile or selected work changes invalidate affected preparation.
+Measure actual native/service preparation, changed-pair visits and full reaction
+paths, including jitter, missing evidence, restart, density and provider waits.
+
+Own spoken output is retained as personal speech evidence and a native attributed
+speech result. Neither is a fresh autonomous cause for its speaker. The shared
+intake filter and supplied physical-result predicate distinguish that output from
+another person's heard reply and actual physical completion. This small repair
+uses existing native memory attribution, with no additional history or scheduling
+owner. Actual chosen speech through ordinary intake and a real heard reply have
+controlled native coverage. An unrelated observed-interest subscription change is
+considered independently before isolating own output. Historical encounter
+reconciliation retains the last personally observed point when an unseen source
+vanishes or changes body life; current exposure, not hidden world truth, resolves
+that association. Focused native counterfactuals pass; broader subscriptions and
+independent choice remain unfinished.
+
+Steps 1–4 have connected native implementations and partial controlled service
+qualification. Complete requests retain their full sets; supplied callbacks reach
+an admitted exact strike and its next ordinary native step. The ordinary world now selects the connected profile, interpreted fear/anger and Ada’s general assertiveness together, with both automatic fear producers removed. Both fixed twelve-case live samples failed 0/12 counterattacks and remain
+retained. Uniform explicit action questions now fit the complete 475-choice native
+case without changing the 220,000-character limit. Actor/job-owned immediate
+scheduling and shared two-execution capacity have controlled coverage for ordinary
+plus urgent, two urgent actors and exact cancellation. The one saved refresh now has controlled actual repeated-hit coverage through both
+refreshed stages, including preserved native work and a same-boundary forgetting
+contrast. Exact fear/anger guards exclude unrelated bodily discomfort. Independent
+interpretation/choice, remaining repertoire, meaningful subscriptions, remaining
+source/stale races and complete concurrency qualification remain unfinished.
+
+The native-control change is approximately 150–300 logic lines; the catalogue
+and decision integration is expected to affect another 1,000–2,000 logic lines.
+Relevant recurring growth is active controlled work × remaining route segments,
+plus actual perceived threat pairs × supported methods. Reuse actor/tool and
+source preparation only within an unchanged read; invalidate for path/body,
+geometry, life/control, source/policy revision and original time boundaries.
+Measure actual admission, simulation progress, collision/stop outcomes and
+PostgreSQL continuation, then whole reaction preparation/queue/provider/commit/
+render latency. Existing chosen camp-watch checks remain regression obligations.
 
 ## Physical attack and contact contract — CTR01
 
@@ -170,6 +503,193 @@ Stop attacking ends only the unfinished offensive invocation/continuation owned 
 
 Where the existing plan-control primitive cannot end the exact owned invocation without affecting unrelated work, extend that primitive with the narrow scoped operation before exposing this control. Do not silently cancel a mixed-purpose parent plan or claim success while leaving its owned offense live; report the unsupported scoped stop and retain the separately disclosed ordinary work controls until this native path exists. Already released projectiles, committed damage, spent inputs and recovery are independent outcomes, not unfinished work to remove. Pause permits this same supported cancellation/preference change without advancing time; inactive/retired authority still refuses it. Qualify a late Stop after a new attack on the same person, a new opponent, an unrelated replacement craft, suspended offense, request replay and current-format reopen. A stale Stop must never delete a newer intention.
 
+### Active player-control implementation plan
+
+The existing catalogue already ranks recent personally observed aggression, own
+admitted offense, a matching Speak override and held-shot release. The client now captures one prepared hovered choice at pointer-down; Speak/Stop
+use durable exact-pair operations. Complete their connected qualification within CTR09 in
+approximately 1,000–1,800 changed logic lines across the existing encounter,
+activity-control, command/receipt, catalogue, protocol and scene/UI owners.
+
+1. Retain a pair-local preference revision, exact physical lives and perception
+   episode in the one encounter record. Hostile evidence, new admitted offense,
+   explicit preference operations and expiry advance consequential preference
+   meaning. A minimal revision record survives expired detail, preventing an old
+   Speak gesture from matching again after an intervening fight. New life,
+   perception episode or controlling authority still invalidates the binding.
+2. Add a native exact-pair preference operation through ordinary command admission
+   and durable receipt recovery. Speak changes only the override. Stop removes
+   only that preference's owned unfinished offense, including queued/suspended
+   continuation, through the existing activity owner. Preserve unrelated steps,
+   current craft, other opponents, recovery, consumed inputs and released flight.
+   Where a composition repeats the same bound offensive primitive, cancel its
+   exact existing node continuation rather than the mixed-purpose parent plan.
+3. Project only the player's current permitted pair/control bindings through the
+   existing catalogue. Keep selected-world labels and descriptions in the installed
+   body/context policy. Physical-life and recognition metadata remain private in the
+   server; the wire carries opaque exact-scope references through the existing
+   receipt boundary. Recovery remains the selected disabled attack; preference
+   operations are usable while manually paused under the existing write guards.
+4. Prepare the disclosed Command-hover choice through one scoped read owner.
+   Capture that exact ready choice and target on pointer-down; commit only the
+   unchanged gesture at release and serialized server admission. Current observed
+   distance/bearing are display facts, not changes of the captured command; retain
+   consequential facts and native reach/line-of-effect admission. Drag, modifier
+   loss, target/life loss, focus, cancellation, owner/timeline change and new
+   preference invalidate it. A pending preview cannot become a delayed click.
+   Reuse the existing hover explanation, ordinary action menu and speech composer.
+   Opening speech preserves its draft while the preference receipt is pending or
+   refused; it never claims committed preference before acknowledgement.
+5. Qualify ordinary berries/Speak, two opponents, held aim/recovery, late Stop after
+   replacement work/new attack, suspended and mixed-purpose offense, paused
+   operations, exact receipt replay/reopen, time-only expiry, target disappearance,
+   pointer/keyboard/text focus and real browser input. Recheck affected ordinary
+   cognition/work continuation and current-format persistence.
+
+Cost grows with the current actor's retained minimal pair revisions, its bounded
+plan frontier, the exact composition
+nodes inspected for scoped cancellation and the explicitly requested action
+catalogue. No world-history scan, second action executor or per-frame catalogue
+construction is added. Share existing native method preparation per catalogue;
+retain one owned exact choice per gesture. Scope, physical life, pair revision,
+observation episode, possession/definition changes and relevant simulation-time
+expiry invalidate reuse. Measure hover preparation, command queue/admission,
+receipt persistence and actual browser display/dispatch separately, including
+pending and stale paths. Existing native and broader performance gates remain.
+
+Shortcut previews must expose their actual meaning as soon as their captured
+command becomes ready. The held-shot browser check fits at 800 by 600, but its
+existing ordinary hover fade can leave the facts nearly transparent while the
+shortcut is already eligible. Set both delay and fade to zero only for the
+primary-action preview (approximately one logic line at the existing hover
+presentation owner), preserving ordinary hover animation. Recheck actual computed
+opacity, complete fact visibility and disabled preparing-shot dispatch in the
+existing evolving browser scenario; this changes no action or geometry rule.
+
+### Next independent-choice diagnosis
+
+The three failed twelve-case cohorts remain failed. Retained actual Ada judgments
+show evasion or words outranking physical retaliation despite complete available
+strikes. Before another cohort, inspect exact participant naming and the question
+rubric. The current purpose/first-action sentences can name multiple unfamiliar
+people simply “person,” while exact native bindings remain behind the server.
+Distinct personally permitted roles now use captured model-facing labels in
+each actual question, while native purposes/invocations retain their canonical
+bindings and prose. Complete native/request construction and existing context
+checks pass; independent willingness remains open. Reuse the existing scoped reference owner, never raw hidden
+IDs or positions. The native compiler supplies the purpose label, meaning and
+permitted role descriptions separately, so model projection inserts exact current
+references without duplicating ambiguous role prose or persisting model handles. Estimated affected logic is 100–250 lines across the existing
+supplied-purpose compiler, server context/questions and their callers. First prove
+native/context distinction and privacy with controlled people; then freeze one
+actual corrected Ada input for a declared diagnostic of at most $0.03. Preserve
+all options, independent scoring, thresholds, identity and voluntary choice. A
+higher score or native fixture cannot close the ordinary twelve-case gate.
+All three bounded frozen controls still favor evasion: corrected permitted roles,
+the existing world-authored selection criterion, and an explicit acting-character
+question subject. The two experimental question wordings are not installed.
+No frozen score or controlled native execution qualifies the ordinary cohort.
+Preserve all three failed twelve-case cohorts and their exact evidence. The owner
+has selected preserving Ada's current personality and keeping the counterattack
+acceptance gate explicitly open. No stronger temperament, conditional retaliation
+trait, forced response or injected goal is installed. Continue the remaining
+implementation and qualification in the agreed phase order under that decision.
+
+### Fatal-contact review repair
+
+A reproduced visible fatal projectile hit on a player body loses the shooter's
+actual contact account after death separates that body into a corpse. The
+post-injury sight check addresses the former living participant. An absent
+optional physical-life counter also incorrectly becomes the nonactor sentinel
+instead of life zero. Repair these exact causes in the existing body-lifecycle
+and projectile owners (approximately 40–80 logic lines): capture contacted life
+and both participants' actual sight before injury, retain those witnessed facts,
+and resolve a previously captured body through its existing exact corpse link
+when another projectile reaches it in the same native interval. Never bind a
+successor life or infer hidden contact. Qualify fatal intended/incidental contact,
+two projectiles, unseen contact, life-zero records and current-format continuation
+with the evolving native contact fixture and affected existing checks. The repair
+is implemented and these controlled cases pass, including SQL restoration. The
+same life-zero distinction also preserves the actually seen first-life shooter
+for a nonlethally struck territorial animal. This changes no target-selection law.
+
+### Return after stopped attacks inside mixed work
+
+Actual finite mixed work (strike, movement and wait), interruption while waiting,
+scoped Stop and later explicit return reproduce a prerequisite read selecting the
+cancelled strike. The executor correctly skips that same saved primitive. Reuse
+the existing cancellation set and remaining-work query in the read-only first-step
+calculation (approximately 10–20 logic lines); skip cancelled invokes and exhausted
+cancelled repetitions exactly as execution does. Preserve original limits and
+unrelated movement. Qualify native return, hidden former opponent, current-format
+validation and PostgreSQL continuation with the existing preference fixture, then
+run affected static/existing checks. No new work owner or saved record is needed.
+The same review found remaining-work wording claiming every selected person must
+stay visible, although purpose-only people correctly prompt reconsideration
+without stopping unrelated work. Project actual hard and observation-only
+requirements separately from the existing finite control, and qualify both
+descriptions against the already checked continuation behavior.
+Remaining-work descriptions also mark stopped primitives as skipped, exclude
+their material demands and promise no future output from a cancelled producer.
+Any actual earlier output and the authored method remain unchanged. These repairs
+are implemented; native return, scoped visibility, projection and SQL cases pass.
+
+### Native movement ownership at restoration
+
+Current-format validation accepted a copy of an actually admitted hare escape
+after its animal owner was removed. Check for an orphan native ground/flight
+binding before the validator's ordinary nonanimal return (approximately 5–10
+logic lines). Keep normal nonanimal movement and physical flight unchanged, and
+retain the supported creator-control path that ends a committed animal flight at
+its real landing. Qualify malformed ground and airborne copies, valid native
+continuation, that control transfer and SQL restore through the existing fixtures.
+
+A supported joined-route fixture also exposed ordinary takeoff running before an
+already due alarm choice. It removed ground support at the same point, causing
+the choice to reject its floor-intersecting connector and fall back to gravity.
+Hold an unreleased supported routine at that start boundary while the existing
+animal owner chooses, as already done for supported terminal rest. Preserve
+already airborne movement. Then qualify a real admitted native flight through
+creator transfer and its joined continuation, including prediction, execution,
+SQL and partition agreement. Expected repair is 10–30 logic lines in the flight
+owner; no new movement owner or authored speed/geometry change is permitted.
+After supported takeoff was repaired, the actual admitted native flight and
+creator transfer exposed a second failure: prediction compared a later joined
+corridor against the still-current body's original corridor digest. Validate the
+captured digest against actual current progress, while forecasting each trusted
+joined corridor with its own climb limit. Execution still advances that digest
+only when it actually crosses the join. Preserve changed-definition refusal.
+Use one flight-owner held-routine predicate in execution and every movement
+forecast; a supported routine waiting for the alarm choice predicts no travel.
+The bounded finite-route diagnosis then retained twelve coherent advances at
+game time zero: an unusable aerial comparison deleted the ground proposal on
+every read, replacing generations 1–12 before their completed route answers could
+be consumed. Retain that exact ground proposal when air offers no usable choice;
+retire it only when choosing an actual flight or when no ground support exists.
+Existing origin/geometry/body checks still invalidate genuinely stale preparation.
+
+### Complete held-shot choices and visible animal activity
+
+An actual ready manual aim is offered in the player catalogue but absent from
+the complete character choices. Preserve its exact release as an immediate
+continuation, not a replacement activity that discards the prepared shot. Reuse
+the release owner's readiness, exact aim and permission checks for preparation
+and commit; expose the selected world's existing shot facts. Include the release
+in applicable physical purposes and qualify native response admission, stale aim,
+unready refusal and one exact projectile consumption without a provider call.
+Record the immediate release and its chosen purpose through private action history,
+linking the prepared aim without making the revision-bound release reusable or
+retaining one-attack permission. This repair affects roughly 70–110 logic lines across character-choice preparation,
+the purpose compiler and release/admission owners; it adds one current-aim option
+per character read, without multiplying inventory or target searches.
+
+Blocked and settling animals must remain visibly alert, rather than being called
+foraging. Put this activity wording in one selected-world presentation source,
+consumed by visible status and entity description. Preserve actual action and
+territorial presentation precedence and disclose no private danger records.
+Approximately 20–40 logic lines affect two existing server projections and their
+world-owned wording; each visible animal needs one constant-time lookup.
+
 ## Shared continuation, authoring and removal
 
 Treat current saves as one supported format. Update domain types, validators, installed definition bindings, server projections, pending native work, public protocol and all retained action/context consumers together. A changed current-format definition is not a reason to invent version-suffixed compatibility records or an old-save migration.
@@ -180,13 +700,138 @@ Authoring inspection must explain what is supported: native danger classes, refu
 
 ## Native animal execution (CTR03–CTR04)
 
+### Current native animal implementation
+
+Design used and revised **2026-10-22T22:10:00Z**. One installed controller owns
+personal danger, escape, ordinary travel, rest arbitration and ground/air handoff.
+The [authored animal rules](../worlds/base/animal-responses.md) own the sequential
+10–15 m ground search, 75%/50% thresholds, three/ten attempts and tuning. The
+[world plan](first-playable-world-tech-design.md#simple-escape-and-entity-local-navigation-waits)
+owns this implementation boundary and actual verification.
+
+Each saved proposal carries one current endpoint, the drawn bearing/distance/side,
+attempt count and best shorter physical path. Current origin/body/geometry/life
+and proposal identity fence worker results; the shared clock is deliberately not
+part of an unchanged waiting request's identity. Directions are tried one at a
+time through existing direct navigation or the bounded Recast worker. Only actual
+movement admission installs a path. Support and body collision remain mandatory;
+complete route visibility and optimal all-danger corridor comparison are removed
+from ground escape. Periodic danger review retains an admitted useful leg.
+
+Requests select world-blocking or entity-local waiting. The selected animal profile
+uses local waits for escape and native travel; existing ordinary callers default
+to world blocking. A pending animal remains still while the world advances. Late,
+cancelled and restored callbacks retain current action/proposal/body/map/timeline
+checks. The former anticipatory multi-route preview is removed: each waiting animal
+now publishes its own actual single request through the existing coordinator.
+Callback availability may affect when locally waiting animals depart, an explicit
+tradeoff rather than a second simulation clock or hidden elapsed-time discard.
+
+Personally observed executed attacks, release, passage/contact and authored sound
+rules can alarm animals. Attack preparation does not in this world. Keep human
+combat preparation evidence and all committed projectile effects intact. No animal
+model calls, forced human decisions, second mover or legacy state adapter is added.
+
+The failed early bow hunt exposed the observed-point ray striking the ground
+behind retreating prey. Mike approved observed-motion leading on October 18.
+Before repeating that journey, extend the existing held aim with one personally
+seen, actually executed linear movement segment. The shared physical forecast
+may prepare that segment, but it becomes evidence only after actual movement
+matches it and ordinary sight covers its observed portion. Unsupported or
+ambiguous physical motion supplies no lead. Capture only active aims and their
+exact targets; do not scan unrelated animals or inspect future route choices at
+release. Current target life, visibility and observed endpoint must still match.
+The bundled release law solves the constant-velocity intercept within the
+launcher's existing flight range, otherwise aiming at the current observed point.
+It preserves preparation, steadiness draws and fixed released flight. Current arrow speed, range and approach tuning are owned by [ranged counterplay](../worlds/base/ranged-counterplay.md).
+Approximately 200–300 logic lines affect physical-motion preparation, held aiming,
+release and current-format validation. Verify static and moving shots, turns,
+loss of sight, changed life, same-clock release, save/load and split continuation,
+then repeat the actual hunt–harvest–cook–eat path. This is an approved aiming
+contract change, not evidence that hunting is qualified.
+
+Completion requires the single installed controller and every connected consumer
+above, the canonical qualification matrix below, and truthful remaining evidence.
+The ordinary supplied Main opening remains selected. Broader feeding, packs and
+roaming stay in the later already-authorized RW phase and must extend this owner.
+
+The territorial owner retains pursuit, antler timing, relinquishment and withdrawal
+ownership. Its formerly authored refuge remains saved as a known handoff hint;
+ground movement uses the same bounded sequential escape and never starts a second
+return mover. Settling keeps relinquishment. Existing finite bird connections and
+physical landing/flight continuation below remain under the same response owner.
+
+The remaining bird connection extends the existing flight family in two connected
+steps (approximately 600–1,000 logic lines across flight, prediction, response,
+authored routes and current validation). First make route completion explicit:
+ordinary loops, finite supported landings and exact joins to another admitted
+route. Retain terminal perched progress so settling cannot restart a loop, and
+allow a physically authored return connection only after the alarm ends. Every
+forecast, swept contact and actual flight must traverse the same completion rule;
+no second flight updater or position path is saved in the response episode.
+
+Then author two finite alternative landing corridors on distinct sides of the
+clearing, resolving their actual ground support during initialization. Explicit
+source-route connections authorize only a currently exposed, swept-clear physical
+join from the bird's actual position; a route identity cannot move the body to its
+entry. Compare complete three-dimensional corridors and actual supported endings
+against the same complete danger set. Preserve current refuge continuity and one
+canonical weighted choice. An unsafe ending is not a landing permission: retain
+a valid airborne corridor or report the explicit unsupported/blocked flight
+outcome. A grounded bird without usable takeoff can use ordinary ground escape.
+The selected flight binds its episode/profile/generation, while the flight owner
+retains the route and current progress. It also retains the original selection time,
+geometry revision and any consumed weighted draw, including finite air-node choices.
+Exact route digests reuse only deeply immutable definition identity; changed drafts
+and mutable builders recompute them. Complete graph preparation occurs at due
+reviews, not every movement slice. Prediction and execution read the same pinned
+speed and body factors without another navigation or position owner. Its escape cruise comes from the selected
+profile, with the existing route climb constraint and body movement factors
+applied once. Native control loss ends new choices and stops at a real landing;
+released projectiles and actual falling retain their existing owners. Qualify
+waiting/takeoff, mid-edge joins, blocked and changed supports, unsafe perches,
+ground fallback, rest/incapacity/death, continuation and actual server/browser
+motion before declaring the animal phase delivered.
+
+The concrete finite graph supplies supported landing choices and named airborne
+waypoint choices. Compare landing routes first when a currently exposed clear
+landing is reachable; otherwise compare finite movements to admitted air nodes.
+Reaching an air node requests another same-clock native choice and cannot start
+settling. A currently retained flight keeps its exact remaining leg when still
+eligible. New ground takeoff requires a real vertical connector at the body's
+actual supported point; unsupported ground positions use ground escape instead.
+The body's explicit future graph binding survives that fallback, without keeping
+an obsolete active flight. A last-moment unsafe landing requests native review
+before contact; no available admitted continuation uses explicit flight/falling
+recovery rather than indefinitely hovering at an arbitrary point. Pure landing
+previews read the same complete danger owner without recording new observations. A clear
+ordinary supported perch holds through settling as actual rest, then resumes its
+real successor at the completion boundary. Flight admission and resumption call
+the flight owner at zero elapsed time before any subsequent interval; neither
+waits for another public advance nor backdates departure to an elapsed interval.
+
+The spatial substrate now provides nominal upright-body separation, full-piece
+minimum separation and complete distance-band intervals. Ordinary capsule routes
+use a quadratic minimum; mixed short-cylinder slopes or a growing region use a
+bounded convex search below spatial tolerance. This is shared geometry preparation,
+not a second mover or completed animal controller. Diameter-height projectile
+contact now follows the existing movement sphere convention.
+
+Installed native response definitions use the existing world record catalogue,
+with a structured key containing their complete definition pin. A body selects a
+profile and locomotion binding; its running episode retains its own exact pin.
+Referenced authored revisions remain installed when a future default is selected,
+so one registry owns definition content instead of copying rules into every
+animal. This supports actual authored revisions, not old-format readers. Native
+family validation admits data only; a definition grants no movement or harm.
+
 ### Owners and integration
 
 Replace the current selected animal steering adapter with one installed trusted native response family. Keep the existing `actor.controller = native` authority distinction. Do not turn species into controllers, route animals through the person's Decision API, or introduce a second write path for position. A native controller can be a small coded policy; world ownership means its installation, parameters, meanings and permitted choices can differ between worlds.
 
-The current producers/consumers that must be reconciled together are `worlds/base/animal-behavior.ts`, `worlds/base/actions.ts`, `worlds/base/hunting.ts`, `worlds/base/bodies.ts`, `worlds/base/spawn.ts`, `worlds/base/world.ts`, `worlds/base/landscape.ts`, `worlds/base/first-threat.ts`, `territorial-threat.ts`, `flight.ts`, `kernel.ts`, `temporal-boundaries.ts`, motion/sensory prediction, body/energy active-work detection, public behavior projections and current-format validation. Search all reads of the former animal danger/direction fields and the old universal flee speed; a clean primary adapter does not prove those secondary meanings agree. The ranged approach helper and its execution/action-view consumers must use the [selected explicit ranged allowance](../worlds/base/ranged-counterplay.md#selected-approach-allowance-during-animal-speed-integration), retaining its current effective value rather than inheriting a species escape speed.
+The current producers/consumers that must be reconciled together are `native-response-controller.ts`, `worlds/base/actions.ts`, `worlds/base/hunting.ts`, `worlds/base/bodies.ts`, `worlds/base/spawn.ts`, `worlds/base/world.ts`, `worlds/base/landscape.ts`, `worlds/base/first-threat.ts`, `territorial-threat.ts`, `flight.ts`, `kernel.ts`, `temporal-boundaries.ts`, motion/sensory prediction, body/energy active-work detection, public behavior projections and current-format validation. Search all reads of the former animal danger/direction fields and the old universal flee speed; a clean primary adapter does not prove those secondary meanings agree. The ranged approach helper and its execution/action-view consumers must use the [selected explicit ranged allowance](../worlds/base/ranged-counterplay.md#selected-approach-allowance-during-animal-speed-integration), retaining its current effective value rather than inheriting a species escape speed.
 
-The world contract [animal-responses.md](../worlds/base/animal-responses.md) owns constants, species bindings, candidate construction, comparison and deferred repertoire. Reuse existing movement, navigation, perception and lifecycle operations. A narrow route-to-one-of-these-destinations preparation can extend the existing navigation request if needed, with its complete candidate set and common body/query budget; do not create a second worker fleet or world-wide navigation service for animals.
+The world contract [animal-responses.md](../worlds/base/animal-responses.md) owns constants, species bindings, candidate construction, comparison and deferred repertoire. Reuse existing movement, navigation, perception and lifecycle operations. A narrow route-to-one-of-these-destinations preparation can extend the existing navigation request if needed, with one current endpoint and the common body/query budget; do not create a second worker fleet or world-wide navigation service for animals.
 
 The engine installation dispatcher resolves the supported native family and exact profile. Kernel/domain callers use that selection, not imports of base-world animal constants. A world without that family has no automatic escape behavior. A contrasting fixture binds a small native rover that avoids a locally perceived harmful emitter and selects a reachable sheltered endpoint using a different locomotion profile; it makes no claim to simulate new radiation physics. Supply the fixture's harmful-region input through an admitted test/world policy. This proves the dispatcher and physical route execution do not require humans, animal species, fear prose or this world's distances. Do not implement that fictional world as shipped content.
 
@@ -216,15 +861,20 @@ At each applicable native boundary:
 2. Intake all new eligible alarm evidence, including when the animal is busy, perched, airborne, incapacitated or falling. A physical-work condition may defer movement; it must not discard evidence. Dead bodies receive no new animal response. Injury/flight interruption follows existing physical owners.
 3. Reconcile source estimates from the animal's complete permitted local danger set. Expire old estimates by original observation deadlines. Native spatial broad-phase membership is not itself perception. Do not silently truncate to the nearest danger.
 4. Determine whether a real dependency, temporal crossing or due review invalidates the current refuge. Continue an unchanged admissible route without a new query. Before requesting a route for a stationary route-blocked animal, apply the world's [in-place settling contract](../worlds/base/animal-responses.md#separation-and-settling): complete current clearance, available voluntary capabilities and no current qualifying attack permit adopting its actual supported position and starting a fresh full settling interval. Danger-estimate expiry can enable this without an arrival or usable movement endpoint. Do not consume a navigation request/RNG draw, backdate safety or let a late prepared route overwrite the new mode. A fresh threat can interrupt ordinary cancellable wandering/walking, while a committed physical phase must use its real interruption semantics.
-5. If needed, prepare the bounded refuge candidates through the ordinary navigation owner. Direct supported movement stays on its established fast path; unresolved preparation retains explicit pending state. Finish/refuse the complete request before committing the destination, RNG draw and movement ownership together. Preparation itself grants neither success nor elapsed world time.
+5. If needed, prepare the bounded refuge candidates through the ordinary navigation owner. Direct supported movement stays on its established fast path; unresolved preparation retains explicit pending state. Finish/refuse the complete request before committing the destination, RNG draw and movement ownership together. Preparation grants no movement success; an entity-local wait does permit elapsed world time.
 6. Execute/predict actual movement through one owner. At arrival evaluate current clearance, start/reset settling or request the next refuge. An arrived unsafe refuge is not retained as a zero-length winning route. The temporal owner detects 15-metre clearance entry along executed relative trajectories and growing remembered-region uncertainty, even when the danger enters and leaves between 12-game-second route reviews. Same-time physical, perception and capability changes precede final settling completion.
 7. Emit only real coarse behavior transitions and actual physical outcomes under current disclosure. Repeated reviews do not emit repeated thoughts, alarm-start events, history entries or public destination hints.
 
-Use canonical animal and candidate ordering at semantic decisions. Incidental renderer frames, client reads, preview calls, different service callback partitions or a navigation result's wall-clock arrival do not consume randomness. Tie selection has no draw for a single possible winner and exactly one saved draw for an interchangeable candidate set. If an earlier due animal still awaits required preparation, later refuge-choice commits at that same native boundary remain staged through the existing owner. A callback does not install movement or draw. A stale navigation result is discarded before that draw or any action replacement; current evidence/geometry is then reconsidered.
+Use canonical animal ordering when starting saved searches. Draw the bearing tie,
+leg distance and side preference only when creating the actual attempt, never in
+views, callbacks or restoration. An entity-local wait does not stage later animals
+behind it: they can choose while it waits. Callback availability can affect later
+movement/start order under load; this is the accepted local-wait tradeoff. A
+callback only supplies a fenced physical answer; native admission starts movement.
 
 ### Preparation, passage identity and rest integration
 
-A pending refuge proposal binds world/timeline, exact animal life, controller/profile pin, episode and proposal generation, current position/support and movement ownership, body/navigation profile and the actual candidate endpoints. The returned physical preparation also binds relevant supporting/obstructing part revisions. Recheck those bindings before publication. Body replacement, controller loss, a change to the episode's bound profile pin, a newer proposal, changed origin/ownership or changed relevant geometry makes the old proposal noncommittable. Merely selecting a newer profile for future episodes does not. Recompute the complete currently permitted danger set and score before selecting; an old danger snapshot cannot declare safety. Valid derived navigation preparation may be reused through its existing owner, but an obsolete proposal cannot spend RNG, cancel work or claim a destination. Restoration reconstructs pending derived work from the same saved semantic proposal/episode without replaying a committed choice.
+A pending refuge proposal binds world/timeline, exact animal life, controller/profile pin, episode and proposal generation, current position/support and movement ownership, body/navigation profile and the actual candidate endpoints. The returned physical preparation also binds relevant supporting/obstructing part revisions. Recheck those bindings before publication. Body replacement, controller loss, a change to the episode's bound profile pin, a newer proposal, changed origin/ownership or changed relevant geometry makes the old proposal noncommittable. Merely selecting a newer profile for future episodes does not. Recompute the complete currently permitted danger set before settling or starting a fresh leg; an old danger snapshot cannot declare safety. Valid derived navigation preparation may be reused through its existing owner, but an obsolete proposal cannot spend RNG, cancel work or claim a destination. Restoration reconstructs pending derived work from the same saved semantic proposal/episode without replaying a committed choice.
 
 Extend the existing projectile record with saved **`nearPassObservedLives`**: a canonical set of exact physical-life references that have already received its qualified passage observation. A derived lookup may index that set; there is no new global passage log. Add membership atomically with the admitted passage occurrence/observation, before exposing the alarm. The query is one projectile/life lookup, not a search through all event history. A physical impact remains a separate exact occurrence. Retire this set with its projectile; current-format restoration preserves it. The animal's latest cause alone is insufficient for deduplication when several flights overlap. Qualification covers an earlier passage followed by trajectory-changing escape, source death, two simultaneous flights, replay and a save between passage and impact.
 
@@ -240,17 +890,17 @@ The current bird route is a looping native flight record. The implementation mus
 
 New escape connections require current swept-body clearance, allowed climb/descent and compatible landing support. A route swap retains the current physical position and never spends the interval twice. While airborne, ordinary ground escape cannot also run. If all aerial alternatives are unsupported, use the actual flight recovery/ground fallback and keep a truthful unresolved alarm. No implicit teleport, free hovering at arbitrary height or invented landing point is permitted.
 
-The territorial stag keeps the existing territory decisions, antler strike, pursuit deadlines and relinquishment outcome. Its pursuit speed becomes an explicit authored territorial value so replacing the generic animal speed cannot silently double encounter difficulty. When the territory owner selects withdrawal, it delegates to the same escape evaluator and profile speed; its old authored refuge is only a preferred eligible candidate. Active antler preparation/recovery cannot run concurrently with the delegated move. Settling preserves relinquishment; ordinary prey code never reacquires the cache on its behalf.
+The territorial stag keeps the existing territory decisions, antler strike, pursuit deadlines and relinquishment outcome. Its pursuit speed becomes an explicit authored territorial value so replacing the generic animal speed cannot silently double encounter difficulty. When the territory owner selects withdrawal, it delegates to the same escape evaluator and profile speed; its old authored refuge remains a handoff hint rather than a second movement owner. Active antler preparation/recovery cannot run concurrently with the delegated move. Settling preserves relinquishment; ordinary prey code never reacquires the cache on its behalf.
 
 ### Performance contract
 
-Let A be living native animals, E the subset with active alarm episodes, D the eligible local danger records for an animal, C the bounded new candidate count, and P the actual accepted route segments. Routine work must grow with A through existing participant membership and actual sensing/behavior deadlines, not A multiplied by all world entities, all history or all observers. Active comparison is proportional to the complete local D and at most C route candidates; segment danger checks cost O(C × D × P), with early rejection only when it preserves the specified comparison. The retained route is checked directly. C is bounded in the world profile; D has no independent nearest-N cutoff, and its reachable growth/retention must be recorded honestly in the limits inventory.
+Let A be living native animals, E the subset with active alarm episodes, D the eligible local danger records for an animal, C the bounded new candidate count, and P the actual accepted route segments. Routine work must grow with A through existing participant membership and actual sensing/behavior deadlines, not A multiplied by all world entities, all history or all observers. Active comparison is proportional to the complete local D and at most C route candidates; ground route checks cost O(C × P × nearby bodies), with early acceptance under the authored progress thresholds; danger bearings and settling still consider the complete D. The retained route is checked directly. C is bounded in the world profile; D has no independent nearest-N cutoff, and its reachable growth/retention must be recorded honestly in the limits inventory.
 
 Share immutable body meshes and static support preparation through the existing coordinator. Reuse a complete observer-scoped danger snapshot within one review; do not rerun perception separately for every candidate, tool, route segment or public projection. Current positions/uncertainty remain live at the relevant boundary. Geometry dependency keys cover actual changed parts/supports, not only the top-level map object. Relevant motion and evidence expiry invalidate safety without invalidating unrelated static meshes.
 
 Use the current spatial work/admission budgets, finite navigation request queue and explicit pending outcomes. A queue or computation ceiling does not establish unreachable terrain or an absent danger. No new background busy loop retries all blocked animals each tick. No candidate/path history is appended on a harmless refresh. Retire transient episodes and derived entries when ordinary behavior resumes, the current body life ends, its controller is removed, or the timeline changes.
 
-The existing navigation preparation can technically hold native time while required work is prepared. This design adds no gameplay pause for animal thinking and must measure that existing hold through the real caller. A thousand alarmed animals can overwhelm a small navigation queue despite twelve candidates each. If required qualification fails, optimize shared preparation and invalidation or keep the affected population capability unqualified; do not publish success by dropping animals, skipping threats, replacing paths with collision-blind steering or claiming a timing win from paused/inactive simulation.
+Ordinary requests retain their world-blocking default. Animal requests select entity-local waits, so required animal path preparation cannot hold the shared clock. Large alarmed populations can still overload native processing or the bounded navigation queue. If required qualification fails, optimize shared preparation and invalidation or keep the affected population capability unqualified; do not publish success by dropping animals, skipping threats, replacing paths with collision-blind steering or claiming a timing win from paused/inactive simulation.
 
 Required implementation measurements use identical seed, geometry, native rules, inputs and host for old/new comparison. Include ordinary opening density, 100 native animals and 500 native animals in valid admitted layouts; add a 1,000-animal exploratory workload only where world admission permits it. For each, separate calm, 10% alarmed, all alarmed, two converging groups of human dangers, concentrated geometry edits and save/load cold reconstruction. Record elapsed simulation achieved at normal and requested 8× speed, native CPU/headroom, whole-server responsiveness, navigation pending/hold time, allocations/retained state, and counts of danger candidates, exact perception checks, route preparations, reused routes, invalidations and RNG draws. Report accepted population/time behavior and failures; no numerical speedup or capacity is established by this design document.
 
@@ -274,6 +924,19 @@ Required implementation measurements use identical seed, geometry, native rules,
 | Save/load and native interval partition                                                    | Equivalent admitted inputs yield equivalent movement, deadlines and RNG; no event replay. Include a route turn, pending preparation, settling near expiry and malformed current-format references.                                                                                                                                                          |
 | Alternate installation and omission                                                        | Controller execution does not require base-world species/names; omitting the family removes its choices with no bundled fallback.                                                                                                                                                                                                                           |
 | Ordinary player experience                                                                 | Watch/pursue using actual controls and clock; record purposeful motion, hunting usefulness, awkward blocked cases and any navigation stalls separately from native correctness.                                                                                                                                                                             |
+
+### Concentrated-workload measurement
+
+The existing running-server profiler now implements the two finite diagnostic
+selections: two actual converging pairs of people, or one serialized 0.2 m screen
+edit every 500 real milliseconds with at most one outstanding edit. Earlier
+100/500-alarm normal/8× measurements and 1,000-animal exploratory cold admission are
+recorded in [combat evidence](../verification/combat-and-threat-responses.md#concentrated-population-measurements-and-exploratory-admission).
+All required added cohorts are retained. Those earlier requested speeds were not achieved, including zero
+progress in several phases; no gameplay rule is changed to improve the result.
+Input validation, actual movement/publication counts, elapsed work, waits,
+CPU/memory and owned cleanup are explicit. These measurements complete the
+selected workload attempt, not rendered gameplay. Mike's October 22 revision requires honest current 100/500 measurements without a population throughput target; do not keep optimizing merely to hit those population sizes.
 
 ### Concrete limits to record in the existing base-world inventory
 
@@ -441,7 +1104,7 @@ Native/fixture qualification also covers private known/unknown target attributio
 
 ## Open decisions and intentional limits
 
-The first implementation has no unanswered product question that blocks these modules. Numerical animal/response/UI values are selected initial world tuning and must be evaluated, not rediscovered by an implementer. Reliability, latency, scale and fun remain unperformed acceptance work, not unspecified design choices.
+The owner has selected preserving Ada’s current personality with the failed counterattack gate explicitly open. No stronger general temperament is installed. Remaining implementation and qualification continue in the agreed phase order. Numerical animal/response/UI values are selected initial world tuning and must be evaluated, not rediscovered by an implementer. Reliability, latency, scale and fun remain acceptance work, not unspecified design choices.
 
 Later owner decisions remain explicit and do not block this slice: richer material destruction/penetration; additional animal ecology/cognition; long-term relationship and legal consequences; broader indirect hazards/background conflict fairness; explicit repeat-attack or team tactics; and any expansion of the initial perception or locomotion capabilities. The selected no-PvP-enrollment rule is settled for this world, not deferred back to those later questions.
 

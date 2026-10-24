@@ -1,5 +1,6 @@
 import { entityGet } from '../../packages/domain/src/index.js';
 import { enterGame } from '../fixtures/browser.js';
+import { stockedCamp } from '../fixtures/world.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { worldPosition } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
@@ -18,7 +19,7 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
   const now = Date.now();
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: await testRepository(),
+    store: await testRepository(undefined, stockedCamp()),
     production: true,
     tick: false,
     now: () => now,

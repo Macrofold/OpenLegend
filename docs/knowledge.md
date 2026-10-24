@@ -18,11 +18,23 @@ Count Unicode code points, including whitespace and Markdown. The admitted world
 
 ## Subject binding
 
-Canonical subject IDs identify storage and mutation targets, not evidence of recognition. Perception supplies saved continuous-exposure episodes; a world identity policy decides whether an observation can bind to an existing subject. A person who returns within the bundled world's short linger window after a recorded departure keeps the same episode ([CG10](limits/cognition.md#cg10)); a longer gap since that recorded departure starts a new one. A stored note or name alone cannot reveal that a newly seen individual is the previously known person.
+Canonical subject IDs identify storage and mutation targets, not evidence of
+recognition. The selected world's installed social-perception policy determines
+which actual exposures establish an individual association. The bundled policy
+reuses the existing observer identity owner for stable human sight/voice
+recognition, independently of names. Saved continuous-exposure episodes still
+bind current physical observation and record its brief linger; they do not erase
+a stable association when sight ends. Loss of perception/participation retires
+active exposure bindings while retaining permitted knowledge.
 
-When visible membership changes, the native owner removes departed subject bindings and adds new ones in exposure order without rewriting continuing sighting identities. Loss of perception or participation retires active bindings. This preserves the recognition and linger rules above; mapping entry order remains non-authoritative. [PW08](projects/parallel-batch-01-playable-week/simulation-performance.md) measures the reduced assignment work separately from membership comparison and publication costs.
-
-Model references are opaque observer-scoped tokens, normally four hexadecimal characters and extended on collisions. Unrecognized exposures get episode-scoped references; unavailable exposure uses snapshot scope. Only offered references resolve in responses. Delayed note/name edits recheck their encounter binding. Persist full IDs only inside server state; reproject permitted annotations for later context. Historical unbound references do not become current visible targets through their canonical IDs.
+Model references are opaque observer-scoped tokens, normally four hexadecimal
+characters and extended on collisions. Recognized individuals use the existing
+complete observer/subject key independently of encounter tokens; unrecognized
+exposures retain episode/snapshot scope. Only offered references resolve in
+responses. Delayed work rechecks its actual recognition, current body and native
+prerequisites. A recognized voice can be remembered without revealing a hidden
+position or granting a physical target. Names and duplicate labels never resolve
+identities.
 
 Selected existing pads also receive document-only references, accepted only by note edits. These let an actor revise or summarize remembered knowledge after losing recognition, including knowledge about a retired subject. Their server binding resolves to that actor's existing document and still checks its revision and evidence. They cannot address speech, actions, naming or a visible entity, and editing through them does not establish a new recognition association.
 

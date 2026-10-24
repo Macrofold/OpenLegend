@@ -447,12 +447,14 @@ Post-dispatch timeout, unreadable acknowledgment and lost connection follow the 
 
 The following POST operations are observations and use the read owner/profile, including their existing narrower limits. Preserve their current scope, paging, byte and field rules:
 
-- `/api/actions`; `/api/activity-{requests,choices,status,preview,history}`; `/api/god/activity-history`; `/api/commitments`; `/api/construction/preview`.
+- `/api/actions`; `/api/activity-{requests,choices,status,preview,history}`; `/api/god/activity-history`; `/api/commitments`; `/api/construction/preview`; `/api/work-batches/preview`.
 - `/api/inventory`; `/api/inventory/{access,destinations,history}`; `/api/known-places`; `/api/known-places/inspect`.
 - `/api/god/family`; `/api/god/family/people`; `/api/god/invention-policy`; `/api/god/editor/person`; `/api/god/editor/person/memory`; `/api/god/editor/story`; `/api/god/editor/world-events`; `/api/god/editor/world-event`.
 - `/api/world-events/sources`; `/api/mind`; `/api/memories`; `/api/god/mind`; `/api/god/memories`; `/api/mind/subjects`; `/api/god/mind/subjects`; `/api/god/{triggers,trigger,intelligence-details,intelligence-calls}`.
 - `/api/inventions/list`; `/api/saves/list`; the exact receipt/selection-result endpoints in the table.
 - `/api/world-agent/session/{list,status,turns,turn,review,draft-read,draft-history,draft-compare,removal-page}`; `/api/world-agent/inspect`; `/api/world-agent/tools`; `/api/world-agent/creation/recover`.
+
+`GET /api/construction/hearths` and `GET /api/player-interaction/availability` are scoped observations. `POST /api/work-batches/preview` reads the exact proposed work without starting it. `POST /api/construction/hearth-preview` is bounded native preparation: it may prepare navigation geometry, but never starts construction. All four use the existing fifteen-second read owner/profile, caller cancellation and observation recovery; actual commands retain server permission and admission checks.
 
 `/api/world-agent/session/draft-preview` and `/draft-check` are explicitly classified bounded native preparation/check observations, which can retain their prepared result but cannot dispatch paid work through a generic retry. `/api/world-agent/authoring` selects read or authoring behavior by the already-supported tool name; use that existing semantic classification. Similarly, an empty-body `/api/god/status-effects` request reads policy while a policy body changes it. A method/path-only lookup must not flatten these differences. The current general browser-response `complete-projection` policy remains explicit under NET-L03; this table does not invent per-route response caps from unrelated inbound body limits.
 

@@ -1,3 +1,4 @@
+import { baseAnimalResponse } from './animal-response-profile.js';
 import { entitySet } from '../../entity-collection.js';
 import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 import { baseSpatial } from './spatial-definitions.js';
@@ -11,6 +12,7 @@ import {
 import { worldPlacement } from '../../spatial-state.js';
 import { nativeActor } from './bodies.js';
 import type { Entity, WorldState } from '../../types.js';
+import { BASE_BIRD_REFUGES, BASE_BIRD_REFUGE_CLEARANCE } from './flight-profile.js';
 
 /** Authored new-world composition; no live save is reseeded. */
 export const STARTER_EXTENT = { width: 62, depth: 54 } as const;
@@ -24,6 +26,7 @@ export const FIRST_THREAT_LOCATIONS = {
   screen: [29.5, 28],
 } as const;
 const firstThreatLocations = Object.values(FIRST_THREAT_LOCATIONS);
+const birdRefuges = Object.values(BASE_BIRD_REFUGES);
 /** The solo opening uses this centre, with at least a metre beyond its outer supplies
  * kept clear so seeded rock cells cannot occupy their immediate work stances. */
 export const BASE_SOLO_CLEARING = { x: 13, z: 28, halfWidth: 4, halfDepth: 4 } as const;
@@ -67,7 +70,18 @@ const noise = (seed: number, x: number, z: number): number => {
   n = Math.imul(n ^ (n >>> 13), 1274126177);
   return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
 };
-export function starterTiles(seed: number, width: number, depth: number): Terrain[][] {
+export interface StartingGroundReservation {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+}
+export function starterTiles(
+  seed: number,
+  width: number,
+  depth: number,
+  reservations: readonly StartingGroundReservation[] = [],
+): Terrain[][] {
   const tiles: Terrain[][] = [];
   for (let z = 0; z < depth; z++) {
     const river = z <= 23 ? 2 : 2 + (z - 23) * 0.24 + Math.sin((z - 23) * 0.28) * 1.5;
@@ -114,9 +128,15 @@ export function starterTiles(seed: number, width: number, depth: number): Terrai
       if (
         tiles[z]![x] === 'grass' &&
         !inSoloClearing(x, z) &&
+        !reservations.some(
+          (r) => x + 0.5 >= r.minX && x - 0.5 <= r.maxX && z + 0.5 >= r.minZ && z - 0.5 <= r.maxZ,
+        ) &&
         noise(seed + 29, x, z) < 0.009 &&
         !WOODLAND_ANIMALS.some(([, ax, az]) => Math.hypot(x - ax, z - az) < 1.5) &&
         !WOODLAND_PATCHES.some(([, , px, pz]) => Math.hypot(x - px, z - pz) < 1.5) &&
+        !birdRefuges.some(
+          (perch) => Math.hypot(x - perch.x, z - perch.z) < BASE_BIRD_REFUGE_CLEARANCE,
+        ) &&
         !firstThreatLocations.some(([px, pz]) => Math.hypot(x - px, z - pz) < 1.5)
       )
         tiles[z]![x] = 'rock';
@@ -172,6 +192,12 @@ export function starterScenery(
       const outside = px < 0 || pz < 0 || px > width - 1 || pz > depth - 1;
       if (!outside && tiles[Math.round(pz)]?.[Math.round(px)] !== 'grass') continue;
       if (inSoloClearing(px, pz)) continue;
+      if (
+        birdRefuges.some(
+          (perch) => Math.hypot(px - perch.x, pz - perch.z) < BASE_BIRD_REFUGE_CLEARANCE,
+        )
+      )
+        continue;
       // The original camp and lookout keep their working space, flight corridor and sightlines.
       if (Math.hypot(px - 11, pz - 12) < 5.5 || (px > 17 && px < 26 && pz > 3 && pz < 14)) continue;
       if (edge > perimeter && (n > 0.075 || (px < 27 && pz < 23))) continue;
@@ -232,15 +258,7 @@ export function populateOuterWilderness(world: WorldState): void {
       spatial: baseSpatial(species === 'hare' ? 'hare' : 'deer'),
       placement: worldPlacement(p, p.surfaceId),
       actor: nativeActor(species, world.simTime, energy),
-      animal: {
-        threatPosition: null,
-        threatId: null,
-        escapeHeading: null,
-        calmRate: 0,
-        reviewAt: 0,
-        danger: 0,
-        wander: { remainingSeconds: 120 + index * 7 },
-      },
+      animal: baseAnimalResponse(world, species, 120 + index * 7),
     };
     entitySet(world.entities, id, entity);
   }

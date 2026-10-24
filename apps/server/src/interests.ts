@@ -5,7 +5,7 @@ import {
   accessiblePossession,
   preparationDefinition,
 } from '@open-legend/domain';
-import { currentGoal, isFuel, NATIVE_PREPARATIONS } from '@open-legend/domain';
+import { currentGoal, isFuel } from '@open-legend/domain';
 import {
   activeStimuli,
   STIMULUS_POLICY,
@@ -512,7 +512,6 @@ function planDefinitions(world: WorldState, actorId: string): string[] {
       plan.steps
         .filter((step) => !['completed', 'cancelled'].includes(step.status))
         .flatMap(({ command }) => {
-          if (command.type === 'prepare') return [NATIVE_PREPARATIONS[command.preparation].input];
           if (command.type === 'craft')
             return world.knowledge[actorId]?.some((entry) => entry.recipeId === command.recipeId)
               ? (world.recipes[command.recipeId]?.inputs.map((input) => input.definitionId) ?? [])

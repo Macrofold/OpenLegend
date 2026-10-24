@@ -62,6 +62,35 @@ export interface ResourceStock {
   revision: number;
   precision: 'whole' | 'native-continuous';
 }
+/** Read-only consequences of ending exact current invocations. This never releases
+ * a hold or authorizes an effect; actual execution must end/recheck through its owners. */
+export interface ResourceAvailability {
+  releasedInvocationIds: ReadonlySet<string>;
+  releasedAmounts: ReadonlyMap<string, number>;
+}
+export function resourcesAfterEnding(
+  world: WorldState,
+  invocationIds: readonly string[],
+): ResourceAvailability {
+  const releasedInvocationIds = new Set(invocationIds);
+  const releasedAmounts = new Map<string, number>();
+  const index = reservationIndex(world);
+  for (const invocation of releasedInvocationIds)
+    for (const id of index.invocations.get(invocation) ?? []) {
+      chargeWork({ claims: 1 });
+      const hold = world.resourceReservations![id]!;
+      const key = resourceKey(hold.resource);
+      releasedAmounts.set(key, (releasedAmounts.get(key) ?? 0) + hold.amount);
+    }
+  return { releasedInvocationIds, releasedAmounts };
+}
+function heldAfterEnding(
+  held: ReadonlyMap<string, number>,
+  key: string,
+  view?: ResourceAvailability,
+): number {
+  return Math.max(0, (held.get(key) ?? 0) - (view?.releasedAmounts.get(key) ?? 0));
+}
 interface ResourceLedger {
   debits: Map<string, number>;
   freeDebits: Map<string, number>;
@@ -369,21 +398,34 @@ export function assertReservedStock(
   )
     throw new ResourceReservationError();
 }
-export function availableResource(world: WorldState, ref: ResourceRef): number | undefined {
+export function availableResource(
+  world: WorldState,
+  ref: ResourceRef,
+  view?: ResourceAvailability,
+): number | undefined {
   const stock = readResource(world, ref);
   return stock
-    ? Math.max(0, stock.value - stock.minimum - (heldAmounts(world).get(resourceKey(ref)) ?? 0))
+    ? Math.max(
+        0,
+        stock.value - stock.minimum - heldAfterEnding(heldAmounts(world), resourceKey(ref), view),
+      )
     : undefined;
 }
-export function itemHasReservations(world: WorldState, itemId: string): boolean {
+export function itemHasReservations(
+  world: WorldState,
+  itemId: string,
+  view?: ResourceAvailability,
+): boolean {
   if (!world.resourceReservations) return false;
   const item = itemFor(world, itemId);
   const definition = item && getOwn(world.itemDefinitions, item.definitionId);
   return (
     !!definition &&
-    (heldAmounts(world).get(
+    heldAfterEnding(
+      heldAmounts(world),
       resourceKey({ kind: 'item', itemId, definition: itemDefinitionPin(definition) }),
-    ) ?? 0) > 0
+      view,
+    ) > 0
   );
 }
 /** Completing work may use its own held stock, but never another invocation's.
@@ -393,6 +435,7 @@ export function availableItemQuantity(
   world: WorldState,
   itemId: string,
   invocationId?: string,
+  view?: ResourceAvailability,
 ): number {
   const item = itemFor(world, itemId);
   if (!item) return 0;
@@ -400,8 +443,8 @@ export function availableItemQuantity(
   const definition = getOwn(world.itemDefinitions, item.definitionId);
   if (!definition) return 0;
   const pin = itemDefinitionPin(definition);
-  let available = availableResource(world, { kind: 'item', itemId, definition: pin }) ?? 0;
-  if (invocationId)
+  let available = availableResource(world, { kind: 'item', itemId, definition: pin }, view) ?? 0;
+  if (invocationId && !view?.releasedInvocationIds.has(invocationId))
     for (const id of reservationIndex(world).invocations.get(invocationId) ?? []) {
       const hold = world.resourceReservations[id]!;
       if (
@@ -422,6 +465,7 @@ function planGroup(
   world: WorldState,
   group: ResourceGroup,
   accepted?: ResourceLedger,
+  view?: ResourceAvailability,
 ): ResourcePlan | { status: ResourceFailure } {
   if (
     !hasRecordFields(group, ['invocationId', 'fulfillment', 'operations']) ||
@@ -495,7 +539,7 @@ function planGroup(
           source.value - source.minimum - alreadyDebited,
           source.value -
             source.minimum -
-            (held.get(sourceKey) ?? 0) -
+            heldAfterEnding(held, sourceKey, view) -
             (freeDebits.get(sourceKey) ?? 0),
         );
     const capacity = destination
@@ -608,6 +652,16 @@ export function applyResourceGroup(
   if (plan.status !== 'planned') return plan;
   publishResourcePlan(world, plan, events, group.invocationId, feedback);
   return { status: 'applied', amounts: plan.amounts };
+}
+
+/** The same complete resource calculation as commit, without publishing its plan. */
+export function resourceGroupProblem(
+  world: WorldState,
+  group: ResourceGroup,
+  view?: ResourceAvailability,
+): ResourceFailure | null {
+  const plan = planGroup(world, group, undefined, view);
+  return plan.status === 'planned' ? null : plan.status;
 }
 function consumePlannedHolds(world: WorldState, plan: ResourcePlan): void {
   if (!plan.holds.size) return;
@@ -822,6 +876,16 @@ export function releaseResource(world: WorldState, id: string, invocationId: str
     invalidateReservationIndex(world.resourceReservations!);
   }
   return true;
+}
+/** Exact active holds for one admitted invocation; retained claim history is not scanned. */
+export function* heldInvocationResources(
+  world: WorldState,
+  invocationId: string,
+): Generator<ResourceReservation> {
+  for (const id of reservationIndex(world).invocations.get(invocationId) ?? []) {
+    const hold = world.resourceReservations?.[id];
+    if (hold?.state === 'held') yield hold;
+  }
 }
 export function releaseInvocationResources(world: WorldState, invocationId: string): void {
   if (!world.resourceReservations) return;

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { StatusCondition } from '@open-legend/domain';
 import { attributeBindingSchema } from './world-authoring-bindings.js';
 import { attributeValueSchema } from './world-authoring-values.js';
-import { commandInputSchema } from './world-service.js';
+import { commandInputSchema } from './command-input-schema.js';
 
 const text = (max = 256) => z.string().min(1).max(max);
 const finite = z.number().finite();

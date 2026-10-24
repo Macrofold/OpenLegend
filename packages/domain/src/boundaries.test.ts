@@ -88,7 +88,6 @@ describe('untrusted dictionary identifiers', () => {
       { type: 'hunt', targetId: id },
       { type: 'hunt', targetId: 'hare-1', weaponItemId: id },
       { ...cookingChoices(world, inventoryFor(world, PLAYER_ID), id, 'fixture-raw')[0]! },
-      { type: 'prepare', preparation: id },
       { type: 'teach', targetId: NPC_ID, recipeId: id },
       { type: 'say', targetId: id, text: 'This should not be spoken.' },
     ];

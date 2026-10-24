@@ -1,8 +1,8 @@
 # First playable — people and voluntary cooperation
 
-| Status      | Current progress                                                                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The first-playable cast and cooperation design are specified; implementation and independent-character/player qualification remain open under CP01–CP10. | 2026-10-17   |
+| Status      | Current progress                                                                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Four residents, finite cooperation, exact compacts and ordinary controls are connected; remaining disclosure, integration and independent/player qualification stay open. | 2026-10-22   |
 
 ## Purpose and scope
 

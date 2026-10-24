@@ -1,5 +1,7 @@
+import { expectCurrentWorldEquivalent } from '../../../tests/assert-current-world.js';
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { describe, expect, it } from 'vitest';
-import { createWorld, PLAYER_ID } from './data.js';
+import { PLAYER_ID } from './data.js';
 import { entityGet } from './entity-collection.js';
 import { draftWorld, finishWorld, freezeWorld } from './draft.js';
 import { reconcileConditions } from './conditions.js';
@@ -14,7 +16,6 @@ import {
   currentStatusInstance,
   currentWorkInvocation,
   materializeNativeValues,
-  NATIVE_VALUE_SEGMENTS,
 } from './native-values.js';
 import {
   attributeDefinition,
@@ -32,7 +33,7 @@ import { observeDomainCounters, type DomainCounters } from './diagnostic-counter
 const attributeId = 'wilderness:fullness';
 const statusId = 'wilderness:metabolism';
 function base(value = 76): WorldState {
-  const world = createWorld(),
+  const world = stockedCamp(),
     entity = entityGet(world.entities, PLAYER_ID)!;
   world.paused = false;
   entity.actor!.attributes![attributeId]!.value = value;
@@ -58,7 +59,10 @@ function step(
   return freezeWorld(finishWorld(world));
 }
 
-describe('exact current native values', () => {
+const expectEquivalent = (actual: WorldState, expected: WorldState) =>
+  expectCurrentWorldEquivalent(actual, expected, true);
+
+describe('current anchored native values', () => {
   it('retains both meters and accounting through conditional work rates, sleep and waking', () => {
     const initial = base();
     let lazy = initial,
@@ -69,7 +73,7 @@ describe('exact current native values', () => {
     }
     expect(entityGet(lazy.entities, PLAYER_ID)).toBe(entityGet(initial.entities, PLAYER_ID));
     expect(lazy.pendingNativeIntegration!.byEntity[PLAYER_ID]!['wilderness:energy']).toBeDefined();
-    expect(materializeNativeValues(lazy)).toEqual(eager);
+    expectEquivalent(lazy, eager);
     for (const body of [
       { type: 'gather', targetId: 'branches' },
       { type: 'cancel' },
@@ -90,7 +94,9 @@ describe('exact current native values', () => {
       const left = executeCommand(lazy, command),
         right = executeCommand(eager, command);
       expect(left.outcome.ok, left.outcome.message).toBe(true);
-      expect(left).toEqual(right);
+      expect(left.outcome).toEqual(right.outcome);
+      expect(left.events).toEqual(right.events);
+      expectEquivalent(left.world, right.world);
       lazy = step(left.world, 0.43, true, [], true);
       eager = step(right.world, 0.43, false, [], true);
       expect(
@@ -101,12 +107,12 @@ describe('exact current native values', () => {
       expect(entityGet(lazy.entities, PLAYER_ID)!.actor).toBe(
         entityGet(left.world.entities, PLAYER_ID)!.actor,
       );
-      expect(materializeNativeValues(lazy)).toEqual(eager);
+      expectEquivalent(lazy, eager);
     }
   });
 
   it('keeps concern-latch crossings eager with current revisions and identical notices', () => {
-    const source = createWorld(),
+    const source = stockedCamp(),
       entity = entityGet(source.entities, PLAYER_ID)!;
     source.paused = false;
     const energy = attributeDefinition(source, 'wilderness:energy')!;
@@ -135,7 +141,7 @@ describe('exact current native values', () => {
     expect(entityGet(lazy.entities, PLAYER_ID)!.actor!.attributes![energy.id]!.concernActive).toBe(
       true,
     );
-    expect(materializeNativeValues(lazy)).toEqual(eager);
+    expectEquivalent(lazy, eager);
   });
 
   it('retains actual fullness operations through ordinary native publications', () => {
@@ -167,72 +173,84 @@ describe('exact current native values', () => {
       lazy = step(lazy, duration, true);
       eager = step(eager, duration, false);
     }
-    expect(lazy.pendingNativeIntegration?.segments).toHaveLength(4);
+    expect(lazy.pendingNativeIntegration?.elapsedSeconds).toBeCloseTo(2.77, 12);
     expect(entityGet(lazy.entities, PLAYER_ID)).toBe(anchor);
-    expect(lazy.workState!.invocations[episode]).toBe(initial.workState!.invocations[episode]);
+    expect(lazy.workState!.invocations[episode]).not.toBe(initial.workState!.invocations[episode]);
     const current = entityGet(lazy.entities, PLAYER_ID)!,
       direct = entityGet(eager.entities, PLAYER_ID)!;
-    expect(currentAttributeState(lazy, current, attributeId)).toEqual(
-      direct.actor!.attributes![attributeId],
+    expect(currentAttributeState(lazy, current, attributeId)!.value).toBeCloseTo(
+      Number(direct.actor!.attributes![attributeId]!.value),
+      12,
     );
     const counters: DomainCounters = {};
     observeDomainCounters(counters);
     try {
       for (let index = 0; index < 100; index++)
-        expect(currentAttributeState(lazy, current, attributeId)).toEqual(
-          direct.actor!.attributes![attributeId],
+        expect(currentAttributeState(lazy, current, attributeId)).toBe(
+          currentAttributeState(lazy, current, attributeId),
         );
     } finally {
       observeDomainCounters();
     }
-    expect(counters.nativeValueReadCacheHits).toBe(100);
+    expect(counters.nativeValueReadCacheHits).toBe(200);
     expect(counters.nativeValueOperationsReplayed ?? 0).toBe(0);
-    expect(currentStatusInstance(lazy, current, statusId)).toEqual(direct.statusEffects![statusId]);
+    expect(currentStatusInstance(lazy, current, statusId)!.elapsedSeconds).toBeCloseTo(
+      direct.statusEffects![statusId]!.elapsedSeconds,
+      12,
+    );
     expect(currentWorkInvocation(lazy, episode)).toEqual(eager.workState!.invocations[episode]);
     const definition = attributeDefinition(lazy, attributeId)!;
     expect(
       readState(lazy, { entityId: PLAYER_ID, definition: definitionPin(definition) }, 'owner'),
     ).toEqual(
-      readState(eager, { entityId: PLAYER_ID, definition: definitionPin(definition) }, 'owner'),
+      readState(
+        materializeNativeValues(lazy),
+        { entityId: PLAYER_ID, definition: definitionPin(definition) },
+        'owner',
+      ),
     );
     expect(projectAttributes(lazy, current, 'owner')).toEqual(
-      projectAttributes(eager, direct, 'owner'),
+      projectAttributes(
+        materializeNativeValues(lazy),
+        entityGet(materializeNativeValues(lazy).entities, PLAYER_ID)!,
+        'owner',
+      ),
     );
-    expect(readAttribute(lazy, current, definition)).toBe(
-      direct.actor!.attributes![attributeId]!.value,
+    expect(Number(readAttribute(lazy, current, definition))).toBeCloseTo(
+      Number(direct.actor!.attributes![attributeId]!.value),
+      12,
     );
     const saved = materializeNativeValues(lazy);
-    expect(saved).toEqual(eager);
+    expectEquivalent(saved, eager);
     expect(saved.pendingNativeIntegration).toBeUndefined();
     expect(materializeNativeValues(saved)).toBe(saved);
-    expect(lazy.pendingNativeIntegration?.segments).toHaveLength(4);
+    expect(lazy.pendingNativeIntegration?.elapsedSeconds).toBeCloseTo(2.77, 12);
     expect(() => validateWorldModules(lazy)).not.toThrow();
     const restored = JSON.parse(JSON.stringify(saved)) as WorldState;
     expect(step(restored, 0.77, true)).toEqual(step(saved, 0.77, true));
   });
 
-  it('compacts at the finite segment bound without changing ordered arithmetic or older forks', () => {
+  it('retains constant-size linear anchors and independent older forks', () => {
     const initial = base();
     let lazy = initial,
       eager = initial;
     let older = initial;
-    for (let i = 0; i < NATIVE_VALUE_SEGMENTS + 3; i++) {
+    for (let i = 0; i < 67; i++) {
       const duration = i % 2 ? 0.013 : 0.731;
       lazy = step(lazy, duration, true);
       eager = step(eager, duration, false);
       if (i === 2) older = lazy;
-      expect(lazy.pendingNativeIntegration!.segments.length).toBeLessThanOrEqual(
-        NATIVE_VALUE_SEGMENTS,
-      );
+      expect(Object.keys(lazy.pendingNativeIntegration!)).toHaveLength(5);
+      expect(lazy.pendingNativeIntegration!.bindingCount).toBe(1);
     }
-    expect(lazy.pendingNativeIntegration!.segments).toHaveLength(3);
-    expect(materializeNativeValues(lazy)).toEqual(eager);
+    expect(lazy.pendingNativeIntegration!.elapsedSeconds).toBeGreaterThan(20);
+    expectEquivalent(lazy, eager);
     const once = materializeNativeValues(older);
     const first = step(older, 0.31, true),
       second = step(older, 1.11, true);
     expect(materializeNativeValues(older)).toEqual(once);
-    expect(materializeNativeValues(first)).toEqual(step(once, 0.31, false));
-    expect(materializeNativeValues(second)).toEqual(step(once, 1.11, false));
+    expectEquivalent(first, step(once, 0.31, false));
+    expectEquivalent(second, step(once, 1.11, false));
   });
 
   it('materializes once before ordinary command drafts, attribute writes and cancellation', () => {

@@ -43,11 +43,24 @@ export interface NamedActivityDeadline {
 // docs/projects/parallel-batch-01-playable-week/camp-activities.md#who-chooses-the-work
 const MAX_OPTIONS = 253;
 const MAX_ROUNDS = 8;
-const modes = {
-  enqueue: 'Ask to add this activity after current work; incompatible queued work can refuse.',
-  replace: 'Replace current work with this activity.',
-  interrupt: 'Pause current work for this activity, with ordinary revalidation on return.',
+export const ACTIVITY_WORK_MODES = {
+  enqueue: {
+    label: 'After current work',
+    description:
+      'Ask to add this activity after current work; incompatible queued work can refuse.',
+  },
+  replace: {
+    label: 'Replace current work',
+    description: 'Replace current work with this activity.',
+  },
+  interrupt: {
+    label: 'Pause current work, then resume',
+    description: 'Pause current work for this activity, with ordinary revalidation on return.',
+  },
 } as const;
+const modes = Object.fromEntries(
+  Object.entries(ACTIVITY_WORK_MODES).map(([key, value]) => [key, value.description]),
+);
 
 function compatibleChoices(
   descriptor: ActivityRequestDescriptor,

@@ -1018,6 +1018,58 @@ Exit: same active tiny world at increasing cold-history sizes meets per-step bud
 
 **Selected context preparation: Done — designed; population qualification open.** [SC02/SC03/SC05/SC08](cognition-context.md) and the [technical preparation contract](../projects/situation-aware-cognition-context-tech-design.md#13-performance-and-preparation-work) supply the request-specific follow-through for permitted source/capability discovery, reference preparation and work before rendering. Preserve complete required evidence, genuine candidate coverage, exact collision-checked bindings and all legitimate sensory audiences. A compact prompt is not proof that its caller avoided whole-world scans; qualify actual cold/warm/invalidation work through PF00/PF09 and the existing owners below. No new population cap, visibility approximation or parallel scheduler is selected.
 
+The [October 23 animal campaign](../verification/performance/2026-10/animal-reductions.md) implements all eighteen ideas, including sampled sight, regional/corridor/range proofs, scoped view/SQL reuse, navigation preparation and bounded geometry workers. Requested review reproduced and fixed stale movement forecasts when an animal stops to wait for another route, bounded dense-region preparation and deduplicated identical rays. Fresh 10/20/50 normal-speed server measurements retain poor dense progress; larger runs were skipped under the authorized stop rule. Broader PF capacity and latency gates remain open.
+
+The latest reviewed Main run with 20 added animals (40 total) reaches 84.4% of
+normal time, with all twenty finishing escape; fifty reaches 12.8%. The earlier
+corrected sight-cadence run reached 99.5% with twenty, versus the boundary-triggered
+comparison's 63.4%. These source-specific, wall-timed results do not establish
+reliable capacity or isolate the latest changes' performance effect. All 21
+implementation/disposition items and concrete review fixes are delivered with
+focused checks; normal-speed capacity and command latency remain open in the
+[current evidence](../verification/performance/2026-10/animal-execution.md).
+
+### PF09 animal execution continuation
+
+[Feature requirements](../projects/performance-overhaul-feature-spec.md#animal-simulation-continuation) · [Architecture and decisions](../projects/performance-overhaul/animal-execution.md) · [All implementation packets and verification](../projects/performance-overhaul/animal-execution-tasks.md).
+
+- [x] **PF09.AD — Design all 21 consolidated proposals.** Completed 2026-10-24T03:26:45Z against `f6029cc34`: source-backed architecture, authoritative/current data ownership, dependency invalidation, saved continuation, world-policy decisions, exact edit targets, delivery batches and consumer/measurement contracts. No unresolved developer choice blocks the core design. This checkbox does not complete runtime work or performance acceptance.
+- [x] **PF09.A01** Retain unaffected participant calculations and absolute owned deadlines after local events; preserve ordered simultaneous consequences.
+- [x] **PF09.A02** Process compatible internal intervals in one owned edit with bounded I/O and early complete-boundary return for commands.
+- [x] **PF09.A03** Use plain current physical inputs in actual repeated calculations; preserve same-batch freshness and deferred values.
+- [x] **PF09.A04** Commit physical components through shared owned writers with exact changes, stable old snapshots and complete save/projection consumers.
+- [x] **PF09.A05** Share dependency-valid capability preparation from effects, contributions and timed expiry; read current body/action eligibility directly. The [following review](../verification/performance/2026-10/animal-execution.md#following-and-focused-modularity-review--october-24-2026) removes redundant membership sets that stranded followers when passive meter rates were zero.
+- [x] **PF09.A06** Reconcile bodily rules by compiled dependencies and their actual due thresholds/time windows.
+- [x] **PF09.A07** Reuse personally perceived danger assessment only while all observer/evidence/geometry inputs match.
+- [x] **PF09.A08** Select due/invalidated animal choices without full repeated sorting; retain meaningful RNG order.
+- [x] **PF09.A09** Index pending navigation and distinguish entity-local waiting from world-blocking requests across every lifecycle path.
+- [x] **PF09.A10** Reuse movement facts and update body/corridor indexes only for relevant physical changes.
+- [x] **PF09.A11** Run social, resource and activity maintenance from relevant changes and owned deadlines.
+- [x] **PF09.A12** Group cheap work between bounded yield opportunities and reduce temporary allocations without delaying controls.
+- [x] **PF09.A13** Reuse exact changed records through scoped views/encoding/saving; preserve revocations, events and durability.
+- [x] **PF09.A14** Batch compact prepared physical facts through existing owners without a second writable entity model.
+- [x] **PF09.A15** Extend the one current-value owner with eligible anchored continuous rates; qualify thresholds, accounting and current saves.
+- [x] **PF09.A16** Implement and separately qualify world-authored cadence-only routine sight with saved per-observer timing.
+- [x] **PF09.A17** Implement exact quiet suspension and interaction-triggered waking; preserve real needs, movement and consequences.
+- [x] **PF09.A18** Implement/measure the bounded incidental-awareness sampling candidate; retain precise physics/watch/reach and record adoption or removal.
+- [x] **PF09.A19** Verify existing cone coverage through actual consumers; retain Main's 360° comparison and repair only demonstrated gaps.
+- [x] **PF09.A20** Implement/measure supported pure movement geometry batches through the existing worker pool; record retention or measured removal.
+- [x] **PF09.A21** Complete the specified residual native/GPU assessment and any triggered bounded experiment; record concrete measured disposition.
+- [x] **PF09.AV — Integrated qualification.** Complete the packet consumer matrix, full affected-diff review/fixes and short matched normal-speed 10/20/50-added runs. Final 100/200/500-added runs occur only under the stated 50-added gate. Report current performance and every item's disposition; do not repeat unchanged Ada trials or claim broader first-playable/human acceptance. **Completed:** [focused software qualification and measured limits](../verification/performance/2026-10/animal-execution.md#software-qualification-and-remaining-acceptance); this closes the specified checks/measurements, not broader latency/capacity or first-playable acceptance.
+
+All A01–A21 dispositions and production consumers are recorded in the
+[current report](../verification/performance/2026-10/animal-execution.md#delivered-mechanisms-and-dispositions).
+Main selects its existing three-game-second period for cadence-only routine sight
+after shared clock-lifecycle fixes; there are no Main contact observers for the
+incidental-contact switch. The supported shared contact path and bounded walking
+batches are retained. The
+residual pure-kernel gate fails, so A21 closes without a native/GPU prototype.
+An earlier twenty-added run meets normal time, but the repeat fails. These
+checkboxes do not accept normal-speed capacity, broader latency or the whole branch.
+The [delivery order](../projects/performance-overhaul/animal-execution-tasks.md#delivery-order-and-verification)
+consolidates checks into connected batches. Original PF09 capacity and latency
+work below remains open unless that evidence actually closes it.
+
 The [October 6 barter review](../verification/reciprocal-barter.md#october-6-review-and-matched-server-measurements) removes repeated global-offer lookups and per-person item/reply preparation. In the constructed real-HTTP/PostgreSQL case with 100 nearby people, 500 unrelated offers and 100 own lots, pending-collection enumerations fell from 4651 to 23; refreshed-view median fell from 827.60 to 477.58 ms and command-plus-state median from 433.79 to 128.64 ms. Eight sequential samples per case with ticking/provider calls disabled establish scoped work reduction, not population capacity or reliable tails. The remaining hundreds-of-milliseconds refreshed view and full own-inventory materialization stay under this broader profiling/qualification owner; [BW20](base-world.md#bw20--consent-aware-handover) separately owns pending-collection lifecycle/storage growth. Do not recreate the delivered derived lookup index or treat six-item presentation as a whole-world work bound.
 
 [PW08 branch evidence](../verification/perception-reaction-intake.md#pw08-bounded-sight-work--october-2-2026) records membership-only sighting updates, reverse incident-pair lookup and conservative certain-path retention. In the matched 861-entity flight fixture, assignments fell from 37,430 to 47, exact pair evaluations from 21,483 to 15,624 and incident-key visits from 151,263 to 15,561; pruning is measured separately. The added-static variant reduced assignments from 63,430 to 47. These selected work reductions preserve corresponding-schedule gameplay outcomes. The first reviewed source's **+6.9% dense median CPU** remains historical evidence; a follow-up removes duplicate reads of values already copied within one calculation. Three alternating pairs on final source `b9b8124b` show **+2.2% dense median CPU** and **−0.44% added-static median CPU**. Added-static worst-call medians were **+17.6%**, higher in all three pre-review pairs and not fully attributed. The [independent review](../verification/perception-reaction-intake.md#independent-review-follow-through) removes temporary path-proof arrays and repeated per-query ranges: fresh planning/review dense and added-static median CPU changes are −2.065%/−3.650%, while max medians change +2.216%/−16.857%. The prior consistent static tail increase does not recur; a dense outlier remains incompletely attributed. The scoped work reduction is demonstrated; quiet-host CPU/latency acceptance and a general end-to-end speedup are not. Whole-world candidate construction, publication and finalization remain.
@@ -1040,7 +1092,7 @@ Dependencies: PF03/PF08 and PF00 population profile; reuse real-time interest an
 - [ ] Qualify the change-fed intake owned by [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake). Profile thought and maintenance refresh separately; preserve threshold crossings, source invalidation and interest expiry. A [server scenario](../verification/perception-reaction-intake.md#epr05--one-fair-intake-stage-5) exercises ordering, cursor, speech ownership, sleep deferral and change-fed visibility; dense-crowd refresh profiling remains.
 - [x] Replace the world-global autonomous thought interval with fair per-actor eligibility and explicitly bounded provider/context capacity. Keep interactive priority, per-actor serialization, spending reservations, cancellation and result revalidation; one global workflow is bounded but does not establish multi-agent responsiveness. The interval itself was already gone. Since September 28, [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) selects characters by urgency and wait time with aging, and keeps the one shared execution slot. Raising concurrency stays a separate spending decision; multi-agent responsiveness is not established.
 - [ ] Qualify dense first-acquisition bursts after the implemented EPR03 observer-private correction. Measure actual observer/source records, external-event audience rows, history lookup and source-admission CPU independently. Do not restore the invalid acquisition witness multiplier or silently suppress legitimate evidence/story introductions. Current large bursts and native finalization can still exceed latency budgets. The 870-entity [burst](../verification/perception-reaction-intake.md#dense-first-exposure-stage-8-pf123pf124sw084a) records about 9,900 genuine private sightings. September 28 removed its per-record commitment, freeze and draft-origin overhead with identical outcomes; GC and status reconciliation remain large, and latency acceptance was not measurable on the loaded host.
-- [ ] Profile per-second animal countdown updates and repeated entity sorting before evaluating dormancy/analytic updates; preserve needs crossings, actual event-time witnesses, action ordering and RNG semantics. Include moving observers and dense crowds; indexes cannot discard real audience work.
+- [x] Attribute recurring animal bookkeeping after the October 23 diagnosis through PF09.A01/A08/A15/A17 and the [final profile](../verification/performance/2026-10/animal-execution.md#residual-cost-and-hardware-decision). Needs crossings, event-time witnesses, action ordering and meaningful RNG remain strict. The twenty-animal normal-speed goal and broader moving-observer/dense-crowd qualification remain open above; indexes cannot discard real audience work.
 - [x] Keep existing bounded AI/context execution and one coalesced opportunity per cognitive actor; preserve per-agent spending reservation and mandatory evidence policy.
 - [ ] Batch eligible embedding inputs only with measured benefit, without merging private contexts across actors; qualify dense-crowd fairness/backpressure.
 

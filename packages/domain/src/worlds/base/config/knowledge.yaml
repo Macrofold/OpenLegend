@@ -6,3 +6,10 @@ knowledge:
     subject: 1000
 observerIdentity:
   policy: observer-given-names
+socialPerception:
+  id: wilderness:social-perception
+  version: 1
+  implementation: reliable-individuals
+  recognizableSpecies: [human]
+  recognitionChannels: [sight, linguistic-voice]
+  addressing: detected-linguistic

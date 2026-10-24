@@ -1,9 +1,9 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet, entityValues } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import {
   advanceWorld,
-  createWorld,
   executeCommand,
   inventoryFor,
   NPC_ID,
@@ -89,7 +89,7 @@ describe('event-time observer facts', () => {
   it.each(['gather', 'strike'] as const)(
     'keeps only visible activity after an actual %s on a hidden target',
     (family) => {
-      const result = perform(createWorld(73), family, false);
+      const result = perform(stockedCamp(73), family, false);
       const own = projectEventEvidence(
         result.event,
         evidence(result.world, result.event, PLAYER_ID),
@@ -113,7 +113,7 @@ describe('event-time observer facts', () => {
   it.each(['gather', 'strike'] as const)(
     'retains observable %s details and owner-only bodily values',
     (family) => {
-      const result = perform(createWorld(73), family, true);
+      const result = perform(stockedCamp(73), family, true);
       const projected = projectEventEvidence(result.event, evidence(result.world, result.event));
       expect(projected.type).toBe(result.event.type);
       expect(projected.targetId).toBe(result.targetId);
@@ -132,7 +132,7 @@ describe('event-time observer facts', () => {
   );
 
   it('keeps a real offer’s carried terms with its parties while witnesses see the offer', () => {
-    const world = createWorld(73);
+    const world = stockedCamp(73);
     arrange(world, 'mara', true);
     const item = inventoryFor(world, PLAYER_ID).find((entry) => entry.definitionId === 'wood')!;
     expect(item).toBeDefined();
@@ -151,16 +151,22 @@ describe('event-time observer facts', () => {
     const witness = projectEventEvidence(event, evidence(result.world, event));
     expect(witness).toMatchObject({ type: 'activity-observed', data: {} });
     expect(witness.text).not.toContain(world.itemDefinitions[item.definitionId]!.name);
-    expect(projectEventEvidence(event, evidence(result.world, event, PLAYER_ID)).text).toContain(
-      world.itemDefinitions[item.definitionId]!.name,
-    );
-    expect(projectEventEvidence(event, evidence(result.world, event, 'mara')).text).toContain(
-      world.itemDefinitions[item.definitionId]!.name,
-    );
+    for (const participant of [PLAYER_ID, 'mara']) {
+      const receipt = result.events.find(
+        (entry) =>
+          entry.type === 'item-offered' &&
+          entry.data?.personalAgreement === true &&
+          entry.audience.includes(participant),
+      )!;
+      expect(receipt).toBeDefined();
+      expect(
+        projectEventEvidence(receipt, evidence(result.world, receipt, participant)).text,
+      ).toContain(world.itemDefinitions[item.definitionId]!.name);
+    }
   });
 
   it('keeps creator-added carried possessions private, and observes a visible ground creation', () => {
-    const world = createWorld(73);
+    const world = stockedCamp(73);
     const carried = createGodItem(world, {
       id: 'disclosure-private-creation',
       definitionId: 'wood',
@@ -188,7 +194,7 @@ describe('event-time observer facts', () => {
   });
 
   it('does not disclose a hidden third participant or an unknown execution field', () => {
-    const world = createWorld(73);
+    const world = stockedCamp(73);
     arrange(world, 'mara', true);
     place(world, 'tavin', 60, 20);
     const events: WorldEvent[] = [];
@@ -225,7 +231,7 @@ describe('event-time observer facts', () => {
   });
 
   it('preserves target-only contact without revealing a distant shooter, and excludes unrelated observers', () => {
-    const world = createWorld(73);
+    const world = stockedCamp(73);
     arrange(world, 'mara', true);
     place(world, PLAYER_ID, 60, 20);
     const events: WorldEvent[] = [];
@@ -266,7 +272,7 @@ describe('event-time observer facts', () => {
   });
 
   it('uses the same stored facts through cold PostgreSQL history and required cognition evidence', async () => {
-    const store = await testRepository();
+    const store = await testRepository(undefined, stockedCamp());
     const service = new WorldService(store, readConfig({ OPEN_LEGEND_GOD_MODE: 'true' }));
     cleanup.push(async () => {
       service.releaseHostWork();

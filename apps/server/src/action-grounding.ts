@@ -290,7 +290,7 @@ export async function groundActionAttempts(
       );
       const activityRequests = {
         requests: activityRequestDescriptors(world),
-        ...activityRequestChoices(world, actorId),
+        ...activityRequestChoices(world, actorId, observed),
         simTime: world.simTime,
       };
       const activityEntityIds = [
@@ -555,7 +555,9 @@ export async function groundActionAttempts(
                   field.type === 'entity'
                     ? observerDescription(world, actorId, String(value))
                     : field.type === 'definition'
-                      ? (world.itemDefinitions[String(value)]?.name ?? String(value))
+                      ? field.definitionKind === 'recipe'
+                        ? (world.recipes[String(value)]?.name ?? 'Unavailable known method')
+                        : (world.itemDefinitions[String(value)]?.name ?? 'Unavailable material')
                       : field.type === 'time' && typeof value === 'number'
                         ? gameTime(value, world.statusEffectPolicy.clockOffsetHours)
                         : String(value);

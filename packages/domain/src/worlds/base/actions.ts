@@ -1,17 +1,16 @@
+import { nativeResponseProfile, nativeResponseMovementFactor } from '../../native-response.js';
 import { WILDERNESS_NEEDS } from './needs.js';
 import { PERCEPTION_RULES } from './senses.js';
 import { scarFactor } from '../../scar-effects.js';
+import { readOnlyDraftView } from '../../draft.js';
 
 // Bundled balance values consumed by the existing finite native adapters.
 // docs/worlds/base/survival.md
-export const BASE_GATHER_QUANTITY = 2;
 export const BASE_ACTION_DEFAULTS = {
   movementTilesPerSecond: 0.11,
   sightRadius: PERCEPTION_RULES.sightRadius,
   interactionRadius: 1.6,
-  animalFleeTilesPerSecond: 0.055,
   ...WILDERNESS_NEEDS,
-  gatherQuantity: BASE_GATHER_QUANTITY,
   harvestSeconds: 84,
   shotSeconds: 18,
 } as const;
@@ -36,10 +35,11 @@ export function gatheringDescription(
  * food preparation definitions. docs/worlds/base/actions.md */
 export const BASE_FAMILY_FACTS = {
   /** Completed steps whose item a later step may use (harvest only through a named port). */
-  itemOutputs: ['gather', 'prepare', 'craft', 'cook', 'fish', 'harvest'],
+  itemOutputs: ['gather', 'craft', 'cook', 'fish', 'harvest'],
   /** Of those, the ones that record a single item receipt a plain later step can use. */
-  singleItemReceipt: ['gather', 'prepare', 'craft', 'cook', 'fish'],
+  singleItemReceipt: ['gather', 'cook', 'fish'],
   toolFields: {
+    'impact-boundary': ['toolId'],
     strike: ['weaponItemId'],
     hunt: ['weaponItemId', 'ammoItemId'],
     aim: ['weaponItemId', 'ammoItemId'],
@@ -48,6 +48,9 @@ export const BASE_FAMILY_FACTS = {
     fish: ['itemId'],
   } as Readonly<Record<string, readonly string[]>>,
   unitPerCommand: ['eat'],
+  // Cancelling unreleased work releases its claims; a released projectile keeps
+  // its independent contact and accounting owner after this activity ends.
+  deadlineSafeCommands: ['hunt', 'shoot-once'],
   unpausableWhileWorking: ['strike', 'hunt', 'aim', 'shoot-once', 'practice-shot', 'coaching'],
 } as const;
 
@@ -55,16 +58,22 @@ export const BASE_FAMILY_FACTS = {
 export function nativeMovementSpeed(
   world: import('../../types.js').WorldState,
   entity: import('../../types.js').Entity,
-  fleeing = false,
 ): number {
+  entity = readOnlyDraftView(entity);
   if (entity.actor?.action?.evasion) return entity.actor.action.evasion.speed;
+  const binding =
+    entity.actor?.action?.strikeMotion?.locomotion ?? entity.actor?.action?.nativeLocomotion;
+  const profile = binding && nativeResponseProfile(world, binding.profile);
+  const nativeSpeed = binding && profile?.locomotion[binding.locomotion]?.[binding.mode];
+  if (binding && nativeSpeed === undefined)
+    throw new Error('Native movement lost its pinned locomotion definition.');
   return (
-    (fleeing
-      ? BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond
-      : BASE_ACTION_DEFAULTS.movementTilesPerSecond) *
-    (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200) *
-    (entity.threat?.policy.movementFactor ?? 1) *
-    scarFactor(world, entity, 'movementFactor')
+    (nativeSpeed ??
+      BASE_ACTION_DEFAULTS.movementTilesPerSecond * (entity.threat?.policy.movementFactor ?? 1)) *
+    (profile
+      ? nativeResponseMovementFactor(world, entity, profile)
+      : (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200) *
+        scarFactor(world, entity, 'movementFactor'))
   );
 }
 

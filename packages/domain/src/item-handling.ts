@@ -1,3 +1,4 @@
+import { validateContentsExposureDefinitions } from './contents-exposure.js';
 import { entityDelete, entityGet, entityOwn, entitySet } from './entity-collection.js';
 import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import { subjectNarration, narrationTemplate } from './narration.js';
@@ -12,6 +13,8 @@ import {
   validateObjects,
   declareObjectOwner,
   itemAvailabilityChanged,
+  retireEmptyItemPile,
+  captureObjectPlacementIndex,
 } from './objects.js';
 import { recordSemanticChange } from './dependencies.js';
 import { WorkBudgetError } from './work-budget.js';
@@ -110,6 +113,7 @@ export function releaseBodyPossessions(world: WorldState, body: Entity): boolean
 export function atomicObjects<T>(world: WorldState, operation: (candidate: WorldState) => T): T {
   const candidate = draftWorld(world),
     result = operation(candidate),
+    installPlacementIndex = captureObjectPlacementIndex(candidate),
     committed = finishWorld(candidate);
   for (const id of changedEntityIds(committed) ?? []) {
     const entity = entityGet(committed.entities, id);
@@ -124,6 +128,7 @@ export function atomicObjects<T>(world: WorldState, operation: (candidate: World
     if (wasRoot !== isRoot) rootMembershipChanged(world, id);
   }
   world.objectState = committed.objectState;
+  installPlacementIndex?.(world);
   world.objectLineage = committed.objectLineage;
   // Movement's split/merge carries action evidence with the real units. Keep the
   // existing occurrence references attached while publishing the moved-item links.
@@ -180,10 +185,7 @@ export function pickUpItems(
     pile.id,
     { targetMustBeVisible: true },
   );
-  if (pile.kind === 'item-pile' && !itemsForOwner(world, pileId).length) {
-    entityDelete(world.entities, pileId);
-    rootMembershipChanged(world, pileId);
-  }
+  retireEmptyItemPile(world, pileId);
   return received;
 }
 /** Shared read-only eligibility keeps inventory menus cheap without simulating a transfer.
@@ -241,8 +243,9 @@ export function dropItems(
   itemId: string,
   quantity: number,
   events: WorldEvent[],
+  preserveIdentity = false,
 ): string | null {
-  return dropSelectedItems(world, actor, [{ itemId, quantity }], events);
+  return dropSelectedItems(world, actor, [{ itemId, quantity }], events, preserveIdentity);
 }
 /** One chosen drop can contain several retained physical origins. */
 export function dropSelectedItems(
@@ -250,6 +253,7 @@ export function dropSelectedItems(
   actor: Entity,
   sources: ReadonlyArray<{ itemId: string; quantity: number }>,
   events: WorldEvent[],
+  preserveIdentity = false,
 ): string | null {
   for (const source of sources) {
     const reason = dropItemReason(world, actor, source.itemId, source.quantity);
@@ -266,7 +270,14 @@ export function dropSelectedItems(
     pileId = atomicObjects(world, (candidate) => {
       const pile = pileAt(candidate, { ...worldPosition(actor), surfaceId });
       for (const source of sources)
-        moveLot(candidate, source.itemId, pile.id, source.quantity, 'drop', sources.length === 1);
+        moveLot(
+          candidate,
+          source.itemId,
+          pile.id,
+          source.quantity,
+          'drop',
+          sources.length === 1 && !preserveIdentity,
+        );
       return pile.id;
     });
   } catch (error) {
@@ -413,6 +424,7 @@ export function validateItemHandling(world: WorldState): void {
   )
     throw new Error('Invalid item-handling policy.');
   validateBodyProfile(policy.objectBody);
+  validateContentsExposureDefinitions(world);
   for (const definition of Object.values(world.itemDefinitions)) {
     validateItemCharacteristics(definition);
     if (definition.portable !== undefined && typeof definition.portable !== 'boolean')

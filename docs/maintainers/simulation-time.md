@@ -4,6 +4,8 @@
 
 [Simulation time](../simulation-time.md) owns the engine contract; [base-world time](../worlds/base/time.md) owns current fidelity limits. This focused PF13 tracker replaces the previously unresolved link to a PF13 section in the general performance tracker. PF12 remains the broader scaling program; SW and EPR retain geometry, motion and sensory ownership. The [boundary catalogue](simulation-boundaries.md) records future opportunities, not a second task list.
 
+**Selected continuation designed — 2026-10-24:** [PF09.A01/A02/A06/A15/A16](performance.md#pf09-animal-execution-continuation) now own participant-local deadline retention, bounded shared edits, compiled rule dependencies, eligible anchored values and independent saved sight cadence. The [technical chapter](../projects/performance-overhaul/animal-execution.md) resolves that concrete design; implementation remains open there. Existing PF13 delivery and broader unresolved coupled laws below retain their status; do not create duplicate execution checklists.
+
 ### Delivered implementation
 
 - [x] **PF13.1** Separate game-clock conversion from integration and rendering frequency. Accept finite elapsed game time and return a bounded completed prefix; `maxIntervals` limits computation, not simulated seconds. Keep the existing host wake and real-time routine durability policy.

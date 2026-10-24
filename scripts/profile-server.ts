@@ -1,5 +1,6 @@
 import { toolHttp, toolStream } from './network.js';
 import { SSEFramer } from '@open-legend/network';
+import { learnRecipe } from '../packages/domain/src/knowledge.js';
 import { profilingOptions } from './performance/profiling-options.js';
 import { workspaceBindings } from './performance/workspace-bindings.js';
 import {
@@ -780,7 +781,7 @@ try {
         },
       ],
     }),
-  );
+  ).world;
   const seedIds = new Set(seedRoots.map((entity) => entity.id));
   const routineActorIds = routineFixture
     ? worldRootEntities(seeded)
@@ -790,6 +791,15 @@ try {
         )
         .map((entity) => entity.id)
     : [];
+  // The diagnostic supplies method knowledge explicitly; it does not infer it
+  // from body shape or manufacture an autonomous goal.
+  for (const actorId of routineActorIds)
+    for (const recipe of Object.values(seeded.recipes))
+      if (
+        recipe.source.kind === 'fixed-transform' &&
+        ['base:clean-fibers', 'base:twist-cord'].includes(recipe.source.definition.id)
+      )
+        learnRecipe(seeded, actorId, recipe.id, 'authored', 'diagnostic:routine-material-methods');
   const routineResources: Array<{
     actorId: string;
     id: string;
@@ -1523,11 +1533,12 @@ try {
         for (const definitionId of ['raw_fiber', 'berries'])
           if (
             gatheringYield(
+              game.service.world,
               observed.inventory.map(
                 (item) => game.service.world.itemDefinitions[item.definitionId],
               ),
               definitionId,
-            ) !== gatheringYield([], definitionId)
+            ) !== gatheringYield(game.service.world, [], definitionId)
           )
             throw new Error(
               `Long-soak resident ${actorId} has a tool outside the finite no-tool stock bound.`,
@@ -1688,8 +1699,15 @@ try {
     const routineCommand = (actorId: string, phase: number): CommandInput | undefined => {
       const observed = game.service.observe(actorId, { includeMemories: false });
       if (!observed) return;
-      if (phase === 1 || phase === 2)
-        return { type: 'prepare', preparation: phase === 1 ? 'fiber' : 'cord' };
+      if (phase === 1 || phase === 2) {
+        const method = observed.knownRecipes.find(
+          (recipe) =>
+            recipe.source.kind === 'fixed-transform' &&
+            recipe.source.definition.id === (phase === 1 ? 'base:clean-fibers' : 'base:twist-cord'),
+        );
+        if (!method) throw new Error('Routine actor lacks the required material method.');
+        return { type: 'craft', recipeId: method.id };
+      }
       if (phase === 4) {
         const food = observed.inventory.find((item) =>
           observed.itemDefinitions.some((d) => d.id === item.definitionId && d.nutrition),

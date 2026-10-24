@@ -1,5 +1,45 @@
+import type { PreparedNavigationPublication } from './navigation/messages.js';
+import { completeGeometryBatch } from '@open-legend/spatial';
+import { GeometryBatches } from './geometry-batches.js';
+import { observerDescription, cooperationReceptionProblem } from '@open-legend/domain';
+import { compactCommandInput, cooperationProposalInput } from './cooperation-input.js';
+import { endsConstructionConsent, validContributionTerms } from '@open-legend/domain';
+import {
+  defaultCoverProfile,
+  materialCoverProfile,
+  constructionPermissionBatch,
+  expireConstructionContributions,
+  absorbConstructionPermissionBatch,
+  type ConstructionPermissionChanges,
+  definitionPin,
+  sameDefinitionPin,
+  tracksMaterialOrigins,
+  compileWorkBatch,
+  campAssetPermissionCurrent,
+  gatePublicationPolicyCurrent,
+  structuralExposurePolicyCurrent,
+  type CampAssetPermission,
+} from '@open-legend/domain';
+import { workBatchDigest, previewWorkBatch } from './work-batches.js';
+import type { WorkBatchRequest, WorkBatchPreview } from '@open-legend/protocol';
+import { interactiveAllowance } from './cognition-budget.js';
+import {
+  canSpeak,
+  activelyParticipates,
+  capabilityBlocked,
+  canAddressSpeech,
+  orderedRecordOwn,
+  canonicalJson,
+} from '@open-legend/domain';
+import { reconcileNativeControl } from '@open-legend/domain';
 import { entityGet, entityKeys, entityValues, projectWorldHistory } from '@open-legend/domain';
 import type { ConsumptionContext } from '@open-legend/network';
+import {
+  prepareNativeChoice,
+  isActivityCommand,
+  type WorkTransitionMode,
+  type PreparedNativeChoice,
+} from '@open-legend/domain';
 import { resolveInventoryGroup } from './inventory-groups.js';
 import {
   decisionClaimCurrent,
@@ -9,7 +49,11 @@ import {
 import { DecisionClaimLost } from './decision-state.js';
 import { decisionPolicyDigest } from './decision-task.js';
 import { assemblyView } from './construction.js';
-import { orderedRecordSet, reconcileConstructionAuthority } from '@open-legend/domain';
+import {
+  orderedRecordSet,
+  reconcileConstructionAuthority,
+  reconcileCampAssetAuthority,
+} from '@open-legend/domain';
 import { endsCoachingConsent, endsOutingConsent } from '@open-legend/domain';
 import {
   inventoryFor,
@@ -21,9 +65,22 @@ import {
   compileAssemblyRest,
   beginConstructionShower,
   constructionProfile,
+  boundaryConstructionProfile,
   constructionShowerText,
 } from '@open-legend/domain';
-import { constructionPlanSchema } from './construction.js';
+import { boundaryConstructionChoices } from './construction.js';
+import {
+  hearthBounds,
+  hearthDefinition,
+  hearthApproach,
+  pointVisionQuery,
+  personallyKnownPlaceReports,
+  nativeActionIcon,
+  installedActionMeaning,
+  nativeCommandSupported,
+} from '@open-legend/domain';
+import type { HearthConstructionView, HearthPlan } from '@open-legend/protocol';
+import { prepareCandidateNavigation } from './navigation/preparation.js';
 import {
   assemblyPermission,
   assemblyRoot,
@@ -44,6 +101,9 @@ import {
 import type { ConstructionView, ConstructionShape } from '@open-legend/protocol';
 import {
   compileAssemblyActivity,
+  prepareBoundaryPlan,
+  boundaryPlanShapes,
+  boundaryRemovalOperations,
   type ConstructionPermission,
   type AssemblyPlan,
 } from '@open-legend/domain';
@@ -58,10 +118,9 @@ import {
   bindActivityRequest,
   combatHelpBinding,
   reviewActivityRequest,
-  isCookingInputRole,
   BASE_FOOD_ACTION_WORDING,
 } from '@open-legend/domain';
-import { resolveKnownPlaceMove, knownPlaceReference } from './known-places.js';
+import { resolveKnownPlaceMove } from './known-places.js';
 import type { StoryJob } from './history.js';
 import {
   prepareHistoryEdit,
@@ -80,6 +139,8 @@ import {
   type Outcome,
 } from '@open-legend/domain';
 import { knowledgeDocument, canRememberSubject } from '@open-legend/domain';
+import { encounterPreferenceBinding } from '@open-legend/domain';
+import { encounterControlReference } from './entity-references.js';
 import { HostWork } from './host-work.js';
 import { WorkBudgetError } from '@open-legend/domain';
 import { changeParticipation } from '@open-legend/domain';
@@ -87,6 +148,7 @@ import {
   lethalAttackOffer,
   bodyPolicy,
   observerName,
+  observerGivenName,
   nativeActivityView,
   type LethalPermission,
 } from '@open-legend/domain';
@@ -109,10 +171,23 @@ import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { declareOwnership, custodian, type OwnershipRequest } from '@open-legend/domain';
 import { inventoryTotals, projectStatusEffects } from '@open-legend/domain';
 import { admitStatusEffectPolicy } from '@open-legend/domain';
-import { completeNavigation, navigationBlocked, spatialMap } from '@open-legend/domain';
+import {
+  completeNavigationBatch,
+  type NavigationCompletion,
+  navigationBlocked,
+  spatialMap,
+  supportedPosition,
+  nativeRefugeBatch,
+  type NativeRefugePreparations,
+  type PreparedNativeRefuges,
+  pendingBoundaryExitPreparation,
+  type BoundaryExitBatch,
+  type BoundaryExitPreparations,
+  type PreparedBoundaryExits,
+} from '@open-legend/domain';
 import { initializeCollisionRuntime } from '@open-legend/spatial/rapier';
-import type { NavigationRequest, NavigationResult } from '@open-legend/spatial';
-import { SPEECH_VOLUMES, type SpeechVolume } from '@open-legend/domain';
+import { finitePoint } from '@open-legend/spatial';
+import type { SpeechVolume } from '@open-legend/domain';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
@@ -134,6 +209,7 @@ import {
   timed,
   countMetric,
   gaugeMetric,
+  recordBackgroundFailure,
   beginTiming,
   endTiming,
   profilingEnabled,
@@ -148,7 +224,6 @@ import {
   editStoryMechanism,
   type StoryPolicy,
 } from '@open-legend/domain';
-import { changeConversation, leaveConversation } from '@open-legend/domain';
 import { changeFamilyTree } from '@open-legend/domain';
 import { familyPeople, projectFamily } from './family-view.js';
 import type { FamilyEdit } from '@open-legend/protocol';
@@ -157,7 +232,6 @@ import { enableActorCognition } from '@open-legend/domain';
 import { hasMemory } from '@open-legend/domain';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
-import { z } from 'zod';
 import {
   createBaseStartingWorld,
   baseWorldInitialConstructionSeeds,
@@ -191,6 +265,7 @@ import {
 } from '@open-legend/domain';
 import type {
   ApiResult,
+  PlayerInteractionAvailability,
   CommandInput,
   CommandReceiptResult,
   GodPersonEditorView,
@@ -210,175 +285,6 @@ import type { CreationActivationReceipt } from './creation-target-contracts.js';
 import { prepareWorldForStartup } from './initial-world-preparation.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { primaryActionRefusal } from './action-catalogue.js';
-
-const id = z
-  .string()
-  .min(1)
-  .max(120)
-  .regex(/^[a-zA-Z0-9_.:-]+$/);
-export const commandInputSchema = z
-  .object({
-    primaryAction: z
-      .object({ targetId: id, actionId: z.string().min(1) })
-      .strict()
-      .optional(),
-    type: z.enum([
-      'construction',
-      'construction-rest',
-      'activity',
-      'activity-request',
-      'conversation',
-      'say',
-      'pickup',
-      'drop',
-      'transfer-item',
-      'split-item',
-      'merge-item',
-      'unequip',
-      'move',
-      'evade',
-      'follow',
-      'confirm-attempt',
-      'withdraw-attempt',
-      'gather',
-      'prepare',
-      'craft',
-      'equip',
-      'guard',
-      'strike',
-      'hunt',
-      'aim',
-      'shoot-once',
-      'release-shot',
-      'practice-shot',
-      'coaching',
-      'harvest',
-      'cook',
-      'fish',
-      'tend-fire',
-      'handover',
-      'outing',
-      'eat',
-      'status-effect',
-      'replenish',
-      'inspect-inventory',
-      'inspect-activities',
-      'cancel',
-      'recover',
-      'respawn',
-      'treat-scar',
-      'teach',
-      'learn-record',
-    ]),
-    constructionPlan: constructionPlanSchema.optional(),
-    bay: z.number().int().nonnegative().optional(),
-    purpose: z.string().trim().min(1).max(120).optional(),
-    activityFamilyId: id.optional(),
-    activityArguments: z
-      .record(id, z.union([z.string().min(1).max(120), z.number().finite(), z.boolean()]))
-      .refine((value) => Object.keys(value).length <= 16)
-      .optional(),
-    methodId: id.optional(),
-    bindings: z
-      .record(
-        id,
-        z.union([
-          z.string().min(1).max(1500),
-          z
-            .object({
-              x: z.number().finite(),
-              y: z.number().finite(),
-              z: z.number().finite(),
-              surfaceId: id,
-            })
-            .strict(),
-        ]),
-      )
-      .refine((value) => Object.keys(value).length <= ACTIVITY_LIMITS.nodes)
-      .optional(),
-    resume: z.boolean().optional(),
-    historyAfter: z.number().int().min(-1).optional(),
-    methodAfter: z.number().int().min(0).max(ACTIVITY_LIMITS.acquisitions).optional(),
-    after: id.optional(),
-    containerId: id.optional(),
-    expectedScope: z.string().max(16000).optional(),
-    conversationId: id.optional(),
-    text: z.string().trim().min(1).max(1500).optional(),
-    volume: z.enum(SPEECH_VOLUMES).optional(),
-    facing: z.number().finite().optional(),
-    aimId: id.optional(),
-    autoEquip: z.boolean().optional(),
-    generation: z.number().int().nonnegative().optional(),
-    operation: z.enum(['join', 'leave']).optional(),
-    effectOperation: z.enum(['activate', 'deactivate']).optional(),
-    fireOperation: z.enum(['light', 'fuel', 'extinguish']).optional(),
-    coachingOperation: z.enum(['request', 'accept', 'decline', 'withdraw', 'feedback']).optional(),
-    episodeId: id.optional(),
-    handoverOperation: z.enum(['offer', 'counter', 'accept', 'decline', 'withdraw']).optional(),
-    opponentId: id.optional(),
-    outingOperation: z.enum(['help', 'invite', 'accept', 'decline', 'leave']).optional(),
-    outingId: id.optional(),
-    outingMode: z.enum(['enqueue', 'replace', 'interrupt']).optional(),
-    destinationId: id.optional(),
-    offerId: id.optional(),
-    expectedOfferRevision: z.number().int().nonnegative().safe().optional(),
-    requestedItem: z
-      .object({
-        itemId: id,
-        quantity: z.number().int().positive().safe(),
-        expectedRevision: z.number().int().nonnegative().safe().optional(),
-        placementRevision: z.number().int().nonnegative().safe().optional(),
-        expectedContentsRevision: z.number().int().nonnegative().safe().optional(),
-      })
-      .strict()
-      .optional(),
-    inventoryGroup: z.string().min(1).max(4096).optional(),
-    targetId: id.optional(),
-    definitionId: id.optional(),
-    distance: z.number().min(1.5).max(12).optional(),
-    attemptId: id.optional(),
-    scarId: id.optional(),
-    lethalReviewId: id.optional(),
-    itemId: id.optional(),
-    recipeId: id.optional(),
-    recordPin: z
-      .object({ id, version: z.number().int().positive(), digest: z.string().min(1).max(128) })
-      .strict()
-      .optional(),
-    attributeId: id.optional(),
-    ammunitionId: id.optional(),
-    position: z
-      .object({
-        x: z.number().finite(),
-        y: z.number().finite(),
-        z: z.number().finite(),
-        surfaceId: id,
-      })
-      .strict()
-      .optional(),
-    knownPlace: knownPlaceReference.optional(),
-    expectedRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
-    expectedActionId: id.optional(),
-    placementRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
-    expectedContentsRevision: z
-      .number()
-      .int()
-      .nonnegative()
-      .max(Number.MAX_SAFE_INTEGER)
-      .optional(),
-    targetRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
-    quantity: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
-    preparation: z.enum(['fiber', 'cord']).optional(),
-    preparationId: id.optional(),
-    preparationVersion: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
-    preparationDigest: z.string().min(1).max(128).optional(),
-    inputs: z
-      .record(z.string().refine(isCookingInputRole), id)
-      .refine((value) => JSON.stringify(value).length <= ACTIVITY_LIMITS.recordBytes)
-      .optional(),
-  })
-  .strict();
-export const requestIdSchema = id;
 
 function commandRecoveryFingerprint(input: CommandInput, scope: RequestScope): string {
   // A reconnect may read its committed result after taking control again. It cannot execute
@@ -494,6 +400,72 @@ interface PresentationReleaseSelection {
 }
 
 export class WorldService {
+  private readonly boundaryExitResults = new Map<
+    string,
+    PreparedBoundaryExits & { actionId: string }
+  >();
+  private boundaryExitMap?: WorldState['map'];
+  private boundaryExitTimeline?: string;
+  get boundaryExitPreparations(): BoundaryExitPreparations {
+    const map = spatialMap(this.world);
+    if (this.boundaryExitMap !== map || this.boundaryExitTimeline !== this.timelineId) {
+      this.boundaryExitResults.clear();
+      this.boundaryExitMap = map;
+      this.boundaryExitTimeline = this.timelineId;
+    }
+    for (const [id, answer] of this.boundaryExitResults) {
+      const action = entityGet(this.world.entities, id)?.actor?.action;
+      if (action?.id !== answer.actionId || !action.assemblyExitPending)
+        this.boundaryExitResults.delete(id);
+    }
+    return this.boundaryExitResults;
+  }
+  /** Resolve current operational grants at execution, never from a model's offer. */
+  get nativeExecutionPermissions() {
+    return {
+      constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),
+      campAssetPermissions: this.store.authority!.campAssetPermissions(this.world.id),
+    };
+  }
+  get constructionNavigationContext() {
+    return {
+      permissions: this.store.authority!.constructionPermissions(this.world.id),
+      campAssets: this.store.authority!.campAssetPermissions(this.world.id),
+      boundaryExits: this.boundaryExitPreparations,
+    };
+  }
+  pendingBoundaryExit(actorId: string) {
+    const context = this.constructionNavigationContext;
+    return pendingBoundaryExitPreparation(
+      this.world,
+      actorId,
+      context.permissions,
+      context.campAssets,
+      context.boundaryExits,
+    );
+  }
+  private readonly nativeRefugeResults = new Map<string, PreparedNativeRefuges>();
+  private nativeRefugeMap?: WorldState['map'];
+  private nativeRefugeTimeline?: string;
+  get nativeRefugePreparations(): NativeRefugePreparations {
+    const map = spatialMap(this.world);
+    if (this.nativeRefugeMap !== map || this.nativeRefugeTimeline !== this.timelineId) {
+      if (this.nativeRefugeResults.size)
+        countMetric('navigation.nativeRefugeRetiredAnswers', this.nativeRefugeResults.size);
+      this.nativeRefugeResults.clear();
+      this.nativeRefugeMap = map;
+      this.nativeRefugeTimeline = this.timelineId;
+    }
+    for (const [id, answer] of this.nativeRefugeResults) {
+      const actor = entityGet(this.world.entities, id);
+      if (!actor || nativeRefugeBatch(this.world, actor)?.key !== answer.key) {
+        countMetric('navigation.nativeRefugeRetiredAnswers');
+        this.nativeRefugeResults.delete(id);
+      }
+    }
+    return this.nativeRefugeResults;
+  }
+
   private saved!: SavedWorld;
   private assetAuthorityUnsubscribe?: () => void;
   private readonly personMemoryPage = createPersonMemoryPager();
@@ -679,10 +651,20 @@ export class WorldService {
 
   readonly ready: Promise<void>;
   private readonly hostWork = new HostWork(this);
+  private readonly geometryBatches = new GeometryBatches();
+  get geometryStatistics() {
+    return {
+      batches: this.geometryBatches.batches,
+      sightQueries: this.geometryBatches.sightQueries,
+      walkingQueries: this.geometryBatches.walkingQueries,
+      failures: this.geometryBatches.failures,
+    };
+  }
   releaseHostWork(): void {
     this.assetAuthorityUnsubscribe?.();
     this.assetAuthorityUnsubscribe = undefined;
     this.hostWork.close();
+    this.geometryBatches.close();
   }
   private readonly mutationLane = new WorkLane('mutation');
   private mutationContext = new AsyncLocalStorage<{ active: boolean }>();
@@ -856,7 +838,7 @@ export class WorldService {
     this.persistedRevision = existing?.revision ?? 0;
     this.persistedEvents = this.saved.world.events;
     this.viewRevision = this.persistedRevision;
-    if (existing) await store.authority.refreshConstruction(this.saved.world.id);
+    if (existing) await store.authority.refreshPermissions(this.saved.world.id);
     if (createdActivation) {
       // This world was fully prepared and reviewed before its first transaction. A host
       // retry must not replay observations, traits, grants or starting-scene effects.
@@ -876,9 +858,21 @@ export class WorldService {
         actorOwners,
         store.authority.constructionPermissions(this.saved.world.id),
         !existing,
+        store.authority.campAssetPermissions(this.saved.world.id),
       );
       this.saved = updateMilestones(this.saved, this.saved.world.events);
     }
+    const startupContributions = constructionPermissionBatch(
+      this.saved.world.id,
+      store.authority.constructionPermissions(this.saved.world.id),
+    );
+    this.saved = {
+      ...this.saved,
+      world: updateWorld(this.saved.world, (world) => {
+        if (expireConstructionContributions(world, startupContributions))
+          reconcileConstructionAuthority(world, startupContributions.permissions);
+      }),
+    };
     // Startup initialization can add actor state, so use the ordinary diff once.
     const startupHistory = this.saved.world;
     if (store.history) {
@@ -895,12 +889,23 @@ export class WorldService {
           undefined,
           {
             after: startupHistory,
+            ...(startupContributions.effects.length
+              ? {
+                  constructionChanges: {
+                    effects: startupContributions.effects,
+                    updates: [...startupContributions.updates.values()],
+                  },
+                }
+              : {}),
             ...(!createdActivation
               ? { authorityBindings: bindings, authorityOwners: actorOwners }
               : {}),
             ...(!existing
               ? {
-                  constructionSeeds: baseWorldInitialConstructionSeeds(this.saved.world),
+                  constructionSeeds:
+                    config.worldPreset === 'wilderness'
+                      ? baseWorldInitialConstructionSeeds(this.saved.world)
+                      : [],
                 }
               : {}),
           },
@@ -911,7 +916,7 @@ export class WorldService {
       throw error;
     }
     if (store.releaseHistory) this.saved = store.releaseHistory(this.saved);
-    if (!existing) await store.authority.refreshConstruction(this.saved.world.id);
+    if (!existing) await store.authority.refreshPermissions(this.saved.world.id);
     freezeWorld(this.saved.world);
     this.rememberPersistedMemorySources();
     this.persistedEvents = this.saved.world.events;
@@ -1245,27 +1250,11 @@ export class WorldService {
                 this.connectionPreferences.delete(previous.accountId);
             }
           }
-          await this.reconcileDisconnectedConversation();
           await this.reconcileParticipation();
           if (this.world.paused !== this.paused) await this.syncPause();
         }),
       ),
     );
-  }
-  private async reconcileDisconnectedConversation(): Promise<void> {
-    if (this.config.authentication.mode !== 'local') return;
-    if (this.present || this.connections.size > 0) this.disconnectedAt = null;
-    else this.disconnectedAt ??= this.now();
-    if (
-      this.disconnectedAt !== null &&
-      this.now() - this.disconnectedAt >= this.config.conversationDisconnectMs &&
-      this.world.conversations?.active[this.controlledEntityId]
-    ) {
-      const world = updateWorld(this.world, (draft) =>
-        leaveConversation(draft, this.controlledEntityId, 'disconnect'),
-      );
-      if (!(await this.commit({ ...this.saved, world }, undefined, 'unchanged'))) return;
-    }
   }
   get present(): boolean {
     const cutoff = this.now() - 12_000;
@@ -1301,7 +1290,6 @@ export class WorldService {
       this.listeners.delete(listener);
     };
   }
-  private disconnectedAt: number | null = null;
   telemetryRevision = 0;
   private transcriptRevision = 0;
   private eventViewRevisions = new Map<string, number>();
@@ -1394,7 +1382,9 @@ export class WorldService {
     );
     const historyWorld = snapshot.world;
     if (this.store.history) {
-      const hot = retainHotEvents(compactHistory(historyWorld, this.saved.world));
+      const hot = retainHotEvents(
+        compactHistory(historyWorld, this.saved.world, { preview: true }),
+      );
       snapshot = {
         ...snapshot,
         world: projectWorldHistory(historyWorld, {
@@ -1431,6 +1421,7 @@ export class WorldService {
     receipt?: GameplayReceipt,
     restore?: RestoreSave,
     authorityChanges?: {
+      constructionChanges?: ConstructionPermissionChanges;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
       controlChange?: {
         scope: RequestScope;
@@ -1442,16 +1433,28 @@ export class WorldService {
       operationalChange?: () => Promise<void>;
     },
   ): Promise<boolean> {
-    if (restore)
+    if (restore) {
+      const contributions = constructionPermissionBatch(
+        saved.world.id,
+        this.store.authority!.constructionPermissions(saved.world.id),
+      );
       saved = {
         ...saved,
-        world: updateWorld(saved.world, (world) =>
-          reconcileConstructionAuthority(
-            world,
-            this.store.authority!.constructionPermissions(world.id),
-          ),
-        ),
+        world: updateWorld(saved.world, (world) => {
+          expireConstructionContributions(world, contributions);
+          reconcileConstructionAuthority(world, contributions.permissions);
+          reconcileCampAssetAuthority(world, this.store.authority!.campAssetPermissions(world.id));
+        }),
       };
+      if (contributions.effects.length)
+        authorityChanges = {
+          ...authorityChanges,
+          constructionChanges: {
+            effects: contributions.effects,
+            updates: [...contributions.updates.values()],
+          },
+        };
+    }
     // Synchronous save. One writer in snapshot order: an in-flight background save commits
     // first, and a failed one stops every later write
     // (docs/projects/ordered-async-saves.md#ordering-rules).
@@ -1472,9 +1475,7 @@ export class WorldService {
         this.store.commit(this.persistedRevision, saved, invalidatedMemoryIds, appendEventCount, {
           before: historyBefore,
           after: historyWorld,
-          ...(!restore
-            ? { constructionFences: this.constructionFences(historyWorld, appendEventCount) }
-            : {}),
+          ...(!restore ? this.operationFences(historyWorld, appendEventCount) : {}),
           receipt,
           restore,
           ...authorityChanges,
@@ -1522,6 +1523,7 @@ export class WorldService {
         error instanceof DecisionClaimLost
       )
         throw error;
+      recordBackgroundFailure('world-commit', error);
       this.storageError =
         'The save could not be committed. Simulation is paused; restart after resolving storage access.';
       this.notify(false);
@@ -1829,6 +1831,7 @@ export class WorldService {
     if (rethrowAuthority && error instanceof AuthorityError) throw error;
     // The snapshot never became durable. Every later commit re-checks this latch, so no
     // newer state is written on top of an unknown baseline; restart reloads the last revision.
+    recordBackgroundFailure('world-commit', error);
     this.unpersisted = true;
     this.storageError =
       'The save could not be committed. Simulation is paused; restart after resolving storage access.';
@@ -2096,10 +2099,6 @@ export class WorldService {
     )
       throw new Error('Private mind changed during inspection.');
     const world = this.world;
-    const sourceRevision = this.store.memories?.actorRevision(actorId);
-    const stillPrivate = this.privateReadFence(actorId, () =>
-      this.mayInspectPrivate(actorId, scope),
-    );
     const commitments =
       this.store.memories && head
         ? await this.store.memories.commitments({
@@ -2108,6 +2107,13 @@ export class WorldService {
             generation: head.generation,
           })
         : undefined;
+    // The first SQL read may apply already committed source rows. Bind its
+    // publication revision afterward, then validate those exact selected sources
+    // and the original world generation before disclosing the combined result.
+    const sourceRevision = this.store.memories?.actorRevision(actorId);
+    const stillPrivate = this.privateReadFence(actorId, () =>
+      this.mayInspectPrivate(actorId, scope),
+    );
     const recent = await this.memoryContext(actorId, null, 100);
     const current =
       !commitments ||
@@ -2119,7 +2125,8 @@ export class WorldService {
           revision: entry.revision,
         })),
       ));
-    if (!current || !stillPrivate()) throw new Error('Private mind changed during inspection.');
+    if (!current || generation !== this.generation || world.id !== this.world.id || !stillPrivate())
+      throw new Error('Private mind changed during inspection.');
     return {
       generation,
       sourceRevision,
@@ -2562,6 +2569,10 @@ export class WorldService {
         if (!this.mayManageSaves(scope))
           throw new Error('World creator or host operator access required.');
         const restored = structuredClone(payload.state);
+        // Operational grants outlive rewind. A later native item must never take
+        // the identity of a material that was authorized on the abandoned timeline.
+        // docs/identity-and-references.md#contract
+        restored.world.nextId = Math.max(restored.world.nextId, this.world.nextId);
         if (restored.presentationRelease)
           await this.assertPresentationRelease(restored.presentationRelease);
         const assetPrincipal = { accountId: scope.accountId };
@@ -2761,6 +2772,7 @@ export class WorldService {
         throw new AuthorityError('forbidden');
       let world = updateWorld(this.world, (draft) => {
         entityGet(draft.entities, request.actorId)!.actor!.controller = 'player';
+        reconcileNativeControl(draft, entityGet(draft.entities, request.actorId)!);
         draft.authorship.playerAccountIds[request.actorId] = request.accountId;
       });
       // Both embodiments settle through the existing departure owner. Native progress and
@@ -2844,6 +2856,7 @@ export class WorldService {
       const departed = this.departImmediately(
         updateWorld(this.world, (draft) => {
           entityGet(draft.entities, actorId)!.actor!.controller = 'player';
+          reconcileNativeControl(draft, entityGet(draft.entities, actorId)!);
           draft.authorship.playerAccountIds[actorId] = accountId;
         }),
         actorId,
@@ -3210,7 +3223,17 @@ export class WorldService {
       // The HTTP wake admits fresh elapsed time on every bounded batch. Draining
       // here until caught up would delay that admission (and background intake)
       // indefinitely under load, understating the time actually owed.
-      if (this.paused || this.debtSeconds < 1e-6 || navigationBlocked(this.world)) return false;
+      if (
+        this.paused ||
+        this.debtSeconds < 1e-6 ||
+        navigationBlocked(
+          this.world,
+          undefined,
+          this.nativeRefugePreparations,
+          this.constructionNavigationContext,
+        )
+      )
+        return false;
       if (options.drain === false) return true;
       // Release the mutation queue before yielding so commands can interleave with catch-up.
       const yieldedAt = beginTiming();
@@ -3228,7 +3251,6 @@ export class WorldService {
       await this.ready;
       await this.refreshCommandEpoch();
 
-      await this.reconcileDisconnectedConversation();
       await this.reconcileParticipation();
       if (this.world.paused !== this.paused) await this.syncPause();
       // The host may have offered this interval before a queued pause/resume
@@ -3275,7 +3297,14 @@ export class WorldService {
       // Retain offered elapsed time even if a route became pending during the prior batch.
       // The native barrier delays integration; later catch-up charges needs, deadlines and travel.
       // docs/architecture.md#navigation-preparation
-      if (navigationBlocked(this.world)) {
+      if (
+        navigationBlocked(
+          this.world,
+          undefined,
+          this.nativeRefugePreparations,
+          this.constructionNavigationContext,
+        )
+      ) {
         countMetric('clock.navigationDeferredRealSeconds', elapsedRealSeconds);
         gaugeMetric('navigation.blocked', 1);
         return;
@@ -3284,21 +3313,37 @@ export class WorldService {
       const offered = Math.min(this.debtSeconds, 86400);
       if (offered < 1e-6) return;
       let world = this.world;
+      const permissions = constructionPermissionBatch(
+        world.id,
+        this.store.authority!.constructionPermissions(world.id),
+        this.store.authority!.campAssetPermissions(world.id),
+      );
       const batchStarted = performance.now();
       const measured = profilingEnabled();
       let nativeMs = 0;
       let advancedSeconds = 0;
+      let assetEffect = false;
       gaugeMetric('tick.dueSimSeconds', this.debtSeconds);
-      // Game-clock conversion is not an integration frequency. Accept one boundary-limited
-      // interval at a time and retain actual unadvanced time as debt. docs/simulation-time.md
-      // A single transition remains atomic even if it exceeds this time budget.
+      // Share compatible internal intervals in one owned edit; the generator returns at
+      // a coherent boundary for waiting operations or the existing host budget below.
+      // Unadvanced time remains debt. docs/projects/performance-overhaul/animal-execution.md
       while (advancedSeconds < offered) {
-        if (navigationBlocked(world)) break;
+        if (
+          navigationBlocked(world, undefined, this.nativeRefugePreparations, {
+            permissions: permissions.permissions,
+            campAssets: permissions.campAssets,
+            boundaryExits: this.boundaryExitPreparations,
+          })
+        )
+          break;
         const stepStarted = beginTiming();
         const startTime = world.simTime;
         const slices = advanceWorldSlices(world, offered - advancedSeconds, {
-          maxIntervals: 1,
-          constructionPermissions: this.store.authority!.constructionPermissions(world.id),
+          maxIntervals: 4096,
+          nativeRefuges: this.nativeRefugePreparations,
+          boundaryExits: this.boundaryExitPreparations,
+          constructionPermissions: permissions.permissions,
+          campAssetPermissions: permissions.campAssets,
         });
         const nextSlice = (boundary?: boolean) => {
           const started = beginTiming();
@@ -3311,6 +3356,14 @@ export class WorldService {
         let sliceStarted = performance.now(),
           result = nextSlice();
         while (!result.done) {
+          if (result.value && typeof result.value === 'object') {
+            const started = beginTiming();
+            try {
+              completeGeometryBatch(result.value, await this.geometryBatches.compute(result.value));
+            } finally {
+              endTiming('native.geometryBatch', started);
+            }
+          }
           if (performance.now() - sliceStarted >= 8) {
             if (measured) recordDuration('native.noYield', performance.now() - sliceStarted);
             await new Promise<void>((resolve) => setImmediate(resolve));
@@ -3319,9 +3372,13 @@ export class WorldService {
           // I/O still yields every 8 ms above. Keep the private native draft longer
           // when uncontended, but let waiting commands/reads take the next coherent
           // boundary rather than waiting for the 32 ms publication target.
+          // A ready route removes a physical wait at the same game instant.
+          // Publish it for a waiting command, but do not repeat the whole native
+          // start merely because the uncontended batch's clock target elapsed.
           result = nextSlice(
-            result.value === 'boundary' &&
-              (this.pendingOperations > 0 || performance.now() - batchStarted >= 32),
+            ((result.value === 'boundary' || result.value === 'preparation') &&
+              this.pendingOperations > 0) ||
+              (result.value === 'boundary' && performance.now() - batchStarted >= 32),
           );
         }
         const advanced = result.value;
@@ -3331,6 +3388,13 @@ export class WorldService {
           this.notify(false);
           return;
         }
+        absorbConstructionPermissionBatch(permissions, advanced);
+        assetEffect ||= advanced.events.some(
+          (event) =>
+            event.type === 'gate-operated' ||
+            event.type === 'gate-checked' ||
+            event.type === 'structure-struck',
+        );
         const finalizationStarted = beginTiming();
         world = freezeWorld(advanced.world);
         endTiming('native.finalization', finalizationStarted);
@@ -3357,11 +3421,24 @@ export class WorldService {
         !this.backgroundSave &&
         unsavedMs >= 1000 &&
         (!this.pendingOperations || unsavedMs >= BACKGROUND_SAVE_DEFERRAL_MS);
+      const constructionChanges = permissions.effects.length
+        ? {
+            effects: permissions.effects,
+            updates: [...permissions.updates.values()],
+            ...(permissions.creations.size
+              ? { creations: [...permissions.creations.values()] }
+              : {}),
+          }
+        : undefined;
       const constructionChanged =
+        assetEffect ||
+        !!constructionChanges ||
         world.assemblyGeometryRevision !== this.world.assemblyGeometryRevision;
       if (
         constructionChanged
-          ? await this.commit(saved, undefined, 'append')
+          ? await this.commit(saved, undefined, 'append', undefined, undefined, undefined, {
+              constructionChanges,
+            })
           : due
             ? await this.saveProgress(saved)
             : this.acceptProgress(saved)
@@ -3372,35 +3449,67 @@ export class WorldService {
     }, true);
   }
 
-  async conversation(
-    requestId: string,
-    operation: 'join' | 'leave',
-    conversationId: string,
-    generation: number,
-    scope = this.localScope,
-  ): Promise<ApiResult> {
-    return this.mutate(async () => {
-      await this.ready;
-      if (operation === 'join' && this.paused)
-        return { ok: false, code: 'paused', message: 'Resume before joining.' };
-      const result = changeConversation(
-        this.world,
-        `${scope.accountId}:${requestId}`,
-        scope.actorId,
-        operation,
-        conversationId,
-        generation,
-      );
-      if (!result.outcome.ok) return result.outcome;
-      if (!(await this.commit({ ...this.saved, world: result.world }, undefined, 'unchanged')))
-        return { ok: false, code: 'storage', message: this.storageError! };
-      return result.outcome;
-    });
+  private gateUseReadCache?: {
+    permissions: readonly CampAssetPermission[];
+    revisions: Map<string, string>;
+  };
+  /** Public gate grant changes invalidate only the inspected structure's choices.
+   * Prepare once per authority publication; ordinary clock reads use a direct lookup. */
+  gateUseReadRevision(rootId: string): string {
+    const permissions = this.store.authority!.campAssetPermissions(this.world.id);
+    if (!permissions.length) return 'ungranted';
+    let cache = this.gateUseReadCache;
+    if (cache?.permissions !== permissions) {
+      const groups = new Map<string, Array<[string, number, boolean]>>();
+      for (const permission of permissions) {
+        let entries = groups.get(permission.assemblyId);
+        if (!entries) groups.set(permission.assemblyId, (entries = []));
+        entries.push([permission.id, permission.revision, permission.revoked]);
+      }
+      cache = this.gateUseReadCache = {
+        permissions,
+        revisions: new Map([...groups].map(([id, entries]) => [id, digest(entries)])),
+      };
+    }
+    return cache.revisions.get(rootId) ?? 'ungranted';
   }
+
   constructionAllowed(actorId: string): boolean {
     return this.store
       .authority!.constructionPermissions(this.world.id)
       .some((p) => p.actorId === actorId && !p.revoked);
+  }
+  async changeCampAssetPermission(
+    permission: CampAssetPermission,
+    expectedRevision: number,
+    id: string,
+    scope = this.localScope,
+  ): Promise<ApiResult> {
+    return this.authorized(scope, 'manage-access', false, async () => {
+      await this.flush();
+      await this.store.authority!.changeCampAsset(
+        scope,
+        permission,
+        expectedRevision,
+        id,
+        this.now,
+        () => campAssetPermissionCurrent(this.world, permission),
+      );
+      const world = updateWorld(this.world, (draft) =>
+        reconcileCampAssetAuthority(draft, this.store.authority!.campAssetPermissions(draft.id)),
+      );
+      if (
+        world !== this.world &&
+        !(await this.commit({ ...this.saved, world }, undefined, 'append'))
+      )
+        return { ok: false, code: 'storage', message: this.storageError! };
+      this.notify();
+      return {
+        ok: true,
+        code: 'camp-asset-permission',
+        message: 'The exact current camp asset permission was recorded.',
+      };
+    });
   }
   /** Operational grants never travel with a gameplay save. The writer lane cancels
    * an old phase before any later material publication can use its permission. */
@@ -3411,29 +3520,79 @@ export class WorldService {
     scope = this.localScope,
   ): Promise<ApiResult> {
     return this.authorized(scope, 'manage-access', false, async () => {
-      if (
-        permission.worldId !== this.world.id ||
-        !entityGet(this.world.entities, permission.actorId)?.actor ||
-        !this.world.map.spatial.surfaces.some((s) => s.id === permission.site.surfaceId) ||
-        permission.materialIds.some(
-          (materialId) =>
-            !entityGet(this.world.entities, materialId)?.item &&
-            !entityGet(this.world.entities, materialId)?.retirement,
-        )
-      )
-        return {
-          ok: false,
-          code: 'invalid-permission',
-          message: 'Choose a current character, supported site and actual material identities.',
-        };
       await this.flush();
-      await this.store.authority!.changeConstruction(
-        scope,
-        permission,
-        expectedRevision,
-        id,
-        this.now,
-      );
+      // Receipt recovery precedes mutable asset eligibility. A recorded grant
+      // remains reportable after its materials or source definitions have gone.
+      const validateCurrent = async (): Promise<ApiResult | undefined> => {
+        if (
+          permission.worldId !== this.world.id ||
+          (!permission.revoked &&
+            (!entityGet(this.world.entities, permission.actorId)?.actor ||
+              !this.world.map.spatial.surfaces.some((s) => s.id === permission.site.surfaceId) ||
+              (permission.publicGateUse &&
+                !gatePublicationPolicyCurrent(this.world, permission.publicGateUse)) ||
+              (permission.structuralExposure &&
+                !structuralExposurePolicyCurrent(this.world, permission.structuralExposure)) ||
+              permission.acquisition?.sources.some((source) => {
+                const resource = entityGet(this.world.entities, source.entityId)?.resource;
+                const definition = this.world.itemDefinitions[source.definition.id];
+                return (
+                  !resource ||
+                  resource.definitionId !== source.definition.id ||
+                  !definition ||
+                  !tracksMaterialOrigins(definition) ||
+                  !sameDefinitionPin(definitionPin(definition), source.definition)
+                );
+              }) ||
+              permission.acquisition?.assemblyIds.some(
+                (assemblyId) => !entityGet(this.world.entities, assemblyId)?.assembly,
+              )))
+        )
+          return {
+            ok: false,
+            code: 'invalid-permission',
+            message: 'Choose a current character, supported site and actual material identities.',
+          };
+        // Made materials can name consumed origins already evicted from the active
+        // world. Resolve only absent exact IDs through the existing cold-object owner.
+        const absent = permission.revoked
+          ? []
+          : permission.materialIds.filter(
+              (materialId) => !entityGet(this.world.entities, materialId),
+            );
+        const retained = absent.length
+          ? await this.store.records?.readRetainedObjectCustody(this.world.id, absent)
+          : undefined;
+        if (
+          !permission.revoked &&
+          permission.materialIds.some((materialId) => {
+            const entity = entityGet(this.world.entities, materialId);
+            return entity ? !entity.item && !entity.retirement : !retained?.get(materialId);
+          })
+        )
+          return {
+            ok: false,
+            code: 'invalid-permission',
+            message: 'Choose actual current or retained material identities.',
+          };
+      };
+      let refusal: ApiResult | undefined;
+      try {
+        await this.store.authority!.changeConstruction(
+          scope,
+          permission,
+          expectedRevision,
+          id,
+          this.now,
+          async () => {
+            refusal = await validateCurrent();
+            return !refusal;
+          },
+        );
+      } catch (error) {
+        if (refusal) return refusal;
+        throw error;
+      }
       // Operational revocation must release unfinished work even while gameplay is
       // paused. The ordinary action transition deliberately refuses paused worlds.
       const world = updateWorld(this.world, (draft) =>
@@ -3458,6 +3617,221 @@ export class WorldService {
     this.assertScope(scope, 'create');
     return this.transition((world) => beginConstructionShower(world, id));
   }
+  previewWorkBatch(request: WorkBatchRequest, scope = this.localScope): WorkBatchPreview {
+    return previewWorkBatch(this, request, scope);
+  }
+  private constructionReadCache?: {
+    worldId: string;
+    permissions: readonly ConstructionPermission[];
+    definitions: WorldState['hearthDefinitions'];
+    profile: WorldState['constructionProfile'];
+    family: unknown;
+    boundary: unknown;
+    definitionRevision: string;
+    actors: Map<string, string>;
+  };
+  /** The stream carries only an opaque invalidation value. Definition/authority
+   * changes rebuild it; ordinary clock publications do no grant or stock scan. */
+  constructionReadRevision(actorId: string): string | undefined {
+    const world = this.world;
+    if (!world.hearthDefinitions && !world.constructionProfile) {
+      this.constructionReadCache = undefined;
+      return;
+    }
+    const permissions = this.store.authority!.constructionPermissions(world.id);
+    const selected = constructionProfile(world);
+    const boundary = boundaryConstructionProfile(world);
+    let cache = this.constructionReadCache;
+    if (
+      !cache ||
+      cache.worldId !== world.id ||
+      cache.permissions !== permissions ||
+      cache.definitions !== world.hearthDefinitions ||
+      cache.profile !== world.constructionProfile ||
+      cache.family !== selected?.family ||
+      cache.boundary !== boundary?.family
+    ) {
+      cache = this.constructionReadCache = {
+        worldId: world.id,
+        permissions,
+        definitions: world.hearthDefinitions,
+        profile: world.constructionProfile,
+        family: selected?.family,
+        boundary: boundary?.family,
+        definitionRevision: digest([
+          Object.values(world.hearthDefinitions ?? {}).map((definition) =>
+            definitionPin(definition),
+          ),
+          selected?.family && definitionPin(selected.family),
+          boundary?.family && definitionPin(boundary.family),
+          world.constructionProfile,
+        ]),
+        actors: new Map(),
+      };
+    }
+    let revision = cache.actors.get(actorId);
+    if (!revision) {
+      revision = digest([
+        cache.definitionRevision,
+        permissions
+          .filter((permission) => permission.actorId === actorId)
+          .map(({ id, revision, revoked }) => [id, revision, revoked]),
+      ]);
+      cache.actors.set(actorId, revision);
+    }
+    return revision;
+  }
+  hearthConstructionView(scope = this.localScope): HearthConstructionView {
+    this.assertScope(scope);
+    const world = this.world,
+      actor = entityGet(world.entities, scope.actorId)!;
+    const supported = nativeCommandSupported(world, 'place-hearth');
+    const choices = supported
+      ? Object.values(world.hearthDefinitions ?? {}).map((definition) => ({
+          definition: definitionPin(definition),
+          name: definition.name,
+          actionLabel: definition.actionLabel,
+          description: definition.description,
+          help: definition.help,
+          icon: nativeActionIcon('place-hearth'),
+          inputName: world.itemDefinitions[definition.input.definition.id]!.name,
+          inputQuantity: definition.input.quantity,
+          workSeconds: definition.workSeconds,
+        }))
+      : [];
+    const selected = constructionProfile(world),
+      boundary = boundaryConstructionProfile(world);
+    const permissions = this.store
+      .authority!.constructionPermissions(world.id)
+      .filter(
+        (permission) =>
+          permission.worldId === world.id &&
+          permission.actorId === scope.actorId &&
+          !permission.revoked &&
+          permission.operations.includes('place-hearth'),
+      );
+    const authorized = permissions.length > 0;
+    const suggested =
+      selected && pointVisionQuery(world, actor)(selected.profile.suggested)
+        ? selected.profile.suggested
+        : actor.placement?.mode === 'world' && actor.placement.supportSurfaceId
+          ? { ...worldPosition(actor), surfaceId: actor.placement.supportSurfaceId }
+          : undefined;
+    return {
+      revision: this.version,
+      authorityRevision: this.constructionReadRevision(scope.actorId) ?? '',
+      authorized,
+      choices,
+      ...(suggested ? { suggested: { ...suggested } } : {}),
+      ...(selected ? { structureLabel: selected.family.name } : {}),
+      ...(boundary ? { boundaryLabel: boundary.family.name } : {}),
+      ...(choices.length
+        ? {
+            label:
+              installedActionMeaning(world, 'place-hearth')?.fallback?.label ??
+              choices[0]!.actionLabel,
+          }
+        : {}),
+      ...(!authorized && choices.length
+        ? {
+            reason:
+              'Current construction permission is required for this place and its actual materials.',
+          }
+        : {}),
+    };
+  }
+  async previewHearth(
+    plan: HearthPlan,
+    scope = this.localScope,
+  ): Promise<ApiResult & { shapes: ConstructionShape[] }> {
+    this.assertScope(scope, 'play', true);
+    const definition = hearthDefinition(this.world, plan.definition);
+    if (
+      !definition ||
+      !nativeCommandSupported(this.world, 'place-hearth') ||
+      !finitePoint(plan.site)
+    )
+      return {
+        ok: false,
+        code: 'unavailable-placement',
+        message: 'The selected construction definition is unavailable.',
+        shapes: [],
+      };
+    const command: Command = {
+      id: 'hearth-placement-preview',
+      actorId: scope.actorId,
+      type: 'place-hearth',
+      definitionId: plan.definition.id,
+      definitionVersion: plan.definition.version,
+      definitionDigest: plan.definition.digest,
+      destination: plan.site,
+    };
+    const evaluate = () => {
+      const prepared = prepareNativeChoice(
+        this.world,
+        scope.actorId,
+        command,
+        'replace',
+        this.store.authority!.constructionPermissions(this.world.id),
+      );
+      return 'outcome' in prepared ? prepared.outcome : prepared;
+    };
+    let result = evaluate();
+    const approach = result.ok && hearthApproach(this.world, scope.actorId, definition, plan.site);
+    if (approach && approach.route.status === 'pending') {
+      const map = spatialMap(this.world),
+        request = approach.route.request,
+        life = entityGet(this.world.entities, scope.actorId)!.actor!.physicalLife ?? 0;
+      const routes = await prepareCandidateNavigation(map, [{ id: 'hearth-preview', request }]);
+      this.assertScope(scope, 'play', true);
+      result = evaluate();
+      const currentDefinition = hearthDefinition(this.world, plan.definition);
+      const current =
+        result.ok &&
+        currentDefinition &&
+        hearthApproach(this.world, scope.actorId, currentDefinition, plan.site);
+      if (
+        result.ok &&
+        (!current ||
+          (entityGet(this.world.entities, scope.actorId)?.actor?.physicalLife ?? 0) !== life ||
+          spatialMap(this.world) !== map ||
+          (current.route.status === 'pending' &&
+            canonicalJson(current.route.request) !== canonicalJson(request)))
+      )
+        result = {
+          ok: false,
+          code: 'placement-changed',
+          message: 'The route or placement changed. Check this place again.',
+        };
+      else if (result.ok && current && current.route.status === 'pending') {
+        const route = routes.get('hearth-preview');
+        if (route?.status !== 'reached')
+          result =
+            route && ['no-route', 'invalid-endpoint', 'unsafe-route'].includes(route.status)
+              ? {
+                  ok: false,
+                  code: 'blocked-stance',
+                  message: 'The selected working place cannot currently be reached.',
+                }
+              : {
+                  ok: false,
+                  code: 'preparation-incomplete',
+                  message: 'The route check could not finish. Check this place again.',
+                };
+      }
+    }
+    return {
+      ...result,
+      shapes: [
+        {
+          id: 'hearth-placement-footprint',
+          role: 'hearth',
+          geometry: 'cylinder',
+          ...hearthBounds(definition, plan.site),
+        },
+      ],
+    };
+  }
   constructionView(scope = this.localScope): ConstructionView {
     this.assertScope(scope);
     const world = this.world;
@@ -3471,6 +3845,16 @@ export class WorldService {
         message: 'This world has no supported construction selection.',
       };
     const { family, profile } = selected;
+    const builder = entityGet(world.entities, scope.actorId)!,
+      support = supportedPosition(builder);
+    if (!support)
+      return {
+        ok: false,
+        revision: this.version,
+        authorized: false,
+        canCueShower: false,
+        message: 'Stand on supported ground or a floor before planning construction.',
+      };
     const permissions = this.store
       .authority!.constructionPermissions(world.id)
       .filter((p) => p.actorId === scope.actorId && !p.revoked);
@@ -3483,9 +3867,29 @@ export class WorldService {
         .filter((e) => seesEntity(world, entityGet(world.entities, scope.actorId)!, e))
         .map((e) => e.id),
     );
-    const materials = inventoryFor(world, scope.actorId).flatMap((item) => {
+    const knownSites = personallyKnownPlaceReports(world, scope.actorId)
+      .filter((entry) => profile.suggestionPlaceIds?.includes(entry.exposure.id))
+      .map((entry) => ({
+        id: entry.exposure.id,
+        label: entry.exposure.label,
+        description: entry.exposure.description,
+        point: entry.exposure.point,
+      }));
+    const suggested = pointVisionQuery(world, builder)(profile.suggested)
+      ? profile.suggested
+      : (knownSites[0]?.point ?? support);
+    const stock = inventoryFor(world, scope.actorId);
+    const boundary = boundaryConstructionProfile(world);
+    const materials = stock.flatMap((item) => {
       const descriptor = world.itemDefinitions[item.definitionId]?.assemblyMaterial;
-      if (!descriptor || descriptor.familyId !== family.id) return [];
+      if (
+        !descriptor ||
+        descriptor.familyId !== family.id ||
+        descriptor.role === 'panel' ||
+        descriptor.role === 'gate' ||
+        descriptor.role === 'rail'
+      )
+        return [];
       const role = descriptor.role;
       const availableQuantity = availableItemQuantity(world, item.id);
       const reason = entityGet(world.entities, item.id)?.item?.assemblyClaim
@@ -3539,13 +3943,40 @@ export class WorldService {
         bay: family.bay,
         defaultArrangementId: family.defaultArrangementId,
         arrangements: family.arrangements,
-        cover: family.cover,
+        cover: defaultCoverProfile(family),
         maximumBays: family.limits.bays,
         invitationText: family.presentation.invitationText,
         postSeconds: family.seconds.post,
         coverSeconds: family.seconds.cover,
       },
-      suggested: { ...profile.suggested },
+      suggested: { ...suggested },
+      sites: knownSites,
+      ...(world.socialOfferPolicy?.cooperation?.families.includes('help')
+        ? {
+            cooperation: {
+              description: world.socialOfferPolicy.cooperation.description,
+              people: [...visible].flatMap((id) =>
+                id !== scope.actorId &&
+                entityGet(world.entities, id)?.actor &&
+                !cooperationReceptionProblem(world, scope.actorId, id)
+                  ? [{ id, label: observerDescription(world, scope.actorId, id, 'definite') }]
+                  : [],
+              ),
+            },
+          }
+        : {}),
+      ...(boundary
+        ? {
+            boundary: boundaryConstructionChoices(
+              world,
+              scope.actorId,
+              boundary.family,
+              stock,
+              permissions,
+              visible,
+            ),
+          }
+        : {}),
       ...(profile.shower
         ? {
             shower: {
@@ -3570,13 +4001,27 @@ export class WorldService {
     scope = this.localScope,
   ): ApiResult & { shapes: ConstructionShape[] } {
     this.assertScope(scope);
-    const checked = compileAssemblyActivity(
-      this.world,
-      scope.actorId,
-      'construction-preview',
-      plan,
-      this.store.authority!.constructionPermissions(this.world.id),
-    );
+    const boundaryReview =
+      plan.implementation === 'grounded-panel-boundary'
+        ? prepareBoundaryPlan(
+            this.world,
+            scope.actorId,
+            'construction-preview',
+            plan,
+            this.store.authority!.constructionPermissions(this.world.id),
+          )
+        : undefined;
+    const checked = boundaryReview
+      ? 'command' in boundaryReview
+        ? boundaryReview.command
+        : boundaryReview
+      : compileAssemblyActivity(
+          this.world,
+          scope.actorId,
+          'construction-preview',
+          plan,
+          this.store.authority!.constructionPermissions(this.world.id),
+        );
     const root = plan.rootId ? entityGet(this.world.entities, plan.rootId) : undefined;
     // A refused guessed root must not disclose its position or installed geometry.
     if (
@@ -3594,12 +4039,48 @@ export class WorldService {
             }),
         shapes: [],
       };
+    if (plan.implementation === 'grounded-panel-boundary') {
+      const family = this.world.assemblyFamilies?.[plan.familyId],
+        exposure =
+          boundaryReview &&
+          'command' in boundaryReview &&
+          boundaryReview.permission.structuralExposure &&
+          plan.steps.some((step) =>
+            ['post', 'boundary-panel', 'boundary-gate'].includes(step.operation),
+          ) &&
+          family?.implementation === 'grounded-panel-boundary'
+            ? family.damage?.exposureText
+            : undefined;
+      return {
+        ...('ok' in checked
+          ? checked
+          : {
+              ok: true,
+              code: 'available',
+              message:
+                'The selected parts and layout are available. Each actual phase checks current access, supports, exit routes and permission.' +
+                (exposure ? ' ' + exposure : ''),
+            }),
+        shapes: [
+          ...(root &&
+          !plan.steps.every((step) =>
+            boundaryRemovalOperations.some((operation) => operation === step.operation),
+          )
+            ? (assemblyView(this.world, root.id)?.shapes ?? [])
+            : []),
+          ...boundaryPlanShapes(this.world, scope.actorId, plan).map(({ bounds, ...shape }) => ({
+            ...shape,
+            ...bounds,
+          })),
+        ],
+      };
+    }
     const site = root ? assemblySite(root)! : plan.site,
       heading = root ? root.spatial.heading : (plan.orientation * Math.PI) / 2,
       family = this.world.assemblyFamilies?.[plan.familyId];
     const shapes: ConstructionShape[] = [];
     if (
-      family &&
+      family?.implementation === 'four-corner-flexible-bays' &&
       site &&
       assemblyArrangement(family, root?.assembly?.arrangementId ?? plan.arrangementId)
     ) {
@@ -3609,12 +4090,25 @@ export class WorldService {
           ? 2
           : 1;
       const arrangementId = root?.assembly?.arrangementId ?? plan.arrangementId;
-      const previewCover = (id: string, bay: number) => {
-        const geometry = coverGeometry(family, site, heading, bay, arrangementId);
+      const previewCover = (id: string, bay: number, itemId = plan.coverId) => {
+        const permittedItem =
+          itemId &&
+          (root?.assembly?.parts[itemId]?.role === 'cover' ||
+            accessiblePossession(this.world, scope.actorId, itemId));
+        const profile = permittedItem
+          ? materialCoverProfile(this.world, itemId)
+          : defaultCoverProfile(family);
+        if (!profile) return;
+        const geometry = coverGeometry(family, site, heading, bay, arrangementId, profile);
         shapes.push({ id, role: 'cover', ...geometry.bounds, panel: geometry.panel });
       };
       if (['build', 'extend', 'resume'].includes(plan.operation)) {
-        for (let bay = 0; bay < bays; bay++) previewCover(`preview-cover-${bay}`, bay);
+        for (let bay = 0; bay < bays; bay++) {
+          const installed = Object.values(root?.assembly?.parts ?? {}).find(
+            (part) => part.role === 'cover' && part.bay === bay,
+          );
+          previewCover(`preview-cover-${bay}`, bay, installed?.itemId ?? plan.coverId);
+        }
         const parts = Object.values(root?.assembly?.parts ?? {}).filter((p) => p.role === 'post');
         const targetBay =
           plan.operation === 'extend' ||
@@ -3682,15 +4176,19 @@ export class WorldService {
       shapes,
     };
   }
-  private constructionFences(
-    world: WorldState,
-    appendCount: number | undefined,
-  ): { id: string; revision: number }[] {
+  private operationFences(world: WorldState, appendCount: number | undefined) {
     const fences = new Map<string, number>();
+    const campAssets = new Map<string, number>();
     for (const entity of worldRootEntities(world, true)) {
       const action = entity.actor?.action;
-      if (action?.assemblyPhase && action.constructionGrant)
+      if ((action?.assemblyPhase || action?.hearthWork) && action.constructionGrant)
         fences.set(action.constructionGrant.id, action.constructionGrant.revision);
+      if (action?.gateWork)
+        campAssets.set(action.gateWork.grant.id, action.gateWork.grant.revision);
+      if (action?.boundaryImpact)
+        campAssets.set(action.boundaryImpact.grant.id, action.boundaryImpact.grant.revision);
+      for (const grant of action?.materialPermission?.grants ?? [])
+        fences.set(grant.id, grant.revision);
     }
     // The snapshot owner already proved the append suffix. Only an edited/forked
     // history needs an identity diff against retained history.
@@ -3701,15 +4199,30 @@ export class WorldService {
     const start = appendCount === undefined ? 0 : world.events.length - appendCount;
     for (let i = start; i < world.events.length; i++) {
       const event = world.events[i]!;
+      if (known?.has(event.id)) continue;
       if (
-        !known?.has(event.id) &&
         event.type === 'construction-phase' &&
         typeof event.data?.['grantId'] === 'string' &&
         typeof event.data['grantRevision'] === 'number'
       )
         fences.set(event.data['grantId'], event.data['grantRevision']);
+      if (
+        (event.type === 'gate-operated' || event.type === 'gate-checked') &&
+        typeof event.data?.['gateUseGrantId'] === 'string' &&
+        typeof event.data['gateUseGrantRevision'] === 'number'
+      )
+        campAssets.set(event.data['gateUseGrantId'], event.data['gateUseGrantRevision']);
+      if (
+        event.type === 'structure-struck' &&
+        typeof event.data?.['exposureGrantId'] === 'string' &&
+        typeof event.data['exposureGrantRevision'] === 'number'
+      )
+        campAssets.set(event.data['exposureGrantId'], event.data['exposureGrantRevision']);
     }
-    return [...fences].map(([id, revision]) => ({ id, revision }));
+    return {
+      constructionFences: [...fences].map(([id, revision]) => ({ id, revision })),
+      campAssetFences: [...campAssets].map(([id, revision]) => ({ id, revision })),
+    };
   }
   /** Manual pause permits deliberate inspection and revoking one's own cooperation
    * consent. Forced pauses and current control/episode admission still protect writes. */
@@ -3717,7 +4230,9 @@ export class WorldService {
     return (
       !!command &&
       (command.type === 'inspect-inventory' ||
+        command.type === 'encounter-preference' ||
         command.type === 'cancel' ||
+        endsConstructionConsent(command) ||
         endsCoachingConsent(command) ||
         endsOutingConsent(command)) &&
       this.saved.manuallyPaused &&
@@ -3808,21 +4323,34 @@ export class WorldService {
             undefined,
             receipt,
             undefined,
-            decision
-              ? {
-                  operationalChange: () =>
-                    finishDecisionPublication(
-                      this.store,
-                      decision,
-                      world,
-                      admissionWorld,
-                      this.timelineId,
-                      this.generation,
-                      result.outcome,
-                      () => decisionPolicyDigest(this.config),
-                    ),
-                }
-              : undefined,
+            {
+              ...(result.constructionEffects?.length
+                ? {
+                    constructionChanges: {
+                      effects: result.constructionEffects ?? [],
+                      updates: result.constructionUpdates ?? [],
+                      ...(result.constructionCreations?.length
+                        ? { creations: result.constructionCreations }
+                        : {}),
+                    },
+                  }
+                : {}),
+              ...(decision
+                ? {
+                    operationalChange: () =>
+                      finishDecisionPublication(
+                        this.store,
+                        decision,
+                        world,
+                        admissionWorld,
+                        this.timelineId,
+                        this.generation,
+                        result.outcome,
+                        () => decisionPolicyDigest(this.config),
+                      ),
+                  }
+                : {}),
+            },
           ))
         )
           return { ok: false, code: 'storage', message: this.storageError! };
@@ -3839,24 +4367,85 @@ export class WorldService {
     }
   }
 
-  async preparedNavigation(
+  async preparedBoundaryExits(
     actorId: string,
     actionId: string,
-    request: NavigationRequest,
-    result: NavigationResult,
+    batch: BoundaryExitBatch,
+    results: PreparedBoundaryExits['results'],
+    timeline: string,
+  ): Promise<void> {
+    await this.mutate(async () => {
+      if (
+        this.storageError ||
+        this.timelineId !== timeline ||
+        spatialMap(this.world) !== batch.sourceMap
+      )
+        return;
+      const action = entityGet(this.world.entities, actorId)?.actor?.action;
+      if (action?.id !== actionId || !action.assemblyExitPending) return;
+      const current = this.pendingBoundaryExit(actorId);
+      if (current?.batch?.key !== batch.key) return;
+      if (this.boundaryExitResults.size >= 64 && !this.boundaryExitResults.has(actorId)) return;
+      this.boundaryExitResults.set(actorId, {
+        actionId,
+        key: batch.key,
+        sourceMap: batch.sourceMap,
+        results,
+      });
+      this.notify(false);
+    }, true);
+  }
+
+  async preparedNavigationBatch(
+    answers: PreparedNavigationPublication[],
     map: WorldState['map'],
     timeline: string,
   ): Promise<void> {
     await this.mutate(async () => {
       if (this.storageError || spatialMap(this.world) !== map || this.timelineId !== timeline)
         return;
-      const transition = completeNavigation(this.world, actorId, actionId, request, result);
-      if (transition.world === this.world) return;
-      // The action/request is already durable. A computed route is simulation progress,
-      // saved in the next background save; restart can prepare it again from that request.
-      // Avoid a synchronous save before the character takes its first step.
+      let world = this.world;
+      let prepared = false;
+      let pruned = false;
+      const routes: NavigationCompletion[] = [];
+      const completeRoutes = () => {
+        world = completeNavigationBatch(world, routes);
+        routes.length = 0;
+      };
+      for (const answer of answers) {
+        if (answer.kind === 'native-refuge') {
+          completeRoutes();
+          if (!pruned) {
+            this.nativeRefugePreparations;
+            pruned = true;
+          }
+          const actor = entityGet(world.entities, answer.actorId);
+          const current = actor && nativeRefugeBatch(world, actor);
+          if (
+            current?.key !== answer.batch.key ||
+            answer.results.length !== answer.batch.requests.length
+          )
+            continue;
+          if (this.nativeRefugeResults.size >= 64 && !this.nativeRefugeResults.has(answer.actorId))
+            continue;
+          this.nativeRefugeResults.set(answer.actorId, {
+            key: answer.batch.key,
+            results: answer.batch.requests.map((entry, index) => ({
+              ...entry,
+              result: answer.results[index]!,
+            })),
+          });
+          prepared = true;
+        } else {
+          routes.push(answer);
+        }
+      }
+      completeRoutes();
+      // The requests are already durable. All exact answers enter the existing routine-progress
+      // buffer together; no simulation or RNG advances between these derived completions.
       // docs/performance.md#navigation-failure-and-shutdown
-      this.acceptProgress({ ...this.saved, world: transition.world });
+      if (world !== this.world) this.acceptProgress({ ...this.saved, world });
+      else if (prepared) this.notify(false);
     }, true);
   }
 
@@ -4802,6 +5391,115 @@ export class WorldService {
     );
   }
 
+  private playerInteractionAdmission?: (actorId: string) => boolean;
+  /** The AI scheduler remains the sole owner of inference capacity. */
+  setPlayerInteractionAdmission(admit: (actorId: string) => boolean): () => void {
+    this.playerInteractionAdmission = admit;
+    return () => {
+      if (this.playerInteractionAdmission === admit) this.playerInteractionAdmission = undefined;
+    };
+  }
+
+  /** One application gate for new player freeform work, independent of native
+   * vocal mechanics. It reads existing accounts; paid dispatch still reserves. */
+  async playerInteractionAvailability(
+    mode: 'speak' | 'act',
+    targetId?: string,
+    scope = this.localScope,
+  ): Promise<PlayerInteractionAvailability> {
+    await this.ready;
+    const recipientName = () => {
+      if (mode !== 'speak' || !targetId || !this.currentScope(scope, 'play', true)) return {};
+      const name = observerGivenName(this.world, scope.actorId, targetId);
+      return name ? { recipientName: name } : {};
+    };
+    const unavailable = (code: string, reason: string): PlayerInteractionAvailability => ({
+      available: false,
+      code,
+      reason,
+      reply: false,
+      ...recipientName(),
+    });
+    const current = (): PlayerInteractionAvailability | undefined => {
+      if (!this.currentScope(scope, 'play', true))
+        return unavailable('control', 'Resume control of your character to send.');
+      if (this.paused)
+        return unavailable(
+          'paused',
+          this.pauseReason === 'storage'
+            ? 'Saving must recover before sending.'
+            : this.pauseReason === 'maintenance'
+              ? 'Sending is unavailable during maintenance.'
+              : 'Resume the world to send.',
+        );
+      const actor = entityGet(this.world.entities, scope.actorId);
+      if (
+        !actor?.actor?.alive ||
+        actor.actor.incapacitated ||
+        !activelyParticipates(actor) ||
+        (mode === 'speak' && !canSpeak(actor)) ||
+        capabilityBlocked(this.world, actor, mode === 'speak' ? 'speech' : 'actions')
+      )
+        return unavailable(
+          'actor-unavailable',
+          mode === 'speak' ? 'Your character cannot speak now.' : 'Your character cannot act now.',
+        );
+      if (mode === 'speak' && targetId) {
+        const target = entityGet(this.world.entities, targetId);
+        if (!target?.actor?.alive || !canAddressSpeech(this.world, actor, target))
+          return unavailable(
+            'invalid-recipient',
+            'Choose a known person or a person currently in sight.',
+          );
+      }
+      if (
+        this.config.jevOnly ||
+        !(this.config.macrofoldKey || this.config.jevKey) ||
+        !(this.config.macrofoldKey || this.config.llmKey) ||
+        this.config.budgetUsd <= 0
+      )
+        return unavailable(
+          'ai-unavailable',
+          'Speak and Act need configured character AI and an allowance.',
+        );
+    };
+    const fundingActor = () =>
+      mode === 'speak' &&
+      targetId &&
+      entityGet(this.world.entities, targetId)?.actor?.controller === 'npc'
+        ? targetId
+        : scope.actorId;
+    const refusal = current();
+    if (refusal) return refusal;
+    const account = fundingActor();
+    const funded = await this.store.budgetAvailable(
+      account,
+      interactiveAllowance(this.config),
+      this.config.budgetUsd,
+    );
+    const changed = current();
+    if (changed) return changed;
+    if (account !== fundingActor())
+      return unavailable('stale', 'The selected interaction changed. Refresh it.');
+    if (!funded)
+      return unavailable(
+        'ai-unavailable',
+        'Speak and Act need an available character AI allowance.',
+      );
+    if (this.playerInteractionAdmission && !this.playerInteractionAdmission(account))
+      return unavailable('busy', 'Character AI is busy. Your draft is saved; check again shortly.');
+    return {
+      available: true,
+      ...recipientName(),
+      code: 'available',
+      reason: null,
+      reply:
+        mode === 'speak' &&
+        !!targetId &&
+        entityGet(this.world.entities, targetId)?.actor?.controller === 'npc',
+    };
+  }
+
   async command(
     commandId: string,
     input: CommandInput,
@@ -4821,7 +5519,31 @@ export class WorldService {
         };
       // Legacy callers retain their old identity rules; new clients bind retries to their issued epoch.
       if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
+      if (epoch === undefined && input.type === 'say') {
+        const bound = this.bindCommand(commandId, input, actor, true, scope ?? this.localScope);
+        const prior = orderedRecordOwn(this.world.commandReceipts, commandId);
+        if (prior && 'actorId' in bound)
+          return prior.digest === canonicalJson(bound)
+            ? { ...prior.outcome, code: 'duplicate' }
+            : {
+                ok: false,
+                code: 'idempotency-conflict',
+                message: 'That command ID was used for different input.',
+              };
+      }
       const prepare = async () => {
+        if (
+          input.type === 'say' &&
+          entityGet(this.world.entities, actor)?.actor?.controller === 'player'
+        ) {
+          const available = await this.playerInteractionAvailability(
+            'speak',
+            input.targetId,
+            scope ?? this.localScope,
+          );
+          if (!available.available)
+            return { ok: false, code: available.code, message: available.reason! };
+        }
         const refusal = input.primaryAction
           ? primaryActionRefusal(this, input, scope ?? this.localScope)
           : undefined;
@@ -4936,6 +5658,7 @@ export class WorldService {
     input: CommandInput,
     actorId = this.controlledEntityId,
     humanInitiated = true,
+    scope?: RequestScope,
   ): ApiResult {
     const result = this.evaluateCommand(
       randomUUID(),
@@ -4943,7 +5666,7 @@ export class WorldService {
       actorId,
       true,
       undefined,
-      undefined,
+      scope,
       humanInitiated,
     ) as ApiResult;
     if (result.code === 'lethal-review-required') return { ...result, ok: true };
@@ -4957,12 +5680,68 @@ export class WorldService {
     return result;
   }
 
+  /** Prepare work consequences through the same exact command binder as execution. */
+  prepareCommandChoice(
+    input: CommandInput,
+    actorId: string,
+    transition: WorkTransitionMode,
+    humanInitiated = false,
+  ): PreparedNativeChoice | Outcome | ApiResult {
+    const bound = this.bindCommand('prepared-choice', input, actorId, humanInitiated);
+    if ('ok' in bound) return bound;
+    if (!isActivityCommand(bound) && bound.type !== 'learn-record' && bound.type !== 'compose')
+      return this.previewCommand(input, actorId, humanInitiated);
+    return this.prepareNativeCommandChoice(bound, transition);
+  }
+
+  /** Trusted compiled activities use the same read-only owner and permission view. */
+  prepareNativeCommandChoice(bound: Command, transition: WorkTransitionMode) {
+    return prepareNativeChoice(
+      this.world,
+      bound.actorId,
+      bound,
+      transition,
+      this.store.authority!.constructionPermissions(this.world.id),
+      undefined,
+      this.store.authority!.campAssetPermissions(this.world.id),
+    );
+  }
+  /** One synchronous required set shares physical checks without sharing a grant
+   * or skipping each option's exact purpose/record admission. */
+  prepareNativeCommandChoices(
+    choices: readonly { invocation: Command; transition: WorkTransitionMode }[],
+  ) {
+    const world = this.world;
+    const permissions = this.store.authority!.constructionPermissions(world.id);
+    const preparation: import('@open-legend/domain').NativeChoicePreparation = {
+      world,
+      permissions,
+      operations: new Map(),
+      physicalPreparations: 0,
+    };
+    return {
+      choices: choices.map(({ invocation, transition }) =>
+        prepareNativeChoice(
+          world,
+          invocation.actorId,
+          invocation,
+          transition,
+          permissions,
+          preparation,
+          this.store.authority!.campAssetPermissions(world.id),
+        ),
+      ),
+      physicalPreparations: preparation.physicalPreparations,
+    };
+  }
+
   /** Family binding is shared by UI commands and reviewed agent commands. */
   private bindCommand(
     commandId: string,
     input: CommandInput,
     actorId: string,
     humanInitiated = true,
+    scope: RequestScope = this.localScope,
   ): Command | ApiResult {
     let inventorySources: import('@open-legend/domain').ExactInventorySource[] | undefined;
     if (input.inventoryGroup) {
@@ -4993,10 +5772,53 @@ export class WorldService {
       ...(input.purpose ? { purpose: input.purpose } : {}),
       ...(input.autoEquip ? { autoEquip: true } : {}),
       ...(combatHelpId ? { combatHelpId } : {}),
+      ...(input.cooperation ? { cooperation: input.cooperation } : {}),
     };
     let command: Command;
     switch (input.type) {
       case 'outing':
+        if (compactCommandInput(input)) return { ...envelope, ...compactCommandInput(input)! };
+        if (
+          input.outingOperation === 'work' &&
+          input.outingId &&
+          input.expectedRevision !== undefined &&
+          input.outingMode
+        )
+          return {
+            ...envelope,
+            type: 'outing',
+            operation: 'work',
+            outingId: input.outingId,
+            expectedRevision: input.expectedRevision,
+            mode: input.outingMode,
+          };
+        if (input.outingOperation === 'propose' && input.targetId) {
+          const proposal = cooperationProposalInput(input);
+          if (proposal)
+            return {
+              ...envelope,
+              type: 'outing',
+              operation: 'propose',
+              recipientId: input.targetId,
+              ...proposal,
+            };
+        }
+        if (
+          input.outingOperation === 'revise' &&
+          input.outingId &&
+          input.expectedRevision !== undefined
+        ) {
+          const proposal = cooperationProposalInput(input);
+          if (proposal)
+            return {
+              ...envelope,
+              type: 'outing',
+              operation: 'revise',
+              outingId: input.outingId,
+              expectedRevision: input.expectedRevision,
+              ...proposal,
+            };
+        }
         if (input.outingOperation === 'help' && input.targetId && input.opponentId)
           return {
             ...envelope,
@@ -5018,7 +5840,9 @@ export class WorldService {
         if (
           (input.outingOperation === 'accept' ||
             input.outingOperation === 'decline' ||
-            input.outingOperation === 'leave') &&
+            input.outingOperation === 'leave' ||
+            input.outingOperation === 'withdraw' ||
+            input.outingOperation === 'conclude') &&
           input.outingId &&
           input.expectedRevision !== undefined
         )
@@ -5029,12 +5853,25 @@ export class WorldService {
             outingId: input.outingId,
             expectedRevision: input.expectedRevision,
             mode: input.outingMode,
+            amendmentRevision: input.amendmentRevision,
           };
         return {
           ok: false,
           code: 'outing-choices',
           message: 'Choose the exact invitation and reply.',
         };
+      case 'impact-boundary':
+        return input.boundaryImpact
+          ? { ...envelope, type: 'impact-boundary', ...input.boundaryImpact }
+          : {
+              ok: false,
+              code: 'impact-choices',
+              message: 'Choose the actual structural part and qualified tool.',
+            };
+      case 'operate-gate':
+        return input.gateUse
+          ? { ...envelope, type: 'operate-gate', ...input.gateUse }
+          : { ok: false, code: 'gate-choices', message: 'Choose an actual gate and operation.' };
       case 'construction-rest':
         if (!input.targetId)
           return { ok: false, code: 'rest-place', message: 'Choose a covered bay.' };
@@ -5053,6 +5890,40 @@ export class WorldService {
           input.constructionPlan,
           this.store.authority!.constructionPermissions(this.world.id),
         );
+      case 'repeat-work': {
+        if (!input.workBatch || !input.workBatchDigest)
+          return {
+            ok: false,
+            code: 'batch-review',
+            message: 'Review the selected batches before starting.',
+          };
+        const compiled = compileWorkBatch(this.world, actorId, commandId, input.workBatch);
+        if ('ok' in compiled) return compiled;
+        if (compiled.type !== 'compose')
+          throw new Error('Unsupported finite-work compiler result.');
+        if (workBatchDigest(compiled) !== input.workBatchDigest)
+          return {
+            ok: false,
+            code: 'batch-changed',
+            message: 'The selected method, source or tool changed. Review these batches again.',
+          };
+        return { ...compiled, ...envelope };
+      }
+      case 'place-hearth':
+        if (!input.hearthPlan)
+          return {
+            ok: false,
+            code: 'placement-choices',
+            message: 'Choose the installed definition and a supported place.',
+          };
+        return {
+          ...envelope,
+          type: 'place-hearth',
+          definitionId: input.hearthPlan.definition.id,
+          definitionVersion: input.hearthPlan.definition.version,
+          definitionDigest: input.hearthPlan.definition.digest,
+          destination: input.hearthPlan.site,
+        };
       case 'activity-request':
         if (!input.activityFamilyId || !input.activityArguments)
           return {
@@ -5099,17 +5970,6 @@ export class WorldService {
           ...(input.targetId ? { targetId: input.targetId } : {}),
         };
         break;
-      case 'conversation':
-        if (!input.conversationId || input.generation === undefined || !input.operation)
-          return { ok: false, code: 'conversation', message: 'Choose a current conversation.' };
-        command = {
-          ...envelope,
-          type: 'conversation',
-          operation: input.operation,
-          conversationId: input.conversationId,
-          generation: input.generation,
-        };
-        break;
       case 'evade':
       case 'move':
         if (!input.position)
@@ -5118,6 +5978,43 @@ export class WorldService {
         break;
       case 'cancel':
         command = { ...envelope, type: 'cancel', expectedActionId: input.expectedActionId };
+        break;
+      case 'encounter-preference': {
+        const binding =
+          input.targetId && encounterPreferenceBinding(this.world, actorId, input.targetId);
+        if (
+          !binding ||
+          !input.encounterPreference ||
+          scope.actorId !== actorId ||
+          input.encounterPreference.reference !==
+            encounterControlReference(scopeKey(scope), input.encounterPreference.operation, binding)
+        )
+          return {
+            ok: false,
+            code: 'stale-encounter-preference',
+            message: 'Choose a current encounter control.',
+          };
+        command = {
+          ...envelope,
+          type: 'encounter-preference',
+          operation: input.encounterPreference.operation,
+          binding,
+        };
+        break;
+      }
+      case 'resume-work':
+        if (!input.planId || input.expectedRevision === undefined)
+          return {
+            ok: false,
+            code: 'paused-work',
+            message: 'Choose the exact current paused work.',
+          };
+        command = {
+          ...envelope,
+          type: 'resume-work',
+          planId: input.planId,
+          expectedRevision: input.expectedRevision,
+        };
         break;
       case 'status-effect':
         if (!input.targetId || !input.definitionId || !input.effectOperation)
@@ -5215,6 +6112,8 @@ export class WorldService {
           type: 'follow',
           targetId: input.targetId,
           ...(input.distance !== undefined ? { distance: input.distance } : {}),
+          ...(input.completeFollow ? { complete: true as const } : {}),
+          ...(input.followUntil !== undefined ? { until: input.followUntil } : {}),
         };
         break;
       case 'gather':
@@ -5244,13 +6143,15 @@ export class WorldService {
           attributeId: input.attributeId,
         };
         break;
-      case 'prepare':
-        command = { ...envelope, type: 'prepare', preparation: input.preparation ?? 'fiber' };
-        break;
       case 'craft':
         if (!input.recipeId)
           return { ok: false, code: 'recipe', message: 'Choose an admitted recipe.' };
-        command = { ...envelope, type: 'craft', recipeId: input.recipeId };
+        command = {
+          ...envelope,
+          type: 'craft',
+          recipeId: input.recipeId,
+          ...(input.tools ? { tools: input.tools } : {}),
+        };
         break;
       case 'equip':
       case 'eat':
@@ -5324,7 +6225,28 @@ export class WorldService {
       case 'handover':
         if (!input.targetId || !input.handoverOperation)
           return { ok: false, code: 'target', message: 'Choose a person and an offer.' };
-        if (input.handoverOperation === 'offer' || input.handoverOperation === 'counter') {
+        if (input.handoverOperation === 'withdraw-use') {
+          if (!input.contributionPermissionId || input.expectedRevision === undefined)
+            return {
+              ok: false,
+              code: 'construction-contribution',
+              message: 'Choose the current material-use permission.',
+            };
+          command = {
+            ...envelope,
+            type: 'handover',
+            operation: 'withdraw-use',
+            targetId: input.targetId,
+            permissionId: input.contributionPermissionId,
+            expectedRevision: input.expectedRevision,
+          };
+        } else if (input.handoverOperation === 'offer' || input.handoverOperation === 'counter') {
+          if (input.constructionUse && !validContributionTerms(input.constructionUse))
+            return {
+              ok: false,
+              code: 'construction-contribution',
+              message: 'Review the exact construction-use terms.',
+            };
           if (!input.itemId || input.quantity === undefined)
             return { ok: false, code: 'item', message: 'Choose what to offer and how many.' };
           command = {
@@ -5335,6 +6257,7 @@ export class WorldService {
             itemId: input.itemId,
             quantity: input.quantity,
             ...(input.requestedItem ? { requested: input.requestedItem } : {}),
+            ...(input.constructionUse ? { constructionUse: input.constructionUse } : {}),
             ...(input.offerId ? { offerId: input.offerId } : {}),
             ...(input.expectedOfferRevision !== undefined
               ? { expectedOfferRevision: input.expectedOfferRevision }
@@ -5482,7 +6405,7 @@ export class WorldService {
         events: [],
         outcome: { ok: false, code: 'stale-controller', message: 'The controlled actor changed.' },
       };
-    const bound = this.bindCommand(id, input, scope.actorId);
+    const bound = this.bindCommand(id, input, scope.actorId, true, scope);
     return 'actorId' in bound
       ? executeCommand(world, bound)
       : { world, events: [], outcome: bound };
@@ -5501,7 +6424,13 @@ export class WorldService {
     scope?: RequestScope,
     humanInitiated = true,
   ): ApiResult | Promise<ApiResult> {
-    const bound = this.bindCommand(commandId, input, actorId, humanInitiated);
+    const bound = this.bindCommand(
+      commandId,
+      input,
+      actorId,
+      humanInitiated,
+      scope ?? this.localScope,
+    );
     if (!('actorId' in bound)) return bound;
     let command = bound;
     if (preview) {
@@ -5514,6 +6443,7 @@ export class WorldService {
       const { outcome } = executeCommand(this.world, command, {
         preview: true,
         constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),
+        campAssetPermissions: this.store.authority!.campAssetPermissions(this.world.id),
       });
       return { ok: outcome.ok, code: outcome.code, message: outcome.message };
     }
@@ -5543,6 +6473,7 @@ export class WorldService {
       const preview = executeCommand(this.world, command, {
         preview: true,
         constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),
+        campAssetPermissions: this.store.authority!.campAssetPermissions(this.world.id),
       }).outcome;
       if (preview.code === 'lethal-review-required') {
         const offer = lethalAttackOffer(this.world, command),
@@ -5569,9 +6500,11 @@ export class WorldService {
         )
           return { ...preview, lethalReview: prior.view };
         const attack = nativeActivityView(this.world, offer.command);
+        const { rangedDescription, ...reviewPolicy } = policy;
         const view: NonNullable<ApiResult['lethalReview']> = {
           id: randomUUID(),
-          ...policy,
+          ...reviewPolicy,
+          description: command.type === 'strike' ? policy.description : rangedDescription,
           targetLabel: observerName(this.world, actorId, offer.permission.targetId).name,
           attack: {
             name: attack.name,
@@ -5601,6 +6534,7 @@ export class WorldService {
       (world) =>
         executeCommand(world, command, {
           constructionPermissions: this.store.authority!.constructionPermissions(world.id),
+          campAssetPermissions: this.store.authority!.campAssetPermissions(world.id),
         }),
       gameplay,
       undefined,

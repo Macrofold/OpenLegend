@@ -1,10 +1,12 @@
 # Performance overhaul: implementation batches
 
-| Status      | Current progress                                                                             | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Remaining selected code is installed; final runtime qualification and smooth 3× remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Animal continuation design is complete in PF09; earlier implementations/evidence are retained and runtime qualification remains open. | 2026-10-24   |
 
 [Specification](../performance-overhaul-feature-spec.md) · [Design](../performance-overhaul-tech-design.md) · [Task owner](../../maintainers/performance.md#pf17--performance-overhaul-ideas) · [Results](../../verification/performance/overhaul-implementation.md)
+
+**Current animal continuation — 2026-10-24:** the [21-item design](animal-execution.md) and [implementation packets](animal-execution-tasks.md) specify the selected follow-through from the October 23 profile. Use their connected batches and PF09 checklist for this work. Earlier PF17 experiments/dispositions remain historical evidence, not instructions to rerun unchanged trials or recreate delivered mechanisms.
 
 ## Authorization and completion
 

@@ -5,6 +5,7 @@ import { sameDefinitionPin, isDefinitionPin } from './state-owners.js';
 import type { DefinitionPin } from './world-modules.js';
 import type { Position, WorldState } from './types.js';
 import { maximumDomainWork } from './diagnostic-counters.js';
+import { recordNativeChange } from './native-change-feed.js';
 
 /** Finite native query families. A dependency is evidence of freshness, never authority. */
 export type QueryFamily =
@@ -110,10 +111,16 @@ export interface SensoryChanges {
 }
 type SensoryPending = { sources: Set<string>; observers: Set<string>; overflow: boolean };
 const sensory = new WeakMap<WorldState, SensoryPending>();
+const sensoryInputs = new WeakMap<WorldState, number>();
+/** Same-owned-phase invalidation, including repeated changes to an already dirty source. */
+export function sensoryInputRevision(world: WorldState): number {
+  return sensoryInputs.get(world) ?? 0;
+}
 let sensoryPhase = 0;
 /** Independent of publication changes: each actual sensing phase acknowledges its own
  * writes, including multiple phases inside one unpublished advance. */
 export function recordSensoryChange(world: WorldState, id: string, observer = false): void {
+  sensoryInputs.set(world, sensoryInputRevision(world) + 1);
   let batch = sensory.get(world);
   if (!batch)
     sensory.set(world, (batch = { sources: new Set(), observers: new Set(), overflow: false }));
@@ -179,6 +186,7 @@ export function captureSensoryChanges(world: WorldState): (result: WorldState) =
 /** Called at semantic mutation owners before old scope is discarded. Bounded coalescing
  * keeps earliest old/latest new extents; required effects/evidence are never coalesced here. */
 export function recordSemanticChange(world: WorldState, change: SemanticChange): void {
+  recordNativeChange(world, change);
   if (change.kind === 'spatial') recordSensoryChange(world, change.entityId, true);
   else if (change.kind === 'knowledge') recordSensoryChange(world, change.actorId, true);
   // Metadata outlives the draft; never retain a placement's revocable proxy.

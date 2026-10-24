@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Build qualification, participant sessions and findings remain open in the delivery tracker. | 2026-10-20   |
+| In progress | Build qualification, participant sessions and findings remain open in the delivery tracker. | 2026-10-24   |
 
 **Design origin:** [DG03 / ND26](../maintainers/needs-design.md#dg03--a-useful-demo-and-early-audience-learning). **Work owner:** [FPV01–FPV09](../maintainers/first-playable-validation.md). The [world specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the required game, [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection, and this plan owns how to learn from a named build. Applicable authorization, [verification/spending rules](../../.agents/rules/verification.md) and service requirements govern execution.
 
@@ -16,7 +16,7 @@ Use early partial tests to resolve specific uncertainties while the complete exp
 
 Pin the actual implementation revision and use the [capability map](../maintainers/first-playable-validation.md#required-capability-and-owner-map). Reuse valid owner evidence; distinguish missing design, undelivered behavior, unqualified integration and missing player evidence.
 
-Record the selected activity, source requirements, available capabilities, remaining prerequisite tasks and decision the test will inform. Reuse the shared Main initializer. The equipped Main setup and isolated Solo ground may support labeled component checks but do not qualify empty-handed survival or the complete camp-and-conflict experience.
+Record the selected activity, source requirements, available capabilities, remaining prerequisite tasks and decision the test will inform. Reuse the shared Main initializer. Earlier supplied-kit evidence and the isolated Solo ground support labeled component checks; complete-world acceptance uses the selected empty-handed Main and its actual camp-and-conflict paths.
 
 **Output:** a named build, a worthwhile test question and explicit missing coverage under FPV01. A participant session must not rely on unfinished dependencies arriving during play.
 
@@ -97,3 +97,80 @@ Retest changed comprehension with fresh people where practical and continuing va
 [FPV](../maintainers/first-playable-validation.md) owns coordination and task status. Subsystem trackers and reports retain their detailed work/evidence. Record actual integrated/player findings in `docs/verification/first-playable-experience.md` when they exist and link it from [verification](../verification.md). Include exact revisions, setup, outcomes, costs and missing coverage; keep private raw material outside the repository.
 
 Full acceptance follows the [world's complete target](../worlds/base/playable-openings.md#full-experience-acceptance-and-scope), not whichever partial test ran first. Commercial adoption and public release retain their own owners.
+
+## Supervised session handoff for the complete Main
+
+**Prepared; participants unavailable.** The implementation branch is
+`codex/implement-complete-first-playable` in
+`/Users/mzw/.codex/worktrees/214c/OpenLegend`. Pin its final qualified commit and
+production build before a session. The [current delivery/evidence record](../verification/first-playable-world.md#complete-main-and-personal-agreement-integration)
+keeps remaining software, performance, independent-behavior and Ada acceptance
+gaps explicit. This packet schedules nothing, recruits nobody and grants no
+additional provider allowance.
+
+Use the ordinary `wilderness` preset and seed 73 through the normal production
+server and browser entry, on a fresh operator-owned disposable test database and
+save directory. The expected opening is 128 × 112 metres, day 1 08:00, full
+player needs and empty inventory, with cold wayside/southern hearths and the
+relocated Watchpost. Confirm these through ordinary entry and the current
+manifest; do not substitute a stocked feature fixture. Keep the chosen models,
+operator controls, effective simulation speed, active model allowances and
+remaining uncertain commitments in the session record. A zero-provider
+technical rehearsal does not qualify the intended character experience. Use
+only the existing authorized allowance; obtain any separately required funding
+before dispatching calls beyond it.
+
+Before participant use, complete the delivery gates that protect this specific
+session, including the ordinary controls, saving/recovery, private information,
+committed effects and a usable measured complete path. Retain contrary outcomes
+and the owner-preserved Ada counterattack gap. Explain that this is disposable
+development play and that progress may be replaced under the current save
+policy; promise no persistence service. The supervisor records the actual local
+browser URL and ordinary permitted entry, without exposing credentials or
+administrative controls. Start paused so setup and the initial explanation do
+not spend the participant's game time.
+
+The current operating envelope is not ready for that session. The retained
+resident continuation achieved about 5.135:1 with 60:1 requested; nine decisions
+expired while an uncertain execution occupied the former single background
+position. The owner has since expanded the allowance to 100, with each uncertain
+attempt retaining one position and its financial obligation under [DE-L02](../limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention).
+That historical blockage no longer establishes current saturation. Complete-path
+speed, independent conduct and actual human experience still need qualification;
+the allowance change alone does not establish participant readiness. The
+[current review](../verification/first-playable-world.md#current-barrier-navigation-and-resident-review--october-21)
+retains the earlier settings, costs, continuation and failures.
+
+Give this short brief, then let the participant choose:
+
+> You have arrived empty handed beside an old resting hearth. Find a way to live
+> here and make somewhere worth returning to. You can make useful things, meet
+> people, explore or keep to yourself. Other inhabitants make their own choices.
+> There is no required order or perfect camp. You may pause, ask for help or stop.
+
+Observe a 20–30 minute first session, or the participant's earlier chosen stop.
+Do not coach a recipe chain, name a preferred companion, assign a hunt or make
+God edits to rescue the outcome. Record every intervention separately. Capture
+what the player expected before a consequential action, what actually happened,
+time spent reading/waiting/travelling/making, mistaken assumptions, voluntary
+company/refusal, useful partial camps, independent encounters or quiet periods,
+and any loss/recovery. A moderator intervention preserves the run but cannot
+supply missing unassisted evidence.
+
+After play, ask what they were trying to achieve, which occurrence mattered,
+what they think the people knew or chose, what was confusing or tedious, and
+whether/why they would choose another visit. Offer a separate return session
+only with their actual agreement; do not infer retention from an expressed
+intention. Keep numerator/denominator and recruitment source when people are
+available. Record comprehension, effort/payoff, attraction and willingness to
+return separately from engineering correctness.
+
+The session record must name the commit/build, opening/database scope, adult
+participant count and recruitment source, actual duration and stopping reason,
+interventions, achieved game time, controls/command/render waits, provider
+preparation/queue/execution/admission/persistence times, retained memory and
+scoped/cumulative paid costs with uncertainty. Keep consent and identifying raw
+notes in authorized private storage; commit only the permitted anonymized
+findings to `docs/verification/first-playable-experience.md`. No participant has
+been recruited or observed in this assignment, and no comprehension, enjoyment
+or return-play acceptance is claimed.

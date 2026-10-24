@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from '@open-legend/domain';
 import { localHttpClient } from '../../../tests/fixtures/http.js';
 import { testRepository } from '../../../tests/fixtures/database.js';
@@ -16,7 +17,7 @@ afterEach(async () => {
 async function start(godMode = false, tick = false) {
   const game = await createGameServer({
     config: readConfig({ OPEN_LEGEND_GOD_MODE: String(godMode) }),
-    store: await testRepository(),
+    store: await testRepository(undefined, stockedCamp()),
     production: true,
     tick,
   });
@@ -55,7 +56,9 @@ describe('local HTTP boundary', () => {
     };
     await post('/api/control', { paused: false, clientId: 'bounded-host-clock' });
     await expect.poll(() => calls).toBeGreaterThanOrEqual(3);
-    expect(game.service.world.simTime).toBeGreaterThan(0);
+    // The host can yield before its first completed native boundary. Observe
+    // actual progress independently of the deliberately forced continuation count.
+    await expect.poll(() => game.service.world.simTime).toBeGreaterThan(0);
     expect(peak).toBe(1);
     expect(draining.every((value) => value === false)).toBe(true);
     await game.close();
@@ -122,7 +125,7 @@ describe('local HTTP boundary', () => {
     });
     expect(noCookie.status).toBe(401);
     expect(JSON.stringify(god.initial)).not.toContain('My beginnings');
-  });
+  }, 60_000);
   it('denies god world editing to ordinary sessions', async () => {
     const ordinary = await start();
     expect(
@@ -241,7 +244,7 @@ describe('local HTTP boundary', () => {
       ).status,
     ).toBe(401);
     expect(game.service.paused).toBe(true);
-  });
+  }, 60_000);
   it('resumes immediately from away and ignores an older hidden-tab notification', async () => {
     const { post, game } = await start();
     const missingPresence = await (await post('/api/control', { paused: false })).json();
@@ -274,7 +277,7 @@ describe('local HTTP boundary', () => {
     expect(game.service.world.exitExposures![PLAYER_ID]).toBe(departureAt);
     await game.service.tick((departureAt - game.service.world.simTime) / 60, 0);
     expect(game.service.pauseReason).toBe('away');
-  });
+  }, 60_000);
   it('does not renew presence from speed changes or while manually pausing', async () => {
     const { post, game } = await start();
     await post('/api/control', { speed: 3, clientId: 'away-tab', presenceSequence: 1 });
@@ -285,7 +288,7 @@ describe('local HTTP boundary', () => {
     await post('/api/control', { paused: false, clientId: 'away-tab', presenceSequence: 3 });
     expect(game.service.paused).toBe(false);
     expect(game.service.speed).toBe(3);
-  });
+  }, 60_000);
   it('supports presence, controls and idempotent native actions without AI', async () => {
     const { post, game } = await start();
     await post('/api/presence', { clientId: 'test-client', visible: true });

@@ -3,29 +3,41 @@ import { current, isDraft, original } from 'immer';
 import { readOnlyDraftView, sensoryDraftWrites } from './draft.js';
 import { worldRootEntities } from './entity-index.js';
 import { hasMemory } from './living.js';
+import { nativeSensoryObserver } from './native-response.js';
 import { activelyParticipates } from './participation-state.js';
 import { visibleFeature } from './perception-frame.js';
 import { bodyProfile, spatialMap, worldPosition } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
-import { SpatialCandidateIndex } from './spatial.js';
+import { SpatialCandidateIndex, nearbySolidAssemblies } from './spatial.js';
 import { nextSensoryPhase, recordSensoryChange, MAX_CHANGE_SCOPES } from './dependencies.js';
 import { countDomainWork } from './diagnostic-counters.js';
-import { sensesFor, visionRadius } from './perception.js';
+import { sensesFor, visionRadius, visionFieldOfView } from './perception.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { SPATIAL_LIMITS } from '@open-legend/spatial';
 export interface ExposureInput {
+  assemblyId?: string;
   id: string;
   position: { x: number; y: number; z: number };
   height: number;
   radius: number;
   alive: boolean;
   memory: boolean;
+  nativeResponse: boolean;
   object: boolean;
   feature: string;
 }
 /** A new continuous-exposure episode identity. Its format is owned here with its parser. */
 export function perceptionEpisodeId(world: WorldState, sourceId: string): string {
   return `${world.sequence}:${world.simTime}:${sourceId}`;
+}
+/** The caller has just established sight; this grants no remembered name. */
+export function ensurePerceptionEpisode(
+  world: WorldState,
+  observerId: string,
+  sourceId: string,
+): string {
+  const episodes = ((world.perceptionEpisodes ??= {})[observerId] ??= {});
+  return (episodes[sourceId] ??= perceptionEpisodeId(world, sourceId));
 }
 /** Simulation time an episode began, or undefined for a foreign/unknown identity. */
 export function episodeStartedAt(episode: string | undefined): number | undefined {
@@ -94,11 +106,15 @@ export function captureExposure(entity: Entity): ExposureCapture | null {
     capture = {
       entity,
       id: entity.id,
+      ...(entity.assembly?.implementation === 'grounded-panel-boundary'
+        ? { assemblyId: entity.id }
+        : {}),
       position: isDraft(position) ? current(position) : position,
       height: profile.height,
       radius: profile.radius,
       alive: !!entity.actor?.alive,
       memory: hasMemory(entity),
+      nativeResponse: nativeSensoryObserver(entity),
       object: !entity.actor && !entity.animal,
       ...visibleFeature(entity),
     };
@@ -179,7 +195,9 @@ const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
   a.radius === b.radius &&
   a.alive === b.alive &&
   a.memory === b.memory &&
+  a.nativeResponse === b.nativeResponse &&
   a.object === b.object &&
+  a.assemblyId === b.assemblyId &&
   a.feature === b.feature;
 const snapshot = <T extends object>(value: T): T => (isDraft(value) ? current(value) : value);
 const within = (a: Position, b: Position, radius: number) =>
@@ -191,6 +209,7 @@ const within = (a: Position, b: Position, radius: number) =>
 export function* prepareExposure(
   world: WorldState,
   base: EncounterBaseline,
+  motionSpeed?: (entity: Entity) => number,
 ): Generator<
   void,
   {
@@ -203,9 +222,12 @@ export function* prepareExposure(
       kind: 'people' | 'objects' | 'contact',
     ) => Source[];
     objectsChanged: (id: string) => boolean;
+    nearbySight: (observerId: string, position: Position, radius: number) => Source[];
     /** Undefined requires a full rescan; otherwise only these sources can change sight. */
     changedPeople: (id: string) => ReadonlySet<string> | undefined;
     selectedPeople: (position: Position, radius: number, ids: ReadonlySet<string>) => Source[];
+    sourceIds: Iterable<string>;
+    selectedContacts: (position: Position, radius: number, ids: ReadonlySet<string>) => Source[];
     orderPeople: (ids: readonly string[]) => string[];
     maximumBodyHeight: number;
     maximumBodyRadius: number;
@@ -368,7 +390,7 @@ export function* prepareExposure(
     : new Set([...changes.sources, ...changes.observers]);
   for (const id of observerIds) {
     const source = prepared.inputs.get(id);
-    if (source?.alive && source.memory) {
+    if (source?.alive && (source.memory || source.nativeResponse)) {
       if (!prepared.observers.has(id))
         prepared.observers.set(id, {
           id,
@@ -403,7 +425,17 @@ export function* prepareExposure(
       Math.max(source.radius + prepared.radii.maximum, source.height, prepared.heights.maximum) +
       SPATIAL_LIMITS.epsilon;
     const range = Math.max(radius + 2, touch ? contactRadius : 0);
-    const signature = `${radius}:${bodyProfile(entity).eyeHeight}:${touch?.id ?? ''}:${contactRadius}:${capabilityBlocked(world, entity, 'perception')}:${world.moduleManifest.revision}`;
+    const angle = visionFieldOfView(world, entity);
+    const signature = JSON.stringify([
+      radius,
+      bodyProfile(entity).eyeHeight,
+      touch?.id,
+      contactRadius,
+      capabilityBlocked(world, entity, 'perception'),
+      world.moduleManifest.revision,
+      angle,
+      angle < 2 * Math.PI ? entity.spatial.heading : undefined,
+    ]);
     const moved = !within(input.position, source.position, 0);
     if (
       rebuild ||
@@ -449,8 +481,9 @@ export function* prepareExposure(
     for (const observer of prepared.observerNear.query(source.position, prepared.ranges.maximum))
       if (within(source.position, observer.position, observer.radius)) {
         affected.add(observer.id);
-        if (source.object) fullPeople.add(observer.id);
-        else {
+        // Non-occluding object changes affect object exposure, not every person
+        // this observer sees. Real occluder edits already replace the map above.
+        if (!source.object) {
           let ids = peopleChanges.get(observer.id);
           if (!ids) peopleChanges.set(observer.id, (ids = new Set()));
           ids.add(source.id);
@@ -495,24 +528,44 @@ export function* prepareExposure(
     maximumBodyHeight: prepared.heights.maximum,
     maximumBodyRadius: prepared.radii.maximum,
     objectsChanged: (id) => prepared.observers.get(id)?.objectsDirty ?? true,
+    nearbySight: (id, position, radius) => {
+      const entity = entityGet(readOnlyDraftView(world.entities), id)!;
+      return prepared.near
+        .querySphere(position, radius, { id, at: world.simTime, speed: motionSpeed?.(entity) ?? 0 })
+        .filter((source) => source.alive);
+    },
     changedPeople: (id) =>
       rebuild || orderChanged || fullPeople.has(id)
         ? undefined
         : (peopleChanges.get(id) ?? new Set<string>()),
     selectedPeople: (position, radius, ids) => prepared.near.querySelected(position, radius, ids),
+    sourceIds: prepared.inputs.keys(),
+    selectedContacts: (position, radius, ids) =>
+      prepared.contacts.querySelected(position, radius, ids),
     orderPeople: (ids) =>
       [...ids].sort((a, b) => prepared.inputs.get(a)!.order - prepared.inputs.get(b)!.order),
-    nearby: (position, radius, kind) =>
-      (kind === 'contact'
-        ? prepared.contacts
-        : kind === 'objects'
-          ? prepared.objects
-          : prepared.near
+    nearby: (position, radius, kind) => {
+      const ordinary = (
+        kind === 'contact'
+          ? prepared.contacts
+          : kind === 'objects'
+            ? prepared.objects
+            : prepared.near
       )
         .query(position, radius)
         .filter(
           (source) => kind === 'contact' || (kind === 'people' ? source.alive : source.object),
-        ),
+        );
+      if (kind !== 'objects') return ordinary;
+      const structures = nearbySolidAssemblies(world, position, radius);
+      if (!structures.length) return ordinary;
+      const found = new Map(ordinary.map((source) => [source.id, source]));
+      for (const root of structures) {
+        const source = prepared.inputs.get(root.id);
+        if (source?.object) found.set(root.id, source);
+      }
+      return [...found.values()].sort((a, b) => a.order - b.order);
+    },
   };
 }
 export function captureExposureCache(world: WorldState): (result: WorldState) => void {

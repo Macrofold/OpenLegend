@@ -4,7 +4,8 @@ import { namePhrase, type Named, type NameArticle } from '@open-legend/language'
 import { outcome } from '../../events.js';
 import { characterCount, advanceKnowledgeRevision, type KnowledgePolicy } from '../../knowledge.js';
 import { isSafeRecordId } from '../../records.js';
-import { seesEntity } from '../../perception.js';
+import { validateSocialPerception, type SocialPerceptionPolicy } from '../../social-perception.js';
+import { understandsSpeech } from '../../living.js';
 import config from './config/knowledge.generated.json' with { type: 'json' };
 import { learnRecipe } from '../../knowledge.js';
 
@@ -18,6 +19,9 @@ export function startingRecipeKnowledge(
 }
 
 export const BASE_KNOWLEDGE_POLICY: KnowledgePolicy = config.knowledge;
+const socialPerception: unknown = config.socialPerception;
+validateSocialPerception(socialPerception);
+export const BASE_SOCIAL_PERCEPTION: SocialPerceptionPolicy | null = socialPerception;
 
 export interface ObserverIdentity {
   givenName: string;
@@ -44,11 +48,10 @@ export function recognizesSubject(
   return (
     !!identity &&
     (identity.authored ||
-      (!!identity.encounterId &&
-        identity.encounterId === world.perceptionEpisodes?.[observerId]?.[subjectId]))
+      world.moduleManifest.socialPerception?.implementation === 'reliable-individuals')
   );
 }
-/** Existing creator-authored acquaintances persist across encounters; other identities do not.
+/** Recognition associates a person, while current physical exposure remains separate.
  * docs/worlds/base/knowledge.md#identity-and-recognition
  */
 export function subjectReferenceCurrent(
@@ -59,7 +62,7 @@ export function subjectReferenceCurrent(
 ): boolean {
   return (
     observerId === subjectId ||
-    world.observerIdentities?.[observerId]?.[subjectId]?.authored === true ||
+    recognizesSubject(world, observerId, subjectId) ||
     (expectedEncounter !== undefined &&
       expectedEncounter === (world.perceptionEpisodes?.[observerId]?.[subjectId] ?? null))
   );
@@ -159,6 +162,28 @@ export function rememberSubject(
     encounterId: world.perceptionEpisodes?.[observerId]?.[subjectId] ?? null,
     authored,
   };
+  advanceKnowledgeRevision(world, observerId);
+}
+
+/** Only an actual supported exposure calls this; IDs or names alone never recognize. */
+export function associatePerceivedSubject(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+  channel: 'sight' | 'linguistic-voice',
+): boolean {
+  if (observerId === subjectId) return true;
+  const policy = world.moduleManifest.socialPerception;
+  const source = entityGet(world.entities, subjectId);
+  if (
+    !policy?.recognitionChannels.includes(channel) ||
+    !source?.actor?.species ||
+    !policy.recognizableSpecies.includes(source.actor.species) ||
+    (channel === 'linguistic-voice' && !understandsSpeech(entityGet(world.entities, observerId)))
+  )
+    return false;
+  rememberSubject(world, observerId, subjectId);
+  return true;
 }
 
 /** Select permitted identity before applying presentation grammar. */
@@ -168,6 +193,11 @@ export function observerName(world: WorldState, observerId: string, subjectId: s
     return observerName(world, observerId, remains.sourceId);
   const known = observerGivenName(world, observerId, subjectId);
   if (known) return { name: known, nameForm: 'proper', indefiniteArticle: undefined };
+  return unnamedSubject(world, subjectId);
+}
+
+/** Visible bodily description without consulting remembered human names. */
+export function unnamedSubject(world: WorldState, subjectId: string): Named {
   const entity = entityGet(world.entities, subjectId);
   if (!entity?.actor)
     return entity
@@ -227,11 +257,16 @@ export function learnSpeechIntroduction(world: WorldState, event: WorldEvent): v
     .map((word) => word.segment);
   for (const observerId of event.audience) {
     const observer = entityGet(world.entities, observerId);
-    if (observerId === source.id || !observer?.actor || !seesEntity(world, observer, source))
+    if (
+      observerId === source.id ||
+      !observer?.actor ||
+      !recognizesSubject(world, observerId, source.id)
+    )
       continue;
     const evidence = world.experience?.awareness[observerId]?.at(-1);
     if (
       evidence?.eventId !== event.id ||
+      evidence.sourceId !== source.id ||
       !evidence.speech ||
       evidence.speech.perception !== 'heard' ||
       !evidence.speech.segments.some(

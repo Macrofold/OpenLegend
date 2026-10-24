@@ -1,5 +1,7 @@
+import firstPlayable from './config/first-playable.generated.json' with { type: 'json' };
+import type { PreparedBaseMaterialWorld } from './first-playable-config.js';
 import { BASE_CLOAK_EQUIPMENT } from './equipment.js';
-import type { AssemblyFamily } from '../../assembly-types.js';
+import type { FlexibleBayFamily } from '../../assembly-types.js';
 import type { AttributeDefinition } from '../../world-modules.js';
 import type { ItemDefinition } from '../../types.js';
 
@@ -9,7 +11,7 @@ const UNQUALIFIED_BAG_EXPOSURE =
   'This material has no qualified exposure rule inside a bag. Keep it directly carried or on exposed ground.';
 
 /** One authored source for DG13 content and tuning. docs/worlds/base/editable-shelters.md */
-export const BASE_CANOPY: AssemblyFamily = {
+export const BASE_CANOPY: FlexibleBayFamily = {
   id: 'base:light-canopy',
   version: 2,
   implementation: 'four-corner-flexible-bays',
@@ -60,7 +62,8 @@ export const BASE_CANOPY: AssemblyFamily = {
     },
   ],
   binding: { contactBand: 0.05, workDrop: 0.05, stanceOffset: 0.35 },
-  cover: { width: 1.8, length: 2.4, thickness: 0.02, edge: 0.1, transmission: 0 },
+  coverProfiles: (firstPlayable as unknown as PreparedBaseMaterialWorld).coverProfiles,
+  defaultCover: (firstPlayable as unknown as PreparedBaseMaterialWorld).defaultCover,
   limits: { bays: 2, parts: 32, layers: 2, sockets: 2 },
   restMargin: 0.1,
   minimumClearance: 2.2,
@@ -148,7 +151,11 @@ export const CANOPY_ITEMS: Record<string, ItemDefinition> = {
     portable: true,
     packingLoad: 2,
     properties: ['fiber', 'flexible'],
-    assemblyMaterial: { familyId: BASE_CANOPY.id, role: 'cover' },
+    assemblyMaterial: {
+      familyId: BASE_CANOPY.id,
+      role: 'cover',
+      coverProfile: BASE_CANOPY.defaultCover,
+    },
   },
   weather_cloth: {
     id: 'weather_cloth',
@@ -159,7 +166,11 @@ export const CANOPY_ITEMS: Record<string, ItemDefinition> = {
     portable: true,
     packingLoad: 2,
     properties: ['fiber', 'flexible'],
-    assemblyMaterial: { familyId: BASE_CANOPY.id, role: 'cover' },
+    assemblyMaterial: {
+      familyId: BASE_CANOPY.id,
+      role: 'cover',
+      coverProfile: BASE_CANOPY.defaultCover,
+    },
   },
   canopy_tall_post: {
     id: 'canopy_tall_post',

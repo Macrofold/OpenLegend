@@ -193,17 +193,19 @@ function answer(request: JudgeRequest, script: Script): AiResult<JudgeValue> {
 const defaultRate = (description: string) =>
   noul(isEat(description) ? 0.9 : isContinue(description) ? 0.2 : 0.1);
 
-/** Find the permitted addressee handles in the provider schema so a fixture reply can speak. */
-function addressees(schema: unknown): string[] {
-  if (!schema || typeof schema !== 'object') return [];
-  const record = schema as Record<string, unknown>;
-  const field = record['addresseeEntityId'] as { enum?: string[] } | undefined;
-  if (field?.enum) return field.enum;
-  for (const child of Object.values(record)) {
-    const found = addressees(child);
-    if (found.length) return found;
+/** Address this greeting's acquired speaker, rather than the first entity in
+ * a general enum (which can be the fixture's owned food). */
+function replyAddressee(request: GenerateRequest): string {
+  const references = String(request.context).split('## References\n').at(-1)!;
+  for (const line of references.split('\n')) {
+    if (!line.startsWith('- {')) continue;
+    const entry = JSON.parse(line.slice(2)) as {
+      entityId: string;
+      triggerRoles: { role: string }[];
+    };
+    if (entry.triggerRoles.some((role) => role.role === 'source')) return entry.entityId;
   }
-  return [];
+  throw new Error('The fixture has no permitted speaker reference.');
 }
 
 /** Every action handle a generation schema permits (act and plan-step `actionId` enums). */
@@ -734,7 +736,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
               requiresAccepted: [],
               talk: {
                 text: 'Fixture reply from Ada.',
-                addresseeEntityId: addressees(request.schema)[0],
+                addresseeEntityId: replyAddressee(request),
                 selfIntroduction: null,
                 volume: 'normal',
               },
@@ -751,7 +753,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     });
     const events = new Set(h.service.world.events.map((event) => event.id));
     const job = await h.chat('greeting', 'Hello Ada, how are you today?');
-    expect(job.status).toBe('completed');
+    expect(job.status, job.message).toBe('completed');
     expect(disposition(job)).toBe('responded');
     const dispatched = h.jobCalls(job.id);
     const ratings = dispatched.decisions.find((request) => request.requestId.endsWith(RATINGS));

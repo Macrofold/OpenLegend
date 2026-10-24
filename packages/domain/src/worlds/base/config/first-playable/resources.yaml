@@ -1,0 +1,299 @@
+items:
+  - id: knappable_flint
+    revision: 1
+    version: 1
+    name: Unworked flint
+    description: A suitable flint piece. Knapping with a kept stone can make a cutting stone.
+    icon: resource.flint
+    portable: true
+    packingLoad: 1
+    properties: [rigid]
+  - id: straight_pole
+    tracksMaterialOrigins: true
+    revision: 1
+    version: 1
+    name: Straight fallen pole
+    description: A straight fallen pole with 2.40 metres of usable length.
+    icon: resource.branch
+    portable: true
+    packingLoad: 3
+    properties: [rigid, shaft]
+    stockShape: { usableLengthMeters: 2.4 }
+  - id: wooden_club
+    revision: 1
+    version: 1
+    name: Wooden club
+    description: A trimmed wooden club held in one hand for close contact.
+    icon: resource.branch
+    portable: true
+    packingLoad: 2
+    properties: [rigid, shaft]
+    equipment: { ports: [main-hand], uses: [melee] }
+    melee:
+      damage: 6
+      accuracy: 0.75
+      range: 1.4
+      approachRange: 1
+      windupSeconds: 12
+      recoverySeconds: 24
+  - id: reed_mat
+    revision: 1
+    version: 1
+    name: Reed roof mat
+    description: A flexible 1.80 by 2.40 metre woven mat, 0.02 metres thick. Fasten it to four qualified canopy posts with four real cords for rain cover.
+    portable: true
+    packingLoad: 2
+    properties: [fiber, flexible]
+    assemblyMaterial:
+      familyId: base:light-canopy
+      role: cover
+      coverProfileId: base:reed-mat-cover
+
+sources:
+  - id: berries-west
+    revision: 1
+    placement:
+      kind: retained-opening
+      entityId: berries-west
+    item: berries
+    quantity: 24
+    workSeconds: 30
+    collection: bare-hand
+    name: Berry bush
+  - id: berries-east
+    revision: 1
+    placement:
+      kind: retained-opening
+      entityId: berries-east
+    item: berries
+    quantity: 36
+    workSeconds: 30
+    collection: bare-hand
+    name: Berry thicket
+  - id: forage-west
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: outer-forage-west
+      offsetMeters: { x: 0, z: 0 }
+    item: berries
+    quantity: 96
+    workSeconds: 30
+    collection: bare-hand
+    name: Berry thicket
+  - id: forage-east
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: outer-forage-east
+      offsetMeters: { x: 0, z: 0 }
+    item: berries
+    quantity: 84
+    workSeconds: 30
+    collection: bare-hand
+    name: Berry thicket
+  - id: reeds
+    revision: 1
+    placement:
+      kind: retained-opening
+      entityId: reeds
+    item: raw_fiber
+    quantity: 48
+    workSeconds: 36
+    collection: bare-hand
+    name: River reeds
+  - id: reeds-east
+    revision: 1
+    placement:
+      kind: retained-opening
+      entityId: reeds-east
+    item: raw_fiber
+    quantity: 30
+    workSeconds: 36
+    collection: bare-hand
+    name: River reeds
+  - id: fiber-bank
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: fiber-bank
+      offsetMeters: { x: 0, z: 0 }
+    item: raw_fiber
+    quantity: 96
+    workSeconds: 36
+    collection: bare-hand
+    name: Dry plant fibers
+  - id: outer-fiber
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: outer-fiber
+      offsetMeters: { x: 0, z: 0 }
+    item: raw_fiber
+    quantity: 126
+    workSeconds: 36
+    collection: bare-hand
+    name: Dry plant fibers
+  - id: branches
+    revision: 1
+    placement:
+      kind: retained-opening
+      entityId: branches
+    item: wood
+    quantity: 36
+    workSeconds: 42
+    collection: bare-hand
+    name: Fallen branches
+  - id: copse-branches
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: pole-copse
+      offsetMeters: { x: 0, z: 0 }
+    item: wood
+    quantity: 48
+    workSeconds: 42
+    collection: bare-hand
+    name: Fallen branches
+  - id: outer-branches
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: outer-materials
+      offsetMeters: { x: 0, z: 0 }
+    item: wood
+    quantity: 48
+    workSeconds: 42
+    collection: bare-hand
+    name: Fallen branches
+  - id: stones
+    revision: 1
+    placement:
+      kind: retained-opening
+      entityId: stones
+    item: stone
+    quantity: 60
+    workSeconds: 24
+    collection: bare-hand
+    name: Loose stones
+  - id: bank-stones
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: stone-bank
+      offsetMeters: { x: 0, z: 0 }
+    item: stone
+    quantity: 40
+    workSeconds: 24
+    collection: bare-hand
+    name: Loose stones
+  - id: outer-stones
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: outer-materials
+      offsetMeters: { x: 1.5, z: 0 }
+    item: stone
+    quantity: 40
+    workSeconds: 24
+    collection: bare-hand
+    name: Loose stones
+  - id: bank-flint
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: stone-bank
+      offsetMeters: { x: 1.5, z: 0 }
+    item: knappable_flint
+    quantity: 12
+    workSeconds: 30
+    collection: bare-hand
+    name: Unworked flint
+  - id: clay-bank-flint
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: clay-bank
+      offsetMeters: { x: 0, z: 0 }
+    item: knappable_flint
+    quantity: 18
+    workSeconds: 30
+    collection: bare-hand
+    name: Unworked flint
+  - id: outer-flint
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: outer-materials
+      offsetMeters: { x: 0, z: 1.5 }
+    item: knappable_flint
+    quantity: 18
+    workSeconds: 30
+    collection: bare-hand
+    name: Unworked flint
+  - id: copse-poles
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: pole-copse
+      offsetMeters: { x: 1.5, z: 0 }
+    item: straight_pole
+    quantity: 24
+    workSeconds: 60
+    collection: bare-hand
+    name: Fallen straight poles
+  - id: bank-poles
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: fiber-bank
+      offsetMeters: { x: 1.5, z: 0 }
+    item: straight_pole
+    quantity: 12
+    workSeconds: 60
+    collection: bare-hand
+    name: Fallen straight poles
+  - id: outer-poles
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: outer-materials
+      offsetMeters: { x: 1.5, z: 1.5 }
+    item: straight_pole
+    quantity: 24
+    workSeconds: 60
+    collection: bare-hand
+    name: Fallen straight poles
+  - id: marsh-poles
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: outer-fiber
+      offsetMeters: { x: 1.5, z: 0 }
+    item: straight_pole
+    quantity: 36
+    workSeconds: 60
+    collection: bare-hand
+    name: Fallen straight poles
+  - id: washed-bone
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: stone-bank
+      offsetMeters: { x: 0, z: 1.5 }
+    item: bone
+    quantity: 2
+    workSeconds: 30
+    collection: bare-hand
+    name: Washed bone fragments
+  - id: outer-bone
+    revision: 1
+    placement:
+      kind: anchor
+      anchor: outer-materials
+      offsetMeters: { x: 3, z: 0 }
+    item: bone
+    quantity: 6
+    workSeconds: 30
+    collection: bare-hand
+    name: Bone fragments

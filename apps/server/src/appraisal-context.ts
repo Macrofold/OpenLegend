@@ -1,6 +1,10 @@
+import { memorySourceProof } from './memory-repository.js';
 import { entityGet } from '@open-legend/domain';
 import {
   activeAppraisals,
+  canonicalJson,
+  experienceEntryKey,
+  scopedAppraisals,
   renderNarration,
   subjectNarration,
   person,
@@ -13,17 +17,46 @@ import {
   type AppraisalChange,
   type AppraisalEvidence,
   type WorldState,
+  type AppraisalScope,
 } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
 import type { DecisionAppraisalProposal, AppraisalProposal } from './cognition-contracts.js';
 import { decisionAppraisalSchema } from './cognition-contracts.js';
 import { z } from 'zod';
+import {
+  experienceForModel,
+  experienceModelBindings,
+  type SharedModelExperience,
+} from './perceived-context.js';
+
+interface AppraisalPreparation {
+  requiredFeelings?: readonly AppraisalScope[];
+  completeSources?: boolean;
+  /** Only a closed supplied strategy may restrict its possible writes this way. */
+  guard?: 'all' | 'required';
+  /** The caller includes the exact complete character.experience array. */
+  sharedExperiences?: ReadonlyMap<string, SharedModelExperience>;
+}
 
 /** Feelings are the actor's interpretation, not knowledge of somebody else's mind.
  * A missing target does not mean that the accepted feeling has an unknown cause.
  * docs/projects/parallel-batch-03-personal-game-tech-design.md#representation-choices */
-export function decisionFeelings(world: WorldState, actorId: string): string {
-  return activeAppraisals(world, actorId)
+function selectedFeelings(world: WorldState, actorId: string, required: readonly AppraisalScope[]) {
+  return [
+    ...new Map(
+      [
+        ...activeAppraisals(world, actorId),
+        ...(required.length ? scopedAppraisals(world, actorId, required) : []),
+      ].map((value) => [value.id, value]),
+    ).values(),
+  ];
+}
+export function decisionFeelings(
+  world: WorldState,
+  actorId: string,
+  required: readonly AppraisalScope[] = [],
+): string {
+  return selectedFeelings(world, actorId, required)
     .map((value) => {
       return renderNarration(
         world,
@@ -36,7 +69,19 @@ export function decisionFeelings(world: WorldState, actorId: string): string {
                 person(value.targetId, value.targetId === actorId ? 'reflexive' : 'object'),
               ]
             : []),
-          `. Source: ${value.coverage}; lifetime: ${value.lifetime}.`,
+          (() => {
+            const definition = appraisalDefinition(world, value.definitionPin);
+            if (!definition) throw new Error('An appraisal definition is unavailable.');
+            const amount =
+              value.value.kind === 'scaled' && definition.value.kind === 'scaled'
+                ? `; current intensity ${value.value.value} on the installed ${definition.value.min}–${definition.value.max} scale`
+                : '';
+            const duration =
+              definition.lifetime.kind === 'decays'
+                ? `decays by ${definition.lifetime.perHour} per game hour without a new interpretation`
+                : value.lifetime;
+            return `${amount}. Source: ${value.coverage}; lifetime: ${duration}.`;
+          })(),
         ]),
         actorId,
       );
@@ -54,15 +99,32 @@ async function bindAppraisals(
   subjects: Record<string, string>,
   purpose: 'reflection' | 'decision',
   triggerEvidenceId?: string,
+  preparation: AppraisalPreparation = {},
 ) {
+  const { requiredFeelings = [], completeSources = false, guard = 'all' } = preparation;
   await service.flush();
   const world = service.world,
     generation = service.generation;
   const head = await service.store.records?.head();
   const scope = head && { worldId: world.id, actorId, generation: head.generation };
   const repository = service.store.memories;
+  const requested = [...new Set(evidenceIds)];
+  if (completeSources && requested.length > 48)
+    throw new Error('The complete appraisal source set exceeds its admitted work limit.');
   const selected =
-    scope && repository ? await repository.appraisalSources(scope, evidenceIds.slice(0, 48)) : [];
+    scope && repository
+      ? await repository.appraisalSources(
+          scope,
+          completeSources ? requested : requested.slice(0, 48),
+        )
+      : [];
+  if (
+    completeSources &&
+    requested.some(
+      (id) => !selected.some((entry) => entry.memory.id === id || entry.memory.eventId === id),
+    )
+  )
+    throw new Error('A required personal appraisal source is unavailable.');
   const sources = new Map<string, AppraisalEvidence>(
     selected.map((entry, index) => [
       `cause${index + 1}`,
@@ -73,6 +135,7 @@ async function bindAppraisals(
             : 'remembered',
         actorId,
         sourceId: entry.memory.id,
+        sourceKind: entry.entry.source,
         sourceVersion: entry.revision,
         occurrenceId: entry.memory.eventId ?? entry.memory.id,
         coverage: entry.memory.source,
@@ -83,13 +146,25 @@ async function bindAppraisals(
   );
   const worldId = world.id;
   const appraisalState = world.appraisals?.[actorId];
+  const requiredRevisions =
+    guard === 'required'
+      ? new Map(
+          scopedAppraisals(world, actorId, requiredFeelings).map(({ id, revision }) => [
+            id,
+            revision,
+          ]),
+        )
+      : undefined;
   const installed = world.moduleManifest.appraisals;
   const knowledgeRevision = world.knowledgeRevisions?.[actorId];
   const ownerAccount = world.authorship.playerAccountIds[actorId];
   const permitted = (definition: NonNullable<typeof installed>['definitions'][number]) =>
     purpose === 'decision' ? definition.decision : definition.reflection;
   const records = new Map(
-    activeAppraisals(world, actorId).map((value, index) => [`feeling${index + 1}`, value]),
+    selectedFeelings(world, actorId, requiredFeelings).map((value, index) => [
+      `feeling${index + 1}`,
+      value,
+    ]),
   );
   const recordDefinitions = new Map(
     [...records].map(([handle, record]) => [
@@ -102,19 +177,37 @@ async function bindAppraisals(
       .filter(permitted)
       .map((definition, index) => [`policy${index + 1}`, definition]),
   );
-  const proof = selected.map((entry) => ({
-    id: entry.memory.id,
-    sourceKind: entry.sourceKind,
-    revision: entry.revision,
-  }));
-  const sourcesCurrent = async () =>
+  const proof = selected.map(memorySourceProof);
+  const sourceCurrent = async () =>
     generation === service.generation &&
     worldId === service.world.id &&
-    appraisalState === service.world.appraisals?.[actorId] &&
-    installed === service.world.moduleManifest.appraisals &&
     knowledgeRevision === service.world.knowledgeRevisions?.[actorId] &&
     ownerAccount === service.world.authorship.playerAccountIds[actorId] &&
     (!scope || !repository || (await repository.current(scope, proof)));
+  const feelingsCurrent = () => {
+    if (appraisalState === service.world.appraisals?.[actorId]) return true;
+    // An unrelated publication may copy the same records. Exact contents, not
+    // allocation identity, determine whether this person's interpretation changed.
+    if (!requiredRevisions)
+      return (
+        canonicalJson(appraisalState ?? {}) ===
+        canonicalJson(service.world.appraisals?.[actorId] ?? {})
+      );
+    // New bodily discomfort is not a changed interpretation of fear or anger.
+    // Preserve actual subscribed revisions, including absence and native decay;
+    // the native writer still validates every exact proposed operation.
+    const current = scopedAppraisals(service.world, actorId, requiredFeelings);
+    return (
+      current.length === requiredRevisions.size &&
+      current.every(({ id, revision }) => requiredRevisions.get(id) === revision)
+    );
+  };
+  const sourcesCurrent = async () =>
+    feelingsCurrent() &&
+    (installed === service.world.moduleManifest.appraisals ||
+      canonicalJson(installed ?? null) ===
+        canonicalJson(service.world.moduleManifest.appraisals ?? null)) &&
+    (await sourceCurrent());
   if (!(await sourcesCurrent()))
     throw new Error('Appraisal sources changed during context preparation.');
   const subjectRef = (id: string | null) =>
@@ -140,6 +233,10 @@ async function bindAppraisals(
   };
   return {
     current,
+    sourceCurrent,
+    sources,
+    definitions,
+    records,
     bindings,
     valueSchema(handle: string) {
       const definition = definitions.get(handle) ?? recordDefinitions.get(handle);
@@ -154,6 +251,12 @@ async function bindAppraisals(
         : variants[0];
     },
     context: {
+      ...(preparation.sharedExperiences?.size
+        ? {
+            sourceReferences:
+              'An experience.reference names the exact complete record at character.experience[index] in this same request. Read that record for the cause; each cause handle keeps its own native binding.',
+          }
+        : {}),
       feelings: [...records].map(([handle, record]) => ({
         handle,
         revision: record.revision,
@@ -173,12 +276,26 @@ async function bindAppraisals(
         value: definition.value,
         lifetime: definition.lifetime.kind,
       })),
-      sources: [...sources].map(([handle, source]) => ({
-        handle,
-        evidence: source.sourceId,
-        coverage: source.coverage,
-        subjects: source.subjectIds.flatMap((id) => (subjectRef(id) ? [subjectRef(id)] : [])),
-      })),
+      sources: [...sources].map(([handle, source], index) => {
+        const entry = selected[index]!,
+          experience = experienceForModel(
+            entry.entry,
+            experienceModelBindings(world, actorId, entry.entry, handle),
+          ),
+          shared = preparation.sharedExperiences?.get(experienceEntryKey(entry.entry));
+        // Exact private identity and revision are necessary but not enough: a
+        // changed observer projection must retain its own complete wording.
+        const same =
+          shared?.revision === entry.revision &&
+          canonicalJson({ ...shared.experience, handle: null }) ===
+            canonicalJson({ ...experience, handle: null });
+        return {
+          handle,
+          experience: same ? { reference: `character.experience[${shared.index}]` } : experience,
+          coverage: source.coverage,
+          subjects: source.subjectIds.flatMap((id) => (subjectRef(id) ? [subjectRef(id)] : [])),
+        };
+      }),
     },
     resolve(proposals: AppraisalProposal[]): AppraisalChange[] {
       const changes: AppraisalChange[] = proposals.map((proposal) => {
@@ -268,6 +385,7 @@ export async function bindDecisionAppraisals(
   evidenceIds: string[],
   subjects: Record<string, string>,
   triggerEvidenceId?: string,
+  preparation: AppraisalPreparation = {},
 ) {
   const ids = [...new Set([...(triggerEvidenceId ? [triggerEvidenceId] : []), ...evidenceIds])];
   const bound = await bindAppraisals(
@@ -278,6 +396,7 @@ export async function bindDecisionAppraisals(
     subjects,
     'decision',
     triggerEvidenceId,
+    preparation,
   );
   return {
     ...bound,

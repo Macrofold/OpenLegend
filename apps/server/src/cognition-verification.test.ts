@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet, entityValues } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import {
@@ -6,7 +7,7 @@ import {
   readConfig,
 } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
-import { applyBodyEffects, DEFAULT_COGNITION_POLICY, NPC_ID } from '@open-legend/domain';
+import { applyBodyEffects, baseCognitionPolicy, NPC_ID } from '@open-legend/domain';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   compileSchema,
@@ -155,7 +156,11 @@ function answers(
 }
 /** The permitted handle of the person whose speech triggered the decision. */
 function speaker(context: string): string {
-  const handle = context.match(/"speaker":"[^"]*\(ID:([0-9a-f]+)\)"/)?.[1];
+  const trigger = context.match(/## Trigger facts\n([^\n]+)/)?.[1];
+  const facts = trigger
+    ? (JSON.parse(trigger) as { experience?: { value?: { sourceId?: string } } })
+    : undefined;
+  const handle = facts?.experience?.value?.sourceId;
   if (!handle) throw new Error('Fixture context has no permitted speaker reference.');
   return handle;
 }
@@ -284,7 +289,11 @@ afterEach(async () => {
 }, 120_000);
 
 async function harness(
-  options: { env?: Record<string, string>; client?: (config: AppConfig) => AiClient } = {},
+  options: {
+    env?: Record<string, string>;
+    client?: (config: AppConfig) => AiClient;
+    ordinaryMain?: boolean;
+  } = {},
 ) {
   const now = 10_000;
   const config = readConfig({
@@ -298,7 +307,9 @@ async function harness(
     NARRATION_BATCH_MS: '10000',
     ...options.env,
   });
-  const store = await testRepository();
+  // Adapter specimens choose their small supplied scene explicitly. The greeting
+  // keeps actual Main input-budget coverage. Neither changes production defaults.
+  const store = await testRepository(undefined, options.ordinaryMain ? undefined : stockedCamp());
   const service = new WorldService(store, config, () => now);
   await enterLocalWorld(service);
   await service.setPresence('fixture-browser', true);
@@ -466,7 +477,7 @@ describe(
   { timeout: 480_000 },
   () => {
     it('answers a greeting with one low-effort level-2 mini request, a minimal schema, no reflection and no harness', async () => {
-      const h = await harness();
+      const h = await harness({ ordinaryMain: true });
       h.state.policy = { route: 'level2', reflection: 'no', possibleAction: 'no' };
       h.state.generate = (request) =>
         value(request.requestId, 'openai', talk(String(request.context), 'Hello. I am Ada.'));
@@ -707,22 +718,32 @@ describe(
       ];
       // The first reply reaches the second request only as world-derived conversation evidence:
       // no provider response ID, raw model output or earlier instructions are carried over.
+      // Complete personally heard segments legitimately retain the exact speech text.
       expect(firstInput).not.toContain('Welcome to the river camp.');
       const section = secondInput.indexOf('## Conversation so far');
       expect(section).toBeGreaterThanOrEqual(0);
       const conversation = secondInput.slice(section, secondInput.indexOf('\n## ', section + 1));
-      expect(conversation).toContain('I said to a person (ID:');
-      const mentions = secondInput.split('\n').filter((line) => line.includes('river camp'));
-      expect(mentions.length).toBeGreaterThan(0);
-      for (const line of mentions)
-        expect(line).toMatch(/I said to .+: "Welcome to the river camp\."$/);
+      expect(conversation).toContain('I said');
+      const evidenceSection = secondInput.match(/## Complete personal evidence\n([^\n]+)/)?.[1];
+      const evidence = JSON.parse(evidenceSection ?? '[]') as Array<{
+        value: {
+          sourceId?: string;
+          actorId?: string;
+          speech?: { segments: Array<{ kind: string; text?: string }> };
+        };
+      }>;
+      expect(
+        evidence.some(
+          (entry) =>
+            entry.value.sourceId === entry.value.actorId &&
+            entry.value.speech?.segments.some(
+              (segment) =>
+                segment.kind === 'heard' && segment.text === 'Welcome to the river camp.',
+            ),
+        ),
+      ).toBe(true);
       expect(transport.outputs[0]).toContain('"text":"Welcome to the river camp."');
-      for (const transcript of [
-        'resp_fixture_1',
-        transport.outputs[0]!,
-        '"text":"Welcome to the river camp."',
-        RESPONSE_INSTRUCTIONS,
-      ])
+      for (const transcript of ['resp_fixture_1', transport.outputs[0]!, RESPONSE_INSTRUCTIONS])
         expect(secondInput).not.toContain(transcript);
 
       const jev = transport.requests.filter((request) => request.url === JEV_URL);
@@ -735,7 +756,7 @@ describe(
     });
 
     it('forwards the actual model, effort and output limit per level and never substitutes a missing capability', async () => {
-      expect(DEFAULT_COGNITION_POLICY.maxImmediateLevel).toBe(4);
+      expect(baseCognitionPolicy().maxImmediateLevel).toBe(4);
       let policy: JudgePolicy = {};
       const transport = fixtureTransport(
         () => policy,
@@ -809,7 +830,7 @@ describe(
         env: { AI_JEV_ONLY: 'true' },
         client: (config) => directClient(config, jevOnlyTransport.fetch),
       });
-      const job = await jevOnly.chat('jev-only', 'Hello');
+      const job = await jevOnly.think();
       const routing = jevOnlyTransport.requests.find(
         (request) =>
           request.url === JEV_URL && 'route' in (request.body['questions'] as TypedQuestionMap),
@@ -828,24 +849,17 @@ describe(
       expect(offeredRoutes.some((key) => /^request_\d+$/.test(key))).toBe(true);
       expect(jevOnlyTransport.requests.filter((request) => request.url !== JEV_URL)).toEqual([]);
       expect(jevOnly.npcResponses()).toEqual([]);
-      // Speech uses the dependent path: routing first, then one separate level-1 rating request.
-      expect(decisionJudges(jevOnly, job.id)).toEqual([
-        `${job.id}:attempt:0:route`,
-        `${job.id}:attempt:0:action-attention`,
-      ]);
-      expect(Object.keys(routeRequest(jevOnly, job.id)!.questions)).toEqual([
-        'route',
-        'reflection',
-        'possibleAction',
-      ]);
-      const rating = jevOnly.calls.judges.find(
-        (request) => request.requestId === `${job.id}:attempt:0:action-attention`,
-      )!;
-      const handles = Object.keys(rating.questions);
+      // An autonomous decision combines routing and action ratings. Speech
+      // interpretation itself requires generation and is not the Jev-only specimen.
+      expect(decisionJudges(jevOnly, job.id)).toEqual([`${job.id}:attempt:0:route`]);
+      const rating = routeRequest(jevOnly, job.id)!;
+      expect(Object.keys(rating.questions)).toEqual(
+        expect.arrayContaining(['route', 'reflection']),
+      );
+      const handles = ratingHandles(rating.questions);
       expect(handles.length).toBeGreaterThan(0);
-      expect(ratingHandles(rating.questions)).toEqual(handles);
-      for (const question of Object.values(rating.questions))
-        expect(question).toMatchObject({
+      for (const handle of handles)
+        expect(rating.questions[handle]).toMatchObject({
           type: 'noul',
           instructions: expect.stringContaining('serve a current need, intention or interest'),
         });
@@ -865,7 +879,7 @@ describe(
       const selection = trace.children.find((child) => child.id === `${job.id}:attempt:0:level1`)!;
       expect(selection).toMatchObject({
         kind: 'Level-1 selection',
-        input: { selectionRequest: 'dependent', ignoredAnswers: [] },
+        input: { selectionRequest: 'combined', ignoredAnswers: [] },
         output: {
           outcome: {
             kind: 'defer',
@@ -1023,10 +1037,17 @@ describe(
       h.state.policy = {
         route: 'level1',
         reflection: 'no',
-        rate: (description) => (description.startsWith('Prepare 1 Fiber cord') ? 0.9 : 0.1),
+        rate: (description) => (/^Craft .*cord/i.test(description) ? 0.9 : 0.1),
       };
       const cordStep = expect.objectContaining({
-        command: expect.objectContaining({ type: 'prepare', preparation: 'cord' }),
+        command: expect.objectContaining({
+          type: 'craft',
+          recipeId: Object.values(h.service.world.recipes).find(
+            (recipe) =>
+              recipe.source.kind === 'fixed-transform' &&
+              recipe.source.definition.id === 'base:twist-cord',
+          )!.id,
+        }),
       });
       const steps = () =>
         entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.plan?.steps ?? [];
@@ -1044,7 +1065,7 @@ describe(
             ratings: Level1Rating[];
           }
         ).ratings.find((rating) => rating.handle === selectedHandle(act)),
-      ).toMatchObject({ rating: 0.9, description: expect.stringMatching(/^Prepare 1 Fiber cord/) });
+      ).toMatchObject({ rating: 0.9, description: expect.stringMatching(/^Craft .*cord/i) });
       // The selected binding was admitted natively and now drives Ada's plan.
       const actReceipt = h.service.world.responseReceipts?.[act.id];
       expect(Object.values(actReceipt?.components ?? {}).length).toBeGreaterThan(0);

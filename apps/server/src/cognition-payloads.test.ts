@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -240,6 +241,7 @@ const KNOWN_HEADINGS = new Set([
   'My commitments',
   'Trigger',
   'Trigger facts',
+  'Complete personal evidence',
   'Task',
   'Conversation so far',
   'Known planning techniques',
@@ -339,7 +341,8 @@ function embeddedJson(line: string): { start: number; end: number; value: unknow
 }
 // Format and reference sections legitimately describe nullable fields and empty role lists;
 // only whole-line JSON there is inspected, which exposes content appended without a heading.
-const SCAFFOLDING_EXEMPT = new Set(['Response format', 'References']);
+// Complete observer records use null to preserve unknown/unacquired facts.
+const SCAFFOLDING_EXEMPT = new Set(['Response format', 'References', 'Complete personal evidence']);
 /** Null/empty scaffolding in model-facing sections: empty bodies, whole-line empty JSON,
  * null/empty values inside embedded JSON, bare `null` prose, separators left by empty values
  * and blank lines. Reported, never asserted to exist. The accepted About-me text is authored
@@ -531,7 +534,7 @@ async function harness(
     // In-process simulated ceiling for fake receipts; no provider is reachable.
     AI_BUDGET_USD: '1',
   });
-  const store = await testRepository();
+  const store = await testRepository(undefined, stockedCamp());
   const service = new WorldService(store, config, () => now);
   await enterLocalWorld(service);
   await service.setConnection('fixture-browser', true);
@@ -1083,8 +1086,13 @@ describe(
       });
     });
 
-    it('hazard: another actor strikes Ada; attention, combined routing and a level-3 payload', async () => {
+    it('hazard under ordinary routing: attention, combined routing and a level-3 payload', async () => {
       const h = await harness({ script: { route: { level3: 0.9 } } });
+      // This CR01 specimen inspects the ordinary route, including a world which
+      // omits the optional supplied-threat strategy. CTR owns that two-stage route.
+      await editWorld(h.service, (world) => {
+        world.cognitionPolicy.preparedResponses = null;
+      });
       const health = entityGet(h.service.world.entities, NPC_ID)!.actor!.health;
       const struck = await h.service.command('fixture-punch', {
         type: 'strike',
@@ -1431,7 +1439,7 @@ describe(
       // The large snapshots must refuse before dispatch. A small accepted snapshot supplies
       // a positive control independently of growing authored starting context.
       const sixFiles = await harness({ script: { route: { level2: 0.9 } }, reply });
-      probes.push(await probe(sixFiles, 'fresh-six-files', 6, files.slice(0, 6)));
+      const positiveSix = await probe(sixFiles, 'fresh-six-files', 6, files.slice(0, 6));
       const control = await harness({ script: { route: { level2: 0.9 } }, reply });
       const positive = await probe(control, 'fresh-control', 1, files.slice(0, 1));
       report('inner-world-quota', {
@@ -1439,7 +1447,7 @@ describe(
         fileBytes: fileBytes[0],
         level2InputLimit: levelLimits(h.config)[2].inputSize,
         level1InputLimit: levelLimits(h.config)[1].inputSize,
-        probes: [...probes, positive],
+        probes: [...probes, positiveSix, positive],
       });
       const exceeded =
         'Complete accepted inner world and required context exceed the input budget.';
@@ -1461,6 +1469,13 @@ describe(
           generationInputBytes: null,
           accounting: null,
         });
+      expect(positiveSix).toMatchObject({
+        files: 6,
+        status: 'completed',
+        disposition: 'responded',
+        routeHasCompleteSnapshot: true,
+        nativeReplyAccepted: true,
+      });
       // Preserve positive full-snapshot, request-limit and accounting coverage, including
       // the actual native reply; an arbitrary refusal cannot satisfy this control.
       expect(positive).toMatchObject({

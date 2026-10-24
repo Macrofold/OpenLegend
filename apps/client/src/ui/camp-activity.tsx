@@ -932,7 +932,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     >
       {/* Exact agreement replies retain their own native admission; an uncertain task
           cannot prevent consent ending. docs/action-capabilities.md#exact-social-consent-with-separate-movement */}
-      <OutingStatus view={view} connected={!disabled} command={(action) => void command(action)} />
+      <OutingStatus view={view} connected={!unavailable} command={command} />
       {retained.status !== 'empty' && (
         <div className="ol-task-recovery" role="status">
           {unresolved ? (

@@ -959,6 +959,14 @@ body,
   font-size: 12px;
   opacity: 0.85;
 }
+.ol-world-hover[data-primary] > div {
+  /* Consequences must remain readable before a captured shortcut commits. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.ol-world-hover-fact {
+  font-size: 12px;
+}
 /* The player's own promises (docs/projects/readable-promises-feature-spec.md). */
 .ol-promises {
   display: grid;
@@ -1398,9 +1406,14 @@ body,
 .ol-hud[data-narrow='true'] {
   --hud-inset: var(--space-3);
   --status-scale: 0.72;
-  /* Keep Game and the open-task tabs above the sheet at enlarged text sizes. */
+  /* Reading tools start below the actual condition card, including enlarged text. */
+  --sheet-tabs-space: 0px;
+  --sheet-rail-top: max(
+    calc(var(--status-bottom) + var(--space-2)),
+    calc(var(--space-3) + var(--control-sm) + var(--space-2))
+  );
   --sheet-top: calc(
-    var(--space-3) + var(--control-sm) + var(--space-2) + var(--control-md) + 2 * var(--space-1)
+    var(--sheet-rail-top) + var(--control-md) + 2 * var(--space-1) + var(--sheet-tabs-space)
   );
   --dock-top: max(
     230px,
@@ -2539,6 +2552,9 @@ body,
   font-size: calc(12px * var(--caption-scale, 1));
   margin-bottom: 3px;
 }
+.ol-speech-caption-text {
+  white-space: pre-wrap;
+}
 .ol-speech-caption-text > .ol-icon-wrap {
   margin-right: 6px;
   vertical-align: -2px;
@@ -2828,10 +2844,6 @@ body,
    They share the sheet's geometry instead of sitting behind its reading area. */
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) {
   --sheet-tabs-space: calc(var(--control-md) + 2 * var(--space-1));
-  --sheet-top: calc(
-    var(--space-3) + var(--control-sm) + var(--space-2) + var(--control-md) + 2 * var(--space-1) +
-      var(--sheet-tabs-space)
-  );
 }
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs[data-single='true']) {
   --sheet-tabs-space: 0px;
@@ -2839,13 +2851,17 @@ body,
 .ol-hud[data-narrow='true'] .ol-mobile-tabs[data-single='true'] {
   display: none;
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-top-tools {
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs, .ol-world-composer:not([hidden])) .ol-top-tools {
   flex-direction: row;
 }
-.ol-hud[data-narrow='true']:is([data-tight='true'], [data-short='true'], :has(.ol-mobile-tabs))
+.ol-hud[data-narrow='true']:is(
+    [data-tight='true'],
+    [data-short='true'],
+    :has(.ol-mobile-tabs, .ol-world-composer:not([hidden]))
+  )
   .ol-launcher-rails {
   position: absolute;
-  top: calc(var(--space-3) + var(--control-sm) + var(--space-2));
+  top: var(--sheet-rail-top);
   left: var(--hud-inset);
   right: var(--hud-inset);
   display: flex;
@@ -2856,10 +2872,17 @@ body,
   pointer-events: auto;
   z-index: var(--z-sheet);
 }
-.ol-hud:is([data-tight='true'], [data-short='true']):not(:has(.ol-mobile-tabs)) .ol-launcher-rails {
+.ol-hud:is([data-tight='true'], [data-short='true']):not(
+    :has(.ol-mobile-tabs, .ol-world-composer:not([hidden]))
+  )
+  .ol-launcher-rails {
   top: var(--dock-top);
 }
-.ol-hud[data-narrow='true']:is([data-tight='true'], [data-short='true'], :has(.ol-mobile-tabs))
+.ol-hud[data-narrow='true']:is(
+    [data-tight='true'],
+    [data-short='true'],
+    :has(.ol-mobile-tabs, .ol-world-composer:not([hidden]))
+  )
   .ol-rail {
   transform: none;
   position: static;
@@ -2867,14 +2890,22 @@ body,
   flex-direction: row;
   gap: var(--space-1);
 }
-.ol-hud[data-narrow='true']:is([data-tight='true'], [data-short='true'], :has(.ol-mobile-tabs))
+.ol-hud[data-narrow='true']:is(
+    [data-tight='true'],
+    [data-short='true'],
+    :has(.ol-mobile-tabs, .ol-world-composer:not([hidden]))
+  )
   .ol-launcher {
   flex: none;
   width: var(--control-md);
   height: var(--control-md);
 }
 /* Keep the shared focus ring inside the horizontal strip's clipping edges. */
-.ol-hud[data-narrow='true']:is([data-tight='true'], [data-short='true'], :has(.ol-mobile-tabs))
+.ol-hud[data-narrow='true']:is(
+    [data-tight='true'],
+    [data-short='true'],
+    :has(.ol-mobile-tabs, .ol-world-composer:not([hidden]))
+  )
   .ol-launcher:focus-visible {
   outline-offset: -2px;
 }
@@ -3055,6 +3086,19 @@ body,
   justify-content: space-between;
   gap: var(--space-2);
 }
+.ol-world-recipient {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.ol-world-recipient > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .ol-world-composer-input {
   display: flex;
   align-items: center;
@@ -3118,6 +3162,7 @@ body,
 }
 .ol-hud[data-narrow='true'] .ol-world-composer {
   bottom: var(--space-3);
+  max-height: calc(100% - var(--sheet-top) - var(--space-3));
 }
 
 .ol-camera .ol-camera-more {
@@ -3216,4 +3261,29 @@ body,
 }
 .ol-work-disclosure[data-collapsed='true'] {
   transform: rotate(90deg);
+}
+
+/* First-context information is a dismissible disclosure, not a modal or task. */
+.ol-opening-information {
+  width: min(28rem, calc(100vw - 2 * var(--hud-inset)));
+  max-height: 30vh;
+  overflow: auto;
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+.ol-opening-information summary {
+  cursor: pointer;
+}
+.ol-world-controls[data-bounded] > .ol-opening-information {
+  /* The shared lower scroller reserves launcher space and owns tall text.
+     Keep the same disclosure readable through narrow/short/enlarged layouts. */
+  flex: none;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  box-sizing: border-box;
+  margin: 0;
+}
+.ol-hud[data-picking='true'] .ol-opening-information {
+  visibility: hidden;
 }

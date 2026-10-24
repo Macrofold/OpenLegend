@@ -3,12 +3,14 @@ import {
   distance3D,
   interpolate,
   movingBodyContact,
+  movingBodiesDistanceInterval,
   rayHits,
+  SPATIAL_LIMITS,
   type WorldPoint,
 } from '@open-legend/spatial';
 import { rangedTargetAllowed, rangedAccuracy, rangedPolicy } from './ranged-policy.js';
 import { nextId } from './data.js';
-import { canonicalJson, emit, outcome } from './events.js';
+import { emit, outcome } from './events.js';
 import { subjectNarration, person } from './narration.js';
 import { accessiblePossession } from './object-access.js';
 import { itemFor } from './objects.js';
@@ -24,8 +26,8 @@ import { bodyProfile, spatialMap, worldPosition } from './spatial-state.js';
 import { interactionAnchor, spatialCandidates } from './spatial.js';
 import { seesEntity, visionQuery } from './perception.js';
 import { activelyParticipates } from './participation-state.js';
+import { physicalBodyForLife } from './reincarnation.js';
 import { commitContactImpact } from './contact-defense.js';
-import { scarFactor } from './scar-effects.js';
 import { projectAttributes, definitionPin, type DefinitionPin } from './world-modules.js';
 import { sameDefinitionPin, isDefinitionPin } from './state-owners.js';
 import {
@@ -40,14 +42,22 @@ import { occurrenceFor } from './action-experience.js';
 import { noteTerritorialInjury } from './territorial-threat.js';
 import { chargeWork } from './work-budget.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
-import { baseShotDirection, BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
+import {
+  baseShotDirection,
+  baseObservedAimPoint,
+  BASE_RANGED_TEXT,
+} from './worlds/base/ranged-counterplay.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
-import { rememberAttack } from './worlds/base/animal-behavior.js';
-import { appraiseProjectileContact } from './worlds/base/appraisals.js';
 import { flightTracks, motionTrackPosition, type MotionTrack } from './flight.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { readOnlyDraftView } from './draft.js';
+import { nativeResponseProfile } from './native-response.js';
+import {
+  motionReach,
+  movingPointVisionRuns,
+  physicalObservationTracks,
+} from './motion-boundaries.js';
 import type { Action, Entity, Outcome, WorldEvent, WorldState } from './types.js';
 
 export interface AimState {
@@ -57,13 +67,120 @@ export interface AimState {
   reservationId: string;
   manual: boolean;
   ready: boolean;
+  observedMotion?: {
+    fromAt: number;
+    at: number;
+    from: WorldPoint;
+    to: WorldPoint;
+  };
+}
+
+interface AimMotionPreparation {
+  actorId: string;
+  actionId: string;
+  targetId: string;
+  targetLife?: number;
+  startedAt: number;
+  seconds: number;
+  own: MotionTrack[];
+  target: MotionTrack[];
+  visible: { own: number; target: number; from: number }[];
+}
+
+/** Prepare only existing aims and their exact target's physical paths. These are
+ * disposable predictions until movement and personal sight establish evidence. */
+export function captureAimMotion(
+  world: WorldState,
+  actorIds: readonly string[],
+  seconds: number,
+): AimMotionPreparation[] {
+  if (seconds <= TIME_EPSILON) return [];
+  const prepared: AimMotionPreparation[] = [];
+  for (const id of actorIds) {
+    const actor = entityGet(world.entities, id),
+      action = actor?.actor?.action,
+      target = entityGet(world.entities, action?.targetId ?? '');
+    if (!actor || !action?.ranged || action.stage !== 'working' || !target) continue;
+    const own = physicalObservationTracks(world, actor, seconds),
+      targetTracks = physicalObservationTracks(world, target, seconds);
+    if (!own || !targetTracks || !seesEntity(world, actor, target)) continue;
+    const lift = interactionAnchor(target).y - worldPosition(target).y;
+    const aimed = targetTracks.map((track) => ({
+      ...track,
+      pose: track.pose.map((point) => ({ ...point, y: point.y + lift })),
+    }));
+    const visible: AimMotionPreparation['visible'] = [];
+    for (let i = 0; i < own.length; i++)
+      for (let j = 0; j < aimed.length; j++) {
+        const run = movingPointVisionRuns(world, actor, own[i]!, aimed[j]!, seconds).at(-1);
+        if (run?.value && run.end === seconds) visible.push({ own: i, target: j, from: run.start });
+      }
+    prepared.push({
+      actorId: id,
+      actionId: action.id,
+      targetId: target.id,
+      targetLife: action.targetLife,
+      startedAt: world.simTime,
+      seconds,
+      own,
+      target: aimed,
+      visible,
+    });
+  }
+  return prepared;
+}
+
+/** Call after physical movement and before endpoint releases. No future intention
+ * is read here: only a uniquely matched, actually seen executed segment is saved. */
+export function observeAimMotion(world: WorldState, prepared: AimMotionPreparation[]): void {
+  for (const entry of prepared) {
+    const actor = entityGet(world.entities, entry.actorId),
+      action = actor?.actor?.action,
+      target = entityGet(world.entities, entry.targetId);
+    if (!actor || action?.id !== entry.actionId || !action.ranged) continue;
+    delete action.ranged.observedMotion;
+    if (
+      !target ||
+      entry.targetLife !== action.targetLife ||
+      (entry.targetLife !== undefined && entry.targetLife !== (target.actor?.physicalLife ?? 0)) ||
+      !seesEntity(world, actor, target)
+    )
+      continue;
+    const ownPoint = worldPosition(actor),
+      targetPoint = interactionAnchor(target);
+    const matches = entry.visible.filter(
+      (pair) =>
+        distance3D(motionTrackPosition(entry.own[pair.own]!, entry.seconds), ownPoint) <
+          SPATIAL_LIMITS.epsilon &&
+        distance3D(motionTrackPosition(entry.target[pair.target]!, entry.seconds), targetPoint) <
+          SPATIAL_LIMITS.epsilon,
+    );
+    if (matches.length !== 1) continue;
+    const match = matches[0]!,
+      track = entry.target[match.target]!,
+      from = Math.max(match.from, track.at.at(-2)!),
+      fromAt = entry.startedAt + from;
+    if (entry.seconds - from <= TIME_EPSILON || fromAt >= world.simTime) continue;
+    action.ranged.observedMotion = {
+      fromAt,
+      at: world.simTime,
+      from: motionTrackPosition(track, from),
+      to: { ...targetPoint },
+    };
+  }
 }
 export interface ProjectileFlight {
+  nearPassObservedLives?: Record<string, true>;
   id: string;
   actionId: string;
   sourceId: string;
   sourceLife: number;
   sourceController: 'player' | 'npc' | 'native';
+  contactPolicy: {
+    pin: DefinitionPin | null;
+    response: 'injure-vulnerable-body' | 'stop-only';
+  };
+  sourceExited: boolean;
   targetId: string;
   targetLife?: number;
   practice: boolean;
@@ -79,6 +196,51 @@ export interface ProjectileFlight {
   speed: number;
   remainingRange: number;
   injury: number;
+}
+
+const passageLife = (entity: Entity) =>
+  JSON.stringify([entity.id, entity.actor?.physicalLife ?? 0]);
+function nativePassageDistance(world: WorldState, entity: Entity): number {
+  return entity.animal && entity.actor?.alive && entity.actor.controller === 'native'
+    ? (nativeResponseProfile(world, entity.animal.episode?.profilePin ?? entity.animal.profile)
+        ?.passageDistance ?? 0)
+    : 0;
+}
+/** Query only the path physically traversed before first contact. Predictions
+ * bound native time; actual integration calls this again with executed poses. */
+function projectilePassage(
+  world: WorldState,
+  animal: Entity,
+  from: WorldPoint,
+  to: WorldPoint,
+  ownFrom: WorldPoint,
+  ownTo: WorldPoint,
+  body: ReturnType<typeof bodyProfile>,
+  seconds: number,
+  separation: number,
+): { at: number; point: WorldPoint } | undefined {
+  if (!(seconds > 0) || !animal.actor?.alive || !activelyParticipates(animal) || separation <= 0)
+    return;
+  const close = movingBodiesDistanceInterval(
+    from,
+    to,
+    { radius: 0, height: 0 },
+    ownFrom,
+    ownTo,
+    body,
+    separation,
+  );
+  if (!close) return;
+  const own: MotionTrack = { at: [0, seconds], pose: [ownFrom, ownTo] },
+    point: MotionTrack = { at: [0, seconds], pose: [from, to] };
+  for (const run of movingPointVisionRuns(world, animal, own, point, seconds)) {
+    if (!run.value) continue;
+    const start = Math.max(close.enter * seconds, run.start),
+      end = Math.min(close.exit * seconds, run.end);
+    if (start > end) continue;
+    const at = start + Math.min(TIME_EPSILON, (end - start) / 2);
+    return { at, point: interpolate(from, to, at / seconds) };
+  }
 }
 export function bindAim(
   world: WorldState,
@@ -209,7 +371,8 @@ export function releaseShot(
     launcher = definition.launcher!;
   const aim = action.ranged!,
     handling = handlingAccuracy(world, actor, definition);
-  const facts = action.type === 'practice-shot' ? null : attackFacts(world, actor, action);
+  const facts = attackFacts(world, actor, action);
+  if (!facts) return outcome(false, 'aim-unavailable', BASE_RANGED_TEXT.selectedChanged);
   // Admit the complete release before consuming stock or drawing randomness. Existing flights
   // are never discarded to admit a new one. Collision work retains the native group's allowance.
   chargeWork({ effects: 1, retainedBytes: 2048 });
@@ -232,7 +395,14 @@ export function releaseShot(
   if (debit.status !== 'applied')
     return outcome(false, 'ammunition-unavailable', BASE_RANGED_TEXT.releaseUnavailable);
   const origin = interactionAnchor(actor),
-    point = interactionAnchor(target);
+    point = baseObservedAimPoint(
+      origin,
+      interactionAnchor(target),
+      aim.observedMotion,
+      world.simTime,
+      launcher.flightSpeed,
+      launcher.range,
+    );
   const delta = { x: point.x - origin.x, y: point.y - origin.y, z: point.z - origin.z };
   const steadiness = Math.max(
     0,
@@ -250,12 +420,24 @@ export function releaseShot(
     sourceId: actor.id,
     sourceLife: aim.sourceLife,
     sourceController: actor.actor!.controller,
+    contactPolicy: {
+      pin: world.moduleManifest.bodyPolicyPin && { ...world.moduleManifest.bodyPolicyPin },
+      response: bodyPolicy(world)?.combat?.projectileContact ?? 'stop-only',
+    },
+    sourceExited:
+      movingBodyContact(
+        origin,
+        origin,
+        worldPosition(actor),
+        worldPosition(actor),
+        bodyProfile(actor),
+      ) === undefined,
     targetId: target.id,
     ...(action.targetLife === undefined ? {} : { targetLife: action.targetLife }),
     practice: action.type === 'practice-shot',
     requiresLethalReview: !!action.requiresLethalReview || actor.actor!.controller === 'player',
     ...(action.lethalPermission ? { lethalPermission: { ...action.lethalPermission } } : {}),
-    ...(facts ? { attackDigest: facts.digest } : {}),
+    attackDigest: facts.digest,
     tool: { ...aim.tool },
     ammunition: { ...aim.ammunition },
     position: origin,
@@ -264,7 +446,7 @@ export function releaseShot(
     advancedAt: world.simTime,
     speed: launcher.flightSpeed,
     remainingRange: launcher.range,
-    injury: facts?.injury ?? 0,
+    injury: facts.injury,
   };
   (world.projectiles ??= {})[flight.id] = flight;
   const released = emit(
@@ -297,16 +479,34 @@ export function releaseShot(
     };
   const support = creditRelease(world, actor, definition, released, events);
   observeCoachedRelease(world, actor, released, support, events);
-  if (target.animal && !target.threat && seesEntity(world, target, actor))
-    rememberAttack(world, target, actor);
   releaseInvocationResources(world, action.id);
   return outcome(true, 'released', BASE_RANGED_TEXT.released);
 }
 
 export type ProjectileBodies = Map<
   string,
-  { entity: Entity; position: WorldPoint; profile: ReturnType<typeof bodyProfile> }
+  {
+    entity: Entity;
+    life: number | undefined;
+    position: WorldPoint;
+    profile: ReturnType<typeof bodyProfile>;
+  }
 >;
+/** Exempt only the original launch overlap. Once clear, even the source can intercept.
+ * Relative linear capsule motion is convex; native track turns split intervals below. */
+function launchOverlap(
+  flight: ProjectileFlight,
+  entity: Entity,
+  position: WorldPoint,
+  profile: ReturnType<typeof bodyProfile>,
+): boolean {
+  return (
+    !flight.sourceExited &&
+    entity.id === flight.sourceId &&
+    (entity.actor?.physicalLife ?? 0) === flight.sourceLife &&
+    movingBodyContact(flight.position, flight.position, position, position, profile) !== undefined
+  );
+}
 export function captureProjectileBodies(
   world: WorldState,
   bodyIds: readonly string[],
@@ -320,7 +520,12 @@ export function captureProjectileBodies(
       .filter((e) => activelyParticipates(e))
       .map((entity) => [
         entity.id,
-        { entity, position: { ...worldPosition(entity) }, profile: { ...bodyProfile(entity) } },
+        {
+          entity,
+          life: entity.actor ? (entity.actor.physicalLife ?? 0) : undefined,
+          position: { ...worldPosition(entity) },
+          profile: { ...bodyProfile(entity) },
+        },
       ]),
   );
 }
@@ -335,18 +540,6 @@ function predictedPosition(world: WorldState, entity: Entity, seconds: number): 
       to,
       distance > 0 ? Math.min(1, (nativeMovementSpeed(world, entity) * seconds) / distance) : 1,
     );
-  }
-  if (
-    entity.animal?.danger &&
-    entity.animal.escapeHeading !== null &&
-    entity.animal.escapeHeading !== undefined
-  ) {
-    const travel = nativeMovementSpeed(world, entity, true) * seconds;
-    return {
-      x: from.x + Math.cos(entity.animal.escapeHeading) * travel,
-      y: from.y,
-      z: from.z + Math.sin(entity.animal.escapeHeading) * travel,
-    };
   }
   return from;
 }
@@ -368,13 +561,14 @@ export function projectileBoundary(
       ...entry,
       end,
       restricted,
+      passageDistance: nativePassageDistance(world, entry.entity),
       extent:
         entry.profile.height +
         entry.profile.radius +
         (restricted
           ? 0
           : entry.entity.spatial.flight
-            ? world.flightRoutes[entry.entity.spatial.flight.routeId]!.speed * seconds
+            ? motionReach(world, entry.entity, seconds)
             : distance3D(entry.position, end)),
       tracks: undefined as MotionTrack[] | undefined,
     };
@@ -391,7 +585,10 @@ export function projectileBoundary(
     }
     return entry.tracks;
   };
-  const extent = bodies.reduce((maximum, entry) => Math.max(maximum, entry.extent), 0);
+  const extent = bodies.reduce(
+    (maximum, entry) => Math.max(maximum, entry.extent + entry.passageDistance),
+    0,
+  );
   const query = spatialCandidates(bodies);
   let bound = seconds;
   for (const id of ids) {
@@ -410,8 +607,8 @@ export function projectileBoundary(
     const midpoint = interpolate(from, to, 0.5);
     const candidates = query(midpoint, travel / 2 + extent).filter(
       (entry) =>
-        entry.entity.id !== flight.sourceId &&
-        distance3D(midpoint, entry.position) <= travel / 2 + entry.extent + TIME_EPSILON,
+        distance3D(midpoint, entry.position) <=
+        travel / 2 + entry.extent + entry.passageDistance + TIME_EPSILON,
     );
     // A chord cannot represent a corridor turn. Split only a nearby body's relevant
     // interval; distant birds keep their private turns and paths are prepared once.
@@ -423,6 +620,7 @@ export function projectileBoundary(
     bound = Math.min(bound, duration);
     const shortTo = interpolate(from, to, duration / (travel / flight.speed));
     for (const entry of candidates) {
+      if (launchOverlap(flight, entry.entity, entry.position, entry.profile)) continue;
       for (const track of tracksFor(entry)) {
         const fraction = movingBodyContact(
           from,
@@ -434,6 +632,23 @@ export function projectileBoundary(
         chargeWork({ tests: 1 });
         if (fraction !== undefined)
           bound = Math.min(bound, Math.max(TIME_EPSILON, duration * fraction));
+        if (
+          entry.passageDistance > 0 &&
+          !flight.nearPassObservedLives?.[passageLife(entry.entity)]
+        ) {
+          const passage = projectilePassage(
+            world,
+            entry.entity,
+            from,
+            shortTo,
+            entry.position,
+            motionTrackPosition(track, duration),
+            entry.profile,
+            duration,
+            entry.passageDistance,
+          );
+          if (passage) bound = Math.min(bound, Math.max(TIME_EPSILON, passage.at));
+        }
       }
     }
   }
@@ -453,13 +668,17 @@ export function advanceProjectiles(
     ...entry,
     id: entry.entity.id,
     order,
+    passageDistance: nativePassageDistance(world, entry.entity),
     end: { ...worldPosition(entityGet(world.entities, entry.entity.id) ?? entry.entity) },
   }));
   const maximum = candidates.reduce(
     (max, entry) =>
       Math.max(
         max,
-        entry.profile.height + entry.profile.radius + distance3D(entry.position, entry.end),
+        entry.profile.height +
+          entry.profile.radius +
+          distance3D(entry.position, entry.end) +
+          entry.passageDistance,
       ),
     0,
   );
@@ -478,7 +697,7 @@ export function advanceProjectiles(
     const solid = rayHits(spatialMap(world), from, to, 'movement')[0];
     if (solid) contact = { fraction: solid.fraction, id: solid.id };
     for (const entry of query(interpolate(from, to, 0.5), travel / 2 + maximum)) {
-      if (entry.id === flight.sourceId) continue;
+      if (launchOverlap(flight, entry.entity, entry.position, entry.profile)) continue;
       const fraction = movingBodyContact(from, to, entry.position, entry.end, entry.profile);
       chargeWork({ tests: 1 });
       if (
@@ -486,61 +705,144 @@ export function advanceProjectiles(
         (!contact ||
           fraction < contact.fraction ||
           (fraction === contact.fraction && entry.id.localeCompare(contact.id) < 0))
+      ) {
+        const current = entityGet(world.entities, entry.id);
+        const body =
+          current && entry.life !== undefined
+            ? physicalBodyForLife(world, current, entry.life)
+            : current;
+        if (body) contact = { fraction, id: body.id, body };
+      }
+    }
+    const stoppedAt = contact?.fraction ?? 1,
+      actualTo = interpolate(from, to, stoppedAt);
+    for (const entry of query(
+      interpolate(from, actualTo, 0.5),
+      (travel * stoppedAt) / 2 + maximum,
+    )) {
+      if (
+        !entry.entity.animal ||
+        entry.passageDistance <= 0 ||
+        flight.nearPassObservedLives?.[passageLife(entry.entity)]
       )
-        contact = { fraction, id: entry.id, body: entityGet(world.entities, entry.id) };
+        continue;
+      const actualAnimal = entityGet(world.entities, entry.id);
+      if (!actualAnimal) continue;
+      const passage = projectilePassage(
+        world,
+        actualAnimal,
+        from,
+        actualTo,
+        entry.position,
+        interpolate(entry.position, entry.end, stoppedAt),
+        entry.profile,
+        seconds * stoppedAt,
+        entry.passageDistance,
+      );
+      if (!passage) continue;
+      (flight.nearPassObservedLives ??= {})[passageLife(actualAnimal)] = true;
+      const profile = nativeResponseProfile(
+        world,
+        actualAnimal.animal!.episode?.profilePin ?? actualAnimal.animal!.profile,
+      );
+      if (!profile) continue;
+      emit(
+        world,
+        events,
+        'projectile-passage',
+        subjectNarration(actualAnimal, profile.presentation.alarmed),
+        actualAnimal,
+        actualAnimal.id,
+        {
+          projectileId: flight.id,
+          incomingX: -flight.direction.x,
+          incomingY: -flight.direction.y,
+          incomingZ: -flight.direction.z,
+        },
+        'external',
+        passage.point,
+      );
     }
     flight.position = interpolate(from, to, contact?.fraction ?? 1);
     flight.remainingRange = Math.max(0, flight.remainingRange - travel * (contact?.fraction ?? 1));
     flight.advancedAt = world.simTime;
+    if (!flight.sourceExited) {
+      const source = entityGet(world.entities, flight.sourceId);
+      flight.sourceExited =
+        !source || !launchOverlap(flight, source, worldPosition(source), bodyProfile(source));
+    }
     if (!contact && flight.remainingRange > 1e-8) continue;
     const source = entityGet(world.entities, flight.sourceId),
       target = contact?.body;
+    // Injury can separate a player's living participant into a corpse. Capture
+    // actual contact-time sight before that transition, without learning from it.
+    const contactLife = target?.actor ? (target.actor.physicalLife ?? 0) : -1;
+    const observedContact = !!target && !!source && seesEntity(world, source, target);
+    const knownSource =
+      target &&
+      source?.actor &&
+      (source.actor.physicalLife ?? 0) === flight.sourceLife &&
+      seesEntity(world, target, source)
+        ? source
+        : undefined;
     let result = contact ? 'stopped' : 'missed';
     let damage = 0;
     let contactFacts: Record<string, number> | undefined;
-    if (target?.id === flight.targetId && source) {
-      const permission = flight.practice
-        ? null
-        : attackPermissionProblem(world, source, target, flight, {
-            controller: flight.sourceController,
-          });
-      const review = flight.practice ? null : flightReviewProblem(world, flight, target);
-      if (
-        !permission &&
-        !review &&
-        (flight.practice ? !!target.practiceTarget : !!target.actor?.alive)
-      ) {
-        result = 'hit';
-        if (!flight.practice) {
-          const impact = commitContactImpact(
-            world,
-            source,
-            target,
-            flight.injury,
-            flight.actionId,
-            events,
-            { x: -flight.direction.x, y: -flight.direction.y, z: -flight.direction.z },
-          );
-          damage = impact.damage;
-          contactFacts = { ...impact };
-          if (target.threat) noteTerritorialInjury(world, target, source, damage, events);
-        }
-      }
+    if (
+      target?.actor?.alive &&
+      activelyParticipates(target) &&
+      flight.contactPolicy.response === 'injure-vulnerable-body'
+    ) {
+      // Release completed admission and human review. The actual current body supplies
+      // susceptibility/defense; historical intention is never a damage allowlist.
+      const impact = commitContactImpact(
+        world,
+        source,
+        target,
+        flight.injury,
+        flight.actionId,
+        events,
+        { x: -flight.direction.x, y: -flight.direction.y, z: -flight.direction.z },
+      );
+      result = 'hit';
+      damage = impact.damage;
+      contactFacts = { ...impact };
+      if (target.threat)
+        noteTerritorialInjury(
+          world,
+          target,
+          source?.actor && (source.actor.physicalLife ?? 0) === flight.sourceLife
+            ? source
+            : undefined,
+          damage,
+          events,
+        );
+    } else if (target?.practiceTarget && target.id === flight.targetId && flight.practice) {
+      result = 'hit';
     }
     if (target) {
       // Contact is at the struck body. It does not identify an unseen shooter.
-      const contactEvent = emit(
+      emit(
         world,
         events,
         'projectile-contact',
-        subjectNarration(
-          target,
+        subjectNarration(target, [
           result === 'hit' ? BASE_RANGED_TEXT.contactHit : BASE_RANGED_TEXT.contactStopped,
-        ),
+          ...(knownSource
+            ? [BASE_RANGED_TEXT.contactSource, person(knownSource.id, 'object'), '.']
+            : []),
+        ]),
         target,
         target.id,
         {
           projectileId: flight.id,
+          contactLife,
+          ...(knownSource
+            ? { contactSourceId: knownSource.id, contactSourceLife: flight.sourceLife }
+            : {}),
+          incomingX: -flight.direction.x,
+          incomingY: -flight.direction.y,
+          incomingZ: -flight.direction.z,
           contactInjury: true,
           ...(contactFacts ? bodyPolicy(world)?.combat?.impactAttention : {}),
           damage,
@@ -550,12 +852,6 @@ export function advanceProjectiles(
         'external',
         flight.position,
       );
-      if (
-        source &&
-        (source.actor?.physicalLife ?? 0) === flight.sourceLife &&
-        seesEntity(world, target, source)
-      )
-        appraiseProjectileContact(world, contactEvent, source, target);
     }
     emit(
       world,
@@ -568,7 +864,14 @@ export function advanceProjectiles(
         actionId: flight.actionId,
         projectileId: flight.id,
         sourceLife: flight.sourceLife,
+        sourceId: flight.sourceId,
+        sourceController: flight.sourceController,
+        intendedTargetId: flight.targetId,
         targetLife: flight.targetLife ?? -1,
+        ...(target ? { contactLife } : {}),
+        incomingX: -flight.direction.x,
+        incomingY: -flight.direction.y,
+        incomingZ: -flight.direction.z,
         result,
         damage,
         importance: 8,
@@ -595,11 +898,14 @@ export function advanceProjectiles(
       )({ id: flight.id, position: flight.position, height: 0 });
       // A miss has no contacted body. Preserve a witnessed outcome for the exact
       // selected life, without substituting an intervening body's identity or condition.
+      const reported = observedContact ? target : selected;
       const observed =
-        !!selected &&
-        (selected.actor?.physicalLife ?? 0) === (flight.targetLife ?? 0) &&
-        seesEntity(world, source, selected) &&
-        (result === 'hit' || observedPoint);
+        observedContact ||
+        (!!selected &&
+          (selected.actor?.physicalLife ?? 0) === (flight.targetLife ?? 0) &&
+          seesEntity(world, source, selected) &&
+          !!observedPoint);
+      const reportedHit = observedContact && result === 'hit';
 
       emit(
         world,
@@ -607,8 +913,8 @@ export function advanceProjectiles(
         'shot-ended',
         observed
           ? subjectNarration(source, [
-              result === 'hit' ? BASE_RANGED_TEXT.observedHit : BASE_RANGED_TEXT.observedNoInjury,
-              person(selected, 'object'),
+              reportedHit ? BASE_RANGED_TEXT.observedHit : BASE_RANGED_TEXT.observedNoInjury,
+              person(reported!, 'object'),
               '.',
             ])
           : subjectNarration(
@@ -620,12 +926,18 @@ export function advanceProjectiles(
                 : BASE_RANGED_TEXT.stopped,
             ),
         source,
-        observed ? selected.id : undefined,
+        observed ? reported?.id : undefined,
         {
           actionId: flight.actionId,
           projectileId: flight.id,
-          result: observed || observedPoint ? result : 'unobserved',
-          ...(observed
+          result: observedContact
+            ? result
+            : observedPoint
+              ? contact
+                ? 'stopped'
+                : 'missed'
+              : 'unobserved',
+          ...(observedContact
             ? { damage, ...contactFacts, contactInjury: true, targetReference: true }
             : {}),
           semanticTrigger: true,
@@ -634,59 +946,21 @@ export function advanceProjectiles(
       );
       const occurrence = occurrenceFor(world, source.id, flight.actionId);
       if (occurrence?.release && observed) {
-        occurrence.release.hit = result === 'hit';
-        if (projectAttributes(world, selected, 'public').some((attribute) => attribute.bodyHealth))
+        occurrence.release.hit = reportedHit && target?.id === flight.targetId;
+        if (
+          observedContact &&
+          target.id === flight.targetId &&
+          projectAttributes(world, target, 'public').some((attribute) => attribute.bodyHealth)
+        )
           occurrence.release.damage = damage;
       }
     }
     delete world.projectiles![id];
   }
 }
-function flightReviewProblem(
-  world: WorldState,
-  flight: ProjectileFlight,
-  target: Entity,
-): Outcome | null {
-  const permission = flight.lethalPermission;
-  if (permission) {
-    const tool = world.itemDefinitions[flight.tool.id],
-      ammo = world.itemDefinitions[flight.ammunition.id];
-    const expected = {
-      actorId: flight.sourceId,
-      sourceLife: flight.sourceLife,
-      targetId: flight.targetId,
-      targetLife: flight.targetLife,
-      attackDigest: canonicalJson({
-        attack: flight.attackDigest,
-        susceptibility: target.actor?.body?.susceptibility.injury,
-        incomingInjuryFactor: scarFactor(world, target, 'incomingInjuryFactor'),
-      }),
-    };
-    if (
-      !tool ||
-      !ammo ||
-      !sameDefinitionPin(flight.tool, definitionPin(tool)) ||
-      !sameDefinitionPin(flight.ammunition, definitionPin(ammo)) ||
-      canonicalJson(expected) !== canonicalJson(permission)
-    )
-      return outcome(false, 'lethal-review-stale', BASE_RANGED_TEXT.reviewedAttackChanged);
-  }
-  const policy = bodyPolicy(world);
-  if (
-    policy?.lethalAttackReview &&
-    flight.requiresLethalReview &&
-    target.actor &&
-    policy.zeroHealth[target.actor.controller] === 'die' &&
-    flight.injury *
-      (target.actor.body?.susceptibility.injury ?? 0) *
-      scarFactor(world, target, 'incomingInjuryFactor') >=
-      target.actor.health &&
-    !permission
-  )
-    return outcome(false, 'lethal-review-required', BASE_RANGED_TEXT.concurrentLethal);
-  return null;
-}
 export function validateRanged(world: WorldState): void {
+  const vector = (v: WorldPoint) =>
+    !!v && ['x', 'y', 'z'].every((key) => Number.isFinite(v[key as keyof WorldPoint]));
   for (const definition of Object.values(world.itemDefinitions)) {
     const launcher = definition.launcher;
     if (launcher && (!Number.isFinite(launcher.flightSpeed) || launcher.flightSpeed <= 0))
@@ -699,14 +973,22 @@ export function validateRanged(world: WorldState): void {
     const hold = aim && world.resourceReservations?.[aim.reservationId];
     if (
       !aim ||
-      !hasRecordFields(aim, [
-        'sourceLife',
-        'tool',
-        'ammunition',
-        'reservationId',
-        'manual',
-        'ready',
-      ]) ||
+      !hasRecordFields(
+        aim,
+        ['sourceLife', 'tool', 'ammunition', 'reservationId', 'manual', 'ready'],
+        ['observedMotion'],
+      ) ||
+      (aim.observedMotion !== undefined &&
+        (!hasRecordFields(aim.observedMotion, ['fromAt', 'at', 'from', 'to']) ||
+          !Number.isFinite(aim.observedMotion.fromAt) ||
+          !Number.isFinite(aim.observedMotion.at) ||
+          aim.observedMotion.fromAt < 0 ||
+          aim.observedMotion.fromAt >= aim.observedMotion.at ||
+          aim.observedMotion.at > world.simTime ||
+          !hasRecordFields(aim.observedMotion.from, ['x', 'y', 'z']) ||
+          !hasRecordFields(aim.observedMotion.to, ['x', 'y', 'z']) ||
+          !vector(aim.observedMotion.from) ||
+          !vector(aim.observedMotion.to))) ||
       !Number.isSafeInteger(aim.sourceLife) ||
       aim.sourceLife !== (entity.actor!.physicalLife ?? 0) ||
       typeof aim.manual !== 'boolean' ||
@@ -737,8 +1019,6 @@ export function validateRanged(world: WorldState): void {
   }
   const releases = new Set<string>();
   for (const [id, flight] of Object.entries(world.projectiles ?? {})) {
-    const vector = (v: WorldPoint) =>
-      !!v && ['x', 'y', 'z'].every((key) => Number.isFinite(v[key as keyof WorldPoint]));
     if (
       !hasRecordFields(
         flight,
@@ -748,6 +1028,8 @@ export function validateRanged(world: WorldState): void {
           'sourceId',
           'sourceLife',
           'sourceController',
+          'contactPolicy',
+          'sourceExited',
           'targetId',
           'practice',
           'requiresLethalReview',
@@ -760,17 +1042,18 @@ export function validateRanged(world: WorldState): void {
           'speed',
           'remainingRange',
           'injury',
+          'attackDigest',
         ],
-        ['targetLife', 'lethalPermission', 'attackDigest'],
+        ['targetLife', 'lethalPermission', 'nearPassObservedLives'],
       ) ||
       !isDefinitionPin(flight.tool) ||
       !isDefinitionPin(flight.ammunition) ||
-      !entityGet(world.entities, flight.sourceId)?.actor ||
-      (flight.practice
-        ? flight.targetLife !== undefined ||
-          flight.attackDigest !== undefined ||
-          flight.injury !== 0
-        : !entityGet(world.entities, flight.targetId)?.actor) ||
+      !flight.contactPolicy ||
+      !hasRecordFields(flight.contactPolicy, ['pin', 'response']) ||
+      !['injure-vulnerable-body', 'stop-only'].includes(flight.contactPolicy.response) ||
+      (flight.contactPolicy.pin === null
+        ? flight.contactPolicy.response !== 'stop-only'
+        : !isDefinitionPin(flight.contactPolicy.pin)) ||
       (flight.lethalPermission !== undefined &&
         (!hasRecordFields(flight.lethalPermission, [
           'actorId',
@@ -808,10 +1091,39 @@ export function validateRanged(world: WorldState): void {
       flight.remainingRange <= 0 ||
       flight.injury < 0 ||
       typeof flight.practice !== 'boolean' ||
+      typeof flight.sourceExited !== 'boolean' ||
       typeof flight.requiresLethalReview !== 'boolean' ||
-      (!flight.practice && (!Number.isSafeInteger(flight.targetLife) || !flight.attackDigest))
+      typeof flight.attackDigest !== 'string' ||
+      !flight.attackDigest ||
+      (flight.practice
+        ? flight.targetLife !== undefined
+        : !Number.isSafeInteger(flight.targetLife) || flight.targetLife! < 0)
     )
       throw new Error('Invalid committed projectile continuation.');
+    if (flight.nearPassObservedLives) {
+      if (
+        typeof flight.nearPassObservedLives !== 'object' ||
+        Array.isArray(flight.nearPassObservedLives)
+      )
+        throw new Error('Invalid projectile passage receipts.');
+      for (const [key, seen] of Object.entries(flight.nearPassObservedLives)) {
+        let parts: unknown;
+        try {
+          parts = JSON.parse(key);
+        } catch {
+          throw new Error('Invalid projectile passage identity.');
+        }
+        if (
+          seen !== true ||
+          !Array.isArray(parts) ||
+          parts.length !== 2 ||
+          !isSafeRecordId(parts[0]) ||
+          !Number.isSafeInteger(parts[1]) ||
+          parts[1] < 0
+        )
+          throw new Error('Invalid projectile passage receipt.');
+      }
+    }
     releases.add(flight.actionId);
   }
 }

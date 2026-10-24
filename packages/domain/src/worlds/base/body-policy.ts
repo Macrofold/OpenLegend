@@ -1,7 +1,11 @@
 import type { BodyPolicy } from '../../body-policy.js';
 import type { StatusCondition } from '../../status-effects.js';
 import { BASE_REINCARNATION_POLICY } from './death.js';
-import { BASE_EVASION_TEXT, BASE_RANGED_TEXT } from './ranged-counterplay.js';
+import {
+  BASE_EVASION_TEXT,
+  BASE_RANGED_TEXT,
+  BASE_PROJECTILE_CONTACT_WARNING,
+} from './ranged-counterplay.js';
 import type { ActorComponent } from '../../types.js';
 
 /** These native families use the bundled injury-cancels-preparation rule. The body
@@ -37,9 +41,11 @@ const distress: StatusCondition = {
 const awake: StatusCondition = {
   statusActive: { target: '$subject', definitionId: 'wilderness:restorative-rest', value: false },
 };
+const lethalAttackDescription =
+  'This attack could kill the target. Death leaves a body; ordinary animal and NPC revival is unavailable. Confirm one attack; a hit is not guaranteed. Choosing does not pause the world.';
 export const BASE_BODY_POLICY: BodyPolicy = {
   id: 'wilderness:body-policy',
-  version: 9,
+  version: 12,
   evasion: {
     bodyPlans: ['biped'],
     maximumDistance: 2,
@@ -51,11 +57,37 @@ export const BASE_BODY_POLICY: BodyPolicy = {
   },
   combat: {
     targets: {
-      player: ['npc', 'native'],
+      player: ['player', 'npc', 'native'],
       npc: ['player', 'npc', 'native'],
       native: ['player', 'npc', 'native'],
     },
-    humanIssuedTargets: ['npc', 'native'],
+    humanIssuedTargets: ['player', 'npc', 'native'],
+    projectileContact: 'injure-vulnerable-body',
+    encounters: {
+      recentSeconds: 600,
+      visiblePreparation: true,
+      preparingStrike: 'is preparing to strike',
+      aiming: 'is aiming at',
+      ended: 'is no longer observed preparing an attack.',
+      closing: 'is drawing closer.',
+      withdrawing: 'is moving farther away.',
+      controls: {
+        speak: {
+          label: 'Prefer Speak',
+          description:
+            'Keep Speak as the shortcut for this person until a new observed attack or a newly chosen attack. Opening the draft does not stop physical work or say anything.',
+          success:
+            'Speak is preferred for this person. Existing physical work and incoming threats remain.',
+        },
+        stop: {
+          label: 'Stop attacking this person',
+          description:
+            'End only your unfinished attacks on this person and their queued or paused continuation. Spent materials, recovery and released shots remain.',
+          success:
+            'Stopped your unfinished attacks on this person. Other work, incoming threats and committed effects remain.',
+        },
+      },
+    },
     // A perceived impact warrants prompt reconsideration, never a prescribed retaliation.
     // docs/worlds/base/lifecycle-and-protection.md#npc-combat-participation
     impactAttention: { importance: 8, urgency: 8 },
@@ -64,8 +96,8 @@ export const BASE_BODY_POLICY: BodyPolicy = {
   reincarnation: BASE_REINCARNATION_POLICY,
   lethalAttackReview: {
     title: 'Attempt a final blow?',
-    description:
-      'This attack could kill the target. Death leaves a body; ordinary animal and NPC revival is unavailable. Confirm one attack; a hit is not guaranteed. Choosing does not pause the world.',
+    description: lethalAttackDescription,
+    rangedDescription: `${lethalAttackDescription} ${BASE_PROJECTILE_CONTACT_WARNING}`,
     confirmLabel: 'Attempt lethal blow',
     cancelLabel: 'Cancel',
   },

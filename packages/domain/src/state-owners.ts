@@ -1,6 +1,8 @@
+import { isDefinitionPin, sameDefinitionPin } from './definition-pins.js';
+export { isDefinitionPin, sameDefinitionPin } from './definition-pins.js';
 import { currentAttributeState } from './native-values.js';
 import { entityOwn } from './entity-collection.js';
-import { lowerUnsupportedCovers } from './assemblies.js';
+import { lowerUnsupportedAssemblyParts } from './assemblies.js';
 import { reconcileConditions } from './conditions.js';
 import { installedStateQuery } from './queries.js';
 import { ResourceReservationError } from './resource-claims.js';
@@ -36,17 +38,6 @@ export type StateWriteResult =
   | { status: 'applied' | 'unchanged'; value: AttributeValue; revision: number }
   | { status: 'stale' | 'invalid' | 'reserved' | 'not-applicable' | 'unsupported' };
 
-export function isDefinitionPin(value: unknown): value is DefinitionPin {
-  return (
-    hasRecordFields(value, ['id', 'version', 'digest']) &&
-    isSafeRecordId(value.id) &&
-    Number.isSafeInteger(value.version) &&
-    (value.version as number) > 0 &&
-    typeof value.digest === 'string' &&
-    value.digest.length > 0 &&
-    value.digest.length <= 128
-  );
-}
 export function isStateAddress(value: unknown): value is StateAddress {
   return (
     hasRecordFields(value, ['entityId', 'definition']) &&
@@ -68,10 +59,6 @@ export function isStateOperation(value: unknown): value is StateOperation {
     typeof value.amount === 'number' &&
     Number.isFinite(value.amount)
   );
-}
-
-export function sameDefinitionPin(a: DefinitionPin, b: DefinitionPin): boolean {
-  return a.id === b.id && a.version === b.version && a.digest === b.digest;
 }
 
 function resolve(world: WorldState, address: StateAddress): AttributeDefinition | undefined {
@@ -175,6 +162,7 @@ export function writeState(
   cause: string,
   conditionTiming: 'now' | 'transition' = 'now',
   feedback: 'effect' | 'silent' = 'effect',
+  completingInvocationId?: string,
 ): StateWriteResult {
   if (!isStateAddress(address) || !isStateOperation(operation)) return { status: 'invalid' };
   const definition = resolve(world, address);
@@ -225,12 +213,15 @@ export function writeState(
   }
   const material =
     entity.item && world.itemDefinitions[entity.item.definitionPin.id]?.assemblyMaterial;
+  const family = material && world.assemblyFamilies?.[material.familyId];
   if (
-    material &&
-    world.assemblyFamilies?.[material.familyId]?.conditionAttribute === definition.id &&
+    ((family?.implementation === 'four-corner-flexible-bays' &&
+      family.conditionAttribute === definition.id) ||
+      (family?.implementation === 'grounded-panel-boundary' &&
+        Object.values(family.integrity).some((pin) => pin.id === definition.id))) &&
     entity.item?.assemblyClaim
   )
-    lowerUnsupportedCovers(world, entity.id, events);
+    lowerUnsupportedAssemblyParts(world, entity.id, events, completingInvocationId);
   if (conditionTiming === 'now') reconcileConditions(world, entity, events);
   recordSemanticChange(world, {
     kind: 'state',

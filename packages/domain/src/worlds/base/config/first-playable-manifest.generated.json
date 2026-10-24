@@ -1,0 +1,1191 @@
+{
+  "sling-practice-target": {
+    "id": "sling-practice-target",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 15, "y": 0, "z": 16, "surfaceId": "terrain" }
+  },
+  "entity-0001": {
+    "id": "entity-0001",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 11, "y": 0, "z": 13, "surfaceId": "terrain" }
+  },
+  "entity-0002": {
+    "id": "entity-0002",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 13, "y": 0, "z": 12, "surfaceId": "terrain" }
+  },
+  "peacock-mercenary": {
+    "id": "peacock-mercenary",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 12, "y": 0, "z": 11, "surfaceId": "terrain" }
+  },
+  "campfire": {
+    "id": "campfire",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 11, "y": 0, "z": 10, "surfaceId": "terrain" }
+  },
+  "reeds": {
+    "id": "reeds",
+    "change": "replaced-quantity",
+    "installer": "first-playable-resources",
+    "position": { "x": 5, "y": 0, "z": 11, "surfaceId": "terrain" },
+    "definition": { "id": "raw_fiber", "version": 1, "digest": "n64fev" },
+    "quantity": 48
+  },
+  "reeds-east": {
+    "id": "reeds-east",
+    "change": "replaced-quantity",
+    "installer": "first-playable-resources",
+    "position": { "x": 19, "y": 0, "z": 12, "surfaceId": "terrain" },
+    "definition": { "id": "raw_fiber", "version": 1, "digest": "n64fev" },
+    "quantity": 30
+  },
+  "branches": {
+    "id": "branches",
+    "change": "replaced-quantity",
+    "installer": "first-playable-resources",
+    "position": { "x": 8, "y": 0, "z": 8, "surfaceId": "terrain" },
+    "definition": { "id": "wood", "version": 1, "digest": "r63kmo" },
+    "quantity": 36
+  },
+  "stones": {
+    "id": "stones",
+    "change": "replaced-quantity",
+    "installer": "first-playable-resources",
+    "position": { "x": 5, "y": 0, "z": 15, "surfaceId": "terrain" },
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 60
+  },
+  "berries-west": {
+    "id": "berries-west",
+    "change": "replaced-quantity",
+    "installer": "first-playable-resources",
+    "position": { "x": 8, "y": 0, "z": 13, "surfaceId": "terrain" },
+    "definition": { "id": "berries", "version": 1, "digest": "1pkw5cx" },
+    "quantity": 24
+  },
+  "berries-east": {
+    "id": "berries-east",
+    "change": "replaced-quantity",
+    "installer": "first-playable-resources",
+    "position": { "x": 19, "y": 0, "z": 15, "surfaceId": "terrain" },
+    "definition": { "id": "berries", "version": 1, "digest": "1pkw5cx" },
+    "quantity": 36
+  },
+  "hare-1": {
+    "id": "hare-1",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 16, "y": 0, "z": 13, "surfaceId": "terrain" }
+  },
+  "hare-2": {
+    "id": "hare-2",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 21, "y": 0, "z": 11, "surfaceId": "terrain" }
+  },
+  "deer-1": {
+    "id": "deer-1",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 21, "y": 0, "z": 19, "surfaceId": "terrain" }
+  },
+  "lookout-cache": {
+    "id": "lookout-cache",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 20, "y": 3, "z": 5.5, "surfaceId": "lookout-deck" },
+    "definition": { "id": "wood", "version": 1, "digest": "r63kmo" },
+    "quantity": 24
+  },
+  "bird-1": {
+    "id": "bird-1",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 22, "y": 3, "z": 5.5, "surfaceId": "lookout-deck" }
+  },
+  "item-15": {
+    "id": "item-15",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "stone_tool", "version": 1, "digest": "120f9yt" },
+    "quantity": 1,
+    "parentId": "entity-0002"
+  },
+  "item-16": {
+    "id": "item-16",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
+    "quantity": 1,
+    "parentId": "entity-0002"
+  },
+  "item-17": {
+    "id": "item-17",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
+    "quantity": 2,
+    "parentId": "entity-0002"
+  },
+  "item-18": {
+    "id": "item-18",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
+    "quantity": 1,
+    "parentId": "entity-0002"
+  },
+  "item-19": {
+    "id": "item-19",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "wood", "version": 1, "digest": "r63kmo" },
+    "quantity": 2,
+    "parentId": "entity-0002"
+  },
+  "item-20": {
+    "id": "item-20",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 6,
+    "parentId": "entity-0002"
+  },
+  "item-21": {
+    "id": "item-21",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "stone_tool", "version": 1, "digest": "120f9yt" },
+    "quantity": 1,
+    "parentId": "peacock-mercenary"
+  },
+  "item-22": {
+    "id": "item-22",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
+    "quantity": 1,
+    "parentId": "peacock-mercenary"
+  },
+  "item-23": {
+    "id": "item-23",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
+    "quantity": 2,
+    "parentId": "peacock-mercenary"
+  },
+  "item-24": {
+    "id": "item-24",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
+    "quantity": 1,
+    "parentId": "peacock-mercenary"
+  },
+  "item-25": {
+    "id": "item-25",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "wood", "version": 1, "digest": "r63kmo" },
+    "quantity": 2,
+    "parentId": "peacock-mercenary"
+  },
+  "item-26": {
+    "id": "item-26",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 6,
+    "parentId": "peacock-mercenary"
+  },
+  "camp-river-reach": {
+    "id": "camp-river-reach",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 4, "y": 0, "z": 16, "surfaceId": "terrain" },
+    "definition": { "id": "raw_river_fish", "version": 1, "digest": "frhkal" },
+    "quantity": 4
+  },
+  "far-river-bend": {
+    "id": "far-river-bend",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 7, "y": 0.6, "z": 34, "surfaceId": "terrain-1-2" },
+    "definition": { "id": "raw_river_fish", "version": 1, "digest": "frhkal" },
+    "quantity": 6
+  },
+  "woodland-hare-0": {
+    "id": "woodland-hare-0",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 30, "y": 0, "z": 19, "surfaceId": "terrain" }
+  },
+  "woodland-hare-1": {
+    "id": "woodland-hare-1",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 27, "y": 0.525, "z": 33, "surfaceId": "terrain-1-2" }
+  },
+  "woodland-hare-2": {
+    "id": "woodland-hare-2",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 17, "y": 0.6, "z": 36, "surfaceId": "terrain-1-3" }
+  },
+  "woodland-hare-3": {
+    "id": "woodland-hare-3",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 46, "y": 1.4, "z": 17, "surfaceId": "terrain-3-1" }
+  },
+  "woodland-hare-4": {
+    "id": "woodland-hare-4",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 40, "y": 1.9, "z": 43, "surfaceId": "terrain-2-4" }
+  },
+  "woodland-deer-5": {
+    "id": "woodland-deer-5",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 35, "y": 0.5249999999999999, "z": 19, "surfaceId": "terrain-2-1" }
+  },
+  "woodland-deer-6": {
+    "id": "woodland-deer-6",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 26, "y": 0.6, "z": 37, "surfaceId": "terrain-1-3" }
+  },
+  "woodland-deer-7": {
+    "id": "woodland-deer-7",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 43, "y": 1.775, "z": 31, "surfaceId": "terrain-3-2" }
+  },
+  "woodland-deer-8": {
+    "id": "woodland-deer-8",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 22, "y": 0.3, "z": 45, "surfaceId": "terrain-1-4" }
+  },
+  "woodland-deer-9": {
+    "id": "woodland-deer-9",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 51, "y": 0.9125, "z": 25, "surfaceId": "terrain-4-1" }
+  },
+  "woodland-wolf-10": {
+    "id": "woodland-wolf-10",
+    "change": "relocated",
+    "installer": "ordinary-scenario",
+    "position": { "x": 96, "y": 0.10000000000000005, "z": 80, "surfaceId": "terrain-5-5" }
+  },
+  "woodland-wolf-11": {
+    "id": "woodland-wolf-11",
+    "change": "relocated",
+    "installer": "ordinary-scenario",
+    "position": { "x": 99, "y": 0.10000000000000003, "z": 82, "surfaceId": "terrain-5-5" }
+  },
+  "woodland-wolf-12": {
+    "id": "woodland-wolf-12",
+    "change": "relocated",
+    "installer": "ordinary-scenario",
+    "position": { "x": 102, "y": 0.10000000000000003, "z": 78, "surfaceId": "terrain-5-5" }
+  },
+  "woodland-bear-13": {
+    "id": "woodland-bear-13",
+    "change": "relocated",
+    "installer": "ordinary-scenario",
+    "position": { "x": 88, "y": 0.10000000000000005, "z": 96, "surfaceId": "terrain-5-5" }
+  },
+  "woodland-bear-14": {
+    "id": "woodland-bear-14",
+    "change": "relocated",
+    "installer": "ordinary-scenario",
+    "position": { "x": 58, "y": 0.10000000000000009, "z": 94, "surfaceId": "terrain-5-5" }
+  },
+  "woodland-patch-0": {
+    "id": "woodland-patch-0",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 28, "y": 0.22499999999999998, "z": 29, "surfaceId": "terrain-1-2" },
+    "definition": { "id": "berries", "version": 1, "digest": "1pkw5cx" },
+    "quantity": 24
+  },
+  "woodland-patch-1": {
+    "id": "woodland-patch-1",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 37, "y": 0.875, "z": 17, "surfaceId": "terrain-2-1" },
+    "definition": { "id": "berries", "version": 1, "digest": "1pkw5cx" },
+    "quantity": 18
+  },
+  "woodland-patch-2": {
+    "id": "woodland-patch-2",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 19, "y": 0.6, "z": 35, "surfaceId": "terrain-1-3" },
+    "definition": { "id": "berries", "version": 1, "digest": "1pkw5cx" },
+    "quantity": 28
+  },
+  "woodland-patch-3": {
+    "id": "woodland-patch-3",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 44, "y": 1.8, "z": 44, "surfaceId": "terrain-3-4" },
+    "definition": { "id": "berries", "version": 1, "digest": "1pkw5cx" },
+    "quantity": 22
+  },
+  "woodland-patch-4": {
+    "id": "woodland-patch-4",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 33, "y": 0.55, "z": 31, "surfaceId": "terrain-2-2" },
+    "definition": { "id": "wood", "version": 1, "digest": "r63kmo" },
+    "quantity": 40
+  },
+  "woodland-patch-5": {
+    "id": "woodland-patch-5",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 49, "y": 1.2374999999999998, "z": 20, "surfaceId": "terrain-4-1" },
+    "definition": { "id": "wood", "version": 1, "digest": "r63kmo" },
+    "quantity": 32
+  },
+  "woodland-patch-6": {
+    "id": "woodland-patch-6",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 24, "y": 0.2, "z": 46, "surfaceId": "terrain-1-4" },
+    "definition": { "id": "wood", "version": 1, "digest": "r63kmo" },
+    "quantity": 34
+  },
+  "woodland-patch-7": {
+    "id": "woodland-patch-7",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 38, "y": 1.0499999999999998, "z": 25, "surfaceId": "terrain-2-1" },
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 36
+  },
+  "woodland-patch-8": {
+    "id": "woodland-patch-8",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 51, "y": 1.2125000000000001, "z": 45, "surfaceId": "terrain-4-4" },
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 42
+  },
+  "woodland-patch-9": {
+    "id": "woodland-patch-9",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 30, "y": 0, "z": 23, "surfaceId": "terrain" },
+    "definition": { "id": "raw_fiber", "version": 1, "digest": "n64fev" },
+    "quantity": 36
+  },
+  "woodland-patch-10": {
+    "id": "woodland-patch-10",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 46, "y": 2, "z": 35, "surfaceId": "terrain-3-3" },
+    "definition": { "id": "raw_fiber", "version": 1, "digest": "n64fev" },
+    "quantity": 30
+  },
+  "woodland-patch-11": {
+    "id": "woodland-patch-11",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 10, "y": 0.6, "z": 40, "surfaceId": "terrain-1-3" },
+    "definition": { "id": "raw_fiber", "version": 1, "digest": "n64fev" },
+    "quantity": 42
+  },
+  "territorial-stag": {
+    "id": "territorial-stag",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 32, "y": 0.15, "z": 28, "surfaceId": "terrain-1-2" }
+  },
+  "stag-cache": {
+    "id": "stag-cache",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 36.8, "y": 0.8399999999999994, "z": 26, "surfaceId": "terrain-2-1" }
+  },
+  "stag-tracks": {
+    "id": "stag-tracks",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 28, "y": 0, "z": 24, "surfaceId": "terrain" }
+  },
+  "stag-brush": {
+    "id": "stag-brush",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 30, "y": 0, "z": 24, "surfaceId": "terrain" }
+  },
+  "item-27": {
+    "id": "item-27",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
+    "quantity": 4,
+    "parentId": "stag-cache"
+  },
+  "item-28": {
+    "id": "item-28",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
+    "quantity": 2,
+    "parentId": "stag-cache"
+  },
+  "item-29": {
+    "id": "item-29",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 8,
+    "parentId": "stag-cache"
+  },
+  "camp-route-marker": {
+    "id": "camp-route-marker",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 13, "y": 0, "z": 10, "surfaceId": "terrain" }
+  },
+  "lookout-equipment": {
+    "id": "lookout-equipment",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 21.5, "y": 3, "z": 6, "surfaceId": "lookout-deck" }
+  },
+  "riverside-workshop": {
+    "id": "riverside-workshop",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 8, "y": 0.525, "z": 33, "surfaceId": "terrain-1-2" }
+  },
+  "item-30": {
+    "id": "item-30",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "lookout-equipment-case", "version": 1, "digest": "m8ldmh" },
+    "quantity": 1,
+    "parentId": "lookout-equipment"
+  },
+  "item-31": {
+    "id": "item-31",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "workshop-supply-satchel", "version": 1, "digest": "evya57" },
+    "quantity": 1,
+    "parentId": "riverside-workshop"
+  },
+  "item-32": {
+    "id": "item-32",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "spear", "version": 1, "digest": "wc8zif" },
+    "quantity": 1,
+    "parentId": "item-30"
+  },
+  "item-33": {
+    "id": "item-33",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "workshop-directions", "version": 1, "digest": "1tydjy5" },
+    "quantity": 1,
+    "parentId": "item-30"
+  },
+  "item-34": {
+    "id": "item-34",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "field-sling-record", "version": 1, "digest": "1iaop55" },
+    "quantity": 1,
+    "parentId": "item-31"
+  },
+  "item-35": {
+    "id": "item-35",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
+    "quantity": 2,
+    "parentId": "item-31"
+  },
+  "item-36": {
+    "id": "item-36",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
+    "quantity": 1,
+    "parentId": "riverside-workshop"
+  },
+  "item-37": {
+    "id": "item-37",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 4,
+    "parentId": "item-31"
+  },
+  "mara": {
+    "id": "mara",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 9.5, "y": 0, "z": 13.5, "surfaceId": "terrain" }
+  },
+  "tavin": {
+    "id": "tavin",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 9.5, "y": 0, "z": 18, "surfaceId": "terrain" }
+  },
+  "mending-clearing-marker": {
+    "id": "mending-clearing-marker",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 11, "y": 0, "z": 16.5, "surfaceId": "terrain" }
+  },
+  "mending-clearing-spot": {
+    "id": "mending-clearing-spot",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 11, "y": 0, "z": 18, "surfaceId": "terrain" }
+  },
+  "reed-side-store-pile": {
+    "id": "reed-side-store-pile",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "position": { "x": 11, "y": 0, "z": 22.5, "surfaceId": "terrain" }
+  },
+  "item-38": {
+    "id": "item-38",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "stone_tool", "version": 1, "digest": "120f9yt" },
+    "quantity": 1,
+    "parentId": "mara"
+  },
+  "item-39": {
+    "id": "item-39",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
+    "quantity": 1,
+    "parentId": "mara"
+  },
+  "item-40": {
+    "id": "item-40",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "stone_tool", "version": 1, "digest": "120f9yt" },
+    "quantity": 1,
+    "parentId": "tavin"
+  },
+  "item-41": {
+    "id": "item-41",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
+    "quantity": 1,
+    "parentId": "tavin"
+  },
+  "item-42": {
+    "id": "item-42",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "torn_red_fastening", "version": 1, "digest": "1pflae9" },
+    "quantity": 1,
+    "parentId": "mending-clearing-spot"
+  },
+  "item-43": {
+    "id": "item-43",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "tavins_sorting_note", "version": 1, "digest": "pei98e" },
+    "quantity": 1,
+    "parentId": "mending-clearing-spot"
+  },
+  "item-44": {
+    "id": "item-44",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "red_stitched_satchel", "version": 1, "digest": "dmz1ra" },
+    "quantity": 1,
+    "parentId": "reed-side-store-pile"
+  },
+  "item-45": {
+    "id": "item-45",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
+    "quantity": 2,
+    "parentId": "item-44"
+  },
+  "item-46": {
+    "id": "item-46",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
+    "quantity": 1,
+    "parentId": "reed-side-store-pile"
+  },
+  "watchpost-cache": {
+    "id": "watchpost-cache",
+    "change": "relocated",
+    "installer": "ordinary-scenario",
+    "position": { "x": 104, "y": 0.25, "z": 28, "surfaceId": "terrain-5-2" }
+  },
+  "kest": {
+    "id": "kest",
+    "change": "relocated",
+    "installer": "ordinary-scenario",
+    "position": { "x": 103, "y": 0.10000000000000003, "z": 25, "surfaceId": "terrain-5-1" }
+  },
+  "item-47": {
+    "id": "item-47",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
+    "quantity": 1
+  },
+  "item-48": {
+    "id": "item-48",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "cooked_meat", "version": 1, "digest": "1nuttzc" },
+    "quantity": 2,
+    "parentId": "kest"
+  },
+  "orin": {
+    "id": "orin",
+    "change": "relocated",
+    "installer": "ordinary-scenario",
+    "position": { "x": 106, "y": 0.10000000000000003, "z": 26, "surfaceId": "terrain-5-1" }
+  },
+  "item-49": {
+    "id": "item-49",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
+    "quantity": 1,
+    "parentId": "orin"
+  },
+  "item-50": {
+    "id": "item-50",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "cooked_meat", "version": 1, "digest": "1nuttzc" },
+    "quantity": 2,
+    "parentId": "orin"
+  },
+  "item-51": {
+    "id": "item-51",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "item-10uvnqg", "version": 1, "digest": "lhm7zm" },
+    "quantity": 1
+  },
+  "item-52": {
+    "id": "item-52",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "item-hua8to", "version": 1, "digest": "cajaal" },
+    "quantity": 1
+  },
+  "item-53": {
+    "id": "item-53",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "item-stfmma", "version": 1, "digest": "8427iq" },
+    "quantity": 6,
+    "parentId": "orin"
+  },
+  "item-54": {
+    "id": "item-54",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "field-sling-record", "version": 1, "digest": "1iaop55" },
+    "quantity": 1,
+    "parentId": "watchpost-cache"
+  },
+  "item-55": {
+    "id": "item-55",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
+    "quantity": 2,
+    "parentId": "watchpost-cache"
+  },
+  "item-56": {
+    "id": "item-56",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
+    "quantity": 1,
+    "parentId": "watchpost-cache"
+  },
+  "item-57": {
+    "id": "item-57",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 4,
+    "parentId": "watchpost-cache"
+  },
+  "item-58": {
+    "id": "item-58",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "item-stfmma", "version": 1, "digest": "8427iq" },
+    "quantity": 4,
+    "parentId": "watchpost-cache"
+  },
+  "item-59": {
+    "id": "item-59",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "watchpost-directions", "version": 1, "digest": "se6i7n" },
+    "quantity": 1,
+    "parentId": "riverside-workshop"
+  },
+  "southern-hearth": {
+    "id": "southern-hearth",
+    "change": "new",
+    "installer": "ordinary-scenario",
+    "position": { "x": 15, "y": 0, "z": 58, "surfaceId": "terrain-1-5" }
+  },
+  "watchpost-repair-stock": {
+    "id": "watchpost-repair-stock",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 103, "y": 0.325, "z": 29, "surfaceId": "terrain-5-2" }
+  },
+  "repair:cloak:ground:0": {
+    "id": "repair:cloak:ground:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 100, "y": 0.625, "z": 33, "surfaceId": "terrain-5-2" }
+  },
+  "repair:cloak:lot:0": {
+    "id": "repair:cloak:lot:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "travel_cloak", "version": 1, "digest": "pmmips" },
+    "quantity": 1,
+    "parentId": "repair:cloak:ground:0",
+    "declaredOwnerId": "kest"
+  },
+  "repair:cloth:ground:0": {
+    "id": "repair:cloth:ground:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 102, "y": 0.625, "z": 33, "surfaceId": "terrain-5-2" }
+  },
+  "repair:cloth:lot:0": {
+    "id": "repair:cloth:lot:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "weather_cloth", "version": 1, "digest": "1yqk6kf" },
+    "quantity": 1,
+    "parentId": "repair:cloth:ground:0",
+    "declaredOwnerId": "kest"
+  },
+  "repair:posts:ground:0": {
+    "id": "repair:posts:ground:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 100, "y": 0.7000000000000001, "z": 35, "surfaceId": "terrain-5-3" }
+  },
+  "repair:posts:lot:0": {
+    "id": "repair:posts:lot:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "canopy_post", "version": 1, "digest": "12kkydc" },
+    "quantity": 1,
+    "parentId": "repair:posts:ground:0",
+    "declaredOwnerId": "kest"
+  },
+  "repair:posts:ground:1": {
+    "id": "repair:posts:ground:1",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 102, "y": 0.7000000000000001, "z": 35, "surfaceId": "terrain-5-3" }
+  },
+  "repair:posts:lot:1": {
+    "id": "repair:posts:lot:1",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "canopy_post", "version": 1, "digest": "12kkydc" },
+    "quantity": 1,
+    "parentId": "repair:posts:ground:1",
+    "declaredOwnerId": "kest"
+  },
+  "repair:posts:ground:2": {
+    "id": "repair:posts:ground:2",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 104, "y": 0.7, "z": 35, "surfaceId": "terrain-5-3" }
+  },
+  "repair:posts:lot:2": {
+    "id": "repair:posts:lot:2",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "canopy_post", "version": 1, "digest": "12kkydc" },
+    "quantity": 1,
+    "parentId": "repair:posts:ground:2",
+    "declaredOwnerId": "kest"
+  },
+  "repair:posts:ground:3": {
+    "id": "repair:posts:ground:3",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 106, "y": 0.7, "z": 35, "surfaceId": "terrain-5-3" }
+  },
+  "repair:posts:lot:3": {
+    "id": "repair:posts:lot:3",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "canopy_post", "version": 1, "digest": "12kkydc" },
+    "quantity": 1,
+    "parentId": "repair:posts:ground:3",
+    "declaredOwnerId": "kest"
+  },
+  "repair:posts:ground:4": {
+    "id": "repair:posts:ground:4",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 108, "y": 0.7, "z": 35, "surfaceId": "terrain-5-3" }
+  },
+  "repair:posts:lot:4": {
+    "id": "repair:posts:lot:4",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "canopy_post", "version": 1, "digest": "12kkydc" },
+    "quantity": 1,
+    "parentId": "repair:posts:ground:4",
+    "declaredOwnerId": "kest"
+  },
+  "repair:posts:ground:5": {
+    "id": "repair:posts:ground:5",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 110, "y": 0.7, "z": 35, "surfaceId": "terrain-5-3" }
+  },
+  "repair:posts:lot:5": {
+    "id": "repair:posts:lot:5",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "canopy_post", "version": 1, "digest": "12kkydc" },
+    "quantity": 1,
+    "parentId": "repair:posts:ground:5",
+    "declaredOwnerId": "kest"
+  },
+  "repair:tall-posts:ground:0": {
+    "id": "repair:tall-posts:ground:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 108, "y": 0.625, "z": 33, "surfaceId": "terrain-5-2" }
+  },
+  "repair:tall-posts:lot:0": {
+    "id": "repair:tall-posts:lot:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "canopy_tall_post", "version": 1, "digest": "1xxt3i0" },
+    "quantity": 1,
+    "parentId": "repair:tall-posts:ground:0",
+    "declaredOwnerId": "kest"
+  },
+  "repair:tall-posts:ground:1": {
+    "id": "repair:tall-posts:ground:1",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 110, "y": 0.625, "z": 33, "surfaceId": "terrain-5-2" }
+  },
+  "repair:tall-posts:lot:1": {
+    "id": "repair:tall-posts:lot:1",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "canopy_tall_post", "version": 1, "digest": "1xxt3i0" },
+    "quantity": 1,
+    "parentId": "repair:tall-posts:ground:1",
+    "declaredOwnerId": "kest"
+  },
+  "repair:cord:ground:0": {
+    "id": "repair:cord:ground:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 104, "y": 0.625, "z": 33, "surfaceId": "terrain-5-2" }
+  },
+  "repair:cord:lot:0": {
+    "id": "repair:cord:lot:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
+    "quantity": 11,
+    "parentId": "repair:cord:ground:0",
+    "declaredOwnerId": "kest"
+  },
+  "repair:stone-tool:ground:0": {
+    "id": "repair:stone-tool:ground:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 100, "y": 0.7000000000000001, "z": 37, "surfaceId": "terrain-5-3" }
+  },
+  "repair:stone-tool:lot:0": {
+    "id": "repair:stone-tool:lot:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "stone_tool", "version": 1, "digest": "120f9yt" },
+    "quantity": 1,
+    "parentId": "repair:stone-tool:ground:0",
+    "declaredOwnerId": "kest"
+  },
+  "repair:knife:ground:0": {
+    "id": "repair:knife:ground:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 102, "y": 0.7000000000000001, "z": 37, "surfaceId": "terrain-5-3" }
+  },
+  "repair:knife:lot:0": {
+    "id": "repair:knife:lot:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
+    "quantity": 1,
+    "parentId": "repair:knife:ground:0",
+    "declaredOwnerId": "kest"
+  },
+  "repair:fiber:ground:0": {
+    "id": "repair:fiber:ground:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 104, "y": 0.7, "z": 37, "surfaceId": "terrain-5-3" }
+  },
+  "repair:fiber:lot:0": {
+    "id": "repair:fiber:lot:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
+    "quantity": 4,
+    "parentId": "repair:fiber:ground:0",
+    "declaredOwnerId": "kest"
+  },
+  "repair:wood:ground:0": {
+    "id": "repair:wood:ground:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 106, "y": 0.7, "z": 37, "surfaceId": "terrain-5-3" }
+  },
+  "repair:wood:lot:0": {
+    "id": "repair:wood:lot:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "wood", "version": 1, "digest": "r63kmo" },
+    "quantity": 2,
+    "parentId": "repair:wood:ground:0",
+    "declaredOwnerId": "kest"
+  },
+  "repair:stone:ground:0": {
+    "id": "repair:stone:ground:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "position": { "x": 108, "y": 0.7, "z": 37, "surfaceId": "terrain-5-3" }
+  },
+  "repair:stone:lot:0": {
+    "id": "repair:stone:lot:0",
+    "change": "new",
+    "installer": "watchpost-repair-stock",
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 6,
+    "parentId": "repair:stone:ground:0",
+    "declaredOwnerId": "kest"
+  },
+  "camp-site:east-clearing:marker": {
+    "id": "camp-site:east-clearing:marker",
+    "change": "new",
+    "installer": "ordinary-scenario",
+    "position": { "x": 22.4, "y": 0, "z": 20, "surfaceId": "terrain" }
+  },
+  "camp-site:western-supplies:marker": {
+    "id": "camp-site:western-supplies:marker",
+    "change": "new",
+    "installer": "ordinary-scenario",
+    "position": { "x": 13.4, "y": 0, "z": 22.5, "surfaceId": "terrain" }
+  },
+  "camp-site:south-meadow:marker": {
+    "id": "camp-site:south-meadow:marker",
+    "change": "new",
+    "installer": "ordinary-scenario",
+    "position": { "x": 40.4, "y": 1.4, "z": 51, "surfaceId": "terrain-3-5" }
+  },
+  "base:pasture-0": {
+    "id": "base:pasture-0",
+    "change": "new",
+    "installer": "first-playable-ecology",
+    "position": { "x": 26, "y": 0.6, "z": 36, "surfaceId": "terrain-1-3" },
+    "definition": { "id": "base:pasture", "version": 1, "digest": "1dmruuf" },
+    "quantity": 240
+  },
+  "base:pasture-1": {
+    "id": "base:pasture-1",
+    "change": "new",
+    "installer": "first-playable-ecology",
+    "position": { "x": 50, "y": 1.075, "z": 58, "surfaceId": "terrain-4-5" },
+    "definition": { "id": "base:pasture", "version": 1, "digest": "1dmruuf" },
+    "quantity": 240
+  },
+  "base:pasture-2": {
+    "id": "base:pasture-2",
+    "change": "new",
+    "installer": "first-playable-ecology",
+    "position": { "x": 81, "y": 0.10000000000000006, "z": 74, "surfaceId": "terrain-5-5" },
+    "definition": { "id": "base:pasture", "version": 1, "digest": "1dmruuf" },
+    "quantity": 240
+  },
+  "forage-west": {
+    "id": "forage-west",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 20, "y": 0, "z": 61, "surfaceId": "terrain-1-5" },
+    "definition": { "id": "berries", "version": 1, "digest": "1pkw5cx" },
+    "quantity": 96
+  },
+  "forage-east": {
+    "id": "forage-east",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 71, "y": 0.10000000000000007, "z": 54, "surfaceId": "terrain-5-5" },
+    "definition": { "id": "berries", "version": 1, "digest": "1pkw5cx" },
+    "quantity": 84
+  },
+  "fiber-bank": {
+    "id": "fiber-bank",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 9, "y": 0.6, "z": 38, "surfaceId": "terrain-1-3" },
+    "definition": { "id": "raw_fiber", "version": 1, "digest": "n64fev" },
+    "quantity": 96
+  },
+  "outer-fiber": {
+    "id": "outer-fiber",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 48, "y": 1.4, "z": 72, "surfaceId": "terrain-3-5" },
+    "definition": { "id": "raw_fiber", "version": 1, "digest": "n64fev" },
+    "quantity": 126
+  },
+  "copse-branches": {
+    "id": "copse-branches",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 20, "y": 0.075, "z": 27, "surfaceId": "terrain-1-2" },
+    "definition": { "id": "wood", "version": 1, "digest": "r63kmo" },
+    "quantity": 48
+  },
+  "outer-branches": {
+    "id": "outer-branches",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 75, "y": 0.7000000000000001, "z": 37, "surfaceId": "terrain-5-3" },
+    "definition": { "id": "wood", "version": 1, "digest": "r63kmo" },
+    "quantity": 48
+  },
+  "bank-stones": {
+    "id": "bank-stones",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 17, "y": 0.375, "z": 31, "surfaceId": "terrain-1-2" },
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 40
+  },
+  "outer-stones": {
+    "id": "outer-stones",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 76.5, "y": 0.7000000000000001, "z": 37, "surfaceId": "terrain-5-3" },
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
+    "quantity": 40
+  },
+  "bank-flint": {
+    "id": "bank-flint",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 18.5, "y": 0.375, "z": 31, "surfaceId": "terrain-1-2" },
+    "definition": { "id": "knappable_flint", "version": 1, "digest": "1dbxnp0" },
+    "quantity": 12
+  },
+  "clay-bank-flint": {
+    "id": "clay-bank-flint",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 7, "y": 0.5, "z": 43, "surfaceId": "terrain-1-4" },
+    "definition": { "id": "knappable_flint", "version": 1, "digest": "1dbxnp0" },
+    "quantity": 18
+  },
+  "outer-flint": {
+    "id": "outer-flint",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 75, "y": 0.7000000000000001, "z": 38.5, "surfaceId": "terrain-5-3" },
+    "definition": { "id": "knappable_flint", "version": 1, "digest": "1dbxnp0" },
+    "quantity": 18
+  },
+  "copse-poles": {
+    "id": "copse-poles",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 21.5, "y": 0.075, "z": 27, "surfaceId": "terrain-1-2" },
+    "definition": { "id": "straight_pole", "version": 1, "digest": "xaz30c" },
+    "quantity": 24
+  },
+  "bank-poles": {
+    "id": "bank-poles",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 10.5, "y": 0.6, "z": 38, "surfaceId": "terrain-1-3" },
+    "definition": { "id": "straight_pole", "version": 1, "digest": "xaz30c" },
+    "quantity": 12
+  },
+  "outer-poles": {
+    "id": "outer-poles",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 76.5, "y": 0.7000000000000001, "z": 38.5, "surfaceId": "terrain-5-3" },
+    "definition": { "id": "straight_pole", "version": 1, "digest": "xaz30c" },
+    "quantity": 24
+  },
+  "marsh-poles": {
+    "id": "marsh-poles",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 49.5, "y": 1.15625, "z": 72, "surfaceId": "terrain-4-5" },
+    "definition": { "id": "straight_pole", "version": 1, "digest": "xaz30c" },
+    "quantity": 36
+  },
+  "washed-bone": {
+    "id": "washed-bone",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 17, "y": 0.4875, "z": 32.5, "surfaceId": "terrain-1-2" },
+    "definition": { "id": "bone", "version": 1, "digest": "1ds0yrx" },
+    "quantity": 2
+  },
+  "outer-bone": {
+    "id": "outer-bone",
+    "change": "new",
+    "installer": "first-playable-resources",
+    "position": { "x": 78, "y": 0.7000000000000001, "z": 37, "surfaceId": "terrain-5-3" },
+    "definition": { "id": "bone", "version": 1, "digest": "1ds0yrx" },
+    "quantity": 6
+  }
+}

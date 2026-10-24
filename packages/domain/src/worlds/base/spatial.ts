@@ -1,6 +1,8 @@
 import { BASE_BODY_PROFILES } from './spatial-definitions.js';
-import type { SpatialLayout, WalkableSurface } from '@open-legend/spatial';
+import type { SpatialLayout, SpatialMap, WalkableSurface } from '@open-legend/spatial';
 import type { FlightRoute } from '../../spatial-state.js';
+import { starterGroundAt } from './landscape.js';
+import { BASE_BIRD_REFUGES } from './flight-profile.js';
 
 export function starterSpatialLayout(width: number, depth: number): SpatialLayout {
   return {
@@ -73,13 +75,14 @@ export function starterSpatialLayout(width: number, depth: number): SpatialLayou
     ],
   };
 }
-export function starterFlightRoutes(): Record<string, FlightRoute> {
-  return {
+export function starterFlightRoutes(map: SpatialMap): Record<string, FlightRoute> {
+  const routes: Record<string, FlightRoute> = {
     'clearing-bird-loop': {
       id: 'clearing-bird-loop',
       body: { ...BASE_BODY_PROFILES.bird },
       speed: 0.12,
       climbSpeed: 0.06,
+      continuation: { kind: 'loop' },
       points: [
         { position: { x: 22, y: 3, z: 5.5 }, landingSurfaceId: 'lookout-deck', waitSeconds: 180 },
         { position: { x: 22, y: 5.5, z: 5.5 }, waitSeconds: 0 },
@@ -90,6 +93,62 @@ export function starterFlightRoutes(): Record<string, FlightRoute> {
       ],
     },
   };
+  const routine = routes['clearing-bird-loop']!;
+  for (const [side, perch] of Object.entries(BASE_BIRD_REFUGES)) {
+    const ground = starterGroundAt(map.spatial, perch.x, perch.z),
+      above = { x: perch.x, y: perch.altitude, z: perch.z },
+      junction = side === 'west' ? 3 : 4,
+      entry = routine.points[junction]!.position,
+      escapeId = `clearing-bird-${side}-escape`,
+      returnId = `clearing-bird-${side}-return`;
+    routes[escapeId] = {
+      id: escapeId,
+      body: { ...BASE_BODY_PROFILES.bird },
+      speed: routine.speed,
+      climbSpeed: routine.climbSpeed,
+      continuation: { kind: 'land', resumeRouteId: returnId },
+      points: [
+        { position: { ...entry }, waitSeconds: 0 },
+        { position: above, waitSeconds: 0 },
+        {
+          position: { x: ground.x, y: ground.y, z: ground.z },
+          landingSurfaceId: ground.surfaceId,
+          waitSeconds: 0,
+        },
+      ],
+    };
+    routes[returnId] = {
+      id: returnId,
+      body: { ...BASE_BODY_PROFILES.bird },
+      speed: routine.speed,
+      climbSpeed: routine.climbSpeed,
+      continuation: { kind: 'join', routeId: 'clearing-bird-loop', next: junction + 1 },
+      points: [
+        {
+          position: { x: ground.x, y: ground.y, z: ground.z },
+          landingSurfaceId: ground.surfaceId,
+          waitSeconds: 0,
+        },
+        { position: { ...above }, waitSeconds: 0 },
+        { position: { ...entry }, waitSeconds: 0 },
+      ],
+    };
+  }
+  const connections: NonNullable<FlightRoute['responseConnections']> = [
+    ...['west', 'east'].flatMap((side) => [
+      { kind: 'landing' as const, routeId: `clearing-bird-${side}-escape`, next: 0 },
+      { kind: 'landing' as const, routeId: `clearing-bird-${side}-escape`, next: 2 },
+      { kind: 'transit' as const, routeId: `clearing-bird-${side}-escape`, next: 1 },
+    ]),
+    ...[1, 2, 3, 4, 5].map((next) => ({
+      kind: 'transit' as const,
+      routeId: 'clearing-bird-loop',
+      next,
+    })),
+  ];
+  for (const route of Object.values(routes))
+    route.responseConnections = connections.map((connection) => ({ ...connection }));
+  return routes;
 }
 
 /** Continuous, low authored rises built from the existing planar support family.

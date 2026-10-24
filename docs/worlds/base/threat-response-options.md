@@ -1,10 +1,10 @@
 # Threat responses — wilderness purpose and action catalogue
 
-| Status      | Current progress                                                                                              | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The selected threat-response catalogue is designed; installation and independent behavior checks remain open. | 2026-10-17   |
+| Status      | Current progress                                                                                                         | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | The catalogue and two-stage strategy are connected; complete dynamic and independent behavior qualification remain open. | 2026-10-18   |
 
-**Selected target, not installed behavior.** This profile supplies the wilderness world's plausible purposes, bounded commitments, context language and candidate actions for an autonomous person's response to danger. It does not decide that a particular person is angry, create an intention for them, or execute an attack. The [feature spec](../../projects/combat-and-threat-responses-feature-spec.md), [technical design](../../projects/combat-and-threat-responses-tech-design.md) and [implementation tracker](../../maintainers/combat-and-threat-responses.md) own the complete delivery. Native animal escape is a different, model-free world policy.
+**Partly implemented; complete qualification remains open.** This profile supplies the wilderness world's plausible purposes, bounded commitments, context language and candidate actions for an autonomous person's response to danger. It does not decide that a particular person is angry, create an intention for them, or execute an attack. The [feature spec](../../projects/combat-and-threat-responses-feature-spec.md), [technical design](../../projects/combat-and-threat-responses-tech-design.md) and [implementation tracker](../../maintainers/combat-and-threat-responses.md) own the complete delivery. Native animal escape is a different, model-free world policy.
 
 ## 1. What a response means
 
@@ -114,7 +114,7 @@ The initial technical acceptance window is 900 game seconds from the personally 
 
 ## 5. First-delivery commitments and reconsideration tuning
 
-The following are selected, adjustable world defaults. They are not engine constants or observed performance results. Use the existing finite activity/plan and installed observed-condition owners. A purpose ID is descriptive selection metadata on that admitted work, not a parallel psychological goal store. A larger personal objective, if the person chooses one, remains an ordinary `ActorGoal`.
+The following are selected, adjustable world defaults. Finite commitments and the first native observation implementation are connected; the tracker retains the remaining conditions and qualification. These values are not engine constants or observed performance results. Use the existing finite activity/plan and installed observed-condition owners. A purpose ID is descriptive selection metadata on that admitted work, not a parallel psychological goal store. A larger personal objective, if the person chooses one, remains an ordinary `ActorGoal`.
 
 | Selected term                    | Default and exact meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -130,6 +130,14 @@ The following are selected, adjustable world defaults. They are not engine const
 | Review admission                 | No universal combat cooldown is added. A genuinely new urgent opportunity enters existing scheduling immediately; pending ordinary changes for that actor coalesce. The already selected action can continue while an unrelated decision waits only while its native prerequisites and chosen conditions remain valid.                                                                                                                                                               |
 
 At the current 60:1 clock, 600 game seconds is 10 normal-speed real seconds, 120 is 2 seconds, and 12 is 0.2 seconds. Pausing stops these deadlines; speed changes follow game time; restoration resumes remaining time without real-time catch-up. The independent Command-click recent-hostility preference happens to use the same initial 600-game-second duration, but it is a different owner and must not extend a pursuit, force an appraisal, authorize attack or erase a feeling when it expires.
+
+Native sustained-change notices use authored importance 6 and urgency 4. Actual
+entry into a supported attack's reach uses importance 8 and urgency 8, making a
+fresh urgent choice available without starting an attack. Passive protected people
+and helpers are observed for the chosen purpose without being treated as
+assailants or acquiring attack-range notices. A selected method uses its own
+reach while it remains current; otherwise use the shortest available direct
+strike's reach. The world profile identifies the purpose role whose reach matters.
 
 The one-strike default deliberately leaves renewed aggression as a character choice. A future finite exchange of several strikes may be supplied as an explicitly chosen bounded composition if measurement shows that reconsidering after every strike is too slow or costly. It must preserve the chosen purpose, maximum attempts/deadline, observed stop conditions and current native validation. It is not installed by this first catalogue or silently substituted when the provider is slow.
 

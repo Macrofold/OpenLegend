@@ -1164,8 +1164,6 @@ try {
         const panel = page.locator('#nearbyPanel');
         if (!(await panel.isVisible()))
           await page.locator('.ol-launcher[aria-label="In view"]').click({ timeout: 2000 });
-        const back = panel.getByRole('button', { name: 'Back to In view', exact: true });
-        if (await back.isVisible()) await back.click({ timeout: 2000 });
         const rows = panel.locator('[data-entity]');
         const count = await rows.count();
         if (!count) throw new Error('No visible entity available for selection sweep.');
@@ -1174,10 +1172,18 @@ try {
         const at = await page.evaluate(() => performance.now());
         const attempt = { at, entityId, outcome: 'pending' };
         selectionInputs.push(attempt);
+        const inspector = page.locator(`[data-inspector-id=${JSON.stringify(entityId)}]`);
         try {
           await row.getByRole('button').click({ timeout: 2000 });
-          await back.waitFor({ timeout: 2000 });
-          attempt.outcome = 'selected';
+          await inspector.waitFor({ timeout: 2000 });
+          if (
+            await inspector.getByRole('heading', { name: 'Out of sight', exact: true }).isVisible()
+          ) {
+            attempt.outcome = 'skipped';
+            attempt.reason = 'Target left sight before its inspection opened';
+          } else {
+            attempt.outcome = 'selected';
+          }
         } catch (error) {
           const ids = await panel
             .locator('[data-entity]')
@@ -1191,6 +1197,13 @@ try {
           if (!refused && !(showingList && !ids.includes(entityId))) throw error;
           attempt.outcome = 'skipped';
           attempt.reason = refused ? 'Sight-focus refusal' : 'Target no longer in visible list';
+        } finally {
+          // Object details have their own panel; closing it keeps the next ground
+          // input comparable instead of accumulating overlapping inspections.
+          if (await inspector.isVisible())
+            await inspector
+              .getByRole('button', { name: /^Hide .* panel$/ })
+              .click({ timeout: 2000 });
         }
         await panel.getByRole('button', { name: /^Hide .* panel$/ }).click({ timeout: 2000 });
         continue;

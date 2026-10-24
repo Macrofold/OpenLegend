@@ -229,7 +229,12 @@ export class DecisionEscalator {
       this.reconciling.delete(rootId);
     }
   }
-  async enqueue(rootId: string, reason: DecisionReason, response = false): Promise<boolean> {
+  async enqueue(
+    rootId: string,
+    reason: DecisionReason,
+    response = false,
+    initialPreparation: Prepare = this.prepare,
+  ): Promise<boolean> {
     if (!permitsEscalation(this.service.config, reason)) return false;
     let queued: JobRecord | undefined;
     let immediateChanged = false;
@@ -239,9 +244,7 @@ export class DecisionEscalator {
         !this.eligible(job, state) ||
         state.higherEntitlement !== 'available' ||
         (await this.service.store.decisionAttempts(rootId)).some(
-          (attempt) =>
-            attempt.executionClass === 'primary' &&
-            (!attempt.receipt || attempt.receipt.completionUncertain),
+          (attempt) => !attempt.receipt || attempt.receipt.completionUncertain,
         ) ||
         !Object.values(state.groups).some((group) => group.state === 'open') ||
         (await this.service.store.activeDecision(
@@ -330,7 +333,8 @@ export class DecisionEscalator {
       kind: 'decision',
       urgency: state.urgency,
       metadataBytes: Buffer.byteLength(JSON.stringify(descriptor)),
-      start: (lease) => this.log.withTrigger(rootId, () => this.run(rootId, lease)),
+      start: (lease) =>
+        this.log.withTrigger(rootId, () => this.run(rootId, lease, initialPreparation)),
       declined: (reason) => this.end(rootId, reason),
     });
     if (!accepted) await this.end(rootId, 'capacity');
@@ -410,7 +414,11 @@ export class DecisionEscalator {
         ...(job.completedAt ? { completedAt: new Date(job.completedAt).toISOString() } : {}),
       });
   }
-  private async run(rootId: string, lease: ExecutionLease): Promise<void> {
+  private async run(
+    rootId: string,
+    lease: ExecutionLease,
+    initialPreparation: Prepare,
+  ): Promise<void> {
     this.queued.delete(rootId);
     const controller = new AbortController();
     this.active.set(rootId, controller);
@@ -471,7 +479,7 @@ export class DecisionEscalator {
         ),
       );
       timer.unref();
-      let prepared = await this.prepare(job, controller.signal);
+      let prepared = await initialPreparation(job, controller.signal);
       if (!controller.signal.aborted && !(await prepared.current())) {
         const refreshed = await this.service.store.mutateDecision(rootId, async (current) => {
           const live = current.decision!;
@@ -673,7 +681,7 @@ export class DecisionEscalator {
         );
         this.rate.observe(receipt, this.now());
         await this.service.store.putIntegration(this.rateKey, this.rate.snapshot());
-        if (receipt.completionUncertain) lease.uncertain();
+        if (receipt.completionUncertain) lease.uncertain(child.id);
         if (receipt.completionUncertain) {
           await this.end(rootId, 'uncertain');
           return;
@@ -757,7 +765,7 @@ export class DecisionEscalator {
               : 'native-rejection',
           );
       } finally {
-        if (!receipt) lease.uncertain(); // Crossing durable dispatch intent makes missing completion uncertain.
+        if (!receipt) lease.uncertain(child.id); // Crossing durable dispatch intent makes missing completion uncertain.
       }
     } catch (error) {
       await this.end(
@@ -776,7 +784,7 @@ export class DecisionEscalator {
           reservedId,
           undispatchedReceipt(reservedId, 'openai', this.now()),
         );
-      if (dispatchIntent && !completed) lease.uncertain();
+      if (dispatchIntent && !completed && reservedId) lease.uncertain(reservedId);
       if (reservedId) this.rate.release(reservedId);
       if (timer) clearTimeout(timer);
       this.active.delete(rootId);

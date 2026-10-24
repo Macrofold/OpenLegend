@@ -1,6 +1,6 @@
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
-import { expect, it } from 'vitest';
+import { beforeAll, expect, it } from 'vitest';
 import { readConfig } from '../../../tests/fixtures/database.js';
 import { WorldService } from './world-service.js';
 import { IntelligenceLog } from './intelligence-log.js';
@@ -23,8 +23,15 @@ async function fixture() {
   };
 }
 
-it('keeps conversation turns after the original trigger and beyond 32 turns during relevance failure', async () => {
-  const { store, service, actor, player } = await fixture();
+let ready: Awaited<ReturnType<typeof fixture>>;
+// Disposable database initialization is outside the gameplay path's 15-second
+// assertion budget. Its measured startup SQL wait can exceed that budget alone.
+beforeAll(async () => {
+  ready = await fixture();
+}, 60_000);
+
+it('keeps required causes and a complete bounded recent suffix after the trigger during relevance failure', async () => {
+  const { store, service, actor, player } = ready;
   const log = new IntelligenceLog(store);
   const recall = new RecallService(service, log);
   try {
@@ -47,9 +54,26 @@ it('keeps conversation turns after the original trigger and beyond 32 turns duri
       new AbortController().signal,
     );
     const history = decision.context['conversation'] as string[];
-    expect(history).toHaveLength(34);
-    expect(history[0]).toContain('My reply number 0');
-    expect(history.at(-1)).toContain('My reply number 33');
+    expect(history.length).toBeGreaterThan(0);
+    expect(history.length).toBeLessThan(34);
+    const numbers = history.map((line) => Number(/My reply number (\d+)/.exec(line)?.[1]));
+    expect(
+      numbers.every((number, index) => index === 0 || number === numbers[index - 1]! + 1),
+    ).toBe(true);
+    // The latest own utterance is also a required committed work result, kept
+    // separately rather than duplicated in the optional suffix.
+    expect(numbers.at(-1)).toBe(32);
+    expect(decision.prompt).toContain('My reply number 33');
+    expect(decision.prompt).toContain('First question');
+    expect(decision.awarenessSequence).toBe(
+      Math.max(...service.world.experience!.awareness[actor]!.map((entry) => entry.sequence)),
+    );
+    expect(decision.diagnostics.conversation.more).toBe(true);
+    expect(decision.diagnostics.conversation.projectionBytes).toBeLessThanOrEqual(24000);
+    expect((decision.context['experience'] as unknown[]).length).toBeGreaterThanOrEqual(
+      history.length,
+    );
+    await expect(decision.validateConversation()).resolves.toBeUndefined();
   } finally {
     await recall.close();
     await log.close();

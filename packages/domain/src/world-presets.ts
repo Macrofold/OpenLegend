@@ -1,5 +1,7 @@
 import { entityGet, entitySet, entityValues } from './entity-collection.js';
 import { CANOPY_ATTRIBUTES, BASE_CANOPY_ACTIVITY_HOST } from './worlds/base/canopies.js';
+import { BASE_BOUNDARY_CONFIGURATION } from './worlds/base/camp-boundaries.js';
+import { BASE_CAMP_ACTIVITY_HOST } from './worlds/base/camp-activity.js';
 import { SLING_HANDLING } from './worlds/base/practical-competence.js';
 import { directChildIds, unequipLot } from './objects.js';
 import { baseSpatial } from './worlds/base/spatial-definitions.js';
@@ -7,7 +9,7 @@ import { worldPlacement } from './spatial-state.js';
 import type { WorldCreationAccounts } from './invention-attribution.js';
 import { seedAgency } from './agency.js';
 import { DEFAULT_SENSES, COARSE_TOUCH } from './perception.js';
-import { createWorld } from './data.js';
+import { createBaseDiagnosticWorld } from './worlds/base/world.js';
 import { controlledEntityId, defaultResidentEntityId } from './identity.js';
 import {
   createModuleManifest,
@@ -60,7 +62,7 @@ export const RESERVOIR_DEMO_ATTRIBUTES: AttributeDefinition[] = [
   },
 ];
 export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts): WorldState {
-  const world = createWorld(seed, accounts);
+  const world = createBaseDiagnosticWorld(seed, accounts);
   world.id = `reservoir-demo-${seed}`;
   world.presentation = {
     worldName: 'Clockwork inhabitants',
@@ -107,11 +109,23 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
   world.moduleManifest = createModuleManifest(
     // This preset reuses the camp's actual shelter materials and practice target.
     // Their rules remain authored dependencies; human food/energy meters do not.
-    [integrity, ...RESERVOIR_DEMO_ATTRIBUTES, ...CANOPY_ATTRIBUTES, SLING_HANDLING],
+    [
+      integrity,
+      ...RESERVOIR_DEMO_ATTRIBUTES,
+      ...CANOPY_ATTRIBUTES,
+      ...BASE_BOUNDARY_CONFIGURATION.attributes,
+      SLING_HANDLING,
+    ],
     BASE_SENSES,
     policy,
     world.moduleManifest.recipeFamilies,
-    [activityHostPin(RESERVOIR_ACTIVITY_HOST), activityHostPin(BASE_CANOPY_ACTIVITY_HOST)],
+    [
+      activityHostPin(RESERVOIR_ACTIVITY_HOST),
+      activityHostPin(BASE_CANOPY_ACTIVITY_HOST),
+      activityHostPin(BASE_CAMP_ACTIVITY_HOST),
+    ],
+    null,
+    world.moduleManifest.socialPerception,
   );
   world.statusEffectPolicy = { revision: 1, clockOffsetHours: 0, namedTimes: {}, definitions: [] };
   world.cognitionPolicy = { ...world.cognitionPolicy, dream: null };
@@ -163,6 +177,8 @@ export function createTouchDemo(seed = 73, accounts?: WorldCreationAccounts): Wo
     manifest.bodyPolicy,
     manifest.recipeFamilies,
     manifest.activityHosts,
+    manifest.rangedPolicy,
+    manifest.socialPerception,
   );
   const resident = entityGet(world.entities, defaultResidentEntityId(world))!;
   resident.actor!.senses = [COARSE_TOUCH.id];

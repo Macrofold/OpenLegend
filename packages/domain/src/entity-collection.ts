@@ -27,6 +27,7 @@ const IMMER_STATE = Symbol.for('immer-state');
 type EntityDraftState = { modified_?: boolean; copy_?: Entity };
 const accessed = new WeakMap<EntityCollection, Map<string, Entity>>();
 const structural = new WeakMap<EntityCollection, Set<string>>();
+const removed = new WeakMap<EntityCollection, Set<string>>();
 
 export function emptyEntities(): EntityCollection {
   return { kind: 'entity-collection', nextInsertion: 0, size: 0 };
@@ -123,6 +124,11 @@ export function entityDelete(records: EntityCollection, id: string): boolean {
   accessed.get(records)?.delete(id);
   const previous = plainGet(readOnlyDraftView(records).byId, id);
   if (!previous) return false;
+  if (isDraft(records)) {
+    let ids = removed.get(records);
+    if (!ids) removed.set(records, (ids = new Set()));
+    ids.add(id);
+  }
   records.byOrder = objectIndexSet(records.byOrder, readOnlyDraftView(previous).order, undefined);
   records.byId = objectIndexSet(records.byId, id, undefined);
   records.size--;
@@ -194,6 +200,7 @@ export function entityDraftAudit(records: EntityCollection) {
   if (!isDraft(records)) return;
   return {
     assigned: structural.get(records) ?? new Set<string>(),
+    removed: removed.get(records) as ReadonlySet<string> | undefined,
     values: accessed.get(records) ?? new Map<string, Entity>(),
   };
 }
