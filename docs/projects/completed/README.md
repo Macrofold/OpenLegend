@@ -1,6 +1,6 @@
 # Completed projects
 
-This folder contains project documents whose entire agreed scope and required verification are complete. Each document retains its dated status table and links to the owning tracker and completion evidence.
+This folder contains project documents whose entire agreed scope and required verification are complete. Project specs/designs retain meaningful status and links to their tracker/evidence. New completions are grouped under year directories; existing flat paths below remain valid until deliberately filed. Current contracts stay in their maintained owners under [the completion procedure](../../documentation-system.md#current-contracts-and-completed-projects).
 
 | Project                                                                            | Scope and evidence                                                                                                                                                                                              |
 | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

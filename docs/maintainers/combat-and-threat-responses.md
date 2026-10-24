@@ -22,7 +22,7 @@ Animal navigation waits are local; other requests keep their world-hold default.
 Attack preparation no longer alarms animals. Faster arrows and a wider approach
 allowance make ordinary prey hunting practical. Current native/SQL, four-shot
 cooperative hunt and 100/500 all-alarm measurements are consolidated in
-[world evidence](../verification/first-playable-world.md#sequential-escape-local-path-waits-and-hunting--october-22).
+[world evidence](../verification/first-playable-world/2026/2026-10-24-final-controls-and-continuation.md#sequential-escape-local-path-waits-and-hunting--october-22).
 Those population sizes have no throughput acceptance target. Ada's preserved
 personality, independent-character/invention, ordinary-world performance and
 actual human acceptance retain their distinct unfinished qualification.
@@ -63,7 +63,7 @@ Contract: [physical attack/contact](../projects/combat-and-threat-responses-tech
 
 The sixteen physical contact cases, exact departure-deadline/SQL continuation
 and two simultaneous retained contacts cover this physical qualification.
-[Current evidence](../verification/combat-and-threat-responses.md#simultaneous-retained-projectile-contacts--october-22)
+[Current evidence](../verification/combat-and-threat-responses/2026/2026-10-24-control-and-continuation-review.md#simultaneous-retained-projectile-contacts--october-22)
 distinguishes controlled trajectories from ordinary hunting and character choices.
 
 ## CTR02 — Observer-scoped encounter evidence
@@ -126,7 +126,7 @@ Contract: [native execution](../projects/combat-and-threat-responses-tech-design
 
 A current future-profile edit during a real pending refuge proposal preserves
 the active episode’s original speed, avoidance and settling pin through first and
-later native legs; complete cold continuation agrees. [Current evidence](../verification/first-playable-world.md#native-relationship-selection-and-safe-publication--october-22)
+later native legs; complete cold continuation agrees. [Current evidence](../benchmarks/first-playable/2026/2026-10-24-native-preparation-and-publication.md#native-relationship-selection-and-safe-publication--october-22)
 records that case separately from the remaining aggregate checks.
 
 Calm +100/+500 server measurements retain failed speed and latency evidence.
@@ -168,7 +168,7 @@ Multi-step character plans now preserve the same exact offered work identity and
 first-action handling as direct choices. Stale plans cannot cancel an intervening
 walk; missing physical invocations and changed handling refuse. The current plan
 and malformed alternatives pass focused native admission/current-format validation in the
-[requested review](../verification/first-playable-world.md#requested-complete-implementation-review--october-20).
+[requested review](../verification/first-playable-world/2026/2026-10-24-integrated-implementation-review.md#requested-complete-implementation-review--october-20).
 
 Current native preparation reports exact work identity, elapsed work lost, spent materials, paused-work disposition, persistent recovery and the subsequent command. Ordinary response-plan admission uses this preparation before stopping work; only that exact work’s held resources become prospectively available. A focused gather-to-cook replacement and refusal preservation pass. Busy NPC alternatives now include movement, contact/ranged attacks and defense, including explained recovery. Selected work handling survives ordinary selection and native admission; optional speech can preserve work. Native finite compositions now share read-only first-child preparation before replacement, and chosen purpose/role/source bindings reach admitted work and private action history. Complete required sets retain their options or refuse before inference; ordinary optional suggestions retain their existing policy. The authored catalogue/strategy and player action details are installed; full work-matrix qualification remains open.
 
@@ -305,7 +305,7 @@ These cases qualify the shared owners changed by CTR05/CTR07/CTR08. Use existing
 
 Qualify changed ordinary routing alongside the two-call threat route, including empty/no-intervention, deliberate continuation, uncertainty, native refusal, partial component acceptance and actual provider failure. Their existing meanings and spending rules remain distinct. Broader AG/AC/CR acceptance stays with those trackers; this matrix is the single owner of the selected cross-consumer regression requirement.
 
-The final Main threat-input repair preserves all 115 exact choices and 42 complete personal records while excluding unused freeform forms from the two fixed judgments. Both full requests fit unchanged limits and the quiet 830-test check passes. Live quality, combined cases and performance remain open; see the [combined evidence](../verification/first-playable-world.md#ordinary-resident-observation-and-complete-threat-input--october-20).
+The final Main threat-input repair preserves all 115 exact choices and 42 complete personal records while excluding unused freeform forms from the two fixed judgments. Both full requests fit unchanged limits and the quiet 830-test check passes. Live quality, combined cases and performance remain open; see the [combined evidence](../verification/first-playable-world/2026/2026-10-24-connected-world-qualification.md#ordinary-resident-observation-and-complete-threat-input--october-20).
 
 ## Maintained records
 

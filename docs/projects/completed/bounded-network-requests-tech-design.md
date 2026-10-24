@@ -645,4 +645,4 @@ The implementation must use the pinned repository dependencies. Primary sources 
 - Implementation: [NET01–NET11](../../maintainers/bounded-network-requests.md).
 - Limits and constraints: [network lifetime inventory](../../limits/bounded-network-requests.md).
 - Related behavior: [feature specification](bounded-network-requests-feature-spec.md).
-- Existing contracts: [AI receipts](../../ai-providers.md#receipts-outcomes-and-accounting), [browser effects/mutations](../../ui-ux/react.md#effects-asynchronous-work-and-mutations), [save continuation](../../save-and-load.md#continuation-and-identity), [asset storage](../game-asset-storage-tech-design.md), [bounded admission](../../performance.md#bounded-admission).
+- Existing contracts: [AI receipts](../../ai-providers.md#receipts-outcomes-and-accounting), [browser effects/mutations](../../ui-ux/react.md#effects-asynchronous-work-and-mutations), [save continuation](../../save-and-load.md#continuation-and-identity), [asset storage](../game-asset-storage-tech-design.md), [bounded admission](../../performance/scheduling.md#bounded-admission).

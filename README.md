@@ -207,7 +207,7 @@ The latest design additions cover [world locks and invention ownership](archive/
 - [Production data model](archive/07-technical-architecture/production-data-model.md), [world-agent queries](archive/07-technical-architecture/data-queries-and-mcp.md), and [migration/scale design](archive/07-technical-architecture/data-delivery-and-scale.md) — target design, with active phases in the [production-data tracker](docs/maintainers/production-data.md)
 - [Cognition redesign](docs/memory-architecture.md) and [build tasks CR01–CR12](docs/maintainers/cognition-redesign.md) — implemented compact context, attention, cleanup and background reflection, with remaining acceptance tracked explicitly
 - [Situation-aware context design](docs/projects/situation-aware-cognition-context-feature-spec.md), [technical contract](docs/projects/situation-aware-cognition-context-tech-design.md) and [SC01–SC12](docs/maintainers/cognition-context.md) — selected design for smaller situation-specific requests with complete necessary evidence, exact references and compatible speech/action; runtime implementation and qualification remain open
-- [Project decisions](archive/05-project/open-decisions.md) and [implementation status](archive/05-project/implementation-status.md)
+- [Project decisions](docs/maintainers/decisions/README.md) and [implementation status](docs/architecture.md)
 - [First playable MVP agreement](archive/05-project/first-playable-mvp.md)
 - [Art direction and reference board](art-direction/README.md)
 - [Game ideas to explore](docs/game-ideas/README.md)

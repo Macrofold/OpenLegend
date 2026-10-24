@@ -14,7 +14,7 @@ The source-order subgate is implemented: strict geometry/source/fixed/family dat
 feeds the shared initializer explicitly; real pole sources precede pole-hook
 admission, and removing those sources refuses. The generated material bundle is
 written after candidate validation. The scoped native source-to-tool route and
-current PostgreSQL depletion pass. Raw construction inputs also retain distinct origins through gathering, manufacture and splitting; that physical evidence supplies no grant by itself. The complete bundle and atomic authority publication are installed; final combined qualification remains open. [Evidence](../verification/first-playable-world.md#gathering-policy-and-prepared-finite-sources).
+current PostgreSQL depletion pass. Raw construction inputs also retain distinct origins through gathering, manufacture and splitting; that physical evidence supplies no grant by itself. The complete bundle and atomic authority publication are installed; final combined qualification remains open. [Evidence](../verification/first-playable-world/2026/2026-10-24-manufacture-and-material-authority.md#gathering-policy-and-prepared-finite-sources).
 
 Explicit restore also retains already-issued native identities, with a repository
 refusal for unsafe counter rewind. Real checkpoint/material/grant/restore and
@@ -68,7 +68,7 @@ and shows the exact completion in Events, Actions and search. Hearth, feeding,
 structural impact/failure, body decay and finite animal-alarm records share the
 world-owned display mapping, with no new observation grants. Scoped SQL omission/
 privacy, current types/build and actual browser evidence pass; broader controls
-and performance remain open. See [connected outcome evidence](../verification/first-playable-world.md#physical-outcome-display-and-competing-meals--october-20).
+and performance remain open. See [connected outcome evidence](../verification/first-playable-world/2026/2026-10-24-control-and-recovery-review.md#physical-outcome-display-and-competing-meals--october-20).
 
 ## FPW04 — Whole-world continuation, privacy and costs
 
@@ -89,7 +89,7 @@ open controls arrive/hit, closure stops travel/prevents contact, and cold
 continuation agrees. The full configured check at `d4b62732e` passes all 833 tests
 and every static/build stage. Complete source review and the final construction
 corrections are delivered; subsequent source/order/collision fixes and current qualification remain recorded in
-[the final review](../verification/first-playable-world.md#final-construction-review-and-completion-audit--october-21).
+[the final review](../verification/first-playable-world/2026/2026-10-24-construction-and-movement-review.md#final-construction-review-and-completion-audit--october-21).
 Actual server/native speed still fails the unchanged requirement. Independent
 resident behavior is blocked by the retained uncertain provider execution;
 participants are unavailable. These remain acceptance gaps, with no further

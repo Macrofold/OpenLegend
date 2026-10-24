@@ -1,5 +1,7 @@
 # Maintainer TODO — cross-cutting work
 
+Use a [focused tracker](README.md) for work with an existing owner. [Decision owners](decisions/README.md) and [research questions](../research/README.md) are separate from this miscellaneous backlog; completed task bodies are filed in coherent year/topic batches. This page does not duplicate their task inventories.
+
 ## Shared NPC speech streaming
 
 The selected immediate-text design is complete. [NST01–NST10](npc-speech-streaming.md) owns its implementation and qualification tasks, with the [paired specification/design](../projects/npc-speech-streaming-feature-spec.md) and [limits](../limits/npc-speech-streaming.md). NC19/ND16's public NPC streaming slice leaves the needs-design queue; remaining private callers, broader acoustics/media and runtime acceptance retain their focused owners. Do not create a second streaming checklist here.

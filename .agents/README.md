@@ -12,7 +12,10 @@ Follow [root task authorization](../AGENTS.md#task-scope-and-authorization) for 
 
 Use these canonical owners rather than restating their workflows:
 
-- [Root](../AGENTS.md): planning, general task policy, startup trigger, completion and handoff.
+- [Root](../AGENTS.md): task mode, authority, hard boundaries, completion and handoff.
+- [Implementation](rules/implementation.md): adaptive planning, execution and continuity for authorized product/code/tooling changes.
+- [Engineering context](rules/engineering-context.md): conditional contract routes for affected behavior.
+- [Performance](skills/openlegend-performance/SKILL.md): short cost/design core, then only matching technical chapters.
 - [Prioritization](skills/openlegend-prioritize/SKILL.md): choosing future work by the experience it enables or protects; loaded for selection/reprioritization, not ordinary execution.
 - [Rebase](skills/openlegend-rebase/SKILL.md): base selection, refresh/reconciliation, worktree/history protections and conflict stops.
 - [Merge branch](skills/merge-branch/SKILL.md): explicitly requested newest-source squash integration, source provenance, conflict reporting and destination publication.
@@ -39,7 +42,7 @@ Use ordinary, non-symlink guidance files and versioned link targets; newly creat
 
 Size reports cover the root, longest AGENTS ancestry and total skill discovery text (names, descriptions and paths). They exclude harness overhead and loaded topic bodies, and are bytes, not tokens. Assess representative task context as well; a smaller root can still trigger excessive reading. Keep native skills directly under `.agents/skills/<name>/SKILL.md`, with shallow links to details rather than a deep skill-folder hierarchy.
 
-Expected routing: code work first applies the [root performance read requirement](../AGENTS.md#performance-guidance-before-code-work). A Jev rubric change also loads server, TypeScript, AI and verification; a camera change also loads client, TypeScript, PlayCanvas and verification; permission/resource transfers and persisted-model changes also load their root-routed authorization/validation contracts; a polled client panel also loads React; a typo-only document correction loads documentation. A cross-boundary change loads the applicable union. Reading guidance for maintenance does not activate every procedure it describes.
+Expected routing: code work uses the implementation rule, engineering map and short [root performance read requirement](../AGENTS.md#performance-guidance-before-code-work). A Jev rubric change also loads server, TypeScript, AI and verification; a camera change also loads client, TypeScript, PlayCanvas and verification; permission/resource transfers and persisted-model changes also load their engineering-map authorization/validation contracts; a polled client panel also loads React; a typo-only document correction loads documentation. A cross-boundary change loads the applicable union. Reading guidance for maintenance does not activate every procedure it describes.
 
 A physical attachment or reach feature loads the spatial behavior/design checks even if implemented in domain/server files. A new repeated material process, collection query, cache or polling loop loads performance during planning, without requiring an already measured slowdown. Prose-only references still do not activate those workflows. The root routes and applicable package reminders own these required reads; [CG05](../docs/maintainers/agent-guidance.md#cg05--read-only-routing-cases) retains observed dispatch qualification.
 

@@ -28,6 +28,8 @@ A request to create either deliverable produces both, as distinct cross-linked f
 
 Follow [Feature documentation](../../../docs/feature-documentation.md) for required content and the Maintained records section linking the focused implementation tracker and feature limits/constraints inventory. Keep behavior distinct from mechanism and proposals from implemented behavior; record numerical and behavioral restrictions with reasons, restrictiveness and removed/no-limit decisions under the linked tracking rules.
 
+For each costly qualification, distinguish a required pass from a required measurement or exploration. State the workload and what a failed result means; do not silently create a capacity promise. At completion use [contract promotion and project filing](../../../docs/documentation-system.md#current-contracts-and-completed-projects).
+
 ## Architecture and extension boundaries
 
 Read the canonical specification and focused tracker; apply the [boundary decision procedure](../../../docs/engine-and-world-boundaries.md#5-a-repeatable-boundary-decision) and P01–P12 without duplicating their catalogue.
@@ -46,6 +48,6 @@ When replacing a fixed world behavior with installed definitions, trace availabi
 
 Use [root task authorization](../../../AGENTS.md#task-scope-and-authorization). Interpret chat approval of the discussed project plan from context: “approved,” “looks good,” “yes,” “go ahead,” “start work,” “implement” or “do it” can suffice; no repeated spec filenames are needed. “Continue” is not approval: it resumes the conversation's current design work, not implementation. GitHub PR approval or a document-status change is not that chat instruction.
 
-For a spec/design-only request, deliver the pair, feasible stages and open choices. After chat approval to implement, apply [root startup](../../../AGENTS.md#work-discipline), then [Documentation](../../rules/documentation.md#project-approval-and-current-truth) for pre-implementation tracker/contract reconciliation, and **commence implementation in the same working session**. Planning/tracker updates do not complete an implementation request.
+For a spec/design-only request, deliver the pair, feasible stages and open choices. Only after executable work is authorized, follow the [implementation workflow](../../rules/implementation.md) and [initial startup](../../../AGENTS.md#work-discipline). Reconcile actual missing/conflicting requirements and tracker coverage under [Documentation](../../rules/documentation.md#project-approval-and-current-truth), then commence implementation in the same session. Accurate plans need not be copied into several owners before coding; planning alone does not complete implementation.
 
 Use [root completion/handoff](../../../AGENTS.md#completion-and-handoff--every-task) and [Verification](../../rules/verification.md) through the full agreed scope, including user/agent surfaces; the linked documentation policy owns work IDs, dependencies and acceptance status.

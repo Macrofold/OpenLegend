@@ -1,5 +1,7 @@
 # Maintainer work index
 
+[Documentation map](../README.md) · [Unfinished projects](../projects/README.md) · [Decision owners](decisions/README.md) · [Research](../research/README.md) · [Completed tracker records](completed/2026/)
+
 Use this page to find the owner of work. Focused trackers own task status; specifications own behavior, limits inventories own restrictions, and topic verification reports own actual evidence. A linked proposal or completed design does not establish implemented or qualified behavior.
 
 ## First playable: survival, a defensible home and independent encounters
@@ -22,7 +24,7 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## Combat and immediate threat responses
 
-[Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). Selected ND11/ND13 design is complete; runtime and independent acceptance remain open in CTR.
+[Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). CTR owns current delivery and unsatisfied independent acceptance; this index does not repeat its status.
 
 ## Speech and social perception
 
@@ -131,7 +133,7 @@ Reuse the [shelter technical design](../projects/editable-shelters-tech-design.m
 
 [Game asset storage and study delivery (AS01–AS08)](game-asset-storage.md) owns external assets, exact publication, selective local caching and recovery. AS01–AS06 are complete; AS07 retains installation qualification and AS08 retains separately authorized history reclamation. [Specifications and design](../projects/game-asset-storage-feature-spec.md), [limits](../limits/game-asset-storage.md) and [verification](../verification/game-asset-storage.md) distinguish delivered behavior from remaining acceptance.
 
-Useful entry points: [gameplay availability](../../archive/05-project/implementation-status.md#gameplay-availability), [remaining foundations](remaining-foundational-work.md), [foundations 1–5](../projects/completed/foundations-1-5.md), [multiplayer](multiplayer.md) and [production deployment](production-deployment.md).
+Useful entry points: [gameplay availability](../features/README.md), [remaining foundations](remaining-foundational-work.md), [foundations 1–5](../projects/completed/foundations-1-5.md), [multiplayer](multiplayer.md) and [production deployment](production-deployment.md).
 
 ## Elapsed simulation
 
@@ -191,8 +193,8 @@ Actual evidence: [continuation](../verification/workshop-continuation.md), [tran
 | World Agent                 | [Runtime](../world-agent-runtime.md), [MCP](../world-agent-mcp.md), [workshop tools](../invention-workshop-tools.md)                                                                                                                                                                                                            |
 | Invention composition       | [Graph](../invention-graph.md), [composition](../invention-composition.md), [target scenarios](../invention-scenarios.md)                                                                                                                                                                                                       |
 | Encounters/tooling          | [Encounter scaling](../encounter-scaling.md), [MCP research](../../archive/02-research/mcp-tooling-and-integration.md)                                                                                                                                                                                                          |
-| Product decisions           | [Baseline](../../archive/01-requirements/product-baseline.md), [roadmap](../../archive/05-project/roadmap.md), [open decisions](../../archive/05-project/open-decisions.md), [research backlog](../../archive/05-project/research-backlog.md)                                                                                   |
-| Evidence and implementation | [Verification and shared playtest protocol](../verification.md), [implementation status](../../archive/05-project/implementation-status.md)                                                                                                                                                                                     |
+| Product decisions           | [Baseline](../../archive/01-requirements/product-baseline.md), [roadmap](../../archive/05-project/roadmap.md), [open decisions](decisions/README.md), [research backlog](../research/gameplay-and-systems/README.md)                                                                                                            |
+| Evidence and implementation | [Verification and shared playtest protocol](../verification.md), [implementation status](../architecture.md)                                                                                                                                                                                                                    |
 | Integration and art         | [Macrofold handoff](../macrofold-world-agent-handoff.md), [hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)                                                                                                                                                                               |
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).

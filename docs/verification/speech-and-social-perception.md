@@ -80,7 +80,7 @@ All foundation checks use AI budget zero and make no paid call. Additional Jev
 cost is **$0**. Cumulative provider estimates remain **$0.447590 Jev** and
 **$0.207513 other providers**, with **$5.918352 uncertain commitments** and
 **$6.573455 conservative task exposure**. The separate earlier combat browser
-attempt's uncertain HTTP 503 is retained in [combat evidence](combat-and-threat-responses.md#production-browser-live-reaction-attempt-and-provider-failure).
+attempt's uncertain HTTP 503 is retained in [combat evidence](combat-and-threat-responses/2026/2026-10-24-live-reaction-and-prey-comparison.md#production-browser-live-reaction-attempt-and-provider-failure).
 
 ## Exact summary checkpoint
 

@@ -103,7 +103,7 @@ Full acceptance follows the [world's complete target](../worlds/base/playable-op
 **Prepared; participants unavailable.** The implementation branch is
 `codex/implement-complete-first-playable` in
 `/Users/mzw/.codex/worktrees/214c/OpenLegend`. Pin its final qualified commit and
-production build before a session. The [current delivery/evidence record](../verification/first-playable-world.md#complete-main-and-personal-agreement-integration)
+production build before a session. The [current delivery/evidence record](../verification/first-playable-world/2026/2026-10-24-residents-and-cooperation.md#complete-main-and-personal-agreement-integration)
 keeps remaining software, performance, independent-behavior and Ada acceptance
 gaps explicit. This packet schedules nothing, recruits nobody and grants no
 additional provider allowance.
@@ -138,7 +138,7 @@ attempt retaining one position and its financial obligation under [DE-L02](../li
 That historical blockage no longer establishes current saturation. Complete-path
 speed, independent conduct and actual human experience still need qualification;
 the allowance change alone does not establish participant readiness. The
-[current review](../verification/first-playable-world.md#current-barrier-navigation-and-resident-review--october-21)
+[current review](../verification/first-playable-world/2026/2026-10-24-construction-and-movement-review.md#current-barrier-navigation-and-resident-review--october-21)
 retains the earlier settings, costs, continuation and failures.
 
 Give this short brief, then let the participant choose:

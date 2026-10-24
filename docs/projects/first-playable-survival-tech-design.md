@@ -218,7 +218,7 @@ Use current timeline/restore/control/life and actual dependency revisions after 
 
 ## Performance and admission
 
-Follow [recurring-work design](../performance.md#design-recurring-work-before-implementation). New manufacture adds no recurring global scan. Source quantities change only on actual extraction; hearth work has a known completion boundary; finite repeats hold only their current native step. Definition compilation occurs at install/check/restore, with shared immutable compiled results used by all method rows.
+Follow [recurring-work design](../performance/preparation.md#design-recurring-work-before-implementation). New manufacture adds no recurring global scan. Source quantities change only on actual extraction; hearth work has a known completion boundary; finite repeats hold only their current native step. Definition compilation occurs at install/check/restore, with shared immutable compiled results used by all method rows.
 
 The growing dimensions are known methods × relevant stock lots × candidate tool roles, plus nearby geometry for placement. Compute actor-level available stock and permitted retained-tool candidates once per exact read scope, index by exact definition, then resolve method rows without rescanning/hydrating every carried item for each recipe. Existing bounded selectors must report incomplete rather than missing if they cannot finish; no arbitrary first-item list may hide a valid later cutting tool. Use exact selected tool/lot lookup at execution and ordinary read-only evaluation for offers.
 

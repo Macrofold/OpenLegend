@@ -1,4 +1,6 @@
-# Performance evidence
+# Existing performance evidence collection
+
+This established collection contains mixed historical campaigns and current summaries. [Benchmark navigation](../../benchmarks/README.md) locates runtime and model comparisons; new growing campaigns use topic/year/question records. Existing records stay at their paths until their owners next maintain them. Read only the applicable workload/revision, not every record below.
 
 [Optional profiling implementation and evidence](profiling-controls.md) records disabled work, process/worker/browser cleanup, tool modes and measured-overhead qualification separately from the smooth3× goal.
 

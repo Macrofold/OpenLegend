@@ -2,11 +2,13 @@
 
 Use one maintained behavior owner per feature. The [design workflow](../.agents/skills/openlegend-design/SKILL.md) decides when to create paired feature-spec and technical-design files; this structure does not require retroactively splitting every established specification. Project history must link current contracts rather than duplicate them.
 
-Project documents follow [Project status and completion](../.agents/rules/documentation.md#project-status-and-completion): include the status table after the title, refresh it when project work finishes, and move fully completed project documents into `docs/projects/completed/` with repaired references. This rule applies to project documents, not persistent cross-project feature specifications.
+Project feature specifications and technical designs follow [Project status and completion](../.agents/rules/documentation.md#project-status-and-completion). Update dates for meaningful changes, not unchanged rereads. At completion, use [contract promotion and filing](documentation-system.md#current-contracts-and-completed-projects): current contracts remain discoverable, while genuinely completed project material is filed with repaired references. Supporting evidence and navigation need no duplicate live status table.
 
 ## Required content
 
 A feature specification describes purpose, supported behavior, target scenarios and user/agent journeys, scope/non-goals, meaningful failure cases, acceptance criteria and staged capabilities. Distinguish implemented behavior from accepted targets and proposals.
+
+For costly qualification, specify the workload and distinguish a required pass, required measurement, exploration and human/external acceptance. State what a failed result means; do not silently create a capacity promise.
 
 Its technical design describes semantic owners and callers, contracts/data flow, persistence/migration, security/privacy and authority, performance, extension seams, stages, verification and tradeoffs/open decisions. Relevant world-specific choices remain under the world’s own contract.
 
@@ -15,6 +17,8 @@ Each new or substantially changed feature spec, technical design or persistent f
 - **Implementation:** the focused `docs/maintainers/` task/progress tracker (stable work IDs, dependencies, completion criteria and unsatisfied acceptance).
 - **Limits and constraints:** its owning `docs/limits/<feature>.md`, under the [limits tracking system](limits/README.md). Record numerical and behavioral choices, rationale, restrictiveness, evidence/current status, and removed/no-limit decisions. Include absent bounds on growing queries, pre-selection loops, hydration, queues and retained collections, even when final output is limited; record reachable growth and consequences under the tracking rules. Reuse an existing inventory for shared mechanisms; do not create competing per-project copies.
 - **Related contract/design:** the counterpart design or persistent semantic owner when needed to distinguish project scope from current behavior.
+
+Guidance-only workflow changes keep operational decisions in their guidance owner and history; they need no gameplay limits inventory. Filing changes and ordinary implementation plans do not require extra feature/design pairs.
 
 If a newly assessed feature has no discretionary limits, say so explicitly in its limits inventory, with the reason and applicable shared limits links. Do not invent a cap just to fill a template. Existing documents can adopt this structure when touched; this migration links every feature represented by the supplied inventories.
 

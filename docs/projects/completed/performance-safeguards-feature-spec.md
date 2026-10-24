@@ -67,5 +67,5 @@ The existing performance project's full-game run accounting remains controlling.
 - Implementation and acceptance status: [PSF01–PSF06](../../maintainers/performance-safeguards.md), linked beneath [PF17](../../maintainers/performance.md#pf17--performance-overhaul-ideas).
 - Technical design: [ownership, sequence and measurement](performance-safeguards-tech-design.md).
 - Limits unchanged by this proposal: [delayed saving](../../limits/persistence.md#pf17-j01--experimental-deferred-saving), [memory preparation](../../limits/memory.md#mh15--delayed-lexical-preparation), and [native work](../../limits/native-work.md).
-- Current contracts: [saving/loading](../../save-and-load.md), [private memory retrieval](../../memory-architecture.md#private-retrieval-fencing), and [storage execution](../../performance.md#storage-execution).
+- Current contracts: [saving/loading](../../save-and-load.md), [private memory retrieval](../../memory-architecture.md#private-retrieval-fencing), and [storage execution](../../performance/storage.md#storage-execution).
 - Parent project: [performance overhaul](../performance-overhaul-feature-spec.md) and its [evaluation procedure](../performance-overhaul/evaluation.md). Historical results remain evidence with their original limits.

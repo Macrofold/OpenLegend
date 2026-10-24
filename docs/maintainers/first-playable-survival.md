@@ -19,15 +19,15 @@ The selected finite sources, one-unit bare-hand collection, tools, material
 permissions, fire and complete known catalogue are installed in ordinary Main.
 The connected empty-handed food → tools → enclosure/roof → hearth/basket → meal
 journey passes checkpoint restoration without supplied stock. The isolated source
-and missing-source checks remain documented in [source evidence](../verification/first-playable-world.md#gathering-policy-and-prepared-finite-sources);
-[complete Main evidence](../verification/first-playable-world.md#complete-main-and-personal-agreement-integration)
+and missing-source checks remain documented in [source evidence](../verification/first-playable-world/2026/2026-10-24-manufacture-and-material-authority.md#gathering-policy-and-prepared-finite-sources);
+[complete Main evidence](../verification/first-playable-world/2026/2026-10-24-residents-and-cooperation.md#complete-main-and-personal-agreement-integration)
 qualifies the connected route. Remaining qualification is listed below.
 
 **Exit:** a named fresh Main build is actually empty-handed and contains the expected union; two lawful first-food routes and an actual bare-hand tool/fire chain are established without NPC help, providers or privileged commands. This does not prove player enjoyment or night danger.
 
 ## SV02 — Normalize manufacture at its existing authority owner
 
-Installed family methods and trusted finite transformations share ordered exact outputs, retained-tool bindings and the existing native craft action. A contrasting clockwork method keeps its cutter, spends one mineral chunk and produces two pieces in 75 seconds; multiple outputs, held-tool removal refusal, cancellation and active/completed PostgreSQL continuation pass focused checks. Offers and execution reject overlapping last units and excessive physical-result records before spending. The natural material catalogue and actual structural/basket consumers are installed. Connected empty-handed camp/fire/basket/meal and browser food/crafting checks pass; remaining loss, combined custody/lifecycle and larger-workload qualification stay open. [Evidence](../verification/first-playable-world.md#shared-manufacture).
+Installed family methods and trusted finite transformations share ordered exact outputs, retained-tool bindings and the existing native craft action. A contrasting clockwork method keeps its cutter, spends one mineral chunk and produces two pieces in 75 seconds; multiple outputs, held-tool removal refusal, cancellation and active/completed PostgreSQL continuation pass focused checks. Offers and execution reject overlapping last units and excessive physical-result records before spending. The natural material catalogue and actual structural/basket consumers are installed. Connected empty-handed camp/fire/basket/meal and browser food/crafting checks pass; remaining loss, combined custody/lifecycle and larger-workload qualification stay open. [Evidence](../verification/first-playable-world/2026/2026-10-24-manufacture-and-material-authority.md#shared-manufacture).
 
 **Dependencies:** integrated definition compilation; SV01 authored schemas. **Owners:** `invention-families.ts`, `declarations.ts`, types/current validators, `kernel.ts`, resource claims, exact recipe knowledge and current consumers.
 
@@ -36,7 +36,7 @@ Installed family methods and trusted finite transformations share ordered exact 
 - [x] Route former fiber/cord preparation through the same installed-known-recipe/manufacture owner. Update all commands, action declarations, schemas, offering/binding, native activities, records and saved validation together; remove old hardcoded preparation/compatibility paths.
 - [x] Preserve existing invention provenance, exact compiler dependencies, one generated output, actor knowledge, cost points and material interfaces. No recipe installation/learning creates goods.
 - [x] Enforce all-or-nothing input debit/output publication at their selected boundaries; reserve kept tools and release every terminal claim. Preflight bounded representation and exact assignment before spending.
-- [x] Qualify an unlike mineral/cutter transform through ordinary consumers, plus changed dependency, overlapping held/spent units, malformed saved meaning and first-output-success/second-output-failure atomicity. [Current manufacture checks](../verification/first-playable-world.md#survival-growth-and-restored-construction--october-22) include a valid first port rejected with an oversized second port before any debit or goods.
+- [x] Qualify an unlike mineral/cutter transform through ordinary consumers, plus changed dependency, overlapping held/spent units, malformed saved meaning and first-output-success/second-output-failure atomicity. [Current manufacture checks](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#survival-growth-and-restored-construction--october-22) include a valid first port rejected with an oversized second port before any debit or goods.
 
 **Exit:** one semantic manufacture owner supports existing recipes and selected multi-output/tool transformations, with no lost output, duplicate debit, invented private knowledge or old-format fallback. Existing one-output recipe consumers remain correct under the new current format.
 
@@ -45,7 +45,7 @@ Installed family methods and trusted finite transformations share ordered exact 
 Known tools, individual structural parts, gate/runner materials and the open
 basket are installed through the existing manufacture and construction owners.
 The complete empty-handed camp journey uses their real outputs and source-derived
-permissions; the smaller layout reuses those materials. [Connected evidence](../verification/first-playable-world.md#complete-main-and-personal-agreement-integration)
+permissions; the smaller layout reuses those materials. [Connected evidence](../verification/first-playable-world/2026/2026-10-24-residents-and-cooperation.md#complete-main-and-personal-agreement-integration)
 retains the natural run and distinguishes earlier supplied-stock specimens.
 
 **Dependencies:** SV02; SH's selected output definitions/condition/placement contracts. **Owners:** `recipes.yaml`, existing world recipe-family adapters, normalized item output owner and actual construction definitions.
@@ -61,8 +61,8 @@ retains the natural run and distinguishes earlier supplied-stock specimens.
 - [x] Compile the known camp basket's exact `parameters.contentsExposureProfile` pin through the existing woven-container family, with SH's open-single-level profile installed first. Preserve capacity24/empty load2/work216; the pouch omits the field.
 - [ ] Complete the combined known/genuinely invented profile-selection, unsupported-profile refusal, generated identity/digest, save-validation and wet-fiber-storage qualification under SH without post-compile mutation.
 - [x] Record all actual outputs, including only the allowed post offcuts, through named ports and existing occurrence/lineage owners. Later fire/fabrication steps bind the selected output, not an arbitrary returned item.
-- [x] Qualify losing all tools, one-unit reserved tools, accessible nested cutter, inaccessible/private cutter, last input race, interruption, definition change and actual secondary-output use. Existing loss/tool evidence and the [current manufacture checks](../verification/first-playable-world.md#survival-growth-and-restored-construction--october-22) cover these mechanisms; independent usefulness remains SV07/SV10.
-      The complete ordinary Main four-metre material, enclosure, canopy, hearth, basket and chosen meal journey passes ordinary checkpoint restoration with no supplied tools/materials. A smaller enclosure reuses those materials and passes native construction and both-sided gate use. Combined loss/weather cases and browser completion remain open; see the [combined evidence](../verification/first-playable-world.md#complete-main-and-personal-agreement-integration).
+- [x] Qualify losing all tools, one-unit reserved tools, accessible nested cutter, inaccessible/private cutter, last input race, interruption, definition change and actual secondary-output use. Existing loss/tool evidence and the [current manufacture checks](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#survival-growth-and-restored-construction--october-22) cover these mechanisms; independent usefulness remains SV07/SV10.
+      The complete ordinary Main four-metre material, enclosure, canopy, hearth, basket and chosen meal journey passes ordinary checkpoint restoration with no supplied tools/materials. A smaller enclosure reuses those materials and passes native construction and both-sided gate use. Combined loss/weather cases and browser completion remain open; see the [combined evidence](../verification/first-playable-world/2026/2026-10-24-residents-and-cooperation.md#complete-main-and-personal-agreement-integration).
 
 - [x] Produce the complete natural 4 m × 4 m enclosure plus roof material set from actual source stock; check five short/three tall gate posts, six ordinary/one access panel, 30 poles/94 fibers/26 derived cords and five usable wood offcuts before utility kit. The smaller enclosure has three short/three gate posts, four ordinary/one access panel and three offcuts; SH verifies actual standing passage and both-sided handle reach.
 
@@ -80,7 +80,7 @@ checks pass. Ordinary Build placement, selected-ground actions and character/pla
 are connected. Focused server/PostgreSQL and actual browser controls, permission
 refresh, pause/resume and unknown-receipt recovery pass. Deferred walking preview
 uses the existing navigation worker and rejects changed geometry. Remaining combined qualification remains open.
-[Evidence](../verification/first-playable-world.md#hearth-definition-and-geometry-foundation).
+[Evidence](../verification/first-playable-world/2026/2026-10-24-hearth-and-finite-work.md#hearth-definition-and-geometry-foundation).
 
 If a selected hearth definition disappears during refresh, its draft stays
 unavailable until the player chooses again. It cannot silently select another
@@ -105,7 +105,7 @@ methods, with exact costs and a reachable native missing-input refusal. Ordinary
 browser filtering, empty-search recovery, nested native refusal, narrow keyboard
 use and an eighty-character unbroken method name with doubled body/caption text
 pass without horizontal overflow. Final lifecycle/scale and independent behavior
-qualification remain open. [Evidence](../verification/first-playable-world.md#grouped-known-method-catalogue).
+qualification remain open. [Evidence](../verification/first-playable-world/2026/2026-10-24-hearth-and-finite-work.md#grouped-known-method-catalogue).
 
 Sequence previews and shared recipe details sum all roles consuming the same
 material. The actual native preview reports eight required fibers for two batches
@@ -147,7 +147,7 @@ quality. Gathering now offers explicit hands or one exact carried tool.
 - [x] Offer a deliberate meal quantity from one selected edible definition and permitted own-stock scope, using that same 1–16 bound. Suggest the amount for the current deficit, preview clamped Food/waste, explain full/busy/ineligible states and obtain the ordinary current-work replacement choice before Start. Each unit uses native Eat; stop at full or a normal blocker without food substitution, future hunger watching or a new learned routine.
 - [x] Dispatch one current native action at a time; rebind available inputs/tools and checks for every subsequent batch. Future steps claim/spend nothing early.
 - [x] Stop on a failed/refused/interrupted native step; preserve completed goods, consumed inputs and remaining count. Do not choose another source/tool, reroll a result or repeat beyond the requested count.
-- [x] Qualify Stop during cost-bearing manufacture, a source depleted midway, tool loss between batches, pause/save/reopen, restore fencing, death and caller disconnection. Use actual output ports, not a one-output shortcut. For meals include five berries from Food 10, clipped final nutrition, already full, independent fill between units, partial stock exhaustion, busy work, changed food/diet, exact receipt recovery and no automatic restart. [Current finite-work checks](../verification/first-playable-world.md#finite-work-and-cooperation-restoration--october-22) complete the source competition, multi-output, death and disconnection cases; reuse the prior meal/tool/receipt evidence.
+- [x] Qualify Stop during cost-bearing manufacture, a source depleted midway, tool loss between batches, pause/save/reopen, restore fencing, death and caller disconnection. Use actual output ports, not a one-output shortcut. For meals include five berries from Food 10, clipped final nutrition, already full, independent fill between units, partial stock exhaustion, busy work, changed food/diet, exact receipt recovery and no automatic restart. [Current finite-work checks](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#finite-work-and-cooperation-restoration--october-22) complete the source competition, multi-output, death and disconnection cases; reuse the prior meal/tool/receipt evidence.
 
 **Exit:** batching reduces input repetition while preserving finite chosen intent, accounting and intervention. No automatic survival routine, another actor's acceptance or fabricated learned method is installed.
 
@@ -165,7 +165,7 @@ The retained earned camp now completes loose bone → known River line → a mis
 cast → an actual fish → the earned hearth → cooked meal, without supplied stock
 or combat. Cold current-format validation passes. This controlled native route
 retains the miss and does not establish uncoached discovery or preference.
-[Evidence](../verification/first-playable-world.md#peaceful-food-continuation--october-21).
+[Evidence](../verification/first-playable-world/2026/2026-10-24-construction-and-movement-review.md#peaceful-food-continuation--october-21).
 
 **Exit:** ordinary and invented routes both have useful actual outcomes, truthful separate provenance and a reason to use their results again. Required independent character consequences remain with the people/FPV owners.
 
@@ -174,10 +174,10 @@ retains the miss and does not establish uncoached discovery or preference.
 **Dependencies:** SV01/SV04; current death/corpse/scar owner; integrated explicit fresh-world creation/control UI.
 
 - [x] Include real unowned cold public rest hearths without a free kit; give only source-bearing authored wayfinding, not fake visits or remote vision.
-- [x] Qualify death before any player hearth, Continue at a real public hearth, half-type retained/lost custody, actual own-corpse pickup/replay, and replacement tools from gathered stock. The current PostgreSQL save/restore preserves life 1, exact quantities/origins and the empty old corpse; the passing E18/E23 provider fixtures reject a delayed action after physical-life change. [Recovery evidence](../verification/first-playable-world.md#bare-hand-recovery-and-food-source-review--october-22).
-- [x] Obtain scar treatment fiber through the bare-hand route and treat through the existing owner. The actual empty-handed Main recovery gathers and cleans new fiber after loss, walks to a public hearth, spends the real material and removes the scar; no supplied tool or fiber. [Recovery evidence](../verification/first-playable-world.md#bare-hand-recovery-and-food-source-review--october-22).
-- [x] Deplete the ordinary nearby berry bush through chosen bare-hand batches, refuse a further gather without spending, then gather from an actually visible remaining thicket. This is local depletion, not full-world exhaustion. [Evidence](../verification/first-playable-world.md#recovery-endings-and-independent-committed-effects--october-22).
-- [x] When every recovery point is unusable, preserve pending death and possessions and refuse automatic replacement. Controlled low headroom at all actual public return points passes native refusal with unchanged randomness; no prepared destination creates no session or reset. Current native review and actual loopback intake then qualify a separately prepared empty target, retained nondefault seed, new world/actor identities, single activation and receipt replay while preserving the lost source. No belongings, memory, relationships, accounting or authority are transferred. [Evidence](../verification/first-playable-world.md#recovery-endings-and-independent-committed-effects--october-22).
+- [x] Qualify death before any player hearth, Continue at a real public hearth, half-type retained/lost custody, actual own-corpse pickup/replay, and replacement tools from gathered stock. The current PostgreSQL save/restore preserves life 1, exact quantities/origins and the empty old corpse; the passing E18/E23 provider fixtures reject a delayed action after physical-life change. [Recovery evidence](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#bare-hand-recovery-and-food-source-review--october-22).
+- [x] Obtain scar treatment fiber through the bare-hand route and treat through the existing owner. The actual empty-handed Main recovery gathers and cleans new fiber after loss, walks to a public hearth, spends the real material and removes the scar; no supplied tool or fiber. [Recovery evidence](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#bare-hand-recovery-and-food-source-review--october-22).
+- [x] Deplete the ordinary nearby berry bush through chosen bare-hand batches, refuse a further gather without spending, then gather from an actually visible remaining thicket. This is local depletion, not full-world exhaustion. [Evidence](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#recovery-endings-and-independent-committed-effects--october-22).
+- [x] When every recovery point is unusable, preserve pending death and possessions and refuse automatic replacement. Controlled low headroom at all actual public return points passes native refusal with unchanged randomness; no prepared destination creates no session or reset. Current native review and actual loopback intake then qualify a separately prepared empty target, retained nondefault seed, new world/actor identities, single activation and receipt replay while preserving the lost source. No belongings, memory, relationships, accounting or authority are transferred. [Evidence](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#recovery-endings-and-independent-committed-effects--october-22).
 
 **Exit:** loss before camp and ordinary foreseeable resource loss have truthful viable continuation; unavailable recovery is understandable and offers a deliberate way to begin again without corrupting the original run.
 
@@ -185,10 +185,10 @@ retains the miss and does not establish uncoached discovery or preference.
 
 **Dependencies:** SV02–SV08. **Owners:** canonical records, saved native work/definition validation, indexed selectors, current command/publication/read callers.
 
-- [x] Verify native and PostgreSQL save/restore for spent inputs, retained tools, multi-output lineage, hearth holds, completed hearth, finite-repeat progress, actual knowledge/source and resource depletion. Reuse the actual camp/recovery checkpoints and [current craft/hearth continuation](../verification/first-playable-world.md#survival-growth-and-restored-construction--october-22).
+- [x] Verify native and PostgreSQL save/restore for spent inputs, retained tools, multi-output lineage, hearth holds, completed hearth, finite-repeat progress, actual knowledge/source and resource depletion. Reuse the actual camp/recovery checkpoints and [current craft/hearth continuation](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#survival-growth-and-restored-construction--october-22).
 - [x] Reject independent malformed current records and changed definition dependencies before activation; no migration, old preparation alias, missing-default grant or creator-data reset is introduced. Five separately corrupted SQL recipe/definition records refuse before activation, and the preceding database marker refuses unchanged.
 - [x] Share immutable recipe validation/arithmetic and one actor-scoped stock/tool preparation; use conservative local geometry. Prove no recurring global scan/history hydration is added.
-- [x] Measure actual catalogue/menu/command/placement callers with 1,000 irrelevant lots, 100 known methods, 1,000 distant inert objects and sixteen selected repeats; include cold/warm/cancel/restore and counts of work examined. [Current service/SQL evidence](../verification/first-playable-world.md#survival-growth-and-restored-construction--october-22) includes actual partial craft/hearth restore, complete batches, Stop and stale-control refusal; renderer and retained-memory acceptance remain separate.
+- [x] Measure actual catalogue/menu/command/placement callers with 1,000 irrelevant lots, 100 known methods, 1,000 distant inert objects and sixteen selected repeats; include cold/warm/cancel/restore and counts of work examined. [Current service/SQL evidence](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#survival-growth-and-restored-construction--october-22) includes actual partial craft/hearth restore, complete batches, Stop and stale-control refusal; renderer and retained-memory acceptance remain separate.
 - [x] Run applicable focused existing/static checks and required CI. Keep actual UI and paid-provider evidence separate from fixtures; retain broader known qualification gaps accurately.
 
 **Exit:** the current model is coherent and the added work has measured behavior through real consumers, with no unsupported scale claim or hidden policy relaxation.

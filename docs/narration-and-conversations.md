@@ -178,7 +178,7 @@ Accepted world effects/events/awareness and a narration delivery trigger commit 
 
 ## 8. The Narrator and context assembly
 
-Runtime wakeups, causal-batch deadlines and durable-job recovery follow the [performance scheduling contract](performance.md#narrator). This specification retains ownership of which evidence merits narration and what may be disclosed.
+Runtime wakeups, causal-batch deadlines and durable-job recovery follow the [performance scheduling contract](performance/scheduling.md#narrator). This specification retains ownership of which evidence merits narration and what may be disclosed.
 
 The Narrator is a presentation role executed as one bounded LLM call, not an autonomous world controller or a persistent omniscient conversation. No action tools or reflection workspace are required. Reuse provider execution, durable spending, cancellation and receipts. Reuse actor-scoped source selection, sentence projection and vector retrieval behind a parameterized context builder; do not copy the entire NPC context and merely remove an action field.
 

@@ -618,7 +618,7 @@ Ordinary animal/object first sightings and returns update current visibility and
 
 **Implemented — September 27 · Restrictiveness: Safe.** Committed interest/reflection/schedule metadata caching retains at most **512 keys and 2 MiB of estimated string storage** per store, counting two bytes per key/value character. Pending reads share entries; oldest entries and oversized resolved values are evicted. Memory/vector coverage caching retains its existing **512 scope/model entries**. Overflow performs ordinary database reads, with no cap on retained memories, interested characters or perception.
 
-**Reason / tradeoff:** Avoid repeatedly fetching unchanged scheduling facts while bounding optimization memory. Values remain isolated from consumer edits, and transaction/restore invalidation preserves freshness. Raise the cache bounds only if measured eviction churn warrants it; no current Remove/Change/Expand task. [Contract](../performance.md#committed-cognition-metadata) · [Metadata owner](../../apps/server/src/integration-values.ts) · [Coverage owner](../../apps/server/src/memory-repository.ts).
+**Reason / tradeoff:** Avoid repeatedly fetching unchanged scheduling facts while bounding optimization memory. Values remain isolated from consumer edits, and transaction/restore invalidation preserves freshness. Raise the cache bounds only if measured eviction churn warrants it; no current Remove/Change/Expand task. [Contract](../performance/storage.md#committed-cognition-metadata) · [Metadata owner](../../apps/server/src/integration-values.ts) · [Coverage owner](../../apps/server/src/memory-repository.ts).
 
 ## CG04
 

@@ -286,4 +286,4 @@ The [five-game comparison](../../archive/02-research/game-inspiration/essays/tac
 - Delivery: [Actor model](../maintainers/actor-model.md), [Cognition redesign](../maintainers/cognition-redesign.md), [CE05](../maintainers/character-experience.md#ce05--integrated-character-quality-and-complete-cost-qualification).
 - Existing product contracts: [Appraisal and social continuity](completed/appraisal-social-continuity-feature-spec.md), [Compelling characters](compelling-characters-feature-spec.md), [Memory](../memory-architecture.md), [Knowledge](../knowledge.md).
 - Constraints: [Memory](../limits/memory.md), [Feelings](../limits/feelings.md), [Cognition](../limits/cognition.md), [AI execution](../limits/ai-execution.md), [Retention decisions](../../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger).
-- Queue and decisions: [DG23](../maintainers/needs-design.md#dg23--characters-changed-by-their-experience), [D14/D59](../../archive/05-project/open-decisions.md).
+- Queue and decisions: [DG23](../maintainers/needs-design.md#dg23--characters-changed-by-their-experience), [D14/D59](../maintainers/decisions/README.md).

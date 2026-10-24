@@ -105,7 +105,7 @@ The October 14 boundary correction moves initial state, homogeneous equivalence 
 - [x] Compile `construction.yaml` through the existing generator/check path into the shared immutable content artifact; validate exact item/attribute/tool references, finite dimensions, supported joints, cardinalities, labels and missing fields. Keep world names/tuning out of generic domain/server/client code.
 - [x] Extend the current family union with `grounded-panel-boundary`, material/section/runner roles and two-position slide. Retain the qualified canopy consumer; add exact cover-profile pins so the natural mat and existing weather cloth have one owner for their actual dimensions/transmission.
 - [x] Connect survival's actual manufactured short camp posts, tall gate posts, ordinary/access panels, gates, runners and mats, initial state and origins to construction. The ordinary empty-handed complete-camp journey retains actual inputs and origins.
-- [x] Qualify the exact thirty-pole/ninety-four-fiber source budget and finite exhaustion through the [ordinary source-to-complete-camp journey](../verification/first-playable-world.md#complete-main-and-personal-agreement-integration), including 26 derived cords and five usable offcuts. SV03 retains the exact material breakdown; supplied-kit specimens remain separate.
+- [x] Qualify the exact thirty-pole/ninety-four-fiber source budget and finite exhaustion through the [ordinary source-to-complete-camp journey](../verification/first-playable-world/2026/2026-10-24-residents-and-cooperation.md#complete-main-and-personal-agreement-integration), including 26 derived cords and five usable offcuts. SV03 retains the exact material breakdown; supplied-kit specimens remain separate.
 - [ ] Trace installation through ordinary menu, inventory/entity shortcuts, NPC offers, grounding/help/schema examples, progress/record wording, reusable methods and current-format restoration. Exercise an omitted family and a materially different lightweight slider with different geometry/material cardinality and no damage consumer.
 
 Ordinary empty-handed Main source collection, manufacture and a complete natural
@@ -118,7 +118,7 @@ remain in the wider consumer matrix. Current-format validation rejects mismatche
 computation kinds and malformed repair bindings. These controlled profiles do not
 establish independently invented construction or human acceptance. The exact
 thirty-pole/ninety-four-fiber exhaustion budget and the remaining consumer matrix
-above remain open. [Connected evidence](../verification/first-playable-world.md#authored-repair-materials-and-complete-consumers--october-22).
+above remain open. [Connected evidence](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#authored-repair-materials-and-complete-consumers--october-22).
 
 **Exit:** exact typed definitions reach every consumer with no code-name/world-law copy; ordinary natural manufacture supplies eligible actual parts, no kit or automatic grants. Formatting/schema/build evidence records only actual checks. No camp runtime acceptance is closed by this definition task.
 
@@ -142,7 +142,7 @@ for material transfer, complete scoped permission and original receipt. Native
 manufacture/build, withdrawal, deadlines, dependent-consent cancellation and
 current save/startup revocation pass focused checks; the ordinary contribution
 control journey and helper-phase integration remain open. Timed native use now passes a supplied-part journey; exact SQL commit races and paused/current-checkpoint revocation pass.
-[Evidence](../verification/first-playable-world.md#separate-public-gate-permission).
+[Evidence](../verification/first-playable-world/2026/2026-10-24-gates-and-permissions.md#separate-public-gate-permission).
 
 **Exit:** the ordinary empty-handed player can construct with actually acquired resources, an independently willing helper can contribute only authorized work, and registered light barriers have exactly the selected damage exposure. Uncertain operational publication is recoverable without orphan authority or duplicated materials. General property law remains separate.
 
@@ -201,7 +201,7 @@ steps. Split-operation grants, later occupied slots and later obstacles refuse
 before work. Actual server/native/PostgreSQL mid-sequence reopening, grant
 revocation and reviewed remaining-work resumption pass. Full enclosures, occupied
 exits and layout templates remain open; no cycle is admitted by this check alone.
-[Evidence](../verification/first-playable-world.md#complete-finite-layout-and-grant-admission).
+[Evidence](../verification/first-playable-world/2026/2026-10-24-gates-and-permissions.md#complete-finite-layout-and-grant-admission).
 
 The actual scoped entrance already uses 126 physical pieces; the complete square
 perimeter projects to 137. The shared technical capacity is 256 with exact
@@ -247,7 +247,7 @@ tall-body refusal and controlled native projectile contacts agree with its actua
 open/closed endpoints; cold events agree. Ordinary Drop/Pickup now proves that a
 real dropped post blocks the gate and removing it clears the doorway, including
 cold clearance and exact native refusal. Second-gate and wider lifecycle
-combinations remain open. [Connected evidence](../verification/first-playable-world.md#native-gate-installation).
+combinations remain open. [Connected evidence](../verification/first-playable-world/2026/2026-10-24-gates-and-permissions.md#native-gate-installation).
 
 **Exit:** the built entrance is physically usable, has a comprehensible inside bar and creates real defensive/exit choices without crushing, teleportation, fake success, owner-only magic or unsupported general rotation.
 
@@ -256,7 +256,7 @@ combinations remain open. [Connected evidence](../verification/first-playable-wo
 Structural loss now cancels another admitted impact through a writable character
 record after read-only discovery. The retained earned camp reproduces the prior
 throw and verifies cancellation, released tool holds, unchanged input world and
-valid cold restored data after repair; see the [requested review](../verification/first-playable-world.md#requested-complete-implementation-review--october-20).
+valid cold restored data after repair; see the [requested review](../verification/first-playable-world/2026/2026-10-24-integrated-implementation-review.md#requested-complete-implementation-review--october-20).
 
 **Status: In progress; dismantling, repair, tool impacts and exact exposure are connected; recovery and remaining qualification unfinished. Owners:** material state/compound assembly, tool actions, authority, events/knowledge and PO salvage. **Dependencies:** SH08–SH10; current body participation/contact owners remain authoritative. **Design:** [damage transition](../projects/editable-shelters-tech-design.md#117-damage-repair-support-loss-and-salvage).
 
@@ -280,7 +280,7 @@ spending, clamp and production-browser controls. Structural failure/salvage pass
 controlled native exhaustion and full PostgreSQL restoration. Four real timed tool contacts now breach an ordinary wall through exact exposure
 authority and SQL publication. Ordinary offers, visible condition/repair refresh
 and paused revocation are connected; their focused checks and remaining structural
-lifecycle/race/browser cases stay open. Remaining lifecycle qualification is open. [Evidence](../verification/first-playable-world.md#native-boundary-dismantling-checkpoint).
+lifecycle/race/browser cases stay open. Remaining lifecycle qualification is open. [Evidence](../verification/first-playable-world/2026/2026-10-24-occupied-camps-and-reclamation.md#native-boundary-dismantling-checkpoint).
 
 Player/character choices, visible coarse condition and repair refresh now pass
 focused service checks. Hidden material changes produce no condition label,
@@ -307,14 +307,14 @@ Destructive impact admission and final contact share the failure owner's exact
 protected-material count. At a full allowance, the ordinary impact refuses before
 damage; with space, destruction retains actual survivors/salvage and validates
 after cold reconstruction. This closes the demonstrated capacity-stall review
-finding without raising the allowance or discarding materials. [Final review](../verification/first-playable-world.md#final-construction-review-and-completion-audit--october-21).
+finding without raising the allowance or discarding materials. [Final review](../verification/first-playable-world/2026/2026-10-24-construction-and-movement-review.md#final-construction-review-and-completion-audit--october-21).
 
 Repair quantities, materials and allowed structural roles now come from the
 installed family throughout plans, native work, help, cost facts and current-format
 storage. The ordinary Main rule stays two prepared-fiber units for panels/gates.
 One-/three-unit contrast and ordinary two-unit production-browser checks pass,
 including exact spending, Stop, SQL reopen and receipt replay; see
-[repair consumer evidence](../verification/first-playable-world.md#authored-repair-materials-and-complete-consumers--october-22).
+[repair consumer evidence](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#authored-repair-materials-and-complete-consumers--october-22).
 
 ## SH12 — Integrated natural camp, effort and lifecycle qualification
 
@@ -331,7 +331,7 @@ Construction-permission retries now recover their exact recorded result before
 checking current sources, without repeating grants or reversing revocation.
 Unsupported falling returns an unavailable construction view and supported
 inspection recovers. Focused service/SQL and native/HTTP evidence passes in the
-[requested implementation review](../verification/first-playable-world.md#requested-complete-implementation-review--october-20);
+[requested implementation review](../verification/first-playable-world/2026/2026-10-24-integrated-implementation-review.md#requested-complete-implementation-review--october-20);
 the broader unchecked matrices below remain open.
 
 The actual earned gate now closes during a chosen route and ordinary punch;
@@ -345,20 +345,20 @@ passes 831/831 tests and the build, including the retained source/order/collisio
 and feeding corrections. Complete earned-camp and dense-animal
 speed/latency measurements still fail; host contention limits comparisons but does
 not excuse those results. Performance remains unqualified. See
-[current camp and navigation evidence](../verification/first-playable-world.md#maximum-camp-persistence-and-shared-navigation-handoffs--october-20).
+[current camp and navigation evidence](../benchmarks/first-playable/2026/2026-10-24-earned-camp-server-cost.md#maximum-camp-persistence-and-shared-navigation-handoffs--october-20).
 
 The earned Main camp now passes actual browser Close gate through its normal
 approach/timed work and saved closed result. Its previously hidden completion is
 now visible in ordinary Events/Actions/search through the world-owned mapping;
 scoped SQL privacy/omission and current types/build pass. This adds no geometry,
 permission or storage rule. Wider interaction/continuation/performance cases below
-remain open; see [connected evidence](../verification/first-playable-world.md#physical-outcome-display-and-competing-meals--october-20).
+remain open; see [connected evidence](../verification/first-playable-world/2026/2026-10-24-control-and-recovery-review.md#physical-outcome-display-and-competing-meals--october-20).
 
 **Status: In progress; ordinary daily rain and local weather display are connected. Open-basket manufacture and the complete natural camp are connected; consolidated lifecycle/performance and participant qualification remain unfinished. Owners:** SH/BW/FPV with existing native/server/storage/UI/performance owners. **Dependencies:** SH07–SH11 and survival/cooperation/ecology implementation; qualified current canopy remains the baseline.
 
 - [ ] Complete SH-J16–SH-J23 using ordinary empty-handed source collection, manufacturing, actual material grants, construction, voluntary help, real approaches/damage, ordinary rain, repair, relocation and return. Separate natural run evidence from injected diagnostic actors/materials or forced choices.
 - [x] Implement the selected ordinary daily rain through the existing material-exposure/weather-boundary and installed-clock owners, following [technical §11.9](../projects/editable-shelters-tech-design.md#119-ordinary-daily-rain-through-existing-exposure). Compile the exact definition from construction YAML; the prepared opening selects it without creator rights. Preserve the independent finite comparison cue and combine actual incident fields by maximum intensity, with exact rectangle/moving-footprint integration and one moisture writer. The complete ordinary Main now selects this rule.
-- [x] Continue the actual earned Main camp through rain ending at 18:00 and ninety minutes of drying, preserving the eight-section camp, living player, material identities and exact cold native continuation; pause changes no moisture. [Elapsed-world evidence](../verification/first-playable-world.md#earned-camp-rain-end-drying-and-current-gate--october-22).
+- [x] Continue the actual earned Main camp through rain ending at 18:00 and ninety minutes of drying, preserving the eight-section camp, living player, material identities and exact cold native continuation; pause changes no moisture. [Elapsed-world evidence](../benchmarks/first-playable/2026/2026-10-24-earned-camp-server-cost.md#earned-camp-rain-end-drying-and-current-gate--october-22).
 - [ ] Qualify both daily edges, consecutive days, cue overlaps and edge crossings, pause, same-time geometry changes, save/reload during rain/drying, omitted/contrasting profiles and ordinary non-creator UI. Measure the full Main workload with many eligible lots/canopies/moving materials; preserve current native failure and observer privacy. No health, rest, strength, ignition or crafting benefit is implied by moisture.
 - [x] Implement [technical §11.10](../projects/editable-shelters-tech-design.md#1110-open-woven-basket-and-actual-contents-exposure) with SV's existing woven-container compiler: optional family-owned `parameters.contentsExposureProfile`, exact installed capability/digest, known and invented admission, and unsupported pouch/profile refusal. Compile the world-owned profile once before candidate admission; no separate basket definition or post-compile mutation.
 - [x] Extend the existing direct-child exposure discovery, actual rim/moving-carrier footprint and object transfer owner for one open basket level. Integrate old custody through the current cut before atomic transfer; preserve distinct child moisture/pins, capacity, holds, claims and private container inspection. Refuse unsupported outer nesting before effects; do not scan arbitrary descendants.
@@ -375,12 +375,12 @@ remain open; see [connected evidence](../verification/first-playable-world.md#ph
 - [ ] Exercise actual UI with pointer/keyboard/no-drag, long/duplicate labels, narrow/short viewports, enlarged text, focus return, stale material/preview, failed/recoverable reads, disconnected control and hidden physical blockers. The scene must visibly agree with body collision, wall occlusion, real breach and parked gate.
 - [ ] Measure cold/warm preview→phase→commit→projection and navigation after concentrated gate/wall edits; eight-section ordinary and sixteen-section/two-gate maximum, neighboring roots, growing retained salvage/receipts, many free/held materials and multiple observers. Count candidates/parts/origin checks plus elapsed work; preserve existing complete-work failure behavior and shared performance targets. SH06 broader gaps are not silently closed.
       The complete native maximum now constructs sixteen posts/sections and two independently usable gates, with exact current-format validation. Its added components are controlled supplied stock; this does not establish a natural-stock maximum or performance acceptance. Complete-history PostgreSQL
-      continuation and current gate-permission revocation now pass. See the [connected qualification](../verification/first-playable-world.md#connected-recovery-and-smaller-camp--october-20-2026).
+      continuation and current gate-permission revocation now pass. See the [connected qualification](../verification/first-playable-world/2026/2026-10-24-connected-world-qualification.md#connected-recovery-and-smaller-camp--october-20-2026).
 - [ ] Under FPV observe uncoached players choosing a site, wall/gate-first or roof-first useful partial layout versus full camp, understanding a blocked/barred gate, comparing construction effort with public rest/travel, responding to actual independent contact and recovering after loss. Record enjoyment/effort/return evidence separately from native correctness, model fixtures and engineering opinion. Revise selected tuning explicitly if evidence fails; do not weaken required camp scope.
 
 **Exit:** the whole natural-camp feature and its required downstream behavior are implemented and qualified for the selected scenario, with actual source/evidence and limits. Connected runtime and focused evidence do not close unverified whole-scenario requirements.
 
-Actual Main canopy/hearth browser previews now refresh when physical geometry changes while retaining their selected placement. Controlled obstacle appearance/removal passes blocked-to-available recovery, including hearth Start disabling. Construction-help previews and one proposal also pass ordinary controls. Supplied material/grant fixtures qualify these controls, not natural stock or the whole UI/lifecycle matrix. See the [connected browser evidence](../verification/first-playable-world.md#building-preview-continuity-and-proposal-integration--october-20).
+Actual Main canopy/hearth browser previews now refresh when physical geometry changes while retaining their selected placement. Controlled obstacle appearance/removal passes blocked-to-available recovery, including hearth Start disabling. Construction-help previews and one proposal also pass ordinary controls. Supplied material/grant fixtures qualify these controls, not natural stock or the whole UI/lifecycle matrix. See the [connected browser evidence](../verification/first-playable-world/2026/2026-10-24-control-and-recovery-review.md#building-preview-continuity-and-proposal-integration--october-20).
 
 ## Later stage blockers and remaining scope
 

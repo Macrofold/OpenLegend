@@ -35,7 +35,7 @@ Updated October 17, 2026. This index links every Markdown document created or ed
 
 - [.agents/skills/openlegend-performance/SKILL.md](../../../.agents/skills/openlegend-performance/SKILL.md)
 
-- [archive/05-project/implementation-status.md](../../../archive/05-project/implementation-status.md)
+- [archive/05-project/implementation-status.md](../../architecture.md)
 - [docs/architecture.md](../../architecture.md)
 - [docs/documentation-changelog.md](../../documentation-changelog.md)
 - [docs/events-perception-and-reactions.md](../../events-perception-and-reactions.md)

@@ -92,7 +92,7 @@ Direct deposit into another person's carried inventory is refused ([items](items
 
 ## Delivery and evidence
 
-Current surfaces are summarized in [gameplay availability](../../../archive/05-project/implementation-status.md#gameplay-availability). The creator family editor and owner-only read-only Promises list are delivered within their recorded scopes. Promise amendment/cancellation controls and general feeling-process authoring remain future work; this review does not implement or qualify them. Existing [runtime evidence](../../verification.md) remains scoped to the journeys actually recorded; the reciprocal-barter and missing-belonging reports above qualify only their selected native, database, client and controlled live journeys.
+Current surfaces are summarized in [gameplay availability](../../features/README.md). The creator family editor and owner-only read-only Promises list are delivered within their recorded scopes. Promise amendment/cancellation controls and general feeling-process authoring remain future work; this review does not implement or qualify them. Existing [runtime evidence](../../verification.md) remains scoped to the journeys actually recorded; the reciprocal-barter and missing-belonging reports above qualify only their selected native, database, client and controlled live journeys.
 
 ## Maintained records
 

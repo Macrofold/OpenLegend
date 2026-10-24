@@ -76,7 +76,7 @@ preserves exact current terms and personal evidence. Two separately chosen craft
 complete a two-item request from actual output records. Withdrawal after materials
 are spent detaches the continuing craft; PostgreSQL restoration finishes it without
 reviving consent. These are controlled software checks, not independent willingness.
-Mixed queued work, committed crafting beside independent travel, suspended work, manual-pause withdrawal and idle accepted save/reopen now pass. Cancelled cooperative steps remain cancelled while the remaining independent work reaches a terminal list; a fresh queued list does not retain the ended steps. The actual work projection and PostgreSQL consequences agree. Death before work and after material debit, plus own ending after completed/stopped work, also pass complete PostgreSQL continuation without unearned output or revived work. Wider activity-family, personal-record deduplication and independent-choice qualification remains open; CP03 is not closed. See the [grouped lifecycle evidence](../verification/first-playable-world.md#mixed-cooperative-work-and-idle-restoration--october-20).
+Mixed queued work, committed crafting beside independent travel, suspended work, manual-pause withdrawal and idle accepted save/reopen now pass. Cancelled cooperative steps remain cancelled while the remaining independent work reaches a terminal list; a fresh queued list does not retain the ended steps. The actual work projection and PostgreSQL consequences agree. Death before work and after material debit, plus own ending after completed/stopped work, also pass complete PostgreSQL continuation without unearned output or revived work. Wider activity-family, personal-record deduplication and independent-choice qualification remains open; CP03 is not closed. See the [grouped lifecycle evidence](../verification/first-playable-world/2026/2026-10-24-control-and-recovery-review.md#mixed-cooperative-work-and-idle-restoration--october-20).
 
 ## CP04 — Grounded guidance and practical preparation
 
@@ -120,7 +120,7 @@ Construction-help discovery considers complete material grants independently and
 preserves candidates spanning separately permitted phases. Identical plans compile
 once against all current grants. A controlled two-grant repair on the earned camp
 finds the valid material pair, rejects the incomplete grant and reaches the normal
-native compiler. [Final review](../verification/first-playable-world.md#final-construction-review-and-completion-audit--october-21)
+native compiler. [Final review](../verification/first-playable-world/2026/2026-10-24-construction-and-movement-review.md#final-construction-review-and-completion-audit--october-21)
 records the evidence; independent willingness and broader scale remain open.
 
 ## CP06 — Useful independent hunting and actual sharing
@@ -185,16 +185,16 @@ panel are connected; this is not completed CP07/CP08 qualification.
 - [x] Deliver actual acceptance once through the existing director's evidence/dependency handling so the accepting actor can independently choose its next action; no second player request, polling loop, combined new decision envelope or compulsory action.
 - [x] Keep present people separate from remembered people, private terms from public visible interaction and accepted agreement from completed effects. Recheck privacy/control/evidence fences after asynchronous reads.
 - [x] Preserve drafts/focus/selection on stale terms, refresh and reconnect; expose truthful no-offers/loading/unavailable/error/unknown-receipt states. No raw native IDs or coordinate entry in ordinary play.
-- [x] Exercise keyboard/focus, long names/terms, narrow layout, output withholding, permission loss and current-format reopening through actual controls. The received gift/access checks and [compact/cooperation matrix](../verification/first-playable-world.md#agreement-focus-and-exact-request-recovery--october-22) cover these paths; shared safety instructions remain separate from persona text.
+- [x] Exercise keyboard/focus, long names/terms, narrow layout, output withholding, permission loss and current-format reopening through actual controls. The received gift/access checks and [compact/cooperation matrix](../verification/first-playable-world/2026/2026-10-24-final-controls-and-continuation.md#agreement-focus-and-exact-request-recovery--october-22) cover these paths; shared safety instructions remain separate from persona text.
 
 **Exit:** each new native choice is discoverable and understandable through ordinary player and resident paths, not only a developer endpoint.
 
-Build's actual Main construction-help controls now preview and send a finite proposal through scoped native admission. Dropped reads expire without enabling Send, retry preserves the selection, and an existing pair offer blocks another proposal. This corrects a missing HTTP consumer; it does not qualify independent acceptance or the complete CP08 matrix. See the [connected browser evidence](../verification/first-playable-world.md#building-preview-continuity-and-proposal-integration--october-20).
+Build's actual Main construction-help controls now preview and send a finite proposal through scoped native admission. Dropped reads expire without enabling Send, retry preserves the selection, and an existing pair offer blocks another proposal. This corrects a missing HTTP consumer; it does not qualify independent acceptance or the complete CP08 matrix. See the [connected browser evidence](../verification/first-playable-world/2026/2026-10-24-control-and-recovery-review.md#building-preview-continuity-and-proposal-integration--october-20).
 
 Received terms now preserve keyboard focus and retain exact unknown requests
 across reload. Actual receipt recovery reads the original result without repeating
 its transfer; unavailable browser storage prevents dispatch. Narrow keyboard use
-also passes the [connected agreement check](../verification/first-playable-world.md#agreement-focus-and-exact-request-recovery--october-22).
+also passes the [connected agreement check](../verification/first-playable-world/2026/2026-10-24-final-controls-and-continuation.md#agreement-focus-and-exact-request-recovery--october-22).
 The compact/cooperation matrix also passes ordinary proposal/withdrawal, exact
 alliance/ceasefire acceptance, guide acceptance without automatic work, original-
 receipt recovery, manual-pause endings and actual PostgreSQL server reopening.
@@ -210,7 +210,7 @@ Accepted alliances now retain their exact personally received terms through
 ordinary history eviction and partial database recovery. Current-source indexes
 track source forgetting/correction without consulting unseen live assent. Actual
 acceptance, unseen withdrawal, own ending and source-revocation checks pass in the
-[requested review](../verification/first-playable-world.md#requested-complete-implementation-review--october-20);
+[requested review](../verification/first-playable-world/2026/2026-10-24-integrated-implementation-review.md#requested-complete-implementation-review--october-20);
 independent character, broader performance and participant acceptance remain open.
 
 Character-selected material contributions now preserve exact permission effects
@@ -218,15 +218,15 @@ through response admission and the enclosing service transaction. Controlled
 native offer → chosen accept → one-unit transfer → one grant → unchanged replay
 passes actual PostgreSQL storage, alongside rollback and sibling-material refusal.
 Nested selected/confirmed gate work also retains current permissions. See the
-[requested full implementation review](../verification/first-playable-world.md#requested-complete-implementation-review--october-20).
+[requested full implementation review](../verification/first-playable-world/2026/2026-10-24-integrated-implementation-review.md#requested-complete-implementation-review--october-20).
 These checks do not establish independent consent or close the broader lifecycle,
 performance and participant criteria below.
 
 **Owners:** canonical record tree, validation, storage, participant/pair/deadline indexes and exact admission. **Dependencies:** CP02–CP08. **Design:** [persistence/performance](../projects/first-playable-cooperation-tech-design.md#persistence-definitions-and-performance).
 
 - [x] Persist and validate current records, definitions, deadlines/lives and owned work bidirectionally; rebuild derived indexes and reject malformed phase/reference combinations before installation.
-- [x] Verify restore during partial help/hunt/ceasefire, accepted inactive cooperation awaiting reconnect, terminal evidence after live record removal, corrected/forgotten private evidence and revoked control/grants. No seeding, duplicate gifts or paid replay on restore. [Current actual SQL restoration](../verification/first-playable-world.md#finite-work-and-cooperation-restoration--october-22) covers these cases; ordinary hunt success, independent willingness and broader performance remain separate gates.
-- [x] Measure cold and warm actual command/context/projection paths, six incoming offers concentrated on one actor, unrelated large inventory/history, independently increased live density and many accepted acquaintances. Report examined/hydrated records, latency, memory and model-call counts. [Declared current growth cases](../verification/first-playable-world.md#concentrated-cooperation-growth-and-offer-previews--october-22) include exact durable acceptances and bounded body reads; they do not qualify broader capacity or retained memory.
+- [x] Verify restore during partial help/hunt/ceasefire, accepted inactive cooperation awaiting reconnect, terminal evidence after live record removal, corrected/forgotten private evidence and revoked control/grants. No seeding, duplicate gifts or paid replay on restore. [Current actual SQL restoration](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#finite-work-and-cooperation-restoration--october-22) covers these cases; ordinary hunt success, independent willingness and broader performance remain separate gates.
+- [x] Measure cold and warm actual command/context/projection paths, six incoming offers concentrated on one actor, unrelated large inventory/history, independently increased live density and many accepted acquaintances. Report examined/hydrated records, latency, memory and model-call counts. [Declared current growth cases](../benchmarks/first-playable/2026/2026-10-24-cooperation-and-browser-cost.md#concentrated-cooperation-growth-and-offer-previews--october-22) include exact durable acceptances and bounded body reads; they do not qualify broader capacity or retained memory.
 - [x] Demonstrate no whole-world per-tick relationship scan, model poll or whole-history hydration. A required-work failure reports incomplete work; it cannot choose arbitrarily or silently omit terms.
 - [x] Exercise a materially different construct/charge-station profile and omitted cooperation family across availability, execution, UI wording and restoration.
 
@@ -236,10 +236,10 @@ Native outing and gift/trade continuation now select existing indexed participan
 items, custodians, affected contribution sources and due deadlines. Complete
 world/event comparisons retain the full-check result while unchanged advances
 inspect zero agreements; compacts already use changed participants and deadlines.
-[Current caller evidence](../verification/first-playable-world.md#native-relationship-selection-and-safe-publication--october-22)
+[Current caller evidence](../benchmarks/first-playable/2026/2026-10-24-native-preparation-and-publication.md#native-relationship-selection-and-safe-publication--october-22)
 qualifies this selection, not broader SQL scan cost, capacity or retained memory.
 
-The contrasting constructed-body/station/cell case passes native availability, actual guide travel, finite committed manufacture, omitted-family refusal and complete partial cold continuation. Actual production-browser checks also pass its charge/integrity display, station/cell wording, recorded guidance, withdrawal and omitted-family controls. The action list now refreshes received-agreement changes, including changes initiated in another panel. The guide-only profile also passes native proposal/revision and cold projection, plus actual browser refresh without cell-help choices; separately supplied namespace-containing choice keys stay distinct. Accepted-term amendment keys also retain their purpose ordering: the actual refresh/retrieval/attention-binding path keeps ordinary eating available under unchanged input bounds. This is a no-provider coverage fixture, not independent choice. The concentrated six-offer case now includes independent inventory/history, nearby-person and accepted-alliance growth through actual projection, native choices, full native-only decision preparation and durable acceptance. Offer previews avoid discarded transfers and notices after shared admission. Complete preparation still reaches seconds. Bounded reads and six-second continuation pass; SQL scan attribution, broader capacity and retained memory remain open. No independent willingness is inferred. See [current growth evidence](../verification/first-playable-world.md#concentrated-cooperation-growth-and-offer-previews--october-22). See the [connected control evidence](../verification/first-playable-world.md#alternate-world-controls-and-agreement-menu-freshness--october-20) and [native continuation evidence](../verification/first-playable-world.md#combined-busy-work-and-alternate-world-contracts--october-20).
+The contrasting constructed-body/station/cell case passes native availability, actual guide travel, finite committed manufacture, omitted-family refusal and complete partial cold continuation. Actual production-browser checks also pass its charge/integrity display, station/cell wording, recorded guidance, withdrawal and omitted-family controls. The action list now refreshes received-agreement changes, including changes initiated in another panel. The guide-only profile also passes native proposal/revision and cold projection, plus actual browser refresh without cell-help choices; separately supplied namespace-containing choice keys stay distinct. Accepted-term amendment keys also retain their purpose ordering: the actual refresh/retrieval/attention-binding path keeps ordinary eating available under unchanged input bounds. This is a no-provider coverage fixture, not independent choice. The concentrated six-offer case now includes independent inventory/history, nearby-person and accepted-alliance growth through actual projection, native choices, full native-only decision preparation and durable acceptance. Offer previews avoid discarded transfers and notices after shared admission. Complete preparation still reaches seconds. Bounded reads and six-second continuation pass; SQL scan attribution, broader capacity and retained memory remain open. No independent willingness is inferred. See [current growth evidence](../benchmarks/first-playable/2026/2026-10-24-cooperation-and-browser-cost.md#concentrated-cooperation-growth-and-offer-previews--october-22). See the [connected control evidence](../verification/first-playable-world/2026/2026-10-24-control-and-recovery-review.md#alternate-world-controls-and-agreement-menu-freshness--october-20) and [native continuation evidence](../verification/first-playable-world/2026/2026-10-24-connected-world-qualification.md#combined-busy-work-and-alternate-world-contracts--october-20).
 
 ## CP10 — Whole episodes and player value
 

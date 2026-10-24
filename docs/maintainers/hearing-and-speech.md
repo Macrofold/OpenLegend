@@ -80,7 +80,7 @@ Earlier [initial/review records](../verification/hearing-runtime-and-reviews.md#
 
 - [ ] Measure stable-cache population churn before adding aging; admitted entries persist until their map is collected/replaced, and overflow remains exact.
 - [x] Selected-world presentation metadata now maps types to semantic categories/icons and ambient inclusion (2026-10-16). Unmapped types use the world policy’s fallback; the ordinary menu never limits retained evidence.
-- [ ] Resolve [D66](../../archive/05-project/open-decisions.md#d66--re-authoring-committed-speech) before implementing dedicated speech re-authoring. Generic text rewrites remain rejected.
+- [ ] Resolve [D66](decisions/characters-and-evidence.md#d66--re-authoring-committed-speech) before implementing dedicated speech re-authoring. Generic text rewrites remain rejected.
 - [x] Add an authorized caption overflow/gap notice through the common EPR/SSE owner. Delivered 2026-09-28: the caption overlay counts dropped or never-shown perceived speech (queue overflow, expiry, hidden tab, reset/reconnect snapshot) from the authorized `GameView.events` projection and the existing SSE reset signal, with no new transport or server counter; the HUD notice opens World Events on Speech. Recovery is through history by design; live captions are never replayed. [Evidence](../verification/player-clarity-ui.md#caption-gap-notice); remaining full-game accessibility qualification stays in HE05.
 - [ ] Qualify long open panels before adding DOM windowing. Explicit older-page loading currently accumulates rows without a global DOM cap.
 - [ ] Qualify background memory-index fairness, source selection and budget-denial retry behavior at sustained scale under CR/PF; no duplicate speech-specific queue.

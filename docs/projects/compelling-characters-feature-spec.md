@@ -399,6 +399,6 @@ The selected vocabulary, represented pressures, satisfaction/recovery rules, mix
 - [Scoped technical design](compelling-characters-tech-design.md): character authorship, unified experience selection and shared personal perspective; implementation gaps remain explicit.
 
 - Integration and delivery: [Character experience — CE01–CE05](../maintainers/character-experience.md).
-- Behavioral evaluation: [AG12](../maintainers/agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized), [CR12](../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence) and [R24](../../archive/05-project/research-backlog.md#r24--p1--agency-continuity-optionality-and-actor-method-fidelity).
+- Behavioral evaluation: [AG12](../maintainers/agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized), [CR12](../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence) and [R24](../research/gameplay-and-systems/characters-and-execution.md#r24--p1--agency-continuity-optionality-and-actor-method-fidelity).
 - Limits and constraints: [CG12](../limits/cognition.md#cg12), [FL19](../limits/feelings.md#fl19), and their existing shared inventories.
 - Related product scope: [Continuing lives](continuing-lives-feature-spec.md), [DG02](../maintainers/needs-design.md#dg02--one-resident-who-follows-through) and [perspective rationale](../../archive/03-design-proposals/character-experience-and-inner-life.md).

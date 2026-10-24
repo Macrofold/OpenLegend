@@ -252,7 +252,7 @@ request changes, rather than routine world updates, and reveals at most 40 rows
 before an explicit request for more. An unrelated work request cannot disable
 these separate consent controls. Actual keyboard acceptance, lost acknowledgement,
 reload/recovery, unavailable storage and narrow use pass the
-[connected browser journey](../verification/first-playable-world.md#agreement-focus-and-exact-request-recovery--october-22);
+[connected browser journey](../verification/first-playable-world/2026/2026-10-24-final-controls-and-continuation.md#agreement-focus-and-exact-request-recovery--october-22);
 the broader CP08 matrix remains tracked separately.
 
 ## Persistence, definitions and performance

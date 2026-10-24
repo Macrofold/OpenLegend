@@ -1,10 +1,10 @@
-# Adaptive implementation workflow — proposed feature specification
+# Adaptive implementation workflow — feature specification
 
-| Status      | Current progress                                                              | Last updated |
-| ----------- | ----------------------------------------------------------------------------- | ------------ |
-| Not started | Design ready for adoption planning; repository instructions remain unchanged. | 2026-10-22   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Operational guidance and named migrations are verified locally; fresh-session routing remains unobserved. | 2026-10-24   |
 
-Design updated 2026-10-21T23:32:40-04:00, America/New_York. This package defines a proposed workflow and documentation system. It does not authorize changes to the ongoing first-playable assignment or activate new instructions.
+Design updated 2026-10-21T23:32:40-04:00, America/New_York. Mike explicitly authorized adoption on October 24, 2026. The operational workflow and documentation system are installed on the adoption branch; this package retains scope and rationale, while [CG34/CG05](../../maintainers/agent-guidance.md) owns adoption and observed-runtime gaps. Gameplay acceptance remains with its original owners.
 
 ## Purpose and scope
 
@@ -17,12 +17,12 @@ In scope: implementation planning/execution, selective context, review repetitio
 ## Package navigation
 
 - [Technical design](02-workflow-tech-design.md): owners, routing, performance chapters, adoption, and validation.
-- [Exact edit plan](03-instruction-edit-plan.md): instruction files, sections, and replacement wording.
-- [Implementation workflow draft](04-implementation-workflow-draft.md): the short operational document for future coding tasks.
-- [Audit and research](05-audit-and-research.md): observed problems, primary sources, and limits of the diagnosis.
+- [Adoption plan](03-instruction-edit-plan.md): scope, canonical owners and remaining acceptance.
+- [Implementation workflow](../../../.agents/rules/implementation.md): operational guidance for authorized code and configuration work.
+- [Audit and research](../../research/agent-workflows/archive/2026/2026-10-21-workflow-audit.md): observed problems, primary sources, and limits of the diagnosis.
 - [Documentation system](06-documentation-system-design.md): file ownership, indexes, growth, and completion filing.
 
-These are design artifacts, not a mandatory reading package for future implementation. Those tasks load the operational workflow and relevant contracts. The audit supports the proposed changes but does not establish a measured speedup or an exact explanation of all elapsed time.
+These are design artifacts, not a mandatory reading package for future implementation. Those tasks load the operational workflow and relevant contracts. The audit supports the design but does not establish a measured speedup or an exact explanation of all elapsed time.
 
 ## Required workflow behavior
 
@@ -46,7 +46,7 @@ Review the complete affected change and relevant contracts once. After fixes, in
 
 Retain the default against new maintained automated tests. Reuse existing checks and tools, with small disposable scenarios when needed. Explicitly required tests remain required. Simplify repeated setup or repair its demonstrated defect; do not replace an oversized temporary script with a new maintained suite. Fixture repair is verification work, not delivered gameplay.
 
-Check selection is proportional to consequence and uncertainty. Preserve required CI and explicit full-suite checks; consolidate expensive overlapping verification after relevant implementations stabilize. Reuse evidence while its assumptions hold, including dependencies outside the directly changed file. A targeted pass is not a successful full-suite run.
+Check selection is proportional to consequence and uncertainty. Preserve required local gates and explicit full-suite checks; consolidate expensive overlapping verification after relevant implementations stabilize. Reuse evidence while its assumptions hold, including dependencies outside the directly changed file. A targeted pass is not a successful full-suite run.
 
 Distinguish the following when the difference affects cost or completion; no classification form is required for each check:
 
@@ -76,7 +76,7 @@ For work spanning sessions or substantial stages, keep one short current-progres
 
 Resume from that summary and the current diff, then load only needed contracts or evidence. Compaction, another commit, or a status question does not restart base selection, full review, or qualification.
 
-Use the [documentation system](06-documentation-system-design.md). Current contracts, unfinished tasks, research, evidence, and history have distinct owners. Growing records use coherent questions/campaigns or dated filing units. Indexes guide to topics or date folders without enumerating every historical file. Completed projects leave the active area; useful current contracts remain discoverable. Missing required human evidence remains open.
+Use the [documentation system](../../documentation-system.md). Current contracts, unfinished tasks, research, evidence, and history have distinct owners. Growing records use coherent questions/campaigns or dated filing units. Indexes guide to topics or date folders without enumerating every historical file. Completed projects leave the active area; useful current contracts remain discoverable. Missing required human evidence remains open.
 
 Batch updates at meaningful boundaries and before handoff. Preserve dates for actual changes, not unchanged reviews. Make commits at coherent or risk-sensitive boundaries and before handoff, without a fixed timer or an attached documentation/testing ceremony.
 
@@ -90,4 +90,8 @@ Report software readiness, independent character/provider evidence, and real-pla
 
 Adoption must preserve unique constraints, route by task intent, reduce redundant obligations and routine context, keep the test-authoring default, and make current contracts/unfinished work discoverable without loading historical collections. Verify links, formatting, structural guidance checks, and representative routing. Structural validity alone proves neither correct agent behavior nor faster delivery.
 
-Judge efficiency through ordinary subsequent tasks and delivered quality, without a new measurement programme. The existing guidance tracker owns adoption and unresolved routing evidence; this proposal needs no new gameplay limits inventory. Exact changes are in [the edit plan](03-instruction-edit-plan.md).
+Judge efficiency through ordinary subsequent tasks and delivered quality, without a new measurement programme. The existing guidance tracker owns adoption and unresolved routing evidence; this proposal needs no new gameplay limits inventory. Scope and remaining acceptance are in [the adoption plan](03-instruction-edit-plan.md).
+
+## Maintained records
+
+[CG34 adoption and CG05 dispatch](../../maintainers/agent-guidance.md) own remaining work and evidence. [The documentation system](../../documentation-system.md) and installed guidance are current operational owners. This guidance-only change adds no gameplay limits inventory.

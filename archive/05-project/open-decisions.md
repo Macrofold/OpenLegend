@@ -1,5 +1,7 @@
 # Open decisions
 
+> Historical snapshot retained October 24, 2026 from `ecf49b1237e0aa83e408572a486aadb7f29cb910`. Product decision register descriptions below include earlier states and are not current authority. Use [the maintained owner](../../docs/maintainers/decisions/README.md) for current contracts and unfinished work. Original observations, rationale and dates are preserved.
+
 This register contains product and technical decisions that remain materially unresolved. Accepted decisions live in their canonical specification; resolved IDs retain short pointers so existing references remain valid. Historical decision changes live in [the documentation changelog](../../docs/documentation-changelog.md).
 
 Rows with an accepted direction describe only the residual choice that still needs resolution; they do not reopen the accepted behavior.

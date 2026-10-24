@@ -827,7 +827,7 @@ All 29 world studies remain incorporated through their linked household, institu
 
 ## Engine and world boundary references
 
-The following reference tables retain the earlier catalogue’s implementation boundaries and contract links alongside the expanded proposal patterns above. The `M:` concept keys are design aliases, not registered runtime families or permission to execute. Current support and exposure remain in [gameplay availability](../../archive/05-project/implementation-status.md#gameplay-availability); implementation tasks, limits and evidence stay with their existing owners.
+The following reference tables retain the earlier catalogue’s implementation boundaries and contract links alongside the expanded proposal patterns above. The `M:` concept keys are design aliases, not registered runtime families or permission to execute. Current support and exposure remain in [gameplay availability](../features/README.md); implementation tasks, limits and evidence stay with their existing owners.
 
 Reusable mechanisms and authored world choices remain distinct. Adding an example never enrolls NPCs, installs a definition, grants access, starts paid work or schedules implementation.
 

@@ -82,7 +82,7 @@ Native acquisition/intake and accepted movement work through provider outage; th
 
 ## HR08 — Compatibility and editing
 
-**Policy reference and editing restriction.** Development compatibility is governed only by the [root policy](../../AGENTS.md#development-save-policy). Current-format restart/restore must preserve recorded fragments and normal validation; unsupported input never triggers an automatic reset. Generic editors reject committed speech text/content rewrites while preserving deletion and importance updates. Dedicated re-authoring remains [D66](../../archive/05-project/open-decisions.md#d66--re-authoring-committed-speech). The old four-second discovery descriptor and mandatory one-second execution loop are **Removed/superseded** by [elapsed-time policy](../simulation-time.md), not hidden hearing controls.
+**Policy reference and editing restriction.** Development compatibility is governed only by the [root policy](../../AGENTS.md#development-save-policy). Current-format restart/restore must preserve recorded fragments and normal validation; unsupported input never triggers an automatic reset. Generic editors reject committed speech text/content rewrites while preserving deletion and importance updates. Dedicated re-authoring remains [D66](../maintainers/decisions/characters-and-evidence.md#d66--re-authoring-committed-speech). The old four-second discovery descriptor and mandatory one-second execution loop are **Removed/superseded** by [elapsed-time policy](../simulation-time.md), not hidden hearing controls.
 
 ## HC-L01 — Correction through actual speech
 

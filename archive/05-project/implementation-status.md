@@ -1,5 +1,7 @@
 # Implementation status
 
+> Historical snapshot retained October 24, 2026 from `ecf49b1237e0aa83e408572a486aadb7f29cb910`. Implementation snapshot descriptions below include earlier states and are not current authority. Use [the maintained owner](../../docs/architecture.md) for current contracts and unfinished work. Original observations, rationale and dates are preserved.
+
 The complete first-playable Main is selected: empty hands/full starting needs,
 finite natural food/materials, four friendly residents, the relocated Watchpost
 and conserved former kit, cold public hearths, camps/cooperation and native

@@ -75,7 +75,7 @@ and failed fixtures. Complete empty-handed Main is selected; final combined and 
 An omitted linguistic social policy now preserves actual sound contact through the
 nonlinguistic evidence owner, without words, addressing or inferred recognition.
 The controlled native projection/cold-validation case and existing perception
-checks pass in the [requested implementation review](../verification/first-playable-world.md#requested-complete-implementation-review--october-20).
+checks pass in the [requested implementation review](../verification/first-playable-world/2026/2026-10-24-integrated-implementation-review.md#requested-complete-implementation-review--october-20).
 
 **Owners:** [kernel](../../packages/domain/src/kernel.ts), [speech](../../packages/domain/src/speech.ts), [events](../../packages/domain/src/events.ts), [experience](../../packages/domain/src/experience.ts), [response](../../packages/domain/src/response.ts), current domain command/type/schema owners, server event/history projections and protocol. Contract: technical design §§3–4.
 
@@ -132,7 +132,7 @@ attribution collector. The complete native 2,048-record consolidation falls from
 8.3–8.6 seconds to 172–238 ms with identical saved summary/support hashes. Exact
 revision conflicts, overlapping child coverage and unknown-source separation
 remain enforced. This is scoped native evidence, not complete memory/performance
-acceptance; see the [review record](../verification/first-playable-world.md#requested-complete-implementation-review--october-20).
+acceptance; see the [review record](../verification/first-playable-world/2026/2026-10-24-integrated-implementation-review.md#requested-complete-implementation-review--october-20).
 
 **Connected checkpoint:** maintenance now retains complete tagged sources. Summaries carry typed kind/ID/revision coverage and native speech attribution; current native/SQL checks retain the protected original, archived full sources and exact dependency rows across summary revision. Cold, page and editor readers reject missing attribution. Hourly selection now preserves intervening protected barriers and avoids protected-only retries. Recall and appraisal bindings distinguish record kinds sharing one native ID; grouped candidates retain every complete source. Required evidence, pending-event and appraisal readers now recover exact archived originals through current summary coverage, with actor/generation/privacy and parent-revision guards. Creator summary facts are derived from existing sources. Automatic speech compaction now retains the same native attribution and typed coverage, sends complete sources to generation, and uses bounded actor-scoped selection. Optional provider failure preserves the prior valid summary and exact recent suffix. The eight recent-memory baseline now selects complete individual records before optional grouping; repeated animal observations no longer expand eight required groups into an oversized decision. The actual complete camp preparation fits after the demonstrated overflow; live reply and combined qualification remain open. Higher-model appraisal causes can share an exact complete source already present in their same-request character evidence array; kind/ID, revision and complete projected meaning must match. Native identity/projection guards and 17 existing consumers pass; later wording and live qualification remain open. No SPK04 exit is claimed.
 
@@ -155,7 +155,7 @@ The shared person-history reader again includes explicitly requested outward
 responses, alongside speaker/addressee speech filters. The actual native/SQL
 sound-only character utterance preserves its evidence and excludes unheard words.
 Sound-only records also reach character preparation without being mistaken for
-linguistic speech; see the [requested review](../verification/first-playable-world.md#requested-complete-implementation-review--october-20).
+linguistic speech; see the [requested review](../verification/first-playable-world/2026/2026-10-24-integrated-implementation-review.md#requested-complete-implementation-review--october-20).
 
 **Owners:** [domain speech](../../packages/domain/src/speech.ts), events/response/current world state, [conversation context](../../apps/server/src/conversation-context.ts), memory repository, WorldService/HTTP, AiDirector/ActorWork, [reply previews](../../apps/server/src/npc-reply-preview.ts), narration/history/protocol/client consumers. Contract: technical design §8 and its complete removal checklist.
 
@@ -249,7 +249,7 @@ remains required, including sleep/wake with a retained draft.
 
 ## SPK10 — Current-format persistence, authority and exact recovery
 
-Current validation rejects a clear-hearing payload containing an unintelligible gap even when all derived wording agrees with that payload. Actual speech while two people retain separate finite waits, plus declining/withdrawing unaccepted combat help, preserves both unrelated plans. Native evidence and current static/build results are in the [combined review checkpoint](../verification/first-playable-world.md#speech-record-consistency-and-current-verification--october-20); complete integrated acceptance remains open.
+Current validation rejects a clear-hearing payload containing an unintelligible gap even when all derived wording agrees with that payload. Actual speech while two people retain separate finite waits, plus declining/withdrawing unaccepted combat help, preserves both unrelated plans. Native evidence and current static/build results are in the [combined review checkpoint](../verification/first-playable-world/2026/2026-10-24-connected-world-qualification.md#speech-record-consistency-and-current-verification--october-20); complete integrated acceptance remains open.
 
 **Owners:** existing WorldService mutation owner, [world records](../../apps/server/src/world-records.ts), [record schema](../../apps/server/src/world-record-schema.ts), memory repositories, domain records/validators, save/restore, command/response receipts, source dependency and UI authority fences. Contract: technical design §11 and [Save and load](../save-and-load.md).
 

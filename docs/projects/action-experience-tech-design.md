@@ -413,6 +413,6 @@ After implementation authorization, capped live trials admitted under the shared
 - Idle-only learning may be delayed indefinitely by continuous work. Keep it pending rather than secretly interrupting survival; learning during an ongoing native wait is outside the initial policy and remains a future scheduling choice.
 - Personal evidence is retained separately from method identity. Automatic numerical confidence promotion/decay and approximate semantic matching are outside the initial path and require a later policy decision. The initial path uses qualified personal evidence and exact compatible structure; no invented probability of success is displayed.
 
-Residual product/tuning choices are indexed in [D67](../../archive/05-project/open-decisions.md#d67--action-records-and-learned-activities). They do not block the accepted initial implementation and are not enabled automatically.
+Residual product/tuning choices are indexed in [D67](../maintainers/decisions/characters-and-evidence.md#d67--action-records-and-learned-activities). They do not block the accepted initial implementation and are not enabled automatically.
 
 Alignment reviewed and updated at **2026-10-14T08:15:16Z**, against implementation commit `3593d7b930c621848157f6ad5a29d01633008a29`; [the current contract](../action-experience.md) and [branch review](../verification/world-engine-boundaries.md#requested-full-review--october-14-2026) retain implementation details and evidence.

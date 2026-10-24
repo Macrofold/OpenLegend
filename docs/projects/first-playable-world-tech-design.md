@@ -201,28 +201,11 @@ The larger map raises cold navigation/scene costs but does not justify scanning 
 
 ## Implementation order and independent task boundaries
 
-**Current performance continuation — 2026-10-24T06:28:00Z:** all [21 animal-execution items](performance-overhaul-feature-spec.md#animal-simulation-continuation) have implemented consumers or specified measured dispositions in [PF09](../maintainers/performance.md#pf09-animal-execution-continuation). Requested review fixes shared bodily deadlines and observation-clock lifecycle; Main selects its existing three-game-second routine-sight cadence. The [current measurements and limits](../verification/performance/2026-10/animal-execution.md#second-requested-review--october-24-2026) distinguish varying short-server results from unmet normal-speed, command-latency, larger-population and broader integration gates. Character/human acceptance remains open; no merge is authorized.
+This section preserves accepted technical contracts and delivery dependencies. Its slice estimates and sequencing do not describe current unfinished work; [FPW](../maintainers/first-playable-world.md), the linked subsystem trackers and [FPV](../maintainers/first-playable-validation.md) own that disposition. Current animal continuation and its remaining performance gates belong to [PF09](../maintainers/performance.md#pf09-animal-execution-continuation).
 
 ### Active implementation plan
 
-The combined assignment uses `codex/implement-complete-first-playable` in
-`/Users/mzw/.codex/worktrees/214c/OpenLegend`, based on local `main` at
-`19a0c303a89d3cb278db1cbbbe5b95e2e6e26fe1` in
-`https://github.com/Macrofold/OpenLegend.git`. A fresh October 18 fetch of
-`origin/main` agrees; the reviewed `d261c94f50875edd88e8eb4a69cf8f4a413563cb`
-is an ancestor. One AI owns implementation and qualification. Main is not a
-merge destination during this assignment.
-
-Risk is high: the accepted scope changes physical contact, personal evidence,
-asynchronous decisions, current-format records, construction authority and ordinary
-controls together. The integrated diff now touches 319 non-test executable files,
-with 47,090 added and 5,936 removed lines including comments and styles. The working
-logic estimate is 40,000–50,000 changed lines. This increases integration risk
-without changing accepted scope. Full affected-diff review and all final
-qualification remain required; the owner permits overlapping cross-project checks
-to be consolidated after their implementations stabilize.
-
-Camp dismantling/reclaim, exact repair and impacts, ordinary rain, open baskets and exact contributions are installed. The actual empty-handed Main journey reaches a four-metre enclosure, usable sliding gate, roof, fire, basket and chosen meal, then restores its complete checkpoint. Remaining camp work is combined permission/lifecycle qualification, smaller/maximum layouts and measured performance. Reuse the retained complete camp instead of rebuilding it for each check.
+The dependency sequence below remains the integration order. [FPW](../maintainers/first-playable-world.md) and the linked subsystem trackers own current delivered/unfinished scope, with [FPV](../maintainers/first-playable-validation.md) coordinating experience evidence. The [original implementation baseline and risk assessment](../verification/first-playable-world/2026/2026-10-24-integration-disposition.md#active-implementation-plan) are historical context, not startup instructions for a resumed task.
 
 ### Exact contribution implementation slice
 
@@ -280,51 +263,9 @@ no physical action, permission or current-format record changes.
 
 ### Remaining-work inventory
 
-Core runtime work in CTR01–CTR10, SPK01–SPK11, SV, SH07–SH12,
-CP01–CP10, RW01–RW06 and FPW01–FPW05 is installed. Unchecked qualification
-rows are not automatically missing mechanics. The complete changed-source review
-and its concrete repairs are recorded in the [combined verification report](../verification/first-playable-world.md#requested-complete-implementation-review--october-20).
-The earned camp and resident databases were reconstructed through current
-checkpoint restoration, preserving complete history, permissions and financial
-commitments. Earlier temporary checkpoint files and verification tools are now
-unavailable; reuse their committed result summaries, preserve protected databases
-and reconstruct only current data required by a changed dependency. The
-[verification report](../verification/first-playable-world.md) identifies new private outputs.
+[FPW shared integration](../maintainers/first-playable-world.md) owns the current integration and complete-path checks; its linked CTR/SPK/SV/SH/CP/RW trackers retain exact subsystem criteria. [FPV](../maintainers/first-playable-validation.md) owns participant evidence. Unchecked qualification is not automatically missing mechanics. The [adoption-time disposition](../verification/first-playable-world/2026/2026-10-24-integration-disposition.md) preserves prior revisions, results, resource limits and incomplete work without maintaining a second live checklist here.
 
-| Remaining category                 | Concrete completion work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Runtime defects/performance        | Native route, danger-source and conservative collision corrections below are delivered; investigate the remaining measured complete-path bottlenecks. Preserve exact logical operations, current physical admission, private evidence and committed effects. Requested-speed, dense-alarm and command/render latency gates remain failed until the matching complete callers pass; no gameplay retuning is authorized for a favorable measurement.                                                                       |
-| Affected verification              | Exact serial/ahead outcomes, host-boundary continuation, stale source/life/map/clock/timeline fences, capacity and shutdown pass, as do the affected busy-work, animal and cooperation cases. Authored repair materials/quantities/roles pass native, SQL, help/cost and ordinary browser consumers; the full configured gate passes at `d4b62732e`, including restored construction receipts and offer previews. Reuse unchanged physical-contact, visibility, grant, manufacture, camp, recovery and browser evidence. |
-| Final consolidated qualification   | Complete the remaining concrete CTR/SPK/SH/CP/RW/FPW matrices through existing tools and real consumers, including current-format restoration, negative permission/privacy cases, connected UI and cold/warm complete-path performance. SV08's technical loss/depletion/restart checks now pass. Each owning tracker retains its exact unrun cases; a passing unit suite does not stand in for them.                                                                                                                     |
-| Independent behavior and invention | Retain the genuine live-generated sling's manufacture, hunt-to-meal and later reuse. The meaningful best-known-alternative comparison, independently chosen resident cooperation/travel/discovery and complete live reaction path still require available execution capacity and the task's existing spending admission. Controlled commands do not qualify independent motivation.                                                                                                                                      |
-| Human/external evidence            | Actual participant comprehension, enjoyment, pacing and return play remain unperformed. The supervised/disposable session packet is prepared; operator/access/consent and authorized participant arrangements are still needed. No recruitment, launch or retained-progress promise is authorized by preparation alone. The unresolved original provider execution must acquire definitive terminal/non-dispatch evidence before its occupied capacity or commitment can be released.                                    |
-
-Ada's twelve ordinary trials remain **0/12 physical counterattacks**. Preserve her
-personality and that explicitly open gate; do not repeat unchanged trials, wording
-diagnostics or temperament experiments. Observed-motion projectile leading and the
-practical gate geometry are already accepted and reflected in their specifications.
-The ordinary bear's routine food trip now preserves its separate territorial
-pursuit allowance; final performance must include that corrected behavior.
-
-Reuse the existing [combat](../verification/combat-and-threat-responses.md),
-[speech](../verification/speech-and-social-perception.md) and combined-world
-reports, retained complete checkpoints and evolving verification tools. Keep
-immediate checks for permissions, privacy, current-format storage and committed
-effects. Consolidate overlapping verification and documentation after coherent
-runtime work; fixture repair is verification activity, not product delivery.
-Reopen valid evidence only for a concrete defect or materially changed dependency.
-Local safety commits do not create new documentation or qualification boundaries.
-
-The complete configured gate passes **833/833 tests at `d4b62732e`** in 676.02
-seconds, all static stages and the production build. This includes the retained
-source/order/collision, feeding, blocked-travel, map-publication, restored-receipt and offer-preview corrections.
-The actual earned camp passes rain-end/full drying; bare-hand loss recovery,
-scar treatment, original-corpse pickup/replay and PostgreSQL restoration pass.
-The measured route/shape/sight corrections and rejected trials retain their exact
-outcomes in the verification report; they do not establish whole-server speed or
-retained-memory acceptance. Keep the task incomplete while agreed technical
-checks or demonstrated in-scope defects remain; unavailable human or external
-execution evidence stays explicitly open.
+Ada's failed cohorts and the decision against unchanged repeats remain open in CTR. Measurements do not waive speed passes or human/external evidence. Consolidate overlapping verification under [the current verification policy](../../.agents/rules/verification.md); a new commit does not invalidate unchanged evidence.
 
 ### Restored construction effects
 
@@ -333,7 +274,7 @@ timeline. Actual partial-hearth restore and same-timeline duplicate refusal pass
 as do rollback, lost-acknowledgement recovery and preceding-format rejection.
 The two existing storage owners add one indexed timeline read only on commits
 with construction effects; no per-tick scan or new cache is added. Database marker
-18 refuses older development databases without conversion. [Current evidence](../verification/first-playable-world.md#survival-growth-and-restored-construction--october-22)
+18 refuses older development databases without conversion. [Current evidence](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#survival-growth-and-restored-construction--october-22)
 retains the failure and correction; the full configured gate passes at `0429ab100` (831 tests, 531.00 seconds).
 
 ### Bow reach and practical hunting
@@ -359,220 +300,9 @@ independent willingness retain their separate acceptance gates.
 
 ### Simple escape and entity-local navigation waits
 
-#### Current performance implementation — October 23
+Current animal behavior and the selected sight/escape tradeoffs are maintained in the [animal execution design](performance-overhaul/animal-execution.md), [combat profile](../worlds/base/combat.md) and [performance work](../maintainers/performance.md#pf09-animal-execution-continuation). Exact physical contact, attack/projectile, selected watch/reach and speech boundaries retain their existing owners. Animal navigation waits remain entity-local; other requests retain the world-hold default.
 
-Mike authorizes the ranked performance work in chat, using the adaptive workflow
-proposal for this continuation. Continue from `4e58e6e4f` on the existing branch;
-do not refresh history, switch checkouts or merge. One AI owns the work. The task's
-total spending ceiling is now $50, including earlier uncertain commitments.
-
-The measured 20-animal caller spends most native work on future perception,
-current exposure, movement, snapshots and interval/status preparation. Cost grows
-with nearby pairs, path pieces, changes and repeated shared preparation. Reuse the
-existing spatial, perception, status, transition, storage and projection owners.
-New caches must name their physical/definition dependencies, remain derived and
-bounded, and rebuild after restoration. Paid inference is not needed for this work.
-
-Implementation batches and completion criteria:
-
-1. **Shared obvious reductions:** remove repeated preparation within navigation
-   readers; update spatial bins only for physical changes; share unchanged
-   movement/status inputs and avoid unnecessary editable reads/copies. Review
-   related storage/projection paths for concrete duplicate work. Build the complete
-   connected batch before measurement.
-2. **Ordinary awareness:** install world-authored sampled sight, replace routine
-   future visibility/danger forecasting with current checks, and preserve exact
-   physical contact, attack/projectile, chosen watch/reach and speech boundaries.
-   Use the existing spatial filtering and change tracking. Extend pair/open-area,
-   distant-range and blocker reuse where the existing owners support a small
-   implementation; keep world tuning in installed definitions. Vision-cone
-   filtering must respect its separately planned authored behavior.
-3. **Remaining connected reductions:** reduce repeated local forecasting and
-   movement/snapshot work, static versus moving-body route checks, first-use
-   navigation and fallback search. Batch current geometry/awareness work and use
-   existing execution budgets. Avoid a second scheduler, geometry authority or
-   worker framework. Reject an idea only for a concrete lack of benefit or
-   disproportionate complexity; record each ranked item's actual disposition.
-
-Run focused correctness/current-format/physical-continuation checks through actual
-consumers as needed, with consolidated static/build verification and affected-diff
-review after connected changes. Do not benchmark individual helper edits. At each
-completed batch use fresh 10/20/50-added-animal server worlds at **1× only**, the
-same seed, alarm setup, observation settings and short 30-real-second window.
-Retain alive/alarmed counts, actual game progress, command waits, host load,
-post-collection memory and zero-cost accounting. Compare equal setup honestly;
-faster completion can end alarm episodes. Only the final campaign may include
-100/200/500, and only if 50 sustains useful normal-speed progress. These are
-measurements, not new population acceptance gates. Do not run a broad stress suite.
-
-Current progress: all eighteen performance mechanisms are implemented through
-existing consumers, including regional sight proofs, static corridors, range-entry
-deadlines, conditional cone rejection, SQL/view reuse, expanded navigation warming,
-bounded geometry workers and fair preparation checkpoints. The prior exclusions
-are superseded; performance takes priority over code size. Main retains 360°
-vision and its accepted gameplay rules. No paid calls or branch/worktree switches.
-
-Requested review inspected the complete optimization change from `4e58e6e4f`
-(about 1,200 changed executable lines) and its consumers. It reproduced and fixed
-the simulation crash: stopping an old escape while waiting for another route now
-refreshes its forecast, and silent action completion records its behavior change.
-The same 50-animal scenario continues through 252 game seconds; current-format
-warm/restored continuation agrees exactly across seconds 42–48. Regional sight
-preparation now stops after 65 opaque candidates and identical rays share work.
-All 38 focused checks and the consolidated full check (834 tests/build) pass. Existing SQL
-isolation/rollback and Chrome navigation/camera evidence remains applicable.
-Fresh 10/20/50 server runs reach 99.9%/49.4%/7.9% of normal speed without errors;
-larger populations remain skipped under the agreed stop rule. Independent-character,
-Ada and participant gates remain in their owners; unchanged trials are not repeated.
-The complete implementation and evidence live in
-[one campaign record](../verification/performance/2026-10/animal-reductions.md).
-
-Latest requested diagnosis is complete: the same 20-added-animal (40 total)
-30-second, 1× case reaches 48.1% of normal speed without instrumentation. Main
-simulation occupies 75.7% of non-idle CPU samples; editable-state machinery alone
-uses 25.6%, across those operations. A targeted repeat classifies 886 of 925
-shared boundaries as elapsed forecast deadlines. The first proposed correction
-is to retain unaffected participants' forecast/status results when a local
-deadline expires, then reduce editable reads and publication work. These runtime
-corrections remain unimplemented; existing safety and gameplay rules stay fixed.
-The existing driver now supports opt-in main-isolate CPU capture, with guarded
-boundary counters and failure cleanup. The campaign record owns details and limits.
-
-Accepted implementation revision: 2026-10-22T22:10:00Z (Mike's current chat).
-Replace ground escape's simultaneous route comparison with sequential attempts:
-choose the widest angular gap between personally perceived threats, break tied
-gaps randomly, and choose one saved 10–15 metre leg length. Accept the first
-physically valid route achieving 75% displacement. Otherwise try at least three
-angles and accept the longest reaching 50%; without that, try up to ten angles
-and accept the longest usable displacement. Nearby alternatives precede broader
-angles. Keep a useful current leg until arrival, obstruction or significant new
-danger; periodic safety review must not rerun the route search. Basic support,
-body clearance and ordinary navigation remain strict; observing every corridor
-and optimizing danger separation are no longer escape requirements.
-
-A navigation request selects world-blocking preparation (default for existing
-callers) or an entity-local wait. The authored animal profile selects entity-local
-waits. Pending animals stand still while needs, other actors and game time advance.
-Preserve one saved attempt across clock/needs updates, and validate current body,
-origin, geometry, life and proposal identity before consuming asynchronous results.
-Fresh danger, cancellation, death or restoration invalidate obsolete results.
-Remove attack windup/aim as animal alarm evidence; personally observed executed
-attacks, released shots, projectile passage/contact and sounds remain real causes.
-
-Implementation is complete in the existing animal, spatial/navigation, validator,
-native clock and coordinator owners. Cost grows with active animals, sequential
-attempts and physical path segments. Unchanged physical comparisons share body
-preparation through existing owners; actual body/geometry/membership changes end
-reuse. Native/SQL continuation, ordinary world-holding requests, opposing threats,
-incoming direction, a four-shot deer hunt and actual harvest/share are verified.
-The complete configured gate passes 834 tests and the production build. Actual
-100/500 all-alarm server measurements remain overloaded; there is no population
-throughput target or further optimization cycle in this delivery. See
-[current evidence](../verification/first-playable-world.md#sequential-escape-local-path-waits-and-hunting--october-22).
-
-Navigation completion and history projection now preserve derived preparation
-through the existing completed-transition owner. Editable builders and private
-atomic installations remain conservative, and discarded history previews cannot
-claim the live world's preparation. Complete native world/events, cold/fork and
-SQL history/privacy checks pass. Earlier Main measurements reached about 2.58×
-at requested 3× under a different host load; this does not establish ordinary-world
-performance acceptance or a causal speedup from reduced rebuild counts.
-
-The ordinary dropped-post/pickup/gate caller reproduced a stale contents index after
-an inner atomic transfer: the post returned to inventory but its empty pile remained
-an obstacle. Exact placement membership now follows that private compound when it
-installs into its caller; general publication proofs remain withheld until sealing.
-An unknown replacement of the object revision owner rebuilds membership instead of
-inheriting the original world's index. Ordinary pickup/drop, nested transfers, basket
-exposure/custody, SQL privacy and cold membership checks pass.
-
-The 500-animal native caller previously performed 1,490,697 condition-rule checks
-while advancing 0.5 game seconds. Serial navigation waits repeated the start phase
-at the same game time. The existing immutable native continuation now retains the
-input to its last complete condition check. Exact changed entities select subjects
-in their original order; shared policy/map changes, unknown lineage, time progress,
-foreign-subject conditions and contribution lifetimes retain full checks. Eligibility
-is prepared once per deeply immutable installed rule set through the existing
-condition walker. No predicate truth, mutable baseline, scheduler or saved record
-is cached. Complete native world/events/randomness agree; checks fall to 325,284,
-with 145,711 subject reconciliations avoided. Cold continuation, clock/fork changes,
-foreign sources and actual source death pass. The 500-animal server still fails
-requested speed under severe host contention; this does not establish capacity.
-See the [current measurements](../verification/first-playable-world.md#unchanged-time-condition-checks--october-22).
-
-The current inventory-growth trace locates repeated whole-entity enumeration at
-nested native-command handoffs, despite unchanged physical root membership. The
-implemented correction is confined to the existing logic of the root index, draft publication and native continuation owners. Current membership enters a child draft only from exact audited writes; unknown
-replacement/order changes retain full rebuilds. Owned native successors are sealed
-only when the entry world is immutable. No mutable-builder or persisted cache contract changes. Cost grows
-with animals starting work × unrelated carried lots; shared IDs remove that multiplier at nested handoff. Membership/order changes invalidate reuse. The same 30-game-second native/navigation
-caller retains its complete world/RNG digest with fewer entity reads. Twelve
-nested/mutable/fork/replacement cases and 375 canonical selection comparisons
-pass. The configured gate passes; broader complete-server qualification remains
-open; [the evidence](../verification/first-playable-world.md#native-command-handoff-and-inventory-growth--october-22) distinguishes native improvement from capacity acceptance.
-
-Failed foraging walks now notify the existing controller and honor its installed
-blocked-review duration, preserving a hunt/regroup's original deadline and traveled
-distance. This removes the reproduced tiny-step restart loop without changing
-movement, collision, needs or choice policy. The matching server advances
-3,294.59298485428 game seconds in 60,056.2145 ms versus the earlier 720; requested
-progress remains 3,598.65787002, so the speed gate stays open.
-
-The derived camp map now becomes deeply immutable only when its base and exact
-physical inputs are immutable, including preparation before publication. Existing
-geometry/perception consumers reuse it; mutable builders and changed geometry
-retain their fallbacks. Exact future crossing runs reset at a new native interval,
-preserving the complete 300-game-second outcome rather than accepting rounding
-differences. Source edits, forks, cold restoration, ahead/serial preparation and
-actual gate changes pass. The subsequent complete-server window remains a failed,
-contended measurement: host load rises 36.22 → 63.60 on ten cores and database/timer
-waits increase sharply. Keep it separate from the matched finite native comparison;
-repeat capacity only after a concrete implementation or observable host change.
-[Current results and limits](../verification/first-playable-world.md#final-movement-and-geometry-corrections--october-22).
-
-The current earned-camp profile attributes 119 of 897 native samples to foraging
-intention. Shared feeding now rejects unsupported source shapes before sight;
-foraging selects their union with actors, all resources and personally retained
-food sources. Cost grows with due foragers × nearby roots, with no cache. Current
-components/retained IDs preserve prey, company, depleted-resource observations and
-forgetting. The complete earned-camp result remains exact; 897 of 6,533 foraging
-sight candidates are excluded and total exact sight tests fall 10,734 → 9,789.
-Grazing, contested feeding, rot/death interruption and cold continuation pass.
-Current timing is contended and establishes no throughput win or capacity pass.
-No diet, sensing, movement, cadence, saved format or gameplay limit changes.
-
-Sharing body preparation across each synchronous ground/air route comparison
-preserved the complete fixed-world hash but did not justify its extra code:
-100-animal CPU was 5,550.708 ms before / 5,480.216 ms after; the 500-animal server
-windows advanced only 0.202635652 / 0.862417696 game seconds in about 30 seconds
-at requested 1×/8×. The experiment is reverted; no read cache or scorer argument
-remains. The accepted physical rules and the prior passing source are intact.
-
-Current read-only source and witness selection, immutable source-class membership,
-and canonical physical-root ordering are implemented. The source oracle checks
-164,100 original predicate results, eleven same-draft changes and 500 selected-query
-comparisons across twenty ordinary/cold/fork/geometry/order cases. Mutable/private
-queries retain their live path: rebuilding class membership there was slower.
-One native controller still owns movement, danger, sound and continuation; exact
-life/action/sight checks admit every effect. Root deletion/reinsertion and an older
-contained object returning to the world now preserve saved/cold entity order.
-
-The current 500-animal profile also identifies occupied-body preparation and exact
-movement sweeps. A controlled wide, reclining body reproduced a missed collision
-(16 m occupied height, indexed clear, exact blocked). Shared candidate bounds now
-cover standing/reclining dimensions and the moving body's full height. Cell
-coordinates are prepared once, and populated cells avoid JS argument-count limits;
-there is no new saved data or gameplay bound. Exhaustive comparisons cover 980
-sweeps and 140,000 entries in one cell, including working-draft and cold reads.
-
-A smaller 4 m actor-only grid reduced candidates but did not demonstrate complete
-speed improvement; it is removed. Both actor/general queries retain 28 m cells.
-The trial's server windows advanced 0 / 0.593481232 game seconds in about 30 seconds
-at requested 1×/8×; host load rose from 66.80 to 80.80 on ten cores. The earned-camp
-30-second native outcome remained exact. Keep these failed/contended measurements
-separate from the retained collision correction and the final current-code gate.
-Complete server/native speed, command/render latency and retained-growth acceptance
-remain open, with exact workload/results in the combined verification report.
+The [continuation planning and observations](../benchmarks/first-playable/2026/2026-10-24-animal-continuation-planning.md) preserve the past task sequence, actual 10/20/50 workloads, budgets, failures and later implementation dispositions. Those diagnostics create no new population promise or authorization to repeat unchanged runs.
 
 ### Authored repair input cardinality
 
@@ -591,34 +321,14 @@ construction, completion, wire/help/cost projection, malformed/gapped/oversized
 binding refusal, Stop, partial-work PostgreSQL reopen and exact receipt replay.
 Main also passes production-browser repair controls. Integrity reductions and
 contrast stock are controlled fixtures, not structural-impact, natural acquisition,
-invention or human evidence. [Qualification](../verification/first-playable-world.md#authored-repair-materials-and-complete-consumers--october-22).
+invention or human evidence. [Qualification](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#authored-repair-materials-and-complete-consumers--october-22).
 The configured gate passes all 831 tests and the production build at `ba4e56430`.
 
 ### Measured speech-attribution correction
 
-The requested review measures the actual native consolidation caller with controlled
-128/512/2,048-record repeated-speech histories. The baseline at 2,048 records takes
-8,279.507958–8,642.804875 ms. The source collector repeatedly sorts and hashes its
-growing group after every record; cost grows quadratically with selected records
-and overlapping summary coverage. The shared collector now accumulates exact revisioned source references
-per group once, then sorts/hashes each completed group once. This preparation remains
-local to one call, with no cross-world or privacy cache to invalidate. The matched complete native caller takes 171.655917–238.440292 ms afterward,
-with identical input/summary hashes and current-format validation. Overlapping
-child coverage, revision conflicts and distinct unknown sources retain their
-meaning; the existing SQL-backed recent-speech context check passes. This does not qualify SQL,
-provider, browser or overall simulation speed.
+The shared speech-source collector accumulates exact revisioned references per group, then sorts/hashes each completed group once. Preparation stays local to one call. Overlapping child coverage, revision conflicts, distinct unknown sources, input/summary hashes and current-format validation retain their meaning. [The complete-caller measurements](../verification/first-playable-world/2026/2026-10-24-integrated-implementation-review.md#requested-complete-implementation-review--october-20) do not qualify SQL, provider, browser or overall simulation speed.
 
-**Current completion boundary:** runtime and complete source review are delivered;
-`59f7b7fc2` closes complete-grant, salvage-capacity and unsupported-ground findings.
-`f46de241c` includes measured route, physical-shape and body-stopping corrections.
-[Current evidence](../verification/first-playable-world.md#route-publication-and-physical-stopping-review--october-21)
-records exact outcomes, focused checks and the passing 831-test configured gate.
-[The requirements map](../maintainers/first-playable-validation.md#active-build-and-requirement-coverage)
-separates delivered mechanics from unperformed qualification. Complete speed still
-fails; the first zero-budget server window's memory-search error has no proved
-cause and does not recur in the next window. Uncertain provider execution blocks
-independent resident qualification, actual participants are unavailable, and Ada's
-unchanged personality retains the explicit 0/12 gate.
+[FPV’s requirements map](../maintainers/first-playable-validation.md#active-build-and-requirement-coverage) owns delivered scope and outstanding qualification. Preserve failed speed, independent-character and human-evidence gates; no historical source-review pass closes them.
 
 Completed route answers now share one owned draft per consecutive batch,
 retaining each answer's action/body/geometry checks, reconciliation and sequence.
@@ -628,63 +338,22 @@ unchanged local read, and participant preparation reads current roots without
 creating writable copies. A blocked walk prepares conservative body candidates
 and lazy shapes once; first contact only proposes adjacent points at the existing
 sixteen-step precision, both checked by the original predicate with full-search
-fallback. [Measured results and limitations](../verification/first-playable-world.md#route-publication-and-physical-stopping-review--october-21)
+fallback. [Measured results and limitations](../verification/first-playable-world/2026/2026-10-24-construction-and-movement-review.md#route-publication-and-physical-stopping-review--october-21)
 retain the matched complete outcomes, cold/edit checks and failed speed gates.
 No new authority, physical rule, cache of character truth or saved representation
 is introduced.
 
-The 100-alarmed-animal profile attributes 2,405 of 6,292 native samples to
-predicting perception changes. Body visibility is the OR of three height samples,
-but preparation computes all three even when one ray family is unobstructed for
-the complete linear motion piece. Stop preparing later samples after that proof;
-range boundaries and all later pieces remain exact (about 5–10 logic lines).
-No approximate pruning, new index or persistent prediction is needed. Compare
-fixed complete dense/camp outcomes, alternating blocked/clear pieces, slopes,
-profile contrasts and current/cold consumers before repeating the changed server
-workload. Rejected rule-reader/classification trials stay out of runtime.
+Body visibility is the OR of three height samples. Stop preparing later samples only after proving one ray family unobstructed for the complete linear motion piece; range boundaries and later pieces remain exact. Preserve complete dense/camp outcomes, blocked/clear pieces, slopes, profile contrasts and cold consumers. The [native preparation campaign](../benchmarks/first-playable/2026/2026-10-24-native-preparation-and-publication.md) owns attribution and rejected trials; this contract authorizes no unchanged repeat.
 
-The complete camp profile attributes 1,886 samples to root enumeration,
-including repeated ordered tree walks of an unchanged mutable base while a
-working draft owns all edits. Retain only that base's root IDs for the lifetime
-of its child draft (about 10–20 logic lines), with current values and existing
-membership hooks still applied on every read. Mutable builders and unknown
-replacement reads continue rebuilding. Compare fixed complete camp/dense callers
-and insertion/removal, nested drafts and direct mutable-builder edits. This
-adds no cache spanning mutable worlds; rejected exact-axis preparation stays out
-of runtime because it did not improve the complete dense operation.
+Root-ID reuse is limited to an unchanged mutable base while its child draft owns all edits. Current values and membership hooks still apply on every read. Mutable builders and unknown replacement reads rebuild. Preserve insertion/removal, nested drafts and direct builder edits; no reuse spans mutable worlds.
 
-The fixed dense replay also builds 358 spatial indexes/48,160 entries in half a
-game second. Ordinary nearby-food/danger reads rebuild complete root bins while
-body collision already maintains exact draft-local bins. Generalize that existing
-owner to all physical roots and use it for nearby-entity/body queries (about
-35–60 changed logic lines), retaining current copied positions, canonical order,
-body bounds and complete changed-ID validation. Unknown/replacement/structural
-writes keep the full fallback; each working draft/kind owns its own preparation.
-Measure complete camp/dense callers and actual food/danger consumers, including
-insertion, removal, participation/body changes, nested drafts and cold recovery.
+Nearby-entity/body queries share the existing draft-local physical-root bins. Retain copied positions, canonical order, body bounds and complete changed-ID validation. Unknown/replacement/structural writes keep full fallback; each working draft/kind owns its preparation. Required consumer comparisons include food/danger reads, insertion/removal, participation/body changes, nested drafts and cold recovery.
 
-The dense replay still performs 42,588 native sight-source checks, excluding
-40,420, and the measured profile spends 985 samples classifying danger sources.
-Select common physically eligible sources once per installed response profile
-before observer fan-out (about 80–110 logic lines at the danger/prediction owners).
-Merge each animal's own retained exact sources separately in canonical order;
-actual sight and current eligibility remain per observer. Share preparation only
-inside this unchanged query, with no saved knowledge or cross-observer evidence.
-Unknown profiles and body-contact observers retain complete conservative paths.
-Compare complete fixed camp/dense outcomes and cold consumers, including retained
-remains, missing profiles, ended alarms, current attacks and capability contrasts.
-Only then repeat the changed full-server pressure workload; unchanged slow
-predicate-cache trials are not repeated.
+Select common physically eligible danger sources once per installed response profile before observer fan-out. Merge each animal’s retained exact sources separately in canonical order; actual sight and current eligibility remain per observer. Reuse remains inside the unchanged query, with no saved knowledge or cross-observer evidence. Unknown profiles and body-contact observers retain conservative paths. Preserve retained remains, missing profiles, ended alarms, current attacks and capability contrasts.
 
 ### Prepare independent native routes before serial admission
 
-At `ca25b8645`, the complete server's 500-animal pressure windows publish 38/45
-native results and dispatch 38/45 navigation tasks while advancing zero seconds.
-The native loop stops at its first pending animal, so the worker receives one
-animal at a time and each answer repeats zero-time status/decision preparation.
-Retired-answer counts include consumed proposals; they do not establish stale
-answer failures. This is measured serial preparation, not a reason to change
-candidate counts, movement, decision order or elapsed-time rules.
+The [native preparation campaign](../benchmarks/first-playable/2026/2026-10-24-native-preparation-and-publication.md) records the serial-worker bottleneck. Retired-answer counts include consumed proposals and do not alone establish stale-answer failures. Ahead preparation must preserve candidate counts, movement, decision order and elapsed-time rules.
 
 Reuse the existing candidate producer and exact batch identity for pure ahead
 preparation of other due grounded alarms (estimated 150–250 logic lines across
@@ -723,12 +392,7 @@ I/O yields remain bounded by the existing cooperative checkpoints.
 
 ### Select physical danger candidates before native exposure
 
-The 500-animal server run visits 1,414,389/2,061,696 nearby danger candidates
-across 5,122/8,004 reads while advancing 0.494/0.645 game seconds. Most are bodies
-that cannot match the installed danger profile. The existing exposure phase
-already owns stable physical inputs and selected-ID spatial queries; reuse those
-instead of collecting every nearby body separately for each animal (about 100
-logic lines in the danger, exposure and kernel owners).
+Danger preparation reuses the existing exposure phase’s stable physical inputs and selected-ID spatial queries instead of collecting every nearby body separately for each animal. [The native preparation campaign](../benchmarks/first-playable/2026/2026-10-24-native-preparation-and-publication.md) owns the diagnostic workload and results.
 
 Cost grows with profiles × phase sources plus observers × relevant nearby sources.
 Prepare conservative species/body/natural-attack-capability sets once per profile
@@ -741,18 +405,7 @@ not the wider people index. Compare complete fixed native worlds, cold restorati
 life/corpse/action contrasts and the actual server caller; report remaining speed
 and command latency failures without changing rules or targets.
 
-The follow-through CPU capture attributes 2,158 of 9,302 native samples to occupied
-body sweeps, including 760 nearest-owned samples in Rapier and 144 in shape
-construction. Nearby point bins conservatively include many boxes outside a
-short body's actual swept volume. Before preparing shapes or crossing into WASM,
-reject disjoint plain-box bounds in the existing collision adapter (about 30 logic
-lines). Include the movement skin, both endpoints, full body height and conservative
-single-precision/tolerance padding. Surface/panel shapes retain their exact path.
-Cost grows with broad-phase candidates; existing shapes/indexes remain shared and
-no cache or writable state is added. Every call reads current body/box/segment
-values. Compare raw Rapier at near-contact, height, size and coordinate contrasts,
-then complete native outcomes and actual server/camp callers. A bounds overlap
-never establishes a collision or permission.
+Before shape preparation or WASM calls, collision preparation may reject disjoint plain-box bounds only conservatively. Include movement skin, both endpoints, full body height and single-precision/tolerance padding. Surface/panel shapes retain their exact path. Reuse existing shapes/indexes and read current body/box/segment values; no new writable cache is needed. Compare raw Rapier at near-contact, height, size and coordinate contrasts, then complete native and actual server/camp callers. Bounds overlap establishes neither collision nor permission.
 
 The first survival slice normalizes installed manufacturing outputs and their
 named completion receipts across the existing compiler, kernel, saved validation,
@@ -915,21 +568,7 @@ permitted existing canopy phase, plus nonmaterial/replay/boundary/stale-rights,
 failed/uncertain commit and current PostgreSQL continuation. Main now selects the
 complete site/hearth/barrier/help consumers.
 
-The native proposal and server transaction paths are implemented in the current
-branch. The authority owner locks exact grant rows, rederives ordered revisions,
-records original native-effect identities and publishes its cache after commit.
-The server forwards the unpublished permission view between native intervals and
-forces synchronous storage for grant-bearing progress. The scoped real gather →
-cord → complete canopy, exact root binding, bounded-origin refusal, replay,
-transaction rollback and lost-acknowledgement reopening pass. Retained consumed
-origins now use the existing indexed cold-object lookup for active permission
-edits; revocation removes rights even when restoration removed physical subjects,
-while re-enabling still validates current subjects. Exact production grant/receipt
-query plans use their primary keys on fresh 10,000-row operational fixtures.
-Actual native-clock gathering also forces the material/grant/receipt commit with
-unchanged assembly geometry. TypeScript and production build pass. Wider
-lifecycle/custody and final combined qualification remain open. Ordinary Main now uses the complete selected bundle and its exact natural-source/site policy.
-See [focused evidence](../verification/first-playable-world.md#atomic-source-material-permission).
+[Material-authority evidence](../verification/first-playable-world/2026/2026-10-24-manufacture-and-material-authority.md#atomic-source-material-permission) owns implementation observations and remaining qualification. Active permission edits use indexed cold-object lookup for retained consumed origins. Revocation remains possible after restore removes a physical subject; re-enabling validates current subjects. Ordinary Main selects the complete bundle and exact source/site policy.
 
 Hearth construction uses the existing configuration, native action/reservation,
 spatial, permission/SQL, protocol and placement owners. `construction.yaml`
@@ -953,17 +592,7 @@ affected-diff review, production/config/type checks and real placement interacti
 Consolidate broader final-world/performance/lifecycle cases under the existing
 qualification plan after connected implementations stabilize.
 
-The native hearth work, exact held inputs, cancellation/completion guards and
-current PostgreSQL continuation are qualified. The scoped command, selected-ground actions, character/planning offers and
-separate Build control are implemented. Focused ordinary server/native command
-and PostgreSQL checks pass, as do wide/narrow browser placement, keyboard cancel
-and explicit Start. Choices refresh from definition/authority changes through the
-existing stream rather than polling. Preview awaits required existing navigation
-preparation and rechecks current geometry, permissions and physical life; the
-actual deferred route and changed-geometry refusal pass. Browser unknown-receipt recovery passes. A real browser departure cancels the
-unfinished work under existing policy, releases four stones and never replays the
-recovered start. The control preserves the same owner’s
-draft, fences stale material/permission checks and uses existing renderer placement.
+Hearth controls share the existing stream, placement and receipt owners. Refresh choices for definition/authority changes, preserve the same owner’s draft, and fence stale material/permission checks. Preview awaits required navigation preparation and rechecks geometry, permissions and physical life. [Hearth qualification](../verification/first-playable-world/2026/2026-10-24-hearth-and-finite-work.md#ordinary-hearth-consumers) owns browser, cancellation and continuation observations.
 
 Cost growth comes from nearby bodies and dangers, routes and geometry, recipes
 times permitted lots, concentrated offers/listeners, exposed materials and retained
@@ -1021,7 +650,7 @@ publication. Previews now end after the existing shared admission checks; real
 execution still repeats them and commits normally. This adds no retained cache or
 invalidation contract. The four independent growth cases compare complete projection/choice/decision
 preparation and actual durable acceptance, including refused/stale offers and
-exact material-use permission checks. The [current evidence](../verification/first-playable-world.md#concentrated-cooperation-growth-and-offer-previews--october-22) retains both improvements and remaining costs.
+exact material-use permission checks. The [current evidence](../benchmarks/first-playable/2026/2026-10-24-cooperation-and-browser-cost.md#concentrated-cooperation-growth-and-offer-previews--october-22) retains both improvements and remaining costs.
 
 Software correctness, independent character/invention outcomes, and real-player comprehension/enjoyment are distinct exits. Complete every available authorized implementation and technical check, prepare an operable participant session, and retain missing human evidence as an explicit acceptance blocker. Neither an AI-controlled browser nor a successful twelve-run Ada sample proves that real players enjoy the complete opening.
 
@@ -1053,30 +682,13 @@ selected outputs and current PostgreSQL continuation, followed by ordinary brows
 controls/receipt recovery. Reuse qualified manufacture and hearth evidence; leave
 combined final-world, independent behavior, workload and participant gates open.
 
-The configured native batch compiler and existing-executor definition guards
-are implemented. Focused actual manufacture, selected carried-tool/no-substitution,
-remaining-step PostgreSQL continuation and malformed-pin checks pass. Gathering
-now records its exact source definition for all active work, and a finite request
-records its chosen carried tool or bare hands. Ordinary unrestricted gathering
-keeps its existing carried-tool discovery; changed source/tool definitions stop
-instead of changing an in-progress chosen operation. The scoped repeat preview/command and ordinary action entry/form are implemented.
-Focused public commands pass current preview witnessing, two real batches, exact
-receipt replay, busy enqueue and Stop after input debit without automatic restart.
-Ordinary browser count/Start/Stop, narrow layout and keyboard checks pass.
-Focused checks also cover one retained hammer through PostgreSQL continuation,
-source collection-time changes, changed reviewed tools and receipt recovery before
-rebinding. Native/server/browser logs are retained under
-`/tmp/openlegend-first-playable-batch-*`; fitted wide/narrow captures are retained
-under `/tmp/openlegend-first-playable-batch-fitted-*`. A panel that moved offscreen
-when its neighboring panel was hidden now rechecks its position when its dock
-changes size. These checks added no provider cost. Meal controls and remaining
-lifecycle, scale, NPC and final-world cases stay unfinished.
+Gathering records the exact source definition for active work; finite requests record the selected carried tool or bare hands. Unrestricted gathering retains carried-tool discovery, while changed source/tool definitions stop an in-progress selected operation. Controls preserve the existing finite executor and receipts. [Finite-work qualification](../verification/first-playable-world/2026/2026-10-24-hearth-and-finite-work.md#finite-work-native-foundation) owns native/server/browser observations and limitations.
 
 Deliberate meals are connected through the existing finite executor/native Eat,
 scoped review and ordinary Inventory controls. Exact food/body meaning, selected
 own-stock location, actual consumed count and the remaining request survive
 current PostgreSQL continuation. Focused full/short-stock/Stop/definition/access
-checks and the ordinary browser path pass; [evidence and remaining limits](../verification/first-playable-world.md#deliberate-meals-and-actual-finite-work-progress)
+checks and the ordinary browser path pass; [evidence and remaining limits](../verification/first-playable-world/2026/2026-10-24-hearth-and-finite-work.md#deliberate-meals-and-actual-finite-work-progress)
 remain explicit. Finite selections also connect to NPC/freeform request discovery
 and the known-method catalogue. Final combined-world,
 lifecycle/scale, independent-behavior and participant gates stay open.
@@ -1103,15 +715,7 @@ retain independent paid character behavior and final lifecycle/workload gates fo
 consolidated qualification. Finish the grouped/searchable known-method catalogue
 through its current Craft consumer, reusing the same authored category metadata.
 
-Configured gathering/crafting/meal parameter routes now bind through the existing
-activity request host to the same finite compiler. Focused native/scoped-server
-checks pass personal method choices, rejected boolean count/unknown method/unpermitted
-source, two actual crafting batches and exact PostgreSQL completion counts.
-Fixture-provider character parameter selection and the actual typed-grounding
-caller now pass. Explicit hands/exact-tool gathering passes native output and
-ordinary browser checks. The grouped known-method catalogue now passes focused empty-stock, native/server,
-PostgreSQL and ordinary browser checks; lifecycle/scale and independent character
-qualification remain open. No independent character outcome is claimed.
+Configured gathering/crafting/meal parameters bind through the existing activity request host to the same finite compiler. [Finite-request qualification](../verification/first-playable-world/2026/2026-10-24-hearth-and-finite-work.md#finite-requests-and-explicit-gathering-instruments) owns fixture, native/server, storage and browser results; these do not establish independent character behavior.
 
 Gathering controls retain the best-tool-once default, allow bare hands even while
 a compatible tool is carried, and allow one exact carried tool. They reuse one
@@ -1498,5 +1102,5 @@ handoff; mutable builders retain cold queries. This protects spatial membership,
 relationships, reservations, sensory state and storage selection without changing
 saving, permissions or serialized gameplay. Late builder edits and actual SQL
 continuation pass focused checks; complete current qualification follows the
-related remaining changes. The [verification record](../verification/first-playable-world.md#native-relationship-selection-and-safe-publication--october-22)
+related remaining changes. The [verification record](../benchmarks/first-playable/2026/2026-10-24-native-preparation-and-publication.md#native-relationship-selection-and-safe-publication--october-22)
 owns timings, failures and limits.

@@ -1,29 +1,29 @@
-# Adaptive implementation workflow — proposed technical design
+# Adaptive implementation workflow — technical design
 
-| Status      | Current progress                                                                      | Last updated |
-| ----------- | ------------------------------------------------------------------------------------- | ------------ |
-| Not started | Ownership, routing, migration, and verification are designed; adoption has not begun. | 2026-10-22   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Operational guidance and named migrations are verified locally; fresh-session routing remains unobserved. | 2026-10-24   |
 
-Updated 2026-10-21T23:32:40-04:00, America/New_York. Related behavior: [feature specification](01-workflow-feature-spec.md). Exact changes: [edit plan](03-instruction-edit-plan.md). This is a documentation-system change, not a replacement coding harness or a game architecture redesign.
+Design prepared October 21, 2026; authorized adoption October 24, 2026. Related behavior: [feature specification](01-workflow-feature-spec.md). Scope and completion: [adoption plan](03-instruction-edit-plan.md). This is a documentation-system change, not a replacement coding harness or a game architecture redesign.
 
 ## Architecture: a short entry point and one owner per obligation
 
-| Owner                                      | Responsibility                                                                                                    | Loaded when                                                                                                         |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `AGENTS.md`                                | Task mode, authority, hard boundaries, protected save policy, concise communication, completion, top-level routes | All repository tasks                                                                                                |
-| New `.agents/rules/implementation.md`      | Adaptive execution and continuity                                                                                 | Product or maintained code/tooling changes are authorized                                                           |
-| New `.agents/rules/engineering-context.md` | Compact map of affected-contract reads                                                                            | Planning, implementing, or reviewing executable behavior; an explanation only loads the contracts it actually needs |
-| Existing performance skill                 | Short universal cost/design principles plus conditional topic routes                                              | Executable design, implementation, review, or performance investigation                                             |
-| Performance contract and topic chapters    | Current performance requirements, with separately loaded technical detail                                         | Matching mechanism or measurement                                                                                   |
-| Existing verification rule                 | Choosing and interpreting checks; databases, spending, and environment controls                                   | Verification or executable work                                                                                     |
-| Existing review skill                      | Review coverage, finding severity, and follow-up scope                                                            | Required implementation review or explicit review request                                                           |
-| Existing documentation rule                | Short ownership/update policy; conditional route to the documentation-system guide                                | Documentation is being created or changed                                                                           |
-| Existing design skill                      | Proposed product/architecture contracts and approval boundary                                                     | Design requests or material contract decisions                                                                      |
-| Existing rebase skill                      | Base selection and history protection                                                                             | Actual implementation startup or requested reconciliation                                                           |
+| Owner                                   | Responsibility                                                                                                    | Loaded when                                                                                                         |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `AGENTS.md`                             | Task mode, authority, hard boundaries, protected save policy, concise communication, completion, top-level routes | All repository tasks                                                                                                |
+| `.agents/rules/implementation.md`       | Adaptive execution and continuity                                                                                 | Product or maintained code/tooling changes are authorized                                                           |
+| `.agents/rules/engineering-context.md`  | Compact map of affected-contract reads                                                                            | Planning, implementing, or reviewing executable behavior; an explanation only loads the contracts it actually needs |
+| Performance skill                       | Short universal cost/design principles plus conditional topic routes                                              | Executable design, implementation, review, or performance investigation                                             |
+| Performance contract and topic chapters | Current performance requirements, with separately loaded technical detail                                         | Matching mechanism or measurement                                                                                   |
+| Verification rule                       | Choosing and interpreting checks; databases, spending, and environment controls                                   | Verification or executable work                                                                                     |
+| Review skill                            | Review coverage, finding severity, and follow-up scope                                                            | Required implementation review or explicit review request                                                           |
+| Documentation rule                      | Short ownership/update policy; conditional route to the documentation-system guide                                | Documentation is being created or changed                                                                           |
+| Design skill                            | Proposed product/architecture contracts and approval boundary                                                     | Design requests or material contract decisions                                                                      |
+| Rebase skill                            | Base selection and history protection                                                                             | Actual implementation startup or requested reconciliation                                                           |
 
 Use a rule file for the implementation workflow rather than a new discoverable skill. Its trigger is authorized product or maintained code/tooling work, including behavior-affecting configuration, not a keyword or file extension. This adds no skill-description tokens and avoids making “workflow design” activate implementation. The root explicitly links the rule; an incidental link elsewhere is insufficient.
 
-The new engineering map replaces the long technical route catalogue in the root. It is a map, not another mandatory handbook. Read the map once when applicable, then only matching contracts. Keep routes shallow: root → topic map or skill → canonical section. Package guidance retains local boundaries and links to the same owners. Do not copy all policy into package files.
+The engineering map owns technical routes behind the short root entrypoint. It is a map, not another mandatory handbook. Read the map once when applicable, then only matching contracts. Keep routes shallow: root → topic map or skill → canonical section. Package guidance retains local boundaries and links to the same owners. Do not copy all policy into package files.
 
 ### Mode selection
 
@@ -45,7 +45,7 @@ The current request and prior authorization determine mode. A disposable researc
 
 Keep the existing owners and conditional routes for authorization, world/engine separation, complete identity, asynchronous continuation, private knowledge, current-format saving, UI/asset behavior, and performance. The new map preserves these reads for changed producers and consumers, including new files. Reusing a helper is not sufficient if its caller bypasses the contract. A shared defect needs a correction at its common owner; a design seam does not require unused infrastructure.
 
-Guarantees stay strict while check timing remains proportional. A complex contract may need broad verification; a small edit does not inherit every historical check linked from that contract. [Edit plan](03-instruction-edit-plan.md) names the preserved routes and protected policy.
+Guarantees stay strict while check timing remains proportional. A complex contract may need broad verification; a small edit does not inherit every historical check linked from that contract. [The adoption plan](03-instruction-edit-plan.md#scope-and-canonical-owners) links their canonical owners.
 
 ## Performance guidance restructuring
 
@@ -69,11 +69,11 @@ For substantial tasks, the existing plan identifies needed outcomes, suitable ev
 
 Evidence identifies revision/diff, settings, workload, actual consumer, result, and limits. Shared admission, initialization, representation, or scheduling changes can invalidate evidence even if a checked file was untouched. A new commit alone does not. Record why a consequential result is reopened; routine reuse needs no new note.
 
-Performance correctness includes starvation and uncontrolled retention, but intentional history growth is not automatically a defect. For optional stress choose the smallest discriminating workload; accepted population measurements and pass gates retain their separate meanings. [Workflow draft](04-implementation-workflow-draft.md) owns execution; [edit plan](03-instruction-edit-plan.md#4-verification-policy) specifies the policy changes.
+Performance correctness includes starvation and uncontrolled retention, but intentional history growth is not automatically a defect. For optional stress choose the smallest discriminating workload; accepted population measurements and pass gates retain their separate meanings. [Implementation](../../../.agents/rules/implementation.md) owns execution; [Verification](../../../.agents/rules/verification.md) owns check selection.
 
 ## Documentation and continuity
 
-[Documentation system](06-documentation-system-design.md) owns the proposed layout, filing units, indexes, and migration. Adopt its compact operational rules as `docs/documentation-system.md`; this full design package remains optional historical design material. The short documentation policy routes to the relevant section when creating, splitting, moving, or reconciling documents. A local wording correction does not load the entire system.
+The [documentation handbook](../../documentation-system.md) owns layout, filing units and indexes; the [bounded migration](06-documentation-system-design.md#bounded-adoption) defines this project’s adoption scope. This design package is optional context for later implementation tasks. The short documentation policy routes to the relevant section when creating, splitting, moving, or reconciling documents. A local wording correction does not load the entire system.
 
 Keep one short current-progress section in the existing task owner: unfinished scope, important decisions, next action, applicable evidence links, and resources or financial uncertainty needed for safe continuation. Replace stale content. Do not create a plan, progress file, and second tracker for the same work. Current contracts, TODOs, and historical measurements have separate owners and are linked rather than copied.
 
@@ -92,14 +92,14 @@ Choose a different approach when information gain disappears: narrow the questio
 1. **Coordinate and pin the active guidance.** Use the current checkout and instructions at adoption time; this audit used an active worktree at `a67a7790e47a83458d3d42ee9661f1b5871d3b6d`. Do not apply stale line-number patches over the main agent's edits. Record unique constraints and preserve the protected block.
 2. **Resolve policy contradictions together.** Apply the core changes to root, verification, review, documentation, design transition, and contributor guidance in one coherent change. Add the implementation-only rule. Preserve the current test-authoring default and remove contradictory review/timing obligations.
 3. **Shorten required loading.** Move the technical route catalogue into the engineering map and partition performance detail under the explicit chapter routes. Preserve explicit routes and matching-mode semantics. No change to runtime code is needed.
-4. **Install documentation navigation and migrate the named entry points.** Follow [the documentation-system migration](06-documentation-system-design.md#bounded-adoption) after coordination with current writers. Promote current truth out of historical locations, separate growing records, and retain completed-project filing. Do not audit or relocate every old document before the new workflow is usable.
+4. **Install documentation navigation and migrate the named entry points.** Follow [the documentation-system migration](06-documentation-system-design.md#bounded-adoption) in the isolated adoption checkout. Promote current truth out of historical locations, separate growing records, and retain completed-project filing. Do not audit or relocate every old document before the new workflow is usable.
 5. **Review and verify the instruction change.** Content/anchor review, pinned formatting, `pnpm guidance:check`, and the focused dispatch cases below. No game stress, provider calls, dependency installation, new checker infrastructure, or broad gameplay suites are required for prose-only adoption.
 
-No instruction update is being applied in this side conversation. No active process is being stopped. This package is saved outside the worktree deliberately.
+Adoption is authorized in this conversation and isolated from the main checkout. The installed operational owners govern their matching task modes; the design/audit package is optional reference context.
 
 ## Focused routing and behavior checks for later adoption
 
-Use the existing CG05 approach on the agent runtime actually used for development. A small combined read-only routing exercise can cover several rows; do not run one costly agent for every sentence. These are not instructions to run agents in this side chat.
+Use the existing CG05 approach on the agent runtime actually used for development. A small combined read-only routing exercise can cover several rows; do not run one costly agent for every sentence. The present side conversation prohibits sub-agents, so fresh-session observations remain explicitly unverified; static routing is not a substitute.
 
 | Case                                                       | Expected evidence                                                                                      |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
@@ -125,6 +125,6 @@ An efficiency improvement must retain accepted scope and correctness. Reduced to
 ## Maintained records
 
 - Adoption and unresolved dispatch: existing `docs/maintainers/agent-guidance.md`.
-- Guidance architecture: `.agents/README.md` after adoption.
+- Guidance architecture: [system guide](../../../.agents/README.md).
 - No new game runtime, schema, permissions, credentials, or financial caps.
-- Exact migrations and replacement text: [edit plan](03-instruction-edit-plan.md).
+- Scope and remaining acceptance: [adoption plan](03-instruction-edit-plan.md).

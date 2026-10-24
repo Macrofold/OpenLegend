@@ -234,5 +234,5 @@ The [roaming profile](first-playable-roaming.md) and [technical design](../../pr
 ## Maintained records
 
 - Implementation: [combat and threat response tasks](../../maintainers/combat-and-threat-responses.md); the existing animal adapter dependency remains linked from [base-world work](../../maintainers/base-world.md).
-- Limits and constraints: [base-world body and escape inventory](../../limits/base-world.md#bw12--remains-and-native-escape), with [navigation bounds](../../limits/spatial.md#sp01) and [recurring-work requirements](../../performance.md#design-recurring-work-before-implementation).
+- Limits and constraints: [base-world body and escape inventory](../../limits/base-world.md#bw12--remains-and-native-escape), with [navigation bounds](../../limits/spatial.md#sp01) and [recurring-work requirements](../../performance/preparation.md#design-recurring-work-before-implementation).
 - Related design: [feature specification](../../projects/combat-and-threat-responses-feature-spec.md) and [technical design](../../projects/combat-and-threat-responses-tech-design.md). The implementation tracker owns staged acceptance and evidence; the project documents own integration with person cognition and combat input.

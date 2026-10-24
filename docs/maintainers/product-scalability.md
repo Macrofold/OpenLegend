@@ -175,7 +175,7 @@ The city-by-city intelligent adversary, damaging siege, supported manifestations
 
 ## Pending policy decisions
 
-The [central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns material unresolved product choices; the [limits register](../limits/product-scalability.md) owns unset operating values, restrictions and reasons. No fixed actor-attention count, player cap, cell size, prewarm radius, logout grace, harm list, scene size, model SKU, price, forecast notice, or implementation date is selected here. Resolve consequential settings before enabling their behavior, not by silently inheriting illustrative numbers from conversation.
+The [central decision register](decisions/world-and-play.md#product-scalability-integration-choices) owns material unresolved product choices; the [limits register](../limits/product-scalability.md) owns unset operating values, restrictions and reasons. No fixed actor-attention count, player cap, cell size, prewarm radius, logout grace, harm list, scene size, model SKU, price, forecast notice, or implementation date is selected here. Resolve consequential settings before enabling their behavior, not by silently inheriting illustrative numbers from conversation.
 
 DG34 supplies an explicit reviewable first-consumer proposal for PS-D05 in PS-L42–PS-L49, including advertised notice and revision choices. Those proposed values are not adopted service terms, measured fairness or a change to the current world clock. Broader campaign policy and actual release qualification remain open.
 

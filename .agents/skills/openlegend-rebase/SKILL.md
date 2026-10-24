@@ -7,6 +7,8 @@ description: >-
 
 # Reconcile before continuing
 
+Initial implementation startup and requested reconciliation use this workflow. Compaction, resuming the same task, review of the same branch or a status question does not itself require another refresh/rebase. Revisit when the base, task or working history actually changes.
+
 Apply [root task authorization](../../../AGENTS.md#task-scope-and-authorization) and perform development synchronization after initial planning, before implementation. Explicit read-only tasks permit inspection only.
 
 A standalone rebase is a narrow reconciliation task, not fresh feature qualification. Plan from the expected overlap and risk; a routine rebase needs no new durable plan under [Documentation](../../rules/documentation.md#keep-maintainer-work-synchronized). Before rewriting, record the old base and branch tip so the resulting patch series can be compared and prior review/verification evidence assessed.

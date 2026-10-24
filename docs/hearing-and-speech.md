@@ -174,7 +174,7 @@ A later identification under a policy that originally withheld identity is new e
 
 ### Editing committed speech
 
-Generic event and awareness editors must not rewrite committed speech text or content independently of the listener capsule. Reject such rewrites clearly; existing guarded deletion and awareness-importance edits remain permitted. A correction spoken in the world is a new event, not a retroactive hearing upgrade. A dedicated administrative re-authoring operation needs explicit semantics for already-perceived fragments and their dependents; that unresolved extension is recorded in [D66](../archive/05-project/open-decisions.md#d66--re-authoring-committed-speech).
+Generic event and awareness editors must not rewrite committed speech text or content independently of the listener capsule. Reject such rewrites clearly; existing guarded deletion and awareness-importance edits remain permitted. A correction spoken in the world is a new event, not a retroactive hearing upgrade. A dedicated administrative re-authoring operation needs explicit semantics for already-perceived fragments and their dependents; that unresolved extension is recorded in [D66](maintainers/decisions/characters-and-evidence.md#d66--re-authoring-committed-speech).
 
 ### Selected attributed correction proposal
 
@@ -302,7 +302,7 @@ Immutable manifest/sense resolution, per-volume receiver bounds and bounded geom
 
 ## Product-scalability attention target
 
-[Attention and scenes](product-scalability/attention-and-scenes.md) adds proposed acoustic competition, stable focus and aggregate commotion through this hearing owner. [PS04](maintainers/product-scalability.md) and [PS-D02](../archive/05-project/open-decisions.md#product-scalability-integration-choices) own integration and residual choices. Physical overlap needs utterance durations or an explicitly authored alternate rule; caption reading time is not sound duration. Current instantaneous speech, thresholds and listener-specific fragments remain unchanged until the new policy is delivered.
+[Attention and scenes](product-scalability/attention-and-scenes.md) adds proposed acoustic competition, stable focus and aggregate commotion through this hearing owner. [PS04](maintainers/product-scalability.md) and [PS-D02](maintainers/decisions/world-and-play.md#product-scalability-integration-choices) own integration and residual choices. Physical overlap needs utterance durations or an explicitly authored alternate rule; caption reading time is not sound duration. Current instantaneous speech, thresholds and listener-specific fragments remain unchanged until the new policy is delivered.
 
 Grouping changes what is distinguishable prospectively, not what a listener already understood. Preserve existing exact speech and permitted fragments; later focus cannot recover unheard words. A coarse background scene may establish gist without an exhaustive ambient transcript, but exact-language mechanics must retain their actual words and source/audience evidence. This does not authorize replacing accepted human messages or foreground NPC utterances with generic chatter.
 
