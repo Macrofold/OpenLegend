@@ -10,6 +10,10 @@ Use this route to turn an idea into a place, person or situation that somebody w
 
 The work can begin with a mechanical idea, a striking image, a person, a location or a player observation. Creative exploration can move between them. The final result still has to join actual world behavior, permitted knowledge and appropriate presentation. The [gameplay priorities](../repertoires/gameplay-priorities.md) choose the worthwhile activity; this route explains how to develop it.
 
+## Selected laboratory consumer
+
+The [Cognition Lab](../projects/cognition-lab-feature-spec.md) supplies the designed isolated rehearsal workspace for this route. Start from a worthwhile person/situation, use ordinary native speech and actions, inspect exact personal evidence and actual outcomes, then change one relevant factor. Its [repertoire map](../projects/cognition-lab-repertoire-review.md) supplies optional recipes for memory, independent help/refusal, humor, ordinary pleasure, invention, threat and interrupted work. Keep the intended experience and human review notes outside model input; let the character make the choice. A saved starting scenario, continuation checkpoint and retained evidence run have different purposes. [CL](../maintainers/cognition-lab.md) retains pending tool delivery; CE/IS/CTR/FPV retain actual character and player evidence.
+
 ## The route
 
 ```mermaid
@@ -144,3 +148,4 @@ Keep evidence proportional to the claim. A script can verify an action path; a f
 The [developer case studies](../../archive/02-research/ai-game-development/02-developer-case-studies.md) support editable production, deliberate situation structure, iterative character authoring and complete-game inspection at different levels of evidence. The [procedural dossier](../../archive/02-research/ai-game-development/03-procedural-art-and-animation.md) explains how coherent reusable art can make revision affordable. The specific player-value applications here are OpenLegend design judgments grounded in its existing ambitions; the research does not empirically prove their enjoyment.
 
 Use [the shared production index](README.md) for route selection and cross-route work. Keep current behavior in its feature owner, project-specific decisions in the selected project, unfinished work in its focused tracker and actual play evidence in its existing verification report. The [needs-design register](../maintainers/needs-design.md) already routes character integration, useful demonstrations and creation/reuse. A new tool candidate does not by itself require another design group.
+

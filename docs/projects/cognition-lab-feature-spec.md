@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | The standalone development workspace is being specified; implementation and qualification have not started. | 2026-10-24 |
+| In progress | Product design is specified; runtime implementation and usability/behavior qualification have not started. | 2026-10-24 |
 
 ## 1. Purpose and product outcome
 
@@ -39,7 +39,7 @@ The selected scenario supplies the normal participating characters, physical sur
 
 The center composer opens on **Say**. Its actor defaults to the scenario's designated developer-speaking character and its target to the initially inspected character. Actor and target remain independent thereafter: inspecting another person does not silently retarget an already drafted message. Volume defaults to the world's normal supported speech volume. The input is focused only on initial ready entry, never on every refresh.
 
-The developer types a sentence and selects **Submit**. The default **One response** mode admits the event and runs until the focal character's immediate decision has published its accepted result or reached an explicit no-decision/failure disposition, then holds at a safe boundary. It does not wait for all autonomous characters, background reflection or a newly started physical action to finish. An action that only started is shown as started, with **Continue** or **Advance to outcome** available. [CLL06](../limits/cognition-lab.md#cll06) owns finite progress bounds. The event appears in the center with actual speaker, target, volume and game time. The selected person's accepted speech, action or deliberate lack of intervention appears in the same chronology. The right panel automatically selects this newly submitted experiment's root while in Follow latest mode and shows its result summary. Existing deliberate inspection disables that automatic selection without stopping the experiment.
+The developer types a sentence and selects **Submit**. The default **One response** mode admits the event and runs until the focal character's immediate decision has published its accepted result or reached an explicit no-decision/failure disposition, then holds at a safe boundary. It closes new admission and settles already-dispatched dependent work; it does not wait for all autonomous characters, background reflection or a newly started physical action to finish. An action that only started is shown as started, with **Continue** or **Advance to outcome** available. [CLL06](../limits/cognition-lab.md#cll06) owns finite progress bounds. Reaching a guard displays **Run limit reached**, never a fictional decision to remain silent. The event appears in the center with actual speaker, target, volume and game time. The selected person's accepted speech, action or deliberate lack of intervention appears in the same chronology. The right panel automatically selects this newly submitted experiment's root while in Follow latest mode and shows its result summary. Existing deliberate inspection disables that automatic selection without stopping the experiment; a fixed new-result indicator offers a direct jump without replacing the record being read.
 
 There is no mandatory setup wizard, test rubric, save dialog, configuration form, tree expansion or raw-payload inspection in this journey. Missing AI configuration is an inline, actionable state beside Submit; the text remains editable. No automatic send occurs after configuration becomes available.
 
@@ -61,6 +61,8 @@ At default UI scale use the existing 4 px token rhythm: 8 px workspace inset, 8 
 | 2560 × 1440 | 480 px | 1024 px | 1024 px | Larger prose, side-by-side facts and richer comparisons without enlarged controls. |
 
 The widths exclude the workspace inset and two column gaps. Pane splitters preserve user choices per device. Reset layout restores these defaults. The selected character, composed text, collection queries, active record and scroll anchors survive resizing. Growing the screen adds readable content space; it does not increase button sizes or impose wider padding.
+
+The header contains the lab title, current scenario/name and dirty state, scenario picker, save actions and settings. The experiment strip contains execution controls and live state. Neither repeats the selected character's name in a large title. A pane header is 32 px; ordinary toolbars use one 32 px row. The left Apply/Discard footer reserves 36 px even when clean, displaying a quiet saved/current status instead of appearing and shifting content. The center composer reserves 160 px: two 32 px control rows, 80 px for the four-line input and 16 px total spacing; expanding text within that allowance cannot shrink the timeline. The right result strip reserves 88 px for a bounded summary and direct links; selecting a longer result opens its full content in the body. These baseline measurements are qualified together in CLL05; they are not permission to clip important text at larger user font sizes.
 
 The large-desktop reference target is at least 1600 × 900 available CSS pixels at the user's chosen scale. Smaller windows retain explicit pane-focus controls; implementing a mobile product or phone-specific drawer system is not a delivery prerequisite. A deliberate focus-pane action temporarily gives that pane the available workspace and has a fixed return control. It never happens automatically during a normal desktop interaction. Browser zoom and larger text still preserve reachable controls and ordinary keyboard operation.
 
@@ -86,6 +88,8 @@ Use existing UI and utility typography, with 13 px interface labels, 14 px reada
 Use icons for familiar repeatable utilities: search, clear, add, remove, edit, copy, save, back, expand/focus pane, play, pause, step, pin, filter and settings. Use the shared semantic catalogue, not arbitrary emoji. Each icon has an accessible name and hover/focus description; toggles expose pressed state and a non-color selection treatment. A tooltip includes a shortcut when supported. Destructive actions identify the exact subject in their accessible name and remain spatially separated from frequent actions.
 
 Keep short labels for unfamiliar or consequential primary choices: **Submit**, **Apply**, **Discard**, **Compare**, and the active category title. This is not a rule to label every repeated utility. A row of anonymous icons whose meaning is required to understand the task fails acceptance even if each has a tooltip. Errors and blocking reasons never exist only in hover help.
+
+Related icon controls use a labeled toolbar with one Tab stop and arrow-key movement; entering/leaving the toolbar must not trap focus. Tab order follows header, experiment strip, left, center, right. A toolbar preserves the active item when focus returns. Tooltips appear on keyboard focus as well as hover, can be dismissed with Escape, and do not cover the control being described. Plain Enter submits only from the intended primary-action context; **Ctrl/Cmd+Enter** submits a composer draft when that composer has focus. Escape closes the topmost temporary surface or discards an uncommitted field edit, never the entire scenario. No global letter shortcut consumes ordinary typing.
 
 ### Shallow disclosure and direct access
 
@@ -126,9 +130,29 @@ Text fields keep short inline previews with a clear edit affordance. Opening a l
 
 Traits and installed definitions use editable comboboxes or named searchable pickers according to the shared control contract. Freeform entry remains available as an explicit **Use custom text** choice when it is descriptive information; it cannot silently create an installed executable capability with a similar name.
 
+### Dynamic editor contract
+
+Installed field descriptors supply label, value type, units, range/options, writable or derived status, help and native owner. The UI renders those descriptors rather than hard-coding a special form for every possible feeling or body. It must not omit an installed field because its name is unfamiliar. An unavailable native editor is a visible capability state, with its actual value inspectable and a source link where available.
+
+| Field shape | Default compact control | Disclosure and validation |
+| --- | --- | --- |
+| Bounded number | Slider plus exact input | Units/endpoints visible; native validation and missing/unknown state retained. |
+| Unbounded number or duration | Exact input plus unit/clock selector | No arbitrary slider ceiling; simulation duration is distinguished from real time. |
+| Boolean | Small named toggle | On/off meaning and inherited/unknown status are explicit. |
+| Fixed enum | Compact segmented control for a small set; combobox for a larger set | Current value remains visible; no scrolling strip of fixed options. |
+| Tags or references | Searchable multi-select with short chips/count | Typed identity bindings, not name-only strings; full selected set is reachable directly. |
+| Short text | Inline input | Preserve draft until apply; no change on blur if the enclosing transaction is not committed. |
+| Long text | Readable preview and focused editor | Full content is editable/copyable in one action. |
+| Growing record collection | Searchable table/list in the category's one body | Add/edit/remove with a stable field schema and explicit affected record. |
+| Structured value without a specialized editor | Labeled advanced structured editor | Preserve complete supported content; field-path errors retain the draft. Never silently flatten or truncate. |
+
+Custom entries have a name, type, value, explicit subject/scope, recipient actors and supported stage placement. Scopes are this person, a directed relationship, an object or the scene. Person and directed-relation additions default to the owning actor only; object and scene additions require chosen recipients. Nothing defaults to every actor. The editor shows where the addition will enter model input, or why the selected call will not include it. The persistent **Model input only** label distinguishes a custom fear, skill claim or invented concern from an installed effect. Exact inputs on the right show whether it was actually included. Source labels such as story premise, private belief or observed description explain the experiment; they do not grant physical truth or native perception. Deliberately adding another recipient is a recorded intervention. A custom number need not have a decay rule, and a qualitative attachment need not have a number. Removing a custom input removes that input; it does not reverse unrelated native effects.
+
 ### Drafts, application and invalidation
 
 Related left-panel edits are staged in one character/scenario editing transaction. **Apply** and **Discard** appear in a reserved fixed footer without moving the category body. Switching categories retains the draft. The footer identifies the number of changed fields and, when needed, affected records. Applying uses shared mutation owners and reports actual resulting values and dependent changes. Applied edits invalidate a prepared model request and its one-shot override.
+
+Changing inspected character preserves that character's staged draft and identifies it when returning; a compact dirty count shows that unapplied edits exist elsewhere. Commands operate on applied scenario values. If a command would consume unapplied values, it offers **Apply edits and continue**, **Use applied values**, or **Cancel** instead of guessing. Replacing the active scenario identifies drafts that would be discarded. Merely switching category, inspecting history or selecting a target does not ask for confirmation. Conflicting changes from another tab are shown per affected field against the current scenario; the lab does not silently overwrite them or create a collaboration system.
 
 If an experiment is active, the developer can read current values and prepare edits. Applying waits for the controlled edit boundary rather than inserting half an edit into an in-flight model decision. The UI clearly names what is waiting and offers the existing stop/cancel command; it does not hide an indefinite pending mutation behind a spinner. The technical design owns exact coordination.
 
@@ -166,7 +190,7 @@ The composer is fixed below the timeline and has a reserved, compact height. Its
 
 **Event:** supported native scenario events or explicit authoring of personal experience. The editor names whether it changes scenario reality, supplies perceived evidence or adds a private belief/experience. It cannot silently convert arbitrary prose into physical effects or disclose it to every character.
 
-The primary action is **Submit**. The adjacent compact inspect/edit-input action opens the prepared-call flow. Stop/cancel remains in the fixed experiment strip, not substituted for Submit while a read is pending. Drafts are scoped by scenario, composer mode, actor and target; changing a selection never submits. A successful send clears only the exact submitted draft. Failure preserves it. IME confirmation, combobox Enter and modal Enter do not accidentally submit the outer composer.
+The primary action is **Submit**. The adjacent **Edit next input** utility opens the prepared-call flow without running it. Stop/cancel remains in the fixed experiment strip, not substituted for Submit while a read is pending. Drafts are scoped by scenario, composer mode, actor and target; changing a selection never submits. A successful send clears only the exact submitted draft. Failure preserves it. IME confirmation, combobox Enter and modal Enter do not accidentally submit the outer composer.
 
 ## 7. Decision inspector — right panel
 
@@ -202,19 +226,30 @@ Fixed **Input**, **Output** and **Full request** actions open a focused modal wi
 
 ## 8. Prepared-input editing
 
-There is no single static payload representing every possible call after a Say/Act. The modal targets one actual prepared call. The developer selects a supported stopping point such as the next cognition call for the inspected character; the experiment runs preceding steps through the game until that call is ready. Required earlier paid preparation, if any, remains visible in the run and is not described as a free preview.
+There is no single static payload representing every possible call after a Say/Act. The modal targets one actual prepared call. Opening **Edit next input** from an idle composer shows a preparation sheet with actor, supported stopping point and an explanation of any preceding native work; opening it does not submit or spend. **Prepare and hold** explicitly submits the source event once and runs the ordinary game preparation until the selected call is ready. Required earlier paid preparation remains visible in the run and is not described as a free preview. A no-perception/no-decision/native-only result terminates truthfully rather than inventing a model request for the modal. An idle context preview, if provided, is labeled an estimate and cannot masquerade as the exact prepared request.
 
-The modal header identifies actor, stage, captured scenario/time and whether this is an ordinary preparation or a captured-call rerun. Original input is retained for comparison. Editing is fully freeform within the supported request contract; malformed or unsupported structure yields a precise validation result and retains the draft. The normal action/response checks still apply after the model returns.
+The modal header identifies actor, stage, captured scenario/time and whether this is a **Held live call** or **Recorded request rerun**. Original input is retained for comparison. Editing is fully freeform within the supported model-facing request contract; malformed or unsupported structure yields a precise validation result and retains the draft. The editor does not grant new native entity references, tool authority, credentials or execution permissions. The normal response parsing and native checks still apply after a live model response returns.
 
-**Submit this input once** is the only action that sends the edited payload. Closing or cancelling the modal discards its one-shot override, not the scene or unrelated composer draft. Ordinary Submit is never redirected to that text. Applied scenario edits invalidate it; an invalidated modal shows the reason and offers **Prepare again**, preserving the old text only as an explicitly stale draft for comparison/copy. It cannot silently submit against a different scenario.
+**Submit this input once** is the only action that sends the edited payload. Closing or cancelling the editor discards its override draft and leaves the real call **Held before [stage]**. It does not dispatch the original, cancel the entire run, erase an already accepted source event or discard unrelated composer text. **Continue original** deliberately dispatches the unmodified prepared call; **Stop** applies the native cancellation semantics and invalidates its handle. Ordinary composer Submit is never redirected to override text. Applied scenario edits invalidate it; an invalidated modal shows the reason and offers **Prepare again**, preserving the old text only as an explicitly stale draft for comparison/copy. It cannot silently submit against a different scenario.
 
-The selected execution boundary holds the scenario consistently while the request is being edited. Reading other panes remains allowed. The technical design owns cancellation and continuing pending work; the UI must not emulate a breakpoint with ordinary game pause if that changes the work being inspected.
+The selected execution boundary holds the scenario consistently while the request is being edited. Reading other panes remains allowed. The technical design owns cancellation and continuing pending work; the UI must not emulate a breakpoint with ordinary game pause if that changes the work being inspected. Operator hold duration is displayed separately and excluded from ordinary production-latency interpretation. The game in the other tab remains independent.
 
-Captured-call rerun is a deliberate isolated comparison: it reuses recorded prepared input without asserting that perception/retrieval would select it again. Its result is labeled accordingly. Continuing that result into a scenario requires the normal game checks against an explicit compatible scenario; no historical action receipt is re-executed merely by replaying a recorded result.
+Historical actions have distinct labels and guarantees:
+
+| Action | What it does | What the result means |
+| --- | --- | --- |
+| Replay recorded run | Displays captured events, requests and outcomes without dispatch or mutation | Evidence of the original run. |
+| Rerun request | Submits a fresh request from recorded input, with current provider/schema validation; defaults to request-only comparison | New output for that captured input. No claim of fresh perception/retrieval, native action execution or world effects. |
+| Continue from checkpoint | Continues a fresh call result through normal native admission from an actually captured compatible checkpoint at that breakpoint | A new scenario continuation with new accepted outcomes; the old result is untouched. |
+| Run scenario again | Restores the selected coherent origin and executes the full event/preparation/decision sequence again | New whole-scenario behavior, including whatever context the normal game selects now. |
+
+**Continue from checkpoint** is unavailable when no actual breakpoint checkpoint was captured. Its inline explanation offers **Run scenario again**; the UI never reconstructs executable history from a request alone. Request-only rerun and live one-shot override are therefore visibly different modes. No historical action receipt is executed merely by replaying a recorded result.
 
 ## 9. Experiment controls and saved work
 
 The experiment strip provides compact Run/Pause, next-event/next-decision step, run-until selector, game-time advance, stop/cancel, autonomous-participant chooser and current experiment status. The normal interaction uses the default response boundary without configuring these controls. Keyboard focus and shortcuts do not enter the world while typing.
+
+The run-until selector names its actual stop condition: One response, Next event, Next decision, Selected action outcome, Chosen simulation time or Until stopped. Unsupported conditions are explained rather than approximated. The selected focal actor and any target action remain visible. Each mode uses the finite allowances in CLL06 and shared spending rules. **Continue** renews the displayed allowance explicitly within the same retained run; there is no automatic loop when a guard is reached. A continuous experiment retains a reachable Stop control even when a read or model request is pending.
 
 Time advance uses simulation time and the installed world clock, with normal-play duration labels when appropriate. Real model latency never becomes an emotion's duration or unrequested world catch-up. Reading an old run or stopping follow does not freeze the world. Cancelling a pending request is distinct from pausing simulation and preserves the actual outcome/usage uncertainty.
 
@@ -223,6 +258,12 @@ Save operations distinguish **Scenario** (a fresh reusable starting setup), **Ch
 New opens a compact scenario picker with the current world's standard starting definitions, saved scenarios and explicit one-time copy from an authorized current game. Creating a custom small scene uses the same source definitions and shared scenario authoring. The source game is unchanged. No ongoing synchronization is configured.
 
 Restoring a checkpoint is explicit and changes current scenario values. It does not silently resume paid work or replay accepted effects. A completed run can be viewed without a model call. **Run again** requests fresh responses; **Replay recorded run** displays recorded outcomes. Same native randomness does not guarantee identical fresh model text.
+
+The save menu offers **Save scenario**, **Save checkpoint**, **Retain run**, **Export** and **Import** with short descriptions of these different objects. Save uses the current applied state; if drafts exist, the choice is explicit. A proposed name is editable, with no mandatory metadata form. The searchable saved-work picker shows kind, name, originating world, creation/update time, short scene/run description and compatibility or capture-completeness status. Opening a run is read-only; loading a scenario/checkpoint explicitly replaces the active lab scenario. These actions do not silently affect game saves.
+
+Export writes the selected current-format scenario/checkpoint/run bundle with the native dependencies and captured evidence required by its kind; it excludes provider credentials and unrelated gameplay data. Import validates kind, structure, required definitions and current compatibility before replacing anything. It shows the selected item's name and relevant included people/objects or run count, reports concrete missing dependencies, and rejects incompatible data without a migration wizard or lossy fallback. Imported recorded evidence remains recorded evidence; importing it does not execute a request. Partial or unavailable captures retain their status in exported and imported results.
+
+Lab settings open from one fixed header action. The initial view contains only active run policy, autonomy, installed model/routes and spending/stop limits. Deeper model, prompt/question or request-setting experiments are grouped by the actual owning stage, searchable where the collection grows, and apply explicitly to the next run or named variant. The effective changes appear in the result. Editing lab settings does not change game settings, credentials or an in-flight submitted request. Unsupported model/route combinations expose the owning validation error rather than being silently translated.
 
 ## 10. Comparison and character-quality workflow
 

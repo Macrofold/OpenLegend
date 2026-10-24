@@ -4,6 +4,8 @@ A limit is a chosen restriction on capacity, access to supported features, selec
 
 The selected first-playable design has linked inventories for [shared integration](first-playable-world.md), [survival/making](first-playable-survival.md), [camp construction](editable-shelters.md), [cooperation](first-playable-cooperation.md) and [roaming](first-playable-roaming.md). Their authored numbers are selected starting values, with runtime/player qualification still open.
 
+The selected standalone [Cognition Lab](../projects/cognition-lab-feature-spec.md) has proposed [CLL01–CLL09](cognition-lab.md) for runtime isolation, compact navigation, paging, explicit run bounds and retained capture. Shared provider, cognition, native action and save constraints keep their existing owners; no runtime capacity claim follows from the design.
+
 ## One owner per purpose
 
 The accepted [shared NPC text design](../projects/npc-speech-streaming-feature-spec.md) is inventoried in [NST-L01–NST-L09](npc-speech-streaming.md). Shared hearing, cognition, memory, response and HTTP/caption limits retain their existing owners; the new inventory distinguishes selected batching/presentation constraints from unmeasured multiplayer capacity.
@@ -92,3 +94,4 @@ Use the backlog’s [ranking method](../maintainers/limits-audit.md#ranking-meth
 Prior evidence: [exact retrieval and cold-source residency](../verification/data-foundation.md#data-foundation-runtime), [private-note candidate preparation](../verification/items-and-knowledge.md#editable-knowledge-and-observer-names) and [dense-work gaps](../maintainers/performance.md#pf09--population-work-follows-relevance). Figures are fixture observations on their recorded versions/hardware, not current natural-session forecasts.
 
 Still outside this focused inspection: exhaustive native family/controller loops, all legacy migration branches, every projection/editor query, browser rendering and every external provider path. Their existing inventories and PF/EPR/CR qualification remain; do not infer they are bounded because they are absent here. Inspect their input/iteration boundary when a consuming feature or measurement makes them relevant.
+

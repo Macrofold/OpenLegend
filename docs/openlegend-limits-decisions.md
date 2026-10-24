@@ -36,6 +36,8 @@ Proposed [extraordinary minds and afterlife](projects/extraordinary-minds-and-af
 
 Selected [combat and threat responses](projects/combat-and-threat-responses-feature-spec.md), October 17: [CTR-L01–CTR-L06](limits/combat-and-threat-responses.md) owns opponent-specific continuity, the finite prepared repertoire, two-stage/two-pipeline decision envelope, finite chosen pursuits, complete evidence growth and strict independent Ada acceptance. [BW12](limits/base-world.md#bw12--remains-and-native-escape), [FL24](limits/feelings.md#fl24--interpreted-threat-reactions) and existing ranged/multiplayer limits retain their own native, appraisal and current-policy restrictions. [CTR01–CTR10](maintainers/combat-and-threat-responses.md) owns implementation; the selected direct-PvP/collateral removals and new tuning are not installed or measured by this documentation change.
 
+Selected [Cognition Lab](projects/cognition-lab-feature-spec.md), October 24: [CLL01–CLL09](limits/cognition-lab.md) records one isolated active lab runtime, shared execution ceilings, explicit operator holds, bounded queries/capture/storage, dense desktop navigation and visible run guards. [CL00–CL11](maintainers/cognition-lab.md) owns implementation and qualification. All lab-specific defaults are proposed; existing gameplay/provider limits and data are unchanged.
+
 ## Feature inventories
 
 Designed, runtime pending: [Custom model deployments](projects/custom-models-feature-spec.md) have [MX-L01–MX-L08](limits/custom-models.md) for production purpose selection, optional revision pins, capability-aware output and existing cost/authority bounds. [MX01–MX08](maintainers/custom-models.md) separates production delivery from optional studies; boot identity and experiment completion do not gate normal use.
@@ -114,3 +116,4 @@ All 238 original numbers are preserved. `LA014` is audit number 14. Most old row
 The [source-review coverage](limits/README.md#growth-path-review-coverage) distinguishes no search/input-work cap from bounded results, batches and pages. New entries: memory MH01–MH07 and KG01, cognition CG01, native work NW10–NW11, and save catalog SV17. The [backlog ranking](maintainers/limits-audit.md#ranking-method) uses near-term permitted gameplay exposure and impact; absence of a cap does not automatically recommend deleting data or adding a fixed content limit.
 
 Hearing, spatial captions and perceived-event history: [HR01–HR08](limits/hearing-and-speech.md).
+

@@ -172,7 +172,7 @@ An operator may remove, replace or invent fictional information inside the reque
 
 A prepared-call handle moves through `prepared → submitted → consumed`, or from `prepared` to `discarded`, `invalidated` or `cancelled`. The server issues it after preparation and accepts it exactly once. It binds an immutable original request and the exact scenario revision/generation. A duplicate Submit returns the same accepted submission outcome; it never makes a second provider request.
 
-Only the payload modal's Submit sends its replacement envelope with that handle. Ordinary composer Submit has no override parameter and always prepares from the current scenario. Closing the modal discards its override draft; it does not leave a persistent hidden override. Applying a left-panel edit invalidates prepared handles before further dispatch and visibly disables their Submit action. Restore, scenario load, principal change and runtime replacement do the same.
+Only the payload modal's Submit sends its replacement envelope with that handle. Ordinary composer Submit has no override parameter and always prepares from the current scenario. Closing the modal discards its override draft and leaves the call visibly held. It does not dispatch or leave a persistent hidden override. Continue original submits the unchanged prepared request; Stop cancels it through the shared owner. Applying a left-panel edit invalidates prepared handles before further dispatch and visibly disables their Submit action. Restore, scenario load, principal change and runtime replacement do the same.
 
 Provide Restore original and an original/edited difference view. The server retains original and actually submitted requests separately. A run's summary states whether it used ordinary inputs, model-only context additions, a stage override or several explicit interventions.
 
@@ -186,9 +186,148 @@ This is an explicit timing intervention, captured in the run, and therefore cann
 
 ### 6.5 Replay and rerun
 
-Replay displays previously captured inputs, outputs and effects without inference or mutation. Rerun captured call creates a new run from the recorded prerequisite checkpoint/inputs and submits a new request under current compatible runtime and configured allowance. It never edits the old run.
+Replay displays previously captured inputs, outputs and effects without inference or mutation. Rerun request creates a new, explicitly paid request comparison using the captured application input and chosen compatible settings. It uses the normal provider adapter and response validation, but does not publish actions, speech, memories or other native effects into the active world. Its result is labeled Request comparison, not a new character decision that happened in the scenario. Never edit the old run.
 
-A captured-call rerun is labeled as testing that stage. A complete-scenario rerun executes perception and earlier selection again. Neither is claimed to reproduce remote model answers exactly. If the saved data is incompatible with the current runtime, it remains unavailable for execution under the development policy; no compatibility engine is added.
+Continue from checkpoint is available only when an actual coherent checkpoint was captured at that held decision boundary and the current runtime can reconstitute its native prerequisite bindings. A process-local handle itself is never serialized. On restore, re-prepare those bindings through the normal owner and verify the recorded request/dependencies before allowing continuation; changed dependencies make the continuation unavailable. Do not capture a full world before every model call merely to provide this action.
+
+Run scenario again restores the saved starting checkpoint and executes perception and every earlier selection again. The active scenario then contains this new execution's real effects. Complete-scenario reruns and request comparisons neither promise identical remote-model answers nor substitute a recorded answer for a new model call without an explicitly labeled intervention.
+
+If the captured request or checkpoint is incompatible with the current runtime, explain why execution is unavailable and permit ordinary recorded inspection where readable. Do not add an obsolete-code loader or compatibility engine.
+
+### 6.6 Preparing from an idle composer
+
+Opening Edit next input reads the supported stages and opens a preparation sheet. It must not commit the stimulus, advance time or call a model. Prepare and hold is the explicit executing action: it submits the source once, then allows necessary earlier native processing until the next matching actual prepared call. Its incurred calls and source occurrence remain in the run even if the operator later cancels.
+
+The default match is the next supported model call belonging to the chosen focal response. A specific purpose filter matches a reported stage capability, not a mandatory pipeline position. If that response never needs the requested call, finish with its actual no-call or terminal disposition. Do not generate a dummy request. The sheet states that preceding work may incur cost; the held modal shows the resulting exact application input.
+
+## 7. Scenario authoring and mutation contracts
+
+### 7.1 One authoring transaction, real owners
+
+A current editor draft is local UI state until Apply. Field edits do not advance time, dispatch models or autosave a new checkpoint. Apply validates the full draft, prepares its dependency closure where required, then commits through the ordinary service mutation lane. The result supplies the new revision and a structured summary of changed native values, invalidated derived evidence and deliberately authored experimental inputs.
+
+Each mutation carries the current runtime generation, expected scenario revision and the existing owner-specific concurrency tokens. Reuse stronger existing checks: person editor base values, memory source hashes, installed manifest revision and body policy pin. A disagreement returns the current field values and a stale outcome without partially applying the draft. Do not replace the existing field-level/native checks with a single weaker UI counter.
+
+When a field group spans several owners, the server prepares/validates all groups first and applies them under one admitted service operation. If the current service cannot provide atomicity for that group, separate its Apply actions visibly by owner; do not present multiple partially successful writes as one atomic edit. Applying an edit cancels or invalidates affected prepared work before subsequent admission.
+
+| Editable subject | Required native path | Semantic rule |
+| --- | --- | --- |
+| Name, description, personality, backstory, installed trait selections, goals, inventory and exposed meters | `WorldService.personEditor` / `savePersonEditor`; `editPersonState` and meter/body owners underneath | Preserve each installed value's type, unit, bounds and reconciliation rules. A nominal need value may create real condition/events through its owner. |
+| Installed attribute declaration or value | `godAttributeDeclaration`, `godAttributeEdit`, `attributeEditor` | Distinguish installing an actual definition from adding a model-only experimental field. Recompute derived projections through their actual owner. |
+| Private appraisal | `authorCharacterAppraisal` | Authored appraisal stays private to its owner and follows source/revision validity. Public event or speech never acquires private attribution by a UI label. |
+| Learned/known information | `editCharacterKnowledge` | Preserve teacher/source/observer semantics. Omniscient scenario truth is not automatically learned knowledge. |
+| Personal memories and remembered speech | `personMemoryJson`, `savePersonEditor`, `correctMemory`, `forgetMemory`; `history-edit.ts` dependency preparation | Actual source correction/deletion invalidates dependent recall summaries, occurrences and appraisals as the existing owner requires. |
+| World events and event history | `worldEventsEditor`, `worldEventJson`, `saveWorldEventsEditor` | Author the underlying event and relevant perspectives coherently; do not repaint only the center transcript. |
+| Relationships, family, conditions/effects, equipment and nearby objects | `godFamily`, `godFamilyEdit`, `godEffects`, `spawn`, `createItem`, `godAct`, and installed domain owners | Use existing supported relations and effects. An arbitrary descriptive statement does not create a new body channel, consent relationship, promise ledger or action primitive. |
+| Position, location, environmental state and scene setup | Existing creator action/geometry/environment owners admitted by `WorldService` | Geometry and perception update through native state. Reject an impossible/unsupported transform rather than silently approximating it. |
+| Experimental model-only information | The explicit lab context contract in §7.3 | Does not mutate native mechanics, permissions, knowledge provenance or entity identity. |
+
+This mapping is an implementation starting point, not permission to force every requested field through `savePersonEditor`. Extend an owning operation where the current API cannot express a required supported edit. Keep the domain owner authoritative and expose its actual result.
+
+### 7.2 Speech history, memories and coherent retcons
+
+The editor distinguishes what happened, what a particular person perceived, what they remember now, and what they believe. These are different editable sources with different consequences. Choosing a speaker and writing a past sentence is insufficient to imply that every nearby or current character heard it.
+
+A new history authoring operation accepts an exact source kind, source time/order, actor/subject references, actual event content and explicit observer perspectives where the native model permits them. It validates temporal references and source links against the loaded scenario. It uses the existing creator-history preparation/commit owner, extended to admit insertion if insertion is not currently supported. This extension is CL03 work, not existing functionality inferred from the JSON viewer.
+
+A prospective edit preview names the selected source and the affected actors/derived records. The existing history correction path hydrates the complete selected dependency closure, including cold SQL history; its recall candidate limit must not truncate this maintenance work. It can clear existing appraisals for affected actors. Show that consequence before Apply and refresh the left projection after the durable commit. Do not hide this by leaving stale private feelings painted on screen.
+
+Changing a source inside a completed run never rewrites that run's evidence. The operator creates or edits a new starting scenario, then reruns. A current-run retcon is permitted as an explicit intervention when the run is held, with before/after source references; its label makes the experiment's edited history clear. Backdating an utterance is not replaying an actual earlier provider request.
+
+### 7.3 Declared model-only fields
+
+A custom field record has an application ID, label, datatype (`text`, `number`, `boolean`, `enum`, or validated JSON), value, subject scope, enabled flag, recipient actor IDs and supported input placement. Subject scopes are person, directed relation, object and scene. A directed relation binds exact `fromActorId` and `toActorId`; the direction is never inferred from display order.
+
+Recipient actor IDs are explicit. A person field defaults to that person's private input; a directed-relation field defaults to its `fromActorId`. Object and scene fields require selecting whose input receives the experimental information. Adding another recipient is an intentional, recorded injection; it is not presented as natural perception. The editor offers source labels such as private belief, observed description and story premise to explain the experiment, but those labels alone do not install knowledge or physical facts.
+
+The shared decision-context assembler accepts a lab-owned extra-context section with a clear experimental provenance marker. Only applicable fields for that focal actor and that stage's declared context capability are included. Stages that cannot accept contextual additions advertise this and are not silently patched elsewhere. The normal state/context envelope carries this section; it is never converted into provider/system instructions or tool authority. An embedding, response schema or judgment question is not modified just because a field is enabled.
+
+Installed native fields and model-only fields must have different descriptors and mutation endpoints/operation kinds. A model-only `fear`, `hunger`, `blessing`, `knows_secret` or `can_fly` does not install an actual emotion, satisfy a resource, create knowledge provenance or grant flight. If a matching native capability later exists, the operator can deliberately author that native state through its owner. Do not auto-promote custom names into mechanics.
+
+Custom-field size/count ceilings belong to [CLL08](../limits/cognition-lab.md). A rejected field remains in the editor draft with a validation message. No silent truncation, coercion to a string, or hidden exclusion is allowed. The recorded right-hand input includes the exact submitted fields and placement, so an operator can verify that a change affected the request.
+
+### 7.4 Typed capability descriptors
+
+The workspace bootstrap exposes small, concrete descriptors for installed editable fields, stimulus kinds, stages and maintenance operations. A field descriptor includes identity, label, datatype, value, unit/bounds/options where meaningful, editability, native versus model-only meaning, mutation owner and unavailable reason. Prefer the installed module's existing descriptors; add projections for missing metadata. This is not a new general plugin/schema framework.
+
+The UI selects controls from the datatype: compact numeric input plus an appropriate bounded slider; checkbox/switch for boolean; searchable select only for genuinely long option sets; multiline editor for prose; full modal for complex structured content. Unknown structured native fields remain inspectable and clearly read-only until an owner exposes a validated editor. An advanced JSON editor may edit a declared supported JSON field, not arbitrary properties of a world object.
+
+## 8. Stimulus, run and settings contracts
+
+### 8.1 Submitted stimuli
+
+Every executing stimulus has `commandId`, `expectedRevision`, `focalActorId`, a discriminated stimulus body and requested run policy. The authenticated principal and destination runtime come from server routing. The command ID deduplicates repeat submission of this same intention; it does not identify a new run when retried after an uncertain HTTP response.
+
+| Kind | Body | Execution and evidence |
+| --- | --- | --- |
+| Say | `actorId`, text, native channel/options when available, addressed target IDs or explicit ambient address | Use `WorldService.say` and ordinary event/perception recording. Addressing someone does not guarantee that they heard it; actual observers appear separately. |
+| Act | `actorId` and either a supported command intention or a prepared native action choice with exact bindings | Use `previewCommand` / `prepareCommandChoice` / `command` as appropriate, then normal grounding, action admission and execution. A preview is not a successful effect. |
+| Event | A supported owner-authored event intention, its native subject/target references and required typed data | Apply through the corresponding creator/domain owner. The emitted event carries operator-authored provenance and native perspectives. Unsupported event text remains a clearly labeled contextual experiment, never a claimed physical effect. |
+
+Selecting an Act does not imply that arbitrary source text is a supported native action. Existing generative grounding may propose a mapping; it must still resolve to the shared catalog and pass admission. Distinguish input accepted, interpretation pending, interpreted choice, command admitted, action started, action completed, refused and unavailable. If the game needs a clarification, preserve that result in the lab; do not manufacture a successful command.
+
+The operator may submit a stimulus as one character while inspecting a different character and focusing the response on a third. The request records all three bindings. The focal actor is whose immediate response defines One response; other autonomous actors retain their actual eligibility and captured outcomes within the chosen run policy.
+
+### 8.2 Run policies and guards
+
+A run policy contains mode (`oneResponse`, `untilCondition`, `forDuration`, `continuous`), focal actor when required, a typed stop condition, autonomous participant IDs, requested simulation duration, active-wall guard, maximum newly dispatched model calls and current authorized spending allowance reference. The policy is validated and displayed before work begins. The run records the requested and effective values plus any constraint that reduced them.
+
+[CLL06](../limits/cognition-lab.md) owns proposed numerical defaults and their qualification status. Its time, call-count and active-wall guards are different from monetary spending authority and per-provider deadlines. Reaching a guard ends with Run limit reached; it must never be represented as an actor choosing silence. Already admitted work settles or cancels through its owner, and no new work is dispatched after the stop gate closes.
+
+Continue explicitly opens a new displayed guard interval on the same retained run. It does not reset paid accounting, erase previous interventions, refund calls or recursively continue by itself. Run until stopped is a deliberate continuous mode with visible bounds, not a hidden unbounded loop. Advance time uses the ordinary clock path and tells the operator whether autonomous cognition is enabled during the interval.
+
+### 8.3 Effective inference configuration
+
+Run configuration is a nonsecret snapshot derived from the ordinary installed settings. It includes model/provider route per supported purpose, requested model identity, effort and output settings, escalation policy, actual judgment/rubric/instruction identity, relevant context inclusion settings, prompt template identity, native seed/state origin, active capabilities and the run guards. Capture both requested and actual reported model/deployment identity where the adapter exposes them.
+
+Changes apply to the lab run or named variant, never the live game's global config. A request's supported settings are validated before its existing cost reservation. A model/provider choice must resolve through configured server routes; no arbitrary endpoint, API key, hosting credential or permission override is accepted from a payload editor.
+
+For `JudgeRequest`, the captured application input includes `state` and the complete typed `questions` map, including each question's instructions, choices/criteria and answer kind. For `GenerateRequest`, it includes `task`, `instructions`, `context`, `schema`, `schemaName` when present, model/effort/output bounds and supported execution/output-mode choices. Effective adapter settings omitted from these typed objects are captured alongside them. The reference tables actually included in state/context are part of the captured request; their executable reverse bindings remain server-owned.
+
+Retain both the editable application request and any actual provider input/output capture emitted by the adapter. Label an adapter capture unavailable when it does not exist; never call a reconstructed prompt exact wire input. Neither receipt output nor UI explanation includes hidden provider chain-of-thought. Record actual supplied rationales and application deliberation only.
+
+### 8.4 Serial experiments and native randomness
+
+A serial A/B experiment restores the same full starting checkpoint before each variant, then applies that variant's declared settings or scenario edits and runs the specified stimulus/episode. Each result records its origin and exact differences. The final variant's resulting state remains the current lab state, visibly labeled; restoration afterward is an explicit action.
+
+Preserve the native saved RNG continuation, simulation clock and current work state when cloning/restoring an origin. Reusing a seed alone does not prove equal state after different preceding events. Remote-model answers and completion ordering may vary despite identical captured inputs; comparisons show observed differences rather than claiming determinism or causal statistical significance from one pair.
+
+Expectation notes, quality tags and operator scores do not enter character inputs automatically. Episode evaluation may include repeated runs or an explicitly requested evaluator model as a separately budgeted/captured stage. No automatic extra paid judge is necessary for a single speech test or for opening a comparison.
+
+## 9. Capture, causality and historical inspection
+
+### 9.1 Actual graph, flat presentation
+
+Store the actual operation graph: a root for the stimulus/decision, stable stage/attempt IDs, parent/dependency IDs, actor, purpose, kind, start/finish/held times and terminal disposition. A judgment, generation, memory retrieval, action admission, publication or maintenance step may appear only when it actually occurred. The UI renders the graph as a flat ordered list with relationship badges and filters; storage identity must not force a recursive tree UI.
+
+Do not hard-code a mandatory attention → routing → action → speech sequence. Existing branches can include fast decisions without generation, action scoring only after a speech/action gate, failed/skipped routes, memory work and independently scheduled maintenance. A missing stage can mean not needed, not admitted, not captured or unavailable; expose the actual reason when known, and preserve unknown when it was not recorded.
+
+The root summary joins the submitted occurrence to perceived stimulus, selected response/disposition and accepted native effects. It remains understandable without expanding every call. A historical selected root or stage reads only captured records and never re-executes context builders against the current actor.
+
+### 9.2 Minimum captured evidence
+
+| Evidence group | Required contents |
+| --- | --- |
+| Input origin | Scenario/checkpoint, stimulus identity, exact actor/target/focal bindings, native time, current revision, actual observer/perspective refs and any authored intervention. |
+| Preparation | Actual context source identities/revisions, selected values/text, available candidate/omission reasons, applicable role/prompt/rubric/definition identities and source completeness. |
+| Submitted request | Complete actual application request, supported effective parameters, actual transmitted reference tables, original versus override, actual adapter capture if supported. |
+| Response | Actual provider/model identity, raw captured response where available, normalized output, schema/parse failures, returned confidence/scores/options and existing receipts. |
+| Admission | Proposed intent, resolved native choices/targets, current-source checks, accepted/rejected disposition with actual reason. No invented rationale. |
+| Publication | Actual emitted speech/events, started/continued/stopped work, native effects, recorded memory/awareness and before/after values where their owner exposes them. |
+| Cost/time | Existing request/attempt identity, reservation, actual or explicitly estimated cost, known/pending/uncertain settlement, tokens if reported, active processing time, operator hold time and native latency when available. |
+| Completeness | `complete`, `partial` or `unavailable` per group plus a reason; never use an empty list or zero to imply that unrecorded work did not exist. |
+
+A context selection manifest is a shared cognition-context deliverable where needed, not evidence that all planned SC tasks already exist. Add the minimum shared source/result hooks for the lab's implemented stages. Keep their records compatible with the cognition-context project's intended provenance and budget accounting. Rich omitted-candidate evidence must be captured at selection time; do not reconstruct candidates later by rerunning retrieval.
+
+Current-stage scalar or source comparisons show both captured values and an explicitly labeled current projection. They are separate views. Context-field text, source SQL, model-facing references and creator-only truth are not interchangeable labels.
+
+### 9.3 Retention and costs
+
+A run record retains its bounded exact request/response evidence independently of the transient diagnostic log. Reuse existing receipts and log identifiers; do not create a second financial ledger that can disagree with settlement. Aggregate each unique actual attempt once across root, stage and run totals. Retries, embeddings, reflection/harness work and uncertain completion remain attributable when dispatched in the run.
+
+Unknown cost is not zero. Estimates retain their pricing basis. A cancelled display row does not erase a provider request that may have executed, and a rewind does not refund or redispatch it. A request comparison adds new cost to its own result and the current allowance, never to the old recorded run.
+
+Loading older evidence is read-only and free of model work. Annotation saves update only annotation records, not captured inputs/outcomes. Immutable evidence here means the app does not silently rewrite an experiment; it does not require a tamperproof archival subsystem or indefinite storage.
 
 ## Maintained records
 

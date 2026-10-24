@@ -134,6 +134,8 @@ Show stable chronological history when generation finishes late, preserve readin
 
 ## God-mode cognition debugging
 
+The separate [Cognition Lab design](projects/cognition-lab-feature-spec.md) selects a light-theme desktop developer workspace at `/cognition`, sharing runtime code with independently initialized scenario data. Its fixed left pane always edits current character state; historical decisions and their exact captured inputs belong in the right inspector. The center holds actual events and the fixed Say/Act composer. Lab details use replacement views, direct evidence links and shallow breadcrumbs, with compact icons and searchable growing lists. [CL](maintainers/cognition-lab.md) owns implementation and qualification; this is a selected future consumer, not a claim that the following current in-game debugger already supplies it.
+
 The authorized **Game → Intelligence diagnostics** route opens the right-side Intelligence panel, following the [canonical debugger hierarchy](memory-architecture.md#god-mode-cognition-debugger): selecting a compact trigger/action row opens a full-width detail view with the standard panel back control. Rows and details expose stable trace/stage references. The detail renders the typed cause and concise trigger, outcome or error, Jev questions/choices/decisions, speech, context/retrieval and semantically named model/harness stages. Root-only world-agent records show the player message, response or error, and result code. Query-embedding stages show the model and number of vectorized inputs; the separate memory-context stage shows the semantic query, backing table and retained ranked results. Persistent JSON icons on the trace and each stage open combined application/provider records in a roomy left-side panel with icon-only copy; transport exchanges are not shown as numbered requests. Filters, paginated history and follow/pause updates preserve the reader's focus; deeper recovery and live-provider acceptance remain tracked separately.
 
 ## Requested design output
@@ -156,3 +158,4 @@ Clearly distinguish existing functionality from future concepts such as richer c
 
 - Implementation: [Feature tasks](maintainers/TODO.md).
 - Limits and constraints: [Authoring and presentation inventory](limits/interface.md).
+

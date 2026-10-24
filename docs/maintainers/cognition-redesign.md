@@ -517,6 +517,12 @@ Current-conversation projection and its deferred coverage are owned by [NC12 com
 - [ ] Verify old failed jobs no longer keep the badge degraded after a newer successful completion. Cancellations are not provider-health evidence. Labels now say Recent AI error / Latest AI request failed instead of implying a live Service limited health check.
 - [ ] Document the distinction between configured providers, request outcomes and actual service health; consider independent per-provider health later. No tests run for this change.
 
+### Standalone Cognition Lab consumer
+
+- [x] Design the isolated developer workspace, current-left/historical-right distinction, actual-stage capture, one-shot prepared-request editing and retained-run inspection. The [paired design](../projects/cognition-lab-feature-spec.md) and [CL00–CL11](cognition-lab.md) own this selected design and its implementation breakdown.
+
+The lab reuses ordinary cognition, memory and action owners through a shared runtime; it is not a new cognition pipeline or a replacement for the in-game Intelligence panel. CR11/CR12 and the inspector qualification below remain open at their recorded scopes. Lab retention/export and compact navigation are now specified, but their implementation is CL05/CL08/CL11; provider-side missing history, live permissions, complete-cost evidence and other existing inspector gaps are not closed by that design.
+
 ### Intelligence call inspector — deferred validation and documentation
 
 - [ ] Add focused tests for direct Jev/LM, Macrofold inference, and full harness/world-agent input/output capture, failures, cancellation, receipt usage, billing, raw provider responses, and restart history.
@@ -652,3 +658,4 @@ Before this consumer is offered, its human-private content and derivatives must 
 [HE06](hearing-and-speech.md#he06--attributed-correction) selects a new actual corrective utterance with first links private to its speaker, independently of the current administrative source-correction operation. Current broad derived-state invalidation must not become an automatic response to an apology or creator edit; [CE02](creator-edits.md#ce02--optional-memory-propagation-tools) remains later explicit selected convenience.
 
 [SL10's DG25 consumer](save-and-load.md#dg25--protected-shared-restoration) restores accepted fictional cognition/private evidence at one coherent checkpoint, then reapplies complete current privacy/erasure and controller restrictions. Restored pending narration is cancelled; no abandoned-future mail, summary, outlook or old paid completion re-enters current context. A human's restoration notice or recollection is not automatically NPC experience. Existing CR/ACT acceptance and DG23's faithful interpretation/current conservative erasure remain controlling; no new review cadence, memory repair queue or parallel qualification list is introduced.
+
