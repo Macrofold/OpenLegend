@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Deep case study in progress; evidence cutoff October 24, 2026.** Scope: the February 25, 2022 base game, Shadow of the Erdtree, and the released Tarnished Edition/Pack. Nightreign is a separate game. The original September research remains here with its dated evidence; the chapters below provide the detailed systems, lore, reception, economics and modding study. Research is not an accepted OpenLegend feature or implementation plan. The [scoped completion record](../research-progress-elden-ring-2026-10-24.md) owns coverage and evidence limits; whole-library preservation gates remain separate.
+**Full case study; evidence cutoff October 24, 2026.** Scope: the February 25, 2022 base game, Shadow of the Erdtree, and the released Tarnished Edition/Pack. Nightreign is a separate game. The original September research remains here with its dated evidence; the chapters below provide the detailed systems, lore, reception, economics and modding study. Research is not an accepted OpenLegend feature or implementation plan. The [scoped completion record](../research-progress-elden-ring-2026-10-24.md) owns coverage and evidence limits; whole-library preservation gates remain separate.
 
 ## Read by question
 
@@ -192,7 +192,7 @@ An additional direct Steam discussion about expansion blessings contains a subst
 | R06 | §4 and detailed [NPC/quest/faction boundaries](elden-ring/02-world-exploration-and-narrative.md), [co-op/invasion/asynchronous participation](elden-ring/04-multiplayer-and-modding.md) |
 | R07 | §7 and [presentation/audio/interface](elden-ring/02-world-exploration-and-narrative.md), [accessibility/readability reactions](elden-ring/03-reception-commercial-and-cultural-impact.md) |
 | R08 | §4 and spoiler-marked [cosmology, history, people, quests, endings and narrative delivery](elden-ring/02-world-exploration-and-narrative.md) |
-| R09 | §8 and [documented production](elden-ring/02-world-exploration-and-narrative.md), [creator workflows](elden-ring/04-multiplayer-and-modding.md) |
+| R09 | §8 and [documented production](elden-ring/02-world-exploration-and-narrative.md), [release and public testing](elden-ring/03-reception-commercial-and-cultural-impact.md#9-commercial-and-cultural-mechanisms-worth-studying), [creator workflows](elden-ring/04-multiplayer-and-modding.md) |
 | R10 | §8 and [distribution, marketing and cultural circulation](elden-ring/03-reception-commercial-and-cultural-impact.md) |
 | R11 | §8 and [dated commercial evidence, estimated spending, costs and causal limits](elden-ring/03-reception-commercial-and-cultural-impact.md) |
 | R12 | §9 and [substantive independent criticism, Steam accounts, enjoyment/return/abandonment](elden-ring/03-reception-commercial-and-cultural-impact.md) |
