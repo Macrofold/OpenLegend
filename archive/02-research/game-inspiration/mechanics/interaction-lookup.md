@@ -16,6 +16,16 @@ Use the concrete example to find a study, then read its limitations and countere
 | Can hired help reduce the human crew requirement while keeping responsibilities clear? | Assigned NPC stations, wages, food and return supplies | [ATLAS, crew and social systems](../dossiers/atlas.md#r06) and [solo-captain case](../dossiers/atlas.md#r05) |
 | What separates a built ship, a published hull and an operated community world? | Native construction, Dev Kit packages, grid configuration, dependency failures and server-specific overhauls | [ATLAS, creation layers](../dossiers/atlas.md#player-creation) and [external modifications](../dossiers/atlas.md#r15) |
 
+## Exploration, demanding encounters and player-selected approaches
+
+| Question | Named reference or interaction | Read |
+| --- | --- | --- |
+| Can leaving a difficult encounter still advance the player's goal? | Elden Ring's route choice, equipment discoveries, upgrades and return attempts | [Connected gameplay loops](../dossiers/elden-ring/05-design-synthesis-and-openlegend.md#1-the-central-achievement-is-a-set-of-connected-choices) |
+| How do equipment choices change what the player actually does? | Skills/affinities, guard counters, stance pressure, casting and assistance | [Combat, builds and equipment](../dossiers/elden-ring/01-combat-builds-and-equipment.md) |
+| How can geography deliver story without a complete quest itinerary? | Legacy dungeons, regional access, Ranni and Miquella's followers | [World, exploration and narrative](../dossiers/elden-ring/02-world-exploration-and-narrative.md) |
+| When does purposeful difficulty become avoidable friction? | Retry cost, unreadable attacks, guidance, expansion blessings and patched encounter rules | [Reception](../dossiers/elden-ring/03-reception-commercial-and-cultural-impact.md) and [dated changes](../dossiers/elden-ring/05-design-synthesis-and-openlegend.md#4-post-launch-decisions-reveal-what-the-design-can-change) |
+| What does the popularity of a co-op mod reveal about participation needs? | Native session boundaries versus Seamless Co-op and community overhauls | [Multiplayer and modding](../dossiers/elden-ring/04-multiplayer-and-modding.md) |
+
 ## Composing items, effects, and reusable constructions
 
 | Question | Named reference or interaction | Read |
