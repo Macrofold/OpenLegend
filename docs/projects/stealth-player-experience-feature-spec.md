@@ -1,8 +1,8 @@
 # Playable stealth controls and an honest player perspective
 
-| Status      | Current progress                                                                                           | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The integrated player-experience design is specified; implementation and player qualification remain open. | 2026-10-24   |
+| Status      | Current progress                                                                                                           | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | SPX01 existing-channel publication converted; broader controls, producers and integrated player qualification remain open. | 2026-10-25   |
 
 ## Purpose and authority
 

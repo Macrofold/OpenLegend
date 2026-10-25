@@ -348,17 +348,15 @@ export function observerName(world: WorldState, observerId: string, subjectId: s
   };
 }
 
-/** The speaker may refer to a genuinely remembered intended person without
- * reacquiring that person's body. A current unknown body keeps its own local label. */
+/** Keep the speaker's selected remembered person distinct from an unknown body,
+ * even when their private routing IDs happen to coincide. */
 export function intendedAddresseeName(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  role: import('../../speech.js').SpeechTargetRole,
 ): Named {
-  if (
-    !currentBodyGrant(world, observerId, subjectId) &&
-    canAddressRememberedSubject(world, observerId, subjectId)
-  ) {
+  if (role === 'remembered' && canAddressRememberedSubject(world, observerId, subjectId)) {
     const name = identityForEntity(world, observerId, subjectId)?.givenName;
     if (name) return { name, nameForm: 'proper' };
   }

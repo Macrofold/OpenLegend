@@ -722,6 +722,7 @@ export type Command = Envelope &
         type: 'say';
         text: string;
         targetId?: string;
+        targetRole?: import('./speech.js').SpeechTargetRole;
         selfIntroduction?: string;
         volume?: import('./acoustics.js').SpeechVolume;
       }

@@ -140,8 +140,15 @@ export function appendEvents(world: WorldState, owned: WorldEvent[]): void {
     sealEvents(world);
     buffer = undefined;
   }
-  if (!buffer && isDraft(world) && Object.isFrozen(entries)) {
-    buffer = { before: entries, values: [...entries] };
+  if (!buffer && isDraft(world)) {
+    // An unfrozen development builder has no certified immutable prefix. Own a
+    // copied snapshot once; never freeze its caller-owned records in place.
+    buffer = {
+      before: entries,
+      values: Object.isFrozen(entries)
+        ? [...entries]
+        : entries.map((entry) => frozenRecord(cloneValue(entry))),
+    };
     eventBuffers.set(world, buffer);
     world.events = buffer.values;
   }
@@ -154,7 +161,8 @@ function sealEvents(world: WorldState): void {
   eventBuffers.delete(world);
   Object.freeze(buffer.values);
   const entries = isDraft(world.events) ? current(world.events) : world.events;
-  if (entries === buffer.values) recordAppend(buffer.before, buffer.values);
+  if (entries === buffer.values && Object.isFrozen(buffer.before))
+    recordAppend(buffer.before, buffer.values);
 }
 type SnapshotBuffer = { before: unknown[]; values: unknown[] };
 const snapshotBuffers = new WeakMap<WorldState, Map<unknown[], SnapshotBuffer>>();
@@ -171,7 +179,7 @@ export function sealAppends(world: WorldState): void {
   for (const { before, values } of buffers.values()) {
     ownedSnapshots.delete(values);
     Object.freeze(values);
-    recordAppend(before, values);
+    if (Object.isFrozen(before)) recordAppend(before, values);
   }
 }
 /** Owned additions freeze immediately; retained prefixes copy only once per native turn.
@@ -187,8 +195,11 @@ export function appendSnapshot<T>(entries: T[], owned: T[], world?: WorldState):
     existing.values.push(...owned.map(frozenRecord));
     return existing.values as T[];
   }
-  if (!Object.isFrozen(before)) return undefined;
-  const after = [...before, ...owned.map(frozenRecord)];
+  if (!Object.isFrozen(before) && (!world || !isDraft(world))) return undefined;
+  const prefix = Object.isFrozen(before)
+    ? before
+    : before.map((entry) => frozenRecord(cloneValue(entry)));
+  const after = [...prefix, ...owned.map(frozenRecord)];
   if (world && isDraft(world)) {
     if (!buffers) snapshotBuffers.set(world, (buffers = new Map()));
     buffers.set(after, { before, values: after });
@@ -322,8 +333,13 @@ export function sensoryDraftWrites(
           (latest[key] as Record<symbol, ImmerState>)[IMMER_STATE]?.modified_ === true),
     );
   };
-  const publicAttributes = world.moduleManifest.definitions.filter((definition) => definition.disclosure === 'public').map((definition) => definition.id);
-  const publicHealth = world.moduleManifest.definitions.some((definition) => definition.disclosure === 'public' && definition.implementation === 'native-health-v1');
+  const publicAttributes = world.moduleManifest.definitions
+    .filter((definition) => definition.disclosure === 'public')
+    .map((definition) => definition.id);
+  const publicHealth = world.moduleManifest.definitions.some(
+    (definition) =>
+      definition.disclosure === 'public' && definition.implementation === 'native-health-v1',
+  );
   for (const value of audit.values.values()) {
     countDomainWork('sensoryDraftsVisited');
     if (!isDraft(value)) continue;
@@ -333,6 +349,9 @@ export function sensoryDraftWrites(
     const source =
       changed(value, [
         'name',
+        'description',
+        'nameForm',
+        'indefiniteArticle',
         'kind',
         'appearance',
         'placement',
@@ -342,7 +361,7 @@ export function sensoryDraftWrites(
       changed(entity.spatial, ['body', 'inactiveBody', 'softFootprint', 'heading']) ||
       changed(entity.heat, ['lit']) ||
       changed(entity.resource, ['quantity']) ||
-      changed(entity.remains, ['harvested']) ||
+      changed(entity.remains, ['harvested', 'phase']) ||
       changed(entity.actor?.attributes, publicAttributes) ||
       (publicHealth && changed(entity.actor, ['health'])) ||
       changed(entity.actor, [
@@ -352,6 +371,7 @@ export function sensoryDraftWrites(
         'controller',
         'participation',
         'physicalLife',
+        'species',
         'action',
       ]) ||
       // Component installation/removal also changes participation and outward facts.
@@ -399,11 +419,22 @@ function freezeData(value: unknown): void {
   Object.freeze(value);
   for (const key of Object.keys(value)) freezeData((value as Record<string, unknown>)[key]);
 }
+/** Native evidence is a bounded working reduction with immutable originals. Seal its
+ * changed snapshot before a nested native preview/transition, rather than asking
+ * Immer to copy the same thousands of latest facets for every candidate command.
+ * This changes representation only; the next actual evidence edit drafts it again. */
+function sealNativeEvidence(world: WorldState): void {
+  if (!isDraft(world) || !world.perceptionEvidence) return;
+  const value = world.perceptionEvidence;
+  if (Object.isFrozen(readOnlyDraftView(value))) return;
+  world.perceptionEvidence = frozenRecord(isDraft(value) ? current(value) : value);
+}
 export function draftWorld(
   world: WorldState,
   options: { retainNativeValues?: boolean } = {},
 ): WorldState {
   sealAppends(world);
+  sealNativeEvidence(world);
   const base = isDraft(world) ? current(world) : world;
   // A compound command may copy an already modified entity dictionary. Carry its
   // trusted residency metadata through that snapshot, never through serialized JSON.
@@ -420,6 +451,7 @@ export function finishWorld(
   capturePatches?: (patches: readonly Patch[]) => void,
 ): WorldState {
   sealAppends(world);
+  sealNativeEvidence(world);
   if (!isDraft(world)) return world;
   for (const value of admittedRecords.get(world) ?? []) freezeData(value);
   admittedRecords.delete(world);

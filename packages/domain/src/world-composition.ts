@@ -71,7 +71,7 @@ export function selectedRecognitionSupportSourceIds(
   return recognitionSupportSourceIds(keys);
 }
 /** Closed source-key grammar for the currently linked recognition family. */
-export const validReceivedRecognitionSupportKey=validRecognitionSupportKey;
+export const validReceivedRecognitionSupportKey = validRecognitionSupportKey;
 
 /** Current direct-path voice interpretation is selected world behavior. Future
  * acoustic producers supply their own admitted received feature evidence. */

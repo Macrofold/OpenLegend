@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Design: integrated for SAD-G's selected scope. Implementation: SPX01 existing-channel conversion is under final verification. Broader UX, accessibility, performance and security qualification remains open.** Updated 2026-10-24.
+**Design: integrated for SAD-G's selected scope. Implementation: SPX01 existing-channel conversion is implemented with scoped native/browser verification. Broader UX, accessibility, performance and security qualification remains open.** Updated 2026-10-25.
 
 [Feature behavior](../projects/stealth-player-experience-feature-spec.md) owns controls, feedback and all ten player journeys. [Technical design](../projects/stealth-player-experience-tech-design.md) owns projection, input, component boundaries, invalid states and G-AC acceptance. [Limits](../limits/stealth-player-experience.md) owns discretionary defaults and remaining capacity questions. [SA coordination](stealth-awareness.md) owns A–G/I integration; this tracker is the focused SAI-G implementation owner.
 
@@ -31,8 +31,8 @@ The [source audit](../projects/stealth-player-experience-tech-design.md#contract
 Dependencies: integrated shared schema; A current/history/reference families; B visible patch/detail/illumination; C cue precision; existing server authority.
 
 - [ ] Consume canonical A evidence/reference families, B's frozen 50 ms visual samples and B/C movement composition. Preserve exact revision types and measurement times; do not derive fresh transforms between samples.
-- [ ] Replace whole-entity publication with permitted facet/contact records across full views, patches, descriptions, histories and all lazy reads.
-- [ ] Separate current body, historical/source association and anonymous cue references; bind action targeting only through eligible current body references.
+- [x] Replace whole-entity publication with permitted facet/contact records across full views, patches, descriptions, histories and all lazy reads.
+- [x] Separate current body, historical/source association and anonymous cue references; bind action targeting only through eligible current body references.
 - [ ] Restrict map/dynamic geometry, appearance assets, animation, shadow, light, sound, DOM/accessibility and diagnostic metadata to the same audience.
 - [x] Stop retained fire records from emitting current light; current sources require an acquired body facet.
 - [ ] Qualify historical art and source-free current glow with their actual B/G producers.
@@ -127,4 +127,4 @@ Dependencies: integrated shared schema; A current/history/reference families; B 
 
 The [integrated dependency contract](../projects/stealth-player-experience-tech-design.md#integrated-dependencies-and-remaining-decision) points to the canonical A–F owners. Implement and qualify their admitted values through the existing native, server and client paths. SA-D01 remains open for controlled-player appraisal production, retained-appraisal applicability, disclosure, revocation and transfer; the native-body-only initial recommendation is not an adopted policy.
 
-This design narrows the **needs-design** work for controls, perspective and basic remapping; it does not close all ND13 recommendations/devices, SA implementation, FPV play qualification or unrelated repertoire ideas. Source inspection and documentation review are the only verification conducted here.
+This design narrows the **needs-design** work for controls, perspective and basic remapping; it does not close all ND13 recommendations/devices, SA implementation, FPV play qualification or unrelated repertoire ideas. The [foundation evidence](../verification/personal-perception-foundation.md) records the supported-channel runtime checks; integrated player qualification remains open.

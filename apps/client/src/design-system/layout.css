@@ -2539,6 +2539,9 @@ body,
   font-size: calc(12px * var(--caption-scale, 1));
   margin-bottom: 3px;
 }
+.ol-speech-caption-text {
+  white-space: pre-wrap;
+}
 .ol-speech-caption-text > .ol-icon-wrap {
   margin-right: 6px;
   vertical-align: -2px;

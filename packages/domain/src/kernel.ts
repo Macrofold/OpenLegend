@@ -166,6 +166,7 @@ import {
   installedActionMeaning,
 } from './activity-hosts.js';
 import { isSpeechVolume } from './acoustics.js';
+import { isSpeechTargetRole } from './speech.js';
 import { SIGHTING_POLICY } from './worlds/base/senses.js';
 import {
   prepareExposure,
@@ -1399,6 +1400,11 @@ function prepareNativeOperation(
       if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot speak.');
       if (!isSpeechVolume(command.volume ?? 'normal'))
         return reject('invalid-volume', 'Choose whisper, normal or shout.');
+      if (
+        command.targetRole !== undefined &&
+        (!command.targetId || !isSpeechTargetRole(command.targetRole))
+      )
+        return reject('invalid-recipient', 'Choose a permitted recipient role.');
       const recipient = command.targetId;
       if (recipient && !entityOwn(world.entities, recipient))
         return reject('invalid-recipient', 'The intended recipient no longer exists.');
@@ -3121,6 +3127,11 @@ function executeCommandNative(
         const volume = command.volume ?? 'normal';
         if (!isSpeechVolume(volume))
           return reject('invalid-volume', 'Choose whisper, normal or shout.');
+        if (
+          command.targetRole !== undefined &&
+          (!command.targetId || !isSpeechTargetRole(command.targetRole))
+        )
+          return reject('invalid-recipient', 'Choose a permitted recipient role.');
         const target = command.targetId ? entityOwn(world.entities, command.targetId) : undefined;
         const addresseeId = command.targetId;
         if (addresseeId && !entityOwn(world.entities, addresseeId))
@@ -3138,6 +3149,7 @@ function executeCommandNative(
           command.targetId,
           {
             text: command.text.trim(),
+            ...(command.targetId ? { targetRole: command.targetRole ?? 'body' } : {}),
             ...(command.selfIntroduction ? { selfIntroduction: command.selfIntroduction } : {}),
             utteranceId: command.id,
             volume,
@@ -6062,9 +6074,17 @@ function* updateEncounters(
                 }),
             ),
             vision,
-            normalSpeedSeconds(world,SIGHTING_POLICY.episodeGraceSeconds),
+            normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
+            frame.sourceToken,
+            frame.publicAttributes,
           );
-        } else endCurrentEvidence(world, actor.id, 'sight', normalSpeedSeconds(world,SIGHTING_POLICY.episodeGraceSeconds));
+        } else
+          endCurrentEvidence(
+            world,
+            actor.id,
+            'sight',
+            normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
+          );
         reconcileNativeExposure(world, entityGet(world.entities, actor.id)!, candidates);
       }
       continue;
@@ -6100,7 +6120,12 @@ function* updateEncounters(
         () => frame.nearby(actor.position, touchRadius, 'contact'),
       );
     if (radius === 0 || blocked) {
-      endCurrentEvidence(world, actor.id, 'sight', normalSpeedSeconds(world,SIGHTING_POLICY.episodeGraceSeconds));
+      endCurrentEvidence(
+        world,
+        actor.id,
+        'sight',
+        normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
+      );
       if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
       if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
       if (Object.keys(world.visiblePlaces?.[actor.id] ?? {}).length)
@@ -6232,7 +6257,9 @@ function* updateEncounters(
         entityGet(world.entities, actor.id)!,
         [...seen, ...objectIds].flatMap((id) => entityGet(world.entities, id) ?? []),
         vision,
-        normalSpeedSeconds(world,SIGHTING_POLICY.episodeGraceSeconds),
+        normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
+        frame.sourceToken,
+        frame.publicAttributes,
       );
     const newlySeen = samePeople
       ? []

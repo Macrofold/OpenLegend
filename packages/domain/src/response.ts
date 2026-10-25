@@ -42,6 +42,7 @@ import {
 } from './action-capabilities.js';
 import { discardSuspended, proposeActionRevision } from './agency.js';
 import { isSpeechVolume, type SpeechVolume } from './acoustics.js';
+import { isSpeechTargetRole, type SpeechTargetRole } from './speech.js';
 import { hasMemory, supportsManualWork } from './living.js';
 import {
   resolveAttempt,
@@ -73,6 +74,8 @@ export interface ResponseOperation {
   talk: {
     text: string;
     addresseeEntityId: string | null;
+    /** Server-derived from the selected permitted reference, never model authority. */
+    addresseeRole?: SpeechTargetRole;
     volume: SpeechVolume;
     selfIntroduction?: string | null;
   } | null;
@@ -168,10 +171,15 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
     const strings = (value: unknown) => Array.isArray(value) && value.every(text);
     if (
       op.talk &&
-      (!(
-        record(op.talk, ['text', 'addresseeEntityId', 'volume']) ||
-        record(op.talk, ['text', 'addresseeEntityId', 'volume', 'selfIntroduction'])
-      ) ||
+      (!record(op.talk, [
+        'text',
+        'addresseeEntityId',
+        'volume',
+        ...(op.talk.selfIntroduction !== undefined ? ['selfIntroduction'] : []),
+        ...(op.talk.addresseeRole !== undefined ? ['addresseeRole'] : []),
+      ]) ||
+        (op.talk.addresseeRole !== undefined &&
+          (op.talk.addresseeEntityId === null || !isSpeechTargetRole(op.talk.addresseeRole))) ||
         !isSpeechVolume(op.talk.volume) ||
         !text(op.talk.text) ||
         !nullableText(op.talk.addresseeEntityId) ||
@@ -670,7 +678,9 @@ export function commitActorResponse(
           text: op.talk.text,
           ...(op.talk.selfIntroduction ? { selfIntroduction: op.talk.selfIntroduction } : {}),
           volume: op.talk.volume,
-          ...(op.talk.addresseeEntityId ? { targetId: op.talk.addresseeEntityId } : {}),
+          ...(op.talk.addresseeEntityId
+            ? { targetId: op.talk.addresseeEntityId, targetRole: op.talk.addresseeRole ?? 'body' }
+            : {}),
         });
     }
     const act = op.act;

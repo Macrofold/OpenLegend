@@ -149,6 +149,21 @@ export function resolveResponseEntities(
       throw new Error('A current physical reference is required.');
     return physicalReferences[handle]!;
   };
+  const talk = (value: NonNullable<ActorResponse['operations'][number]['talk']>) => {
+    const { addresseeRole: _untrustedRole, ...utterance } = value;
+    const handle = value.addresseeEntityId;
+    return {
+      ...utterance,
+      addresseeEntityId: handle === null ? null : resolve(handle),
+      ...(handle === null
+        ? {}
+        : {
+            addresseeRole: Object.hasOwn(physicalReferences, handle)
+              ? ('body' as const)
+              : ('remembered' as const),
+          }),
+    };
+  };
   return {
     operations: response.operations.map((op) => ({
       ...op,
@@ -176,13 +191,7 @@ export function resolveResponseEntities(
             },
           }
         : {}),
-      talk: op.talk
-        ? {
-            ...op.talk,
-            addresseeEntityId:
-              op.talk.addresseeEntityId === null ? null : resolve(op.talk.addresseeEntityId),
-          }
-        : null,
+      talk: op.talk ? talk(op.talk) : null,
       act: op.act
         ? {
             ...op.act,

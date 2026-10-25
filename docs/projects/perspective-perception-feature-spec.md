@@ -1,8 +1,8 @@
 # Observer-specific perception, evidence and recognition — feature specification
 
-| Status      | Current progress                                                                                                | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Module A design is complete and reviewed; PP01–PP07 implementation and gameplay qualification have not started. | 2026-10-24   |
+| Status      | Current progress                                                                                                             | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Supported-channel PP01–PP06 foundation implemented; future physical producers and full PP07/SAI-A qualification remain open. | 2026-10-25   |
 
 ## Purpose and selected scope
 

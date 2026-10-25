@@ -184,14 +184,27 @@ export function EntityDetail({
 }) {
   return (
     <>
-      {entity.observation.kind === 'current' && <p className="ol-caption">
-        In sight. Details observed {formatDisplayNumber(Math.max(0,view.evaluationCut-entity.observation.measurementAt))} game seconds ago.
-      </p>}
+      {entity.observation.kind === 'current' && (
+        <p className="ol-caption">
+          In sight. Details observed{' '}
+          {formatDisplayNumber(Math.max(0, view.evaluationCut - entity.observation.measurementAt))}{' '}
+          game seconds ago.
+        </p>
+      )}
       {entity.description && <p className="ol-narrative">{entity.description}</p>}
-      {entity.observedCarried && <p className="ol-caption">
-        Seen carrying: {entity.observedCarried.items.length ? entity.observedCarried.items.map(item=>item.itemKindAsObserved).join(', ') : 'nothing discernible'}.
-        {' '}Observed {formatDisplayNumber(Math.max(0,view.evaluationCut-entity.observedCarried.measurementAt))} game seconds ago.
-      </p>}
+      {entity.observedCarried && (
+        <p className="ol-caption">
+          Seen carrying:{' '}
+          {entity.observedCarried.items.length
+            ? entity.observedCarried.items.map((item) => item.itemKindAsObserved).join(', ')
+            : 'nothing discernible'}
+          . Observed{' '}
+          {formatDisplayNumber(
+            Math.max(0, view.evaluationCut - entity.observedCarried.measurementAt),
+          )}{' '}
+          game seconds ago.
+        </p>
+      )}
 
       {entity.contents && !entity.storage && (
         <ul>

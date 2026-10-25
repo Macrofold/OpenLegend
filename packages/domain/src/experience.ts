@@ -351,29 +351,38 @@ export function retainObservationConfirmation(
   text: string,
   importance: number,
 ): void {
-  mutateExperience(world, actorId, {
-    operation: 'add',
-    entry: {
-      source: 'memory',
-      value: {
-        id: observation.id,
-        actorId,
-        kind: 'episode',
-        source:
-          observation.modality === 'sight'
-            ? 'observed'
-            : observation.modality === 'hearing'
-              ? 'heard'
-              : 'felt',
-        summary: text,
-        at: observation.acquiredAt,
-        sequence: world.sequence,
-        entityIds: [],
-        importance,
-        observation,
+  if (!world.experience) migrateCognition(world);
+  if (!hasMemory(entityGet(world.entities, actorId))) return;
+  // This newly constructed native account owns its immutable contribution. Reusing
+  // it avoids copying every nested original; editor/provider writes keep copy admission.
+  applyExperienceMutation(
+    world,
+    actorId,
+    {
+      operation: 'add',
+      entry: {
+        source: 'memory',
+        value: {
+          id: observation.id,
+          actorId,
+          kind: 'episode',
+          source:
+            observation.modality === 'sight'
+              ? 'observed'
+              : observation.modality === 'hearing'
+                ? 'heard'
+                : 'felt',
+          summary: text,
+          at: observation.acquiredAt,
+          sequence: world.sequence,
+          entityIds: [],
+          importance,
+          observation,
+        },
       },
     },
-  });
+    'transfer',
+  );
 }
 function applyExperienceMutation(
   world: WorldState,
@@ -414,6 +423,7 @@ function applyExperienceMutation(
       (m) => m.kind !== 'episode' || (!used.has(m.id) && !used.has(m.eventId ?? '')),
     );
     state.consolidatedAt[actorId] = world.simTime;
+    invalidateKnownPlaceEvidence(world, actorId);
     return [...used];
   }
   if (!Array.isArray(mutation) && mutation.operation === 'correct') {
@@ -1481,7 +1491,11 @@ export function correctExperience(
 ): Transition {
   const aware = input.experience?.awareness[actorId]?.find((a) => a.eventId === correctionEventId);
   const retained = experiences(input, actorId, true);
-  if (!aware || !retained.some((m) => m.id === sourceId) || sourceId === correctionEventId)
+  const retainedSource = retained.some(
+    (memory) =>
+      memory.id === sourceId || memory.manifest?.coverage.some((ref) => ref.id === sourceId),
+  );
+  if (!aware || !retainedSource || sourceId === correctionEventId)
     return {
       world: input,
       events: [],

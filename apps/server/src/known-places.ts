@@ -27,8 +27,7 @@ const unavailable =
   'This remembered destination cannot be used now. Refresh Known places or inspect it again when you can.';
 
 function placeView(entry: KnownPlaceSource): KnownPlaceView | undefined {
-  const exposure = entry.awareness?.exposure;
-  if (exposure?.kind !== 'place') return;
+  const { exposure, capsule } = entry.place;
   return {
     id: exposure.id,
     sourceId: entry.memory.id,
@@ -38,10 +37,10 @@ function placeView(entry: KnownPlaceSource): KnownPlaceView | undefined {
       ? entry.correction
         ? `Corrected observation: ${entry.correction}`
         : 'This observation was corrected. Its original description is no longer established information.'
-      : entry.memory.summary,
+      : exposure.description,
     locationLabel: exposure.locationLabel,
     position: { ...exposure.point },
-    time: entry.memory.at,
+    time: capsule.observedAt,
     corrected: !!entry.correctionId,
   };
 }
@@ -155,7 +154,7 @@ export async function resolveKnownPlaceMove(
   reference: Reference,
 ): Promise<{ position: import('@open-legend/spatial').SurfacePoint } | ApiResult> {
   const { entry, place } = await selectedPlace(service, actorId, reference);
-  const exposure = entry.awareness?.exposure;
+  const exposure = entry.place.exposure;
   if (
     exposure?.kind !== 'place' ||
     place.corrected ||
@@ -173,7 +172,7 @@ export async function inspectKnownPlace(
   service.assertScope(scope);
   const { entry, place } = await selectedPlace(service, scope.actorId, reference);
   service.assertScope(scope);
-  const exposure = entry.awareness?.exposure;
+  const exposure = entry.place.exposure;
   const valid =
     exposure?.kind === 'place' &&
     !place.corrected &&

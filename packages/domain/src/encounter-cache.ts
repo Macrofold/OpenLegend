@@ -1,13 +1,14 @@
+import { isImmutableData } from './records.js';
 import { entityGet, entityKeys } from './entity-collection.js';
 import { current, isDraft, original } from 'immer';
-import { readOnlyDraftView, sensoryDraftWrites } from './draft.js';
+import { cloneValue, readOnlyDraftView, sensoryDraftWrites } from './draft.js';
 import { worldRootEntities } from './entity-index.js';
 import { hasMemory } from './living.js';
 import { activelyParticipates } from './participation-state.js';
 import { visibleFeature } from './perception-frame.js';
-import { bodyProfile, spatialMap, worldPosition } from './spatial-state.js';
+import { bodyProfile, spatialMap, worldPosition, worldSupport } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
-import { projectAttributes } from './world-modules.js';
+import { projectAttributes, type AttributeView } from './world-modules.js';
 import { SpatialCandidateIndex } from './spatial.js';
 import { nextSensoryPhase, recordSensoryChange, MAX_CHANGE_SCOPES } from './dependencies.js';
 import { countDomainWork } from './diagnostic-counters.js';
@@ -25,7 +26,8 @@ export interface ExposureInput {
   object: boolean;
   feature: string;
   /** Full currently disclosed detail dependency; separate from narrative salience. */
-  detailSignature:string;
+  detailSignature: string;
+  publicAttributes?: AttributeView[];
 }
 /** A new continuous-exposure episode identity. Its format is owned here with its parser. */
 export function perceptionEpisodeId(world: WorldState, sourceId: string): string {
@@ -105,12 +107,40 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
       memory: hasMemory(entity),
       nativeResponse: entity.actor?.controller === 'native' && !!entity.animal?.episode,
       object: !entity.actor && !entity.animal,
-      detailSignature:JSON.stringify([!entity.actor?entity.description:null,!entity.actor?entity.nameForm:null,!entity.actor?entity.indefiniteArticle:null,entity.resource?.quantity,entity.remains?.phase,worldSupport(entity)]),
+      detailSignature: JSON.stringify([
+        !entity.actor ? entity.description : null,
+        !entity.actor ? entity.nameForm : null,
+        !entity.actor ? entity.indefiniteArticle : null,
+        entity.resource?.quantity,
+        entity.remains?.phase,
+        worldSupport(entity),
+        entity.inventoryRevision ?? 0,
+        entity.spatial.heading,
+        entity.actor?.physicalLife ?? null,
+        entity.actor?.species,
+      ]),
       ...visibleFeature(entity),
     };
   }
   if (frozen) captures.set(entity, capture);
   return withPublicAttributes(world, capture);
+}
+const itemPresentationKeys = new WeakMap<object, string>();
+function itemPresentationKey(world: WorldState): string {
+  const definitions = readOnlyDraftView(world.itemDefinitions),
+    immutable = isImmutableData(definitions);
+  let key = immutable ? itemPresentationKeys.get(definitions) : undefined;
+  if (key === undefined) {
+    key = JSON.stringify(
+      Object.entries(definitions).map(([id, definition]) => [
+        id,
+        definition.name,
+        definition.portable,
+      ]),
+    );
+    if (immutable) itemPresentationKeys.set(definitions, key);
+  }
+  return key;
 }
 const publicAttributeFamilies = new WeakMap<object, boolean>();
 function withPublicAttributes(
@@ -119,20 +149,24 @@ function withPublicAttributes(
 ): ExposureCapture | null {
   if (!capture?.entity.actor) return capture;
   const definitions = readOnlyDraftView(world.moduleManifest.definitions);
-  let installed = Object.isFrozen(definitions)
+  let installed = isImmutableData(definitions)
     ? publicAttributeFamilies.get(definitions)
     : undefined;
   if (installed === undefined) {
     installed = definitions.some((definition) => definition.disclosure === 'public');
-    if (Object.isFrozen(definitions)) publicAttributeFamilies.set(definitions, installed);
+    if (isImmutableData(definitions)) publicAttributeFamilies.set(definitions, installed);
   }
   if (!installed) return capture;
+  // Prepared source inputs survive this draft. Attribute presentation can borrow
+  // nested definition values, so detach them once before the cache owns them.
+  const publicAttributes = cloneValue(projectAttributes(world, capture.entity, 'public'));
   return {
     ...capture,
-    detailSignature: JSON.stringify([capture.detailSignature, projectAttributes(world, capture.entity, 'public')]),
+    publicAttributes,
+    detailSignature: JSON.stringify([capture.detailSignature, publicAttributes]),
   };
 }
-type Source = ExposureInput & { detail: string; order: number };
+type Source = ExposureInput & { detail: string; order: number; measurementKey: string };
 interface ObserverInput {
   id: string;
   position: Position;
@@ -168,6 +202,7 @@ interface ExposureCache {
   map: object;
   manifest: object;
   policy: object;
+  itemPresentationKey: string;
   inputs: Map<string, Source>;
   order: Map<string, number>;
   nextOrder: number;
@@ -207,7 +242,8 @@ const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
   a.memory === b.memory &&
   a.nativeResponse === b.nativeResponse &&
   a.object === b.object &&
-  a.feature === b.feature && a.detailSignature===b.detailSignature;
+  a.feature === b.feature &&
+  a.detailSignature === b.detailSignature;
 const snapshot = <T extends object>(value: T): T => (isDraft(value) ? current(value) : value);
 const within = (a: Position, b: Position, radius: number) =>
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) <= radius;
@@ -237,7 +273,8 @@ export function* prepareExposure(
     maximumBodyHeight: number;
     maximumBodyRadius: number;
     /** Identity changes only when this prepared source's relevant input changes. */
-    sourceToken:(id:string)=>object|undefined;
+    sourceToken: (id: string) => string | undefined;
+    publicAttributes: (id: string) => readonly AttributeView[];
   }
 > {
   countDomainWork('sensoryPhases');
@@ -259,7 +296,8 @@ export function* prepareExposure(
   const changes = nextSensoryPhase(world, audit);
   const map = spatialMap(world),
     manifest = snapshot(world.moduleManifest),
-    policy = snapshot(world.statusEffectPolicy);
+    policy = snapshot(world.statusEffectPolicy),
+    itemKey = itemPresentationKey(world);
   let rebuild: 'cold' | 'unknown' | 'overflow' | 'policy' | undefined;
   if (!cache || (cache.owner !== ownerToken(ancestor) && cache.owner !== ownerToken(world)))
     rebuild = 'cold';
@@ -268,6 +306,7 @@ export function* prepareExposure(
     cache.map !== map ||
     cache.manifest !== manifest ||
     cache.policy !== policy ||
+    cache.itemPresentationKey !== itemKey ||
     !Object.isFrozen(map) ||
     !Object.isFrozen(manifest) ||
     !Object.isFrozen(policy)
@@ -286,6 +325,7 @@ export function* prepareExposure(
       map,
       manifest,
       policy,
+      itemPresentationKey: itemKey,
       inputs: new Map(),
       order: new Map(),
       nextOrder: 0,
@@ -340,7 +380,21 @@ export function* prepareExposure(
     let order = prepared.order.get(id);
     if (order === undefined) prepared.order.set(id, (order = prepared.nextOrder++));
     const { entity: _entity, ...input } = capture;
-    const source: Source = { ...input, position: { ...input.position }, order };
+    const source: Source = {
+      ...input,
+      position: { ...input.position },
+      order,
+      // Shared exact descriptor dependencies survive a cold/mutable cache rebuild.
+      // Observer frames remain sampled independently at the receiving owner.
+      measurementKey: JSON.stringify([
+        input.position,
+        input.radius,
+        input.height,
+        input.feature,
+        input.detailSignature,
+        itemKey,
+      ]),
+    };
     prepared.inputs.set(id, source);
     if (source.alive) prepared.near.set(source);
     if (source.object) prepared.objects.set(source);
@@ -531,6 +585,8 @@ export function* prepareExposure(
     selectedPeople: (position, radius, ids) => prepared.near.querySelected(position, radius, ids),
     orderPeople: (ids) =>
       [...ids].sort((a, b) => prepared.inputs.get(a)!.order - prepared.inputs.get(b)!.order),
+    sourceToken: (id) => prepared.inputs.get(id)?.measurementKey,
+    publicAttributes: (id) => prepared.inputs.get(id)?.publicAttributes ?? [],
     nearby: (position, radius, kind) =>
       (kind === 'contact'
         ? prepared.contacts

@@ -1060,34 +1060,45 @@ export async function projectView(
           };
         }),
     ),
-    events: memo<GameView['events']>('events', [events], () =>
-      events
-        // Recognize legacy movement records that predate structured action types.
-        .filter(isJournalEvent)
-        .slice(-60)
-        .map((event) =>
-          publicEvent(
-            event,
-            selectedEventPresentation(world),
-            player.id,
+    events: memo<GameView['events']>(
+      'events',
+      // The historical words stay fixed, but a current caption anchor can expire
+      // without another event. Never memoize that body grant on history alone.
+      [
+        events,
+        world.perceptionEvidence?.[player.id]?.current,
+        world.entities,
+        world.moduleManifest,
+        service.timelineId,
+      ],
+      () =>
+        events
+          // Recognize legacy movement records that predate structured action types.
+          .filter(isJournalEvent)
+          .slice(-60)
+          .map((event) =>
+            publicEvent(
+              event,
+              selectedEventPresentation(world),
+              player.id,
               JSON.stringify([world.id, `${service.timelineId}:${scopeKey(scope)}`]),
-            (body) => {
-              if (
-                body.entityId === player.id &&
-                body.physicalLife === (player.actor?.physicalLife ?? 0)
-              )
-                return player.id;
-              const entity = entityGet(world.entities, body.entityId);
-              const received = entity && currentBodyObservation(world, player.id, entity.id);
-              return entity &&
-                received &&
-                body.leaseId === received.id &&
-                body.physicalLife === (entity.actor?.physicalLife ?? 0)
-                ? currentContactReference(world, scope, entity)
-                : undefined;
-            },
+              (body) => {
+                if (
+                  body.entityId === player.id &&
+                  body.physicalLife === (player.actor?.physicalLife ?? 0)
+                )
+                  return player.id;
+                const entity = entityGet(world.entities, body.entityId);
+                const received = entity && currentBodyObservation(world, player.id, entity.id);
+                return entity &&
+                  received &&
+                  body.leaseId === received.id &&
+                  body.physicalLife === (entity.actor?.physicalLife ?? 0)
+                  ? currentContactReference(world, scope, entity)
+                  : undefined;
+              },
+            ),
           ),
-        ),
     ),
     conversation: conversationEntries.map((event) => {
       const reply = replies.get(event.id);

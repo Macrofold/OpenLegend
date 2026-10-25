@@ -2588,7 +2588,9 @@ function App({
                 canvas.current?.focus();
               }}
               setup={() => show('ai')}
-              changeAddressee={(targetId,label)=>setWorldIntent(current=>current?{...current,targetId,label}:null)}
+              changeAddressee={(targetId, label) =>
+                setWorldIntent((current) => (current ? { ...current, targetId, label } : null))
+              }
             />
             {!tabPaused &&
               view.godMode &&

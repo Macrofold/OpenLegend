@@ -70,7 +70,7 @@ type WorldComposerProps = {
   visible: boolean;
   close(): void;
   setup(): void;
-  changeAddressee(targetId:string|undefined,label:string|undefined):void;
+  changeAddressee(targetId: string | undefined, label: string | undefined): void;
 };
 
 /** Remains mounted when hidden; private ownership, not transport, owns its drafts. */
@@ -440,22 +440,38 @@ function ScopedWorldComposer({
         </strong>
         <IconButton icon="ui.close" label="Close text bar" onPress={close} />
       </div>
-      {intent?.mode === 'speak' && <SelectField label="Address" value={intent.targetId ?? 'ambient'}
-        placeholder="Choose an addressee" disabled={sending}
-        options={[
-          {id:'ambient',label:'Anyone nearby'},
-          ...(intent.targetId && view.entities.some(entity=>entity.id===intent.targetId)
-            ? [{id:intent.targetId,label:intent.label ?? 'Current person'}] : []),
-          ...view.communicationReferences.map(reference=>({id:reference.id,label:reference.label})),
-        ]}
-        onChange={reference=>{
-          const targetId=reference==='ambient'?undefined:reference;
-          const label=view.communicationReferences.find(entry=>entry.id===reference)?.label ??
-            view.entities.find(entity=>entity.id===reference)?.name;
-          const nextKey=composerDraftKey(composerDraftScope(view),'speak',targetId??null,intent.item?.id??null);
-          if(nextKey)writeDraft(nextKey,{...draft});
-          changeAddressee(targetId,label);
-        }} />}
+      {intent?.mode === 'speak' && (
+        <SelectField
+          label="Address"
+          value={intent.targetId ?? 'ambient'}
+          placeholder="Choose an addressee"
+          disabled={sending}
+          options={[
+            { id: 'ambient', label: 'Anyone nearby' },
+            ...(intent.targetId && view.entities.some((entity) => entity.id === intent.targetId)
+              ? [{ id: intent.targetId, label: intent.label ?? 'Current person' }]
+              : []),
+            ...view.communicationReferences.map((reference) => ({
+              id: reference.id,
+              label: reference.label,
+            })),
+          ]}
+          onChange={(reference) => {
+            const targetId = reference === 'ambient' ? undefined : reference;
+            const label =
+              view.communicationReferences.find((entry) => entry.id === reference)?.label ??
+              view.entities.find((entity) => entity.id === reference)?.name;
+            const nextKey = composerDraftKey(
+              composerDraftScope(view),
+              'speak',
+              targetId ?? null,
+              intent.item?.id ?? null,
+            );
+            if (nextKey) writeDraft(nextKey, { ...draft });
+            changeAddressee(targetId, label);
+          }}
+        />
+      )}
       {intent?.mode === 'speak' ? (
         <Slider
           className="ol-world-volume"

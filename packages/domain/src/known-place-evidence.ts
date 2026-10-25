@@ -4,7 +4,14 @@ import { validateEvidenceSource, validateObservedLocation } from './perception-v
 import type { PersonalSourceRef } from './experience-source.js';
 import type { Awareness } from './experience.js';
 import type { EvidenceSource, ObservedLocation } from './perception-evidence.js';
+import type { ObservationContribution } from './perception-evidence.js';
+import type { EncounterExposure } from './places.js';
 import type { WorldState } from './types.js';
+
+export interface RetainedPlaceObservation {
+  capsule: KnownPlaceCapsule;
+  exposure: Extract<EncounterExposure, { kind: 'place' }>;
+}
 
 /** A minimal projection of one retained place observation, never live place geometry. */
 export interface KnownPlaceCapsule {
@@ -17,6 +24,7 @@ export interface KnownPlaceCapsule {
   /** Original personal occurrence alias, used only for correction/forgetting routing. */
   sourceEventId?: string;
   observedAt: number;
+  observedOrder: number;
   acquiredAt: number;
   provenance: 'observed' | 'testimony' | 'authored';
 }
@@ -64,6 +72,8 @@ export function prepareKnownPlaceEvidence(
       !Number.isSafeInteger(capsule.facetOrdinal) ||
       capsule.facetOrdinal < 0 ||
       !Number.isFinite(capsule.observedAt) ||
+      !Number.isSafeInteger(capsule.observedOrder) ||
+      capsule.observedOrder < 0 ||
       !Number.isFinite(capsule.acquiredAt) ||
       capsule.observedAt > capsule.acquiredAt ||
       !['observed', 'testimony', 'authored'].includes(capsule.provenance) ||
@@ -119,7 +129,16 @@ export function knownPlaceCapsule(
 ): KnownPlaceCapsule | undefined {
   const exposure = entry.exposure;
   if (exposure?.kind !== 'place' || !entry.observation) return;
-  const observation = entry.observation;
+  return placeCapsule(entry.observation, exposure, entry.eventId, personalSource);
+}
+function placeCapsule(
+  observation: ObservationContribution,
+  exposure: Extract<EncounterExposure, { kind: 'place' }>,
+  sourceEventId: string,
+  personalSource?: PersonalSourceRef,
+): KnownPlaceCapsule | undefined {
+  if (observation.origin.kind !== 'occurrence' || observation.origin.eventId !== sourceEventId)
+    return;
   const location = observation.facets.find(
     (facet) =>
       facet.value.kind === 'location' &&
@@ -138,12 +157,39 @@ export function knownPlaceCapsule(
       revision: observation.revision,
     },
     facetOrdinal: location.ordinal,
-    sourceEventId: entry.eventId,
+    sourceEventId,
     ...(personalSource ? { personalSource } : {}),
     observedAt: location.asOf,
+    observedOrder: observation.origin.order,
     acquiredAt: location.acquiredAt,
     provenance: exposure.reportedBy ? 'testimony' : 'observed',
   };
+}
+/** Consolidation retains the original observation, so a learned place survives the
+ * retirement of its prose account without becoming a new sensory observation. */
+export function retainedPlaceObservations(
+  observations: readonly ObservationContribution[],
+  personalSource?: PersonalSourceRef,
+): RetainedPlaceObservation[] {
+  const places = new Map<string, RetainedPlaceObservation>();
+  for (const observation of observations) {
+    if (observation.origin.kind !== 'occurrence') continue;
+    for (const facet of observation.facets) {
+      if (facet.value.kind !== 'encounter-exposure' || facet.value.exposure.kind !== 'place')
+        continue;
+      const exposure = facet.value.exposure;
+      const capsule = placeCapsule(
+        observation,
+        exposure,
+        observation.origin.eventId,
+        personalSource,
+      );
+      if (!capsule) throw new KnownPlacePreparationError();
+      const key = JSON.stringify([capsule.source, capsule.facetOrdinal]);
+      places.set(key, { capsule, exposure });
+    }
+  }
+  return [...places.values()];
 }
 export function acquireKnownPlaceEvidence(world: WorldState, entry: Awareness): void {
   const exposure = entry.exposure;

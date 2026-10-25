@@ -1,14 +1,14 @@
 # Observer-specific perception, evidence and recognition — technical design
 
-| Status      | Current progress                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PP00 design and independent review are complete; PP01–PP07 implementation and qualification remain open. | 2026-10-24   |
+| Status      | Current progress                                                                                                             | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Supported-channel PP01–PP06 foundation implemented; future physical producers and full PP07/SAI-A qualification remain open. | 2026-10-25   |
 
 ## Authority, scope and implementation boundary
 
 This is the implementation design for [the feature specification](perspective-perception-feature-spec.md). [PP00–PP07](../maintainers/perspective-perception.md) own work, dependencies and delivery status. [SC01–SC14](stealth-awareness-tech-design.md#shared-contracts) remain the shared interface authority. This module supplies their concrete supported evidence families and observer recognition/retention policy; it does not replace those contracts. The [base-world policy](../worlds/base/perception-recognition.md) owns Perception, perceivable signatures, familiarity and detection tuning. The [limits inventory](../limits/perspective-perception.md) records restrictions, overflow and unqualified capacity.
 
-The source baseline is the exact `codex/design-stealth-00-contracts` tip, `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`, in `Macrofold/OpenLegend`. Source inspection establishes the delivered paths below. This documentation does not install new fields, an attribute, physical sounds, sight rules, a scheduler, a model prompt or a database change. All subsequent code and qualification are PP01–PP07 work. The integrated [SC02 source adapters](#exact-shared-source-revisions) preserve each existing owner’s exact revision representation.
+The source audit below records the design baseline; current delivery and evidence are maintained in [PP](../maintainers/perspective-perception.md) and [the scoped report](../verification/personal-perception-foundation.md). That baseline is the exact `codex/design-stealth-00-contracts` tip, `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`, in `Macrofold/OpenLegend`. Source inspection establishes the delivered paths below. This documentation does not install new fields, an attribute, physical sounds, sight rules, a scheduler, a model prompt or a database change. All subsequent code and qualification are PP01–PP07 work. The integrated [SC02 source adapters](#exact-shared-source-revisions) preserve each existing owner’s exact revision representation.
 
 A owns acquisition of observer-permitted evidence, classification, association, individual recognition, per-fact retention and projections from those meanings. B owns geometric sight, occlusion, lighting and physically visible features. C owns emission, acoustic propagation, received sound features and physical hearing opportunities. E owns attention, investigation, action choice and native responses; D owns fear/startle and effective conditions; F owns preparedness and surprise; G owns input and authorized presentation. A never answers any of those owners' decisions by looking at a hidden entity or by equating detection with a behavioral response.
 

@@ -43,6 +43,9 @@ import {
   prepareKnownPlaceEvidence,
   type KnownPlaceCapsule,
   knownPlaceCapsule,
+  retainedPlaceObservations,
+  canonicalJson,
+  type EncounterExposure,
 } from '@open-legend/domain';
 import { z } from 'zod';
 import type { SqlDatabase } from './store.js';
@@ -55,7 +58,6 @@ export const MEMORY_SOURCE_TABLES = {
 } as const;
 const sourceTables = MEMORY_SOURCE_TABLES;
 export type MemoryChanges = Map<string, Set<string> | null> & {
-  placeIds?: Map<string, Set<string>>;
   /** Transaction-local canonical creations, never a reusable eligibility cache. */
   newSources?: Map<string, Map<string, SourceKind>>;
 };
@@ -79,7 +81,6 @@ const sourceColumnNames = [
   'eligible',
   'sequence',
   'place_id',
-  'place_label',
   'place_capsule',
 ];
 const sourceColumns = sourceColumnNames.map((name) => `r.${name}`).join(',');
@@ -87,7 +88,6 @@ interface PreparedSource {
   row: RowChange;
   actorId: string;
   id: string;
-  exposure: Awareness['exposure'];
   sources: readonly PersonalSourceRef[];
   manifest: ExperienceSummary['manifest'] | undefined;
   values: unknown[];
@@ -199,6 +199,10 @@ export interface CurrentMemorySource {
   revision: string;
 }
 export interface KnownPlaceSource extends RetrievedMemory {
+  place: {
+    exposure: Extract<EncounterExposure, { kind: 'place' }>;
+    capsule: KnownPlaceCapsule;
+  };
   correctionId?: string;
   correction?: string;
 }
@@ -388,7 +392,7 @@ export class MemoryRepository {
         id TEXT NOT NULL, source_kind TEXT NOT NULL, record_id TEXT NOT NULL, revision TEXT NOT NULL,
         event_id TEXT, memory_kind TEXT, acquisition TEXT, event_type TEXT,
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
-        place_id TEXT, place_label TEXT, place_capsule TEXT, place_latest BIGINT NOT NULL DEFAULT 0,
+        place_id TEXT, place_capsule TEXT,
         search_text TEXT NOT NULL DEFAULT '',
         PRIMARY KEY(world_id,actor_id,id,source_kind));
       CREATE INDEX IF NOT EXISTS recall_actor_rank ON recall_sources(world_id,actor_id,eligible,importance DESC,at DESC,id);
@@ -396,7 +400,7 @@ export class MemoryRepository {
       CREATE INDEX IF NOT EXISTS recall_context_rank ON recall_sources(world_id,actor_id,eligible,required DESC,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_actor_recent ON recall_sources(world_id,actor_id,eligible,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_place_evidence ON recall_sources(world_id,actor_id,place_id,eligible,at DESC,sequence DESC,id DESC) WHERE place_id IS NOT NULL;
-      CREATE INDEX IF NOT EXISTS recall_places ON recall_sources(world_id,actor_id,place_id) INCLUDE(id) WHERE place_latest=1 AND eligible=1;
+      CREATE INDEX IF NOT EXISTS recall_retained_places ON recall_sources(world_id,actor_id,id) WHERE source_kind<>'awareness' AND place_capsule IS NOT NULL AND eligible=1;
       CREATE INDEX IF NOT EXISTS recall_commitments ON recall_sources(world_id,actor_id,at,id) WHERE source_kind='memory' AND memory_kind='commitment' AND eligible=1;
       CREATE INDEX IF NOT EXISTS recall_world_event ON recall_sources(world_id,event_id,actor_id);
       CREATE INDEX IF NOT EXISTS recall_actor_event ON recall_sources(world_id,actor_id,event_id);
@@ -461,14 +465,6 @@ export class MemoryRepository {
   ): Promise<MemoryChanges> {
     const affected: MemoryChanges = new Map();
     affected.newSources = new Map();
-    const placeIds = (affected.placeIds = new Map());
-    const touchPlace = (actorId: string, value: Record<string, unknown>) => {
-      const exposure = value['exposure'] as Awareness['exposure'];
-      if (exposure?.kind !== 'place') return;
-      const ids = placeIds.get(actorId) ?? new Set<string>();
-      ids.add(exposure.id);
-      placeIds.set(actorId, ids);
-    };
     const invalidateConversations = new Set<string>();
     const touch = (actor: string, id: string) => {
       if (affected.get(actor) === null) return;
@@ -516,11 +512,6 @@ export class MemoryRepository {
           .all(worldId, ...batch);
         for (const row of old) {
           touch(String(row['actor_id']), String(row['source_id']));
-          if (kind === 'awareness')
-            touchPlace(
-              String(row['actor_id']),
-              JSON.parse(String(row['payload'])) as Record<string, unknown>,
-            );
           if (kind === 'awareness') invalidateConversations.add(String(row['actor_id']));
         }
         await insertRows(
@@ -603,7 +594,9 @@ export class MemoryRepository {
       const exposure = value['exposure'] as Awareness['exposure'];
       const sources = kind === 'summary' ? value['sources'] : [];
       const manifest =
-        kind === 'summary' ? (value['manifest'] as ExperienceSummary['manifest']) : undefined;
+        kind === 'summary' || kind === 'memory'
+          ? (value['manifest'] as ExperienceSummary['manifest'] | undefined)
+          : undefined;
       if (manifest) validateExperienceManifest(manifest);
       if (
         typeof id !== 'string' ||
@@ -614,6 +607,30 @@ export class MemoryRepository {
         (exposure !== undefined && !validEncounterExposure(exposure))
       )
         throw new Error('Invalid memory source projection.');
+      const evidence =
+        kind === 'memory'
+          ? (value as unknown as MemoryRecord).evidence
+          : (value as unknown as Awareness);
+      const originals =
+        kind === 'summary'
+          ? manifest!.observations
+          : [
+              ...((value as unknown as Awareness).observation
+                ? [(value as unknown as Awareness).observation!]
+                : []),
+              ...((value as unknown as Awareness).observations ?? []),
+              ...(kind === 'memory' && evidence?.observation ? [evidence.observation] : []),
+              ...(kind === 'memory' ? (evidence?.observations ?? []) : []),
+              ...(kind === 'memory' ? (manifest?.observations ?? []) : []),
+            ];
+      const retainedPlaces =
+        kind === 'awareness'
+          ? []
+          : retainedPlaceObservations(originals, {
+              kind,
+              id: String(id),
+              revision: personalAccountRevision(row.payload),
+            }).map((place) => place.capsule);
       const values: unknown[] = [
         worldId,
         actorId,
@@ -631,7 +648,6 @@ export class MemoryRepository {
         0,
         value['sequence'] ?? 0,
         kind === 'awareness' && exposure?.kind === 'place' ? exposure.id : null,
-        kind === 'awareness' && exposure?.kind === 'place' ? exposure.label : null,
         kind === 'awareness' && exposure?.kind === 'place'
           ? JSON.stringify(
               knownPlaceCapsule(value as unknown as Awareness, {
@@ -640,7 +656,9 @@ export class MemoryRepository {
                 revision: personalAccountRevision(row.payload),
               }),
             )
-          : null,
+          : retainedPlaces.length
+            ? JSON.stringify(retainedPlaces)
+            : null,
         value[kind === 'memory' ? 'summary' : 'text'] ?? '',
       ];
       // These are the actual SQL fields: required times/ranks cannot become NULL,
@@ -654,30 +672,17 @@ export class MemoryRepository {
             (index >= 12 && !Number.isSafeInteger(part))
           )
             throw new Error('Invalid numeric memory source projection.');
-        } else if (part === null ? index < 6 || index === 18 : typeof part !== 'string')
+        } else if (
+          part === null ? index < 6 || index === sourceColumnNames.length : typeof part !== 'string'
+        )
           throw new Error('Invalid text memory source projection.');
       }
       if (kind === 'awareness') validateEventEvidence(value);
-      const evidence =
-        kind === 'memory'
-          ? (value as unknown as MemoryRecord).evidence
-          : (value as unknown as Awareness);
-      const originals =
-        kind === 'summary'
-          ? manifest!.observations
-          : [
-              ...((value as unknown as Awareness).observation
-                ? [(value as unknown as Awareness).observation!]
-                : []),
-              ...((value as unknown as Awareness).observations ?? []),
-              ...(kind === 'memory' && evidence?.observation ? [evidence.observation] : []),
-              ...(kind === 'memory' ? (evidence?.observations ?? []) : []),
-            ];
       const learning = [
         ...recognitionSupportSources(evidence?.recognition?.learningSupport ?? []),
         ...observationLearningSources(originals),
       ];
-      yield { row, actorId, id, exposure, sources, manifest, values, originals, learning };
+      yield { row, actorId, id, sources, manifest, values, originals, learning };
     }
   }
   /** Insert only after current records have changed. All awareness must precede
@@ -857,7 +862,7 @@ export class MemoryRepository {
       }
       await flushDependencies();
       function* incoming() {
-        for (const { row, actorId, id, exposure, values } of writes()) {
+        for (const { row, actorId, id, values } of writes()) {
           if (affected.get(actorId) !== null) {
             const ids = affected.get(actorId) ?? new Set<string>();
             if (row.create && !ids.has(id)) {
@@ -867,11 +872,6 @@ export class MemoryRepository {
             } else affected.newSources?.get(actorId)?.delete(id);
             ids.add(id);
             affected.set(actorId, ids);
-          }
-          if (kind === 'awareness' && exposure?.kind === 'place') {
-            const ids = affected.placeIds!.get(actorId) ?? new Set<string>();
-            ids.add(exposure.id);
-            affected.placeIds!.set(actorId, ids);
           }
           yield values;
         }
@@ -1013,64 +1013,50 @@ export class MemoryRepository {
         )
         .run(...params, worldId, worldId);
     }
-    await this.reconcilePlaces(worldId, changes);
   }
 
-  /** Keep the latest retained observation in the existing recall projection. Batch
-   * observers together: a shared arrival must not add two SQL round trips per witness. */
-  private async reconcilePlaces(worldId: string, changes: MemoryChanges) {
-    const pairs: [string, string][] = [];
-    const flush = async () => {
-      if (!pairs.length) return;
-      const changed = `WITH changed(actor_id,place_id) AS (VALUES ${pairs.map(() => '(?,?)').join(',')})`;
-      await this.db
-        .prepare(
-          `${changed} UPDATE recall_sources r SET place_latest=0
-          FROM changed c WHERE r.world_id=? AND r.actor_id=c.actor_id AND r.place_id=c.place_id AND r.place_latest=1`,
-        )
-        .run(...pairs.flat(), worldId);
-      await this.db
-        .prepare(
-          `${changed}, latest AS MATERIALIZED (
-          SELECT c.actor_id,source.id,source.source_kind FROM changed c CROSS JOIN LATERAL (
-            SELECT id,source_kind FROM recall_sources WHERE world_id=? AND actor_id=c.actor_id
-            AND eligible=1 AND place_id=c.place_id ORDER BY at DESC,sequence DESC,id DESC LIMIT 1
-          ) source)
-          UPDATE recall_sources r SET place_latest=1 FROM latest l
-          WHERE r.world_id=? AND r.actor_id=l.actor_id AND r.id=l.id AND r.source_kind=l.source_kind`,
-        )
-        .run(...pairs.flat(), worldId, worldId);
-      pairs.length = 0;
-    };
-    // Ordinary visits touch only their places. Explicit history-wide edits and
-    // restoration enumerate metadata in pages; no historical bodies are hydrated.
-    for (const [actorId, ids] of changes) {
-      const places = changes.placeIds?.get(actorId);
-      if (ids !== null && !places?.size) continue;
-      let after = '';
-      do {
-        const page: string[] =
-          ids === null
-            ? (
-                await this.db
-                  .prepare(
-                    `SELECT DISTINCT place_id FROM recall_sources WHERE world_id=? AND actor_id=? AND place_id>? ORDER BY place_id LIMIT 250`,
-                  )
-                  .all(worldId, actorId, after)
-              ).map((row) => String(row['place_id']))
-            : [...places!];
-        if (!page.length) break;
-        for (const placeId of page) {
-          pairs.push([actorId, placeId]);
-          if (pairs.length === 250) await flush();
-        }
-        after = page.at(-1)!;
-        if (ids !== null || page.length < 250) break;
-      } while (true);
-    }
-    await flush();
+  /** Only the minimal place projection is expanded here, never autobiography payloads.
+   * A summary may retain several original places under its one current source revision. */
+  private retainedPlaces(uncorrected = false, range?: { after?: string; placeId?: string }) {
+    const bounds = (place: string) =>
+      `${range?.after ? ` AND (${place})>?` : ''}${range?.placeId ? ` AND (${place})=?` : ''}`;
+    return `WITH place_candidates AS (
+    SELECT r.world_id,r.actor_id,r.id AS owner_id,r.source_kind AS owner_kind,r.revision AS owner_revision,
+      r.place_id AS candidate_place_id,r.place_capsule::jsonb AS capsule
+    FROM recall_sources r WHERE ${this.eligible} AND r.source_kind='awareness'
+      AND r.place_id IS NOT NULL${bounds('r.place_id')}
+    UNION ALL
+    SELECT r.world_id,r.actor_id,r.id AS owner_id,r.source_kind AS owner_kind,r.revision AS owner_revision,
+      p.value->>'placeId' AS candidate_place_id,p.value AS capsule
+    FROM recall_sources r CROSS JOIN LATERAL jsonb_array_elements(
+      CASE WHEN r.source_kind<>'awareness' THEN r.place_capsule::jsonb ELSE '[]'::jsonb END) p
+    WHERE ${this.eligible} AND r.source_kind<>'awareness' AND r.place_capsule IS NOT NULL${bounds("p.value->>'placeId'")}
+  ), retained_places AS (
+    SELECT DISTINCT ON (p.candidate_place_id) p.*,p.candidate_place_id AS learned_place_id
+    FROM place_candidates p WHERE NOT EXISTS (
+      SELECT 1 FROM mind_forgotten f WHERE f.world_id=p.world_id AND f.actor_id=p.actor_id
+        AND f.source_id IN (p.capsule->>'sourceEventId',p.capsule->'source'->>'id',
+          '["perception-fact",'||to_json(p.capsule->'source'->>'id')::text||','||(p.capsule->>'facetOrdinal')||']'))
+      ${
+        uncorrected
+          ? `AND NOT EXISTS (SELECT 1 FROM mind_corrections c
+        WHERE c.world_id=p.world_id AND c.actor_id=p.actor_id AND c.source_id IN (
+          p.capsule->>'sourceEventId',p.capsule->'source'->>'id',
+          '["perception-fact",'||to_json(p.capsule->'source'->>'id')::text||','||(p.capsule->>'facetOrdinal')||']'))`
+          : ''
+      }
+    ORDER BY p.candidate_place_id,(p.capsule->>'observedAt')::double precision DESC,
+      (p.capsule->>'observedOrder')::bigint DESC,p.owner_id DESC
+  )`;
   }
-
+  private placeParams(scope: MemoryScope, range?: { after?: string; placeId?: string }) {
+    const params = [
+      ...this.params(scope),
+      ...(range?.after ? [range.after] : []),
+      ...(range?.placeId ? [range.placeId] : []),
+    ];
+    return [...params, ...params];
+  }
   /** Native preparation is complete or explicitly refused. The source projection retains
    * only the observed place capsule, so this reads no autobiography or live place body.
    * This exceptional activation work is never performed by a hearing callback or cut. */
@@ -1078,12 +1064,11 @@ export class MemoryRepository {
     return this.snapshot(async () => {
       const head = await this.db.prepare('SELECT generation FROM world_head WHERE id=1').get();
       if (head?.['generation'] !== scope.generation) throw new MemoryPreparationError();
-      const predicate = `${this.eligible} AND r.source_kind='awareness' AND r.place_latest=1 AND r.place_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=r.world_id AND c.actor_id=r.actor_id AND c.source_id=r.id)`;
       const size = await this.db
         .prepare(
-          `SELECT COUNT(*) AS count,COALESCE(SUM(octet_length(r.place_capsule)),0) AS bytes FROM recall_sources r WHERE ${predicate}`,
+          `${this.retainedPlaces(true)} SELECT COUNT(*) AS count,COALESCE(SUM(octet_length(p.capsule::text)),0) AS bytes FROM retained_places p`,
         )
-        .get(...this.params(scope));
+        .get(...this.placeParams(scope));
       if (
         Number(size?.['count'] ?? 0) > RETRIEVAL_ROWS ||
         Number(size?.['bytes'] ?? 0) > RETRIEVAL_BYTES
@@ -1091,15 +1076,16 @@ export class MemoryRepository {
         throw new MemoryPreparationError();
       const rows = await this.db
         .prepare(
-          `SELECT r.id,r.revision,r.place_capsule FROM recall_sources r WHERE ${predicate} ORDER BY r.place_id`,
+          `${this.retainedPlaces(true)} SELECT p.owner_id AS id,p.owner_kind AS source_kind,p.owner_revision AS revision,p.capsule::text AS place_capsule FROM retained_places p ORDER BY p.learned_place_id`,
         )
-        .all(...this.params(scope));
+        .all(...this.placeParams(scope));
       if (rows.length !== Number(size?.['count'] ?? 0)) throw new MemoryPreparationError();
       const capsules = rows.map((row) => {
         if (typeof row['place_capsule'] !== 'string') throw new MemoryPreparationError();
         const capsule = JSON.parse(row['place_capsule']) as KnownPlaceCapsule;
         if (
-          capsule.personalSource?.kind !== 'awareness' ||
+          !capsule.personalSource ||
+          capsule.personalSource.kind !== row['source_kind'] ||
           capsule.personalSource.id !== row['id'] ||
           capsule.personalSource.revision !== row['revision']
         )
@@ -1116,6 +1102,7 @@ export class MemoryRepository {
     options: { after?: string; terms?: string[]; placeId?: string; limit: number; scan: number },
   ) {
     type PlaceRow = Record<string, unknown> & {
+      capsule: KnownPlaceCapsule;
       correction_id?: string;
       correction_source?: Record<string, unknown>;
     };
@@ -1124,26 +1111,42 @@ export class MemoryRepository {
     // Selected correction metadata is reused for body hydration.
     // docs/limits/spatial.md#sp08--static-named-places-and-private-known-places
     const rowsAfter = async (after: string | undefined, count: number): Promise<PlaceRow[]> => {
+      const range = { after, placeId: options.placeId };
       const rows = await this.db
         .prepare(
-          `SELECT ${sourceColumns},r.search_text FROM recall_sources r
-        WHERE ${this.eligible} AND r.source_kind='awareness' AND r.place_id IS NOT NULL AND r.place_latest=1${after ? ' AND r.place_id>?' : ''}${options.placeId ? ' AND r.place_id=?' : ''}
-        ORDER BY r.place_id LIMIT ?`,
+          `${this.retainedPlaces(false, range)} SELECT ${sourceColumns},r.search_text,
+            p.capsule::text AS selected_place_capsule,p.learned_place_id AS selected_place_id
+          FROM retained_places p JOIN recall_sources r ON r.world_id=p.world_id AND r.actor_id=p.actor_id
+            AND r.id=p.owner_id AND r.source_kind=p.owner_kind AND r.revision=p.owner_revision
+          ORDER BY p.learned_place_id LIMIT ?`,
         )
-        .all(
-          ...this.params(scope),
-          ...(after ? [after] : []),
-          ...(options.placeId ? [options.placeId] : []),
-          count,
-        );
-      if (!rows.length) return rows;
+        .all(...this.placeParams(scope, range), count);
+      const places: PlaceRow[] = rows.map((row) => {
+        if (typeof row['selected_place_capsule'] !== 'string') throw new MemoryPreparationError();
+        const capsule = JSON.parse(row['selected_place_capsule']) as KnownPlaceCapsule;
+        if (
+          !capsule.personalSource ||
+          capsule.personalSource.kind !== row['source_kind'] ||
+          capsule.personalSource.id !== row['id'] ||
+          capsule.personalSource.revision !== row['revision']
+        )
+          throw new MemoryPreparationError();
+        return {
+          ...row,
+          place_id: row['selected_place_id'],
+          place_label: capsule.label,
+          capsule,
+          search_text: `${capsule.label} ${row['search_text']}`,
+        };
+      });
+      if (!places.length) return places;
       const corrections = await this.db
         .prepare(
           `SELECT source_id,correction_id FROM mind_corrections
         WHERE world_id=? AND actor_id=? AND source_id IN (${rows.map(() => '?').join(',')})`,
         )
-        .all(scope.worldId, scope.actorId, ...rows.map((row) => row['id']));
-      if (!corrections.length) return rows;
+        .all(scope.worldId, scope.actorId, ...places.map((row) => row.capsule.sourceEventId));
+      if (!corrections.length) return places;
       const correctionIds = [...new Set(corrections.map((row) => String(row['correction_id'])))];
       const correctionSources = await this.db
         .prepare(
@@ -1155,8 +1158,8 @@ export class MemoryRepository {
         bySource = new Map(
           corrections.map((row) => [String(row['source_id']), String(row['correction_id'])]),
         );
-      return rows.map((row) => {
-        const id = bySource.get(String(row['id']));
+      return places.map((row) => {
+        const id = bySource.get(row.capsule.sourceEventId!);
         if (!id) return row;
         const correction = byId.get(id);
         return {
@@ -1184,20 +1187,64 @@ export class MemoryRepository {
             scanLimited: false,
           };
       const page = result.matched.slice(0, options.limit);
-      const hydrated = await this.hydrate(page);
-      const correctionRows = new Map<string, Record<string, unknown>>(),
-        correctionBySource = new Map<string, string>();
+      const hydrated = await this.hydrate([
+        ...new Map(
+          page.map((row) => [sourceKey(String(row['source_kind']), String(row['id'])), row]),
+        ).values(),
+      ]);
+      const correctionRows = new Map<string, Record<string, unknown>>();
       for (const row of page) {
-        if (row.correction_id) correctionBySource.set(String(row['id']), row.correction_id);
         if (row.correction_source)
           correctionRows.set(String(row.correction_source['id']), row.correction_source);
       }
       const correctionBodies = await this.hydrate([...correctionRows.values()]);
-      const entries: KnownPlaceSource[] = hydrated.map((entry) => {
-        const id = correctionBySource.get(entry.memory.id),
+      const retainedBySource = new Map(
+        hydrated.map((entry) => {
+          const reference = {
+            kind: entry.sourceKind,
+            id: entry.memory.id,
+            revision: entry.revision,
+          };
+          const original =
+            entry.awareness?.exposure?.kind === 'place'
+              ? knownPlaceCapsule(entry.awareness, reference)
+              : undefined;
+          const places =
+            original && entry.awareness?.exposure?.kind === 'place'
+              ? [{ exposure: entry.awareness.exposure, capsule: original }]
+              : retainedPlaceObservations(
+                  [
+                    ...(entry.memory.manifest?.observations ?? []),
+                    ...(entry.memory.observation ? [entry.memory.observation] : []),
+                    ...(entry.memory.observations ?? []),
+                    ...(entry.memory.evidence?.observation
+                      ? [entry.memory.evidence.observation]
+                      : []),
+                    ...(entry.memory.evidence?.observations ?? []),
+                  ],
+                  reference,
+                );
+          return [
+            sourceKey(entry.sourceKind, entry.memory.id),
+            {
+              entry,
+              places: new Map(places.map((place) => [canonicalJson(place.capsule), place])),
+            },
+          ];
+        }),
+      );
+      const entries: KnownPlaceSource[] = page.map((row) => {
+        const retained = retainedBySource.get(
+          sourceKey(String(row['source_kind']), String(row['id'])),
+        );
+        const place = retained?.places.get(canonicalJson(row.capsule));
+        if (!retained || !place) throw new MemoryPreparationError();
+        const { entry } = retained;
+        const id = row.correction_id,
           correction = correctionBodies.find((body) => body.memory.id === id);
         return {
           ...entry,
+          place,
           ...(id
             ? { correctionId: id, ...(correction ? { correction: correction.memory.summary } : {}) }
             : {}),

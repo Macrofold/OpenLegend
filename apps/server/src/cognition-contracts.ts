@@ -207,8 +207,13 @@ export function boundResponseSchema(
     : z.null();
   if (!entityIds.length) throw new Error('A response requires a permitted actor ID.');
   const entityId = z.enum(entityIds as [string, ...string[]]);
-  const physicalEntityId = physicalEntityIds.length ? z.enum(physicalEntityIds as [string, ...string[]]).nullable() : z.null();
-  const noteSubject = z.enum([...entityIds, ...knowledgeReferences, ...identityReferences] as [string, ...string[]]);
+  const physicalEntityId = physicalEntityIds.length
+    ? z.enum(physicalEntityIds as [string, ...string[]]).nullable()
+    : z.null();
+  const noteSubject = z.enum([...entityIds, ...knowledgeReferences, ...identityReferences] as [
+    string,
+    ...string[],
+  ]);
   const nameSubject = z.enum([...entityIds, ...identityReferences] as [string, ...string[]]);
   const actionId = actionIds.length
     ? z.enum(actionIds as [string, ...string[]]).nullable()
@@ -221,7 +226,10 @@ export function boundResponseSchema(
       .nullable(),
     name: operationSchema.shape.name.unwrap().extend({ subjectId: nameSubject }).nullable(),
     talk: capabilities.speech
-      ? operationSchema.shape.talk.unwrap().extend({ addresseeEntityId: entityId.nullable() }).nullable()
+      ? operationSchema.shape.talk
+          .unwrap()
+          .extend({ addresseeEntityId: entityId.nullable() })
+          .nullable()
       : z.null(),
     act: operationSchema.shape.act
       .unwrap()

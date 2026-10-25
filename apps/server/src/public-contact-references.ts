@@ -6,6 +6,7 @@ import {
   entityGet,
   type Entity,
   type WorldState,
+  type SpeechTargetRole,
 } from '@open-legend/domain';
 import { scopeKey, type RequestScope } from './authority.js';
 import { entityBodyReference } from './entity-references.js';
@@ -98,12 +99,27 @@ export function resolveContactTarget(
   throw new ContactReferenceError();
 }
 
+const admittedSpeechRole = (reference: string): SpeechTargetRole =>
+  reference.startsWith('person-') ? 'remembered' : 'body';
+
+/** Preserve the selected role before decoding its sole recipient routing ID. */
+export function resolveSpeechTarget(
+  world: WorldState,
+  scope: RequestScope,
+  reference: string,
+): { targetId: string; targetRole: SpeechTargetRole } {
+  return {
+    targetId: resolveContactTarget(world, scope, reference, { communication: true }),
+    targetRole: admittedSpeechRole(reference),
+  };
+}
+
 /** Explicit command/reference positions only. Text, stock IDs and arbitrary data stay data. */
 export function resolveCommandContactReferences<T extends object>(
   world: WorldState,
   scope: RequestScope,
   input: T,
-): T {
+): T & { targetRole?: SpeechTargetRole } {
   const communication = 'type' in input && input.type === 'say';
   const visit = (value: unknown): unknown => {
     if (Array.isArray(value)) return value.map(visit);
@@ -117,7 +133,12 @@ export function resolveCommandContactReferences<T extends object>(
       ]),
     );
   };
-  return visit(input) as T;
+  const resolved = visit(input) as T & { targetRole?: SpeechTargetRole };
+  // This is admission metadata, not a client-granted name or identity claim.
+  delete resolved.targetRole;
+  if (communication && 'targetId' in input && typeof input.targetId === 'string')
+    resolved.targetRole = admittedSpeechRole(input.targetId);
+  return resolved;
 }
 
 export function projectCommandContactReferences<T>(

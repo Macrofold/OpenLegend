@@ -52,7 +52,9 @@ function participantForModel(world: WorldState, actorId: string, participant: Ev
       return { ...participant };
   }
 }
-/** Only already-permitted event fields reach this adapter; definition IDs are literals. */
+/** Only already-permitted event fields reach this adapter. Native physical routing
+ * positions still need occurrence-scoped references; authored definition/recipe IDs
+ * remain literal facts even when their spelling happens to match an entity ID. */
 function eventFieldsForModel(
   world: WorldState,
   actorId: string,
@@ -65,7 +67,10 @@ function eventFieldsForModel(
   return Object.fromEntries(
     Object.entries(value).map(([key, field]) => [
       key,
-      typeof field === 'string' && /^(entityId|actorId|targetId|sourceId|recipientId)$/.test(key)
+      typeof field === 'string' &&
+      /^(entityId|actorId|targetId|sourceId|recipientId|itemId|weaponItemId|ammoItemId|assemblyId|changedMaterialId|endingActorId|destinationId|contactSourceId)$/.test(
+        key,
+      )
         ? permittedSourceHandle(world, actorId, ['historical-participant', sourceScope, field])
         : eventFieldsForModel(world, actorId, field, sourceScope),
     ]),

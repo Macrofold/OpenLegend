@@ -3,7 +3,7 @@ import type { EntityView, GameView } from '@open-legend/protocol';
 /** Adapt the separately projected player to the same presentation contract as other things. */
 export function playerEntity(view: GameView): EntityView {
   return {
-    observation:{kind:'self'},
+    observation: { kind: 'self' },
     id: view.player.id,
     name: view.player.name,
     nameForm: view.player.nameForm,

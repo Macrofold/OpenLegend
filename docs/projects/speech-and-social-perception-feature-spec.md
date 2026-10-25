@@ -1,8 +1,8 @@
 # Speech and social perception — feature specification
 
-| Status      | Current progress                                                                                                                 | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Speech, observer evidence and general acoustic designs are specified; integration, implementation and qualification remain open. | 2026-10-24   |
+| Status      | Current progress                                                                                                           | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Required SPK01–SPK04 existing-channel integration implemented; wider speech/social delivery and qualification remain open. | 2026-10-25   |
 
 ## Purpose and design status
 

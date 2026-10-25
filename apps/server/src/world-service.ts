@@ -1,7 +1,7 @@
 import { historyPositions } from './history-residency.js';
 import {
   resolveCommandContactReferences,
-  resolveContactTarget,
+  resolveSpeechTarget,
   ContactReferenceError,
 } from './public-contact-references.js';
 import { personalAccountRevision } from './personal-accounts.js';
@@ -12,6 +12,8 @@ import {
   installKnownPlaceEvidence,
   prepareKnownPlaceEvidence,
   knownPlaceCapsule,
+  retainedPlaceObservations,
+  personalFactAlias,
   KnownPlacePreparationError,
 } from '@open-legend/domain';
 import { reconcileNativeControl } from '@open-legend/domain';
@@ -2005,27 +2007,64 @@ export class WorldService {
               // No-database worlds and complete save candidates already own all originals.
               // A released resident tail is never enough to establish an empty result.
               const entries = candidate.experience!.awareness[actorId] ?? [];
-              const placement = historyPositions.get(entries);
-              if (placement && !placement.complete) throw new KnownPlacePreparationError();
+              const memories = candidate.memories[actorId] ?? [];
+              const summaries = candidate.experience!.summaries[actorId] ?? [];
+              for (const values of [entries, memories, summaries]) {
+                const placement = historyPositions.get(values);
+                if (placement && !placement.complete) throw new KnownPlacePreparationError();
+              }
               const forgotten = new Set(candidate.experience?.forgotten[actorId] ?? []);
               const corrected = candidate.experience?.corrections?.[actorId] ?? {};
               const latest = new Map<string, import('@open-legend/domain').KnownPlaceCapsule>();
-              for (const entry of entries) {
+              const retain = (capsule: import('@open-legend/domain').KnownPlaceCapsule) => {
+                const aliases = [
+                  capsule.sourceEventId!,
+                  capsule.source.id,
+                  personalFactAlias(capsule.source.id, capsule.facetOrdinal),
+                ];
+                if (aliases.some((id) => forgotten.has(id) || corrected[id])) return;
+                const prior = latest.get(capsule.placeId);
                 if (
-                  forgotten.has(entry.eventId) ||
-                  corrected[entry.eventId] ||
-                  entry.exposure?.kind !== 'place'
+                  !prior ||
+                  capsule.observedAt > prior.observedAt ||
+                  (capsule.observedAt === prior.observedAt &&
+                    capsule.observedOrder >= prior.observedOrder)
                 )
-                  continue;
+                  latest.set(capsule.placeId, capsule);
+              };
+              for (const entry of entries) {
+                if (forgotten.has(entry.eventId) || entry.exposure?.kind !== 'place') continue;
                 const capsule = knownPlaceCapsule(entry, {
                   kind: 'awareness',
                   id: entry.eventId,
                   revision: personalAccountRevision(JSON.stringify(entry)),
                 });
                 if (!capsule) throw new KnownPlacePreparationError();
-                const prior = latest.get(capsule.placeId);
-                if (!prior || capsule.observedAt >= prior.observedAt)
-                  latest.set(capsule.placeId, capsule);
+                retain(capsule);
+              }
+              for (const [kind, values] of [
+                ['memory', memories],
+                ['summary', summaries],
+              ] as const) {
+                for (const value of values) {
+                  if (forgotten.has(value.id) || corrected[value.id]) continue;
+                  const originals = 'manifest' in value ? (value.manifest?.observations ?? []) : [];
+                  const observations = [
+                    ...originals,
+                    ...('observation' in value && value.observation ? [value.observation] : []),
+                    ...('observations' in value ? (value.observations ?? []) : []),
+                    ...('evidence' in value && value.evidence?.observation
+                      ? [value.evidence.observation]
+                      : []),
+                    ...('evidence' in value ? (value.evidence?.observations ?? []) : []),
+                  ];
+                  for (const { capsule } of retainedPlaceObservations(observations, {
+                    kind,
+                    id: value.id,
+                    revision: personalAccountRevision(JSON.stringify(value)),
+                  }))
+                    retain(capsule);
+                }
               }
               const result = prepareKnownPlaceEvidence([...latest.values()]);
               return result;
@@ -4975,7 +5014,9 @@ export class WorldService {
       // Legacy callers retain their old identity rules; new clients bind retries to their issued epoch.
       if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
       const prepare = async () => {
-        let currentInput = input;
+        let currentInput: CommandInput & {
+          targetRole?: import('@open-legend/domain').SpeechTargetRole;
+        } = input;
         if (scope && publicReferences) {
           try {
             currentInput = resolveCommandContactReferences(this.world, scope, input);
@@ -5174,7 +5215,7 @@ export class WorldService {
   /** Family binding is shared by UI commands and reviewed agent commands. */
   private bindCommand(
     commandId: string,
-    input: CommandInput,
+    input: CommandInput & { targetRole?: import('@open-legend/domain').SpeechTargetRole },
     actorId: string,
     humanInitiated = true,
   ): Command | ApiResult {
@@ -5310,7 +5351,9 @@ export class WorldService {
           type: 'say',
           text: input.text,
           ...(input.volume ? { volume: input.volume } : {}),
-          ...(input.targetId ? { targetId: input.targetId } : {}),
+          ...(input.targetId
+            ? { targetId: input.targetId, targetRole: input.targetRole ?? 'body' }
+            : {}),
         };
         break;
       case 'conversation':
@@ -5854,16 +5897,14 @@ export class WorldService {
     targetBinding?: { scope: RequestScope; reference: string },
   ): Promise<ApiResult> {
     return await this.transition((world) => {
+      let targetRole: import('@open-legend/domain').SpeechTargetRole = 'body';
       if (targetBinding) {
         this.assertScope(targetBinding.scope, 'play', true);
         try {
-          if (
-            targetBinding.scope.actorId !== actorId ||
-            resolveContactTarget(world, targetBinding.scope, targetBinding.reference, {
-              communication: true,
-            }) !== targetId
-          )
+          const selected = resolveSpeechTarget(world, targetBinding.scope, targetBinding.reference);
+          if (targetBinding.scope.actorId !== actorId || selected.targetId !== targetId)
             throw new ContactReferenceError();
+          targetRole = selected.targetRole;
         } catch (error) {
           if (!(error instanceof ContactReferenceError)) throw error;
           return {
@@ -5879,7 +5920,7 @@ export class WorldService {
         type: 'say',
         text,
         volume,
-        ...(targetId ? { targetId } : {}),
+        ...(targetId ? { targetId, targetRole } : {}),
       });
     });
   }

@@ -22,6 +22,11 @@ import type { SpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
 import type { Entity, Position, WorldEvent, WorldState } from './types.js';
 
+/** Which already permitted role the speaker selected; the recipient remains targetId. */
+export type SpeechTargetRole = 'body' | 'remembered';
+export const isSpeechTargetRole = (value: unknown): value is SpeechTargetRole =>
+  value === 'body' || value === 'remembered';
+
 export interface PerceivedSound {
   kind: 'voice-like';
   receivedLevelDbSpl: number;
@@ -283,7 +288,12 @@ export function perceiveSpeech(
   const addressed = !self && perceivedRecipient === observer.id;
   if (perceivedRecipient) {
     const name = self
-      ? intendedAddresseeName(world, observer.id, perceivedRecipient)
+      ? intendedAddresseeName(
+          world,
+          observer.id,
+          perceivedRecipient,
+          event.data?.['targetRole'] === 'remembered' ? 'remembered' : 'body',
+        )
       : observerName(world, observer.id, perceivedRecipient);
     speech.addressee = {
       nameAtTime: name.name,

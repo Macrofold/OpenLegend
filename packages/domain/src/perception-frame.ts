@@ -26,15 +26,7 @@ export function visibleFeature(entity: Entity): { feature: string; detail: strin
       ? [action.id, action.type, action.stage, action.strikePhase ?? 'preparing']
       : null;
   const value = {
-    // Attachments are observed independently from carried containers. Their owning
-    // possession revision invalidates preparation without publishing inventory contents.
-    feature: JSON.stringify([
-      facts,
-      posture,
-      entity.inventoryRevision ?? 0,
-      entity.spatial.heading,
-      entity.actor?.physicalLife ?? null,
-    ]),
+    feature: JSON.stringify([facts, posture]),
     detail: facts.filter(Boolean).join(', '),
   };
   if (Object.isFrozen(entity)) features.set(entity, value);
