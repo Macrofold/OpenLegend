@@ -2,6 +2,42 @@
 
 2026-09-27, branch `codex/shadow-quality`, base `origin/main` at `412b5b480b4911d9977de73168c6072e2c023b83`. Implements the [approved feature](../projects/shadow-quality-feature-spec.md); [world presentation](../world-presentation.md) and [VP01](../limits/interface.md#vp01) own behavior and settings.
 
+## Shadow stability — October 24, 2026
+
+Base: freshly fetched `Macrofold/OpenLegend`, `origin/main`, `52bfc990b67d8adc7d65e307aa564bf016e6f037`; branch `codex/stable-rendered-shadows`. This correction covers shared sun-shadow filtering and received-clock lighting, not new artwork or world mechanics. [Current contract](../world-presentation.md#shadow-quality) and [VP01](../limits/interface.md#vp01) own the settings.
+
+The pinned PlayCanvas 2.22.2 renderer already snaps directional-map translation. Its Detailed PCSS instead compared nearest raw depths with binary samples, and the default Economy 1024 map undersampled small foliage at ordinary framing. The renderer also applied each clock publication as a lighting step. The correction filters visibility comparisons, retains a 1.5-texel minimum PCSS radius, uses eight filtered samples with sixteen blocker samples, gives Economy a PCF5/2048 sun independently of its unchanged 1024 local atlas, and interpolates ordinary received sunlight over 50 ms without extrapolation. People, props, receiving geometry and ambient brightness use the same corrected owners.
+
+**Rendered comparison.** Chrome 155.0.8059.85, WebGL2 / ANGLE Metal / Apple M1 Pro; 1920×1080 browser viewport, actual 1766×828 scene framebuffer, orthographic zoom 5.5 / pitch 0.68, fixed camera, natural-source camp with 36 rendered entities and 1,250 scenery entries. A disposable build hook exposed the actual `WildernessScene`; the hook added no production API and public assets stayed unchanged. The historical recorded study lacks the current daylight DTO, so both fixtures explicitly supplied the verified current authored values (dawn 6, dusk 18, noon elevation 60°). Omitting that policy correctly produces generic overhead light and cannot qualify moving sunlight. Local compiled study files were served through a browser route under the public study origin; external assets used their exact public release URLs. No database, native simulation or paid model execution was involved.
+
+The deterministic comparison supplied 61 clock samples from hour 10 through 10.15 at a modeled 20 Hz / 3× game speed, with three 1/60-second renderer updates between samples. It measured the same 330×95 ground-shadow crop beneath the camp trees and a separate roof-shadow crop. A fixed-light control produced exactly zero pixel changes in both crops. Per-frame changes larger than 10/255 in mean RGB and the largest change were:
+
+| Quality  | Tree-crop pixels changing by >10/255, before → after | Largest tree-crop change, before → after |
+| -------- | ---------------------------------------------------- | ---------------------------------------- |
+| Economy  | 0.1862% → 0.00233%                                   | 26.33 → 14.00                            |
+| Detailed | 0.4929% → 0.05572%                                   | 37.67 → 20.67                            |
+
+These are approximately 98.7% and 88.7% fewer large changes in this particular crop. They are not a universal shimmer score: normal shadow travel remains, mean absolute changes do not decrease, and small/grazing geometry remains limited by map sampling. The roof comparison retained continuous contact and had no >10/255 changes after correction. The sixteen-filter-sample PCSS candidate was rejected for cost; eight filtered samples with the wider minimum footprint retained useful soft penumbras and the stronger stability result above.
+
+**Cost.** Separate ten-second warm stationary runs used the existing study profiler, counted completed rendered frames and excluded screenshot/readback sampling. Values below are bounded observations, not sustained native capacity or a claimed speedup. GPU-pass values are summed engine timers, not whole-frame GPU latency; production CPU counters were unavailable.
+
+| Quality  | Displayed frame median / p95, before → after | Summed GPU-pass median / p95, before → after |
+| -------- | -------------------------------------------- | -------------------------------------------- |
+| Economy  | 9.1 / 17.2 ms → 15.9 / 17.6 ms               | 12.48 / 17.31 ms → 14.43 / 23.09 ms          |
+| Detailed | 17.2 / 25.4 ms → 17.0 / 25.5 ms              | 38.40 / 47.75 ms → 36.32 / 46.17 ms          |
+
+Economy's larger sun map adds exactly 12 MiB of tracked texture allocation; total tracked graphics allocation changed from 126,957,686 to 139,540,598 bytes. Detailed remained at 152,123,510 bytes. The default's increased graphics cost is explicit; local-light budgets, geometry and shadow submissions remain unchanged. This sample does not establish strict 60 Hz, low-end hardware support or the separate eight-fire/native-3× qualification.
+
+**State checks.** Twenty disposable assertions through the actual browser consumer covered interpolation midpoint/end, duplicate samples, stalled input, pause/navigation preparation, speed/rate/offset/policy changes, world/timeline/access changes, rewind/large jumps, midnight, missing daylight policy, quality switching and split map budgets. Pause and discontinuities snap; silence settles at the last received sample. No new maintained tests were added. Earlier comparison attempts with an incorrectly retained baseline browser route were discarded; final comparisons verified the loaded bundle, actual filter/resolution and presence or absence of the interpolation fields.
+
+Actual UI interaction covered projection switching, camera rotation and orbit, low-sun contacts, day/firelit-night transitions and repeated quality changes. Night disabled the sun and retained the admitted fire light. Two page-hide/history-restoration cycles stopped the old renderer's completed-frame counter and recreated a drawing scene. The exercised final shaders and transitions produced no browser console/page errors. Type checking, production build (including the asset-payload guard), changed-file formatting and affected-diff review passed. These renderer-fixture checks do not claim a native server playthrough, all camera/asset combinations, context-loss recovery or broader art/device acceptance; SW18.6/SW18.10 and V3D's existing qualification remain open.
+
+### Requested complete-change review
+
+Reviewed `18b2f3ac686037af755552614d9dc0e069257d42` against the base above, including every changed file, current material/copy/batching consumers, pinned engine shader assembly, world clock projection, publication cadence and scene teardown. Independent shader and sunlight reviews found no actionable code defect: all current shadow receivers share the filter, interpolation adds constant per-frame work without entity scans, and daylight remains installed world data. No runtime refactor or additional cache was justified. The review corrected stale daylight-extraction status in BW06/EWF04 and the base-world time contract, placed the bundled preset rationale with that world owner, and clarified that the no-delayed-light claim applied only to batching. The bounded 50 ms interpolation smooths received steps but can still hold between slower publications.
+
+This review changed documentation only and reused the unchanged implementation's browser, typecheck and production-build evidence above; it did not rerun those workloads or qualify broader devices. Existing SW18 and EWF04 gaps remain open in their owners.
+
 ## Constrained graphics and sprite volume
 
 The follow-up adds device-local Detailed/Economy shadows and replaces the zero-thickness sprite caster with a bounded alpha-derived relief. The source image, visible contact and front-plane picking are preserved. No per-image metadata, external assets, provider requests, new light, collision rule or protocol/save field was introduced. The base was refreshed from the verified repository default `origin/main` at unchanged `412b5b480b4911d9977de73168c6072e2c023b83`; `codex/shadow-quality` stayed unchanged with prior work preserved.

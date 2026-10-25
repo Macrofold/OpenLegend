@@ -84,7 +84,13 @@ Engine code never states these names. Deadline binding, request validation, the 
 
 A follow or wait that ends at a named time is an exact interval boundary: elapsed-time integration stops at that instant instead of running the 60-second fallback horizon past it. Named times are a small clock vocabulary, not a general time-expression parser; "wait N minutes" is the only relative form. A separate clock policy is warranted when another clock consumer (calendar, seasons) appears.
 
-Clock displays (the HUD clock, event times and God-tool time labels) read the world's `clockOffsetHours` from the view. Daylight is not yet a world setting: the renderer's daylight curve (06:00–18:00, in presentation code outside this project's file ownership) and the HUD's day/night icon (06:00–19:00) keep their own hours; making them read a world daylight policy is tracked in the [base-world tracker](../../maintainers/base-world.md).
+Clock displays (the HUD clock, event times and God-tool time labels) read the world's `clockOffsetHours` from the view.
+
+## Daylight presentation
+
+The bundled [presentation definition](../../../packages/domain/src/worlds/base/presentation.ts) selects the installed dawn and dusk names above and a 60° noon elevation. The public view resolves those names through the world's saved clock policy. Renderer sunlight and the HUD day/night icon consume the same projected values; their former separate hard-coded hours are removed. [FPW03](../../maintainers/first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness) records delivery.
+
+The daily arc rises on +X, reaches its highest point toward +Z, and sets on −X. The 60° peak avoids a directly overhead, collapsed sprite shadow while keeping noon substantially higher than morning/evening. This is a fixed presentation preset, without calendar, latitude or seasons. Rendering adds no minimum elevation or shadow-length clamp. [World presentation](../../world-presentation.md#sun-path) owns the generic evaluator, received-clock smoothing and behavior when a world omits daylight; [VP01](../../limits/interface.md#vp01) owns graphical budgets. These visual choices change no physical sight or animal eligibility.
 
 ## Review trigger
 
@@ -92,6 +98,6 @@ Revisit these bounds when fleeting encounters matter to a mechanic, new movement
 
 ## Selected first-playable clock consumers
 
-The [integrated design](../../projects/first-playable-world-tech-design.md#time-daylight-needs-and-decision-latency) keeps the current 60:1 clock and physical perception, and selects one installed clock source for renderer daylight and HUD day/night. [FPW03](../../maintainers/first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness) owns that correction. Roaming and the selected daily material-rain window use game-time boundaries through their existing native owners, never browser color or wall time. This is designed work, not a current display fix or a new light-sensitive sight rule.
+The [integrated design](../../projects/first-playable-world-tech-design.md#time-daylight-needs-and-decision-latency) preserves the current 60:1 clock and physical perception. The [shared daylight consumer](#daylight-presentation) is implemented. Roaming and the selected daily material-rain window use game-time boundaries through their existing native owners, never browser color or wall time. No light-sensitive sight rule is introduced.
 
 The separate selected [vision/light profile](vision-and-gaze.md) uses that same world clock for authoritative illumination and its [VG04](../../maintainers/vision-and-gaze.md#vg04--authoritative-light-and-consistent-appearance) implementation. FPW03's display correction alone does not deliver light-sensitive sight or the selected visual sampling and continuation above.
