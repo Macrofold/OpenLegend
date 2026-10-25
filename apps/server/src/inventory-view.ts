@@ -11,6 +11,10 @@ import {
   quantityOf,
   activityRequestHost,
   currentInventoryInspection,
+  currentBodyObservation,
+  currentBodyGrant,
+  currentObservedFacets,
+  worldPosition,
   readRecipeRecord,
   definitionPin,
   visionRadius,
@@ -18,16 +22,13 @@ import {
   accessiblePossession,
   inventoryWorkReason,
   mergeTargetAvailable,
-  interactionPageQuery,
   membershipDependency,
-  spatialCandidateMembershipKey,
   availableItemQuantity,
   itemMoveReason,
   itemPackingLoad,
   itemCharacteristics,
   effectivePosition,
   distance,
-  seesEntity,
   canReachEntity,
   dropItemReason,
   applicableConsumption,
@@ -40,8 +41,8 @@ import {
   custodian,
   objectAncestors,
   targetApproachPoint,
-  offerRecipientProblem,
   type ItemInstance,
+  type ObservedBody,
 } from '@open-legend/domain';
 import type {
   CommandInput,
@@ -63,6 +64,12 @@ import { HistoryCursorError } from './perceived-events.js';
 import { countMetric } from './performance.js';
 import { createHash } from 'node:crypto';
 import { sealCursor, openCursor } from './scoped-cursor.js';
+import {
+  physicalContactReference,
+  currentContactReference,
+  projectCommandContactReferences,
+  hasPhysicalContactReference,
+} from './public-contact-references.js';
 import { recipeDetailsView } from './recipe-view.js';
 
 /** A historical successor is descriptive only; no redirect to an actionable object. */
@@ -125,20 +132,55 @@ export function inventoryStorageHint(
   service: WorldService,
   scope: RequestScope,
   id: string,
+  body: ObservedBody,
 ): EntityView['storage'] {
+  const storage = body.storage;
   const target = entityGet(service.world.entities, id);
-  if (
-    !target ||
-    target.retirement ||
-    target.placement?.mode !== 'world' ||
-    !(target.container || target.kind === 'item-pile' || target.remains)
-  )
-    return;
+  if (!storage || !target) return;
+  const inspection = currentInventoryInspection(service.world, scope.actorId);
   return {
-    containerId: id,
-    placementRevision: target.placement.revision,
-    ...(canAccessContainer(service.world, scope.actorId, id)
-      ? { revision: target.inventoryRevision ?? 0 }
+    containerId: currentContactReference(service.world, scope, target),
+    placementRevision: storage.placementRevision,
+    ...(inspection?.containerId === id ? { revision: inspection.revision } : {}),
+  };
+}
+
+/** Native approach admission may refuse changed physics, but cannot publish a
+ * new target location before an actual observation records it. */
+export function observedStorageApproach(service: WorldService, scope: RequestScope, id: string) {
+  const world = service.world;
+  const actor = entityGet(world.entities, scope.actorId);
+  const root = objectAncestors(world, id).at(-1);
+  if (!actor || !root || root.placement?.mode !== 'world') return null;
+  const observed = currentBodyObservation(world, scope.actorId, root.id);
+  if (!observed) return null;
+  const position = worldPosition(root),
+    captured = observed.value.body;
+  if (
+    position.x !== captured.position.x ||
+    position.y !== captured.position.y ||
+    position.z !== captured.position.z ||
+    root.placement.supportSurfaceId !== captured.supportSurfaceId
+  )
+    return null;
+  return targetApproachPoint(world, actor, root, world.itemHandling.reach);
+}
+
+export function projectInventoryAccess(
+  service: WorldService,
+  scope: RequestScope,
+  access: InventoryAccessView,
+): InventoryAccessView {
+  return {
+    ...access,
+    ...(access.container
+      ? {
+          container: {
+            ...access.container,
+            id: physicalContactReference(service.world, scope, access.container.id),
+            rootId: physicalContactReference(service.world, scope, access.container.rootId),
+          },
+        }
       : {}),
   };
 }
@@ -169,19 +211,21 @@ export function inventoryAccess(
   const root = objectAncestors(world, target.id).at(-1);
   if (!root || root.placement?.mode !== 'world') return unavailable;
   const accessible = canAccessContainer(world, actor.id, target.id);
+  const observed = currentBodyObservation(world, scope.actorId, root.id);
   const visibleExterior =
-    (target.placement?.mode === 'world' && seesEntity(world, actor, target)) ||
-    ((root.kind === 'item-pile' || root.remains) &&
-      target.placement?.mode === 'contained' &&
-      target.placement.parentEntityId === root.id &&
-      seesEntity(world, actor, root));
+    (target.id === root.id && !!observed) ||
+    currentObservedFacets(world, scope.actorId, root.id).some(
+      (facet) =>
+        facet.value.kind === 'pile-contents' &&
+        facet.value.items.some((item) => item.id === target.id),
+    );
   if (!accessible && !visibleExterior) return unavailable;
   const container = {
     id: target.id,
     name: observerDescription(world, scope.actorId, target.id),
     location: containerLocation(service, scope, target.id),
     rootId: root.id,
-    placementRevision: root.placement.revision,
+    placementRevision: observed?.value.body.storage?.placementRevision ?? root.placement.revision,
     geometryRevision: world.map.spatial.revision,
   };
   if (accessible)
@@ -189,15 +233,19 @@ export function inventoryAccess(
       ok: true,
       scope: scopeKey(scope),
       status: 'ready',
-      container: { ...container, revision: target.inventoryRevision ?? 0 },
+      container: {
+        ...container,
+        ...(custodian(world, target.id) === scope.actorId ||
+        currentInventoryInspection(world, scope.actorId)?.containerId === target.id
+          ? { revision: target.inventoryRevision ?? 0 }
+          : {}),
+      },
     };
   if (canReachEntity(world, actor, root, world.itemHandling.reach))
     return { ...unavailable, container, message: 'You cannot access this container.' };
   // Native stance selection uses this world's handling reach and current geometry. It is
   // requested only by Walk to and open, never for every visible object or view update.
-  const stance = request.approach
-    ? targetApproachPoint(world, actor, root, world.itemHandling.reach)
-    : null;
+  const stance = request.approach ? observedStorageApproach(service, scope, target.id) : null;
   return {
     ok: true,
     scope: scopeKey(scope),
@@ -229,6 +277,10 @@ export function containerPage(
   const entity = entityGet(world.entities, containerId);
   if (!entity || !canAccessContainer(world, scope.actorId, containerId))
     throw new HistoryCursorError('This container is unavailable.');
+  const own = custodian(world, containerId) === scope.actorId;
+  const inspection = own ? undefined : currentInventoryInspection(world, scope.actorId);
+  if (!own && inspection?.containerId !== containerId)
+    throw new HistoryCursorError('Inspect this container before reading its contents.');
   const revision = entity.inventoryRevision ?? 0,
     rootRevision = entityGet(world.entities, scope.actorId)!.inventoryRevision ?? 0;
   const query = (request.query ?? '').trim().toLocaleLowerCase(),
@@ -244,9 +296,7 @@ export function containerPage(
   if (request.cursor) {
     let cursor: z.infer<typeof cursorSchema>;
     try {
-      cursor = cursorSchema.parse(
-        JSON.parse(Buffer.from(request.cursor, 'base64url').toString('utf8')),
-      );
+      cursor = cursorSchema.parse(openCursor(request.cursor));
     } catch {
       throw new HistoryCursorError('Invalid inventory page. Refresh this container.');
     }
@@ -278,7 +328,11 @@ export function containerPage(
     },
     breadcrumbs: objectAncestors(world, containerId)
       .reverse()
-      .filter((parent) => canAccessContainer(world, scope.actorId, parent.id))
+      .filter(
+        (parent) =>
+          canAccessContainer(world, scope.actorId, parent.id) &&
+          hasPhysicalContactReference(world, scope.actorId, parent.id),
+      )
       .map((parent) => ({
         id: parent.id,
         ...observerName(world, scope.actorId, parent.id),
@@ -288,17 +342,48 @@ export function containerPage(
     ...(next ? { next } : {}),
   });
   const continuation = (last: string) =>
-    Buffer.from(
-      JSON.stringify({
-        scope: scopeKey(scope),
-        containerId,
-        revision,
-        rootRevision,
-        query,
-        source,
-        after: last,
-      }),
-    ).toString('base64url');
+    sealCursor({
+      scope: scopeKey(scope),
+      containerId,
+      revision,
+      rootRevision,
+      query,
+      source,
+      after: last,
+    });
+
+  // Native inspection is deliberately bounded. Search and quantity/group labels must
+  // not disclose the uninspected remainder through this read-only collection.
+  if (inspection) {
+    if (request.cursor)
+      throw new HistoryCursorError('Inspect the next contents before reading another page.');
+    const items = inspection.itemIds.flatMap((id) => {
+      const item = itemFor(world, id);
+      return item?.ownerId === containerId &&
+        (!query ||
+          world.itemDefinitions[item.definitionId]!.name.toLocaleLowerCase().includes(query)) &&
+        (!source || (!sourceBlocked && mergeTargetAvailable(world, scope.actorId, source, id)))
+        ? [item]
+        : [];
+    });
+    return {
+      ...response(inventoryItemsView(service, scope, items)),
+      inspection: {
+        ...(inspection.more
+          ? {
+              next: {
+                type: 'inspect-inventory' as const,
+                containerId,
+                after: inspection.after,
+                expectedRevision: inspection.revision,
+                expectedScope: inspection.scope,
+              },
+            }
+          : {}),
+      },
+    };
+  }
+
   if (!source) {
     const groups = inventoryDisplayGroups(world, containerId);
     const previous = after ? groups.findIndex((entry) => entry.ids[0] === after) : -1;
@@ -419,23 +504,33 @@ export function containerPage(
 }
 
 function containerLocation(service: WorldService, scope: RequestScope, id: string): string {
-  const world = service.world,
-    rootId = custodian(world, id),
-    root = entityGet(world.entities, rootId)!;
-  const enclosing = objectAncestors(world, id)
-    .slice(1, -1)
-    .filter((entry) => entry.container && canAccessContainer(world, scope.actorId, entry.id))
-    .reverse()
-    .map((entry) => observerDescription(world, scope.actorId, entry.id));
-  const path = enclosing.length ? `In ${enclosing.join(' › ')}, ` : '';
-  if (rootId === scope.actorId) return `${path}Carried by you`;
-  if (root.actor && !root.remains)
-    return `${path}Carried by ${observerDescription(world, scope.actorId, rootId, 'definite')}`;
+  const world = service.world;
+  if (custodian(world, id) === scope.actorId) {
+    const enclosing = objectAncestors(world, id)
+      .slice(1, -1)
+      .filter((entry) => entry.container && canAccessContainer(world, scope.actorId, entry.id))
+      .reverse()
+      .map((entry) => observerDescription(world, scope.actorId, entry.id));
+    return `${enclosing.length ? `In ${enclosing.join(' › ')}, ` : ''}Carried by you`;
+  }
+  let observed = currentBodyObservation(world, scope.actorId, id);
+  if (!observed) {
+    const root = objectAncestors(world, id).at(-1);
+    if (
+      root &&
+      currentObservedFacets(world, scope.actorId, root.id).some(
+        (facet) =>
+          facet.value.kind === 'pile-contents' && facet.value.items.some((item) => item.id === id),
+      )
+    )
+      observed = currentBodyObservation(world, scope.actorId, root.id);
+  }
+  if (!observed) return 'Location not currently observed';
   const separation = distance(
-    effectivePosition(world, scope.actorId),
-    effectivePosition(world, id),
+    worldPosition(entityGet(world.entities, scope.actorId)!),
+    observed.value.body.position,
   );
-  return `${path}On the ground, ${separation.toFixed(1)} m away`;
+  return `In sight, ${separation.toFixed(1)} m away`;
 }
 
 const destinationCursorSchema = z
@@ -447,6 +542,7 @@ const destinationCursorSchema = z
     spatialRevision: z.string(),
     grantActorId: z.string(),
     grantRevision: z.number().int().nonnegative(),
+    grantEvidence: z.string(),
   })
   .strict();
 type DestinationCursor = z.infer<typeof destinationCursorSchema>;
@@ -491,10 +587,13 @@ export function activityStorageReader(
     const groundAppearance =
       target.placement?.mode === 'contained' &&
       target.placement.parentEntityId === root.id &&
-      (root.kind === 'item-pile' || root.remains) &&
-      seesEntity(world, actor, root);
+      currentObservedFacets(world, scope.actorId, root.id).some(
+        (facet) =>
+          facet.value.kind === 'pile-contents' && facet.value.items.some((item) => item.id === id),
+      );
     const visible =
-      (target.placement?.mode === 'world' && seesEntity(world, actor, target)) || groundAppearance;
+      (target.placement?.mode === 'world' && !!currentBodyObservation(world, scope.actorId, id)) ||
+      groundAppearance;
     const granted =
       target.placement?.mode === 'contained' &&
       entityGet(world.entities, target.placement.parentEntityId)?.actor &&
@@ -511,7 +610,7 @@ export function activityStorageReader(
       ...observerName(world, scope.actorId, id),
       name: choice.label,
       location: containerLocation(service, scope, id),
-      revision: target.inventoryRevision ?? 0,
+      ...(evidenced ? { revision: target.inventoryRevision ?? 0 } : {}),
       kind: 'container',
       openable: reachable && evidenced,
       accessible: allowed,
@@ -578,7 +677,9 @@ export function inventoryDestinationPage(
   if (
     parentId &&
     (!canAccessContainer(world, scope.actorId, parentId) ||
-      (request.activity && !storage?.(parentId)?.openable))
+      (request.activity && !storage?.(parentId)?.openable) ||
+      (custodian(world, parentId) !== scope.actorId &&
+        currentInventoryInspection(world, scope.actorId)?.containerId !== parentId))
   )
     throw new HistoryCursorError(
       'This destination is no longer reachable or accessible. Refresh destinations.',
@@ -614,25 +715,39 @@ export function inventoryDestinationPage(
         spatialRevision: '',
         grantActorId: '',
         grantRevision: 0,
+        grantEvidence: '',
       };
   if (
     cursor.binding !== binding ||
-    ((cursor.phase === 'granted' || cursor.phase === 'ground') &&
+    (cursor.phase === 'granted' &&
       (entityGet(world.entities, cursor.grantActorId)?.inventoryRevision ?? 0) !==
         cursor.grantRevision)
   )
     throw new HistoryCursorError('Destinations, contents or access changed. Refresh destinations.');
+  let observed: { id: string; leaseId: string }[] | undefined;
+  const observedBodies = () =>
+    (observed ??= Object.values(world.perceptionEvidence?.[scope.actorId]?.current ?? {})
+      .filter(
+        (lease) =>
+          lease.value.kind === 'body' && currentBodyGrant(world, scope.actorId, lease.subjectId),
+      )
+      .map((lease) => ({ id: lease.subjectId, leaseId: lease.id }))
+      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)));
   let spatialRevision: string | undefined;
   const spatialMembership = () =>
     (spatialRevision ??= createHash('sha256')
-      .update(
-        spatialCandidateMembershipKey(
-          world,
-          actor,
-          request.activity ? visionRadius(world, actor) : world.itemHandling.reach,
-        ),
-      )
+      .update(JSON.stringify(observedBodies()))
       .digest('hex'));
+  const observedPile = (id: string) =>
+    currentObservedFacets(world, scope.actorId, id).find(
+      (facet) => facet.value.kind === 'pile-contents',
+    );
+  if (
+    cursor.phase === 'ground' &&
+    (!currentBodyGrant(world, scope.actorId, cursor.grantActorId) ||
+      observedPile(cursor.grantActorId)?.id !== cursor.grantEvidence)
+  )
+    throw new HistoryCursorError('Observed contents changed. Refresh destinations.');
   if (cursor.phase === 'spatial' && cursor.spatialRevision !== spatialMembership())
     throw new HistoryCursorError('Nearby destinations changed. Refresh destinations.');
   const entries: InventoryDestination[] = [];
@@ -682,10 +797,17 @@ export function inventoryDestinationPage(
       location: recipient
         ? 'Nearby person, offer requires their acceptance'
         : containerLocation(service, scope, id),
-      revision: target.inventoryRevision ?? 0,
+      ...(!recipient &&
+      (custodian(world, id) === scope.actorId ||
+        currentInventoryInspection(world, scope.actorId)?.containerId === id)
+        ? { revision: target.inventoryRevision ?? 0 }
+        : {}),
       kind: recipient ? 'recipient' : 'container',
-      openable: !recipient,
-      ...(target.container && definition?.container
+      openable: !recipient && canAccessContainer(world, scope.actorId, id),
+      ...(target.container &&
+      definition?.container &&
+      (custodian(world, id) === scope.actorId ||
+        currentInventoryInspection(world, scope.actorId)?.containerId === id)
         ? { load: target.container.load, capacity: definition.container.capacity }
         : {}),
       ...(source
@@ -712,8 +834,6 @@ export function inventoryDestinationPage(
       ? storage?.(parentId)
       : project(parentId)
     : undefined;
-  let spatial: ReturnType<typeof interactionPageQuery> | undefined;
-  let spatialIndex = 0;
   while (scanned < 200 && entries.length < 40 && cursor.phase !== 'done') {
     if (
       parentId ||
@@ -726,13 +846,27 @@ export function inventoryDestinationPage(
         (cursor.phase === 'granted' || cursor.phase === 'ground'
           ? cursor.grantActorId
           : scope.actorId);
-      const page = contentsQuery(
-        world,
-        owner,
-        scopeKey(scope),
-        cursor.after,
-        Math.min(201, 201 - scanned),
-      );
+      const inspection = currentInventoryInspection(world, scope.actorId);
+      const receivedPile = cursor.phase === 'ground' ? observedPile(owner) : undefined;
+      const received =
+        cursor.phase === 'ground'
+          ? receivedPile?.value.kind === 'pile-contents'
+            ? receivedPile.value.items.map((item) => item.id)
+            : []
+          : parentId && custodian(world, parentId) !== scope.actorId
+            ? inspection?.containerId === parentId
+              ? inspection.itemIds
+              : []
+            : undefined;
+      const page = received
+        ? {
+            status: 'complete' as const,
+            values: received
+              .filter((id) => id.localeCompare(cursor.after, 'en') > 0)
+              .sort((a, b) => a.localeCompare(b, 'en'))
+              .slice(0, 201 - scanned),
+          }
+        : contentsQuery(world, owner, scopeKey(scope), cursor.after, Math.min(201, 201 - scanned));
       if (page.status !== 'complete') {
         unavailable = true;
         break;
@@ -765,58 +899,40 @@ export function inventoryDestinationPage(
         cursor.after = '';
       }
     } else {
-      if (!spatial) {
-        spatial = interactionPageQuery(
-          world,
-          actor,
-          request.activity ? visionRadius(world, actor) : world.itemHandling.reach,
-          cursor.spatialAfter,
-          Math.min(201, 201 - scanned),
-        );
-        if (spatial.status === 'complete') materialized += spatial.values.length;
-      }
-      if (spatial.status !== 'complete') {
-        unavailable = true;
-        break;
-      }
-      if (spatialIndex >= spatial.values.length) {
+      const candidates = observedBodies();
+      const candidate = candidates[cursor.spatialAfter + 1];
+      if (!candidate) {
         cursor.phase = 'done';
         break;
       }
-      const candidate = spatial.values[spatialIndex++]!;
-      cursor.spatialAfter = candidate.after;
+      cursor.spatialAfter++;
       scanned++;
-      const target = candidate.value;
+      materialized++;
+      const target = entityGet(world.entities, candidate.id)!;
       if (target.id === scope.actorId) continue;
       // A corpse retains its actor component; its storage follows native remains access.
       if (request.activity && (!target.actor || target.remains)) {
-        if (!seesEntity(world, actor, target)) continue;
+        if (!currentBodyObservation(world, scope.actorId, target.id)) continue;
         if (target.container) add(target.id);
         if (target.kind === 'item-pile' || target.remains) {
           cursor.phase = 'ground';
           cursor.grantActorId = target.id;
           cursor.grantRevision = target.inventoryRevision ?? 0;
+          cursor.grantEvidence = observedPile(target.id)?.id ?? '';
           cursor.after = '';
         }
       } else if (target.actor && !target.remains) {
-        if (
-          !seesEntity(world, actor, target) ||
-          !canReachEntity(world, actor, target, world.itemHandling.reach)
-        )
-          continue;
-        if (
-          source &&
-          item &&
-          accessiblePossession(world, scope.actorId, item.id) &&
-          !offerRecipientProblem(world, actor, target)
-        )
+        if (!currentBodyGrant(world, scope.actorId, target.id)) continue;
+        if (source && item && accessiblePossession(world, scope.actorId, item.id))
           add(target.id, true);
-        cursor.phase = 'granted';
-        cursor.grantActorId = target.id;
-        cursor.grantRevision = target.inventoryRevision ?? 0;
+        if (canReachEntity(world, actor, target, world.itemHandling.reach)) {
+          cursor.phase = 'granted';
+          cursor.grantActorId = target.id;
+          cursor.grantRevision = target.inventoryRevision ?? 0;
+        }
       } else if (
         (target.container || target.kind === 'item-pile' || target.remains) &&
-        canAccessContainer(world, scope.actorId, target.id)
+        currentBodyGrant(world, scope.actorId, target.id)
       )
         add(target.id);
     }
@@ -841,7 +957,11 @@ export function inventoryDestinationPage(
     breadcrumbs: parentId
       ? objectAncestors(world, parentId)
           .reverse()
-          .filter((entry) => canAccessContainer(world, scope.actorId, entry.id))
+          .filter(
+            (entry) =>
+              canAccessContainer(world, scope.actorId, entry.id) &&
+              hasPhysicalContactReference(world, scope.actorId, entry.id),
+          )
           .map((entry) => ({
             id: entry.id,
             name:
@@ -851,6 +971,41 @@ export function inventoryDestinationPage(
           }))
       : [],
     ...(!unavailable && cursor.phase !== 'done' ? { next: destinationCursor(cursor) } : {}),
+  };
+}
+
+export function projectContainerPage(
+  service: WorldService,
+  scope: RequestScope,
+  page: ContainerPage,
+): ContainerPage {
+  const reference = (id: string) => physicalContactReference(service.world, scope, id);
+  return {
+    ...page,
+    container: { ...page.container, id: reference(page.container.id) },
+    breadcrumbs: page.breadcrumbs.map((entry) => ({ ...entry, id: reference(entry.id) })),
+    ...(page.inspection
+      ? { inspection: projectCommandContactReferences(service.world, scope, page.inspection) }
+      : {}),
+  };
+}
+
+/** Storage and recipient choices use the same physical roles as their subsequent command. */
+export function projectInventoryDestinationPage(
+  service: WorldService,
+  scope: RequestScope,
+  page: InventoryDestinationPage,
+): InventoryDestinationPage {
+  const reference = (id: string) => physicalContactReference(service.world, scope, id);
+  const destination = (value: InventoryDestination): InventoryDestination => ({
+    ...value,
+    id: reference(value.id),
+  });
+  return {
+    ...page,
+    destinations: page.destinations.map(destination),
+    ...(page.container ? { container: destination(page.container) } : {}),
+    breadcrumbs: page.breadcrumbs.map((entry) => ({ ...entry, id: reference(entry.id) })),
   };
 }
 
@@ -1079,6 +1234,9 @@ export function inventoryItemSummary(
     } else recipeRecord = { message: recordRead.message };
   }
   const declaration = entityGet(world.entities, item.id)!.declaredOwner;
+  const contentsKnown =
+    custodian(world, item.id) === scope.actorId ||
+    currentInventoryInspection(world, scope.actorId)?.containerId === item.id;
   const characteristics = itemCharacteristics(world, definition).map(({ key: id, ...fact }) => ({
     id,
     ...fact,
@@ -1118,9 +1276,13 @@ export function inventoryItemSummary(
     ...(item.container && canAccessContainer(world, scope.actorId, item.id)
       ? {
           container: {
-            load: item.container.load,
             capacity: definition.container!.capacity,
-            revision: entityGet(world.entities, item.id)!.inventoryRevision ?? 0,
+            ...(contentsKnown
+              ? {
+                  load: item.container.load,
+                  revision: entityGet(world.entities, item.id)!.inventoryRevision ?? 0,
+                }
+              : {}),
           },
         }
       : {}),
@@ -1146,7 +1308,7 @@ export function inventoryItemSummary(
     characteristics,
     ...(definition.equipment ? { equipmentConflicts: conflicts } : {}),
     availableQuantity: availableItemQuantity(world, item.id),
-    ...(!item.container || canAccessContainer(world, scope.actorId, item.id)
+    ...(!item.container || (contentsKnown && canAccessContainer(world, scope.actorId, item.id))
       ? { packingLoad: itemPackingLoad(world, item.id, 1) }
       : {}),
     category:

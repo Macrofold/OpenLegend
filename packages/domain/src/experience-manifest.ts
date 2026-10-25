@@ -59,7 +59,7 @@ export function manifestCoverageKey(refs: readonly PersonalSourceRef[]): string 
   return canonicalJson(refs.map(refKey).sort());
 }
 /** Structured meaning is native-derived, independent of a model's paraphrase.
- * Child manifests already carry exact leaf coverage; never replay lifetime history.
+ * Child manifests carry complete exact source closure; never replay lifetime history.
  * docs/projects/speech-and-social-perception-tech-design.md#structural-attribution-in-every-selected-summary */
 export function experienceManifest(
   inputs: readonly PreparedExperience[],
@@ -138,7 +138,11 @@ export function experienceManifest(
           ? entry.value.manifest
           : undefined;
     if (child) validateExperienceManifest(child);
-    for (const original of child?.coverage ?? [ref]) coverage.set(refKey(original), original);
+    // Keep the supplied intermediate account as well as its original leaves. After
+    // another consolidation retires that account, its exact reference must still
+    // revoke every dependent summary without replaying archived source bodies.
+    coverage.set(refKey(ref), ref);
+    for (const original of child?.coverage ?? []) coverage.set(refKey(original), original);
     const originals =
       entry.source === 'summary'
         ? []

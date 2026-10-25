@@ -12,7 +12,7 @@ import type {
   CommandReceiptResult,
   GameView,
 } from '@open-legend/protocol';
-import { post } from '../api';
+import { post, postContactRead } from '../api';
 import type { RetainedRequest } from '../retained-request';
 import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
 import { Button, Icon, Section, SelectField, Tag } from '../design-system/components';
@@ -524,7 +524,15 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     // Read-only prerequisites appear automatically. A changing clock never extends the checked deadline.
     const selectedInput = { ...input, activityArguments: { ...input.activityArguments } };
     const timer = setTimeout(() => {
-      void post<ApiResult>('/api/activity-preview', selectedInput, abort.signal)
+      void postContactRead<ApiResult>(
+        '/api/activity-preview',
+        selectedInput,
+        Object.entries(descriptor?.fields ?? {}).flatMap(([key, field]) => {
+          const value = selectedInput.activityArguments?.[key];
+          return field.type === 'entity' && typeof value === 'string' ? [value] : [];
+        }),
+        abort.signal,
+      )
         .then((result) => {
           if (!abort.signal.aborted) setReview({ key: reviewKey, input: selectedInput, result });
         })

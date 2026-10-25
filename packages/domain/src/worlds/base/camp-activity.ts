@@ -18,7 +18,7 @@ import { seesEntity } from '../../perception.js';
 import { canReachEntity } from '../../spatial.js';
 import { itemDefinitionPin } from '../../resource-claims.js';
 import { outcome } from '../../events.js';
-import { isFuel, fireFuelDescription } from './fire.js';
+import { isFuel } from './fire.js';
 import { observeActor } from '../../kernel.js';
 import { worldPosition } from '../../spatial-state.js';
 import { observerDescription } from './knowledge.js';
@@ -505,7 +505,7 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
         candidateId,
         observerDescription(world, actorId, candidateId),
         'entity',
-        `${fireFuelDescription(target.heat)}. A full fire can refuse additional fuel.`,
+        'A full fire can refuse additional fuel.',
       );
     if (
       fieldId === 'sourceId' &&
@@ -583,7 +583,7 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
       if (target.resource) addDefinition(target.resource.definitionId);
       if (target.heat)
         warnings.push(
-          `${observerDescription(world, actorId, target.id)}: ${fireFuelDescription(target.heat)}. A full fire can refuse additional fuel; waiting alone is not a fuel-care result.`,
+          `${observerDescription(world, actorId, target.id)}: A full fire can refuse additional fuel; waiting alone is not a fuel-care result.`,
         );
     }
     let count = 0;

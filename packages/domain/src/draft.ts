@@ -357,6 +357,7 @@ export function sensoryDraftWrites(
         'placement',
         'retirement',
         'inventoryRevision',
+        'container',
       ]) ||
       changed(entity.spatial, ['body', 'inactiveBody', 'softFootprint', 'heading']) ||
       changed(entity.heat, ['lit']) ||

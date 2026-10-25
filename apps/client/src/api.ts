@@ -288,6 +288,10 @@ export async function getOperations(): Promise<OperationsView> {
   }
   return view;
 }
+/** A remembered or inspected role is not a live body; only contact tokens expire here. */
+export const currentContactAvailable = (reference: string): boolean =>
+  !/^contact-[a-f0-9]{64}$/.test(reference) || currentContacts.has(reference);
+
 /** Private reads carry this tab's audience and discard responses from a prior scope. */
 export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<T> {
   const scope = viewScope;
@@ -443,6 +447,22 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
     throw new Error(`The request was not accepted (${response.status}).`);
   return result;
 }
+/** Read-only POSTs share contact-loss fencing with scoped GETs. Write receipts
+ * deliberately use post(): losing a contact cannot erase a committed result. */
+export async function postContactRead<T extends { ok: boolean; message?: string }>(
+  path: string,
+  body: unknown,
+  references: readonly (string | undefined)[],
+  signal?: AbortSignal,
+): Promise<T> {
+  const result = await post<T>(path, body, signal);
+  if (
+    references.some((reference) => reference !== undefined && !currentContactAvailable(reference))
+  )
+    throw new Error('That observed target is no longer available.');
+  return result;
+}
+
 /** Loading intentionally replaces this timeline. Only the selected load's
  * non-disclosing success acknowledgment may cross that change; no old result
  * fields are adopted. Reload resolves the current account/session from scratch.

@@ -1,7 +1,7 @@
 import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useState } from 'react';
 import type { ContainerPage, InventoryItemView, ObjectHistoryPage } from '@open-legend/protocol';
-import { post } from '../api';
+import { post, postContactRead } from '../api';
 import { Button } from '../design-system/components';
 
 export function InventoryHistory({
@@ -108,9 +108,10 @@ function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: 
   useEffect(() => {
     if (!visible) return;
     const controller = new AbortController();
-    void post<ContainerPage>(
+    void postContactRead<ContainerPage>(
       '/api/inventory',
       { containerId, mergeSourceId: item.id, cursor },
+      [containerId, item.id],
       controller.signal,
     )
       .then((page) => {

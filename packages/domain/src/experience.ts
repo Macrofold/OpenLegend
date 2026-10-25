@@ -771,6 +771,40 @@ export function experiences(
         .slice(0, EXPERIENCE_LIMITS.recallRaw);
   return [...personal.filter((m) => m.kind === 'commitment'), ...eligible, ...summaries];
 }
+
+/** Immediate summaries and original received leaves are distinct dependencies: a later
+ * summary can retire its source summary without retaining that source's text or identity
+ * in leaf coverage. Keep both relationships when editing personal history. */
+function experienceDependsOn(
+  entry: MemoryRecord | ExperienceSummary,
+  affected: ReadonlySet<string>,
+): boolean {
+  return (
+    affected.has(entry.id) ||
+    ('eventId' in entry && !!entry.eventId && affected.has(entry.eventId)) ||
+    ('observation' in entry && !!entry.observation && affected.has(entry.observation.id)) ||
+    ('sources' in entry && entry.sources.some((source) => affected.has(source.id))) ||
+    (!!entry.manifest && manifestDependsOn(entry.manifest, affected))
+  );
+}
+
+/** A retired account remains editable while an eligible retained account depends on it.
+ * Cold callers prepare that account through the existing history-edit dependency closure. */
+export function retainedExperienceSource(
+  world: WorldState,
+  actorId: string,
+  sourceId: string,
+): boolean {
+  const affected = new Set([sourceId]);
+  const retained = experiences(world, actorId, true);
+  if (retained.some((entry) => experienceDependsOn(entry, affected))) return true;
+  // Memory projections carry original coverage. Read immediate typed summary sources
+  // from their actual owner rather than copying a second lineage into those projections.
+  const retainedIds = new Set(retained.map((entry) => entry.id));
+  return (world.experience?.summaries[actorId] ?? []).some(
+    (summary) => retainedIds.has(summary.id) && experienceDependsOn(summary, affected),
+  );
+}
 /** Trigger selection reads only records newer than a character's considered-evidence
  * watermark. Same visibility rules as `experiences` (forgotten sources, corrected summaries,
  * awareness superseding its episode copy) without materializing or sorting retained history.
@@ -1030,11 +1064,7 @@ export function invalidateExperience(
         ...(memory.observations ?? []),
         ...(memory.manifest?.observations ?? []),
       ];
-      if (
-        affected.has(memory.id) ||
-        (memory.observation && affected.has(memory.observation.id)) ||
-        (memory.manifest && manifestDependsOn(memory.manifest, affected))
-      ) {
+      if (experienceDependsOn(memory, affected)) {
         include(memory.id);
         for (const observation of observations) include(observation.id);
       }
@@ -1075,7 +1105,7 @@ export function invalidateExperience(
         expanded = true;
       }
     for (const summary of state.summaries[actorId] ?? [])
-      if (!affected.has(summary.id) && manifestDependsOn(summary.manifest, affected)) {
+      if (!affected.has(summary.id) && experienceDependsOn(summary, affected)) {
         affected.add(summary.id);
         expanded = true;
       }
@@ -1128,7 +1158,7 @@ export function invalidateExperience(
         learningQueue.push(next);
       }
   for (const summary of state.summaries[actorId] ?? [])
-    if (manifestDependsOn(summary.manifest, recognitionAffected)) affected.add(summary.id);
+    if (experienceDependsOn(summary, recognitionAffected)) affected.add(summary.id);
   const revokedFacts = new Set<string>();
   const markAssociationFacts = (
     observation: import('./perception-evidence.js').ObservationContribution,
@@ -1490,12 +1520,17 @@ export function correctExperience(
   correctionEventId: string,
 ): Transition {
   const aware = input.experience?.awareness[actorId]?.find((a) => a.eventId === correctionEventId);
-  const retained = experiences(input, actorId, true);
-  const retainedSource = retained.some(
-    (memory) =>
-      memory.id === sourceId || memory.manifest?.coverage.some((ref) => ref.id === sourceId),
-  );
-  if (!aware || !retainedSource || sourceId === correctionEventId)
+  const retainedSource = retainedExperienceSource(input, actorId, sourceId);
+  // Native receipts and their personal event are aliases of the same acquired account,
+  // not independent correcting evidence merely because their IDs differ.
+  const sameAccount =
+    aware &&
+    (aware.eventId === sourceId ||
+      ownedObservationSources([
+        ...(aware.observation ? [aware.observation] : []),
+        ...(aware.observations ?? []),
+      ]).some((source) => source.id === sourceId));
+  if (!aware || !retainedSource || sameAccount)
     return {
       world: input,
       events: [],

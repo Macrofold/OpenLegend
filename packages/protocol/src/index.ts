@@ -442,7 +442,7 @@ export interface InventoryItemSummary extends Named {
     representativeQuantity: number;
     representativeAvailableQuantity: number;
   };
-  container?: { load: number; capacity: number; revision: number };
+  container?: { load?: number; capacity: number; revision?: number };
   declaredOwner?: { name: string; revision: number };
   id: string;
   definitionId: string;
@@ -1471,6 +1471,9 @@ export interface ContainerPage {
   breadcrumbs: Array<Named & { id: string; revision: number }>;
   items: InventoryItemView[];
   next?: string;
+  /** World-container rows are only the page deliberately inspected. Further rows
+   * require this native command; a read/search never records more experience. */
+  inspection?: { next?: CommandInput };
 }
 
 /** Actor-safe state of chosen work; "understood" requests are PlayerActionAttempt cards. */

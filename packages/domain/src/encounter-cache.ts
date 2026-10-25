@@ -118,6 +118,9 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
         entity.spatial.heading,
         entity.actor?.physicalLife ?? null,
         entity.actor?.species,
+        entity.container || entity.kind === 'item-pile' || entity.remains
+          ? entity.placement?.revision
+          : null,
       ]),
       ...visibleFeature(entity),
     };
@@ -126,6 +129,18 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
   return withPublicAttributes(world, capture);
 }
 const itemPresentationKeys = new WeakMap<object, string>();
+const exposureDependencyKeys = new WeakMap<object, string>();
+/** Mutable builders cannot prove freshness by object identity. Compare their exact
+ * settings; immutable installed definitions compute this key only once. */
+function exposureDependencyKey(value: object): string {
+  const immutable = isImmutableData(value);
+  let key = immutable ? exposureDependencyKeys.get(value) : undefined;
+  if (key === undefined) {
+    key = JSON.stringify(value);
+    if (immutable) exposureDependencyKeys.set(value, key);
+  }
+  return key;
+}
 function itemPresentationKey(world: WorldState): string {
   const definitions = readOnlyDraftView(world.itemDefinitions),
     immutable = isImmutableData(definitions);
@@ -199,9 +214,9 @@ class Dimensions {
 }
 interface ExposureCache {
   owner: object;
-  map: object;
-  manifest: object;
-  policy: object;
+  mapKey: string;
+  manifestKey: string;
+  policyKey: string;
   itemPresentationKey: string;
   inputs: Map<string, Source>;
   order: Map<string, number>;
@@ -297,19 +312,24 @@ export function* prepareExposure(
   const map = spatialMap(world),
     manifest = snapshot(world.moduleManifest),
     policy = snapshot(world.statusEffectPolicy),
+    mapKey = exposureDependencyKey(map),
+    manifestKey = exposureDependencyKey(manifest),
+    policyKey = exposureDependencyKey(policy),
     itemKey = itemPresentationKey(world);
   let rebuild: 'cold' | 'unknown' | 'overflow' | 'policy' | undefined;
   if (!cache || (cache.owner !== ownerToken(ancestor) && cache.owner !== ownerToken(world)))
     rebuild = 'cold';
   else if (!changes.complete) rebuild = changes.rebuildReason;
+  // A mutable published builder can be edited outside draft change tracking.
+  // Its first phase must rescan sources; later phases of this owned draft have
+  // exact write coverage and can reuse unchanged settings by their complete key.
+  else if (working?.owner !== ownerToken(world) && !isImmutableData(ancestor.entities))
+    rebuild = 'unknown';
   else if (
-    cache.map !== map ||
-    cache.manifest !== manifest ||
-    cache.policy !== policy ||
-    cache.itemPresentationKey !== itemKey ||
-    !Object.isFrozen(map) ||
-    !Object.isFrozen(manifest) ||
-    !Object.isFrozen(policy)
+    cache.mapKey !== mapKey ||
+    cache.manifestKey !== manifestKey ||
+    cache.policyKey !== policyKey ||
+    cache.itemPresentationKey !== itemKey
   )
     rebuild = 'policy';
   if (rebuild) {
@@ -322,9 +342,9 @@ export function* prepareExposure(
     countDomainWork(counter[rebuild]);
     cache = {
       owner: ownerToken(world),
-      map,
-      manifest,
-      policy,
+      mapKey,
+      manifestKey,
+      policyKey,
       itemPresentationKey: itemKey,
       inputs: new Map(),
       order: new Map(),

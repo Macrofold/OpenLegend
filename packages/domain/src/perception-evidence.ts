@@ -19,6 +19,7 @@ import { retainObservationConfirmation } from './experience.js';
 import { hasMemory } from './living.js';
 import { knownPlaceEvidence } from './known-place-evidence.js';
 import { validEncounterExposure, type EncounterExposure } from './places.js';
+import { hasRecordFields, isSafeRecordId } from './records.js';
 import {
   selectedBodyIndividual,
   selectedOrdinaryWarning,
@@ -105,6 +106,8 @@ export interface ObservedBody {
   quantity?: number;
   heatLit?: boolean;
   remainsPhase?: 'fresh' | 'rotting' | 'removed';
+  /** Visible storage access only; inspection still owns the disclosure of contents. */
+  storage?: { placementRevision: number };
 }
 export type SensoryFacet =
   | { kind: 'detected'; detected: 'signal' | 'surface' | 'body' | 'impact'; limits: string[] }
@@ -739,6 +742,40 @@ function finalizeLease(world: WorldState, observer: Entity, lease: LiveFacetSupp
   );
 }
 
+/** Pose and continuously changing quantities keep only their latest received sample.
+ * Semantic detail changes retain the ended meaning; numeric effects already have
+ * their exact before/after accounts at the attribute mutation owner. */
+function attributeMeanings(value: Extract<SensoryFacet, { kind: 'public-attributes' }>) {
+  return value.attributes.map(({ value: sample, revision: _revision, ...detail }) => ({
+    ...detail,
+    ...(detail.display === 'category' ? { value: sample } : {}),
+  }));
+}
+/** Called only after the complete received value changed. */
+function semanticFacetChanged(before: SensoryFacet, after: SensoryFacet): boolean {
+  if (before.kind === 'body' && after.kind === 'body') {
+    const previous = before.body,
+      current = after.body;
+    return (
+      previous.kind !== current.kind ||
+      previous.appearance !== current.appearance ||
+      previous.radius !== current.radius ||
+      previous.height !== current.height ||
+      previous.description !== current.description ||
+      previous.heatLit !== current.heatLit ||
+      previous.remainsPhase !== current.remainsPhase ||
+      !!previous.storage !== !!current.storage ||
+      previous.outward.some((value, index) => value !== current.outward[index]) ||
+      previous.label?.name !== current.label?.name ||
+      previous.label?.nameForm !== current.label?.nameForm ||
+      previous.label?.indefiniteArticle !== current.label?.indefiniteArticle
+    );
+  }
+  if (before.kind === 'public-attributes' && after.kind === 'public-attributes')
+    return JSON.stringify(attributeMeanings(before)) !== JSON.stringify(attributeMeanings(after));
+  return after.kind === 'carried' || after.kind === 'pile-contents';
+}
+
 /** The existing native sight phase supplies its completed admitted candidates. Projection
  * never calls this function. Changed measurements replace only their own latest values. */
 export function reconcileVisualEvidence(
@@ -773,12 +810,14 @@ export function reconcileVisualEvidence(
     if (subject.placement?.mode !== 'world') continue;
     const placement = subject.placement;
     const token = sourceToken?.(subject.id),
-      heldBody = state.current[`${subject.id}:body`];
+      heldBody = state.current[`${subject.id}:body`],
+      heldOriginal = heldBody && readOnlyDraftView(heldBody).original,
+      measuredSource = heldOriginal && measuredSources.get(readOnlyDraftView(heldOriginal));
     if (
       token &&
       heldBody &&
-      measuredSources.get(readOnlyDraftView(heldBody.original))?.leaseId === heldBody.id &&
-      measuredSources.get(readOnlyDraftView(heldBody.original))?.token === token
+      measuredSource?.leaseId === heldBody.id &&
+      measuredSource.token === token
     ) {
       const position = readOnlyDraftView(worldPosition(observer)),
         heading = observer.spatial.heading;
@@ -797,8 +836,9 @@ export function reconcileVisualEvidence(
         if (kind !== 'association') held.valueMeasuredThrough = world.simTime;
       }
       const location = state.current[`${subject.id}:location`];
-      if (location?.value.kind === 'location') {
-        const frame = location.value.frame;
+      const locationValue = location && readOnlyDraftView(readOnlyDraftView(location).value);
+      if (location && locationValue?.kind === 'location') {
+        const frame = locationValue.frame;
         const moved =
           frame.positionAtObservation.x !== position.x ||
           frame.positionAtObservation.y !== position.y ||
@@ -810,7 +850,7 @@ export function reconcileVisualEvidence(
           location.valueMeasuredFrom = world.simTime;
           location.valueMeasuredThrough = world.simTime;
           location.valueAcquiredAt = world.simTime;
-          if (moved)
+          if (moved && location.value.kind === 'location')
             location.value.frame = {
               positionAtObservation: { ...position },
               forwardAtObservation: heading,
@@ -848,6 +888,9 @@ export function reconcileVisualEvidence(
       ...(subject.resource ? { quantity: subject.resource.quantity } : {}),
       ...(subject.heat ? { heatLit: subject.heat.lit } : {}),
       ...(subject.remains ? { remainsPhase: subject.remains.phase } : {}),
+      ...(subject.container || subject.kind === 'item-pile' || subject.remains
+        ? { storage: { placementRevision: placement.revision } }
+        : {}),
     };
     const frame: ObservationFrame = {
       positionAtObservation: { ...readOnlyDraftView(worldPosition(observer)) },
@@ -891,7 +934,8 @@ export function reconcileVisualEvidence(
       sourcePublicAttributes?.(subject.id) ?? projectAttributes(world, subject, 'public');
     if (publicAttributes.length)
       values.push({ kind: 'public-attributes', attributes: [...publicAttributes] });
-    let original = state.current[`${subject.id}:detected`]?.original;
+    const detected = state.current[`${subject.id}:detected`];
+    let original = detected && readOnlyDraftView(detected).original;
     if (!original)
       original = acquireObservation(world, observer, {
         origin: {
@@ -917,41 +961,37 @@ export function reconcileVisualEvidence(
       chargeWork({ tests: 1 });
       const key = `${subject.id}:${facet.kind}`;
       let prior = state.current[key];
+      // Equality and semantic comparison read completed values, not deep Immer proxies.
+      // Drafting every unchanged nested body here makes later native previews copy it.
+      const previous = prior && readOnlyDraftView(prior),
+        previousValue = previous && readOnlyDraftView(previous.value);
+      const changed = !previousValue || JSON.stringify(previousValue) !== JSON.stringify(facet);
       if (
+        prior &&
+        previous &&
         facet.kind === 'location' &&
-        prior?.value.kind === 'location' &&
-        prior.value.location.kind === 'point' &&
+        previousValue?.kind === 'location' &&
+        previousValue.location.kind === 'point' &&
         facet.location.kind === 'point' &&
-        prior.valueMeasuredThrough < world.simTime &&
-        prior.motionContinuityRevision === (placement.motionContinuityRevision ?? 0) &&
-        placement.revision > (prior.sourcePlacementRevision ?? -1) &&
+        previous.valueMeasuredThrough < world.simTime &&
+        previous.motionContinuityRevision === (placement.motionContinuityRevision ?? 0) &&
+        placement.revision > (previous.sourcePlacementRevision ?? -1) &&
         Math.hypot(
-          prior.value.location.point.x - facet.location.point.x,
-          prior.value.location.point.y - facet.location.point.y,
-          prior.value.location.point.z - facet.location.point.z,
+          previousValue.location.point.x - facet.location.point.x,
+          previousValue.location.point.y - facet.location.point.y,
+          previousValue.location.point.z - facet.location.point.z,
         ) >
-          prior.value.location.errorRadius + facet.location.errorRadius
+          previousValue.location.errorRadius + facet.location.errorRadius
       )
         earlierLocation = captureCurrentFacet(prior) as CapturedLocationSample;
       let facetOriginal = original;
-      if (
-        prior &&
-        (((facet.kind === 'carried' || facet.kind === 'pile-contents') &&
-          JSON.stringify(prior.value) !== JSON.stringify(facet)) ||
-          (facet.kind === 'public-attributes' &&
-            prior.value.kind === 'public-attributes' &&
-            prior.value.attributes.some(
-              (previous) => !facet.attributes.some((current) => current.id === previous.id),
-            )))
-      ) {
+      if (prior && previousValue && changed && semanticFacetChanged(previousValue, facet)) {
         finalizeLease(world, observer, prior);
-        delete state.current[key];
-        prior = undefined;
         facetOriginal = acquireObservation(world, observer, {
           origin: {
             kind: 'exposure',
             episodeId: exposure.episodeId,
-            detectorId: `${detector.id}:${facet.kind}`,
+            detectorId: `${detector.id}:${facet.kind}:${prior.id}:${prior.revision + 1}`,
             measuredFrom: world.simTime,
             measuredThrough: world.simTime,
           },
@@ -967,6 +1007,15 @@ export function reconcileVisualEvidence(
             },
           ],
         });
+        if (facet.kind === 'body' || facet.kind === 'public-attributes') {
+          // The same observed body/contact continues while its semantic fact changes.
+          prior.original = facetOriginal;
+          prior.originalOrdinal = 0;
+          prior.confirmedFrom = world.simTime;
+        } else {
+          delete state.current[key];
+          prior = undefined;
+        }
       }
       if (!prior) {
         if (
@@ -1017,7 +1066,6 @@ export function reconcileVisualEvidence(
           confirmedThrough: world.simTime,
         };
       } else {
-        const changed = JSON.stringify(prior.value) !== JSON.stringify(facet);
         if (!changed && prior.confirmedThrough === world.simTime) return;
         prior.revision++;
         prior.confirmedThrough = world.simTime;
@@ -1131,7 +1179,10 @@ export function reconcileVisualEvidence(
     }
     const measured = state.current[`${subject.id}:body`];
     if (token && measured)
-      measuredSources.set(readOnlyDraftView(measured.original), { leaseId: measured.id, token });
+      measuredSources.set(readOnlyDraftView(readOnlyDraftView(measured).original), {
+        leaseId: measured.id,
+        token,
+      });
   }
 }
 
@@ -1557,20 +1608,31 @@ export function validatePerceptionEvidenceState(
         throw new Error('Invalid perception observer life.');
     }
     for (const [key, lease] of Object.entries(state.current)) {
+      if (!lease || typeof lease !== 'object' || !lease.observer || !lease.value)
+        throw new Error('Invalid current perception facet.');
       validateObservationContribution(lease.original, originals);
       validateSensoryFacet(lease.value, originals);
       if (
-        !lease ||
         typeof lease.id !== 'string' ||
         !lease.id.startsWith('perception-lease-') ||
         !Number.isSafeInteger(lease.revision) ||
         lease.revision < 1 ||
         lease.observer.actorId !== observerId ||
         lease.observer.physicalLife !== state.life ||
-        typeof lease.subjectId !== 'string' ||
+        !isSafeRecordId(lease.subjectId) ||
         (lease.subjectPhysicalLife !== null &&
           (!Number.isSafeInteger(lease.subjectPhysicalLife) || lease.subjectPhysicalLife < 0)) ||
         key !== `${lease.subjectId}:${lease.value.kind}` ||
+        !lease.exposure ||
+        typeof lease.exposure.episodeId !== 'string' ||
+        !lease.exposure.episodeId ||
+        lease.exposure.observer?.actorId !== observerId ||
+        lease.exposure.observer.physicalLife !== state.life ||
+        !['sight', 'hearing', 'touch'].includes(lease.modality) ||
+        (lease.value.kind !== 'association' && lease.modality !== lease.original.modality) ||
+        [lease.motionContinuityRevision, lease.sourcePlacementRevision].some(
+          (revision) => revision !== undefined && (!Number.isSafeInteger(revision) || revision < 0),
+        ) ||
         (lease.localSubject !== undefined &&
           (!validObserverSubject(lease.localSubject) ||
             (lease.localSubject.kind === 'individual' &&
@@ -1593,6 +1655,8 @@ export function validatePerceptionEvidenceState(
         lease.original.observer.physicalLife !== state.life ||
         !Number.isSafeInteger(lease.originalOrdinal) ||
         !lease.original.facets[lease.originalOrdinal] ||
+        lease.original.facets[lease.originalOrdinal]!.value.kind !== lease.value.kind ||
+        lease.original.acquiredAt > world.simTime ||
         ![
           lease.valueMeasuredFrom,
           lease.valueMeasuredThrough,
@@ -1601,6 +1665,11 @@ export function validatePerceptionEvidenceState(
           lease.confirmedThrough,
         ].every(Number.isFinite) ||
         lease.valueMeasuredThrough < lease.valueMeasuredFrom ||
+        // Unchanged continuously measured values may predate their latest support.
+        // Completed measurement still cannot claim time after this native boundary.
+        lease.valueMeasuredThrough > world.simTime ||
+        lease.valueMeasuredThrough > lease.confirmedThrough ||
+        lease.valueAcquiredAt < lease.original.acquiredAt ||
         lease.valueAcquiredAt > world.simTime ||
         lease.confirmedThrough > world.simTime ||
         lease.confirmedThrough < lease.confirmedFrom
@@ -1614,10 +1683,20 @@ export function validatePerceptionEvidenceState(
 export function reconcileContactEvidence(world: WorldState, observer: Entity): void {
   const state = owner(world, observer);
   const contacts = observer.actor?.contacts ?? {};
+  const renewed = new Map<string, { previous: string; newLife: boolean }>();
   for (const [key, lease] of Object.entries(state.current)) {
     if (lease.modality !== 'touch') continue;
     const contact = contacts[lease.subjectId];
-    if (!contact || (lease.value.kind === 'contact' && lease.value.detail !== contact.detail)) {
+    const subject = entityGet(world.entities, lease.subjectId),
+      physicalLife = subject?.actor ? (subject.actor.physicalLife ?? 0) : null,
+      newLife = lease.subjectPhysicalLife !== physicalLife;
+    if (
+      !contact ||
+      newLife ||
+      lease.exposure.episodeId !== contact.id ||
+      (lease.value.kind === 'contact' && lease.value.detail !== contact.detail)
+    ) {
+      if (contact) renewed.set(lease.subjectId, { previous: lease.id, newLife });
       finalizeLease(world, observer, lease);
       delete state.current[key];
     }
@@ -1637,13 +1716,22 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
       observer: observerLife(observer),
       episodeId: contact.id,
     };
+    const subject = entityGet(world.entities, sourceId),
+      physicalLife = subject?.actor ? (subject.actor.physicalLife ?? 0) : null,
+      renewal = renewed.get(sourceId),
+      measuredFrom = renewal?.newLife ? world.simTime : contact.changedAt;
     const value: SensoryFacet = { kind: 'contact', exposure, detail: contact.detail };
     const original = acquireObservation(world, observer, {
       origin: {
         kind: 'exposure',
         episodeId: contact.id,
-        detectorId: contact.senseId,
-        measuredFrom: contact.changedAt,
+        detectorId: JSON.stringify([
+          contact.senseId,
+          physicalLife,
+          contact.detail,
+          renewal?.previous ?? null,
+        ]),
+        measuredFrom,
         measuredThrough: world.simTime,
       },
       modality: 'touch',
@@ -1652,7 +1740,7 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
         {
           role: 'direct',
           asOf: world.simTime,
-          measuredFrom: contact.changedAt,
+          measuredFrom,
           measuredThrough: world.simTime,
           value,
         },
@@ -1663,18 +1751,16 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
       revision: 1,
       observer: observerLife(observer),
       subjectId: sourceId,
-      subjectPhysicalLife: entityGet(world.entities, sourceId)?.actor
-        ? (entityGet(world.entities, sourceId)?.actor?.physicalLife ?? 0)
-        : null,
+      subjectPhysicalLife: physicalLife,
       exposure,
       original,
       originalOrdinal: 0,
       modality: 'touch',
       value,
-      valueMeasuredFrom: contact.changedAt,
+      valueMeasuredFrom: measuredFrom,
       valueMeasuredThrough: world.simTime,
       valueAcquiredAt: world.simTime,
-      confirmedFrom: contact.changedAt,
+      confirmedFrom: measuredFrom,
       confirmedThrough: world.simTime,
     };
   }
@@ -1824,6 +1910,10 @@ function validateSensoryFacet(value: SensoryFacet, originals = new Map<string, s
         (body.heatLit !== undefined && typeof body.heatLit !== 'boolean') ||
         (body.remainsPhase !== undefined &&
           !['fresh', 'rotting', 'removed'].includes(body.remainsPhase)) ||
+        (body.storage !== undefined &&
+          (!hasRecordFields(body.storage, ['placementRevision']) ||
+            !Number.isSafeInteger(body.storage.placementRevision) ||
+            body.storage.placementRevision < 0)) ||
         (body.label !== undefined && (typeof body.label.name !== 'string' || !body.label.name))
       )
         throw new Error('Invalid observed outward detail.');
@@ -1861,14 +1951,49 @@ function validateSensoryFacet(value: SensoryFacet, originals = new Map<string, s
         value.attributes.some(
           (attribute) =>
             !attribute ||
-            typeof attribute.id !== 'string' ||
+            !isSafeRecordId(attribute.id) ||
             !Number.isSafeInteger(attribute.version) ||
+            attribute.version < 1 ||
+            !Number.isSafeInteger(attribute.revision) ||
+            attribute.revision < 0 ||
+            typeof attribute.name !== 'string' ||
+            !attribute.name ||
+            !attribute.presentation ||
+            typeof attribute.presentation.icon !== 'string' ||
+            !attribute.presentation.icon ||
+            typeof attribute.presentation.color !== 'string' ||
+            !attribute.presentation.color ||
             !['meter', 'category'].includes(attribute.display) ||
             !['unknown', 'known'].includes(attribute.status) ||
-            (attribute.value !== null &&
-              typeof attribute.value !== 'string' &&
-              typeof attribute.value !== 'boolean' &&
-              !(typeof attribute.value === 'number' && Number.isFinite(attribute.value))),
+            (attribute.status === 'unknown'
+              ? attribute.value !== null
+              : attribute.display === 'meter'
+                ? typeof attribute.value !== 'number' || !Number.isFinite(attribute.value)
+                : typeof attribute.value !== 'string') ||
+            (attribute.display === 'meter' &&
+              (typeof attribute.min !== 'number' ||
+                typeof attribute.max !== 'number' ||
+                !Number.isFinite(attribute.min) ||
+                !Number.isFinite(attribute.max) ||
+                attribute.min >= attribute.max ||
+                typeof attribute.unit !== 'string')) ||
+            [attribute.meaning, attribute.condition, attribute.concern].some(
+              (text) => text !== undefined && typeof text !== 'string',
+            ) ||
+            [attribute.bodyHealth, attribute.critical, attribute.editorCritical].some(
+              (flag) => flag !== undefined && typeof flag !== 'boolean',
+            ) ||
+            (attribute.changeFeedback !== undefined && attribute.changeFeedback !== 'effects') ||
+            (attribute.editorCriticalComparison !== undefined &&
+              (!['lessThan', 'lessThanOrEqual'].includes(
+                attribute.editorCriticalComparison.operator,
+              ) ||
+                !['none', 'nearest-integer'].includes(
+                  attribute.editorCriticalComparison.rounding,
+                ) ||
+                !Number.isFinite(attribute.editorCriticalComparison.value) ||
+                (attribute.editorCriticalComparison.unit !== undefined &&
+                  attribute.editorCriticalComparison.unit !== 'fractionOfRange'))),
         )
       )
         throw new Error('Invalid observed public attributes.');
@@ -1956,7 +2081,9 @@ function validateSensoryFacet(value: SensoryFacet, originals = new Map<string, s
       validateEvidenceSource(snapshot.confirmation);
       validateObservationContribution(snapshot.original, originals);
       if (
+        !Number.isSafeInteger(snapshot.originalOrdinal) ||
         !snapshot.original.facets[snapshot.originalOrdinal] ||
+        snapshot.original.facets[snapshot.originalOrdinal]!.value.kind !== snapshot.value.kind ||
         !snapshot.observer ||
         !snapshot.exposure ||
         canonicalJson(snapshot.observer) !== canonicalJson(snapshot.original.observer) ||
@@ -2019,5 +2146,7 @@ function validateSensoryFacet(value: SensoryFacet, originals = new Map<string, s
       )
         throw new Error('Invalid heard warning speaker.');
       break;
+    default:
+      throw new Error('Invalid received sensory facet.');
   }
 }

@@ -45,6 +45,7 @@ import {
   knownPlaceCapsule,
   retainedPlaceObservations,
   canonicalJson,
+  personalFactAlias,
   type EncounterExposure,
 } from '@open-legend/domain';
 import { z } from 'zod';
@@ -80,8 +81,6 @@ const sourceColumnNames = [
   'required',
   'eligible',
   'sequence',
-  'place_id',
-  'place_capsule',
 ];
 const sourceColumns = sourceColumnNames.map((name) => `r.${name}`).join(',');
 interface PreparedSource {
@@ -93,6 +92,7 @@ interface PreparedSource {
   values: unknown[];
   originals: ObservationContribution[];
   learning: RecognitionSupportSource[];
+  places: KnownPlaceCapsule[];
 }
 export interface PreparedMemorySources {
   readonly worldId: string;
@@ -392,15 +392,19 @@ export class MemoryRepository {
         id TEXT NOT NULL, source_kind TEXT NOT NULL, record_id TEXT NOT NULL, revision TEXT NOT NULL,
         event_id TEXT, memory_kind TEXT, acquisition TEXT, event_type TEXT,
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
-        place_id TEXT, place_capsule TEXT,
         search_text TEXT NOT NULL DEFAULT '',
         PRIMARY KEY(world_id,actor_id,id,source_kind));
       CREATE INDEX IF NOT EXISTS recall_actor_rank ON recall_sources(world_id,actor_id,eligible,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_source_validation ON recall_sources(world_id,actor_id,eligible,id);
       CREATE INDEX IF NOT EXISTS recall_context_rank ON recall_sources(world_id,actor_id,eligible,required DESC,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_actor_recent ON recall_sources(world_id,actor_id,eligible,at DESC,id);
-      CREATE INDEX IF NOT EXISTS recall_place_evidence ON recall_sources(world_id,actor_id,place_id,eligible,at DESC,sequence DESC,id DESC) WHERE place_id IS NOT NULL;
-      CREATE INDEX IF NOT EXISTS recall_retained_places ON recall_sources(world_id,actor_id,id) WHERE source_kind<>'awareness' AND place_capsule IS NOT NULL AND eligible=1;
+      CREATE TABLE IF NOT EXISTS recall_place_capsules (
+        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,owner_id TEXT NOT NULL,owner_kind TEXT NOT NULL,owner_revision TEXT NOT NULL,
+        place_id TEXT NOT NULL,observed_at DOUBLE PRECISION NOT NULL,observed_order BIGINT NOT NULL,
+        source_event_id TEXT,native_source_id TEXT NOT NULL,fact_alias TEXT NOT NULL,capsule_key TEXT NOT NULL,capsule TEXT NOT NULL,
+        PRIMARY KEY(world_id,actor_id,owner_id,owner_kind,capsule_key),
+        FOREIGN KEY(world_id,actor_id,owner_id,owner_kind) REFERENCES recall_sources(world_id,actor_id,id,source_kind) ON DELETE CASCADE);
+      CREATE INDEX IF NOT EXISTS recall_place_lookup ON recall_place_capsules(world_id,actor_id,place_id,observed_at DESC,observed_order DESC,owner_id DESC,owner_kind DESC);
       CREATE INDEX IF NOT EXISTS recall_commitments ON recall_sources(world_id,actor_id,at,id) WHERE source_kind='memory' AND memory_kind='commitment' AND eligible=1;
       CREATE INDEX IF NOT EXISTS recall_world_event ON recall_sources(world_id,event_id,actor_id);
       CREATE INDEX IF NOT EXISTS recall_actor_event ON recall_sources(world_id,actor_id,event_id);
@@ -623,14 +627,23 @@ export class MemoryRepository {
               ...(kind === 'memory' ? (evidence?.observations ?? []) : []),
               ...(kind === 'memory' ? (manifest?.observations ?? []) : []),
             ];
-      const retainedPlaces =
+      const places =
         kind === 'awareness'
-          ? []
+          ? exposure?.kind === 'place'
+            ? [
+                knownPlaceCapsule(value as unknown as Awareness, {
+                  kind,
+                  id: String(id),
+                  revision: personalAccountRevision(row.payload),
+                }),
+              ]
+            : []
           : retainedPlaceObservations(originals, {
               kind,
               id: String(id),
               revision: personalAccountRevision(row.payload),
             }).map((place) => place.capsule);
+      if (places.some((capsule) => !capsule)) throw new MemoryPreparationError();
       const values: unknown[] = [
         worldId,
         actorId,
@@ -647,18 +660,6 @@ export class MemoryRepository {
         value['kind'] === 'commitment' && !value['resolved'] ? 1 : 0,
         0,
         value['sequence'] ?? 0,
-        kind === 'awareness' && exposure?.kind === 'place' ? exposure.id : null,
-        kind === 'awareness' && exposure?.kind === 'place'
-          ? JSON.stringify(
-              knownPlaceCapsule(value as unknown as Awareness, {
-                kind: 'awareness',
-                id: String(id),
-                revision: personalAccountRevision(row.payload),
-              }),
-            )
-          : retainedPlaces.length
-            ? JSON.stringify(retainedPlaces)
-            : null,
         value[kind === 'memory' ? 'summary' : 'text'] ?? '',
       ];
       // These are the actual SQL fields: required times/ranks cannot become NULL,
@@ -682,7 +683,17 @@ export class MemoryRepository {
         ...recognitionSupportSources(evidence?.recognition?.learningSupport ?? []),
         ...observationLearningSources(originals),
       ];
-      yield { row, actorId, id, sources, manifest, values, originals, learning };
+      yield {
+        row,
+        actorId,
+        id,
+        sources,
+        manifest,
+        values,
+        originals,
+        learning,
+        places: places as KnownPlaceCapsule[],
+      };
     }
   }
   /** Insert only after current records have changed. All awareness must precede
@@ -891,6 +902,30 @@ export class MemoryRepository {
           .get(batch);
         await this.lexical.admit(pending);
       }
+      // Exact original capsules under each source replace an unindexed JSON array.
+      // Deleting/replacing its source cascades; eligibility/revision remain owned by
+      // recall_sources and are checked in the same read snapshot. No second knowledge store.
+      function* placeRows() {
+        for (const entry of writes())
+          for (const capsule of entry.places) {
+            yield [
+              worldId,
+              entry.actorId,
+              entry.id,
+              kind,
+              personalAccountRevision(entry.row.payload),
+              capsule.placeId,
+              capsule.observedAt,
+              capsule.observedOrder,
+              capsule.sourceEventId ?? null,
+              capsule.source.id,
+              personalFactAlias(capsule.source.id, capsule.facetOrdinal),
+              canonicalJson([capsule.source, capsule.facetOrdinal]),
+              JSON.stringify(capsule),
+            ];
+          }
+      }
+      await insertRows(this.db, 'recall_place_capsules', placeRows());
     }
   }
 
@@ -1015,47 +1050,52 @@ export class MemoryRepository {
     }
   }
 
-  /** Only the minimal place projection is expanded here, never autobiography payloads.
-   * A summary may retain several original places under its one current source revision. */
-  private retainedPlaces(uncorrected = false, range?: { after?: string; placeId?: string }) {
-    const bounds = (place: string) =>
-      `${range?.after ? ` AND (${place})>?` : ''}${range?.placeId ? ` AND (${place})=?` : ''}`;
-    return `WITH place_candidates AS (
-    SELECT r.world_id,r.actor_id,r.id AS owner_id,r.source_kind AS owner_kind,r.revision AS owner_revision,
-      r.place_id AS candidate_place_id,r.place_capsule::jsonb AS capsule
-    FROM recall_sources r WHERE ${this.eligible} AND r.source_kind='awareness'
-      AND r.place_id IS NOT NULL${bounds('r.place_id')}
-    UNION ALL
-    SELECT r.world_id,r.actor_id,r.id AS owner_id,r.source_kind AS owner_kind,r.revision AS owner_revision,
-      p.value->>'placeId' AS candidate_place_id,p.value AS capsule
-    FROM recall_sources r CROSS JOIN LATERAL jsonb_array_elements(
-      CASE WHEN r.source_kind<>'awareness' THEN r.place_capsule::jsonb ELSE '[]'::jsonb END) p
-    WHERE ${this.eligible} AND r.source_kind<>'awareness' AND r.place_capsule IS NOT NULL${bounds("p.value->>'placeId'")}
-  ), retained_places AS (
-    SELECT DISTINCT ON (p.candidate_place_id) p.*,p.candidate_place_id AS learned_place_id
-    FROM place_candidates p WHERE NOT EXISTS (
-      SELECT 1 FROM mind_forgotten f WHERE f.world_id=p.world_id AND f.actor_id=p.actor_id
-        AND f.source_id IN (p.capsule->>'sourceEventId',p.capsule->'source'->>'id',
-          '["perception-fact",'||to_json(p.capsule->'source'->>'id')::text||','||(p.capsule->>'facetOrdinal')||']'))
-      ${
-        uncorrected
-          ? `AND NOT EXISTS (SELECT 1 FROM mind_corrections c
-        WHERE c.world_id=p.world_id AND c.actor_id=p.actor_id AND c.source_id IN (
-          p.capsule->>'sourceEventId',p.capsule->'source'->>'id',
-          '["perception-fact",'||to_json(p.capsule->'source'->>'id')::text||','||(p.capsule->>'facetOrdinal')||']'))`
-          : ''
-      }
-    ORDER BY p.candidate_place_id,(p.capsule->>'observedAt')::double precision DESC,
-      (p.capsule->>'observedOrder')::bigint DESC,p.owner_id DESC
-  )`;
+  /** Seek the next eligible place through the source-owned capsule index. Each place
+   * retains its newest valid original, even when a newer account was revoked. Native
+   * preparation allows one over-budget sentinel: exhaustion proves completeness;
+   * the sentinel refuses preparation rather than publishing a truncated index. */
+  private retainedPlaces(
+    uncorrected = false,
+    range?: { after?: string; placeId?: string; limit?: number },
+  ) {
+    const selection = (
+      afterPrevious = false,
+    ) => `SELECT p.world_id,p.actor_id,p.owner_id,p.owner_kind,p.owner_revision,
+      p.place_id AS learned_place_id,p.capsule::jsonb AS capsule,${afterPrevious ? 'previous.place_step+1' : '1'} AS place_step
+      FROM recall_place_capsules p CROSS JOIN LATERAL (
+        SELECT r.revision,r.eligible FROM recall_sources r WHERE r.world_id=p.world_id AND r.actor_id=p.actor_id
+          AND r.id=p.owner_id AND r.source_kind=p.owner_kind LIMIT 1
+      ) admitted
+      WHERE admitted.revision=p.owner_revision AND admitted.eligible=1
+        AND p.world_id=? AND p.actor_id=? AND (SELECT generation FROM world_head WHERE id=1)=?${range?.after ? ' AND p.place_id>?' : ''}${range?.placeId ? ' AND p.place_id=?' : ''}
+        ${afterPrevious ? ' AND p.place_id>previous.learned_place_id AND previous.place_step<?' : ''}
+        AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=p.world_id AND f.actor_id=p.actor_id
+          AND f.source_id IN (p.source_event_id,p.native_source_id,p.fact_alias))
+        ${
+          uncorrected
+            ? `AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=p.world_id AND c.actor_id=p.actor_id
+          AND c.source_id IN (p.source_event_id,p.native_source_id,p.fact_alias))`
+            : ''
+        }`;
+    const order =
+      'p.place_id,p.observed_at DESC,p.observed_order DESC,p.owner_id DESC,p.owner_kind DESC';
+    return `WITH RECURSIVE retained_places AS (
+      (${selection()} ORDER BY ${order} LIMIT 1)
+      UNION ALL SELECT following.* FROM retained_places previous CROSS JOIN LATERAL (
+        ${selection(true)} ORDER BY ${order} LIMIT 1
+      ) following
+    )`;
   }
-  private placeParams(scope: MemoryScope, range?: { after?: string; placeId?: string }) {
+  private placeParams(
+    scope: MemoryScope,
+    range?: { after?: string; placeId?: string; limit?: number },
+  ) {
     const params = [
       ...this.params(scope),
       ...(range?.after ? [range.after] : []),
       ...(range?.placeId ? [range.placeId] : []),
     ];
-    return [...params, ...params];
+    return [...params, ...params, range?.limit ?? RETRIEVAL_ROWS + 1];
   }
   /** Native preparation is complete or explicitly refused. The source projection retains
    * only the observed place capsule, so this reads no autobiography or live place body.
@@ -1111,14 +1151,15 @@ export class MemoryRepository {
     // Selected correction metadata is reused for body hydration.
     // docs/limits/spatial.md#sp08--static-named-places-and-private-known-places
     const rowsAfter = async (after: string | undefined, count: number): Promise<PlaceRow[]> => {
-      const range = { after, placeId: options.placeId };
+      const range = { after, placeId: options.placeId, limit: count };
       const rows = await this.db
         .prepare(
           `${this.retainedPlaces(false, range)} SELECT ${sourceColumns},r.search_text,
             p.capsule::text AS selected_place_capsule,p.learned_place_id AS selected_place_id
-          FROM retained_places p JOIN recall_sources r ON r.world_id=p.world_id AND r.actor_id=p.actor_id
-            AND r.id=p.owner_id AND r.source_kind=p.owner_kind AND r.revision=p.owner_revision
-          ORDER BY p.learned_place_id LIMIT ?`,
+          FROM retained_places p CROSS JOIN LATERAL (
+            SELECT ${sourceColumns},r.search_text FROM recall_sources r WHERE r.world_id=p.world_id AND r.actor_id=p.actor_id
+              AND r.id=p.owner_id AND r.source_kind=p.owner_kind LIMIT 1
+          ) r WHERE r.revision=p.owner_revision ORDER BY p.learned_place_id LIMIT ?`,
         )
         .all(...this.placeParams(scope, range), count);
       const places: PlaceRow[] = rows.map((row) => {
@@ -1747,7 +1788,7 @@ export class MemoryRepository {
                 `WHEN '${kind}' THEN (SELECT ${payloadBytes} FROM ${table} t WHERE t.world_id=r.world_id AND t.id=r.record_id)`,
             )
             .join(' ')} END AS payload_bytes FROM recall_sources r
-        WHERE ${this.eligible} AND NOT (r.place_id IS NOT NULL AND r.importance>=${EXPERIENCE_LIMITS.protectedImportance}) AND r.at>=? AND r.at${mode === 'daily' ? '<' : '<='}?
+        WHERE ${this.eligible} AND NOT (r.source_kind='awareness' AND r.importance>=${EXPERIENCE_LIMITS.protectedImportance} AND EXISTS (SELECT 1 FROM recall_place_capsules p WHERE p.world_id=r.world_id AND p.actor_id=r.actor_id AND p.owner_id=r.id AND p.owner_kind=r.source_kind AND p.owner_revision=r.revision)) AND r.at>=? AND r.at${mode === 'daily' ? '<' : '<='}?
         AND (r.at,r.sequence,r.id) > (?,?,?)
         AND (r.source_kind='awareness' OR r.memory_kind='episode'${mode === 'daily' ? " OR r.source_kind='summary'" : ''})
         AND r.id NOT IN (SELECT s.id FROM recall_sources s JOIN mind_awareness a ON a.world_id=s.world_id AND a.id=s.record_id WHERE s.world_id=? AND s.actor_id=? AND s.eligible=1 AND s.source_kind='awareness' AND s.event_type='speech' AND ${this.linguisticSpeech} ORDER BY s.at DESC,s.sequence DESC,s.id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech})

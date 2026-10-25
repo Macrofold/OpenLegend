@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   GameView,
   PerceivedEventsPage,
@@ -40,13 +40,11 @@ type Props = {
   revision: string | undefined;
   visible?: boolean;
   view: GameView;
-  inspectEntity?: (id: string) => void;
 };
 /** Keyed ownership clears old rows during the same render, not a later effect. The owner may
  * control the filter, for example to open Speech from the missed-caption notice. */
 export const WorldEvents = memo(function WorldEvents({
   view,
-  inspectEntity,
   type: controlledType,
   onTypeChange,
   ...props
@@ -59,9 +57,6 @@ export const WorldEvents = memo(function WorldEvents({
     view.access?.privateDraftScope,
     view.saveTimeline,
   ]);
-  const inspection = useRef(inspectEntity);
-  inspection.current = inspectEntity;
-  const inspectCurrent = useCallback((id: string) => inspection.current?.(id), []);
   const [localType, setLocalType] = useState('all');
   const type = controlledType ?? localType;
   const setType = onTypeChange ?? setLocalType;
@@ -76,7 +71,6 @@ export const WorldEvents = memo(function WorldEvents({
       historyEpoch={view.historyEpoch ?? ''}
       day={view.clock.day}
       offsetHours={view.clock.offsetHours}
-      inspectEntity={inspectEntity ? inspectCurrent : undefined}
       type={type}
       setType={setType}
       query={query}
@@ -103,7 +97,6 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
   canShowAll,
   day,
   offsetHours,
-  inspectEntity,
   scope,
   revision,
   visible = true,
@@ -223,7 +216,6 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
       canShowAll={canShowAll}
       day={day}
       offsetHours={offsetHours}
-      inspectEntity={inspectEntity}
       revision={revision}
       visible={visible}
       type={type}
@@ -256,7 +248,6 @@ function ScopedWorldEvents({
   canShowAll,
   day,
   offsetHours,
-  inspectEntity,
   scope,
   revision,
   visible = true,
@@ -597,17 +588,6 @@ function ScopedWorldEvents({
                     }
                   </p>
                 )}
-                {inspectEntity &&
-                  (event.references ?? []).map((ref) => (
-                    <button
-                      type="button"
-                      key={`${ref.role}:${ref.id}`}
-                      className="ol-inline-reference"
-                      onClick={() => inspectEntity(ref.id)}
-                    >
-                      {ref.label}
-                    </button>
-                  ))}
                 {source && (
                   <div className="ol-world-event-actions">
                     <Button
@@ -635,17 +615,7 @@ function ScopedWorldEvents({
         ),
       };
     });
-  }, [
-    events,
-    slots,
-    choosingSlot,
-    type,
-    query,
-    inspectEntity,
-    offsetHours,
-    currentPage,
-    observerId,
-  ]);
+  }, [events, slots, choosingSlot, type, query, offsetHours, currentPage, observerId]);
 
   const visibleSlotIndices = [0, 1] as const;
 

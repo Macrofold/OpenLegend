@@ -122,9 +122,18 @@ import {
   containerPage,
   inventoryAccess,
   inventoryDestinationPage,
+  projectInventoryDestinationPage,
+  projectInventoryAccess,
+  projectContainerPage,
   objectHistoryPage,
 } from './inventory-view.js';
-import { activityRequests, activityStatus, activityChoicePage } from './activity-requests.js';
+import {
+  activityRequests,
+  activityStatus,
+  activityChoicePage,
+  resolveActivityChoiceRequest,
+  projectActivityChoicePage,
+} from './activity-requests.js';
 
 const clientId = z
   .string()
@@ -1985,7 +1994,19 @@ async function initializeGameServer(
                 })
                 .strict()
                 .parse(body);
-              return send(response, 200, activityChoicePage(service, scope, value));
+              return send(
+                response,
+                200,
+                projectActivityChoicePage(
+                  service,
+                  scope,
+                  activityChoicePage(
+                    service,
+                    scope,
+                    resolveActivityChoiceRequest(service, scope, value),
+                  ),
+                ),
+              );
             }
             case '/api/activity-status':
               z.object({}).strict().parse(body);
@@ -1995,7 +2016,14 @@ async function initializeGameServer(
               if (input.type !== 'activity-request')
                 return send(response, 400, { ok: false, message: 'Review a requested activity.' });
               service.assertScope(scope, 'play', true);
-              return send(response, 200, service.previewCommand(input, scope.actorId));
+              return send(
+                response,
+                200,
+                service.previewCommand(
+                  resolveCommandContactReferences(service.world, scope, input),
+                  scope.actorId,
+                ),
+              );
             }
             case '/api/inventory/history': {
               const value = z
@@ -2034,14 +2062,44 @@ async function initializeGameServer(
                 })
                 .strict()
                 .parse(body);
-              return send(response, 200, containerPage(service, scope, value));
+              const selected = {
+                ...value,
+                ...(value.containerId
+                  ? { containerId: resolveContactTarget(service.world, scope, value.containerId) }
+                  : {}),
+                ...(value.mergeSourceId
+                  ? {
+                      mergeSourceId: resolveContactTarget(
+                        service.world,
+                        scope,
+                        value.mergeSourceId,
+                      ),
+                    }
+                  : {}),
+              };
+              return send(
+                response,
+                200,
+                projectContainerPage(service, scope, containerPage(service, scope, selected)),
+              );
             }
             case '/api/inventory/access': {
               const value = z
                 .object({ containerId: requestIdSchema, approach: z.boolean().optional() })
                 .strict()
                 .parse(body);
-              return send(response, 200, inventoryAccess(service, scope, value));
+              return send(
+                response,
+                200,
+                projectInventoryAccess(
+                  service,
+                  scope,
+                  inventoryAccess(service, scope, {
+                    ...value,
+                    containerId: resolveContactTarget(service.world, scope, value.containerId),
+                  }),
+                ),
+              );
             }
             case '/api/inventory/destinations': {
               const value = z
@@ -2068,7 +2126,27 @@ async function initializeGameServer(
                 })
                 .strict()
                 .parse(body);
-              return send(response, 200, inventoryDestinationPage(service, scope, value));
+              const selected = {
+                ...value,
+                ...(value.parentId
+                  ? { parentId: resolveContactTarget(service.world, scope, value.parentId) }
+                  : {}),
+                ...(value.source
+                  ? {
+                      source: {
+                        ...value.source,
+                        itemId: resolveContactTarget(service.world, scope, value.source.itemId),
+                        containerId: resolveContactTarget(
+                          service.world,
+                          scope,
+                          value.source.containerId,
+                        ),
+                      },
+                    }
+                  : {}),
+              };
+              const page = inventoryDestinationPage(service, scope, selected);
+              return send(response, 200, projectInventoryDestinationPage(service, scope, page));
             }
             case '/api/profile/preferences':
               return send(response, 200, {

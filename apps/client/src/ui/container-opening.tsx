@@ -6,7 +6,7 @@ import type {
   InventoryAccessView,
   SurfacePoint,
 } from '@open-legend/protocol';
-import { getState, post } from '../api';
+import { getState, post, postContactRead } from '../api';
 import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
 import { Button } from '../design-system/components';
 import './container-opening.css';
@@ -29,6 +29,7 @@ type Attempt = {
   phase: 'checking' | 'out-of-reach' | 'walking' | 'unknown' | 'blocked';
   message: string;
   movement?: Movement;
+  inspection?: CommandRequestIdentity;
   cancelRequested?: boolean;
 };
 function geometry(entity: EntityView): string {
@@ -44,7 +45,8 @@ function atStance(view: GameView, stance: SurfacePoint): boolean {
   );
 }
 
-/** Opening is a read. The only movement starts with the player's explicit Walk action. */
+/** Explicit Open records the existing native inspection before reading contents.
+ * Movement still starts only with the player's explicit Walk action. */
 export function useContainerOpening(
   view: GameView | null,
   connected: boolean,
@@ -92,6 +94,62 @@ export function useContainerOpening(
     read.current?.abort();
     retain({ ...value, ...current.current, phase: 'blocked', message });
   }
+  function finishInspection(value: Attempt) {
+    if (!sameScope(value)) return;
+    if (current.current?.cancelRequested) return stopFollowing();
+    if (!active(value)) return blocked(value, 'The container is no longer visible. Open it again.');
+    setOpenContainer({
+      requestId: crypto.randomUUID(),
+      containerId: value.containerId,
+      name: value.name,
+    });
+    retain(null);
+  }
+  async function inspectContents(value: Attempt) {
+    const now = latest.current;
+    if (value.inspection || !active(value) || !now.view?.commandEpoch) return;
+    const inspection = { commandId: crypto.randomUUID(), commandEpoch: now.view.commandEpoch };
+    const checking = {
+      ...value,
+      inspection,
+      phase: 'checking' as const,
+      message: 'Inspecting contents…',
+    };
+    retain(checking);
+    let result;
+    try {
+      result = await now.dispatch(
+        {
+          id: 'inspect-container',
+          label: `Inspect ${value.name}`,
+          enabled: true,
+          command: { type: 'inspect-inventory', containerId: value.containerId },
+        },
+        inspection,
+      );
+    } catch {
+      if (sameScope(checking))
+        retain({
+          ...current.current!,
+          phase: 'unknown',
+          message: 'The inspection response was lost. Check its result before trying again.',
+        });
+      return;
+    }
+    if (!sameScope(checking)) return;
+    if (result.code === 'unconfirmed') {
+      retain({
+        ...current.current!,
+        phase: 'unknown',
+        message: 'The inspection response was lost. Check its result before trying again.',
+      });
+      return;
+    }
+    retain({ ...current.current!, inspection: undefined });
+    if (result.ok) finishInspection(checking);
+    else if (current.current?.cancelRequested) stopFollowing();
+    else blocked(checking, result.message);
+  }
   async function inspectAccess(value: Attempt, approach: boolean) {
     read.current?.abort();
     const abort = new AbortController();
@@ -102,12 +160,13 @@ export function useContainerOpening(
       message: approach ? 'Finding a place to stand…' : 'Checking access…',
     });
     try {
-      const access = await post<InventoryAccessView>(
+      const access = await postContactRead<InventoryAccessView>(
         '/api/inventory/access',
         {
           containerId: value.containerId,
           ...(approach ? { approach: true } : {}),
         },
+        [value.containerId],
         abort.signal,
       );
       if (abort.signal.aborted || !active(value) || current.current?.cancelRequested) return;
@@ -124,12 +183,7 @@ export function useContainerOpening(
         return;
       }
       if (access.status === 'ready' && access.ok) {
-        setOpenContainer({
-          requestId: crypto.randomUUID(),
-          containerId: value.containerId,
-          name: access.container.name,
-        });
-        retain(null);
+        await inspectContents(value);
       } else if (access.status === 'out-of-reach' && approach && access.stance) {
         await walk(value, access.stance);
       } else {
@@ -236,7 +290,36 @@ export function useContainerOpening(
   }
   async function checkResult() {
     const value = current.current;
-    if (!value?.movement || !sameScope(value)) return;
+    if (!value || !sameScope(value)) return;
+    if (value.inspection) {
+      retain({ ...value, phase: 'checking', message: 'Checking the original inspection…' });
+      try {
+        const receipt = await post<CommandReceiptResult>('/api/command/receipt', {
+          ...value.inspection,
+          command: { type: 'inspect-inventory', containerId: value.containerId },
+        });
+        if (!sameScope(value)) return;
+        if (receipt.scope !== value.scope) {
+          retain({
+            ...current.current!,
+            phase: 'unknown',
+            message: 'Refresh access before checking this inspection.',
+          });
+          return;
+        }
+        if (receipt.status === 'resolved') {
+          retain({ ...current.current!, inspection: undefined });
+          if (receipt.result.ok) finishInspection(value);
+          else if (current.current?.cancelRequested) stopFollowing();
+          else blocked(value, receipt.result.message);
+        } else retain({ ...current.current!, phase: 'unknown', message: receipt.message });
+      } catch (reason) {
+        if (sameScope(value))
+          retain({ ...current.current!, phase: 'unknown', message: String(reason) });
+      }
+      return;
+    }
+    if (!value.movement) return;
     const movement = value.movement;
     retain({ ...value, phase: 'checking', message: 'Checking the original walk…' });
     try {
@@ -260,6 +343,8 @@ export function useContainerOpening(
     }
   }
   function open(entity: EntityView) {
+    // An uncertain original inspection must settle before another Open can replace it.
+    if (current.current?.inspection) return;
     stopFollowing();
     setOpenContainer({ requestId: crypto.randomUUID(), containerId: null, name: entity.name });
     const now = latest.current;
@@ -312,6 +397,15 @@ export function useContainerOpening(
   }
   function cancel() {
     const value = current.current;
+    if (value?.inspection) {
+      retain({
+        ...value,
+        cancelRequested: true,
+        message: 'Waiting for the original inspection result…',
+      });
+      if (value.phase === 'unknown') void checkResult();
+      return;
+    }
     if (!value?.movement) return stopFollowing();
     if (value.cancelRequested && value.phase === 'checking') return;
     read.current?.abort();
@@ -336,7 +430,14 @@ export function useContainerOpening(
       view.map.spatial.revision !== value.geometryRevision ||
       geometry(target) !== value.geometry
     ) {
-      if (value.phase !== 'blocked')
+      if (value.inspection) {
+        if (value.phase !== 'unknown')
+          retain({
+            ...value,
+            phase: 'unknown',
+            message: 'The container changed. Check the original inspection result.',
+          });
+      } else if (value.phase !== 'blocked')
         blocked(value, 'The container moved or is no longer visible. Open it again.');
       return;
     }
@@ -383,7 +484,9 @@ export function ContainerOpening({
           </Button>
         )}
         {value.phase === 'unknown' && (
-          <Button onPress={() => void state.checkResult()}>Check walking result</Button>
+          <Button onPress={() => void state.checkResult()}>
+            Check {value.inspection ? 'inspection' : 'walking'} result
+          </Button>
         )}
         {value.phase === 'blocked' && <Button onPress={state.retry}>Check access again</Button>}
         <Button

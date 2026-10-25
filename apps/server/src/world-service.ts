@@ -203,6 +203,7 @@ import {
   freezeWorld,
   forgetExperience,
   correctExperience,
+  retainedExperienceSource,
   experiences,
   EXPERIENCE_LIMITS,
   executeCommand,
@@ -5982,12 +5983,7 @@ export class WorldService {
       const recordedAction =
         this.world.actionExperience.occurrences[actorId]?.some((entry) => entry.id === sourceId) ||
         (await this.store.records?.activityPage(this.world.id, actorId, -1, [sourceId]))?.length;
-      if (
-        !recordedAction &&
-        !experiences(this.world, actorId, true).some(
-          (m) => m.id === sourceId || m.eventId === sourceId,
-        )
-      )
+      if (!recordedAction && !retainedExperienceSource(this.world, actorId, sourceId))
         return {
           ok: false,
           code: 'source',

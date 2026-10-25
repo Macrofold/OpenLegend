@@ -95,7 +95,9 @@ export function InventoryCollection({
           </p>
         )}
         <div className="ol-inventory-search">
-          <label htmlFor={searchId}>Search {collectionTitle}</label>
+          <label htmlFor={searchId}>
+            Search {page?.inspection ? 'inspected contents' : collectionTitle}
+          </label>
           <div>
             <input
               ref={search}
@@ -203,32 +205,34 @@ export function InventoryCollection({
         </ul>
         {page && !page.items.length && (
           <p role="status">
-            {page.next
+            {page.next || page.inspection?.next
               ? 'No match in this part of the search. More contents remain to search.'
               : state.query
                 ? 'No matching items. Clear the search to see other contents.'
-                : 'This container is empty.'}
+                : page.inspection
+                  ? 'No items on this inspected page.'
+                  : 'This container is empty.'}
           </p>
         )}
       </div>
       <footer className="ol-inventory-collection-footer">
-        {page?.next && (
+        {(page?.next || page?.inspection?.next) && (
           <Button size="sm" variant="quiet" disabled={busy || !state.current} onPress={state.next}>
-            Next contents
+            {page?.inspection ? 'Inspect next contents' : 'Next contents'}
           </Button>
         )}
-        {state.location.cursor && (
+        {(state.location.cursor || page?.inspection) && (
           <Button size="sm" variant="quiet" disabled={busy || loading} onPress={state.first}>
-            First contents
+            {page?.inspection ? 'Inspect first contents' : 'First contents'}
           </Button>
         )}
         <Button
           size="sm"
           variant="quiet"
           disabled={!state.available || loading}
-          onPress={state.refresh}
+          onPress={state.refreshContents}
         >
-          Refresh
+          {page?.inspection ? 'Inspect again' : 'Refresh'}
         </Button>
       </footer>
     </section>

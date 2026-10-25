@@ -229,7 +229,6 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     !!(
       currentWorldRoot?.storage &&
       currentWorldRoot.storage.containerId === worldRoot.id &&
-      currentWorldRoot.storage.revision !== undefined &&
       currentWorldRoot.storage.placementRevision === worldRoot.placementRevision &&
       JSON.stringify([currentWorldRoot.position, currentWorldRoot.supportSurfaceId]) ===
         worldRoot.position
@@ -344,6 +343,15 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
       worldInvalid || !worldRootValid
         ? 'This container moved or is no longer within permitted reach. Open it again from the world.'
         : undefined,
+    nativeInspection: !!worldRoot,
+    inspect(input) {
+      void operations.dispatch({
+        id: 'inspect-container-contents',
+        label: 'Inspect container contents',
+        enabled: visible && connected && view.player.canUseInventory,
+        command: input,
+      });
+    },
   });
   const currentTitle =
     right.page?.container.name ??
@@ -581,7 +589,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     }
     const input = captureInputFocus();
     navigationInput.current = input ? { ...input, side, containerId: id } : undefined;
-    collection(side).navigate(id);
+    collection(side).openLocation(id);
   }
   function choose(
     side: InventorySide,
@@ -603,6 +611,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
       connected &&
       view.access?.controlling &&
       source &&
+      !source.inspection &&
       collection(side).available &&
       !collection(side).loading
     ) {
@@ -613,17 +622,18 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         selected.id,
       ]);
       inspectedSelection.current = identity;
-      void command({
-        id: `inspect:${selected.id}`,
-        label: `Inspect ${selected.name}`,
-        enabled: true,
-        command: {
-          type: 'inspect-inventory',
-          itemId: selected.id,
-          containerId: source.container.id,
-          expectedRevision: source.container.revision,
-        },
-      })
+      void operations
+        .dispatch({
+          id: `inspect:${selected.id}`,
+          label: `Inspect ${selected.name}`,
+          enabled: true,
+          command: {
+            type: 'inspect-inventory',
+            itemId: selected.id,
+            containerId: source.container.id,
+            expectedRevision: source.container.revision,
+          },
+        })
         .then((result) => {
           if (alive.current && inspectedSelection.current === identity) {
             if (result.ok) collection(side).refresh();

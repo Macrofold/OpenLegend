@@ -71,6 +71,7 @@ export const captionScope = (view: GameView) =>
     view.saveTimeline,
     view.access?.scope,
     view.player.id,
+    view.player.life,
     view.historyEpoch,
   ]);
 /** React owns text; the existing scene callback paints positions and fractions only. */

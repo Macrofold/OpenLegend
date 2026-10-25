@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ContainerPage } from '@open-legend/protocol';
-import { post } from '../api';
+import type { ContainerPage, CommandInput } from '@open-legend/protocol';
+import { postContactRead } from '../api';
 
 /** One visible collection owns one bounded native page. The other side never shares its
  * query, location or continuation. Reopening requires a fresh permitted read. */
@@ -13,6 +13,8 @@ export function useInventoryCollection({
   connected,
   expectedRootId,
   blockedReason,
+  nativeInspection = false,
+  inspect,
 }: {
   initialId: string;
   scope: string;
@@ -22,6 +24,8 @@ export function useInventoryCollection({
   connected: boolean;
   expectedRootId: string;
   blockedReason?: string;
+  nativeInspection?: boolean;
+  inspect?(input: CommandInput): void;
 }) {
   const [location, setLocation] = useState<{ id: string; cursor?: string; context?: string }>({
     id: initialId,
@@ -62,9 +66,10 @@ export function useInventoryCollection({
     const controller = new AbortController();
     const timer = window.setTimeout(
       () => {
-        void post<ContainerPage>(
+        void postContactRead<ContainerPage>(
           '/api/inventory',
           { containerId: location.id, cursor, query },
+          [location.id, expectedRootId],
           controller.signal,
         )
           .then((page) => {
@@ -147,6 +152,11 @@ export function useInventoryCollection({
       setLocation({ id, cursor: undefined });
       setQueryValue('');
     },
+    openLocation(id: string) {
+      setLocation({ id, cursor: undefined });
+      setQueryValue('');
+      if (nativeInspection && id) inspect?.({ type: 'inspect-inventory', containerId: id });
+    },
     search(value: string) {
       setQueryValue(value);
       setLocation((old) => ({ id: old.id, cursor: undefined }));
@@ -156,7 +166,9 @@ export function useInventoryCollection({
       setRefreshNumber((value) => value + 1);
     },
     next() {
-      if (current?.page?.next && !current.error)
+      if (current?.page?.inspection?.next && !current.error)
+        inspect?.(current.page.inspection.next);
+      else if (current?.page?.next && !current.error)
         setLocation((old) => ({
           id: old.id,
           cursor: current.page?.next,
@@ -164,7 +176,15 @@ export function useInventoryCollection({
         }));
     },
     first() {
+      if (nativeInspection) inspect?.({ type: 'inspect-inventory', containerId: location.id });
       setLocation((old) => ({ id: old.id, cursor: undefined }));
+    },
+    refreshContents() {
+      if (nativeInspection) inspect?.({ type: 'inspect-inventory', containerId: location.id });
+      else {
+        setLocation((old) => ({ id: old.id }));
+        setRefreshNumber((value) => value + 1);
+      }
     },
   };
 }

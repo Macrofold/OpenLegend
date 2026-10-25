@@ -35,7 +35,7 @@ import {
 } from '@open-legend/domain';
 import { projectWork } from './work-view.js';
 import { projectActivityStatus } from './activity-requests.js';
-import { canUseInventory, inventoryItemSummary } from './inventory-view.js';
+import { canUseInventory, inventoryItemSummary, inventoryStorageHint } from './inventory-view.js';
 import { namedClockTimes, typedRequestVocabulary, nativeActionIcon } from '@open-legend/domain';
 import { exposedPlaces, worldPosition, worldSupport } from '@open-legend/domain';
 import {
@@ -481,6 +481,7 @@ export async function projectView(
         ? { bodyState: body.remainsPhase === 'fresh' ? ('dead' as const) : ('rotting' as const) }
         : {}),
       ...(pile?.value.kind === 'pile-contents' ? { contents: pile.value.items } : {}),
+      storage: inventoryStorageHint(service, scope, entity.id, body),
       ...(carried?.value.kind === 'carried'
         ? {
             observedCarried: {

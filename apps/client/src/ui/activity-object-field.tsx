@@ -8,7 +8,7 @@ import type {
   ApiResult,
   CommandInput,
 } from '@open-legend/protocol';
-import { post } from '../api';
+import { postContactRead, currentContactAvailable } from '../api';
 import { Button } from '../design-system/components';
 import { InventoryDestinations } from './inventory-destinations';
 import './camp-activity.css';
@@ -66,10 +66,16 @@ export function ActivityObjectField({
     };
   }, []);
   const body = { family, field: fieldId, sourceId, selectedId: value, witnessId };
+  const references = [sourceId, witnessId, ...(field.type === 'entity' ? [value] : [])];
   useEffect(() => {
     if (!visible || !connected || !value) return;
     const abort = new AbortController();
-    void post<ActivityChoicePage>('/api/activity-choices', body, abort.signal)
+    void postContactRead<ActivityChoicePage>(
+      '/api/activity-choices',
+      body,
+      references,
+      abort.signal,
+    )
       .then((result) => {
         if (!abort.signal.aborted)
           onRead(
@@ -99,7 +105,8 @@ export function ActivityObjectField({
       });
     return () => abort.abort();
   }, [readKey, visible, connected]);
-  const selected = page?.selected;
+  const selected =
+    page?.selected && currentContactAvailable(page.selected.id) ? page.selected : undefined;
   const close = () => {
     setOpen(false);
   };
@@ -115,10 +122,14 @@ export function ActivityObjectField({
     try {
       let input: CommandInput;
       if (approach) {
-        const current = await post<ActivityChoicePage>('/api/activity-choices', {
-          ...body,
-          approach: true,
-        });
+        const current = await postContactRead<ActivityChoicePage>(
+          '/api/activity-choices',
+          {
+            ...body,
+            approach: true,
+          },
+          references,
+        );
         if (!alive.current) return;
         if (latestRead.current !== actionRead)
           throw new Error(
@@ -342,9 +353,10 @@ function RoleSearch({
     const abort = new AbortController();
     const timer = setTimeout(
       () => {
-        void post<ActivityChoicePage>(
+        void postContactRead<ActivityChoicePage>(
           '/api/activity-choices',
           { ...body, query, cursor },
+          [body.sourceId],
           abort.signal,
         )
           .then((page) => {
@@ -371,6 +383,8 @@ function RoleSearch({
     };
   }, [key]);
   const page = current?.page;
+  const choices =
+    page?.choices.filter((choice) => currentContactAvailable(choice.witnessId ?? choice.id)) ?? [];
   const usable = connected && !!page?.ok && ['complete', 'partial'].includes(page.status);
   return (
     <section
@@ -419,7 +433,7 @@ function RoleSearch({
       {current?.error && <p role="alert">{current.error}</p>}
       {page?.message && <p role="status">{page.message}</p>}
       <ul className="ol-camp-results">
-        {page?.choices.map((choice) => (
+        {choices.map((choice) => (
           <li key={choice.id}>
             <strong>{choice.label}</strong>
             <p id={`${id}-${choice.id}`} className="ol-caption">
@@ -437,7 +451,7 @@ function RoleSearch({
           </li>
         ))}
       </ul>
-      {usable && !page?.choices.length && (
+      {usable && !choices.length && (
         <p role="status">
           {page?.next
             ? 'No match in this part of the search. More objects remain to check.'

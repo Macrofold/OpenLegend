@@ -8,15 +8,13 @@ import {
   inspectedContainer,
   custodian,
   objectAncestors,
-  seesEntity,
-  effectivePosition,
+  currentBodyObservation,
+  currentBodyGrant,
+  worldPosition,
   distance,
-  targetApproachPoint,
   contentsQuery,
-  interactionPageQuery,
   visionRadius,
   membershipDependency,
-  spatialCandidateMembershipKey,
   activityRequestDescriptors,
   clockDeadline,
   namedClockTimes,
@@ -30,11 +28,16 @@ import type {
 import { countMetric } from './performance.js';
 import { z } from 'zod';
 import { createHash } from 'node:crypto';
-import { activityStorageReader } from './inventory-view.js';
+import { activityStorageReader, observedStorageApproach } from './inventory-view.js';
 import { sealCursor, openCursor } from './scoped-cursor.js';
 import { HistoryCursorError } from './perceived-events.js';
 import { scopeKey, type RequestScope } from './authority.js';
 import type { WorldService } from './world-service.js';
+import {
+  physicalContactReference,
+  resolveContactTarget,
+  projectInspectionScope,
+} from './public-contact-references.js';
 
 /** The ordinary result contains no detailed child-step debugger or another person's work. */
 export function activityStatus(
@@ -153,6 +156,56 @@ export interface ActivityChoiceRequest {
   witnessId?: string;
   approach?: boolean;
 }
+/** Translate only the selected installed field's entity roles at the public boundary. */
+export function resolveActivityChoiceRequest(
+  service: WorldService,
+  scope: RequestScope,
+  request: ActivityChoiceRequest,
+): ActivityChoiceRequest {
+  const field = activityRequestDescriptors(service.world).find(
+    (entry) => entry.id === request.family,
+  )?.fields[request.field];
+  return {
+    ...request,
+    ...(request.sourceId
+      ? { sourceId: resolveContactTarget(service.world, scope, request.sourceId) }
+      : {}),
+    ...(request.selectedId && field?.type === 'entity'
+      ? { selectedId: resolveContactTarget(service.world, scope, request.selectedId) }
+      : {}),
+    ...(request.witnessId
+      ? { witnessId: resolveContactTarget(service.world, scope, request.witnessId) }
+      : {}),
+  };
+}
+
+export function projectActivityChoicePage(
+  service: WorldService,
+  scope: RequestScope,
+  page: ActivityChoicePage,
+): ActivityChoicePage {
+  const physical = (id: string) => physicalContactReference(service.world, scope, id);
+  const choice = (value: ActivityChoice): ActivityChoice => ({
+    ...value,
+    ...(value.kind === 'entity' ? { id: physical(value.id) } : {}),
+    ...(value.witnessId ? { witnessId: physical(value.witnessId) } : {}),
+  });
+  return {
+    ...page,
+    choices: page.choices.map(choice),
+    ...(page.selected ? { selected: choice(page.selected) } : {}),
+    ...(page.inspection
+      ? {
+          inspection: {
+            ...page.inspection,
+            containerId: physical(page.inspection.containerId),
+            scope: projectInspectionScope(scope, page.inspection.scope),
+          },
+        }
+      : {}),
+  };
+}
+
 const choiceCursor = z
   .object({
     binding: z.string(),
@@ -191,6 +244,22 @@ export function activityChoicePage(
     throw new HistoryCursorError('This activity field does not support that search mode.');
   const storage = source === 'storage' ? activityStorageReader(service, scope, request) : undefined;
   const inspection = currentInventoryInspection(world, scope.actorId);
+  // Membership uses small lease proofs; copy exact measured detail only for a
+  // returned choice. Selected/owned reads do not enumerate unrelated bodies.
+  const observed =
+    source === 'spatial' && !request.selectedId
+      ? Object.values(world.perceptionEvidence?.[scope.actorId]?.current ?? {})
+          .filter(
+            (lease) =>
+              lease.value.kind === 'body' &&
+              currentBodyGrant(world, scope.actorId, lease.subjectId),
+          )
+          .map((lease) => ({ id: lease.subjectId, leaseId: lease.id }))
+          .sort((a, b) => a.id.localeCompare(b.id))
+      : [];
+  const relatedBodies = [request.selectedId, request.sourceId, request.witnessId]
+    .filter((id): id is string => !!id)
+    .map((id) => [id, currentBodyGrant(world, scope.actorId, id)?.leaseId]);
   const selectedTarget =
     request.selectedId && entityHas(world.entities, request.selectedId)
       ? entityGet(world.entities, request.selectedId)
@@ -211,9 +280,8 @@ export function activityChoicePage(
         visionRadius(world, actor),
         world.map.spatial.revision,
         membershipDependency(world, 'installed-capabilities').revision,
-        source === 'spatial' && !request.selectedId
-          ? spatialCandidateMembershipKey(world, actor, visionRadius(world, actor))
-          : null,
+        observed.map(({ id, leaseId }) => [id, leaseId]),
+        relatedBodies,
         source !== 'spatial' ? inspection : null,
         selectedTarget && !selectedTarget.retirement
           ? objectAncestors(world, selectedTarget.id).map((entity) => [
@@ -242,7 +310,7 @@ export function activityChoicePage(
       !target.retirement &&
       (id === actor.id ||
         accessiblePossession(world, actor.id, id) ||
-        (target.placement?.mode === 'world' && seesEntity(world, actor, target)) ||
+        (target.placement?.mode === 'world' && !!currentBodyGrant(world, scope.actorId, id)) ||
         inspection?.containerId === id ||
         (inspection?.containerId === request.sourceId && inspection?.itemIds.includes(id)))
     );
@@ -271,7 +339,7 @@ export function activityChoicePage(
       if (!selected) return;
       const own = custodian(world, selected.id) === actor.id;
       if (selected.resource) {
-        if (id !== selected.id || !seesEntity(world, actor, selected)) return;
+        if (id !== selected.id || !currentBodyGrant(world, scope.actorId, id)) return;
       } else if (own) {
         if (
           !accessiblePossession(world, actor.id, id) ||
@@ -283,14 +351,17 @@ export function activityChoicePage(
     }
     const choice = host.requestChoice!(world, actor.id, request.family, request.field, id);
     if (!choice) return;
-    const separation = distance(effectivePosition(world, actor.id), effectivePosition(world, id));
+    const body = currentBodyObservation(world, scope.actorId, id);
+    const separation = body ? distance(worldPosition(actor), body.value.body.position) : undefined;
     return {
       ...choice,
       ...(source === 'materials' ? { witnessId: id } : {}),
-      distance: separation,
+      ...(separation !== undefined ? { distance: separation } : {}),
       location: accessiblePossession(world, actor.id, id)
         ? 'Carried by you'
-        : `${source === 'materials' && inspection?.itemIds.includes(id) ? 'In inspected supply' : 'In sight'} · ${separation.toFixed(1)} m away`,
+        : separation !== undefined
+          ? `In sight · ${separation.toFixed(1)} m away`
+          : 'In inspected supply',
     };
   };
   if (request.selectedId) {
@@ -299,13 +370,7 @@ export function activityChoicePage(
     );
     if (selected?.id === request.selectedId) result.selected = selected;
     if (request.approach && selected && source === 'storage') {
-      const target = entityGet(world.entities, selected.id)!;
-      const point = targetApproachPoint(
-        world,
-        actor,
-        objectAncestors(world, target.id).at(-1)!,
-        world.itemHandling.reach,
-      );
+      const point = observedStorageApproach(service, scope, selected.id);
       if (point) result.stance = point;
       else
         result.message =
@@ -439,28 +504,16 @@ export function activityChoicePage(
       }
     }
   } else if (cursor.phase === 'spatial') {
-    const page = interactionPageQuery(
-      world,
-      actor,
-      visionRadius(world, actor),
-      cursor.spatialAfter,
-      201,
-    );
-    if (page.status !== 'complete')
-      return {
-        ...result,
-        status: 'unavailable',
-        message: 'Visible-object discovery is unavailable. Refresh before continuing.',
-      };
-    materialized += page.values.length;
-    for (const candidate of page.values) {
+    for (let index = cursor.spatialAfter + 1; index < observed.length; index++) {
       if (scanned === 200 || result.choices.length === 40) break;
       scanned++;
-      cursor.spatialAfter = candidate.after;
-      add(candidate.value.id);
+      materialized++;
+      cursor.spatialAfter = index;
+      add(observed[index]!.id);
     }
-    if (scanned === page.values.length) cursor.phase = 'done';
+    if (cursor.spatialAfter + 1 >= observed.length) cursor.phase = 'done';
   }
+
   recordWork(scanned, materialized);
   result.status = cursor.phase === 'done' ? 'complete' : 'partial';
   if (cursor.phase !== 'done') result.next = sealCursor(cursor);

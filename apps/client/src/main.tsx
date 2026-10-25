@@ -1915,14 +1915,6 @@ function App({
         return (
           <WorldEvents
             view={view}
-            inspectEntity={(id) => {
-              const target =
-                id === view.player.id
-                  ? playerEntity(view)
-                  : view.entities.find((entity) => entity.id === id);
-              if (target) inspect(target);
-              else notify('This person or object is not currently in view.');
-            }}
             key={eventsReset}
             visible={visible}
             scope={captionScope(view)}
