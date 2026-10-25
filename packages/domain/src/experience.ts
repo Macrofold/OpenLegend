@@ -1,3 +1,4 @@
+import { recognitionSupportSources } from './worlds/base/recognition.js';
 import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { revokePracticeSupport } from './practical-competence.js';
 import { revokeCombatEvidence } from './combat-encounters.js';
@@ -27,6 +28,9 @@ import {
 import {
   experienceManifest,
   manifestDependsOn,
+  observationLearningSources,
+  ownedObservationSources,
+  personalFactAlias,
   summaryMemory,
   type PersonalSourceRef,
   type PreparedExperience,
@@ -420,7 +424,13 @@ function applyExperienceMutation(
       mutation.sourceId === mutation.correctionEventId
     )
       return null;
-    const invalidated = invalidateExperience(world, actorId, [mutation.sourceId]);
+    const invalidated = invalidateExperience(
+      world,
+      actorId,
+      [mutation.sourceId],
+      false,
+      mutation.correctionEventId,
+    );
     ((world.experience!.corrections ??= {})[actorId] ??= {})[mutation.sourceId] =
       mutation.correctionEventId;
     return invalidated;
@@ -974,6 +984,7 @@ export function invalidateExperience(
   actorId: string,
   sourceIds: string[],
   forget = false,
+  correctionEventId?: string,
 ): string[] {
   const state = world.experience!;
   invalidateKnownPlaceEvidence(world, actorId);
@@ -1059,6 +1070,86 @@ export function invalidateExperience(
         expanded = true;
       }
   }
+  // Learning depends on the actual selected earlier exemplar. Follow immediate
+  // edges supplied by cold preparation without erasing later witnessed utterances.
+  const recognitionAffected = new Set(affected);
+  const recognitionEntries = [
+    ...(state.awareness[actorId] ?? []).map((entry) => ({
+      id: entry.eventId,
+      recognition: entry.recognition,
+      originals: [...(entry.observation ? [entry.observation] : []), ...(entry.observations ?? [])],
+    })),
+    ...(world.memories[actorId] ?? []).map((entry) => ({
+      id: entry.id,
+      recognition: entry.evidence?.recognition,
+      originals: [
+        ...(entry.observation ? [entry.observation] : []),
+        ...(entry.observations ?? []),
+        ...(entry.evidence?.observation ? [entry.evidence.observation] : []),
+        ...(entry.evidence?.observations ?? []),
+      ],
+    })),
+  ];
+  const learningEdges = new Map<string, Set<string>>();
+  const learningEdge = (from: string, to: string) => {
+    const targets = learningEdges.get(from) ?? new Set<string>();
+    targets.add(to);
+    learningEdges.set(from, targets);
+  };
+  for (const entry of recognitionEntries) {
+    for (const source of ownedObservationSources(entry.originals)) {
+      learningEdge(entry.id, source.id);
+      learningEdge(source.id, entry.id);
+    }
+    for (const source of [
+      ...recognitionSupportSources(entry.recognition?.learningSupport ?? []),
+      ...observationLearningSources(entry.originals),
+    ])
+      learningEdge(source.id, entry.id);
+  }
+  for (const observation of world.perceptionEvidence?.[actorId]?.received ?? [])
+    for (const source of observationLearningSources([observation]))
+      learningEdge(source.id, observation.id);
+  const learningQueue = [...recognitionAffected];
+  for (let position = 0; position < learningQueue.length; position++)
+    for (const next of learningEdges.get(learningQueue[position]!) ?? [])
+      if (!recognitionAffected.has(next)) {
+        recognitionAffected.add(next);
+        learningQueue.push(next);
+      }
+  for (const summary of state.summaries[actorId] ?? [])
+    if (manifestDependsOn(summary.manifest, recognitionAffected)) affected.add(summary.id);
+  const revokedFacts = new Set<string>();
+  const markAssociationFacts = (
+    observation: import('./perception-evidence.js').ObservationContribution,
+  ) => {
+    for (const facet of observation.facets) {
+      if (
+        facet.value.kind === 'association' &&
+        (recognitionAffected.has(observation.id) ||
+          recognitionSupportSources(facet.value.learningSupport ?? []).some((source) =>
+            recognitionAffected.has(source.id),
+          ))
+      )
+        revokedFacts.add(personalFactAlias(observation.id, facet.ordinal));
+      if (facet.value.kind === 'confirmation') markAssociationFacts(facet.value.snapshot.original);
+      if (facet.value.kind === 'observed-motion')
+        for (const sample of [facet.value.earlier, facet.value.later])
+          markAssociationFacts(sample.original);
+    }
+  };
+  for (const entry of recognitionEntries)
+    for (const observation of entry.originals) markAssociationFacts(observation);
+  for (const summary of state.summaries[actorId] ?? [])
+    for (const observation of summary.manifest.observations) markAssociationFacts(observation);
+  for (const observation of world.perceptionEvidence?.[actorId]?.received ?? [])
+    markAssociationFacts(observation);
+  if (correctionEventId) {
+    const corrections = ((state.corrections ??= {})[actorId] ??= {});
+    for (const alias of revokedFacts) corrections[alias] = correctionEventId;
+  } else if (revokedFacts.size) {
+    state.forgotten[actorId] = [...new Set([...(state.forgotten[actorId] ?? []), ...revokedFacts])];
+  }
   const retainedDirect = new Set<string>();
   if (forget) {
     // Losing the correction does not turn its earlier direct observation back into
@@ -1099,7 +1190,13 @@ export function invalidateExperience(
     for (const [id, lease] of Object.entries(native.current))
       if (
         affected.has(lease.original.id) ||
-        (lease.original.origin.kind === 'occurrence' && affected.has(lease.original.origin.eventId))
+        (lease.original.origin.kind === 'occurrence' &&
+          affected.has(lease.original.origin.eventId)) ||
+        (lease.value.kind === 'association' &&
+          (recognitionAffected.has(lease.original.id) ||
+            recognitionSupportSources(lease.value.learningSupport ?? []).some((source) =>
+              recognitionAffected.has(source.id),
+            )))
       )
         delete native.current[id];
   }
@@ -1107,7 +1204,12 @@ export function invalidateExperience(
     world,
     actorId,
     new Set(
-      [...affected].flatMap((id) => [id, `awareness:${id}`, `memory:${id}`, `summary:${id}`]),
+      [...recognitionAffected].flatMap((id) => [
+        id,
+        `awareness:${id}`,
+        `memory:${id}`,
+        `summary:${id}`,
+      ]),
     ),
   );
   revokeActivityEvidence(world, actorId, [...affected]);

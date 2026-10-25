@@ -522,7 +522,8 @@ export class AiDirector {
           };
         // Keep the public reference in the original request fingerprint, then bind
         // its currently acquired body only after the durable duplicate lookup.
-        if (targetReference) targetId = resolveContactTarget(this.service.world, authority, targetReference);
+        if (targetReference)
+          targetId = resolveContactTarget(this.service.world, authority, targetReference);
         if (
           targetId &&
           targetId !== actorId &&
@@ -543,7 +544,12 @@ export class AiDirector {
             this.service,
             { id, authority, fingerprint },
             actorId,
-            { text, targetId: targetId ?? null, slots, ...(targetReference ? { targetReference } : {}) },
+            {
+              text,
+              targetId: targetId ?? null,
+              slots,
+              ...(targetReference ? { targetReference } : {}),
+            },
             mode,
           ));
         if (typed) return typed;
@@ -962,10 +968,10 @@ export class AiDirector {
         volume = original.request.volume ?? 'normal';
         npcId = original.request.npcId;
       }
-      let targetId =
-        kind === 'chat' ? (npcId ?? this.service.availableDefaultResidentEntityId) : undefined;
+      let targetId = kind === 'chat' ? npcId : undefined;
       if (
-        kind === 'chat' && (!publicReferences || !!retryOf) &&
+        kind === 'chat' &&
+        (!publicReferences || !!retryOf) &&
         (!targetId || entityGet(this.service.world.entities, targetId)?.actor?.controller !== 'npc')
       )
         return {
@@ -1003,10 +1009,24 @@ export class AiDirector {
               message: 'That request ID was already used for different input.',
             };
       if (kind === 'chat' && publicReferences && !retryOf && npcId) {
-        targetId = resolveContactTarget(this.service.world, authority!, npcId, { communication: true });
+        targetId = resolveContactTarget(this.service.world, authority!, npcId, {
+          communication: true,
+        });
         if (entityGet(this.service.world.entities, targetId)?.actor?.controller !== 'npc')
-          return { ok: false, code: 'resident-unavailable', message: 'Select an available resident for this conversation.' };
+          return {
+            ok: false,
+            code: 'resident-unavailable',
+            message: 'Select an available resident for this conversation.',
+          };
       }
+      // A requested reply needs its explicit person. Ambient speech uses the native
+      // say command; choosing a resident here would silently change its addressee.
+      if (kind === 'chat' && !targetId)
+        return {
+          ok: false,
+          code: 'resident-unavailable',
+          message: 'Select a person for this conversation.',
+        };
       let parent: JobRecord | undefined;
       if (continuation) {
         parent = await this.service.store.getJob(continuation.parentId);
@@ -1231,8 +1251,16 @@ export class AiDirector {
             message: `${namePhrase(observerName(this.service.world, inventorId, target.id), 'definite', { capitalize: true })} cannot respond right now. Retry when they are awake and able to respond.`,
           };
         if (!original) {
-          const spoken = await this.service.say(`${id}:player`, inventorId, text, targetId, volume,
-            publicReferences && npcId && authority ? { scope: authority, reference: npcId } : undefined);
+          const spoken = await this.service.say(
+            `${id}:player`,
+            inventorId,
+            text,
+            targetId,
+            volume,
+            publicReferences && npcId && authority
+              ? { scope: authority, reference: npcId }
+              : undefined,
+          );
           if (!spoken.ok) return spoken;
           for (let i = this.service.world.events.length - 1; i >= 0; i--) {
             const event = this.service.world.events[i]!;
@@ -1492,10 +1520,20 @@ export class AiDirector {
       throw new StopJob('stale', 'The actor or action timeline changed.');
     if (run.job.kind === 'action' && run.job.request.action?.targetReference) {
       try {
-        if (!run.job.authority || resolveContactTarget(this.service.world, run.job.authority, run.job.request.action.targetReference) !== run.job.request.action.targetId)
+        if (
+          !run.job.authority ||
+          resolveContactTarget(
+            this.service.world,
+            run.job.authority,
+            run.job.request.action.targetReference,
+          ) !== run.job.request.action.targetId
+        )
           throw new Error('retired-contact');
       } catch {
-        throw new StopJob('stale', 'The selected observed target changed or left perception. Submit a fresh action.');
+        throw new StopJob(
+          'stale',
+          'The selected observed target changed or left perception. Submit a fresh action.',
+        );
       }
     }
     if (
@@ -2110,7 +2148,12 @@ export class AiDirector {
       required,
     );
     const validityFor = (world: WorldState) =>
-      preparedResponseValidity(world, actorId, interpretations.scopes, prepared.binding.entityLeases);
+      preparedResponseValidity(
+        world,
+        actorId,
+        interpretations.scopes,
+        prepared.binding.entityLeases,
+      );
     run.validityFor = validityFor;
     run.validity = validityFor(this.service.world);
     const current = async () => {

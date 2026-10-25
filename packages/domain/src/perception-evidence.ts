@@ -7,6 +7,8 @@ export { validateEvidenceSource, validateObservedLocation } from './perception-v
 import { nextId } from './data.js';
 import { canonicalJson } from './events.js';
 import { chargeWork } from './work-budget.js';
+import { personalFactAlias } from './experience-source.js';
+import { validateDetectionSupportState, type DetectionSupportState } from './perception-support.js';
 import { cloneValue, readOnlyDraftView } from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { bodyProfile, worldPosition, worldSupport } from './spatial-state.js';
@@ -19,6 +21,8 @@ import {
   selectedBodyIndividual,
   selectedOrdinaryWarning,
   selectedOutwardBodyName,
+  selectedRecognitionSupportSourceIds,
+  validReceivedRecognitionSupportKey,
 } from './world-composition.js';
 import { freeze } from 'immer';
 import {
@@ -139,6 +143,7 @@ export type SensoryFacet =
       kind: 'association';
       subject: ObserverSubject;
       strength: 'supported' | 'possible' | 'ambiguous';
+      learningSupport?: string[];
     }
   | {
       kind: 'claim';
@@ -172,6 +177,7 @@ export type ObservationOrigin =
       detectorId: string;
       measuredFrom: number;
       measuredThrough: number;
+      source?: EvidenceSource;
     };
 export interface ObservationContribution {
   id: string;
@@ -193,7 +199,7 @@ export interface LiveFacetSupport {
   /** An acquired association expires with this exact observed body, even on same-life return. */
   bodyLeaseId?: string;
   /** A source-owned continuous local person role; it supplies no modality profile. */
-  localSubject?:ObserverSubject;
+  localSubject?: ObserverSubject;
   /** Private source continuity, never a permitted trajectory or participant identity. */
   motionContinuityRevision?: number;
   sourcePlacementRevision?: number;
@@ -234,6 +240,7 @@ export interface PerceptionEvidenceOwner {
     string,
     { episodeId: string; lostAt: number; through: number; physicalLife: number | null }
   >;
+  support?: DetectionSupportState;
 }
 export type PerceptionEvidenceState = Record<string, PerceptionEvidenceOwner>;
 export interface EvidenceCut {
@@ -266,7 +273,10 @@ const acquisitionKey = (
           input.origin.measuredThrough,
         ],
   ]);
-function owner(world: WorldState, observer: Entity): PerceptionEvidenceOwner {
+export function perceptionEvidenceOwner(
+  world: WorldState,
+  observer: Entity,
+): PerceptionEvidenceOwner {
   const states = (world.perceptionEvidence ??= {});
   let state = states[observer.id];
   const life = observer.actor?.physicalLife ?? 0;
@@ -286,6 +296,7 @@ function owner(world: WorldState, observer: Entity): PerceptionEvidenceOwner {
   }
   return state;
 }
+const owner = perceptionEvidenceOwner;
 export const observationFactKey = (
   observation: ObservationContribution,
   ordinal: number,
@@ -329,7 +340,10 @@ export function acquireObservation(
       acquiredAt: world.simTime,
     })),
   };
-  chargeWork({effects:1,outputBytes:evidenceEncoder.encode(JSON.stringify(contribution)).byteLength});
+  chargeWork({
+    effects: 1,
+    outputBytes: evidenceEncoder.encode(JSON.stringify(contribution)).byteLength,
+  });
   state.receipts[key] = state.received.length;
   state.received.push(contribution);
   return freeze(cloneValue(contribution), true);
@@ -397,12 +411,18 @@ export function evidenceCutEligible(world: WorldState, cut: EvidenceCut): boolea
     const aliases = [
       observation.id,
       ...(observation.origin.kind === 'occurrence' ? [observation.origin.eventId] : []),
+      ...(observation.origin.kind === 'exposure' && observation.origin.source ? [observation.origin.source.id] : []),
     ];
     if (aliases.some((id) => forgotten.has(id) || Object.hasOwn(corrections, id))) return false;
-    return observation.facets.every(({ value }) => {
+    return observation.facets.every(({ value, ordinal }) => {
       if (value.kind === 'confirmation') return supported(value.snapshot.original);
       if (value.kind === 'observed-motion')
         return supported(value.earlier.original) && supported(value.later.original);
+      if (value.kind === 'association')
+        return (
+          associationEvidenceStatus(world, cut.observer.actorId, value, observation, ordinal) ===
+          'retained'
+        );
       if (value.kind !== 'claim') return true;
       return [
         ...value.support.map((fact) => fact.source.id),
@@ -493,12 +513,42 @@ export function currentBodyAssociation(
   return body &&
     association?.bodyLeaseId === body.id &&
     association.value.kind === 'association' &&
-    association.value.strength === 'supported'
+    association.value.strength === 'supported' &&
+    associationEvidenceStatus(
+      world,
+      observerId,
+      association.value,
+      association.original,
+      association.originalOrdinal,
+    ) === 'retained'
     ? cloneValue(association.value.subject)
     : undefined;
 }
-export function currentBodyLocalSubject(world:WorldState,observerId:string,subjectId:string):ObserverSubject|undefined {
-  const subject=eligibleBodyLease(world,observerId,subjectId)?.localSubject;
+export function associationEvidenceStatus(
+  world: WorldState,
+  observerId: string,
+  value: Extract<SensoryFacet, { kind: 'association' }>,
+  original?: ObservationContribution,
+  ordinal?: number,
+): 'retained' | 'disputed' | 'forgotten' {
+  const keys = value.learningSupport ?? [];
+  const aliases = [
+    ...keys,
+    ...selectedRecognitionSupportSourceIds(world, keys),
+    ...(original && ordinal !== undefined ? [personalFactAlias(original.id, ordinal)] : []),
+  ];
+  if (aliases.some((id) => world.experience?.forgotten[observerId]?.includes(id)))
+    return 'forgotten';
+  return aliases.some((id) => Object.hasOwn(world.experience?.corrections?.[observerId] ?? {}, id))
+    ? 'disputed'
+    : 'retained';
+}
+export function currentBodyLocalSubject(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): ObserverSubject | undefined {
+  const subject = eligibleBodyLease(world, observerId, subjectId)?.localSubject;
   return subject && cloneValue(subject);
 }
 
@@ -571,12 +621,34 @@ export function currentObservedFacets(
     )
     .map(captureCurrentFacet);
 }
-function currentLeaseEligible(world: WorldState, observerId: string, lease: LiveFacetSupport): boolean {
+function currentLeaseEligible(
+  world: WorldState,
+  observerId: string,
+  lease: LiveFacetSupport,
+): boolean {
+  if (
+    lease.value.kind === 'association' &&
+    associationEvidenceStatus(
+      world,
+      observerId,
+      lease.value,
+      lease.original,
+      lease.originalOrdinal,
+    ) !== 'retained'
+  )
+    return false;
   const subject = entityGet(world.entities, lease.subjectId);
-  if (!activelyParticipates(subject) || lease.subjectPhysicalLife !== (subject?.actor ? (subject.actor.physicalLife ?? 0) : null)) return false;
+  if (
+    !activelyParticipates(subject) ||
+    lease.subjectPhysicalLife !== (subject?.actor ? (subject.actor.physicalLife ?? 0) : null)
+  )
+    return false;
   if (lease.modality === 'sight') return !!eligibleBodyLease(world, observerId, lease.subjectId);
   const observer = entityGet(world.entities, observerId);
-  return !!observer && sensesFor(world, observer).some(sense => sense.id === lease.original.detector.id);
+  return (
+    !!observer &&
+    sensesFor(world, observer).some((sense) => sense.id === lease.original.detector.id)
+  );
 }
 
 function finalizeLease(world: WorldState, observer: Entity, lease: LiveFacetSupport): void {
@@ -645,7 +717,7 @@ export function reconcileVisualEvidence(
       delete state.current[key];
     }
   for (const subject of subjects) {
-    chargeWork({tests:1});
+    chargeWork({ tests: 1 });
     delete state.gaps[subject.id];
     const exposed = world.perceptionEpisodes?.[observer.id]?.[subject.id];
     if (subject.placement?.mode !== 'world') continue;
@@ -734,7 +806,7 @@ export function reconcileVisualEvidence(
     const exposure = { observer: observerLife(observer), episodeId: original.id };
     let earlierLocation: CapturedLocationSample | undefined;
     values.forEach((facet, ordinal) => {
-      chargeWork({tests:1});
+      chargeWork({ tests: 1 });
       const key = `${subject.id}:${facet.kind}`;
       let prior = state.current[key];
       if (
@@ -845,8 +917,8 @@ export function reconcileVisualEvidence(
     });
     const currentBody = state.current[`${subject.id}:body`];
     if (subject.actor && currentBody && !currentBody.localSubject) {
-      const localSubject=selectedBodyIndividual(world, observer.id, subject.id);
-      if(localSubject)currentBody.localSubject=localSubject;
+      const localSubject = selectedBodyIndividual(world, observer.id, subject.id);
+      if (localSubject) currentBody.localSubject = localSubject;
     }
     const locationLease = state.current[`${subject.id}:location`];
     const motionKey = `${subject.id}:observed-motion`;
@@ -1107,6 +1179,9 @@ export function acquireAwarenessObservation(
       kind: 'association',
       subject: cloneValue(recognition.subject),
       strength: recognition.recognized ? 'supported' : 'possible',
+      ...(recognition.learningSupport?.length
+        ? { learningSupport: [...recognition.learningSupport] }
+        : {}),
     });
     if (recognition.subject.kind === 'individual') associated.add(recognition.subject.individualId);
   }
@@ -1119,6 +1194,9 @@ export function acquireAwarenessObservation(
         (recognition?.candidates.length ?? 0) > 1 || recognition?.moreCandidates
           ? 'ambiguous'
           : 'possible',
+      ...(recognition?.learningSupport?.length
+        ? { learningSupport: [...recognition.learningSupport] }
+        : {}),
     });
     associated.add(candidate.individualId);
   }
@@ -1127,6 +1205,9 @@ export function acquireAwarenessObservation(
       kind: 'association',
       subject: cloneValue(recognition.learnedSubject),
       strength: 'supported',
+      ...(recognition.learningSupport?.length
+        ? { learningSupport: [...recognition.learningSupport] }
+        : {}),
     });
     if (recognition.learnedSubject.kind === 'individual')
       associated.add(recognition.learnedSubject.individualId);
@@ -1290,18 +1371,22 @@ export function acquireOrdinaryWarning(
   });
 }
 
-export function validatePerceptionEvidenceState(world: WorldState): void {
+export function validatePerceptionEvidenceState(
+  world: WorldState,
+  originals = new Map<string, string>(),
+): void {
   const states = world.perceptionEvidence;
   if (states === undefined) return;
   if (!states || typeof states !== 'object' || Array.isArray(states))
     throw new Error('Invalid active perception owners.');
-  const originals = new Map<string,string>();
   for (const [observerId, state] of Object.entries(states)) {
     if (
       !state ||
       !Number.isSafeInteger(state.life) ||
       state.life < 0 ||
       !Number.isSafeInteger(state.receivedAtSequence) ||
+      state.receivedAtSequence < 0 ||
+      state.receivedAtSequence > world.sequence ||
       !Array.isArray(state.received) ||
       !state.receipts ||
       typeof state.receipts !== 'object' ||
@@ -1326,6 +1411,7 @@ export function validatePerceptionEvidenceState(world: WorldState): void {
       )
     )
       throw new Error('Invalid short exposure gap.');
+    if (state.support) validateDetectionSupportState(world, observerId, state.support, originals);
     if (
       Object.entries(state.receipts).some(
         ([key, index]) =>
@@ -1340,7 +1426,8 @@ export function validatePerceptionEvidenceState(world: WorldState): void {
       validateObservationContribution(observation, originals);
       if (
         observation.observer.actorId !== observerId ||
-        observation.observer.physicalLife !== state.life
+        observation.observer.physicalLife !== state.life ||
+        observation.acquiredAt > world.simTime
       )
         throw new Error('Invalid perception observer life.');
     }
@@ -1359,8 +1446,10 @@ export function validatePerceptionEvidenceState(world: WorldState): void {
         (lease.subjectPhysicalLife !== null &&
           (!Number.isSafeInteger(lease.subjectPhysicalLife) || lease.subjectPhysicalLife < 0)) ||
         key !== `${lease.subjectId}:${lease.value.kind}` ||
-        (lease.localSubject!==undefined && (!validObserverSubject(lease.localSubject) ||
-          (lease.localSubject.kind==='individual'&&!world.observerIdentities?.[observerId]?.[lease.localSubject.individualId]))) ||
+        (lease.localSubject !== undefined &&
+          (!validObserverSubject(lease.localSubject) ||
+            (lease.localSubject.kind === 'individual' &&
+              !world.observerIdentities?.[observerId]?.[lease.localSubject.individualId]))) ||
         ![
           'detected',
           'location',
@@ -1387,6 +1476,8 @@ export function validatePerceptionEvidenceState(world: WorldState): void {
           lease.confirmedThrough,
         ].every(Number.isFinite) ||
         lease.valueMeasuredThrough < lease.valueMeasuredFrom ||
+        lease.valueAcquiredAt > world.simTime ||
+        lease.confirmedThrough > world.simTime ||
         lease.confirmedThrough < lease.confirmedFrom
       )
         throw new Error('Invalid current perception facet.');
@@ -1467,7 +1558,7 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
 /** Current-format validation is shared by native restore and server record validation. */
 export function validateObservationContribution(
   value: unknown,
-  originals = new Map<string,string>(),
+  originals = new Map<string, string>(),
 ): asserts value is ObservationContribution {
   const observation = value as ObservationContribution | undefined;
   if (
@@ -1537,14 +1628,30 @@ export function validateObservationContribution(
     observation.origin.measuredThrough < observation.origin.measuredFrom
   )
     throw new Error('Invalid perception exposure binding.');
+  if (observation.origin.kind === 'exposure' && observation.origin.source) {
+    validateEvidenceSource(observation.origin.source);
+    if (canonicalJson(observation.origin.source.observer) !== canonicalJson(observation.observer))
+      throw new Error('Foreign physical support root.');
+  }
   const key = canonicalJson([observation.observer, observation.id, observation.revision]);
-  const body = canonicalJson(observation), prior = originals.get(key);
-  if (prior !== undefined && prior !== body) throw new Error('Conflicting original observation revision.');
+  const body = canonicalJson(observation),
+    prior = originals.get(key);
+  if (prior !== undefined && prior !== body)
+    throw new Error('Conflicting original observation revision.');
   originals.set(key, body);
-  for (const facet of observation.facets) validateSensoryFacet(facet.value, originals);
+  for (const facet of observation.facets) {
+    validateSensoryFacet(facet.value, originals);
+    if (
+      (facet.value.kind === 'confirmation' &&
+        facet.value.snapshot.valueAcquiredAt > observation.acquiredAt) ||
+      (facet.value.kind === 'observed-motion' &&
+        facet.value.later.valueAcquiredAt > observation.acquiredAt)
+    )
+      throw new Error('Perception support was acquired after its containing contribution.');
+  }
 }
 
-function validateSensoryFacet(value: SensoryFacet, originals = new Map<string,string>()): void {
+function validateSensoryFacet(value: SensoryFacet, originals = new Map<string, string>()): void {
   switch (value.kind) {
     case 'detected':
       if (
@@ -1672,7 +1779,10 @@ function validateSensoryFacet(value: SensoryFacet, originals = new Map<string,st
     case 'association':
       if (
         !validObserverSubject(value.subject) ||
-        !['supported', 'possible', 'ambiguous'].includes(value.strength)
+        !['supported', 'possible', 'ambiguous'].includes(value.strength) ||
+        (value.learningSupport !== undefined &&
+          (!Array.isArray(value.learningSupport) ||
+            value.learningSupport.some((id) => !validReceivedRecognitionSupportKey(id))))
       )
         throw new Error('Invalid acquired association.');
       break;
@@ -1717,6 +1827,11 @@ function validateSensoryFacet(value: SensoryFacet, originals = new Map<string,st
       validateObservationContribution(snapshot.original, originals);
       if (
         !snapshot.original.facets[snapshot.originalOrdinal] ||
+        !snapshot.observer ||
+        !snapshot.exposure ||
+        canonicalJson(snapshot.observer) !== canonicalJson(snapshot.original.observer) ||
+        canonicalJson(snapshot.observer) !== canonicalJson(snapshot.confirmation.observer) ||
+        canonicalJson(snapshot.observer) !== canonicalJson(snapshot.exposure.observer) ||
         ![
           snapshot.valueMeasuredFrom,
           snapshot.valueMeasuredThrough,

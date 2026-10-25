@@ -1,5 +1,7 @@
 import {
   subjectLabel,
+  personalFactAlias,
+  sameSubject,
   type WorldState,
   type ObserverSubject,
   type ObservationContribution,
@@ -10,7 +12,13 @@ import {
   type SensoryFacet,
   type CapturedCurrentFacet,
 } from '@open-legend/domain';
-import { entityHandle, permittedSourceHandle, subjectHandle, evidenceSourceHandle } from './entity-references.js';
+import {
+  entityHandle,
+  permittedSourceHandle,
+  subjectHandle,
+  evidenceSourceHandle,
+  personalSourceHandle,
+} from './entity-references.js';
 
 /** The native source tuple stays in the binding. Models receive the same permitted
  * meaning with opaque roles, never the private producer/exposure routing key.
@@ -45,19 +53,30 @@ function participantForModel(world: WorldState, actorId: string, participant: Ev
   }
 }
 /** Only already-permitted event fields reach this adapter; definition IDs are literals. */
-function eventFieldsForModel(world: WorldState, actorId: string, value: unknown): unknown {
-  if (Array.isArray(value)) return value.map((entry) => eventFieldsForModel(world, actorId, entry));
+function eventFieldsForModel(
+  world: WorldState,
+  actorId: string,
+  value: unknown,
+  sourceScope: unknown,
+): unknown {
+  if (Array.isArray(value))
+    return value.map((entry) => eventFieldsForModel(world, actorId, entry, sourceScope));
   if (!value || typeof value !== 'object') return value;
   return Object.fromEntries(
     Object.entries(value).map(([key, field]) => [
       key,
       typeof field === 'string' && /^(entityId|actorId|targetId|sourceId|recipientId)$/.test(key)
-        ? entityHandle(world, actorId, field)
-        : eventFieldsForModel(world, actorId, field),
+        ? permittedSourceHandle(world, actorId, ['historical-participant', sourceScope, field])
+        : eventFieldsForModel(world, actorId, field, sourceScope),
     ]),
   );
 }
-function facetValueForModel(world: WorldState, actorId: string, value: SensoryFacet): unknown {
+function facetValueForModel(
+  world: WorldState,
+  actorId: string,
+  value: SensoryFacet,
+  sourceScope: unknown,
+): unknown {
   switch (value.kind) {
     case 'association':
       return {
@@ -75,8 +94,16 @@ function facetValueForModel(world: WorldState, actorId: string, value: SensoryFa
       return {
         kind: value.kind,
         claim: value.claim,
-        supportStatus: value.supportAliases?.some(alias=>world.experience?.forgotten[actorId]?.includes(alias.id)) ? 'forgotten' : value.supportAliases?.some(alias=>world.experience?.corrections?.[actorId]?.[alias.id]) ? 'disputed' : 'retained',
-      speaker: participantForModel(world, actorId, value.speaker),
+        supportStatus: value.supportAliases?.some((alias) =>
+          sourceForgotten(world, actorId, alias.id),
+        )
+          ? 'forgotten'
+          : value.supportAliases?.some(
+                (alias) => world.experience?.corrections?.[actorId]?.[alias.id],
+              )
+            ? 'disputed'
+            : 'retained',
+        speaker: participantForModel(world, actorId, value.speaker),
         wordsAsHeard: value.wordsAsHeard,
         support: value.support.map((key) => supportForModel(world, actorId, key)),
       };
@@ -85,18 +112,27 @@ function facetValueForModel(world: WorldState, actorId: string, value: SensoryFa
         kind: value.kind,
         eventType: value.eventType,
         text: value.text,
-        data: eventFieldsForModel(world, actorId, value.data),
+        data: eventFieldsForModel(world, actorId, value.data, sourceScope),
         references: value.references.map((ref) => ({
-          reference: permittedSourceHandle(world, actorId, ['historical-reference', value, ref.id]),
+          reference: permittedSourceHandle(world, actorId, [
+            'historical-participant',
+            sourceScope,
+            ref.id,
+          ]),
           label: ref.label,
           role: ref.role,
         })),
       };
-    case 'confirmation': return {kind:value.kind,snapshot:currentFacetForModel(world,actorId,value.snapshot)};
-    case 'observed-motion': return {kind:value.kind,
-      exposure:permittedSourceHandle(world,actorId,['exposure',value.exposure]),
-      earlier:currentFacetForModel(world,actorId,value.earlier),
-      later:currentFacetForModel(world,actorId,value.later),correspondence:value.correspondence};
+    case 'confirmation':
+      return { kind: value.kind, snapshot: currentFacetForModel(world, actorId, value.snapshot) };
+    case 'observed-motion':
+      return {
+        kind: value.kind,
+        exposure: permittedSourceHandle(world, actorId, ['exposure', value.exposure]),
+        earlier: currentFacetForModel(world, actorId, value.earlier),
+        later: currentFacetForModel(world, actorId, value.later),
+        correspondence: value.correspondence,
+      };
     // Physical feature vectors and intensity margins are native matching inputs.
     // The model gets acquired roles/associations, never a reusable fingerprint.
     case 'perceived-feature':
@@ -115,19 +151,69 @@ function facetValueForModel(world: WorldState, actorId: string, value: SensoryFa
         kind: value.kind,
         items: value.items.map((item) => ({
           ...item,
-          id: entityHandle(world, actorId, item.id),
+          id: permittedSourceHandle(world, actorId, [
+            'historical-participant',
+            sourceScope,
+            item.id,
+          ]),
         })),
       };
     default:
-      return eventFieldsForModel(world, actorId, value);
+      return eventFieldsForModel(world, actorId, value, sourceScope);
   }
 }
-function currentFacetForModel(world:WorldState,actorId:string,snapshot:CapturedCurrentFacet) {
-  return {source:evidenceSourceHandle(world,actorId,{family:'native-exposure',observer:snapshot.original.observer,id:snapshot.original.id,revision:snapshot.original.revision}),
-    ordinal:snapshot.originalOrdinal,confirmation:evidenceSourceHandle(world,actorId,snapshot.confirmation),
-    modality:snapshot.modality,value:facetValueForModel(world,actorId,snapshot.value),
-    measuredFrom:snapshot.valueMeasuredFrom,measuredThrough:snapshot.valueMeasuredThrough,
-    acquiredAt:snapshot.valueAcquiredAt,confirmedFrom:snapshot.confirmedFrom,confirmedThrough:snapshot.confirmedThrough};
+const forgottenIndexes = new WeakMap<readonly string[], ReadonlySet<string>>();
+function sourceForgotten(world: WorldState, actorId: string, id: string): boolean {
+  const values = world.experience?.forgotten[actorId];
+  if (!values?.length) return false;
+  let index = Object.isFrozen(values) ? forgottenIndexes.get(values) : undefined;
+  if (!index) {
+    index = new Set(values);
+    if (Object.isFrozen(values)) forgottenIndexes.set(values, index);
+  }
+  return index.has(id);
+}
+function factSupportStatus(world: WorldState, actorId: string, id: string, ordinal: number) {
+  const alias = personalFactAlias(id, ordinal);
+  return sourceForgotten(world, actorId, alias)
+    ? 'unavailable'
+    : world.experience?.corrections?.[actorId]?.[alias]
+      ? 'disputed'
+      : 'retained';
+}
+function currentFacetForModel(world: WorldState, actorId: string, snapshot: CapturedCurrentFacet) {
+  return {
+    source: evidenceSourceHandle(world, actorId, {
+      family: 'native-exposure',
+      observer: snapshot.original.observer,
+      id: snapshot.original.id,
+      revision: snapshot.original.revision,
+    }),
+    ordinal: snapshot.originalOrdinal,
+    supportStatus: factSupportStatus(
+      world,
+      actorId,
+      snapshot.original.id,
+      snapshot.originalOrdinal,
+    ),
+    confirmation: evidenceSourceHandle(world, actorId, snapshot.confirmation),
+    modality: snapshot.modality,
+    ...(snapshot.localSubject
+      ? {
+          bodyLocalSubject: {
+            ...subjectForModel(world, actorId, snapshot.localSubject),
+            temporalRole: 'historical',
+            currentBody: false,
+          },
+        }
+      : {}),
+    value: facetValueForModel(world, actorId, snapshot.value, snapshot.original.id),
+    measuredFrom: snapshot.valueMeasuredFrom,
+    measuredThrough: snapshot.valueMeasuredThrough,
+    acquiredAt: snapshot.valueAcquiredAt,
+    confirmedFrom: snapshot.confirmedFrom,
+    confirmedThrough: snapshot.confirmedThrough,
+  };
 }
 export function observationForModel(
   world: WorldState,
@@ -136,22 +222,87 @@ export function observationForModel(
 ) {
   if (observation.observer.actorId !== actorId) throw new Error('Foreign personal observation.');
   const first = observation.facets[0];
-  const defaults = first ? {role:first.role,asOf:first.asOf,measuredFrom:first.measuredFrom,
-    measuredThrough:first.measuredThrough,acquiredAt:first.acquiredAt} : undefined;
+  const defaults = first
+    ? {
+        role: first.role,
+        asOf: first.asOf,
+        measuredFrom: first.measuredFrom,
+        measuredThrough: first.measuredThrough,
+        acquiredAt: first.acquiredAt,
+      }
+    : undefined;
   return {
-    source: evidenceSourceHandle(world, actorId, {family:'native-exposure',observer:observation.observer,id:observation.id,revision:observation.revision}),
-    acquiredAt: observation.acquiredAt, modality: observation.modality,
-    temporalRole: 'historical', timeUnit: 'simulation-seconds',
+    source: evidenceSourceHandle(world, actorId, {
+      family: 'native-exposure',
+      observer: observation.observer,
+      id: observation.id,
+      revision: observation.revision,
+    }),
+    acquiredAt: observation.acquiredAt,
+    modality: observation.modality,
+    temporalRole: 'historical',
+    timeUnit: 'simulation-seconds',
     // Equal metadata is encoded once; each facet inherits these exact values.
     // Overrides retain independent times/roles rather than normalizing them away.
-    facetDefaults: defaults,
-    facets: observation.facets.map(facet => ({
-      ordinal:facet.ordinal,
-      ...Object.fromEntries(Object.entries({role:facet.role,asOf:facet.asOf,
-        measuredFrom:facet.measuredFrom,measuredThrough:facet.measuredThrough,acquiredAt:facet.acquiredAt})
-        .filter(([key,value])=>!defaults || value!==defaults[key as keyof typeof defaults])),
-      value:facetValueForModel(world,actorId,facet.value),
+    facetDefaults: { ...defaults, supportStatus: 'retained' },
+    facets: observation.facets.map((facet) => ({
+      ordinal: facet.ordinal,
+      ...(factSupportStatus(world, actorId, observation.id, facet.ordinal) !== 'retained'
+        ? { supportStatus: factSupportStatus(world, actorId, observation.id, facet.ordinal) }
+        : {}),
+      ...Object.fromEntries(
+        Object.entries({
+          role: facet.role,
+          asOf: facet.asOf,
+          measuredFrom: facet.measuredFrom,
+          measuredThrough: facet.measuredThrough,
+          acquiredAt: facet.acquiredAt,
+        }).filter(([key, value]) => !defaults || value !== defaults[key as keyof typeof defaults]),
+      ),
+      value: facetValueForModel(world, actorId, facet.value, observation.id),
     })),
+  };
+}
+function subjectRelationForModel(
+  world: WorldState,
+  actorId: string,
+  subject: ObserverSubject,
+  observations: readonly ObservationContribution[],
+) {
+  const supports = observations.flatMap((observation) =>
+    observation.facets.flatMap((facet) =>
+      facet.value.kind === 'association' && sameSubject(facet.value.subject, subject)
+        ? [
+            {
+              ...supportForModel(world, actorId, {
+                source: {
+                  family: 'native-exposure',
+                  observer: observation.observer,
+                  id: observation.id,
+                  revision: observation.revision,
+                },
+                ordinal: facet.ordinal,
+              }),
+              status: factSupportStatus(world, actorId, observation.id, facet.ordinal),
+            },
+          ]
+        : [],
+    ),
+  );
+  return {
+    ...subjectForModel(world, actorId, subject),
+    temporalRole: 'historical',
+    currentBody: false,
+    supportStatus: !supports.length
+      ? 'not-supplied'
+      : supports.every((support) => support.status === 'retained')
+        ? 'retained'
+        : supports.every((support) => support.status === 'unavailable')
+          ? 'unavailable'
+          : supports.every((support) => support.status === 'disputed')
+            ? 'disputed'
+            : 'mixed',
+    support: supports,
   };
 }
 export function experienceManifestForModel(
@@ -162,13 +313,18 @@ export function experienceManifestForModel(
   return {
     coverage: manifest.coverage.map((source) => ({
       kind: source.kind,
-      reference: permittedSourceHandle(world, actorId, source),
+      reference: personalSourceHandle(world, actorId, source),
     })),
     observations: manifest.observations.map((observation) =>
       observationForModel(world, actorId, observation),
     ),
     speech: manifest.speech.map((group) => ({
-      sources: group.sources.map((source) => permittedSourceHandle(world, actorId, source)),
+      sources: group.sources.map((source) => personalSourceHandle(world, actorId, source)),
+      utterances: group.utterances.map((utterance) => ({
+        source: personalSourceHandle(world, actorId, utterance.source),
+        at: utterance.at,
+        speech: utterance.speech,
+      })),
       speaker: group.speaker,
       addressee: group.addressee,
       addressing: group.addressing,
@@ -179,34 +335,96 @@ export function experienceManifestForModel(
       lastAt: group.lastAt,
       sourceCount: group.sourceCount,
       ...(group.sourceSubject
-        ? { subject: subjectForModel(world, actorId, group.sourceSubject) }
+        ? {
+            subject: subjectRelationForModel(
+              world,
+              actorId,
+              group.sourceSubject,
+              manifest.observations,
+            ),
+          }
         : {}),
     })),
   };
 }
+function exposureForModel(
+  exposure: NonNullable<MemoryRecord['evidence']>['exposure'],
+  reference: (id: string) => string,
+) {
+  if (!exposure) return undefined;
+  if (exposure.kind === 'place')
+    return {
+      kind: exposure.kind,
+      reference: reference(exposure.id),
+      revision: exposure.revision,
+      label: exposure.label,
+      description: exposure.description,
+      point: exposure.point,
+      locationLabel: exposure.locationLabel,
+      landmarkReference: reference(exposure.landmarkId),
+      mechanismFields: exposure.mechanismFields,
+      ...(exposure.reportedBy ? { reportedBy: reference(exposure.reportedBy) } : {}),
+    };
+  const location = exposure.observedLocation;
+  return {
+    kind: exposure.kind,
+    reference: reference(exposure.id),
+    definition: exposure.definition,
+    label: exposure.label,
+    description: exposure.description,
+    introduction: reference(exposure.introductionKey),
+    inscription: exposure.inscription,
+    mechanismFields: exposure.mechanismFields,
+    observedLocation:
+      location?.kind === 'world'
+        ? { ...location, containerId: reference(location.containerId) }
+        : location,
+  };
+}
 export function memoryMeaningForModel(world: WorldState, actorId: string, memory: MemoryRecord) {
   const evidence = memory.evidence;
-  const historyHandle=(id:string)=>permittedSourceHandle(world,actorId,['historical-participant',memory.id,id]);
-  const nativeSpeech = evidence?.speech && memory.observation?.facets.find(facet=>
-    facet.value.kind==='speech' && JSON.stringify(facet.value.speech)===JSON.stringify(evidence.speech));
+  const historyHandle = (id: string) =>
+    id === actorId
+      ? entityHandle(world, actorId, actorId)
+      : permittedSourceHandle(world, actorId, [
+          'historical-participant',
+          memory.observation?.id ?? memory.id,
+          id,
+        ]);
+  const nativeSpeech =
+    evidence?.speech &&
+    memory.observation?.facets.find(
+      (facet) =>
+        facet.value.kind === 'speech' &&
+        JSON.stringify(facet.value.speech) === JSON.stringify(evidence.speech),
+    );
   return {
     ...(evidence
       ? {
           experience: {
             eventType: evidence.eventType,
-            ...(!evidence.speech ? {text:evidence.text,content:evidence.content} : {}),
+            ...(!evidence.speech ? { text: evidence.text, content: evidence.content } : {}),
             modality: evidence.modality,
-            ...(nativeSpeech ? {speechFacet:nativeSpeech.ordinal} : {speech:evidence.speech}),
-            ...(evidence.sourceId
-              ? { source: historyHandle(evidence.sourceId) }
-              : {}),
-            ...(evidence.targetId
-              ? { target: historyHandle(evidence.targetId) }
-              : {}),
+            ...(nativeSpeech ? { speechFacet: nativeSpeech.ordinal } : { speech: evidence.speech }),
+            ...(evidence.sourceId ? { source: historyHandle(evidence.sourceId) } : {}),
+            ...(evidence.targetId ? { target: historyHandle(evidence.targetId) } : {}),
             ...(evidence.sourceSubject
-              ? { subject: subjectForModel(world, actorId, evidence.sourceSubject) }
+              ? {
+                  subject: subjectRelationForModel(world, actorId, evidence.sourceSubject, [
+                    ...(memory.observation ? [memory.observation] : []),
+                    ...(memory.observations ?? []),
+                  ]),
+                }
               : {}),
-            data: eventFieldsForModel(world, actorId, evidence.eventData),
+            data: eventFieldsForModel(
+              world,
+              actorId,
+              evidence.eventData,
+              memory.observation?.id ?? memory.id,
+            ),
+            ...(evidence.exposure
+              ? { exposure: exposureForModel(evidence.exposure, historyHandle) }
+              : {}),
             references: evidence.references?.map((ref) => ({
               reference: historyHandle(ref.id),
               label: ref.label,

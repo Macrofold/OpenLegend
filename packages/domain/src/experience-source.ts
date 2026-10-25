@@ -21,3 +21,7 @@ export function validPersonalSourceRef(value: unknown): value is PersonalSourceR
     /^[a-f0-9]{64}$/.test(ref.revision)
   );
 }
+
+/** Exact local acquired-fact alias for existing correction/forgetting overlays. */
+export const personalFactAlias = (observationId: string, ordinal: number): string =>
+  JSON.stringify(['perception-fact', observationId, ordinal]);

@@ -43,9 +43,35 @@ import {
   BASE_VOICE_FEATURE_FAMILY,
   receivedVoiceFeatures,
   perceiveVoice,
+  recognitionSupportSourceIds,
+  validRecognitionSupportKey,
 } from './worlds/base/recognition.js';
 import { hasMemory } from './living.js';
+import { currentBodyObservation, observationFactKey } from './perception-evidence.js';
 import { ensureBodyIndividual, outwardBodyName } from './worlds/base/knowledge.js';
+import { DETECTION_SUPPORT_POLICY } from './worlds/base/senses.js';
+import { normalSpeedSeconds } from './simulation-time.js';
+
+export function selectedDetectionSupportPolicy(world: WorldState) {
+  selectedCreationProfileForWorld(world);
+  return {
+    ...DETECTION_SUPPORT_POLICY,
+    fullRatePerGameSecond:
+      1 / normalSpeedSeconds(world, DETECTION_SUPPORT_POLICY.fullStrengthSeconds),
+    decayPerGameSecond: 1 / normalSpeedSeconds(world, DETECTION_SUPPORT_POLICY.decaySeconds),
+    graceSeconds: normalSpeedSeconds(world, DETECTION_SUPPORT_POLICY.decaySeconds),
+  };
+}
+
+export function selectedRecognitionSupportSourceIds(
+  world: WorldState,
+  keys: readonly string[],
+): string[] {
+  selectedCreationProfileForWorld(world);
+  return recognitionSupportSourceIds(keys);
+}
+/** Closed source-key grammar for the currently linked recognition family. */
+export const validReceivedRecognitionSupportKey=validRecognitionSupportKey;
 
 /** Current direct-path voice interpretation is selected world behavior. Future
  * acoustic producers supply their own admitted received feature evidence. */
@@ -61,6 +87,9 @@ export function selectedVoiceReception(
   if (!hasMemory(observer) || !observer.actor?.individualRecognition || !source.actor?.voiceProfile)
     return undefined;
   const features = receivedVoiceFeatures(source.actor.voiceProfile);
+  const body = visibleSourceId
+    ? currentBodyObservation(world, observer.id, visibleSourceId)
+    : undefined;
   return {
     family: BASE_VOICE_FEATURE_FAMILY,
     features,
@@ -70,7 +99,8 @@ export function selectedVoiceReception(
       event,
       features,
       clarityMarginDb,
-      visibleSourceId,
+      body ? visibleSourceId : undefined,
+      body ? observationFactKey(body.original, body.originalOrdinal) : undefined,
     ),
   };
 }

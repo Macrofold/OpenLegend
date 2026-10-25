@@ -1,8 +1,10 @@
 import { entityGet } from '../../entity-collection.js';
 import { hasMemory } from '../../living.js';
+import { accessiblePossession } from '../../object-access.js';
 import type { Entity, WorldState, WorldEvent, Outcome } from '../../types.js';
 import {
   currentBodyAssociation,
+  currentBodyLocalSubject,
   currentBodyGrant,
   currentBodyObservation,
 } from '../../perception-evidence.js';
@@ -85,8 +87,12 @@ function currentBodyIdentity(
   observerId: string,
   subjectId: string,
 ): ObserverIdentity | undefined {
+  const local = currentBodyLocalSubject(world, observerId, subjectId);
+  const localIdentity = local && observerIndividual(world, observerId, local);
+  if (localIdentity?.givenName) return localIdentity;
   const association = currentBodyAssociation(world, observerId, subjectId);
   if (association) return observerIndividual(world, observerId, association);
+  if (localIdentity) return localIdentity;
   const encounterId = world.perceptionEpisodes?.[observerId]?.[subjectId];
   if (!encounterId || !currentBodyGrant(world, observerId, subjectId)) return undefined;
   return Object.values(world.observerIdentities?.[observerId] ?? {}).find(
@@ -99,6 +105,8 @@ export function currentBodySubject(
   observerId: string,
   subjectId: string,
 ): ObserverSubject | undefined {
+  const local = currentBodyLocalSubject(world, observerId, subjectId);
+  if (local) return local;
   const association = currentBodyAssociation(world, observerId, subjectId);
   if (association) return association;
   const identity = currentBodyIdentity(world, observerId, subjectId);
@@ -223,9 +231,8 @@ export function assignGivenName(
   const encounterId = world.perceptionEpisodes?.[observerId]?.[edit.subjectId] ?? null;
   if (
     !authored &&
-    !recognizesSubject(world, observerId, edit.subjectId) &&
-    !canAddressRememberedSubject(world, observerId, edit.subjectId) &&
-    (!encounterId || current)
+    !canRememberSubject(world, observerId, edit.subjectId) &&
+    !canAddressRememberedSubject(world, observerId, edit.subjectId)
   )
     return outcome(
       false,
@@ -267,11 +274,12 @@ export function canRememberSubject(
   observerId: string,
   subjectId: string,
 ): boolean {
-  return (
-    recognizesSubject(world, observerId, subjectId) ||
-    (!identityForEntity(world, observerId, subjectId) &&
-      !!world.perceptionEpisodes?.[observerId]?.[subjectId])
-  );
+  if (entityGet(world.entities, subjectId)?.actor)
+    return (
+      canAddressRememberedSubject(world, observerId, subjectId) ||
+      currentCommunicationSubject(world, observerId, subjectId) === subjectId
+    );
+  return !!currentBodyGrant(world, observerId, subjectId);
 }
 export function rememberSubject(
   world: WorldState,
@@ -331,9 +339,10 @@ export function observerName(world: WorldState, observerId: string, subjectId: s
   const received = currentBodyObservation(world, observerId, subjectId);
   if (received?.value.body.label) return received.value.body.label;
   const entity = entityGet(world.entities, subjectId);
-  if (entity && !entity.actor) return outwardBodyName(world, entity);
+  if (entity && accessiblePossession(world, observerId, subjectId))
+    return outwardBodyName(world, entity);
   return {
-    name: entity?.actor ? 'unidentified person' : 'unidentified object',
+    name: 'unidentified subject',
     nameForm: 'count',
     indefiniteArticle: undefined,
   };
@@ -410,7 +419,10 @@ export function subjectLabel(
   return subject.kind === 'entity'
     ? identityForEntity(world, observerId, subject.entityId)?.givenName ||
         observerDescription(world, observerId, subject.entityId)
-    : observerIndividual(world, observerId, subject)?.givenName || 'unidentified voice';
+    : observerIndividual(world, observerId, subject)?.givenName ||
+        (observerIndividual(world, observerId, subject)?.voice
+          ? 'unidentified voice'
+          : 'unidentified individual');
 }
 const introductionWords = new Intl.Segmenter('und', { granularity: 'word' });
 function containsNameWords(text: string, name: string[]): boolean {
@@ -496,6 +508,9 @@ export function validateObserverIdentities(world: WorldState): void {
         !identity ||
         (identity.individualId !== undefined && identity.individualId !== subjectId) ||
         (identity.canonicalId !== undefined && !isSafeRecordId(identity.canonicalId)) ||
+        (identity.nameEvidenceIds !== undefined &&
+          (!Array.isArray(identity.nameEvidenceIds) ||
+            identity.nameEvidenceIds.some((source) => typeof source !== 'string' || !source))) ||
         typeof identity.givenName !== 'string' ||
         characterCount(identity.givenName) > 120 ||
         !Number.isSafeInteger(identity.revision) ||

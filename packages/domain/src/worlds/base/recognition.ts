@@ -9,6 +9,9 @@ import { readAttribute, definitionPin } from '../../world-modules.js';
 import type { WorldEvent, WorldState } from '../../types.js';
 import type { ObserverIdentity } from './knowledge.js';
 import { normalSpeedSeconds } from '../../simulation-time.js';
+import { isSafeRecordId } from '../../records.js';
+import { validateEvidenceSource } from '../../perception-values.js';
+import type { EvidenceSource, ObservationFactKey } from '../../perception-evidence.js';
 
 /** Selected fictional descriptors; never derived from an identity or rendering asset.
  * docs/worlds/base/perception-recognition.md#perceivable-signatures */
@@ -54,6 +57,8 @@ export interface IndividualRecognition {
   perception?: number;
   policy?: string;
   priorExemplarKey?: string;
+  /** Immediate actual association dependency, independent of the received words. */
+  learningSupport?: string[];
   seedCorrelation?: { sampleKey: string; individualId?: string };
 }
 export const BASE_PERCEPTION_POLICY = {
@@ -156,6 +161,7 @@ interface Exemplar {
   order: number;
   key: string;
   authored: boolean;
+  sourceKey: string;
 }
 function exemplars(voice: RecognitionKnowledge): Exemplar[] {
   const pool: Exemplar[] = [
@@ -164,6 +170,7 @@ function exemplars(voice: RecognitionKnowledge): Exemplar[] {
       at: voice.authored!.installedAt,
       order: sample.ordinal,
       key: voice.authored!.source,
+      sourceKey: voice.authored!.source,
       authored: true,
     })) ?? []),
     ...voice.samples.map((sample) => ({ ...sample, authored: false })),
@@ -259,7 +266,10 @@ function perceiveIndividual(
   const records = ((world.observerIdentities ??= {})[observerId] ??= {});
   const sample: RecognitionSample = {
     key: JSON.stringify([modality, event.id]),
-    sourceKey: bodySupport ? JSON.stringify(bodySupport.source) : `awareness:${event.id}`,
+    sourceKey:
+      modality === 'sight' && bodySupport
+        ? JSON.stringify(bodySupport.source)
+        : `awareness:${event.id}`,
     at: event.at,
     order: event.order ?? event.sequence,
     encounter:
@@ -279,7 +289,10 @@ function perceiveIndividual(
         )!,
       ),
     ]),
-    support: bodySupport ? [JSON.stringify(bodySupport)] : [`awareness:${event.id}`],
+    support: [
+      ...(modality === 'voice' ? [`awareness:${event.id}`] : []),
+      ...(bodySupport ? [JSON.stringify(bodySupport)] : []),
+    ],
   };
   result.perception = perception;
   result.policy = sample.policy;
@@ -289,6 +302,7 @@ function perceiveIndividual(
     distance: number;
     quality: number;
     exemplarKey: string;
+    sourceKey: string;
   }[] = [];
   const recognized: typeof candidates = [];
   for (const identity of Object.values(records)) {
@@ -309,6 +323,7 @@ function perceiveIndividual(
         distance: match.distance,
         quality: match.quality,
         exemplarKey: exemplar.key,
+        sourceKey: exemplar.sourceKey,
       };
       if (!candidate || entry.distance < candidate.distance) candidate = entry;
       if (
@@ -345,6 +360,8 @@ function perceiveIndividual(
     result.recognized = true;
     result.subject = localSubject(winner.identity);
     result.priorExemplarKey = winner.exemplarKey;
+    result.learningSupport = [winner.sourceKey];
+    sample.support.push(winner.sourceKey);
   }
   // Only real, qualifying original samples can change familiarity. Prior evidence
   // remains available through the existing personal-history source owner.
@@ -427,6 +444,8 @@ function perceiveIndividual(
     unique &&
     sample.at - seed.prior.at >= normalSpeedSeconds(world, BASE_PERCEPTION_POLICY.creditSeconds)
   ) {
+    result.learningSupport = [seed.prior.sourceKey];
+    sample.support.push(seed.prior.sourceKey);
     const individualId = seed.identity.individualId ?? allocateIndividual(records);
     const identity: ObserverIdentity = seed.identity.individualId
       ? seed.identity
@@ -478,6 +497,7 @@ export function perceiveVoice(
   features: RecognitionFeatures,
   clarityMarginDb: number,
   visibleSourceId?: string,
+  bodySupport?: ObservationFactKey,
 ): IndividualRecognition {
   return perceiveIndividual(
     world,
@@ -487,6 +507,7 @@ export function perceiveVoice(
     Math.max(0, Math.min(1, (clarityMarginDb - 3) / 12)),
     'voice',
     visibleSourceId,
+    bodySupport,
   );
 }
 /** Vision's future physical provider must supply received dimensions and the exact
@@ -563,42 +584,120 @@ export function installAuthoredVoice(
     },
   };
 }
-/** Conservative selected fallback: remove derived learning when exact sources are
- * corrected or forgotten. This cannot silently replace them from today's body. */
+/** Current persisted roots must identify a supported real source or the selected
+ * authored installation; arbitrary strings cannot silently evade revocation. */
+export function validRecognitionSupportKey(key: unknown): key is string {
+  if (typeof key !== 'string' || !key) return false;
+  const personal = /^(awareness|memory|summary):(.+)$/su.exec(key);
+  if (personal) return isSafeRecordId(personal[2]);
+  try {
+    const value = JSON.parse(key);
+    if (Array.isArray(value))
+      return (
+        value.length === 4 &&
+        value[0] === 'authored-acquaintance' &&
+        isSafeRecordId(value[1]) &&
+        value[2] === BASE_PERCEPTION_POLICY.id &&
+        value[3] === BASE_PERCEPTION_POLICY.version
+      );
+    if (!value || typeof value !== 'object') return false;
+    const fact = 'source' in value;
+    if (
+      fact &&
+      (Object.keys(value).length !== 2 || !Number.isSafeInteger(value.ordinal) || value.ordinal < 0)
+    )
+      return false;
+    const source = fact ? value.source : value;
+    validateEvidenceSource(source);
+    return source.family === 'native-exposure' || source.family === 'native-response';
+  } catch {
+    return false;
+  }
+}
+export type RecognitionSupportSource =
+  | { kind: 'awareness' | 'memory' | 'summary'; id: string }
+  | EvidenceSource;
+/** Original immediate roots live on their exact source interpretation. This parser
+ * shares those roots with the existing personal-history reverse dependency index. */
+export function recognitionSupportSources(keys: readonly string[]): RecognitionSupportSource[] {
+  return keys.flatMap((key): RecognitionSupportSource[] => {
+    const personal = /^(awareness|memory|summary):(.+)$/su.exec(key);
+    if (personal)
+      return [{ kind: personal[1] as 'awareness' | 'memory' | 'summary', id: personal[2]! }];
+    try {
+      const value = JSON.parse(key);
+      const source =
+        value && typeof value === 'object' && !Array.isArray(value) && 'source' in value
+          ? value.source
+          : value;
+      if (!source || typeof source !== 'object' || Array.isArray(source)) return [];
+      validateEvidenceSource(source);
+      return [source];
+    } catch {
+      return [];
+    }
+  });
+}
+export const recognitionSupportSourceIds = (keys: readonly string[]): string[] =>
+  recognitionSupportSources(keys).map((source) => source.id);
+
+/** Remove only support revoked through the personal-history dependency closure.
+ * Exact prior-source edges survive in original accounts after exemplar eviction. */
 export function revokeRecognitionEvidence(
   world: WorldState,
   actorId: string,
   affected: Set<string>,
 ): void {
+  const records = Object.values(world.observerIdentities?.[actorId] ?? {});
+  const revoked = (keys: readonly string[]) =>
+    keys.some((key) => affected.has(key)) ||
+    recognitionSupportSourceIds(keys).some(
+      (id) =>
+        affected.has(id) ||
+        affected.has(`awareness:${id}`) ||
+        affected.has(`memory:${id}`) ||
+        affected.has(`summary:${id}`),
+    );
+  // Resident samples provide the same immediate edges. Cold predecessors are
+  // supplied by the existing source dependency preparation before this mutation.
+  let expanded = true;
+  while (expanded) {
+    expanded = false;
+    for (const identity of records)
+      for (const modality of ['voice', 'sight'] as const)
+        for (const sample of identity[modality]?.samples ?? [])
+          if (revoked(sample.support) && !affected.has(sample.sourceKey)) {
+            affected.add(sample.sourceKey);
+            for (const id of recognitionSupportSourceIds([sample.sourceKey])) affected.add(id);
+            expanded = true;
+          }
+  }
   let changed = false;
-  for (const identity of Object.values(world.observerIdentities?.[actorId] ?? {})) {
+  for (const identity of records) {
+    let identityChanged = false;
     for (const modality of ['voice', 'sight'] as const) {
-      const voice = identity[modality];
-      const revokedAuthored = voice?.authored && affected.has(voice.authored.source);
-      // Evicted exemplars can still support later fallible learning. Until the
-      // personal source lineage has a finer eligibility query, revoke actual
-      // learned profiles conservatively on a correction instead of retaining
-      // familiarity whose complete old support cannot be proved.
-      const revokedLearning = affected.size > 0 && !!voice?.samples.length;
-      const revokedName = identity.nameEvidenceIds?.some((key) => affected.has(key));
-      if (!revokedAuthored && !revokedLearning && !revokedName) continue;
-      if (voice && (revokedAuthored || revokedLearning)) {
-        voice.samples = [];
-        if (revokedAuthored) {
-          voice.authored = undefined;
-          identity.authored = false;
-        }
-        // Keep the admitted credit deadline even when its sufficient supports retire.
-      }
-      if (revokedName) {
-        identity.givenName = '';
-        identity.nameEvidenceIds = [];
-      }
-      if (!identity.authored && (revokedAuthored || revokedLearning))
-        identity.canonicalId = undefined;
-      identity.revision++;
-      changed = true;
+      const knowledge = identity[modality];
+      if (!knowledge) continue;
+      const remaining = knowledge.samples.filter((sample) => !revoked(sample.support));
+      const revokedAuthored = knowledge.authored && affected.has(knowledge.authored.source);
+      if (remaining.length === knowledge.samples.length && !revokedAuthored) continue;
+      knowledge.samples = retainSamples(remaining);
+      if (revokedAuthored) knowledge.authored = undefined;
+      // An invalidated sample never resets its admitted last-credit/deadline.
+      identityChanged = true;
     }
+    if (identity.nameEvidenceIds?.some((key) => affected.has(key))) {
+      identity.givenName = '';
+      identity.nameEvidenceIds = [];
+      identityChanged = true;
+    }
+    if (!identityChanged) continue;
+    if (identity.authored && !identity.voice?.authored && !identity.sight?.authored) {
+      identity.authored = false;
+      identity.canonicalId = undefined;
+    }
+    identity.revision++;
+    changed = true;
   }
   if (changed) advanceKnowledgeRevision(world, actorId);
 }
@@ -629,11 +728,18 @@ export function validateRecognition(world: WorldState): void {
             (sample) =>
               !validRecognitionFeatures(sample.features) ||
               typeof sample.key !== 'string' ||
-              typeof sample.sourceKey !== 'string' ||
-              !sample.sourceKey ||
+              !sample.key ||
+              typeof sample.encounter !== 'string' ||
+              !sample.encounter ||
+              typeof sample.policy !== 'string' ||
+              !sample.policy ||
+              !validRecognitionSupportKey(sample.sourceKey) ||
+              !recognitionSupportSources([sample.sourceKey]).length ||
               usable(sample.features).length < 3 ||
               !Array.isArray(sample.support) ||
-              sample.support.some((key) => typeof key !== 'string') ||
+              !sample.support.length ||
+              sample.support.length > 3 ||
+              sample.support.some((key) => !validRecognitionSupportKey(key)) ||
               !Number.isFinite(sample.at) ||
               !Number.isFinite(sample.order) ||
               !Number.isFinite(sample.quality) ||
@@ -644,6 +750,8 @@ export function validateRecognition(world: WorldState): void {
               sample.perception < 0 ||
               sample.perception > 100,
           ) ||
+          (voice.lastCreditAt !== undefined &&
+            (!Number.isFinite(voice.lastCreditAt) || voice.lastCreditAt < 0)) ||
           (voice.nextCreditAt !== undefined &&
             (!Number.isFinite(voice.nextCreditAt) ||
               voice.lastCreditAt === undefined ||
@@ -655,6 +763,7 @@ export function validateRecognition(world: WorldState): void {
           (!['learned', 'familiar'].includes(voice.authored.baseline) ||
             !Number.isFinite(voice.authored.installedAt) ||
             !Number.isSafeInteger(voice.authored.order) ||
+            typeof voice.authored.source !== 'string' ||
             !voice.authored.source ||
             !voice.authored.exemplars.length ||
             voice.authored.exemplars.length > 4 ||
@@ -727,6 +836,10 @@ export function validateIndividualRecognition(
       (!Number.isFinite(result.perception) || result.perception < 0 || result.perception > 100)) ||
     (result.policy !== undefined && typeof result.policy !== 'string') ||
     (result.priorExemplarKey !== undefined && typeof result.priorExemplarKey !== 'string') ||
+    (result.learningSupport !== undefined &&
+      (!Array.isArray(result.learningSupport) ||
+        result.learningSupport.length > 1 ||
+        result.learningSupport.some((key) => !validRecognitionSupportKey(key)))) ||
     (result.seedCorrelation !== undefined &&
       (!result.seedCorrelation ||
         typeof result.seedCorrelation.sampleKey !== 'string' ||

@@ -174,7 +174,7 @@ export class CreationTargetRepository {
         ...BACKUP_TABLES,
         'recall_vectors',
         'recall_sources',
-        'mind_summary_sources',
+        'mind_source_dependencies',
         'memory_index_models',
         'memory_index_queue',
         'memory_vectors',

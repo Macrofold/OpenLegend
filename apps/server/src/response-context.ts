@@ -261,7 +261,10 @@ export function responseReferences(
   const references = ids.map((id) => {
     const entity = entityGet(world.entities, id)!;
     const received = visible.has(id) ? currentBodyObservation(world, actorId, id) : undefined;
-    const currentSubject = received ? currentBodySubject(world, actorId, id) : undefined;
+    const currentSubject = received
+      ? (currentBodySubject(world, actorId, id) ??
+        (!entity.actor ? { kind: 'entity' as const, entityId: id } : undefined))
+      : undefined;
     if (currentSubject) identityReferences[roleHandle(id)] = currentSubject;
     const label =
       id === actorId

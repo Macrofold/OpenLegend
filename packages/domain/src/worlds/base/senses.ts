@@ -1,6 +1,14 @@
 import type { SenseDefinition } from '../../perception.js';
 
 export const PERCEPTION_RULES = { sightRadius: 28 } as const;
+export const DETECTION_SUPPORT_POLICY = {
+  id: 'wilderness:detection-support',
+  version: 1,
+  threshold: 1,
+  maximum: 1,
+  fullStrengthSeconds: 0.25,
+  decaySeconds: 0.5,
+} as const;
 /** Mere scenery/animal reappearance belongs to current sight, not durable recollection.
  * Social sightings remain evidence without requiring thought; interests and actual changes
  * still drive attention. Richer salience remains EPR06, not a physical visibility rule.
@@ -17,7 +25,7 @@ export const SIGHTING_POLICY = {
   recordWindowSeconds: 3600,
   /** A return this soon after actual sensory loss keeps encounter correlation.
    * Native live body/detail leases still end immediately, independent of story quotas. */
-  episodeLingerSeconds: 30,
+  episodeGraceSeconds: 0.5,
 } as const;
 /** Ongoing perceived conditions (EPR06). A fire or an incapacitated being stays salient while
  * in view; a body currently ranks earlier in optional attention only, because bodies are not

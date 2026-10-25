@@ -8,6 +8,7 @@ import {
 } from './worlds/base/recognition.js';
 import { hasMemory } from './living.js';
 import { selectedVoiceReception } from './world-composition.js';
+import { currentBodyLocalSubject } from './perception-evidence.js';
 import { speechPerception } from './perception.js';
 import { contentLabel } from './events.js';
 import type { SpeechVolume } from './acoustics.js';
@@ -149,11 +150,18 @@ export function perceiveSpeech(
   const voice = reception?.recognition;
   const learnedSubject = voice?.subject ?? voice?.learnedSubject;
   const individual = learnedSubject && observerIndividual(world, observer.id, learnedSubject);
+  const localBodySubject = visible
+    ? currentBodyLocalSubject(world, observer.id, source.id)
+    : undefined;
+  const preferredBodyName = localBodySubject
+    ? observerIndividual(world, observer.id, localBodySubject)?.givenName
+    : undefined;
   const speaker =
     voice?.recognized && individual
       ? {
-          name: individual.givenName || 'unidentified voice',
-          nameForm: individual.givenName ? ('proper' as const) : ('count' as const),
+          name: preferredBodyName || individual.givenName || 'unidentified voice',
+          nameForm:
+            preferredBodyName || individual.givenName ? ('proper' as const) : ('count' as const),
         }
       : visible
         ? observerName(world, observer.id, source.id)

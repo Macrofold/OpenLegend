@@ -109,19 +109,21 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
   if (frozen) captures.set(entity, capture);
   return withPublicAttributes(world, capture);
 }
-const publicAttributeFamilies = new WeakMap<object,boolean>();
+const publicAttributeFamilies = new WeakMap<object, boolean>();
 function withPublicAttributes(
   world: WorldState,
   capture: ExposureCapture | null,
 ): ExposureCapture | null {
   if (!capture?.entity.actor) return capture;
-  const definitions=readOnlyDraftView(world.moduleManifest.definitions);
-  let installed = Object.isFrozen(definitions) ? publicAttributeFamilies.get(definitions) : undefined;
-  if(installed===undefined) {
-    installed=definitions.some(definition=>definition.disclosure==='public');
-    if(Object.isFrozen(definitions))publicAttributeFamilies.set(definitions,installed);
+  const definitions = readOnlyDraftView(world.moduleManifest.definitions);
+  let installed = Object.isFrozen(definitions)
+    ? publicAttributeFamilies.get(definitions)
+    : undefined;
+  if (installed === undefined) {
+    installed = definitions.some((definition) => definition.disclosure === 'public');
+    if (Object.isFrozen(definitions)) publicAttributeFamilies.set(definitions, installed);
   }
-  if(!installed)return capture;
+  if (!installed) return capture;
   return {
     ...capture,
     feature: JSON.stringify([capture.feature, projectAttributes(world, capture.entity, 'public')]),

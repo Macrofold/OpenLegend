@@ -21,6 +21,18 @@ import { createHmac, randomBytes } from 'node:crypto';
 const historicalReferenceKey = randomBytes(32);
 export { HistoryCursorError } from './history-cursor-error.js';
 
+/** An event-time participant is a historical role, never a current action target. */
+export function historicalEntityReference(
+  observerId: string | undefined,
+  eventId: string,
+  entityId: string,
+  role: string,
+): string {
+  return createHmac('sha256', historicalReferenceKey)
+    .update(JSON.stringify([observerId, eventId, entityId, role]))
+    .digest('hex');
+}
+
 export function worldEventSourceReference(
   sourceScope: string,
   family: 'speech' | 'encounter',
@@ -38,8 +50,9 @@ export function worldEventSourceReference(
 /** Presentation never receives raw source text, origins or hidden subject IDs. */
 export function publicEvent(
   event: ActorEvent,
-  presentation?: EventPresentationPolicy,
-  observerId?: string,
+  presentation: EventPresentationPolicy | undefined,
+  observerId: string,
+  referenceScope: string,
   currentContact?: (body: NonNullable<ActorEvent['sourceBody']>) => string | undefined,
 ): PublicEvent {
   const change = event.type === 'attribute-changed' ? event.data : undefined;
@@ -69,16 +82,21 @@ export function publicEvent(
       : undefined;
   const references: NonNullable<PublicEvent['references']> = (event.references ?? []).map(
     (ref) => ({
-      id: createHmac('sha256', historicalReferenceKey)
-        .update(JSON.stringify([observerId, event.id, ref.id, ref.role]))
-        .digest('hex'),
+      id: historicalEntityReference(referenceScope, event.id, ref.id, ref.role),
       label: ref.label,
       role: ref.role,
       kind: 'historical',
     }),
   );
   const speakerReference = createHmac('sha256', historicalReferenceKey)
-    .update(JSON.stringify([observerId, 'speech-participant', event.actorId === observerId ? 'self' : event.sourceSubject ?? event.id])).digest('hex');
+    .update(
+      JSON.stringify([
+        referenceScope,
+        'speech-participant',
+        event.actorId === observerId ? 'self' : (event.sourceSubject ?? event.id),
+      ]),
+    )
+    .digest('hex');
   const speakerContact = event.sourceBody && currentContact?.(event.sourceBody);
   // Render only facts already granted to this observer. Older wording may be noisy,
   // but a missing cause must never be filled from today's body or world state.
@@ -134,7 +152,13 @@ export function publicEvent(
     ...(event.actorId === observerId ? { actorId: observerId } : {}),
     ...(event.targetId === observerId ? { targetId: observerId } : {}),
     ...(event.speech
-      ? { speech: { ...event.speech, speakerReference, ...(speakerContact ? { speakerContact } : {}) } }
+      ? {
+          speech: {
+            ...event.speech,
+            speakerReference,
+            ...(speakerContact ? { speakerContact } : {}),
+          },
+        }
       : {}),
     ...(event.sound
       ? {
@@ -425,7 +449,10 @@ export async function readPerceivedEvents(
                 corr ? `${perspective.revision}:corrected:${corr}` : perspective.revision,
               )
             : undefined;
-        return { ...publicEvent(projected, presentation, actorId), ...(source ? { source } : {}) };
+        return {
+          ...publicEvent(projected, presentation, actorId, JSON.stringify([worldId, sourceScope])),
+          ...(source ? { source } : {}),
+        };
       }),
       ...(ascending
         ? {

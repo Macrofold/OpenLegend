@@ -1,8 +1,13 @@
-import { validSpeechLabel } from './speech.js';
+import {
+  recognitionSupportSources,
+  type RecognitionSupportSource,
+} from './worlds/base/recognition.js';
+import { validSpeechLabel, validatePerceivedSpeech } from './speech.js';
 import { validObserverSubject } from './knowledge.js';
 import { validPersonalSourceRef, type PersonalSourceRef } from './experience-source.js';
 export {
   PERSONAL_EVIDENCE_PREPARATION,
+  personalFactAlias,
   validPersonalSourceRef,
   type PersonalSourceRef,
 } from './experience-source.js';
@@ -35,6 +40,12 @@ export interface SpeechAttributionGroup {
   firstAt: number;
   lastAt: number;
   sourceCount: number;
+  /** Self speech without a sensory contribution still retains its exact original payload. */
+  utterances: Array<{
+    source: PersonalSourceRef;
+    at: number;
+    speech: NonNullable<Awareness['speech']>;
+  }>;
 }
 export interface ExperienceManifest {
   version: 1;
@@ -71,6 +82,7 @@ export function experienceManifest(
       firstAt: _first,
       lastAt: _last,
       sourceCount: _count,
+      utterances: _utterances,
       ...roles
     } = group;
     // An unresolved contact is scoped to its actual original contribution; equal labels
@@ -92,6 +104,14 @@ export function experienceManifest(
       firstAt: Math.min(prior?.firstAt ?? Infinity, group.firstAt),
       lastAt: Math.max(prior?.lastAt ?? -Infinity, group.lastAt),
       sourceCount: sources.length,
+      utterances: [
+        ...new Map(
+          [...(prior?.utterances ?? []), ...group.utterances].map((utterance) => [
+            refKey(utterance.source),
+            utterance,
+          ]),
+        ).values(),
+      ],
     });
   };
   for (const child of children) {
@@ -162,6 +182,15 @@ export function experienceManifest(
         firstAt: awareness.at,
         lastAt: awareness.at,
         sourceCount: 1,
+        utterances: originals.some((observation) =>
+          observation.facets.some(
+            (facet) =>
+              facet.value.kind === 'speech' &&
+              canonicalJson(facet.value.speech) === canonicalJson(heard),
+          ),
+        )
+          ? []
+          : [{ source: ref, at: awareness.at, speech: heard }],
       });
   }
   const refs = [...coverage.values()].sort((a, b) => refKey(a).localeCompare(refKey(b)));
@@ -173,7 +202,10 @@ export function experienceManifest(
     speech: [...speech.values()],
   };
 }
-export function validateExperienceManifest(value: unknown): asserts value is ExperienceManifest {
+export function validateExperienceManifest(
+  value: unknown,
+  originals?: Map<string, string>,
+): asserts value is ExperienceManifest {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('Missing structured memory coverage.');
   const manifest = value as ExperienceManifest;
@@ -187,12 +219,25 @@ export function validateExperienceManifest(value: unknown): asserts value is Exp
     !Array.isArray(manifest.speech)
   )
     throw new Error('Invalid structured memory coverage.');
-  for (const observation of manifest.observations) validateObservationContribution(observation);
+  for (const observation of manifest.observations)
+    validateObservationContribution(observation, originals);
   const coverage = new Set(manifest.coverage.map(refKey));
   for (const group of manifest.speech)
     if (
       !group ||
       !Array.isArray(group.sources) ||
+      !Array.isArray(group.utterances) ||
+      group.utterances.some(
+        (utterance) =>
+          !utterance ||
+          !validPersonalSourceRef(utterance.source) ||
+          !group.sources.some((source) => refKey(source) === refKey(utterance.source)) ||
+          !Number.isFinite(utterance.at) ||
+          utterance.at < group.firstAt ||
+          utterance.at > group.lastAt,
+      ) ||
+      new Set(group.utterances.map((utterance) => refKey(utterance.source))).size !==
+        group.utterances.length ||
       !group.sources.length ||
       group.sources.some((ref) => !validPersonalSourceRef(ref) || !coverage.has(refKey(ref))) ||
       new Set(group.sources.map(refKey)).size !== group.sources.length ||
@@ -213,6 +258,8 @@ export function validateExperienceManifest(value: unknown): asserts value is Exp
       !['none', 'partial', 'clear'].includes(group.intelligibility)
     )
       throw new Error('Invalid remembered speech attribution.');
+  for (const group of manifest.speech)
+    for (const utterance of group.utterances) validatePerceivedSpeech(utterance.speech);
 }
 /** Exact native dependencies and explicit personal aliases share the existing reverse
  * source index. Aliases route correction only; they never replace source revisions. */
@@ -265,11 +312,53 @@ export function observationDependencies(
   for (const observation of observations) visit(observation);
   return [...dependencies.values()];
 }
+export function observationLearningSources(
+  observations: readonly ObservationContribution[],
+): RecognitionSupportSource[] {
+  const sources = new Map<string, RecognitionSupportSource>();
+  const facet = (value: SensoryFacet) => {
+    if (value.kind === 'association')
+      for (const source of recognitionSupportSources(value.learningSupport ?? []))
+        sources.set(canonicalJson(source), source);
+    if (value.kind === 'confirmation') {
+      visit(value.snapshot.original);
+      facet(value.snapshot.value);
+    }
+    if (value.kind === 'observed-motion')
+      for (const sample of [value.earlier, value.later]) visit(sample.original);
+  };
+  const visit = (observation: ObservationContribution) => {
+    for (const item of observation.facets) facet(item.value);
+  };
+  for (const observation of observations) visit(observation);
+  return [...sources.values()];
+}
+/** Owned original copies are aliases of this personal source, not dependencies on an
+ * unrelated witness or motion sample. Used only for exact cold invalidation routing. */
+export function ownedObservationSources(
+  observations: readonly ObservationContribution[],
+): EvidenceSource[] {
+  const sources = new Map<string, EvidenceSource>();
+  const visit = (observation: ObservationContribution) => {
+    const source: EvidenceSource = {
+      family: 'native-exposure',
+      observer: observation.observer,
+      id: observation.id,
+      revision: observation.revision,
+    };
+    sources.set(canonicalJson(source), source);
+    for (const item of observation.facets)
+      if (item.value.kind === 'confirmation') visit(item.value.snapshot.original);
+  };
+  for (const observation of observations) visit(observation);
+  return [...sources.values()];
+}
 export function manifestDependsOn(
   manifest: ExperienceManifest,
   affected: ReadonlySet<string>,
 ): boolean {
   return (
+    observationLearningSources(manifest.observations).some((source) => affected.has(source.id)) ||
     manifest.coverage.some((ref) => affected.has(ref.id)) ||
     observationDependencies(manifest.observations).some(
       ({ source, aliases }) => affected.has(source.id) || aliases.some((id) => affected.has(id)),

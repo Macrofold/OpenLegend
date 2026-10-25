@@ -571,7 +571,7 @@ try {
       // Compare the same private fixture before and after statistics refresh;
       // never alter a player's database or hide this work in measured gameplay.
       if (phase === 'grown-analyzed')
-        await database.exec(`ANALYZE recall_sources, mind_summary_sources, memory_vectors,
+        await database.exec(`ANALYZE recall_sources, mind_source_dependencies, memory_vectors,
           memory_index_queue, memory_index_models, memory_index_attempts,
           mind_forgotten, mind_corrections`);
       await database.transaction(async () => {
@@ -580,7 +580,7 @@ try {
           .prepare(
             `SELECT
           (SELECT COUNT(*) FROM recall_sources WHERE world_id=?) AS recall_sources,
-          (SELECT COUNT(*) FROM mind_summary_sources WHERE world_id=?) AS summary_sources,
+          (SELECT COUNT(*) FROM mind_source_dependencies WHERE world_id=?) AS summary_sources,
           (SELECT COUNT(*) FROM memory_vectors WHERE world_id=?) AS vectors,
           (SELECT COUNT(*) FROM memory_index_queue WHERE world_id=?) AS queued_sources`,
           )

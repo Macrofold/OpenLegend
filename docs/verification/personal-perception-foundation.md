@@ -15,11 +15,19 @@ This covers PP01–PP04 and supported-channel PP05–PP06, the required SPK01–
 - Complete Known-place preparation used indexed place/source/correction reads. One small fixture contained one capsule, 511 bytes; one measured complete preparation took 2.728 ms, with SQL execution 0.044 ms. These are tiny-fixture measurements, not capacity acceptance. The existing 8,192-row/4 MiB preparation allowance refuses incomplete required work; it neither truncates retained places nor turns preparation failure into an unknown label.
 - A current public contact resolved while acquired; a raw canonical actor ID was refused. Loss retired the contact immediately. Reacquiring the same actor and physical life created a different contact, and the old reference remained refused. Delayed player and NPC physical decisions retain the captured contact/lease; remembered communication and private notes have separate roles.
 
+## Bounded caller measurements
+
+A fresh seed-73 service with 129 entities and 27 living actors completed ten active one-game-second ticks to simulation time 10; each actual publication contained 34 current bodies and 150–151 facets. Tick time min/median/max was 57.845167/62.687708/199.0335 ms; view preparation was 6.445167/7.480833/16.53825 ms; acquired-cut capture was 3.169167/4.27275/4.833541 ms. The 199.0335 ms tick included the first native walking invalidation. Cold view/cut time was 22.665417/4.290542 ms; unchanged warm view/cut time was 6.8635/3.833541 ms. Serialized cut size was 382,318 bytes cold and 397,661–398,205 bytes after motion; view size was 356,426 bytes cold and 357,393–357,546 bytes afterwards.
+
+This demonstrates the active starter caller, cold preparation and actual invalidation, with zero provider work. It has no before-change baseline or population sweep and does not establish frame-rate, production capacity, multiplayer or PP07 performance acceptance. The current cut retains complete immutable source bodies; its measured size is not a compact-network-payload claim.
+
 ## Player publication evidence
 
 A disposable native HTTP/Vite world was inspected in the desktop browser. The ordinary In view list and inspector showed an unidentified person, received public meters and native action choices. Moving the source away through the actual service and advancing native perception removed its mesh/list entry and all protected inspector details/actions. The panel showed **No longer in sight**. Returning the source added a new contact while the old inspector stayed retired. This was controlled interaction, not natural stealth or a usability study.
 
 Current appearance, geometry, carried-kind details, pile contents and public attributes come from captured facets. The publication includes original times; carried details retain independent times. Historical Events keep occurrence-time labels/words and source inspection, without live person links or body upgrades. Captions group by acquired participant references and anchor only to an independently current body. Omitted contacts are removed before rendering; remembered fires emit no current light. Static map publication remains the existing explicitly public authored topology, excluding the separate dynamic native assembly map. Ordinary embodied views do not become creator views merely because the account holds inspection/creation grants.
+
+The existing 34-turn conversation regression also passed. A separate native round trip reconstructed every original permitted meaning from the request-local shared-field representation: 34 turns occupied 4,518 bytes, with no provider calls or context-budget increase. Native records, timestamps, source roles and retained manifests are unchanged; this is serialization evidence, not model comprehension or reply-quality evidence.
 
 ## Checks and remaining qualification
 

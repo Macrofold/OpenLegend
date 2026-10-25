@@ -1,4 +1,4 @@
-/** Bundled integration fidelity, not a clock conversion or universal world law.
+/** Bundled normal-time conversion and integration fidelity, never universal world law.
  * docs/worlds/base/time.md */
 export const BASE_TIME_POLICY = {
   normalGameSecondsPerSecond: 60,

@@ -34,7 +34,8 @@ Dependencies: integrated shared schema; A current/history/reference families; B 
 - [ ] Replace whole-entity publication with permitted facet/contact records across full views, patches, descriptions, histories and all lazy reads.
 - [ ] Separate current body, historical/source association and anonymous cue references; bind action targeting only through eligible current body references.
 - [ ] Restrict map/dynamic geometry, appearance assets, animation, shadow, light, sound, DOM/accessibility and diagnostic metadata to the same audience.
-- [x] Replace remembered fire illumination with history-only art; permit current source-free glow only from current authorized appearance.
+- [x] Stop retained fire records from emitting current light; current sources require an acquired body facet.
+- [ ] Qualify historical art and source-free current glow with their actual B/G producers.
 - [ ] Apply facet removals and scope invalidation before rendering; fence async reads/asset loads/receipts and stale patches.
 - [ ] Qualify G-AC01–12 and all applicable lifecycle/projection cases in the technical acceptance table.
 

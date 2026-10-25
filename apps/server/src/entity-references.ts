@@ -1,5 +1,5 @@
 import type { NameArticle } from '@open-legend/language';
-import { observerDescription, recognizesSubject, currentBodyObservation } from '@open-legend/domain';
+import { observerDescription, recognizesSubject, currentBodyGrant } from '@open-legend/domain';
 import type {
   ActorResponse,
   ActivityRequestDescriptor,
@@ -13,17 +13,51 @@ import { createHmac, randomBytes } from 'node:crypto';
 // presentation reference opaque; restart invalidation grants no authority.
 const bodyReferenceKey = randomBytes(32);
 
-export function permittedSourceHandle(world: WorldState, observerId: string, identity: unknown): string {
+// These are display/binding tokens, not native source revisions. 144 keyed bits
+// keep them opaque while repeated exact evidence stays within existing context budgets.
+export function permittedSourceHandle(
+  world: WorldState,
+  observerId: string,
+  identity: unknown,
+): string {
   return createHmac('sha256', bodyReferenceKey)
     .update(JSON.stringify(['personal-source', world.id, observerId, identity]))
-    .digest('hex');
+    .digest()
+    .subarray(0, 18)
+    .toString('base64url');
 }
 /** Preserve exact evidence-family identity across fact, support and confirmation views. */
-export function evidenceSourceHandle(world:WorldState,observerId:string,source:import('@open-legend/domain').EvidenceSource):string {
-  return permittedSourceHandle(world,observerId,['evidence',source.family,source.observer.actorId,
-    source.observer.physicalLife,source.id,source.revision]);
+export function evidenceSourceHandle(
+  world: WorldState,
+  observerId: string,
+  source: import('@open-legend/domain').EvidenceSource,
+): string {
+  return permittedSourceHandle(world, observerId, [
+    'evidence',
+    source.family,
+    source.observer.actorId,
+    source.observer.physicalLife,
+    source.id,
+    source.revision,
+  ]);
 }
-export function subjectHandle(world: WorldState, observerId: string, subject: ObserverSubject): string {
+export function personalSourceHandle(
+  world: WorldState,
+  observerId: string,
+  source: import('@open-legend/domain').PersonalSourceRef,
+): string {
+  return permittedSourceHandle(world, observerId, [
+    'personal',
+    source.kind,
+    source.id,
+    source.revision,
+  ]);
+}
+export function subjectHandle(
+  world: WorldState,
+  observerId: string,
+  subject: ObserverSubject,
+): string {
   return permittedSourceHandle(world, observerId, ['subject', subject]);
 }
 
@@ -38,20 +72,21 @@ export function entityBodyReference(scope: string, entity: Entity): string {
 /** Opaque presentation references are not domain identities or authority.
  * docs/memory-architecture.md#metadata-stays-in-the-server-binding
  */
-export function entityHandle(
-  world: WorldState,
-  observerId: string,
-  id: string,
-): string {
+export function entityHandle(world: WorldState, observerId: string, id: string): string {
   // Bind only identities actually selected by the caller. Enumerating the world
   // here made one permitted reference prepare handles for every hidden being.
   // The structured tuple also keeps authored IDs containing separators distinct.
   return createHmac('sha256', bodyReferenceKey)
-    .update(JSON.stringify([
-      'personal-reference', world.id, observerId, id,
-      currentBodyObservation(world, observerId, id)?.id ??
-        (recognizesSubject(world, observerId, id) ? 'known' : world.sequence),
-    ]))
+    .update(
+      JSON.stringify([
+        'personal-reference',
+        world.id,
+        observerId,
+        id,
+        currentBodyGrant(world, observerId, id)?.leaseId ??
+          (recognizesSubject(world, observerId, id) ? 'known' : world.sequence),
+      ]),
+    )
     .digest('hex');
 }
 
@@ -110,7 +145,8 @@ export function resolveResponseEntities(
     return references[handle]!;
   };
   const physical = (handle: string) => {
-    if (!Object.hasOwn(physicalReferences, handle)) throw new Error('A current physical reference is required.');
+    if (!Object.hasOwn(physicalReferences, handle))
+      throw new Error('A current physical reference is required.');
     return physicalReferences[handle]!;
   };
   return {
@@ -121,8 +157,8 @@ export function resolveResponseEntities(
             note: {
               ...op.note,
               subjectId: op.note.subjectId
-                ? Object.hasOwn(knowledgeReferences, op.note.subjectId)
-                  || Object.hasOwn(identityReferences, op.note.subjectId)
+                ? Object.hasOwn(knowledgeReferences, op.note.subjectId) ||
+                  Object.hasOwn(identityReferences, op.note.subjectId)
                   ? op.note.subjectId
                   : resolve(op.note.subjectId)
                 : null,
@@ -130,9 +166,23 @@ export function resolveResponseEntities(
             },
           }
         : {}),
-      ...(op.name ? { name: { ...op.name, subjectId: Object.hasOwn(identityReferences, op.name.subjectId)
-        ? op.name.subjectId : resolve(op.name.subjectId) } } : {}),
-      talk: op.talk ? { ...op.talk, addresseeEntityId: op.talk.addresseeEntityId === null ? null : resolve(op.talk.addresseeEntityId) } : null,
+      ...(op.name
+        ? {
+            name: {
+              ...op.name,
+              subjectId: Object.hasOwn(identityReferences, op.name.subjectId)
+                ? op.name.subjectId
+                : resolve(op.name.subjectId),
+            },
+          }
+        : {}),
+      talk: op.talk
+        ? {
+            ...op.talk,
+            addresseeEntityId:
+              op.talk.addresseeEntityId === null ? null : resolve(op.talk.addresseeEntityId),
+          }
+        : null,
       act: op.act
         ? {
             ...op.act,

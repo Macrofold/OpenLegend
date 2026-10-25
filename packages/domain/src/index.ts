@@ -12,6 +12,7 @@ export * from './ranged-policy.js';
 export * from './native-command-contracts.js';
 export * from './types.js';
 export * from './perception-evidence.js';
+export * from './perception-support.js';
 export * from './worlds/base/initial-opening.js';
 export * from './worlds/base/opening-readiness.js';
 export * from './worlds/base/starting-worlds.js';

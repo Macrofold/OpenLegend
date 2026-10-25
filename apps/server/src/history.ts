@@ -5,6 +5,7 @@ import {
   readPerceivedEvents,
   readPerceivedEventSources,
   perspectiveField,
+  historicalEntityReference,
   type PerceivedEventOptions,
 } from './perceived-events.js';
 import {
@@ -160,6 +161,29 @@ function projectNarration(item: TranscriptItem): TranscriptItem {
     (item.status === 'fallback' && item.sourceIds.length > 0 && !item.authoredFallback)
     ? { ...item, status: 'failed', text: narrationFailed }
     : item;
+}
+function publicTranscriptItem(
+  item: TranscriptItem,
+  worldId: string,
+  actorId: string,
+): TranscriptItem {
+  const { speakerId, ...retained } = item;
+  return {
+    ...retained,
+    ...(speakerId === actorId ? { speakerId } : {}),
+    impacts: item.impacts.map((impact) => ({
+      ...impact,
+      entityId:
+        impact.entityId === actorId
+          ? actorId
+          : historicalEntityReference(
+              JSON.stringify([worldId, actorId]),
+              impact.sourceId,
+              impact.entityId,
+              'impact',
+            ),
+    })),
+  };
 }
 /** Scoped durable history repository. Only the application binds owner and perspective. */
 export class HistoryRepository {
@@ -1157,8 +1181,8 @@ export class HistoryRepository {
     };
   }
   async latestNarration(worldId: string, ownerId: string): Promise<TranscriptItem | null> {
-    if (!this.principals.some((p) => p.ownerId === ownerId))
-      throw new Error('Unsupported history principal.');
+    const principal = this.principals.find((p) => p.ownerId === ownerId);
+    if (!principal) throw new Error('Unsupported history principal.');
     const revision = this.bannerRevision;
     const row = await this.db
       .prepare(
@@ -1166,7 +1190,13 @@ export class HistoryRepository {
       )
       .get(worldId, ownerId);
     if (revision !== this.bannerRevision) throw new Error('Narration changed while loading.');
-    return row ? projectNarration(JSON.parse(String(row['payload'])) as TranscriptItem) : null;
+    return row
+      ? publicTranscriptItem(
+          projectNarration(JSON.parse(String(row['payload'])) as TranscriptItem),
+          worldId,
+          principal.actorId,
+        )
+      : null;
   }
   async perceivedEvents(
     worldId: string,
@@ -1316,6 +1346,9 @@ export class HistoryRepository {
         order: Number(row['position']),
         conversationId: event.conversationId,
         speakerId: event.actorId,
+        speaker:
+          event.speech?.speaker?.nameAtTime ??
+          event.references?.find((reference) => reference.role === 'actor')?.label,
         sourceIds: [event.id],
         impacts: [],
         legacy: !event.conversationId && event.type === 'speech',
@@ -1329,7 +1362,7 @@ export class HistoryRepository {
     items.sort((a, b) => b.order - a.order || b.id.localeCompare(a.id));
     const page = items.slice(0, limit);
     return {
-      items: page.reverse(),
+      items: page.reverse().map((item) => publicTranscriptItem(item, worldId, actorId)),
       watermark,
       ...(items.length > limit ? { before: page[0]!.order } : {}),
     };

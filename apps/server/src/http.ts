@@ -95,7 +95,6 @@ import {
   SPEECH_VOLUMES,
   amendCommitment,
   stateOwnerCapabilities,
-  observerDescription,
 } from '@open-legend/domain';
 import { traceHistory, traceDetails } from './cognition-inspection.js';
 import { admitStatusEffectPolicy, admitCognitionPolicy } from '@open-legend/domain';
@@ -1216,6 +1215,16 @@ async function initializeGameServer(
             scope.actorId,
             {
               ...options,
+              ...(options.participantId
+                ? {
+                    participantId: resolveContactTarget(
+                      service.world,
+                      scope,
+                      options.participantId,
+                      { communication: true },
+                    ),
+                  }
+                : {}),
               speechOnly: options.speechOnly === 'true',
               responseActions: options.responseActions === 'true',
               conversationId: scopedId,
@@ -1235,13 +1244,11 @@ async function initializeGameServer(
                 return {
                   id: item.id,
                   kind: item.kind === 'speech' ? 'speech' : 'action',
-                  speakerId: item.speakerId,
+                  ...(item.speakerId === scope.actorId ? { speakerId: scope.actorId } : {}),
                   speech: item.speech,
                   speaker: item.speech
                     ? (item.speech.speaker?.nameAtTime ?? 'Someone')
-                    : item.speakerId
-                      ? observerDescription(service.world, scope.actorId, item.speakerId)
-                      : 'Someone',
+                    : (item.speaker ?? 'Someone'),
                   text: item.text,
                   time: item.time,
                   ...(job
@@ -1273,12 +1280,6 @@ async function initializeGameServer(
               ? {
                   id: active.id,
                   generation: active.generation,
-                  members: active.intervals
-                    .filter((i) => i.leftAt === undefined)
-                    .map((i) => ({
-                      id: i.actorId,
-                      name: observerDescription(service.world, scope.actorId, i.actorId),
-                    })),
                 }
               : null,
           });
@@ -3626,7 +3627,11 @@ async function initializeGameServer(
           return send(response, 503, { ok: false, code: 'busy', message: error.message });
         }
         if (error instanceof KnownPlacePreparationError || error instanceof MemoryPreparationError)
-          return send(response, 503, { ok: false, code: 'evidence-preparation', message: error.message });
+          return send(response, 503, {
+            ok: false,
+            code: 'evidence-preparation',
+            message: error.message,
+          });
         if (error instanceof AuthorityError) {
           responseScope = undefined;
           return send(response, error.code === 'session' ? 401 : 403, {

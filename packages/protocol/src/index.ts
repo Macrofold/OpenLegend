@@ -1286,6 +1286,8 @@ export interface TranscriptItem {
   order: number;
   conversationId?: string;
   speakerId?: string;
+  /** Name captured in this observer's original event evidence. */
+  speaker?: string;
   sourceIds: string[];
   impacts: Array<{
     entityId: string;

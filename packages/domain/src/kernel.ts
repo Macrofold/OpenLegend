@@ -16,6 +16,7 @@ import {
   currentBodyObservation,
   recentExposureEpisode,
 } from './perception-evidence.js';
+import { nextDetectionSupportBoundary, settleDetectionSupport } from './perception-support.js';
 import {
   prospectiveWork,
   validResponsePurpose,
@@ -271,7 +272,7 @@ import {
   nativeMovementSpeed,
 } from './worlds/base/actions.js';
 import { nativeInterval, refineNativeInterval } from './temporal-boundaries.js';
-import { TIME_EPSILON } from './simulation-time.js';
+import { TIME_EPSILON, normalSpeedSeconds } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import {
   advanceCommitments,
@@ -5180,6 +5181,7 @@ function* advanceWorldNative(
     motionSlices < 4096 &&
     !navigationBlocked(world, participants.actors, options.nativeRefuges)
   ) {
+    settleDetectionSupport(world);
     // A tiny retained remainder is a forecast, not authority to advance the clock.
     // Recompute from current state; only a real predicate may require a micro-interval.
     if (mechanics && mechanics.remainingSeconds <= TIME_EPSILON) discardMechanics();
@@ -5610,6 +5612,8 @@ function* advanceWorldNative(
         seconds = Math.min(seconds, Math.max(TIME_EPSILON, assemblyWorkBoundary(action)));
     }
     seconds = weatherBoundary(world, seconds);
+    const supportBoundary = nextDetectionSupportBoundary(world);
+    if (supportBoundary !== undefined) seconds = Math.min(seconds, supportBoundary - world.simTime);
     const projectileIds = Object.keys(world.projectiles ?? {});
     const projectileBodies = projectileIds.length
       ? captureProjectileBodies(world, participants.projectileBodies)
@@ -5658,12 +5662,21 @@ function* advanceWorldNative(
     // Reaching the interval's stored deadline lands on it exactly (PF13.16).
     const landing = mechanics.endsAt !== undefined && seconds >= mechanics.remainingSeconds;
     const reviewLanding = seconds >= territorialReviewAt - world.simTime;
-    const endpoint = landing ? mechanics.endsAt : reviewLanding ? territorialReviewAt : undefined;
+    const supportLanding =
+      supportBoundary !== undefined && seconds >= supportBoundary - world.simTime;
+    const endpoint = supportLanding
+      ? supportBoundary
+      : landing
+        ? mechanics.endsAt
+        : reviewLanding
+          ? territorialReviewAt
+          : undefined;
     if (endpoint !== undefined) seconds = endpoint - world.simTime;
     if (animalWanderNeedsCountdown(world))
       for (const id of participants.animals)
         advanceAnimalWanderClock(entityGet(world.entities, id)!, seconds);
     world.simTime = endpoint ?? world.simTime + seconds;
+    settleDetectionSupport(world);
     remaining = Math.max(0, remaining - seconds);
     // Subtracting several bounded slices can leave less than one representable
     // clock step. It is not another physical interval with its own side effects.
@@ -6049,9 +6062,9 @@ function* updateEncounters(
                 }),
             ),
             vision,
-            SIGHTING_POLICY.episodeLingerSeconds,
+            normalSpeedSeconds(world,SIGHTING_POLICY.episodeGraceSeconds),
           );
-        } else endCurrentEvidence(world, actor.id, 'sight', SIGHTING_POLICY.episodeLingerSeconds);
+        } else endCurrentEvidence(world, actor.id, 'sight', normalSpeedSeconds(world,SIGHTING_POLICY.episodeGraceSeconds));
         reconcileNativeExposure(world, entityGet(world.entities, actor.id)!, candidates);
       }
       continue;
@@ -6087,7 +6100,7 @@ function* updateEncounters(
         () => frame.nearby(actor.position, touchRadius, 'contact'),
       );
     if (radius === 0 || blocked) {
-      endCurrentEvidence(world, actor.id, 'sight', SIGHTING_POLICY.episodeLingerSeconds);
+      endCurrentEvidence(world, actor.id, 'sight', normalSpeedSeconds(world,SIGHTING_POLICY.episodeGraceSeconds));
       if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
       if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
       if (Object.keys(world.visiblePlaces?.[actor.id] ?? {}).length)
@@ -6219,7 +6232,7 @@ function* updateEncounters(
         entityGet(world.entities, actor.id)!,
         [...seen, ...objectIds].flatMap((id) => entityGet(world.entities, id) ?? []),
         vision,
-        SIGHTING_POLICY.episodeLingerSeconds,
+        normalSpeedSeconds(world,SIGHTING_POLICY.episodeGraceSeconds),
       );
     const newlySeen = samePeople
       ? []

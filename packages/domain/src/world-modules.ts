@@ -1068,29 +1068,54 @@ export function validateWorldModules(world: WorldState): void {
       Object.values(world.presentation).some((value) => typeof value !== 'string' || !value.trim()))
   )
     throw new Error('Invalid world presentation.');
-  for (const entries of Object.values(world.experience?.awareness ?? {}))
-    for (const entry of entries) validateEventEvidence(entry);
+  const originalObservations = new Map<string, string>();
+  const validatePersonalOriginals = (
+    evidence: {
+      actorId: string;
+      observation?: import('./perception-evidence.js').ObservationContribution;
+      observations?: import('./perception-evidence.js').ObservationContribution[];
+    },
+    actorId: string,
+  ) => {
+    if (evidence.actorId !== actorId) throw new Error('Foreign personal evidence owner.');
+    for (const observation of [
+      ...(evidence.observation ? [evidence.observation] : []),
+      ...(evidence.observations ?? []),
+    ]) {
+      validateObservationContribution(observation, originalObservations);
+      if (observation.observer.actorId !== actorId || observation.acquiredAt > world.simTime)
+        throw new Error('Foreign or future personal observation.');
+    }
+  };
+  for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {}))
+    for (const entry of entries) {
+      validateEventEvidence(entry);
+      validatePersonalOriginals(entry, actorId);
+    }
   if (
     !world.timePolicy ||
     !Number.isFinite(world.timePolicy.normalGameSecondsPerSecond) ||
     world.timePolicy.normalGameSecondsPerSecond <= 0
   )
     throw new Error('Invalid selected normal-time rate.');
-  validatePerceptionEvidenceState(world);
+  validatePerceptionEvidenceState(world, originalObservations);
   for (const [actorId, entries] of Object.entries(world.memories))
     for (const memory of entries) {
       if (memory.actorId !== actorId) throw new Error('Foreign personal memory owner.');
-      if (memory.evidence) validateEventEvidence(memory.evidence);
+      if (memory.evidence) {
+        validateEventEvidence(memory.evidence);
+        validatePersonalOriginals(memory.evidence, actorId);
+      }
       for (const observation of [
         ...(memory.observation ? [memory.observation] : []),
         ...(memory.observations ?? []),
       ]) {
-        validateObservationContribution(observation);
+        validateObservationContribution(observation, originalObservations);
         if (observation.observer.actorId !== actorId || observation.acquiredAt > world.simTime)
           throw new Error('Foreign or future personal observation.');
       }
       if (memory.manifest) {
-        validateExperienceManifest(memory.manifest);
+        validateExperienceManifest(memory.manifest, originalObservations);
         if (
           memory.manifest.observations.some(
             (observation) =>
@@ -1107,7 +1132,7 @@ export function validateWorldModules(world: WorldState): void {
         summary.sources.some((source) => !validPersonalSourceRef(source))
       )
         throw new Error('Invalid exact summary sources.');
-      validateExperienceManifest(summary.manifest);
+      validateExperienceManifest(summary.manifest, originalObservations);
       if (
         summary.manifest.observations.some(
           (observation) =>

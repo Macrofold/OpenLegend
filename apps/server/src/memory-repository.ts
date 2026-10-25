@@ -16,6 +16,7 @@ export class MemoryPreparationError extends Error {
 }
 export const MAINTENANCE_SOURCES = 128;
 export const MAINTENANCE_BYTES = 512 * 1024;
+import { digest } from './content-digest.js';
 import { personalAccountRevision } from './personal-accounts.js';
 import type {
   Awareness,
@@ -32,6 +33,11 @@ import {
   summaryMemory,
   validateExperienceManifest,
   observationDependencies,
+  observationLearningSources,
+  ownedObservationSources,
+  recognitionSupportSources,
+  type RecognitionSupportSource,
+  type ObservationContribution,
   validPersonalSourceRef,
   type PersonalSourceRef,
   prepareKnownPlaceEvidence,
@@ -85,6 +91,8 @@ interface PreparedSource {
   sources: readonly PersonalSourceRef[];
   manifest: ExperienceSummary['manifest'] | undefined;
   values: unknown[];
+  originals: ObservationContribution[];
+  learning: RecognitionSupportSource[];
 }
 export interface PreparedMemorySources {
   readonly worldId: string;
@@ -394,13 +402,13 @@ export class MemoryRepository {
       CREATE INDEX IF NOT EXISTS recall_actor_event ON recall_sources(world_id,actor_id,event_id);
       CREATE INDEX IF NOT EXISTS recall_required ON recall_sources(world_id,actor_id,required,eligible,id);
       CREATE INDEX IF NOT EXISTS recall_record ON recall_sources(world_id,source_kind,record_id);
-      CREATE TABLE IF NOT EXISTS mind_summary_sources (
-        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,summary_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,source_revision TEXT NOT NULL,support_key TEXT NOT NULL,source_life BIGINT NOT NULL,facet_ordinal BIGINT NOT NULL,alias_id TEXT NOT NULL,
-        PRIMARY KEY(world_id,actor_id,summary_id,source_kind,source_id,source_revision,support_key,source_life,facet_ordinal,alias_id));
-      CREATE INDEX IF NOT EXISTS mind_summary_world_source ON mind_summary_sources(world_id,source_id,actor_id,summary_id);
-      CREATE INDEX IF NOT EXISTS mind_summary_reverse ON mind_summary_sources(world_id,actor_id,source_id);
-      CREATE INDEX IF NOT EXISTS mind_summary_alias_reverse ON mind_summary_sources(world_id,actor_id,alias_id);
-      CREATE INDEX IF NOT EXISTS mind_summary_world_alias ON mind_summary_sources(world_id,alias_id,actor_id,summary_id);
+      CREATE TABLE IF NOT EXISTS mind_source_dependencies (
+        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,derived_kind TEXT NOT NULL,derived_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,source_revision TEXT NOT NULL,support_key TEXT NOT NULL,source_life BIGINT NOT NULL,facet_ordinal BIGINT NOT NULL,alias_id TEXT NOT NULL,
+        PRIMARY KEY(world_id,actor_id,derived_kind,derived_id,source_kind,source_id,source_revision,support_key,source_life,facet_ordinal,alias_id));
+      CREATE INDEX IF NOT EXISTS mind_dependency_world_source ON mind_source_dependencies(world_id,source_id,actor_id,derived_id);
+      CREATE INDEX IF NOT EXISTS mind_dependency_reverse ON mind_source_dependencies(world_id,actor_id,source_id);
+      CREATE INDEX IF NOT EXISTS mind_dependency_alias_reverse ON mind_source_dependencies(world_id,actor_id,alias_id);
+      CREATE INDEX IF NOT EXISTS mind_dependency_world_alias ON mind_source_dependencies(world_id,alias_id,actor_id,derived_id);
       CREATE TABLE IF NOT EXISTS mind_source_versions (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,
         revision TEXT NOT NULL,payload TEXT NOT NULL,retired_revision BIGINT NOT NULL,
@@ -531,10 +539,10 @@ export class MemoryRepository {
             ]),
           'ON CONFLICT DO NOTHING',
         );
-        if (kind === 'summary') {
+        {
           await this.db
             .prepare(
-              `DELETE FROM mind_summary_sources WHERE world_id=? AND EXISTS (SELECT 1 FROM recall_sources r WHERE r.world_id=mind_summary_sources.world_id AND r.actor_id=mind_summary_sources.actor_id AND r.id=mind_summary_sources.summary_id AND r.source_kind='summary' AND r.record_id IN (${placeholders}))`,
+              `DELETE FROM mind_source_dependencies WHERE world_id=? AND EXISTS (SELECT 1 FROM recall_sources r WHERE r.world_id=mind_source_dependencies.world_id AND r.actor_id=mind_source_dependencies.actor_id AND r.id=mind_source_dependencies.derived_id AND r.source_kind=mind_source_dependencies.derived_kind AND r.record_id IN (${placeholders}))`,
             )
             .run(worldId, ...batch);
         }
@@ -650,7 +658,26 @@ export class MemoryRepository {
           throw new Error('Invalid text memory source projection.');
       }
       if (kind === 'awareness') validateEventEvidence(value);
-      yield { row, actorId, id, exposure, sources, manifest, values };
+      const evidence =
+        kind === 'memory'
+          ? (value as unknown as MemoryRecord).evidence
+          : (value as unknown as Awareness);
+      const originals =
+        kind === 'summary'
+          ? manifest!.observations
+          : [
+              ...((value as unknown as Awareness).observation
+                ? [(value as unknown as Awareness).observation!]
+                : []),
+              ...((value as unknown as Awareness).observations ?? []),
+              ...(kind === 'memory' && evidence?.observation ? [evidence.observation] : []),
+              ...(kind === 'memory' ? (evidence?.observations ?? []) : []),
+            ];
+      const learning = [
+        ...recognitionSupportSources(evidence?.recognition?.learningSupport ?? []),
+        ...observationLearningSources(originals),
+      ];
+      yield { row, actorId, id, exposure, sources, manifest, values, originals, learning };
     }
   }
   /** Insert only after current records have changed. All awareness must precede
@@ -679,11 +706,12 @@ export class MemoryRepository {
                 yield [
                   worldId,
                   entry.actorId,
+                  kind,
                   entry.id,
                   source.kind,
                   source.id,
                   source.revision,
-                  supportKey,
+                  digest(supportKey),
                   -1,
                   -1,
                   '',
@@ -700,11 +728,12 @@ export class MemoryRepository {
                 yield [
                   worldId,
                   entry.actorId,
+                  kind,
                   entry.id,
                   source.family,
                   source.id,
                   JSON.stringify(source.revision),
-                  manifest.coverageKey,
+                  digest(manifest.coverageKey),
                   source.observer.physicalLife,
                   dependency.ordinal ?? -1,
                   alias,
@@ -712,8 +741,119 @@ export class MemoryRepository {
             }
           }
         }
-        await insertRows(this.db, 'mind_summary_sources', summaryLinks(), 'ON CONFLICT DO NOTHING');
+        await insertRows(
+          this.db,
+          'mind_source_dependencies',
+          summaryLinks(),
+          'ON CONFLICT DO NOTHING',
+        );
       }
+      // Immediate learned-identity edges use the same source dependency owner. A
+      // bounded exact lookup binds personal aliases; native roots already own revisions.
+      let dependencyBatch: PreparedSource[] = [];
+      const flushDependencies = async () => {
+        if (!dependencyBatch.length) return;
+        const batch = dependencyBatch;
+        dependencyBatch = [];
+        const personal = batch.flatMap((entry) =>
+          entry.learning
+            .filter(
+              (source): source is Extract<RecognitionSupportSource, { kind: SourceKind }> =>
+                'kind' in source,
+            )
+            .map((source) => ({ actorId: entry.actorId, ...source })),
+        );
+        const revisions = new Map<string, string>();
+        for (const sourceKind of Object.keys(sourceTables) as SourceKind[]) {
+          const selected = personal.filter((source) => source.kind === sourceKind);
+          if (!selected.length) continue;
+          const requested = JSON.stringify(
+            selected.map((source) => ({ actor_id: source.actorId, source_id: source.id })),
+          );
+          const rows = await repository.db
+            .prepare(
+              `SELECT selected.actor_id,selected.source_id,bound.payload FROM jsonb_to_recordset(?::jsonb) selected(actor_id text,source_id text)
+            CROSS JOIN LATERAL (SELECT payload,0 AS priority,0 AS retired FROM ${sourceTables[sourceKind]} WHERE world_id=? AND actor_id=selected.actor_id AND source_id=selected.source_id
+              UNION ALL SELECT payload,1 AS priority,-retired_revision AS retired FROM mind_source_versions WHERE world_id=? AND actor_id=selected.actor_id AND source_kind=? AND source_id=selected.source_id ORDER BY priority,retired LIMIT 1) bound`,
+            )
+            .all(requested, worldId, worldId, sourceKind);
+          for (const row of rows)
+            revisions.set(
+              JSON.stringify([row['actor_id'], sourceKind, row['source_id']]),
+              personalAccountRevision(String(row['payload'])),
+            );
+        }
+        function* links() {
+          for (const entry of batch) {
+            if (kind !== 'summary')
+              for (const source of ownedObservationSources(entry.originals))
+                yield [
+                  worldId,
+                  entry.actorId,
+                  kind,
+                  entry.id,
+                  source.family,
+                  source.id,
+                  JSON.stringify(source.revision),
+                  digest('native-origin'),
+                  source.observer.physicalLife,
+                  -1,
+                  entry.id,
+                ];
+            for (const source of entry.learning) {
+              if ('kind' in source) {
+                const revision = revisions.get(
+                  JSON.stringify([entry.actorId, source.kind, source.id]),
+                );
+                if (!revision)
+                  throw new Error(
+                    'Exact learned-identity source is unavailable; original evidence retained.',
+                  );
+                yield [
+                  worldId,
+                  entry.actorId,
+                  kind,
+                  entry.id,
+                  source.kind,
+                  source.id,
+                  revision,
+                  digest('recognition'),
+                  -1,
+                  -1,
+                  source.id,
+                ];
+              } else {
+                if (source.observer.actorId !== entry.actorId)
+                  throw new Error('Foreign learned-identity source.');
+                yield [
+                  worldId,
+                  entry.actorId,
+                  kind,
+                  entry.id,
+                  source.family,
+                  source.id,
+                  JSON.stringify(source.revision),
+                  digest('recognition'),
+                  source.observer.physicalLife,
+                  -1,
+                  '',
+                ];
+              }
+            }
+          }
+        }
+        await insertRows(
+          repository.db,
+          'mind_source_dependencies',
+          links(),
+          'ON CONFLICT DO NOTHING',
+        );
+      };
+      for (const entry of writes()) {
+        dependencyBatch.push(entry);
+        if (dependencyBatch.length === 100) await flushDependencies();
+      }
+      await flushDependencies();
       function* incoming() {
         for (const { row, actorId, id, exposure, values } of writes()) {
           if (affected.get(actorId) !== null) {
@@ -780,14 +920,14 @@ export class MemoryRepository {
           forgotten AS MATERIALIZED (SELECT source_id FROM mind_forgotten WHERE world_id=? AND actor_id=?),
           corrected AS MATERIALIZED (SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=?),
           aware AS MATERIALIZED (SELECT id FROM recall_sources WHERE world_id=? AND actor_id=? AND source_kind='awareness'),
-          invalid_summaries AS MATERIALIZED (SELECT summary_id FROM mind_summary_sources WHERE world_id=? AND actor_id=? AND
+          invalid_summaries AS MATERIALIZED (SELECT derived_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=? AND derived_kind='summary' AND
             (source_id IN (SELECT source_id FROM forgotten) OR source_id IN (SELECT source_id FROM corrected)
              OR alias_id IN (SELECT source_id FROM forgotten) OR alias_id IN (SELECT source_id FROM corrected)))
           UPDATE recall_sources AS r SET eligible=CASE WHEN
             r.id NOT IN (SELECT source_id FROM forgotten) AND (r.event_id IS NULL OR r.event_id NOT IN (SELECT source_id FROM forgotten))
             AND (r.source_kind<>'memory' OR ((r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
               AND (r.memory_kind<>'episode' OR r.event_id IS NULL OR r.event_id NOT IN (SELECT id FROM aware))))
-            AND (r.source_kind<>'summary' OR r.id NOT IN (SELECT summary_id FROM invalid_summaries))
+            AND (r.source_kind<>'summary' OR r.id NOT IN (SELECT derived_id FROM invalid_summaries))
             THEN 1 ELSE 0 END WHERE r.world_id=? AND r.actor_id=? AND r.id>=? AND r.id<=?`,
           )
           .run(
@@ -826,7 +966,7 @@ export class MemoryRepository {
             WHERE r.world_id=? AND r.actor_id=c.actor_id
             AND (r.event_id=c.id OR (c.fresh_kind IS NOT NULL AND r.id=c.id AND r.source_kind<>c.fresh_kind))
             AND NOT (c.fresh_kind IS NOT NULL AND r.id=c.id AND r.source_kind=c.fresh_kind)
-          UNION SELECT s.actor_id,s.summary_id FROM changed c CROSS JOIN mind_summary_sources s WHERE s.world_id=? AND s.actor_id=c.actor_id AND (s.source_id=c.id OR s.alias_id=c.id))`;
+          UNION SELECT s.actor_id,s.derived_id FROM changed c CROSS JOIN mind_source_dependencies s WHERE s.world_id=? AND s.actor_id=c.actor_id AND (s.source_id=c.id OR s.alias_id=c.id))`;
       const params = [...pairs.flat(), worldId, worldId, worldId, worldId];
       const target = '(r.actor_id,r.id) IN (SELECT actor_id,id FROM affected)';
 
@@ -1079,7 +1219,7 @@ export class MemoryRepository {
       const target = ids
         ? ` IN (${batch.map(() => 'SELECT ?').join(' UNION ')}
         UNION SELECT id FROM recall_sources WHERE world_id=? AND actor_id=? AND event_id IN (${params})
-        UNION SELECT summary_id FROM mind_summary_sources WHERE world_id=? AND actor_id=? AND (source_id IN (${params}) OR alias_id IN (${params})))`
+        UNION SELECT derived_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=? AND (source_id IN (${params}) OR alias_id IN (${params})))`
         : '';
       const args = ids
         ? [...batch, worldId, actorId, ...batch, worldId, actorId, ...batch, ...batch]
@@ -1114,7 +1254,7 @@ export class MemoryRepository {
     AND (r.source_kind<>'memory' OR ((r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
       AND NOT (r.memory_kind='episode' AND r.event_id IS NOT NULL AND EXISTS (SELECT 1 FROM recall_sources a WHERE a.world_id=r.world_id AND a.actor_id=r.actor_id AND a.source_kind='awareness' AND a.id=r.event_id))))
     AND (r.source_kind<>'summary' OR NOT EXISTS (
-      SELECT 1 FROM mind_summary_sources s WHERE s.world_id=r.world_id AND s.actor_id=r.actor_id AND s.summary_id=r.id AND
+      SELECT 1 FROM mind_source_dependencies s WHERE s.world_id=r.world_id AND s.actor_id=r.actor_id AND s.derived_kind=r.source_kind AND s.derived_id=r.id AND
       (EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=s.world_id AND f.actor_id=s.actor_id AND (f.source_id=s.source_id OR f.source_id=s.alias_id))
        OR EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=s.world_id AND c.actor_id=s.actor_id AND (c.source_id=s.source_id OR c.source_id=s.alias_id)))))`;
   private params(scope: MemoryScope) {

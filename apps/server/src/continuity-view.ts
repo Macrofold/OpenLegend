@@ -7,6 +7,9 @@ import {
   knowledgePage,
   snapshotRevision,
   canRememberSubject,
+  currentBodyObservation,
+  currentBodySubject,
+  currentCommunicationSubject,
   distance3D,
   observerDescription,
   worldPosition,
@@ -16,6 +19,7 @@ import {
   type ObserverSubject,
   type KnowledgeDocument,
   type WorldState,
+  type Position,
 } from '@open-legend/domain';
 import type { GodMindView, MindSubject, MindSubjectPage } from '@open-legend/protocol';
 import { z } from 'zod';
@@ -149,7 +153,7 @@ function subjectView(
   world: WorldState,
   actorId: string,
   subjectId: ObserverSubject,
-  visible: ReadonlySet<string>,
+  currentBodies: ReadonlyMap<string, Position>,
 ): MindSubject | undefined {
   const individual = observerIndividual(world, actorId, subjectId);
   const recognized =
@@ -157,22 +161,20 @@ function subjectView(
         ? canRememberSubject(world, actorId, subjectId.entityId)
         : !!individual &&
           !individual.seedOnly &&
-          (!!individual.voice?.authored || (individual.voice?.samples.length ?? 0) >= 2),
+          (currentBodies.has(subjectKey(subjectId)) ||
+            !!individual.voice?.authored ||
+            (individual.voice?.samples.length ?? 0) >= 2 ||
+            !!individual.sight?.authored ||
+            (individual.sight?.samples.length ?? 0) >= 1),
     notes = !!knowledgeDocument(world, actorId, subjectId);
   if (!recognized && !notes) return undefined;
-  const observer = entityGet(world.entities, actorId),
-    subject =
-      subjectId.kind === 'entity' ? entityGet(world.entities, subjectId.entityId) : undefined;
-  const inView =
-    recognized &&
-    subjectId.kind === 'entity' &&
-    visible.has(subjectId.entityId) &&
-    !!observer &&
-    !!subject;
+  const observer = entityGet(world.entities, actorId);
+  const position = currentBodies.get(subjectKey(subjectId));
+  const inView = recognized && !!position && !!observer;
   const status = inView ? 'in-view' : recognized ? 'known' : 'notes-only';
   const detail =
     status === 'in-view'
-      ? `In view · ${Math.round(distance3D(worldPosition(observer!), worldPosition(subject!)))} m away`
+      ? `In view · ${Math.round(distance3D(worldPosition(observer!), position!))} m away`
       : status === 'known'
         ? 'Recognized'
         : 'Notes only · not currently recognized';
@@ -215,10 +217,28 @@ export function continuitySubjects(
     }
     if (after.fence !== fence) throw new HistoryCursorError('People changed. Search again.');
   }
-  const visible = new Set(world.visiblePeople?.[actorId] ?? []);
+  const currentBodies = new Map<string, Position>();
+  const currentSubjects: ObserverSubject[] = [];
+  for (const lease of Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})) {
+    if (lease.value.kind !== 'body') continue;
+    const body = currentBodyObservation(world, actorId, lease.subjectId);
+    if (!body) continue;
+    const subject =
+      currentBodySubject(world, actorId, lease.subjectId) ??
+      (!entityGet(world.entities, lease.subjectId)?.actor
+        ? { kind: 'entity' as const, entityId: lease.subjectId }
+        : undefined);
+    if (subject) {
+      currentSubjects.push(subject);
+      currentBodies.set(subjectKey(subject), body.value.body.position);
+    }
+    const known = currentCommunicationSubject(world, actorId, lease.subjectId);
+    if (known)
+      currentBodies.set(subjectKey({ kind: 'entity', entityId: known }), body.value.body.position);
+  }
   if (request.subjectId) {
     // Exact lookup for the note editor: a subject's notes may lie on any notes page.
-    const selected = subjectView(world, actorId, request.subjectId, visible);
+    const selected = subjectView(world, actorId, request.subjectId, currentBodies);
     const document = selected ? knowledgeDocument(world, actorId, selected.subject) : undefined;
     return {
       ok: true,
@@ -236,10 +256,7 @@ export function continuitySubjects(
     };
   }
   const subjects = new Map<string, ObserverSubject>();
-  for (const entityId of visible) {
-    const subject: ObserverSubject = { kind: 'entity', entityId };
-    subjects.set(subjectKey(subject), subject);
-  }
+  for (const subject of currentSubjects) subjects.set(subjectKey(subject), subject);
   for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
     if (document.subjectId) subjects.set(subjectKey(document.subjectId), document.subjectId);
   for (const identity of Object.values(world.observerIdentities?.[actorId] ?? {})) {
@@ -256,7 +273,7 @@ export function continuitySubjects(
     (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   const matches = [...subjects.entries()]
     .flatMap(([id, reference]) => {
-      const subject = subjectView(world, actorId, reference, visible);
+      const subject = subjectView(world, actorId, reference, currentBodies);
       if (!subject) return [];
       const key = normalized(subject.label);
       return words.every((word) => key.includes(word))
