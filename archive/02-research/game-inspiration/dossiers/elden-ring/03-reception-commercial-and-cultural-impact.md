@@ -209,7 +209,7 @@ The base game was offered across PS4, PS5, Xbox One, Xbox Series and Steam; its 
 
 Our interpretation is that a large premium campaign can support a long commercial life through reputation, discounts, expansion, new platform access and fresh community occasions. This is not proof of a specific discount strategy or a profitable port. The financial table should preserve product boundaries: expansion units are not new base-game purchasers, console and PC owners may overlap, and a bundle can change what a unit or revenue observation represents.
 
-The evidence does not support an Elden Ring-only lifetime profit calculation. Publisher and developer revenue shares, regional rights, payment timing, platform arrangements and production/support costs are missing. Even a correct consumer-spending total would not answer how much cash reached either company or how much remained after costs.
+The [financial definitions and limits above](#1-the-2-billion-claim-and-what-it-establishes) still apply across these products; broader distribution does not establish lifetime profit.
 
 ### A game that produces stories also produces discoverable media
 
