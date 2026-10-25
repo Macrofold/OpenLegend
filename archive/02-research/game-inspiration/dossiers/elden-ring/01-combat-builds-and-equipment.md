@@ -200,7 +200,7 @@ Loot comes through placed treasure, merchant transactions, enemy drops and autho
 
 Remembrances convert particular major victories into a choice of associated equipment or spells, or runes. Wandering Mausoleums allow limited duplication, even after a Remembrance was consumed; the expansion provides additional duplication coffins. This is a second decision about the identity inherited from a boss, rather than a random roll for an unrelated prize. [C33](#c33)
 
-**Analysis:** the reward's action is part of the encounter's memory. Learning to fear an enemy's spectacular move and then gaining an associated tool turns victory into imitation and appropriation. Conversely, a reward the current build cannot use may communicate future possibility or immediate disappointment. A generous respec and catch-up economy determines which interpretation wins. Catalog size alone is an incomplete measure of reward quality.
+**Analysis:** the reward's action is part of the encounter's memory. Learning to fear an enemy's spectacular move and then gaining an associated tool turns victory into imitation and appropriation. Conversely, a reward the current build cannot use may communicate future possibility or immediate disappointment. Respec and catch-up costs can influence whether the reward feels like a practical new possibility or an unusable prize. Catalog size alone is an incomplete measure of reward quality.
 
 ## 10. Spirit Ashes change the distribution of attention
 

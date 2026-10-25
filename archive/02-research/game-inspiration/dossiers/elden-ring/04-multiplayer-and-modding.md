@@ -4,7 +4,7 @@
 
 Evidence cutoff: **October 24, 2026**. Native Elden Ring, its expansion, community PC modifications and the separate Nightreign game are different products and rule sets. This chapter concerns the first three. It documents creator workflows from their authors' instructions; **no mod was installed, executed or independently compatibility-tested for this research**.
 
-## 1. Three different meanings of playing together
+## 1. Different ways of playing together
 
 Elden Ring lets other people affect a mostly solitary adventure at several levels. A player can encounter traces of strangers, temporarily invite combat assistance, compete under invasion rules, or deliberately enter an arena. The same term, “multiplayer,” conceals very different commitments and expectations.
 

@@ -22,7 +22,7 @@ FromSoftware's action RPG places a created Tarnished in the Lands Between. The i
 
 The character's starting package matters without being a permanent class prohibition. Builds can emphasize close combat, distance, spells, status effects, defense or combinations. The important distinction is between having a possible tactic in the game and having the equipment, attributes and resources to execute it now. Broad choice can make a demanding game more approachable without making each encounter easy. GamesRadar explicitly evaluates this from an experienced Souls player's perspective, not a controlled newcomer test. [E5](#e5)
 
-**Edition correction:** Tarnished Edition released for Switch 2 on **August 28, 2026**. It includes the base game and Shadow of the Erdtree, plus Heavy Knight and Idus Knight starting classes, four armor sets and three Torrent appearances. The Tarnished Pack delivers the additional content to other supported platforms; it is not another full campaign. The publisher's separate FAQ includes PS4, PS5, Xbox One, Xbox Series and Steam. An old “coming in 2026” listing is no longer an adequate status statement. [E1](#e1) [E9](#e9)
+**Released editions:** Tarnished Edition released for Switch 2 on **August 28, 2026**. It includes the base game and Shadow of the Erdtree, plus Heavy Knight and Idus Knight starting classes, four armor sets and three Torrent appearances. The Tarnished Pack delivers the additional content to other supported platforms; it is not another full campaign. The publisher's separate FAQ includes PS4, PS5, Xbox One, Xbox Series and Steam. [E1](#e1) [E9](#e9)
 
 ## 2. Action and equipment inventory
 
