@@ -280,3 +280,12 @@ export function attributeBoundary(
   }
   return result;
 }
+
+/** Convert an authored normal-play duration once; runtime speed and pause only
+ * determine how quickly the shared simulation clock advances. */
+export function normalSpeedSeconds(world: WorldState, seconds: number): number {
+  const rate = world.timePolicy?.normalGameSecondsPerSecond;
+  if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0)
+    throw new Error('A normal-play duration requires an installed world clock rate.');
+  return seconds * rate;
+}

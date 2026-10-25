@@ -259,6 +259,9 @@ export interface ActorComponent {
   attributes?: Record<string, import('./world-modules.js').AttributeState>;
   /** Descriptive starting traits, not mechanical bonuses. Saved with the actor. */
   traits?: CharacterTrait[];
+  /** Installed source features and recognition capability are independent of memory. */
+  voiceProfile?: import('./worlds/base/recognition.js').VoiceFeatures;
+  individualRecognition?: { attributeId: string };
   /** God-authored identity seeds are descriptive context, never mechanical authority. */
   description?: string;
   personality?: string;
@@ -345,6 +348,11 @@ export interface Entity extends Named {
   heat?: HeatComponent;
 }
 export interface MemoryRecord {
+  /** Lossless observer-permitted source body; not the authoritative world event. */
+  evidence?: import('./speech.js').EventEvidence;
+  observation?: import('./perception-evidence.js').ObservationContribution;
+  observations?: import('./perception-evidence.js').ObservationContribution[];
+  manifest?: import('./experience-manifest.js').ExperienceManifest;
   /** Actual native attempt that produced this personal result, not new execution authority. */
   activityId?: string;
   obligation?: import('./commitments.js').Obligation;
@@ -451,6 +459,7 @@ export interface WorldState {
     Record<string, import('./worlds/base/knowledge.js').ObserverIdentity>
   >;
   perceptionEpisodes?: Record<string, Record<string, string>>;
+  timePolicy?: { normalGameSecondsPerSecond: number };
   itemHandling: import('./item-handling.js').ItemHandlingPolicy;
   statusEffectPolicy: import('./status-effects.js').StatusEffectPolicy;
   /** Shared outward-feature baseline for the completed perception phase, not private knowledge. */
@@ -497,6 +506,8 @@ export interface WorldState {
   minds?: Record<string, ActorMind>;
   visibleObjects?: Record<string, string[]>;
   visiblePeople?: Record<string, string[]>;
+  /** Active acquired sensory working set and current leases, owned by exposure. */
+  perceptionEvidence?: import('./perception-evidence.js').PerceptionEvidenceState;
   knowledge: Record<string, KnowledgeRecord[]>;
   events: WorldEvent[];
   /** Durable history rows outside the active event working set; not deleted evidence. */
@@ -710,7 +721,6 @@ export type Command = Envelope &
         type: 'say';
         text: string;
         targetId?: string;
-        intendedRecipientId?: string;
         selfIntroduction?: string;
         volume?: import('./acoustics.js').SpeechVolume;
       }

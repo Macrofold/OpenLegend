@@ -19,7 +19,7 @@ export interface EventDisclosurePolicy {
 /** Capture permitted facts once, before later movement or cold history can change them.
  * The audience grants the occurrence; it does not grant every participant or payload field.
  * docs/events-perception-and-reactions.md#event-time-evidence-versus-current-action-authority */
-export function observeEvent(world: WorldState, event: WorldEvent, observerId: string) {
+export function observeEvent(world: WorldState, event: WorldEvent, observerId: string, reception?: { feltImpact: true }) {
   const policy = selectedEventDisclosure(world);
   const owned = event.scope === 'private' || event.actorId === observerId;
   const names = (sourceId?: string, targetId?: string) => [
@@ -91,7 +91,7 @@ export function observeEvent(world: WorldState, event: WorldEvent, observerId: s
   // Private acquisition is the common path; its producer already supplied the grant.
   if (owned) return complete();
   // The trusted audience resolver already tested this source at this occurrence.
-  const felt = policy.feltTarget(event) === observerId;
+  const felt = reception?.feltImpact === true || policy.feltTarget(event) === observerId;
   const observer = felt ? entityGet(world.entities, observerId) : undefined;
   const source = felt && event.actorId ? entityGet(world.entities, event.actorId) : undefined;
   const visible = new Map<string, boolean>(

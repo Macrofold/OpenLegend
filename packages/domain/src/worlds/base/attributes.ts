@@ -1,7 +1,20 @@
 import { SLING_HANDLING } from './practical-competence.js';
 import type { AttributeDefinition } from '../../world-modules.js';
 
+export const PERCEPTION: AttributeDefinition = {
+  id: 'wilderness:perception',
+  version: 1,
+  implementation: 'number-v1',
+  name: 'Perception',
+  disclosure: 'owner',
+  presentation: { icon: 'meter.perception', color: 'meter.perception' },
+  schema: { kind: 'number', min: 0, max: 100, initial: 50, unit: '' },
+  meaning:
+    'Perception supports noticing and recognizing the physical details this person can actually receive. It does not improve hearing range, memory or combat accuracy.',
+};
+
 export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
+  PERCEPTION,
   SLING_HANDLING,
   {
     id: 'wilderness:health',

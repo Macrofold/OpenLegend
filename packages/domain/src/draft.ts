@@ -1,3 +1,4 @@
+import { captureKnownPlaceEvidence } from './known-place-evidence.js';
 import {
   entityDraftAudit,
   entityDraftChanges,
@@ -397,6 +398,7 @@ export function draftWorld(
   // docs/save-and-load.md#continuation-and-identity
   if (!completeObjectHistory(world.entities)) markPartialObjectHistory(base.entities);
   const result = drafts.createDraft(base);
+  captureKnownPlaceEvidence(world)(result);
   inheritSensoryChanges(result, world);
   if (!options.retainNativeValues) materializeNativeValuesInPlace(result);
   return result;
@@ -427,6 +429,7 @@ export function finishWorld(
     }
   }
   recordArrays.delete(world);
+  const publishKnownPlaces = captureKnownPlaceEvidence(world);
   const publishExposure = captureExposureCache(world);
   const publishObjects = captureObjectIndex(world);
   const publishAppraisals = captureAppraisalIndex(world);
@@ -502,6 +505,7 @@ export function finishWorld(
           path[1] >= before.length),
     );
   });
+  publishKnownPlaces(result);
   // A semantic mutation cannot inherit a native prediction's sampling progress. A no-op
   // (including load validation) preserves it; native advance publishes a new owned value.
   // docs/simulation-time.md#native-interval-contract

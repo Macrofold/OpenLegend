@@ -27,6 +27,13 @@ import {
   EXPERIENCE_LIMITS,
   validEncounterExposure,
   validateEventEvidence,
+  awarenessMemory,
+  summaryMemory,
+  validateExperienceManifest,
+  validPersonalSourceRef,
+  type PersonalSourceRef,
+  prepareKnownPlaceEvidence,
+  type KnownPlaceCapsule,
 } from '@open-legend/domain';
 import { z } from 'zod';
 import type { SqlDatabase } from './store.js';
@@ -64,6 +71,7 @@ const sourceColumnNames = [
   'sequence',
   'place_id',
   'place_label',
+  'place_capsule',
 ];
 const sourceColumns = sourceColumnNames.map((name) => `r.${name}`).join(',');
 interface PreparedSource {
@@ -71,7 +79,8 @@ interface PreparedSource {
   actorId: string;
   id: string;
   exposure: Awareness['exposure'];
-  sourceIds: readonly string[];
+  sources: readonly PersonalSourceRef[];
+  manifest: ExperienceSummary['manifest'] | undefined;
   values: unknown[];
 }
 export interface PreparedMemorySources {
@@ -165,6 +174,8 @@ export const conversationCompactionKey = (
   conversationId: string,
 ) => `conversation-compaction:${JSON.stringify([worldId, actorId, conversationId])}`;
 export interface RetrievedMemory {
+  /** Authoritative source; memory is only its shared readable projection. */
+  entry: ExperienceEntry;
   sourceKind: SourceKind;
   memory: MemoryRecord;
   awareness?: Awareness;
@@ -366,7 +377,7 @@ export class MemoryRepository {
         id TEXT NOT NULL, source_kind TEXT NOT NULL, record_id TEXT NOT NULL, revision TEXT NOT NULL,
         event_id TEXT, memory_kind TEXT, acquisition TEXT, event_type TEXT,
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
-        place_id TEXT, place_label TEXT, place_latest BIGINT NOT NULL DEFAULT 0,
+        place_id TEXT, place_label TEXT, place_capsule TEXT, place_latest BIGINT NOT NULL DEFAULT 0,
         search_text TEXT NOT NULL DEFAULT '',
         PRIMARY KEY(world_id,actor_id,id,source_kind));
       CREATE INDEX IF NOT EXISTS recall_actor_rank ON recall_sources(world_id,actor_id,eligible,importance DESC,at DESC,id);
@@ -381,8 +392,8 @@ export class MemoryRepository {
       CREATE INDEX IF NOT EXISTS recall_required ON recall_sources(world_id,actor_id,required,eligible,id);
       CREATE INDEX IF NOT EXISTS recall_record ON recall_sources(world_id,source_kind,record_id);
       CREATE TABLE IF NOT EXISTS mind_summary_sources (
-        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,summary_id TEXT NOT NULL,source_id TEXT NOT NULL,
-        PRIMARY KEY(world_id,actor_id,summary_id,source_id));
+        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,summary_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,source_revision TEXT NOT NULL,support_key TEXT NOT NULL,
+        PRIMARY KEY(world_id,actor_id,summary_id,source_kind,source_id,source_revision,support_key));
       CREATE INDEX IF NOT EXISTS mind_summary_world_source ON mind_summary_sources(world_id,source_id,actor_id,summary_id);
       CREATE INDEX IF NOT EXISTS mind_summary_reverse ON mind_summary_sources(world_id,actor_id,source_id);
       CREATE TABLE IF NOT EXISTS mind_source_versions (
@@ -577,12 +588,16 @@ export class MemoryRepository {
       const value = JSON.parse(row.payload) as Record<string, unknown>;
       const id = value[kind === 'awareness' ? 'eventId' : 'id'];
       const exposure = value['exposure'] as Awareness['exposure'];
-      const sourceIds = kind === 'summary' ? value['sourceIds'] : [];
+      const sources = kind === 'summary' ? value['sources'] : [];
+      const manifest =
+        kind === 'summary' ? (value['manifest'] as ExperienceSummary['manifest']) : undefined;
+      if (manifest) validateExperienceManifest(manifest);
       if (
         typeof id !== 'string' ||
         id !== path.at(-1) ||
-        !Array.isArray(sourceIds) ||
-        sourceIds.some((sourceId) => typeof sourceId !== 'string') ||
+        !Array.isArray(sources) ||
+        sources.some((source) => !validPersonalSourceRef(source)) ||
+        (kind === 'summary' && !manifest) ||
         (exposure !== undefined && !validEncounterExposure(exposure))
       )
         throw new Error('Invalid memory source projection.');
@@ -604,6 +619,26 @@ export class MemoryRepository {
         value['sequence'] ?? 0,
         kind === 'awareness' && exposure?.kind === 'place' ? exposure.id : null,
         kind === 'awareness' && exposure?.kind === 'place' ? exposure.label : null,
+        kind === 'awareness' && exposure?.kind === 'place'
+          ? JSON.stringify({
+              placeId: exposure.id,
+              label: exposure.label,
+              location: { kind: 'point', point: exposure.point, errorRadius: 0 },
+              source: {
+                family: 'awareness',
+                id,
+                revision: personalAccountRevision(row.payload),
+                observer: (value['observation'] as Awareness['observation'])?.observer ?? {
+                  actorId,
+                  physicalLife: 0,
+                },
+              },
+              observedAt: value['at'],
+              acquiredAt:
+                (value['observation'] as Awareness['observation'])?.acquiredAt ?? value['at'],
+              provenance: exposure.reportedBy ? 'testimony' : 'observed',
+            })
+          : null,
         value[kind === 'memory' ? 'summary' : 'text'] ?? '',
       ];
       // These are the actual SQL fields: required times/ranks cannot become NULL,
@@ -617,11 +652,11 @@ export class MemoryRepository {
             (index >= 12 && !Number.isSafeInteger(part))
           )
             throw new Error('Invalid numeric memory source projection.');
-        } else if (part === null ? index < 6 || index === 17 : typeof part !== 'string')
+        } else if (part === null ? index < 6 || index === 18 : typeof part !== 'string')
           throw new Error('Invalid text memory source projection.');
       }
       if (kind === 'awareness') validateEventEvidence(value);
-      yield { row, actorId, id, exposure, sourceIds, values };
+      yield { row, actorId, id, exposure, sources, manifest, values };
     }
   }
   /** Insert only after current records have changed. All awareness must precede
@@ -643,17 +678,39 @@ export class MemoryRepository {
         prepared?.groups.get(kind) ?? repository.sourceRows(worldId, kind, changes);
       if (kind === 'summary') {
         function* summaryLinks() {
-          if (prepared) {
-            for (const entry of writes())
-              for (const sourceId of entry.sourceIds)
-                yield [worldId, entry.actorId, entry.id, sourceId];
-          } else {
-            for (const row of changes.writes.get(sourceTables.summary) ?? []) {
-              const path = JSON.parse(row.id) as string[];
-              const value = JSON.parse(row.payload) as Record<string, unknown>;
-              for (const sourceId of value['sourceIds'] as string[])
-                yield [worldId, path[3]!, value['id'], sourceId];
-            }
+          for (const entry of writes()) {
+            const manifest = entry.manifest!;
+            for (const source of entry.sources)
+              yield [
+                worldId,
+                entry.actorId,
+                entry.id,
+                source.kind,
+                source.id,
+                source.revision,
+                'derivation',
+              ];
+            for (const source of manifest.coverage)
+              yield [
+                worldId,
+                entry.actorId,
+                entry.id,
+                source.kind,
+                source.id,
+                source.revision,
+                manifest.coverageKey,
+              ];
+            for (const group of manifest.speech)
+              for (const source of group.sources)
+                yield [
+                  worldId,
+                  entry.actorId,
+                  entry.id,
+                  source.kind,
+                  source.id,
+                  source.revision,
+                  group.supportKey,
+                ];
           }
         }
         await insertRows(this.db, 'mind_summary_sources', summaryLinks(), 'ON CONFLICT DO NOTHING');
@@ -872,6 +929,35 @@ export class MemoryRepository {
     await flush();
   }
 
+  /** Native preparation is complete or explicitly refused. The source projection retains
+   * only the observed place capsule, so this reads no autobiography or live place body.
+   * This exceptional activation work is never performed by a hearing callback or cut. */
+  async prepareKnownPlaceEvidence(scope: MemoryScope) {
+    return this.snapshot(async () => {
+      const predicate = `${this.eligible} AND r.source_kind='awareness' AND r.place_latest=1 AND r.place_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=r.world_id AND c.actor_id=r.actor_id AND c.source_id=r.id)`;
+      const size = await this.db
+        .prepare(
+          `SELECT COUNT(*) AS count,COALESCE(SUM(octet_length(r.place_capsule)),0) AS bytes FROM recall_sources r WHERE ${predicate}`,
+        )
+        .get(...this.params(scope));
+      if (
+        Number(size?.['count'] ?? 0) > RETRIEVAL_ROWS ||
+        Number(size?.['bytes'] ?? 0) > RETRIEVAL_BYTES
+      )
+        throw new MemoryPreparationError();
+      const rows = await this.db
+        .prepare(
+          `SELECT r.place_capsule FROM recall_sources r WHERE ${predicate} ORDER BY r.place_id`,
+        )
+        .all(...this.params(scope));
+      if (rows.length !== Number(size?.['count'] ?? 0)) throw new MemoryPreparationError();
+      const capsules = rows.map((row) => {
+        if (typeof row['place_capsule'] !== 'string') throw new MemoryPreparationError();
+        return JSON.parse(row['place_capsule']) as KnownPlaceCapsule;
+      });
+      return prepareKnownPlaceEvidence(capsules);
+    });
+  }
   /** One current retained observation per place. Filter a bounded metadata window before
    * hydration; continuation reaches every known place regardless of total history. */
   async knownPlaces(
@@ -1536,6 +1622,10 @@ export class MemoryRepository {
       return {
         mode,
         sources,
+        prepared: selected.map((source) => ({
+          entry: source.entry,
+          ref: { kind: source.sourceKind, id: source.memory.id, revision: source.revision },
+        })),
         protected: sources.filter((s) => s.importance >= EXPERIENCE_LIMITS.protectedImportance),
         routine: sources.filter((s) => s.importance < EXPERIENCE_LIMITS.protectedImportance),
         selection: {
@@ -1696,36 +1786,14 @@ export class MemoryRepository {
             awareness = JSON.parse(payload) as Awareness;
             if (awareness.exposure !== undefined && !validEncounterExposure(awareness.exposure))
               throw new Error('Invalid stored encounter evidence. Existing data was not replaced.');
-            memory = {
-              id: awareness.eventId,
-              eventId: awareness.eventId,
-              actorId,
-              at: awareness.at,
-              sequence: awareness.sequence,
-              kind: 'episode',
-              source: awareness.modality,
-              summary: awareness.text,
-              entityIds: awareness.entityIds,
-              importance: awareness.importance,
-              eventType: awareness.eventType,
-              speakerId: awareness.sourceId,
-            };
+            memory = awarenessMemory(awareness);
           } else if (kind === 'summary') {
             const summary = JSON.parse(payload) as ExperienceSummary;
-            memory = {
-              id: summary.id,
-              actorId,
-              at: summary.to,
-              kind: 'reflection',
-              source: 'inferred',
-              summary: `Summary of remembered experience: ${summary.text}`,
-              entityIds: summary.entityIds,
-              importance: summary.importance,
-              sequence: summary.sequence,
-            };
+            memory = summaryMemory(summary, actorId);
           } else memory = JSON.parse(payload) as MemoryRecord;
           const value: RetrievedMemory = {
             sourceKind: kind,
+            entry: { source: kind, value: JSON.parse(payload) } as ExperienceEntry,
             memory,
             awareness,
             revision: String(row['revision']),

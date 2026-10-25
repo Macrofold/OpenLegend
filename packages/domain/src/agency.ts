@@ -1471,7 +1471,6 @@ export function isActivityCommand(command: Command): boolean {
       command.text.trim().length > 0 &&
       command.text.length <= 1500 &&
       (command.targetId === undefined || isSafeRecordId(command.targetId)) &&
-      (command.intendedRecipientId === undefined || isSafeRecordId(command.intendedRecipientId)) &&
       (command.volume === undefined || ['whisper', 'normal', 'shout'].includes(command.volume)))
   );
 }

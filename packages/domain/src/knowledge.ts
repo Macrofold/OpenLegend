@@ -5,18 +5,40 @@ import { getOwn, isSafeRecordId } from './records.js';
 import { outcome } from './events.js';
 import type { KnowledgeRecord } from './types.js';
 
+export type ObserverSubject =
+  | { kind: 'entity'; entityId: string }
+  | { kind: 'individual'; individualId: string };
+export const subjectKey = (subject: ObserverSubject): string =>
+  JSON.stringify([
+    subject.kind,
+    subject.kind === 'entity' ? subject.entityId : subject.individualId,
+  ]);
+export const sameSubject = (a: ObserverSubject, b: ObserverSubject): boolean =>
+  subjectKey(a) === subjectKey(b);
+export function validObserverSubject(subject: unknown): subject is ObserverSubject {
+  if (!subject || typeof subject !== 'object' || Array.isArray(subject)) return false;
+  const value = subject as Partial<ObserverSubject> & {
+    entityId?: unknown;
+    individualId?: unknown;
+  };
+  return value.kind === 'entity'
+    ? typeof value.entityId === 'string' && isSafeRecordId(value.entityId)
+    : value.kind === 'individual' &&
+        typeof value.individualId === 'string' &&
+        isSafeRecordId(value.individualId);
+}
 export interface KnowledgeDocument {
   /** Source of the current complete text, never inferred from revision or evidence absence.
    * Observed facts and testimony keep their distinct sources on the referenced evidence.
    * docs/knowledge.md#documents-and-authority */
   origin: 'authored-starting' | 'actor-edit';
-  subjectId: string | null;
+  subjectId: ObserverSubject | null;
   text: string;
   revision: number;
   evidenceIds: string[];
 }
 export interface KnowledgeEdit {
-  subjectId: string | null;
+  subjectId: ObserverSubject | null;
   expectedRevision: number;
   text: string;
 }
@@ -45,9 +67,13 @@ export function advanceKnowledgeRevision(world: WorldState, actorId: string): vo
   recordSemanticChange(world, { kind: 'knowledge', actorId });
 }
 export const characterCount = (text: string): number => Array.from(text).length;
-export const knowledgeKey = (subjectId: string | null): string =>
-  subjectId === null ? 'general' : `subject:${subjectId}`;
-export function knowledgeDocument(world: WorldState, actorId: string, subjectId: string | null) {
+export const knowledgeKey = (subjectId: ObserverSubject | null): string =>
+  subjectId === null ? 'general' : `subject:${subjectKey(subjectId)}`;
+export function knowledgeDocument(
+  world: WorldState,
+  actorId: string,
+  subjectId: ObserverSubject | null,
+) {
   return getOwn(world.actorKnowledge?.[actorId] ?? {}, knowledgeKey(subjectId));
 }
 const orderedDocuments = new WeakMap<ActorKnowledge, readonly string[]>();
@@ -83,7 +109,7 @@ export function editKnowledge(
   world: WorldState,
   actorId: string,
   edit: KnowledgeEdit,
-  permittedSubjects: readonly string[],
+  permittedSubjects: readonly ObserverSubject[],
   evidenceIds: readonly string[] = [],
 ): Outcome {
   const policy = world.knowledgePolicy;
@@ -92,9 +118,11 @@ export function editKnowledge(
   const current = knowledgeDocument(world, actorId, edit.subjectId);
   if (
     edit.subjectId !== null &&
-    (!permittedSubjects.includes(edit.subjectId) ||
-      !isSafeRecordId(edit.subjectId) ||
-      (!entityGet(world.entities, edit.subjectId) && !current))
+    (!validObserverSubject(edit.subjectId) ||
+      !permittedSubjects.some((subject) => sameSubject(subject, edit.subjectId!)) ||
+      (edit.subjectId.kind === 'entity'
+        ? !entityGet(world.entities, edit.subjectId.entityId) && !current
+        : !world.observerIdentities?.[actorId]?.[edit.subjectId.individualId]))
   )
     return outcome(false, 'unpermitted-subject', 'The knowledge subject was not supplied.');
   if (
@@ -151,7 +179,7 @@ export function validateKnowledge(world: WorldState): void {
       if (
         !['authored-starting', 'actor-edit'].includes(document.origin) ||
         id !== knowledgeKey(document.subjectId) ||
-        (document.subjectId !== null && !isSafeRecordId(document.subjectId)) ||
+        (document.subjectId !== null && !validObserverSubject(document.subjectId)) ||
         !Number.isSafeInteger(document.revision) ||
         document.revision < 1 ||
         typeof document.text !== 'string' ||

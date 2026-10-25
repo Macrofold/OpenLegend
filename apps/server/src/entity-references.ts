@@ -1,4 +1,3 @@
-import { entityKeys } from '@open-legend/domain';
 import type { NameArticle } from '@open-legend/language';
 import { observerDescription, recognizesSubject } from '@open-legend/domain';
 import type {
@@ -6,13 +5,22 @@ import type {
   ActivityRequestDescriptor,
   Entity,
   WorldState,
+  ObserverSubject,
 } from '@open-legend/domain';
-import { createHash, createHmac, randomBytes } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 
-const cache = new WeakMap<WorldState, Map<string, Map<string, string>>>();
 // A life count has a small guessable range. A process-local key keeps the
 // presentation reference opaque; restart invalidation grants no authority.
 const bodyReferenceKey = randomBytes(32);
+
+export function permittedSourceHandle(world: WorldState, observerId: string, identity: unknown): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(JSON.stringify(['personal-source', world.id, observerId, identity]))
+    .digest('hex');
+}
+export function subjectHandle(world: WorldState, observerId: string, subject: ObserverSubject): string {
+  return permittedSourceHandle(world, observerId, ['subject', subject]);
+}
 
 /** Presentation freshness for one permitted body, without exposing its life count.
  * Unlike body revision, this stays stable through ordinary injury and healing. */
@@ -25,42 +33,21 @@ export function entityBodyReference(scope: string, entity: Entity): string {
 /** Opaque presentation references are not domain identities or authority.
  * docs/memory-architecture.md#metadata-stays-in-the-server-binding
  */
-export function entityHandles(
+export function entityHandle(
   world: WorldState,
-  observerId = world.identity?.controlledEntityId ?? '',
-): Map<string, string> {
-  const cached = cache.get(world)?.get(observerId);
-  if (cached) return cached;
-  const hashes = entityKeys(world.entities).map(
-    (id) =>
-      [
-        id,
-        createHash('sha256')
-          .update(
-            `${observerId}:${id}:${world.perceptionEpisodes?.[observerId]?.[id] ?? (recognizesSubject(world, observerId, id) ? 'known' : world.sequence)}`,
-          )
-          .digest('hex'),
-      ] as const,
-  );
-  const groups = new Map<string, typeof hashes>();
-  for (const entry of hashes) {
-    const prefix = entry[1].slice(0, 4);
-    const group = groups.get(prefix) ?? [];
-    group.push(entry);
-    groups.set(prefix, group);
-  }
-  const handles = new Map<string, string>();
-  for (const group of groups.values()) {
-    let length = 4;
-    while (new Set(group.map(([, hash]) => hash.slice(0, length))).size !== group.length) {
-      if (++length > 64) throw new Error('Entity reference collision.');
-    }
-    for (const [id, hash] of group) handles.set(id, hash.slice(0, length));
-  }
-  const observers = cache.get(world) ?? new Map<string, Map<string, string>>();
-  observers.set(observerId, handles);
-  cache.set(world, observers);
-  return handles;
+  observerId: string,
+  id: string,
+): string {
+  // Bind only identities actually selected by the caller. Enumerating the world
+  // here made one permitted reference prepare handles for every hidden being.
+  // The structured tuple also keeps authored IDs containing separators distinct.
+  return createHmac('sha256', bodyReferenceKey)
+    .update(JSON.stringify([
+      'personal-reference', world.id, observerId, id,
+      world.perceptionEpisodes?.[observerId]?.[id] ??
+        (recognizesSubject(world, observerId, id) ? 'known' : world.sequence),
+    ]))
+    .digest('hex');
 }
 
 export function entityLabel(
@@ -70,7 +57,7 @@ export function entityLabel(
   article: NameArticle = 'none',
 ): string {
   const label = observerDescription(world, observerId, entity.id, article);
-  return `${label} (ID:${entityHandles(world, observerId).get(entity.id)!})`;
+  return `${label} (ID:${entityHandle(world, observerId, entity.id)})`;
 }
 
 export function entityReferenceMap(
@@ -78,11 +65,9 @@ export function entityReferenceMap(
   ids: string[],
   observerId: string,
 ): Record<string, string> {
-  const handles = entityHandles(world, observerId);
   return Object.fromEntries(
     ids.map((id) => {
-      const handle = handles.get(id);
-      if (!handle) throw new Error('Referenced entity is unavailable.');
+      const handle = entityHandle(world, observerId, id);
       return [handle, id];
     }),
   );
@@ -98,13 +83,10 @@ export function resolveEntityMarkers(text: string, references: Record<string, st
 
 /** Persist full identities in intentions, then reproject annotations in a later context. */
 export function projectEntityMarkers(text: string, world: WorldState, observerId: string): string {
-  const handles = entityHandles(world, observerId);
-  return text.replace(/\(ID:([^()\s]+)\)/g, (original, id: string) =>
-    handles.has(id)
-      ? recognizesSubject(world, observerId, id)
-        ? `(ID:${handles.get(id)})`
-        : '(unrecognized identity)'
-      : original,
+  return text.replace(/\(ID:([^()\s]+)\)/g, (_original, id: string) =>
+    recognizesSubject(world, observerId, id)
+      ? `(ID:${entityHandle(world, observerId, id)})`
+      : '(unrecognized identity)',
   );
 }
 

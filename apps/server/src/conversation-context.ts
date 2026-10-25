@@ -1,9 +1,16 @@
+import {
+  awarenessMemory,
+  experienceManifest,
+  validateExperienceManifest,
+  type ExperienceManifest,
+} from '@open-legend/domain';
+import { experienceManifestForModel } from './recall.js';
 import { entityGet } from '@open-legend/domain';
 import type { CognitionPreparation } from './memory-repository.js';
 import { z } from 'zod';
 import { observerDescription, recognizesSubject, type WorldState } from '@open-legend/domain';
 import type { GenerateRequest } from '@open-legend/ai';
-import { entityHandles, projectEntityMarkers } from './entity-references.js';
+import { entityHandle, projectEntityMarkers } from './entity-references.js';
 import { memoryCandidate } from './recall.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { digest } from './store.js';
@@ -21,7 +28,7 @@ import {
 // Request policy, not fictional forgetting. Replace only behind this boundary.
 // docs/projects/completed/conversation-compaction-tech-design.md#14-extension-seam
 // Byte/cold-work rationale: docs/limits/narration.md#la236
-const CONVERSATION_COMPACTOR_VERSION = 'conversation-prose-v8';
+const CONVERSATION_COMPACTOR_VERSION = 'conversation-prose-v9';
 const CONVERSATION_BYTES = 24000;
 const SUMMARY_BYTES = 6000;
 const INPUT_BYTES = 24000;
@@ -37,6 +44,14 @@ const cacheSchema = z
     entityIds: z.array(z.string()),
     references: z.array(z.string()),
     summary: z.string(),
+    manifest: z.custom<ExperienceManifest>((value) => {
+      try {
+        validateExperienceManifest(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }),
     coveredBytes: z.number().int().nonnegative(),
   })
   .strict();
@@ -62,11 +77,10 @@ function conversationText(lines: string[]): string {
 const bytes = (lines: string[]) => Buffer.byteLength(conversationText(lines));
 const joinedBytes = (prefix: number, suffix: number) =>
   prefix + suffix + (prefix && suffix ? 1 : 0);
-const summaryLine = (summary: string) =>
-  `Summary of older personally experienced speech (derived, not authoritative). “The memory owner” means you, the responding actor; other speakers are distinct people:\n${summary}`;
+const summaryLine = (summary: string, structure: unknown) =>
+  `Summary of older personally experienced speech (derived, not authoritative). “The memory owner” means you, the responding actor; other speakers are distinct people:\n${summary}\nStructured original attribution: ${JSON.stringify(structure)}`;
 function perspective(world: WorldState, actorId: string, entityIds: string[]): string {
   if (!entityIds.length) return digest([]);
-  const handles = entityHandles(world, actorId);
   return digest(
     entityIds.map((id) => {
       const known = recognizesSubject(world, actorId, id);
@@ -77,7 +91,7 @@ function perspective(world: WorldState, actorId: string, entityIds: string[]): s
         observerDescription(world, actorId, id),
         known,
         episode ?? null,
-        known || episode ? handles.get(id) : null,
+        known || episode ? entityHandle(world, actorId, id) : null,
       ];
     }),
   );
@@ -186,18 +200,8 @@ export async function buildConversationContext(input: {
                   {
                     awareness: aware,
                     revision: source.revision,
-                    memory: {
-                      id: aware.eventId,
-                      eventId: aware.eventId,
-                      actorId,
-                      at: aware.at,
-                      sequence: aware.sequence,
-                      kind: 'episode' as const,
-                      source: aware.modality,
-                      summary: aware.text,
-                      entityIds: aware.entityIds,
-                      importance: aware.importance,
-                    },
+                    entry: { source: 'awareness' as const, value: aware },
+                    memory: awarenessMemory(aware),
                   },
                 ]
               : [];
@@ -229,6 +233,10 @@ export async function buildConversationContext(input: {
       const text = projectEntityMarkers(candidate.text, world, actorId);
       return {
         ...source,
+        prepared: {
+          entry: { source: 'awareness' as const, value: entry.awareness },
+          ref: { kind: 'awareness' as const, id: source.id, revision: source.revision },
+        },
         at: entry.memory.at,
         text,
         references: candidate.entityIds,
@@ -236,7 +244,7 @@ export async function buildConversationContext(input: {
           ...new Set([
             ...entry.awareness.entityIds,
             ...(entry.awareness.sourceId ? [entry.awareness.sourceId] : []),
-            ...(entry.awareness.intendedRecipientId ? [entry.awareness.intendedRecipientId] : []),
+            ...(entry.awareness.targetId ? [entry.awareness.targetId] : []),
           ]),
         ],
       };
@@ -307,7 +315,12 @@ export async function buildConversationContext(input: {
   };
   let calls = 0;
   const fullLines = turns.filter((turn) => !required.has(turn.id)).map((turn) => turn.text);
-  let lines = cached ? [summaryLine(cached.summary), ...fullLines] : fullLines;
+  let lines = cached
+    ? [
+        summaryLine(cached.summary, experienceManifestForModel(world, actorId, cached.manifest)),
+        ...fullLines,
+      ]
+    : fullLines;
   if (bytes(lines) > maxBytes) {
     if (!input.generate || !repository || !scope || !conversationId)
       throw new Error('Conversation compaction required but unavailable; no speech was omitted.');
@@ -325,6 +338,16 @@ export async function buildConversationContext(input: {
       split--;
     }
     const older = turns.slice(0, split);
+    const manifest = experienceManifest(
+      older.map((turn) => turn.prepared),
+      cached ? [cached.manifest] : [],
+    );
+    const structure = experienceManifestForModel(world, actorId, manifest);
+    if (
+      Buffer.byteLength(JSON.stringify(manifest)) > RETRIEVAL_BYTES ||
+      bytes([summaryLine('', structure)]) > maxBytes - 256
+    )
+      throw new MemoryPreparationError();
     if (!older.length) throw new Error('Conversation summary does not fit its allowance.');
     const recent = turns
       .slice(split)
@@ -334,7 +357,17 @@ export async function buildConversationContext(input: {
     let chunk: typeof older = [];
     let chunkBytes = 2; // JSON array delimiters; the per-turn comma count is conservative.
     for (const turn of older) {
-      const size = Buffer.byteLength(JSON.stringify(turn.text)) + 1;
+      const size =
+        Buffer.byteLength(
+          JSON.stringify({
+            text: turn.text,
+            attribution: experienceManifestForModel(
+              world,
+              actorId,
+              experienceManifest([turn.prepared]),
+            ),
+          }),
+        ) + 1;
       if (size + 2 > INPUT_BYTES)
         throw new Error('One speech turn exceeds compaction input capacity.');
       if (chunkBytes + size > INPUT_BYTES) {
@@ -373,7 +406,14 @@ export async function buildConversationContext(input: {
             instructions: `${instructions}\nThe summary must fit ${summaryBytes} UTF-8 bytes.`,
             context: {
               previousSummary: summary,
-              olderDialogue: part.map((turn) => turn.text),
+              olderDialogue: part.map((turn) => ({
+                text: turn.text,
+                attribution: experienceManifestForModel(
+                  world,
+                  actorId,
+                  experienceManifest([turn.prepared]),
+                ),
+              })),
             },
             schema: z.toJSONSchema(summarySchema, { target: 'draft-7' }),
           },
@@ -408,9 +448,10 @@ export async function buildConversationContext(input: {
         ...new Set([...(cached?.references ?? []), ...older.flatMap((turn) => turn.references)]),
       ],
       summary,
+      manifest,
       coveredBytes: joinedBytes(cached?.coveredBytes ?? 0, bytes(older.map((turn) => turn.text))),
     };
-    lines = [summaryLine(summary), ...recent];
+    lines = [summaryLine(summary, structure), ...recent];
     if (bytes(lines) > maxBytes) throw new Error('Compacted conversation exceeds its allowance.');
     await repository.publishConversationCompaction(
       scope,

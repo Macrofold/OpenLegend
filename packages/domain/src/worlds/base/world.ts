@@ -46,7 +46,7 @@ import { initialInventionPolicy } from '../../invention-policy.js';
 import { seedAgency } from '../../agency.js';
 import { BASE_RECIPE_FAMILIES } from './recipe-families.js';
 import { definitionPin } from '../../world-modules.js';
-import { DEFAULT_ATTRIBUTES } from './attributes.js';
+import { DEFAULT_ATTRIBUTES, PERCEPTION } from './attributes.js';
 import { DEFAULT_SENSES } from '../../perception.js';
 import { BASE_BODY_POLICY } from './body-policy.js';
 import { baseCognitionPolicy } from './cognition.js';
@@ -78,6 +78,7 @@ import type { ActorComponent, CharacterTrait, Entity, WorldState } from '../../t
 import type { ConstructionPermission } from '../../assembly-types.js';
 import { itemsForOwner } from '../../objects.js';
 import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
+import { BASE_TIME_POLICY } from './time.js';
 
 export const PLAYER_ID = 'entity-0001';
 export const NPC_ID = 'entity-0002';
@@ -133,6 +134,13 @@ export function createActor(
     ...(identity.backstory ? { backstory: identity.backstory } : {}),
     ...(initialGoals !== undefined ? { initialGoals } : {}),
     controller,
+    individualRecognition: { attributeId: PERCEPTION.id },
+    voiceProfile: {
+      pitchRange: Math.floor(nextRandom(world) * 1001),
+      resonance: Math.floor(nextRandom(world) * 1001),
+      texture: Math.floor(nextRandom(world) * 1001),
+      rhythm: Math.floor(nextRandom(world) * 1001),
+    },
     species: 'human',
     body: livingBody('human'),
     capabilities: { cognition: true, memory: true, innerWorld: true, speech: true },
@@ -156,6 +164,7 @@ export function createActor(
     (definition) =>
       definition.id === 'wilderness:fullness' ||
       definition.id === 'wilderness:energy' ||
+      definition.id === PERCEPTION.id ||
       definition.implementation === 'finite-practice-v1',
   );
   const food = meters.find((definition) => definition.id === 'wilderness:fullness');
@@ -183,6 +192,7 @@ export function createFreshBaseWorld(
   const world: WorldState = {
     presentation: { ...BASE_WORLD_PRESENTATION },
     perceptionFeatures: {},
+    timePolicy: { normalGameSecondsPerSecond: BASE_TIME_POLICY.normalGameSecondsPerSecond },
     schemaVersion: 10,
     actionExperience: emptyActionExperience(),
     participationPolicy: structuredClone(BASE_PARTICIPATION_POLICY),

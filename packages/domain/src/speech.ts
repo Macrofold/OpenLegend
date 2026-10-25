@@ -1,7 +1,8 @@
 import { entityGet } from './entity-collection.js';
 import { namePhrase, personalPronoun, validName, type Named } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
-import { observerName, recognizesSubject } from './worlds/base/knowledge.js';
+import { observerName, recognizesSubject, observerIndividual } from './worlds/base/knowledge.js';
+import { perceiveVoice, receivedVoiceFeatures } from './worlds/base/recognition.js';
 import { hasMemory } from './living.js';
 import { speechPerception } from './perception.js';
 import { contentLabel } from './events.js';
@@ -15,12 +16,15 @@ export interface PerceivedSpeech {
   perception: 'heard' | 'seen' | 'self';
   intelligibility: 'none' | 'partial' | 'clear';
   segments: SpeechSegment[];
-  speaker: (Omit<Named, 'name'> & { entityId: string; nameAtTime: string }) | null;
-  /** The recipient as identified at the occurrence, never resolved from a later name. */
-  recipient?: (Omit<Named, 'name'> & { entityId: string; nameAtTime: string }) | null;
+  speaker: (Omit<Named, 'name'> & { nameAtTime: string }) | null;
+  /** Address intention is distinct from whether any known individual heard it. */
+  addressing: 'ambient' | 'directed' | null;
+  addressee: (Omit<Named, 'name'> & { nameAtTime: string }) | null;
   delivery: SpeechVolume | null;
   direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
   listenerPosition: Position;
+  /** Actually understood self-name claim; never canonical identity proof. */
+  nameClaim?: string;
 }
 const segmenter = new Intl.Segmenter('und', { granularity: 'word' });
 export function prepareSpeechWords(text: string) {
@@ -110,7 +114,32 @@ export function perceiveSpeech(
   const dx = origin.x - listener.x,
     dz = origin.z - listener.z,
     dy = origin.y - listener.y;
-  const speaker = visible ? observerName(world, observer.id, source.id) : undefined;
+  const voice =
+    !self &&
+    perception === 'heard' &&
+    source.actor?.voiceProfile &&
+    contact?.clarityMarginDb !== null &&
+    contact?.clarityMarginDb !== undefined
+      ? perceiveVoice(
+          world,
+          observer.id,
+          event,
+          receivedVoiceFeatures(source.actor.voiceProfile),
+          contact.clarityMarginDb,
+          visible ? source.id : undefined,
+        )
+      : undefined;
+  const learnedSubject = voice?.subject ?? voice?.learnedSubject;
+  const individual = learnedSubject && observerIndividual(world, observer.id, learnedSubject);
+  const speaker = visible
+    ? observerName(world, observer.id, source.id)
+    : individual
+      ? {
+          name: individual.givenName || 'unidentified voice',
+          nameForm: individual.givenName ? ('proper' as const) : ('count' as const),
+        }
+      : undefined;
+  const sourceId = visible ? source.id : voice?.recognized ? individual?.canonicalId : undefined;
   const speech: PerceivedSpeech = {
     perception,
     intelligibility: detail === 'clear' || detail === 'partial' ? detail : 'none',
@@ -120,9 +149,10 @@ export function perceiveSpeech(
         : detail === 'partial'
           ? partialSpeech(raw, `${world.seed}:${event.id}:${observer.id}`, words)
           : [],
-    speaker: visible
+    addressing: perception === 'seen' ? null : event.targetId ? 'directed' : 'ambient',
+    addressee: null,
+    speaker: speaker
       ? {
-          entityId: source.id,
           nameAtTime: speaker!.name,
           nameForm: speaker!.nameForm,
           indefiniteArticle: speaker!.indefiniteArticle,
@@ -139,27 +169,28 @@ export function perceiveSpeech(
         : null,
     listenerPosition: { ...listener },
   };
+  const introduction = event.data?.['selfIntroduction'];
+  if (
+    typeof introduction === 'string' &&
+    speech.segments.some((part) => part.kind === 'heard' && part.text.includes(introduction.trim()))
+  )
+    speech.nameClaim = introduction.trim();
   if (!speech.segments.some((part) => part.kind === 'heard' && part.text.trim()))
     speech.intelligibility = 'none';
-  // Communicative intent is not available merely because the server knows targetId.
-  const intendedId =
-    typeof event.data?.['intendedRecipientId'] === 'string'
-      ? event.data['intendedRecipientId']
-      : event.targetId;
+  // Linguistic direction is selected world policy for detected speech. The
+  // actual third-person addressee still needs an independently observed binding.
+  const intendedId = event.targetId;
   const recipient = intendedId ? entityGet(world.entities, intendedId) : undefined;
   const perceivedRecipient =
     intendedId &&
-    (self ||
-      (speech.intelligibility !== 'none' &&
-        visible &&
-        (intendedId === observer.id || (recipient && contact?.sees(recipient)))))
+    perception !== 'seen' &&
+    (self || intendedId === observer.id || (visible && recipient && contact?.sees(recipient)))
       ? intendedId
       : undefined;
   const addressed = !self && perceivedRecipient === observer.id;
   if (perceivedRecipient) {
     const name = observerName(world, observer.id, perceivedRecipient);
-    speech.recipient = {
-      entityId: perceivedRecipient,
+    speech.addressee = {
       nameAtTime: name.name,
       nameForm: name.nameForm,
       indefiniteArticle: name.indefiniteArticle,
@@ -172,7 +203,7 @@ export function perceiveSpeech(
       : undefined;
   const entityIds = [
     ...new Set([
-      ...(visible ? [source.id] : []),
+      ...(sourceId ? [sourceId] : []),
       ...(perceivedRecipient ? [perceivedRecipient] : []),
     ]),
   ];
@@ -186,11 +217,12 @@ export function perceiveSpeech(
     content: speechWords(speech),
     speech,
     modality: perception === 'self' ? 'internal' : perception === 'seen' ? 'observed' : 'heard',
-    recognized: visible && recognizesSubject(world, observer.id, source.id),
+    recognized:
+      (visible && recognizesSubject(world, observer.id, source.id)) || voice?.recognized === true,
     intelligible: speech.intelligibility !== 'none',
-    ...(visible ? { sourceId: source.id } : {}),
+    ...(sourceId ? { sourceId } : {}),
+    ...(learnedSubject ? { sourceSubject: learnedSubject } : {}),
     ...(targetId ? { targetId } : {}),
-    ...(perceivedRecipient ? { intendedRecipientId: perceivedRecipient } : {}),
     entityIds,
     entityEpisodes: Object.fromEntries(
       entityIds.flatMap((id) => {
@@ -222,7 +254,8 @@ export type EventEvidence = Pick<
   | 'modality'
   | 'sourceId'
   | 'targetId'
-  | 'intendedRecipientId'
+  | 'sourceSubject'
+  | 'observation'
   | 'speech'
   | 'importance'
   | 'urgency'
@@ -260,14 +293,18 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
     throw new Error('Invalid committed observer event type.');
   if (evidence.eventType === 'speech') {
     if (!evidence.speech) throw new Error('Speech is missing its committed listener perspective.');
-    const recipient = evidence.speech.recipient;
+    const recipient = evidence.speech.addressee;
+    if (
+      !['ambient', 'directed', null].includes(evidence.speech.addressing) ||
+      (evidence.speech.perception === 'seen'
+        ? evidence.speech.addressing !== null
+        : evidence.speech.addressing === null)
+    )
+      throw new Error('Invalid committed speech addressing.');
     if (
       recipient != null &&
       (typeof recipient !== 'object' ||
         Array.isArray(recipient) ||
-        typeof recipient.entityId !== 'string' ||
-        !recipient.entityId ||
-        recipient.entityId !== evidence.intendedRecipientId ||
         !validName({ ...recipient, name: recipient.nameAtTime }))
     )
       throw new Error('Invalid occurrence-time speech recipient.');
@@ -317,9 +354,6 @@ export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence)
           speech: evidence.speech,
           data: {
             text: speechWords(evidence.speech),
-            ...(evidence.intendedRecipientId
-              ? { intendedRecipientId: evidence.intendedRecipientId }
-              : {}),
             ...(evidence.speech.delivery ? { volume: evidence.speech.delivery } : {}),
             ...(typeof event.data?.['responseId'] === 'string'
               ? { responseId: event.data['responseId'] }

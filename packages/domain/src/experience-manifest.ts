@@ -1,0 +1,216 @@
+import { canonicalJson, contentLabel } from './events.js';
+import type { Awareness, ExperienceSummary } from './experience.js';
+import type { ExperienceEntry, MemoryRecord } from './types.js';
+import { validateObservationContribution } from './perception-evidence.js';
+import type { ObservationContribution } from './perception-evidence.js';
+
+/** Exact source identity in the owning world/observer partition. */
+export interface PersonalSourceRef {
+  kind: ExperienceEntry['source'];
+  id: string;
+  revision: string;
+}
+export interface PreparedExperience {
+  entry: ExperienceEntry;
+  ref: PersonalSourceRef;
+}
+export interface SpeechAttributionGroup {
+  supportKey: string;
+  sources: PersonalSourceRef[];
+  speakerId?: string;
+  targetId?: string;
+  sourceSubject?: Awareness['sourceSubject'];
+  speaker: NonNullable<Awareness['speech']>['speaker'];
+  addressee: NonNullable<Awareness['speech']>['addressee'];
+  addressing: NonNullable<Awareness['speech']>['addressing'];
+  observerRelation: 'self' | 'addressed' | 'overheard' | 'ambient' | 'seen';
+  acquisition: NonNullable<Awareness['speech']>['perception'];
+  intelligibility: NonNullable<Awareness['speech']>['intelligibility'];
+  firstAt: number;
+  lastAt: number;
+  sourceCount: number;
+}
+export interface ExperienceManifest {
+  version: 1;
+  coverageKey: string;
+  coverage: PersonalSourceRef[];
+  observations: ObservationContribution[];
+  speech: SpeechAttributionGroup[];
+}
+const refKey = (ref: PersonalSourceRef) => canonicalJson([ref.kind, ref.id, ref.revision]);
+export function validPersonalSourceRef(value: unknown): value is PersonalSourceRef {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const ref = value as PersonalSourceRef;
+  return (
+    Object.keys(ref).length === 3 &&
+    ['awareness', 'memory', 'summary'].includes(ref.kind) &&
+    typeof ref.id === 'string' &&
+    !!ref.id &&
+    typeof ref.revision === 'string' &&
+    /^[a-f0-9]{64}$/.test(ref.revision)
+  );
+}
+export function manifestCoverageKey(refs: readonly PersonalSourceRef[]): string {
+  return contentLabel(canonicalJson(refs.map(refKey).sort()));
+}
+/** Structured meaning is native-derived, independent of a model's paraphrase.
+ * Child manifests already carry exact leaf coverage; never replay lifetime history.
+ * docs/projects/speech-and-social-perception-tech-design.md#structural-attribution-in-every-selected-summary */
+export function experienceManifest(
+  inputs: readonly PreparedExperience[],
+  children: readonly ExperienceManifest[] = [],
+): ExperienceManifest {
+  const coverage = new Map<string, PersonalSourceRef>();
+  const observations = new Map<string, ObservationContribution>();
+  const speech = new Map<string, SpeechAttributionGroup>();
+  const addGroup = (group: SpeechAttributionGroup) => {
+    const {
+      supportKey: _key,
+      sources: _sources,
+      firstAt: _first,
+      lastAt: _last,
+      sourceCount: _count,
+      ...roles
+    } = group;
+    // An unresolved contact is scoped to its actual original contribution; equal labels
+    // never establish that two unknown voices belong to the same person.
+    const key = canonicalJson([
+      roles,
+      group.sourceSubject || group.speakerId ? null : group.sources,
+    ]);
+    const prior = speech.get(key);
+    const sources = [
+      ...new Map(
+        [...(prior?.sources ?? []), ...group.sources].map((ref) => [refKey(ref), ref]),
+      ).values(),
+    ];
+    speech.set(key, {
+      ...roles,
+      sources,
+      supportKey: manifestCoverageKey(sources),
+      firstAt: Math.min(prior?.firstAt ?? Infinity, group.firstAt),
+      lastAt: Math.max(prior?.lastAt ?? -Infinity, group.lastAt),
+      sourceCount: sources.length,
+    });
+  };
+  for (const child of children) {
+    validateExperienceManifest(child);
+    for (const source of child.coverage) coverage.set(refKey(source), source);
+    for (const observation of child.observations)
+      observations.set(
+        canonicalJson([observation.observer, observation.id, observation.revision]),
+        observation,
+      );
+    for (const group of child.speech) addGroup(group);
+  }
+  for (const { entry, ref } of inputs) {
+    if (
+      !validPersonalSourceRef(ref) ||
+      entry.source !== ref.kind ||
+      (entry.source === 'awareness' ? entry.value.eventId : entry.value.id) !== ref.id
+    )
+      throw new Error(
+        'Memory source binding is missing or mismatched; original evidence retained.',
+      );
+    const child =
+      entry.source === 'summary'
+        ? entry.value.manifest
+        : entry.source === 'memory'
+          ? entry.value.manifest
+          : undefined;
+    if (child) validateExperienceManifest(child);
+    for (const original of child?.coverage ?? [ref]) coverage.set(refKey(original), original);
+    const observation = entry.source === 'summary' ? undefined : entry.value.observation;
+    for (const value of child?.observations ?? [
+      ...(observation ? [observation] : []),
+      ...(entry.source === 'summary' ? [] : (entry.value.observations ?? [])),
+    ])
+      observations.set(canonicalJson([value.observer, value.id, value.revision]), value);
+    for (const group of child?.speech ?? []) addGroup(group);
+    const awareness = entry.source === 'awareness' ? entry.value : undefined;
+    const heard = awareness?.speech;
+    if (awareness && heard)
+      addGroup({
+        supportKey: manifestCoverageKey([ref]),
+        sources: [ref],
+        ...(awareness.sourceId ? { speakerId: awareness.sourceId } : {}),
+        ...(awareness.targetId ? { targetId: awareness.targetId } : {}),
+        ...(awareness.sourceSubject ? { sourceSubject: awareness.sourceSubject } : {}),
+        speaker: heard.speaker,
+        addressee: heard.addressee,
+        addressing: heard.addressing,
+        observerRelation:
+          heard.perception === 'self'
+            ? 'self'
+            : heard.perception === 'seen'
+              ? 'seen'
+              : awareness.targetId === awareness.actorId
+                ? 'addressed'
+                : heard.addressing === 'ambient'
+                  ? 'ambient'
+                  : 'overheard',
+        acquisition: heard.perception,
+        intelligibility: heard.intelligibility,
+        firstAt: awareness.at,
+        lastAt: awareness.at,
+        sourceCount: 1,
+      });
+  }
+  const refs = [...coverage.values()].sort((a, b) => refKey(a).localeCompare(refKey(b)));
+  return {
+    version: 1,
+    coverageKey: manifestCoverageKey(refs),
+    coverage: refs,
+    observations: [...observations.values()],
+    speech: [...speech.values()],
+  };
+}
+export function validateExperienceManifest(value: unknown): asserts value is ExperienceManifest {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Missing structured memory coverage.');
+  const manifest = value as ExperienceManifest;
+  if (
+    manifest.version !== 1 ||
+    !Array.isArray(manifest.coverage) ||
+    manifest.coverage.some((ref) => !validPersonalSourceRef(ref)) ||
+    new Set(manifest.coverage.map(refKey)).size !== manifest.coverage.length ||
+    manifest.coverageKey !== manifestCoverageKey(manifest.coverage) ||
+    !Array.isArray(manifest.observations) ||
+    !Array.isArray(manifest.speech)
+  )
+    throw new Error('Invalid structured memory coverage.');
+  for (const observation of manifest.observations) validateObservationContribution(observation);
+  const coverage = new Set(manifest.coverage.map(refKey));
+  for (const group of manifest.speech)
+    if (
+      !group ||
+      !Array.isArray(group.sources) ||
+      !group.sources.length ||
+      group.sources.some((ref) => !validPersonalSourceRef(ref) || !coverage.has(refKey(ref))) ||
+      new Set(group.sources.map(refKey)).size !== group.sources.length ||
+      group.sourceCount !== group.sources.length ||
+      group.supportKey !== manifestCoverageKey(group.sources) ||
+      !Number.isFinite(group.firstAt) ||
+      !Number.isFinite(group.lastAt) ||
+      group.firstAt > group.lastAt ||
+      !['self', 'addressed', 'overheard', 'ambient', 'seen'].includes(group.observerRelation) ||
+      !['self', 'heard', 'seen'].includes(group.acquisition) ||
+      !['none', 'partial', 'clear'].includes(group.intelligibility)
+    )
+      throw new Error('Invalid remembered speech attribution.');
+}
+export function summaryMemory(summary: ExperienceSummary, actorId: string): MemoryRecord {
+  validateExperienceManifest(summary.manifest);
+  return {
+    id: summary.id,
+    actorId,
+    at: summary.to,
+    kind: 'reflection',
+    source: 'inferred',
+    summary: `Summary of remembered experience: ${summary.text}`,
+    entityIds: summary.entityIds,
+    importance: summary.importance,
+    sequence: summary.sequence,
+    manifest: summary.manifest,
+  };
+}

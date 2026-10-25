@@ -1,3 +1,8 @@
+import {
+  validateObservationContribution,
+  validatePerceptionEvidenceState,
+} from './perception-evidence.js';
+import { validateExperienceManifest, validPersonalSourceRef } from './experience-manifest.js';
 import { validateNativeResponse } from './native-response.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { validateEntityCollection } from './entity-collection.js';
@@ -1065,6 +1070,30 @@ export function validateWorldModules(world: WorldState): void {
     throw new Error('Invalid world presentation.');
   for (const entries of Object.values(world.experience?.awareness ?? {}))
     for (const entry of entries) validateEventEvidence(entry);
+  if (
+    !world.timePolicy ||
+    !Number.isFinite(world.timePolicy.normalGameSecondsPerSecond) ||
+    world.timePolicy.normalGameSecondsPerSecond <= 0
+  )
+    throw new Error('Invalid selected normal-time rate.');
+  validatePerceptionEvidenceState(world);
+  for (const entries of Object.values(world.memories))
+    for (const memory of entries) {
+      if (memory.evidence) validateEventEvidence(memory.evidence);
+      if (memory.observation) validateObservationContribution(memory.observation);
+      for (const observation of memory.observations ?? [])
+        validateObservationContribution(observation);
+      if (memory.manifest) validateExperienceManifest(memory.manifest);
+    }
+  for (const entries of Object.values(world.experience?.summaries ?? {}))
+    for (const summary of entries) {
+      if (
+        !Array.isArray(summary.sources) ||
+        summary.sources.some((source) => !validPersonalSourceRef(source))
+      )
+        throw new Error('Invalid exact summary sources.');
+      validateExperienceManifest(summary.manifest);
+    }
   validateSocialPolicy(world);
   validateCombatEncounters(world);
   for (const event of world.events)

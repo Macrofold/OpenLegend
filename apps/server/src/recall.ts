@@ -15,7 +15,7 @@ import type {
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
 import { recognizesSubject, observerGivenName, observerDescription } from '@open-legend/domain';
 import {
-  entityHandles,
+  entityHandle,
   projectEntityMarkers,
   entityLabel,
   awarenessBindsSubject,
@@ -280,8 +280,8 @@ export function candidateSet(
     memory.text = projectEntityMarkers(memory.text, world, actorId);
     const identities = [...new Set(memory.entityIds)].flatMap((id) =>
       entityGet(world.entities, id) &&
-      !memory.text.includes(`(ID:${entityHandles(world, actorId).get(id)})`)
-        ? [`(ID:${entityHandles(world, actorId).get(id)})`]
+      !memory.text.includes(`(ID:${entityHandle(world, actorId, id)})`)
+        ? [`(ID:${entityHandle(world, actorId, id)})`]
         : [],
     );
     if (identities.length) memory.text += ` Referenced entities: ${identities.join('; ')}.`;

@@ -49,7 +49,7 @@ import { prepareQuestionRead } from './decision-question-reader.js';
 import type { DecisionPublication } from './decision-publication.js';
 import { RecallService } from './recall.js';
 import { prepareReconsideration } from './decision-preparation.js';
-import { entityHandles } from './entity-references.js';
+import { entityHandle } from './entity-references.js';
 import { boundResponseSchema, decisionAppraisalSchema } from './cognition-contracts.js';
 
 // Approved E01–E37 use real disposable PostgreSQL, native owners and blocked external I/O.
@@ -572,7 +572,7 @@ describe('enabled character decision reconsideration', () => {
                         requiresAccepted: [],
                         talk: {
                           text,
-                          addresseeEntityId: entityHandles(h.service.world, NPC_ID).get(PLAYER_ID)!,
+                          addresseeEntityId: entityHandle(h.service.world, NPC_ID, PLAYER_ID),
                           selfIntroduction: null,
                           volume: 'normal',
                         },

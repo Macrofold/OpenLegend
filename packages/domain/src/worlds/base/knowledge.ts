@@ -4,9 +4,10 @@ import { namePhrase, type Named, type NameArticle } from '@open-legend/language'
 import { outcome } from '../../events.js';
 import { characterCount, advanceKnowledgeRevision, type KnowledgePolicy } from '../../knowledge.js';
 import { isSafeRecordId } from '../../records.js';
-import { seesEntity } from '../../perception.js';
 import config from './config/knowledge.generated.json' with { type: 'json' };
-import { learnRecipe } from '../../knowledge.js';
+import { learnRecipe, sameSubject, type ObserverSubject } from '../../knowledge.js';
+import { installAuthoredVoice, validateRecognition, type VoiceKnowledge } from './recognition.js';
+export { revokeRecognitionEvidence } from './recognition.js';
 
 export function startingRecipeKnowledge(
   world: WorldState,
@@ -20,6 +21,11 @@ export function startingRecipeKnowledge(
 export const BASE_KNOWLEDGE_POLICY: KnowledgePolicy = config.knowledge;
 
 export interface ObserverIdentity {
+  individualId?: string;
+  canonicalId?: string;
+  seedOnly?: boolean;
+  voice?: VoiceKnowledge;
+  nameEvidenceIds?: string[];
   givenName: string;
   revision: number;
   encounterId: string | null;
@@ -34,13 +40,39 @@ export interface GivenNameEdit {
 /** Identity assignment is world policy, not a universal property of engine documents.
  * docs/worlds/base/knowledge.md#identity-and-recognition
  */
+export function identityForEntity(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): ObserverIdentity | undefined {
+  const records = Object.values(world.observerIdentities?.[observerId] ?? {}).filter(
+    (identity) => !identity.seedOnly && identity.canonicalId === subjectId,
+  );
+  return (
+    records.find(
+      (identity) =>
+        identity.authored ||
+        (!!identity.encounterId &&
+          identity.encounterId === world.perceptionEpisodes?.[observerId]?.[subjectId]),
+    ) ?? records[0]
+  );
+}
+export function observerIndividual(
+  world: WorldState,
+  observerId: string,
+  subject: ObserverSubject,
+): ObserverIdentity | undefined {
+  return subject.kind === 'individual'
+    ? world.observerIdentities?.[observerId]?.[subject.individualId]
+    : identityForEntity(world, observerId, subject.entityId);
+}
 export function recognizesSubject(
   world: WorldState,
   observerId: string,
   subjectId: string,
 ): boolean {
   if (observerId === subjectId) return true;
-  const identity = world.observerIdentities?.[observerId]?.[subjectId];
+  const identity = identityForEntity(world, observerId, subjectId);
   return (
     !!identity &&
     (identity.authored ||
@@ -59,7 +91,7 @@ export function subjectReferenceCurrent(
 ): boolean {
   return (
     observerId === subjectId ||
-    world.observerIdentities?.[observerId]?.[subjectId]?.authored === true ||
+    identityForEntity(world, observerId, subjectId)?.authored === true ||
     (expectedEncounter !== undefined &&
       expectedEncounter === (world.perceptionEpisodes?.[observerId]?.[subjectId] ?? null))
   );
@@ -72,7 +104,7 @@ export function observerGivenName(
 ): string | undefined {
   if (observerId === subjectId) return entityGet(world.entities, subjectId)?.name;
   return recognizesSubject(world, observerId, subjectId)
-    ? world.observerIdentities?.[observerId]?.[subjectId]?.givenName || undefined
+    ? identityForEntity(world, observerId, subjectId)?.givenName || undefined
     : undefined;
 }
 export function assignGivenName(
@@ -91,7 +123,7 @@ export function assignGivenName(
     return outcome(false, 'unpermitted-subject', 'The identity subject was not supplied.');
   if (observerId === edit.subjectId)
     return outcome(false, 'self-identity', 'Self-name comes from authored character identity.');
-  const current = world.observerIdentities?.[observerId]?.[edit.subjectId];
+  const current = identityForEntity(world, observerId, edit.subjectId);
   if (
     !Number.isSafeInteger(edit.expectedRevision) ||
     edit.expectedRevision < 0 ||
@@ -117,12 +149,24 @@ export function assignGivenName(
     return outcome(false, 'invalid-given-name', 'A preferred name must contain 1–120 characters.');
   if (current?.givenName === edit.givenName.trim() && (!authored || current.authored))
     return outcome(true, 'given-name-unchanged', 'Preferred name is already current.');
-  ((world.observerIdentities ??= {})[observerId] ??= {})[edit.subjectId] = {
+  const identities = ((world.observerIdentities ??= {})[observerId] ??= {});
+  let individualId = current?.individualId;
+  if (!individualId) {
+    let ordinal = 1;
+    while (Object.hasOwn(identities, `individual-${ordinal}`)) ordinal++;
+    individualId = `individual-${ordinal}`;
+  }
+  const assigned: ObserverIdentity = (identities[individualId] = {
+    ...current,
+    individualId,
+    canonicalId: edit.subjectId,
     givenName: edit.givenName.trim(),
     revision: (current?.revision ?? 0) + 1,
     encounterId,
     authored: authored || current?.authored === true,
-  };
+  });
+  if (authored && !assigned.voice?.authored)
+    installAuthoredVoice(world, observerId, assigned, edit.subjectId);
   advanceKnowledgeRevision(world, observerId);
   return outcome(true, 'given-name-edited', 'Observer-specific given name updated.');
 }
@@ -134,7 +178,7 @@ export function canRememberSubject(
 ): boolean {
   return (
     recognizesSubject(world, observerId, subjectId) ||
-    (!world.observerIdentities?.[observerId]?.[subjectId] &&
+    (!identityForEntity(world, observerId, subjectId) &&
       !!world.perceptionEpisodes?.[observerId]?.[subjectId])
   );
 }
@@ -144,7 +188,15 @@ export function rememberSubject(
   subjectId: string,
   authored = false,
 ): void {
-  const existing = world.observerIdentities?.[observerId]?.[subjectId];
+  const prior = identityForEntity(world, observerId, subjectId);
+  const existing =
+    prior &&
+    (authored ||
+      prior.authored ||
+      (!!prior.encounterId &&
+        prior.encounterId === world.perceptionEpisodes?.[observerId]?.[subjectId]))
+      ? prior
+      : undefined;
   if (existing) {
     if (authored && !existing.authored) {
       existing.authored = true;
@@ -153,7 +205,13 @@ export function rememberSubject(
     }
     return;
   }
-  ((world.observerIdentities ??= {})[observerId] ??= {})[subjectId] = {
+  const identities = ((world.observerIdentities ??= {})[observerId] ??= {});
+  let ordinal = 1;
+  while (Object.hasOwn(identities, `individual-${ordinal}`)) ordinal++;
+  const individualId = `individual-${ordinal}`;
+  identities[individualId] = {
+    individualId,
+    canonicalId: subjectId,
     givenName: '',
     revision: 0,
     encounterId: world.perceptionEpisodes?.[observerId]?.[subjectId] ?? null,
@@ -192,6 +250,58 @@ export function observerDescription(
   return namePhrase(observerName(world, observerId, subjectId), article);
 }
 
+export interface SubjectNameEdit {
+  subjectId: ObserverSubject;
+  expectedRevision: number;
+  givenName: string;
+}
+/** A private name labels an already supported individual. It creates neither a
+ * physical body reference nor new familiarity. */
+export function assignSubjectName(
+  world: WorldState,
+  observerId: string,
+  edit: SubjectNameEdit,
+  permittedSubjects: readonly ObserverSubject[],
+  evidenceIds: readonly string[] = [],
+): Outcome {
+  if (!permittedSubjects.some((subject) => sameSubject(subject, edit.subjectId)))
+    return outcome(false, 'unpermitted-subject', 'The identity subject was not supplied.');
+  if (edit.subjectId.kind === 'entity')
+    return assignGivenName(world, observerId, { ...edit, subjectId: edit.subjectId.entityId }, [
+      edit.subjectId.entityId,
+    ]);
+  const identity = observerIndividual(world, observerId, edit.subjectId);
+  if (
+    !identity?.individualId ||
+    identity.seedOnly ||
+    (!identity.authored &&
+      !(
+        identity.canonicalId &&
+        identity.encounterId &&
+        identity.encounterId === world.perceptionEpisodes?.[observerId]?.[identity.canonicalId]
+      ) &&
+      (!identity.voice || (!identity.voice.authored && identity.voice.samples.length < 2)))
+  )
+    return outcome(false, 'recognition-unavailable', 'No learned individual supports this name.');
+  if (!Number.isSafeInteger(edit.expectedRevision) || edit.expectedRevision !== identity.revision)
+    return outcome(false, 'stale-identity', 'The preferred name changed.');
+  if (!edit.givenName.trim() || characterCount(edit.givenName) > 120)
+    return outcome(false, 'invalid-given-name', 'A preferred name must contain 1–120 characters.');
+  identity.givenName = edit.givenName.trim();
+  identity.revision++;
+  identity.nameEvidenceIds = [...evidenceIds];
+  advanceKnowledgeRevision(world, observerId);
+  return outcome(true, 'given-name-edited', 'Observer-specific given name updated.');
+}
+export function subjectLabel(
+  world: WorldState,
+  observerId: string,
+  subject: ObserverSubject,
+): string {
+  return subject.kind === 'entity'
+    ? observerDescription(world, observerId, subject.entityId)
+    : observerIndividual(world, observerId, subject)?.givenName || 'unidentified voice';
+}
 const introductionWords = new Intl.Segmenter('und', { granularity: 'word' });
 function containsNameWords(text: string, name: string[]): boolean {
   const words = [...introductionWords.segment(text)].filter((word) => word.isWordLike);
@@ -200,9 +310,8 @@ function containsNameWords(text: string, name: string[]): boolean {
     words.some((_, start) => name.every((word, i) => words[start + i]?.segment === word))
   );
 }
-/** A heard self-introduction is a name claim, not a global rename or proof of recognition.
- * docs/worlds/base/knowledge.md#spoken-introductions
- */
+/** An introduction uses only the listener's actually understood name and supported
+ * local individual. A canonical speaker or a current visible body is unnecessary. */
 export function learnSpeechIntroduction(world: WorldState, event: WorldEvent): void {
   if (event.type !== 'speech' || !event.actorId) return;
   const proposed = event.data?.['selfIntroduction'];
@@ -215,39 +324,42 @@ export function learnSpeechIntroduction(world: WorldState, event: WorldEvent): v
     typeof text !== 'string' ||
     !text.includes(proposed.trim())
   ) {
-    // Invalid optional metadata cannot discard otherwise valid speech.
     delete event.data!['selfIntroduction'];
     return;
   }
-  const source = entityGet(world.entities, event.actorId);
-  if (!source?.actor) return;
   event.data!['selfIntroduction'] = proposed.trim();
   const nameWords = [...introductionWords.segment(proposed.trim())]
     .filter((word) => word.isWordLike)
     .map((word) => word.segment);
   for (const observerId of event.audience) {
-    const observer = entityGet(world.entities, observerId);
-    if (observerId === source.id || !observer?.actor || !seesEntity(world, observer, source))
-      continue;
+    if (observerId === event.actorId) continue;
     const evidence = world.experience?.awareness[observerId]?.at(-1);
     if (
       evidence?.eventId !== event.id ||
-      !evidence.speech ||
-      evidence.speech.perception !== 'heard' ||
+      evidence.speech?.perception !== 'heard' ||
       !evidence.speech.segments.some(
         (part) => part.kind === 'heard' && containsNameWords(part.text, nameWords),
       )
     )
       continue;
-    assignGivenName(
+    const subject =
+      evidence.sourceSubject ??
+      (evidence.sourceId ? { kind: 'entity' as const, entityId: evidence.sourceId } : undefined);
+    if (!subject) {
+      const seed = world.observerIdentities?.[observerId]?.[`voice-seed-${event.id}`];
+      if (seed?.seedOnly) {
+        seed.givenName = proposed.trim();
+        seed.nameEvidenceIds = [`awareness:${event.id}`];
+      }
+      continue;
+    }
+    const identity = observerIndividual(world, observerId, subject);
+    assignSubjectName(
       world,
       observerId,
-      {
-        subjectId: source.id,
-        expectedRevision: world.observerIdentities?.[observerId]?.[source.id]?.revision ?? 0,
-        givenName: proposed.trim(),
-      },
-      [source.id],
+      { subjectId: subject, expectedRevision: identity?.revision ?? 0, givenName: proposed.trim() },
+      [subject],
+      [`awareness:${event.id}`],
     );
   }
 }
@@ -260,6 +372,7 @@ Spoken introductions: when your speech introduces your own name or preferred lab
 }
 
 export function validateObserverIdentities(world: WorldState): void {
+  validateRecognition(world);
   for (const [actorId, identities] of Object.entries(world.observerIdentities ?? {})) {
     if (!entityGet(world.entities, actorId)?.actor)
       throw new Error('Observer identity owner is unavailable.');
@@ -267,6 +380,8 @@ export function validateObserverIdentities(world: WorldState): void {
       if (
         !isSafeRecordId(subjectId) ||
         !identity ||
+        (identity.individualId !== undefined && identity.individualId !== subjectId) ||
+        (identity.canonicalId !== undefined && !isSafeRecordId(identity.canonicalId)) ||
         typeof identity.givenName !== 'string' ||
         characterCount(identity.givenName) > 120 ||
         !Number.isSafeInteger(identity.revision) ||

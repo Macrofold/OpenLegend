@@ -786,7 +786,7 @@ export function basePreparedThreatResponses(
                 actorId: actor.id,
                 type: 'say',
                 text: speech.text,
-                ...(recipient ? { intendedRecipientId: recipient } : {}),
+                ...(recipient ? { targetId: recipient } : {}),
                 volume,
                 chosenPurpose: purpose,
               },

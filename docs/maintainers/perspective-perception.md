@@ -2,7 +2,13 @@
 
 ## Status and ownership
 
-**Design complete and independently reviewed; runtime implementation has not started.** PP00 records completion of the selected module A design. PP01–PP07 are unstarted implementation and qualification work. This assignment creates and reconciles documentation only: no runtime code, executable tests, migrations or implementation are authorized by this design task.
+**Design complete; the supported-channel foundation is in progress.** PP00 records design completion. PP01–PP04, the currently supported-channel portions of PP05–PP06, required SPK01–SPK04 integration and the minimum complete SPX01 conversion are being implemented. Future vision/acoustic producers, attention/combat integration and full PP07/SAI-A qualification remain open.
+
+### Current implementation boundary
+
+The implementation starts from `Macrofold/OpenLegend:codex/design-stealth-08-integration` at `b0c1ca4b06562a65178367a53a26e83ca9402511` on `codex/stealth-runtime-01-evidence`. The connected delivery order is native acquisition/captured cuts and current-format storage; local individuals, recognition and names; faithful retained/cold/summary meaning and complete Known-place preparation; then permitted NPC/player publication. Existing sight, touch and speech are the acquisition producers; this slice does not install the future physical sensing laws.
+
+Cost grows with eligible nearby observations, active facets, an observer's learned exemplars and retained places. Reuse existing physical candidate preparation and source-owned records; interpretation remains observer-specific. Changes to received samples, life/capability, definitions, recognition support or privacy invalidate their affected preparation. Native cuts consume already prepared compact state. Verification will exercise actual acquisition, hot/cold retention, correction/forgetting, restoration and player/NPC consumption, alongside focused existing checks, type checking and the production build. No runtime or capacity pass is claimed yet.
 
 Design owners: [feature specification](../projects/perspective-perception-feature-spec.md) and [technical design](../projects/perspective-perception-tech-design.md). The technical design owns the complete acceptance matrices, engine algorithms, data shapes and worked examples; [the base policy](../worlds/base/perception-recognition.md) owns world thresholds/learning rules, and [the inventory](../limits/perspective-perception.md) owns limits. Reference those cases from implementation evidence instead of maintaining a second matrix here. The [shared stealth contracts SC01–SC14](../projects/stealth-awareness-tech-design.md#shared-contracts) govern all module interfaces. [SAI-A](stealth-awareness.md#future-implementation-dependency-graph) owns cross-module implementation coordination; PP01–PP07 provide its detailed task breakdown.
 

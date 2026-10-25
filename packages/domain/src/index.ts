@@ -11,6 +11,7 @@ export * from './social-policy.js';
 export * from './ranged-policy.js';
 export * from './native-command-contracts.js';
 export * from './types.js';
+export * from './perception-evidence.js';
 export * from './worlds/base/initial-opening.js';
 export * from './worlds/base/opening-readiness.js';
 export * from './worlds/base/starting-worlds.js';
@@ -142,6 +143,8 @@ export {
 export * from './mind.js';
 
 export * from './experience.js';
+export * from './experience-manifest.js';
+export * from './known-place-evidence.js';
 export * from './status-effects.js';
 export * from './status-condition-references.js';
 export * from './status-effect-removal.js';

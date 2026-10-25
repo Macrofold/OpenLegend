@@ -161,7 +161,7 @@ export function journalTableFamily(
           return false;
       }
       if (table === 'mind_summaries') {
-        const links = (value as Record<string, unknown>)['sourceIds'];
+        const links = (value as Record<string, unknown>)['sources'];
         if (!Array.isArray(links)) return false;
         relatedRows += links.length;
         if (relatedRows > CONSTRAINT_LOOKUPS) return false;

@@ -26,7 +26,7 @@ import { generalKnowledgeContext, selectedKnowledgeReferences } from './knowledg
 import {
   entityLabel,
   entityReferenceMap,
-  entityHandles,
+  entityHandle,
   projectEntityMarkers,
 } from './entity-references.js';
 import { digest } from './store.js';
@@ -964,7 +964,7 @@ export async function prepareDecision(
         (field, entry) =>
           typeof entry === 'string' &&
           /^(entityId|actorId|targetId|sourceId|targetEntityId|addresseeEntityId)$/.test(field)
-            ? (entityHandles(currentWorld, actorId).get(entry) ?? entry)
+            ? entityHandle(currentWorld, actorId, entry)
             : entry,
       );
   }

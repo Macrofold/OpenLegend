@@ -12,9 +12,16 @@ import {
   type ActionTarget,
   type ActionTargetEpisodes,
 } from './action-targets.js';
-import { editKnowledge, knowledgeDocument, type KnowledgeEdit } from './knowledge.js';
 import {
-  assignGivenName,
+  editKnowledge,
+  knowledgeDocument,
+  type KnowledgeEdit,
+  type ObserverSubject,
+  subjectKey,
+} from './knowledge.js';
+import {
+  assignSubjectName,
+  observerIndividual,
   canRememberSubject,
   rememberSubject,
   type GivenNameEdit,
@@ -58,13 +65,13 @@ import { reconcileOutings } from './outings.js';
 
 export interface ResponseOperation {
   appraise?: AppraisalChange | null;
-  note?: KnowledgeEdit | null;
+  note?: (Omit<KnowledgeEdit, 'subjectId'> & { subjectId: string | null }) | null;
   name?: GivenNameEdit | null;
   localId: string;
   requiresAccepted: string[];
   talk: {
     text: string;
-    addresseeEntityId: string;
+    addresseeEntityId: string | null;
     volume: SpeechVolume;
     selfIntroduction?: string | null;
   } | null;
@@ -166,7 +173,7 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
       ) ||
         !isSpeechVolume(op.talk.volume) ||
         !text(op.talk.text) ||
-        !text(op.talk.addresseeEntityId) ||
+        !nullableText(op.talk.addresseeEntityId) ||
         (op.talk.selfIntroduction !== undefined && !nullableText(op.talk.selfIntroduction)))
     )
       return false;
@@ -321,7 +328,7 @@ export function unmetSlots(
     )
   )
     unmet.push('the requested tool');
-  if (slots.recipientId && !uses(slots.recipientId, ['targetId', 'intendedRecipientId']))
+  if (slots.recipientId && !uses(slots.recipientId, ['targetId']))
     unmet.push('the requested recipient');
   if (
     slots.quantity !== null &&
@@ -355,8 +362,9 @@ export function commitActorResponse(
   attemptBindings: AttemptBinding[] = [],
   expectedEncounters?: Record<string, string>,
   evidenceIds: string[] = [],
-  knowledgeReferences: Record<string, string> = {},
+  knowledgeReferences: Record<string, ObserverSubject> = {},
   appraisalBindings?: AppraisalBindings,
+  identityReferences: Record<string, ObserverSubject> = {},
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -380,6 +388,7 @@ export function commitActorResponse(
     expectedEncounters,
     evidenceIds,
     knowledgeReferences,
+    identityReferences,
     ...(appraisalBindings ? { appraisalBindings } : {}),
   });
   const prior = getOwn(input.responseReceipts ?? {}, id);
@@ -432,23 +441,6 @@ export function commitActorResponse(
   const command = (part: 'talk' | 'act', value: Command) => {
     const beforeEvents = isDraft(world.events) ? current(world.events) : world.events;
     let transition = executeCommand(world, value);
-    // Speaking aloud preserves intent without claiming the recipient heard or joined.
-    // docs/narration-and-conversations.md#speech-intent-and-audience
-    if (
-      part === 'talk' &&
-      value.type === 'say' &&
-      !transition.outcome.ok &&
-      transition.outcome.code === 'not-heard'
-    )
-      transition = executeCommand(world, {
-        id: value.id,
-        actorId: value.actorId,
-        type: 'say',
-        text: value.text,
-        ...(value.selfIntroduction ? { selfIntroduction: value.selfIntroduction } : {}),
-        intendedRecipientId: value.targetId,
-        volume: value.volume,
-      });
     world = draftWorld(transition.world);
     const emitted = new Set(transition.events.map((event) => event.id));
     const appended = appendedEventCount(beforeEvents, transition.world.events);
@@ -577,15 +569,20 @@ export function commitActorResponse(
       );
       continue;
     }
-    const subject = op.name?.subjectId ?? op.note?.subjectId;
-    const rememberedSubject = op.note?.subjectId
+    const wireSubject = op.name?.subjectId ?? op.note?.subjectId;
+    const noteReference = op.note?.subjectId
       ? getOwn(knowledgeReferences, op.note.subjectId)
       : undefined;
+    const identityReference = wireSubject ? getOwn(identityReferences, wireSubject) : undefined;
+    const subject: ObserverSubject | null = wireSubject
+      ? (noteReference ?? identityReference ?? { kind: 'entity', entityId: wireSubject })
+      : null;
     if (
-      subject &&
-      !rememberedSubject &&
+      subject?.kind === 'entity' &&
+      !noteReference &&
       expectedEncounters &&
-      expectedEncounters[subject] !== world.perceptionEpisodes?.[actorId]?.[subject]
+      expectedEncounters[subject.entityId] !==
+        world.perceptionEpisodes?.[actorId]?.[subject.entityId]
     ) {
       components[localId] = outcome(
         false,
@@ -594,37 +591,48 @@ export function commitActorResponse(
       );
       continue;
     }
-    if (op.name) components[localId] = assignGivenName(world, actorId, op.name, entityIds);
+    const permittedSubjects: ObserverSubject[] = [
+      ...entityIds.map((entityId) => ({ kind: 'entity' as const, entityId })),
+      ...Object.values(identityReferences),
+    ];
+    if (op.name && subject)
+      components[localId] = assignSubjectName(
+        world,
+        actorId,
+        { ...op.name, subjectId: subject },
+        permittedSubjects,
+        evidenceIds,
+      );
     if (op.note) {
-      const subjectId = rememberedSubject ?? op.note.subjectId;
-      const existingDocument = rememberedSubject && knowledgeDocument(world, actorId, subjectId);
-      if (
-        subjectId !== null &&
-        (rememberedSubject ? !existingDocument : !canRememberSubject(world, actorId, subjectId))
-      )
+      const existingDocument = noteReference && knowledgeDocument(world, actorId, subject);
+      const rememberable =
+        subject === null ||
+        (subject.kind === 'entity'
+          ? canRememberSubject(world, actorId, subject.entityId)
+          : !!observerIndividual(world, actorId, subject)?.individualId);
+      if (subject !== null && (noteReference ? !existingDocument : !rememberable))
         components[localId] = outcome(
           false,
           'recognition-unavailable',
           'The subject has no supported identity binding.',
         );
       else {
-        // Editing a remembered document does not identify a new exposure of its subject.
-        // docs/knowledge.md#subject-binding
         components[localId] = editKnowledge(
           world,
           actorId,
-          { ...op.note, subjectId },
-          rememberedSubject ? [rememberedSubject] : entityIds,
+          { ...op.note, subjectId: subject },
+          noteReference ? [noteReference] : permittedSubjects,
           evidenceIds,
         );
-        if (components[localId]!.ok && subjectId !== null && !rememberedSubject)
-          rememberSubject(world, actorId, subjectId);
+        if (components[localId]!.ok && subject?.kind === 'entity' && !noteReference)
+          rememberSubject(world, actorId, subject.entityId);
       }
     }
     if (op.talk) {
       const validTarget =
-        permitted.has(op.talk.addresseeEntityId) &&
-        entityHas(world.entities, op.talk.addresseeEntityId);
+        op.talk.addresseeEntityId === null ||
+        (permitted.has(op.talk.addresseeEntityId) &&
+          entityHas(world.entities, op.talk.addresseeEntityId));
       if (!op.talk.text.trim() || op.talk.text.length > 1200 || !validTarget)
         components[localId] = outcome(
           false,
@@ -641,7 +649,7 @@ export function commitActorResponse(
           text: op.talk.text,
           ...(op.talk.selfIntroduction ? { selfIntroduction: op.talk.selfIntroduction } : {}),
           volume: op.talk.volume,
-          targetId: op.talk.addresseeEntityId,
+          ...(op.talk.addresseeEntityId ? { targetId: op.talk.addresseeEntityId } : {}),
         });
     }
     const act = op.act;

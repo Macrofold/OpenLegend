@@ -497,7 +497,8 @@ export function speechPerception(
       height: bodyProfile(entity).height,
     });
   };
-  return { detail: physicalSpeechExposure(world, observer, source, volume).detail, sees };
+  const exposure = physicalSpeechExposure(world, observer, source, volume);
+  return { ...exposure, sees };
 }
 /** Conversation continuity ignores temporary incapacity; it never grants heard evidence. */
 export function withinHearingRange(

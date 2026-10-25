@@ -709,7 +709,8 @@ export function editWorldEvents(
   for (const [actorId, entries] of Object.entries(world.memories))
     for (const entry of entries) if (entry.eventId) mark(actorId, entry.eventId);
   for (const [actorId, entries] of Object.entries(world.experience!.summaries))
-    for (const entry of entries) for (const sourceId of entry.sourceIds) mark(actorId, sourceId);
+    for (const entry of entries)
+      for (const source of entry.manifest.coverage) mark(actorId, source.id);
   for (const [actorId, corrections] of Object.entries(world.experience!.corrections ?? {}))
     for (const [sourceId, evidenceId] of Object.entries(corrections)) {
       mark(actorId, sourceId);

@@ -1031,7 +1031,14 @@ export class CognitionMaintenance {
               throw new Error('Consolidation sources or timeline changed before publication.');
             return this.service.transition((world) => {
               this.assertAdmission(world);
-              return acceptConsolidation(world, actorId, job.id, batch.sources, groups);
+              return acceptConsolidation(
+                world,
+                actorId,
+                job.id,
+                batch.sources,
+                groups,
+                batch.prepared,
+              );
             });
           },
           batch.selection ? batch.sources.map((source) => source.id) : undefined,
@@ -1267,7 +1274,7 @@ export class CognitionMaintenance {
             value.goalChanges,
             edits.operations.flatMap((op) => (op.note ? [op.note] : [])),
             edits.operations.flatMap((op) => (op.name ? [op.name] : [])),
-            prepared.binding.entityIds,
+            prepared.binding.entityIds.map((entityId) => ({ kind: 'entity' as const, entityId })),
             prepared.binding.entityEpisodes,
             prepared.binding.knowledgeReferences,
             appraisalChanges,

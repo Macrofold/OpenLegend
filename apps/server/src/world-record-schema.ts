@@ -166,6 +166,9 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       actorKnowledge: actorMaps('mind_knowledge_documents'),
       knowledgeRevisions: map('mind_knowledge_revisions'),
       observerIdentities: actorMaps('mind_recognition'),
+      perceptionEvidence: map('mind_perception_owners', {
+        current: map('mind_perception_current'),
+      }),
       // A subject leaving view must not renumber every remaining sight binding.
       // Episode identities fence recognition by key, never by iteration order.
       // docs/performance.md#preserve-order-without-one-global-database-bottleneck

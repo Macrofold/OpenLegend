@@ -37,6 +37,14 @@ import type {
   PreparedResponseSituation,
   PreparedResponseObservation,
 } from './prepared-responses.js';
+import { ordinaryWarningPlace, ordinaryWarningDurationSeconds } from './worlds/base/recognition.js';
+
+/** The selected world owns understood warning grammar and its stated duration. */
+export function selectedOrdinaryWarning(world: WorldState, segments: readonly import('./speech.js').SpeechSegment[]) {
+  selectedCreationProfileForWorld(world);
+  const label = ordinaryWarningPlace(segments);
+  return label === undefined ? undefined : { label, duration: ordinaryWarningDurationSeconds(world) };
+}
 
 /** A selected pin chooses linked trusted native templates. It cannot load code or
  * silently reinterpret a saved profile after the authored definition changes. */

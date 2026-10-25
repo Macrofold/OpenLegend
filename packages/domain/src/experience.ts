@@ -12,14 +12,26 @@ import {
   editKnowledge,
   knowledgeDocument,
   advanceKnowledgeRevision,
+  subjectKey,
+  type ObserverSubject,
   type KnowledgeEdit,
 } from './knowledge.js';
 import {
   assignGivenName,
   canRememberSubject,
   rememberSubject,
+  revokeRecognitionEvidence,
+  observerIndividual,
   type GivenNameEdit,
 } from './worlds/base/knowledge.js';
+import {
+  experienceManifest,
+  summaryMemory,
+  type PersonalSourceRef,
+  type PreparedExperience,
+  type ExperienceManifest,
+} from './experience-manifest.js';
+import { acquireKnownPlaceEvidence, invalidateKnownPlaceEvidence } from './known-place-evidence.js';
 import { dreamStatus, dreamPolicy } from './cognition-policy.js';
 import { current, isDraft } from 'immer';
 import { changeGoal, type GoalChange } from './agency.js';
@@ -50,6 +62,9 @@ export const EXPERIENCE_LIMITS = {
   historyDays: 30,
 } as const;
 export interface Awareness {
+  observation?: import('./perception-evidence.js').ObservationContribution;
+  observations?: import('./perception-evidence.js').ObservationContribution[];
+  sourceSubject?: import('./knowledge.js').ObserverSubject;
   /** Names and identities admitted at this occurrence; later knowledge cannot rewrite them. */
   references?: Array<{ id: string; label: string; role: 'actor' | 'target' | 'participant' }>;
   /** Non-speech payload permitted at occurrence time; never rebuilt from raw history. */
@@ -74,8 +89,6 @@ export interface Awareness {
   eventType?: string;
   sourceId?: string;
   targetId?: string;
-  /** Intended speech recipient, only when perceived at event time; not proof of delivery. */
-  intendedRecipientId?: string;
   triggerKind?:
     | 'addressed_speech'
     | 'overheard_speech'
@@ -91,7 +104,8 @@ export interface ExperienceSummary {
   text: string;
   from: number;
   to: number;
-  sourceIds: string[];
+  sources: PersonalSourceRef[];
+  manifest: ExperienceManifest;
   entityIds: string[];
   importance: number;
   sequence?: number;
@@ -305,7 +319,41 @@ export function acquireEventAwareness(world: WorldState, entries: Awareness[]): 
       },
       'transfer',
     );
+    acquireKnownPlaceEvidence(world, entry);
   }
+}
+/** Final direct confirmations remain historical evidence after their live support ends.
+ * This records no invented event and grants no current body permission. */
+export function retainObservationConfirmation(
+  world: WorldState,
+  actorId: string,
+  observation: import('./perception-evidence.js').ObservationContribution,
+  text: string,
+  importance: number,
+): void {
+  mutateExperience(world, actorId, {
+    operation: 'add',
+    entry: {
+      source: 'memory',
+      value: {
+        id: observation.id,
+        actorId,
+        kind: 'episode',
+        source:
+          observation.modality === 'sight'
+            ? 'observed'
+            : observation.modality === 'hearing'
+              ? 'heard'
+              : 'felt',
+        summary: text,
+        at: observation.acquiredAt,
+        sequence: world.sequence,
+        entityIds: [],
+        importance,
+        observation,
+      },
+    },
+  });
 }
 function applyExperienceMutation(
   world: WorldState,
@@ -335,7 +383,7 @@ function applyExperienceMutation(
       return null;
     if (
       mutation.summaries.some((s) =>
-        s.sourceIds.some((id) => world.experience!.forgotten[actorId]?.includes(id)),
+        s.manifest.coverage.some((ref) => world.experience!.forgotten[actorId]?.includes(ref.id)),
       )
     )
       return null;
@@ -634,6 +682,9 @@ export function awarenessMemory(entry: Awareness): MemoryRecord {
     importance: entry.importance,
     eventType: entry.eventType,
     speakerId: entry.sourceId,
+    evidence: entry,
+    observation: entry.observation,
+    observations: entry.observations,
   };
 }
 export function experiences(
@@ -659,19 +710,12 @@ export function experiences(
     .map(awarenessMemory);
   const summaries: MemoryRecord[] = (state?.summaries[actorId] ?? [])
     .filter(
-      (s) => !s.sourceIds.some((id) => forgotten.has(id) || !!state?.corrections?.[actorId]?.[id]),
+      (s) =>
+        !s.manifest.coverage.some(
+          (ref) => forgotten.has(ref.id) || !!state?.corrections?.[actorId]?.[ref.id],
+        ),
     )
-    .map((s) => ({
-      id: s.id,
-      actorId,
-      at: s.to,
-      kind: 'reflection',
-      source: 'inferred',
-      summary: `Summary of remembered experience: ${s.text}`,
-      entityIds: s.entityIds,
-      importance: s.importance,
-      sequence: s.sequence,
-    }));
+    .map((s) => summaryMemory(s, actorId));
   const raw = [...personal.filter((m) => m.kind !== 'commitment'), ...events];
   // Age makes a source eligible for consolidation, not ineligible for remembering.
   // Bound initial context candidates while retaining the full backlog for maintenance.
@@ -731,21 +775,14 @@ export function unseenExperiences(
     if ((memory.sequence ?? 0) > afterSequence) records.push(memory);
   }
   for (const s of state?.summaries[actorId] ?? []) {
-    if (s.sourceIds.some((id) => forgotten.has(id) || !!state?.corrections?.[actorId]?.[id]))
+    if (
+      s.manifest.coverage.some(
+        (ref) => forgotten.has(ref.id) || !!state?.corrections?.[actorId]?.[ref.id],
+      )
+    )
       continue;
     maxSequence = Math.max(maxSequence, s.sequence ?? 0);
-    if ((s.sequence ?? 0) > afterSequence)
-      records.push({
-        id: s.id,
-        actorId,
-        at: s.to,
-        kind: 'reflection',
-        source: 'inferred',
-        summary: `Summary of remembered experience: ${s.text}`,
-        entityIds: s.entityIds,
-        importance: s.importance,
-        sequence: s.sequence,
-      });
+    if ((s.sequence ?? 0) > afterSequence) records.push(summaryMemory(s, actorId));
   }
   // Truncation keeps important and caller-preferred records first, so a cursor that passes a
   // long routine backlog never skips unread evidence its caller would have acted on.
@@ -767,6 +804,7 @@ export function acceptConsolidation(
   id: string,
   sources: MemoryRecord[],
   groups: MemoryGroup[],
+  prepared: PreparedExperience[],
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -783,6 +821,17 @@ export function acceptConsolidation(
     };
   const current = new Map(experiences(input, actorId, true).map((m) => [m.id, m]));
   const expected = new Map(sources.map((m) => [m.id, m]));
+  const inputs = new Map(prepared.map((source) => [source.ref.id, source]));
+  if (
+    inputs.size !== sources.length ||
+    sources.some((source) => {
+      const bound = inputs.get(source.id);
+      if (!bound) return true;
+      const actual = experienceEntry(input, actorId, `${bound.ref.kind}:${bound.ref.id}`);
+      return !actual || canonicalJson(actual) !== canonicalJson(bound.entry);
+    })
+  )
+    return reject('Exact memory source coverage changed.');
   if (
     expected.size !== sources.length ||
     sources.some(
@@ -831,7 +880,8 @@ export function acceptConsolidation(
       text: personalText(world, actorId, group.text),
       from: Math.min(...entries.map((s) => previous.get(s.id)?.from ?? s.at)),
       to: Math.max(...entries.map((s) => s.at)),
-      sourceIds: [...new Set(entries.flatMap((s) => previous.get(s.id)?.sourceIds ?? [s.id]))],
+      sources: entries.map((source) => inputs.get(source.id)!.ref),
+      manifest: experienceManifest(entries.map((source) => inputs.get(source.id)!)),
       entityIds: [...new Set(entries.flatMap((s) => s.entityIds))],
       importance: Math.max(...entries.map((s) => s.importance)),
       sequence: Math.max(0, ...entries.map((s) => s.sequence ?? 0)),
@@ -907,6 +957,7 @@ export function invalidateExperience(
   forget = false,
 ): string[] {
   const state = world.experience!;
+  invalidateKnownPlaceEvidence(world, actorId);
   const affected = new Set(sourceIds);
   let expanded = true;
   const include = (id: string | undefined) => {
@@ -941,11 +992,15 @@ export function invalidateExperience(
         expanded = true;
       }
     for (const summary of state.summaries[actorId] ?? [])
-      if (!affected.has(summary.id) && summary.sourceIds.some((id) => affected.has(id))) {
+      if (
+        !affected.has(summary.id) &&
+        summary.manifest.coverage.some((ref) => affected.has(ref.id))
+      ) {
         affected.add(summary.id);
         expanded = true;
       }
   }
+  revokeRecognitionEvidence(world, actorId, affected);
   revokeActivityEvidence(world, actorId, [...affected]);
   revokePracticeSupport(world, actorId, affected);
   revokeCombatEvidence(world, actorId, affected);
@@ -1012,9 +1067,9 @@ export function publishInnerWorld(
   goalChanges: GoalChange[] = [],
   knowledgeChanges: KnowledgeEdit[] = [],
   nameChanges: GivenNameEdit[] = [],
-  permittedSubjects: string[] = [],
+  permittedSubjects: ObserverSubject[] = [],
   expectedEncounters?: Record<string, string>,
-  knowledgeReferences: Record<string, string> = {},
+  knowledgeReferences: Record<string, ObserverSubject> = {},
   appraisalChanges: AppraisalChange[] = [],
   appraisalBindings: AppraisalBindings = { sources: [], subjects: [], reflection: true },
 ): Transition {
@@ -1101,34 +1156,42 @@ export function publishInnerWorld(
     return reject('Too many knowledge changes.');
   if (
     expectedEncounters &&
-    [
-      ...nameChanges,
-      ...knowledgeChanges.filter(
-        (edit) => !edit.subjectId || !Object.hasOwn(knowledgeReferences, edit.subjectId),
-      ),
-    ].some(
+    (nameChanges.some(
       (edit) =>
-        edit.subjectId &&
         expectedEncounters[edit.subjectId] !==
-          world.perceptionEpisodes?.[actorId]?.[edit.subjectId],
-    )
+        world.perceptionEpisodes?.[actorId]?.[edit.subjectId],
+    ) ||
+      knowledgeChanges.some(
+        (edit) =>
+          edit.subjectId?.kind === 'entity' &&
+          !Object.hasOwn(knowledgeReferences, subjectKey(edit.subjectId)) &&
+          expectedEncounters[edit.subjectId.entityId] !==
+            world.perceptionEpisodes?.[actorId]?.[edit.subjectId.entityId],
+      ))
   )
     return reject('A knowledge subject encounter changed during reflection.');
   for (const edit of nameChanges) {
-    const result = assignGivenName(world, actorId, edit, permittedSubjects);
+    const result = assignGivenName(
+      world,
+      actorId,
+      edit,
+      permittedSubjects.flatMap((subject) => (subject.kind === 'entity' ? [subject.entityId] : [])),
+    );
     if (!result.ok) return reject(result.message);
   }
   for (const edit of knowledgeChanges) {
     const rememberedSubject =
-      edit.subjectId && Object.hasOwn(knowledgeReferences, edit.subjectId)
-        ? knowledgeReferences[edit.subjectId]
+      edit.subjectId && Object.hasOwn(knowledgeReferences, subjectKey(edit.subjectId))
+        ? knowledgeReferences[subjectKey(edit.subjectId)]
         : undefined;
     const subjectId = rememberedSubject ?? edit.subjectId;
     if (
       subjectId !== null &&
       (rememberedSubject
         ? !knowledgeDocument(world, actorId, subjectId)
-        : !canRememberSubject(world, actorId, subjectId))
+        : !(subjectId.kind === 'entity'
+            ? canRememberSubject(world, actorId, subjectId.entityId)
+            : observerIndividual(world, actorId, subjectId)))
     )
       return reject('Knowledge subject is not recognized.');
     const result = editKnowledge(
@@ -1139,7 +1202,8 @@ export function publishInnerWorld(
       evidenceIds,
     );
     if (!result.ok) return reject(result.message);
-    if (subjectId !== null && !rememberedSubject) rememberSubject(world, actorId, subjectId);
+    if (subjectId?.kind === 'entity' && !rememberedSubject)
+      rememberSubject(world, actorId, subjectId.entityId);
   }
   if (goalChanges.length > 8 || (actor.controller === 'player' && goalChanges.length))
     return reject('Reflection cannot replace player intentions or exceed eight goal changes.');

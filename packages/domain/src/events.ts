@@ -1,6 +1,7 @@
 import { acquireNativeResponseEvent } from './native-response-controller.js';
 import { entityGet } from './entity-collection.js';
 import { observeEvent } from './event-observation.js';
+import { acquireAwarenessObservation, acquireOrdinaryWarning } from './perception-evidence.js';
 import { reconcileCoaching } from './coaching.js';
 import { renderNarration, subjectNarration, personalText, type Narration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
@@ -368,11 +369,20 @@ function recordEvent(
   if (
     scope === 'external' &&
     feltTarget &&
-    hasMemory(feltTarget) &&
+    (hasMemory(feltTarget) || feltTarget.actor?.controller === 'native') &&
     activelyParticipates(feltTarget) &&
     !audience.includes(feltTarget.id)
   ) {
     audience.push(feltTarget.id);
+    event.audience = [...audience];
+  }
+  const nativeTarget = targetId ? entityGet(world.entities, targetId) : undefined;
+  if (nativeTarget?.actor?.controller === 'native' && nativeTarget.actor.alive && activelyParticipates(nativeTarget) &&
+    !audience.includes(nativeTarget.id) &&
+    ['struck', 'projectile-contact', 'projectile-passage', 'shot-released', 'attack-cue', 'action-started'].includes(type) &&
+    (feltTargetId === nativeTarget.id || type === 'projectile-contact' || type === 'projectile-passage' ||
+      (source && seesEntity(world, nativeTarget, source)))) {
+    audience.push(nativeTarget.id);
     event.audience = [...audience];
   }
   const speechAwareness = new Map<string, Awareness>();
@@ -410,63 +420,24 @@ function recordEvent(
     const conversation = world.conversations?.records[conversationId];
     if (conversation) conversation.lastActivityAt = world.simTime;
   }
-  chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
-  countDomainWork('eventsRecorded');
-  events.push(event);
-  acquireNativeResponseEvent(world, event, events);
-  if (
-    [
-      'action-started',
-      'speech',
-      'ate',
-      'equipped',
-      'gathered',
-      'prepared',
-      'crafted',
-      'harvested',
-      'cooked',
-      'fire-lit',
-      'fire-fueled',
-      'fire-extinguished',
-      'struck',
-      'guarded',
-      'shot-released',
-      'shot-ended',
-      'body-effect',
-      'moved',
-      'action-stopped',
-    ].includes(type)
-  ) {
-    const cause =
-      data?.['actionId'] ??
-      data?.['effectId'] ??
-      (source && world.actionExperience.current[source.id]);
-    const experience = typeof cause === 'string' ? activeActivity(world, cause) : undefined;
-    if (
-      experience &&
-      audience.includes(experience.actorId) &&
-      experience.evidenceIds.length < 64 &&
-      !experience.evidenceIds.includes(event.id)
-    )
-      experience.evidenceIds.push(event.id);
-    // Speech already has a complete listener-specific account, including exact words.
-    // Reuse it as the speaker's result rather than narrating the utterance twice.
-    if (experience && type === 'speech' && speechAwareness.has(experience.actorId))
-      experience.resultMemoryId = event.id;
-  }
+  const acquired: Awareness[] = [];
   if (world.experience) {
     countDomainWork('awarenessWritten', audience.length);
-    const acquired: Awareness[] = [];
     for (const actorId of audience) {
       const speech = speechAwareness.get(actorId);
       if (speech) {
+        speech.observation = acquireAwarenessObservation(world, event, speech);
+        const warning = acquireOrdinaryWarning(world, event, speech);
+        if (warning) speech.observations = [warning];
         acquired.push(speech);
         continue;
       }
       // Native participants and grammar are rendered once for this observer; literal
       // prose/quotes retain their supplied ownership. Speech has listener-specific evidence.
       // docs/architecture.md#private-perception-and-evidence-batches
-      const perceived = observeEvent(world, event, actorId);
+      const nativeContact = actorId === nativeTarget?.id &&
+        (type === 'projectile-contact' || type === 'projectile-passage');
+      const perceived = observeEvent(world, event, actorId, nativeContact ? { feltImpact: true } : undefined);
       const perceivedText = perceived.text;
       const awareness: Awareness = {
         ...(event.exposure ? { exposure: cloneValue(event.exposure) } : {}),
@@ -474,9 +445,9 @@ function recordEvent(
         actorId,
         text: perceivedText,
         at: event.at,
-        sequence: world.nextId,
+        sequence: event.order ?? event.sequence,
         modality:
-          feltTargetId === actorId
+          feltTargetId === actorId || nativeContact
             ? 'felt'
             : scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
               ? type === 'contact'
@@ -523,13 +494,62 @@ function recordEvent(
           ? { change: data['change'] }
           : {}),
       };
-      acquireCombatObservation(world, awareness, event);
-      if (awarenessBatch)
-        awarenessBatch.push({ operation: 'add', entry: { source: 'awareness', value: awareness } });
-      else acquired.push(awareness);
+      awareness.observation = acquireAwarenessObservation(world, event, awareness);
+      acquired.push(awareness);
     }
-    acquireEventAwareness(world, acquired);
   }
+  chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
+  countDomainWork('eventsRecorded');
+  events.push(event);
+  acquireNativeResponseEvent(world, event, events);
+  if (
+    [
+      'action-started',
+      'speech',
+      'ate',
+      'equipped',
+      'gathered',
+      'prepared',
+      'crafted',
+      'harvested',
+      'cooked',
+      'fire-lit',
+      'fire-fueled',
+      'fire-extinguished',
+      'struck',
+      'guarded',
+      'shot-released',
+      'shot-ended',
+      'body-effect',
+      'moved',
+      'action-stopped',
+    ].includes(type)
+  ) {
+    const cause =
+      data?.['actionId'] ??
+      data?.['effectId'] ??
+      (source && world.actionExperience.current[source.id]);
+    const experience = typeof cause === 'string' ? activeActivity(world, cause) : undefined;
+    if (
+      experience &&
+      audience.includes(experience.actorId) &&
+      experience.evidenceIds.length < 64 &&
+      !experience.evidenceIds.includes(event.id)
+    )
+      experience.evidenceIds.push(event.id);
+    // Speech already has a complete listener-specific account, including exact words.
+    // Reuse it as the speaker's result rather than narrating the utterance twice.
+    if (experience && type === 'speech' && speechAwareness.has(experience.actorId))
+      experience.resultMemoryId = event.id;
+  }
+  // Native callbacks consumed the same compact acquisition above. Retention is a
+  // later placement decision, never another observation or an ordering clock.
+  for (const awareness of acquired) {
+    if (!awareness.speech) acquireCombatObservation(world, awareness, event);
+    if (awarenessBatch)
+      awarenessBatch.push({ operation: 'add', entry: { source: 'awareness', value: awareness } });
+  }
+  if (!awarenessBatch) acquireEventAwareness(world, acquired);
   learnSpeechIntroduction(world, event);
   // Finalize optional native metadata before handing an immutable record to persistence.
   if (audience.length || importance >= selectedSocialPolicy(world).notableThreshold)

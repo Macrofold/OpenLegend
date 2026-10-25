@@ -5,7 +5,7 @@ import {
   awarenessBindsSubject,
   entityLabel,
   entityReferenceMap,
-  entityHandles,
+  entityHandle,
 } from './entity-references.js';
 import {
   seesEntity,
@@ -232,10 +232,10 @@ export function responseReferences(
   const references = ids.map((id) => {
     const entity = entityGet(world.entities, id)!;
     return JSON.stringify({
-      entityId: entityHandles(world, actorId).get(id),
+      entityId: entityHandle(world, actorId, id),
       label: recognizedIds.has(id)
         ? entityLabel(world, entity, actorId)
-        : `Unidentified ${entity.actor ? 'actor' : 'entity'} (ID:${entityHandles(world, actorId).get(id)})`,
+        : `Unidentified ${entity.actor ? 'actor' : 'entity'} (ID:${entityHandle(world, actorId, id)})`,
       ...(entity.actor
         ? { species: recognizedIds.has(id) ? (entity.actor.species ?? 'unknown') : 'unknown' }
         : {}),
@@ -254,7 +254,7 @@ export function responseReferences(
   for (const id of possessions)
     references.push(
       JSON.stringify({
-        entityId: entityHandles(world, actorId).get(id),
+        entityId: entityHandle(world, actorId, id),
         label: entityLabel(world, entityGet(world.entities, id)!, actorId),
         relation: 'my possession',
       }),
@@ -262,7 +262,7 @@ export function responseReferences(
   for (const id of piled)
     references.push(
       JSON.stringify({
-        entityId: entityHandles(world, actorId).get(id),
+        entityId: entityHandle(world, actorId, id),
         label: entityLabel(world, entityGet(world.entities, id)!, actorId),
         relation: 'lying in a visible pile',
       }),
@@ -277,7 +277,7 @@ export function responseReferences(
   for (const id of inspected)
     references.push(
       JSON.stringify({
-        entityId: entityHandles(world, actorId).get(id),
+        entityId: entityHandle(world, actorId, id),
         label: entityLabel(world, entityGet(world.entities, id)!, actorId),
         relation: 'current permitted activity choice or inspected container page',
       }),

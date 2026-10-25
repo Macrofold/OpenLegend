@@ -10,6 +10,7 @@ import {
   type AnimalWanderPreparation,
 } from './worlds/base/animal-wander-queue.js';
 import { entityGet, entityOwn } from './entity-collection.js';
+import { reconcileVisualEvidence, endCurrentEvidence } from './perception-evidence.js';
 import {
   prospectiveWork,
   validResponsePurpose,
@@ -1392,18 +1393,12 @@ function prepareNativeOperation(
       if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot speak.');
       if (!isSpeechVolume(command.volume ?? 'normal'))
         return reject('invalid-volume', 'Choose whisper, normal or shout.');
-      const recipient = command.targetId ?? command.intendedRecipientId;
+      const recipient = command.targetId;
       if (recipient && !entityOwn(world.entities, recipient))
         return reject('invalid-recipient', 'The intended recipient no longer exists.');
       const target = command.targetId ? entityOwn(world.entities, command.targetId) : undefined;
-      if (
-        command.targetId &&
-        (!target?.actor?.alive ||
-          !hasMemory(target) ||
-          capabilityBlocked(world, target, 'perception') ||
-          target.actor.incapacitated)
-      )
-        return reject('not-heard', 'The intended listener is unavailable.');
+      if (command.targetId && !target?.actor)
+        return reject('invalid-recipient', 'The intended recipient is not a person.');
       break;
     }
     case 'pickup': {
@@ -3121,17 +3116,11 @@ function executeCommandNative(
         if (!isSpeechVolume(volume))
           return reject('invalid-volume', 'Choose whisper, normal or shout.');
         const target = command.targetId ? entityOwn(world.entities, command.targetId) : undefined;
-        const intendedRecipientId = command.targetId ?? command.intendedRecipientId;
+        const intendedRecipientId = command.targetId;
         if (intendedRecipientId && !entityOwn(world.entities, intendedRecipientId))
           return reject('invalid-recipient', 'The intended recipient no longer exists.');
-        if (
-          command.targetId &&
-          (!target?.actor?.alive ||
-            !hasMemory(target) ||
-            capabilityBlocked(world, target, 'perception') ||
-            target.actor.incapacitated)
-        )
-          return reject('not-heard', 'The intended listener is unavailable.');
+        if (command.targetId && !target?.actor)
+          return reject('invalid-recipient', 'The intended recipient is not a person.');
         // Intention is not delivery: a quiet utterance can miss its target and still be overheard.
         // docs/hearing-and-speech.md#4-speech-volume-and-admission
         emit(
@@ -3143,7 +3132,6 @@ function executeCommandNative(
           command.targetId,
           {
             text: command.text.trim(),
-            ...(intendedRecipientId ? { intendedRecipientId } : {}),
             ...(command.selfIntroduction ? { selfIntroduction: command.selfIntroduction } : {}),
             utteranceId: command.id,
             volume,
@@ -6010,6 +5998,7 @@ function* updateEncounters(
     )
       expireCombatEncounters(world, observer);
     if (observer?.actor?.alive && hasMemory(observer) && activelyParticipates(observer)) continue;
+    if (!observer?.actor?.alive || !activelyParticipates(observer)) endCurrentEvidence(world, id);
     if (world.visiblePeople?.[id]?.length) world.visiblePeople[id] = [];
     if (world.visibleObjects?.[id]?.length) world.visibleObjects[id] = [];
     if (Object.keys(world.visiblePlaces?.[id] ?? {}).length) world.visiblePlaces![id] = {};
@@ -6028,13 +6017,30 @@ function* updateEncounters(
       const episode = actor.entity.animal?.episode;
       const due = episode && episode.reviewAt <= world.simTime;
       if (frame.affected.has(actor.id) || due) {
-        reconcileNativeExposure(
-          world,
-          entityGet(world.entities, actor.id)!,
-          frame
-            .nearby(actor.position, radius, 'contact')
-            .flatMap((source) => entityGet(world.entities, source.id) ?? []),
+        const candidates = frame
+          .nearby(actor.position, radius, 'contact')
+          .flatMap((source) => entityGet(world.entities, source.id) ?? []);
+        const vision = sensesFor(world, actor.entity).find(
+          (sense) => sense.implementation === 'vision-geometry-v1',
         );
+        if (vision) {
+          const sees = visionQuery(world, actor.entity);
+          reconcileVisualEvidence(
+            world,
+            entityGet(world.entities, actor.id)!,
+            candidates.filter(
+              (source) =>
+                source.id !== actor.id &&
+                sees({
+                  id: source.id,
+                  position: worldPosition(source),
+                  height: bodyProfile(source).height,
+                }),
+            ),
+            vision,
+          );
+        } else endCurrentEvidence(world, actor.id, 'sight');
+        reconcileNativeExposure(world, entityGet(world.entities, actor.id)!, candidates);
       }
       continue;
     }
@@ -6069,6 +6075,7 @@ function* updateEncounters(
         () => frame.nearby(actor.position, touchRadius, 'contact'),
       );
     if (radius === 0 || blocked) {
+      endCurrentEvidence(world, actor.id, 'sight');
       if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
       if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
       if (Object.keys(world.visiblePlaces?.[actor.id] ?? {}).length)
@@ -6198,6 +6205,16 @@ function* updateEncounters(
         episodeMembership.set(priorEpisodes, { people: seen, objects: objectIds });
     }
     const previouslySeen = samePeople ? null : new Set(previous);
+    const vision = sensesFor(world, actor.entity).find(
+      (sense) => sense.implementation === 'vision-geometry-v1',
+    );
+    if (vision)
+      reconcileVisualEvidence(
+        world,
+        entityGet(world.entities, actor.id)!,
+        [...seen, ...objectIds].flatMap((id) => entityGet(world.entities, id) ?? []),
+        vision,
+      );
     const newlySeen = samePeople
       ? []
       : seen.filter(

@@ -80,7 +80,7 @@ export const invocationFields: Partial<
     required: ['targetId', 'definitionId', 'operation'],
     optional: ['facingHeading', 'restingPlaceId', 'restingBay'],
   },
-  say: { required: ['text'], optional: ['targetId', 'intendedRecipientId', 'volume'] },
+  say: { required: ['text'], optional: ['targetId', 'volume'] },
 };
 export function exactFields(value: object, fields: string[]): void {
   if (
@@ -99,7 +99,6 @@ const entityFields = new Set([
   'heatId',
   'sourceId',
   'destinationId',
-  'intendedRecipientId',
   'containerId',
   'rootId',
   'binding1',
