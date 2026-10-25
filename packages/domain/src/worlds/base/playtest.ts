@@ -13,7 +13,7 @@ export function basePlaytestMilestones(
     return recipe ? [world.itemDefinitions[recipe.outputs[0]!.definition.id]] : [];
   });
   const equipped = equippedItem(world, actorId, 'ranged');
-  const launcher = equipped && world.itemDefinitions[equipped.definitionId]?.launcher;
+  const rangedWeapon = equipped && world.itemDefinitions[equipped.definitionId]?.rangedWeapon;
   return [
     {
       id: 'talk',
@@ -36,7 +36,7 @@ export function basePlaytestMilestones(
             event.data?.source === 'live-model' &&
             world.itemDefinitions[
               world.recipes[String(event.data.recipeId)]?.outputs[0]!.definition.id ?? ''
-            ]?.launcher?.mechanism === 'swing',
+            ]?.rangedWeapon?.mechanism === 'swing',
         ) ||
         (world.knowledge[actorId] ?? []).some(
           (knowledge) =>
@@ -44,13 +44,13 @@ export function basePlaytestMilestones(
             world.declarationReceipts[knowledge.evidenceId]?.source === 'live-model' &&
             world.itemDefinitions[
               world.recipes[knowledge.recipeId]?.outputs[0]!.definition.id ?? ''
-            ]?.launcher?.mechanism === 'swing',
+            ]?.rangedWeapon?.mechanism === 'swing',
         ),
     },
     {
       id: 'craft',
-      label: 'Craft and equip a launcher',
-      done: !!launcher,
+      label: 'Craft and equip a ranged weapon',
+      done: !!rangedWeapon,
     },
     {
       id: 'hunt',
@@ -68,7 +68,7 @@ export function basePlaytestMilestones(
       id: 'bow',
       label: 'Discover bow and arrow',
       done:
-        known.some((item) => item?.launcher?.mechanism === 'flex') &&
+        known.some((item) => item?.rangedWeapon?.mechanism === 'flex') &&
         known.some((item) => item?.ammunition?.kind === 'arrow'),
     },
   ];

@@ -1,6 +1,11 @@
 import { quadraticRoots, SPATIAL_LIMITS, type WorldPoint } from '@open-legend/spatial';
-import { nextRandom } from '../../data.js';
-import type { WorldState } from '../../types.js';
+import { bodyCenter } from '../../spatial.js';
+import type { Entity, WorldState } from '../../types.js';
+
+/** Subject-directed shots choose center mass; hands and other interaction anchors remain separate. */
+export function baseRangedTargetPoint(world: WorldState, target: Entity): WorldPoint {
+  return bodyCenter(world, target);
+}
 
 /** Predict from a personally observed executed segment, never the target's route.
  * No feasible intercept inside existing range means ordinary observed-point aim. */
@@ -41,44 +46,6 @@ export const BASE_PROJECTILE_SPEED = { stone: 0.5, arrow: 3 } as const;
 export const BASE_PROJECTILE_CONTACT_WARNING =
   'This shot can injure any body in its path, including someone other than your target. Once fired, it cannot be recalled.';
 
-/** The current native launcher families use this world's two-radius, uniformly angled
- * release error. The flight owner retains only its chosen direction; alternate error
- * laws need a qualified family/profile binding, not a second collision executor.
- * docs/projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#flight-accuracy-and-effects */
-export function baseShotDirection(
-  world: WorldState,
-  aim: WorldPoint,
-  targetRadius: number,
-  steadiness: number,
-): WorldPoint {
-  const length = Math.hypot(aim.x, aim.y, aim.z);
-  if (length <= 1e-12) throw new Error('A ranged target must have a distinct aim point.');
-  const direction = { x: aim.x / length, y: aim.y / length, z: aim.z / length };
-  if (nextRandom(world) >= steadiness) {
-    const delta = { ...aim };
-    const angle = nextRandom(world) * 2 * Math.PI;
-    const axis = Math.abs(direction.y) < 0.99 ? { x: 0, y: 1, z: 0 } : { x: 1, y: 0, z: 0 };
-    const cross = {
-      x: direction.y * axis.z - direction.z * axis.y,
-      y: direction.z * axis.x - direction.x * axis.z,
-      z: direction.x * axis.y - direction.y * axis.x,
-    };
-    const scale = Math.hypot(cross.x, cross.y, cross.z);
-    const u = { x: cross.x / scale, y: cross.y / scale, z: cross.z / scale };
-    const v = {
-      x: direction.y * u.z - direction.z * u.y,
-      y: direction.z * u.x - direction.x * u.z,
-      z: direction.x * u.y - direction.y * u.x,
-    };
-    const error = 2 * targetRadius;
-    for (const key of ['x', 'y', 'z'] as const)
-      delta[key] += error * (Math.cos(angle) * u[key] + Math.sin(angle) * v[key]);
-    const deviated = Math.hypot(delta.x, delta.y, delta.z);
-    for (const key of ['x', 'y', 'z'] as const) direction[key] = delta[key] / deviated;
-  }
-  return direction;
-}
-
 export const BASE_RANGED_TEXT = {
   keywords: ['shoot', 'aim', 'ranged', 'attack'],
   aimName: 'Aim',
@@ -91,9 +58,9 @@ export const BASE_RANGED_TEXT = {
   aimingLabel: 'Aiming',
   shootingLabel: 'Preparing a shot',
   aimDescription:
-    'Approach a perceived opponent and prepare an aim with the selected tool and one held projectile. Release leads motion you have actually seen; later turns can still make it miss. Aim stays ready until you shoot, cancel or lose sight or range. Holding longer gives no accuracy bonus.',
+    'Prepare one shot with the selected tool. A selected target must be visible and in range when you shoot; the shot leads movement you have seen, but later turns can still make it miss. In attack mode, you can keep holding and choose a ground point if the target leaves sight. Ordinary Aim ends if its target leaves sight or range. Holding longer gives no accuracy bonus.',
   shotDescription: `Approach a perceived opponent and release one projectile after preparation, leading motion you have actually seen. Later turns can make it miss. The projectile travels straight until a body or solid cover stops it. ${BASE_PROJECTILE_CONTACT_WARNING}`,
-  releaseDescription: `Release the projectile held by this prepared aim, leading motion you have actually seen. Later turns can make it miss. ${BASE_PROJECTILE_CONTACT_WARNING}`,
+  releaseDescription: `Release the prepared projectile. A selected target is led using movement you have actually seen; a chosen point is fired at exactly. Later turns can make a target shot miss. ${BASE_PROJECTILE_CONTACT_WARNING}`,
   released: 'released one shot. One projectile was spent; its outcome is not yet known.',
   stopped: 'could not observe where the released shot ended.',
   ready: 'Aim is prepared. Shoot releases one projectile; cancel spends none.',

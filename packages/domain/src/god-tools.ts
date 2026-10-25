@@ -217,7 +217,7 @@ export function reviveActor(
   }
   actor.action = null;
   actor.planGeneration++;
-  actor.body!.conditions = { injury: 0, wetness: 0, burning: 0 };
+  actor.body!.conditions = { wetness: 0, burning: 0 };
   delete entity.remains;
   rootMembershipChanged(world, entity.id);
   interruptStatusEffects(world, entity, events, 'revived');

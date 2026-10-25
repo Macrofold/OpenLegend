@@ -64,7 +64,7 @@ unchanged; ordinary native continuation through its range/speed lifetime retires
 it. Four authenticated commands occur, with no paid request or browser error.
 The first fixture expected the flight to have ended after twelve game seconds
 and failed with one flight still active; that failure is retained. The corrected fixture observes the actual
-finite range/speed lifetime without changing any launcher value. Private passing
+finite range/speed lifetime without changing any ranged weapon value. Private passing
 log: `openlegend-first-playable-held-release-browser-lifetime.log`. This is no
 guaranteed-hit claim.
 

@@ -47,7 +47,7 @@ Use [documentation navigation](docs/README.md) or the [maintainer index](docs/ma
 - Feature-spec/tech-design or architecture requests, changed engine/world contracts, new or changed gameplay discoveries/rewards/knowledge grants/progression, or chat approval/start/continuation of a project plan: [Design](.agents/skills/openlegend-design/SKILL.md). Prose-only corrections and routine implementation planning under unchanged contracts do not themselves trigger this skill.
 - Requested or substantial implementation review: [Review](.agents/skills/openlegend-review/SKILL.md)
 - Instructions, skills, adapters or their checker: [Guidance maintenance](.agents/skills/openlegend-guidance/SKILL.md)
-- Executable design, implementation, review or diagnosis: read the [engineering context map](.agents/rules/engineering-context.md) and short [Performance core](.agents/skills/openlegend-performance/SKILL.md), then only matching contracts. Questions load only contracts needed for the answer.
+- Executable design, implementation, review or diagnosis: read the [engineering context map](.agents/rules/engineering-context.md) and follow [Performance guidance before code work](#performance-guidance-before-code-work). Questions load only contracts needed for the answer.
 - Initial implementation startup or requested rebase/merge: [Rebase](.agents/skills/openlegend-rebase/SKILL.md). Explicit squash-merge-and-push operations also use [Merge branch](.agents/skills/merge-branch/SKILL.md). Resuming unchanged work is not fresh startup.
 - AWS operations, cloud-resource configuration or CLI/MCP access changes: [AWS guidance](.agents/rules/aws.md); incidental prose does not activate it.
 
@@ -55,7 +55,7 @@ These routes select context, not authorization. Reuse loaded, current guidance; 
 
 ### Performance guidance before code work
 
-Before planning, implementing, or reviewing executable behavior or runtime data flow, read the short [Performance core](.agents/skills/openlegend-performance/SKILL.md), then only its applicable detailed routes. This includes new files and executable tooling. Prose-only changes do not trigger it. Reading performance guidance does not itself require benchmarks or stress testing.
+Before planning, implementing, reviewing or diagnosing executable behavior or runtime data flow, read the short [Performance core](.agents/skills/openlegend-performance/SKILL.md), then only its applicable detailed routes. This includes new files and executable tooling. Prose-only changes do not trigger it. Reading performance guidance does not itself require benchmarks or stress testing.
 
 ## Development Philosophy
 

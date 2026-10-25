@@ -4,7 +4,7 @@ A limit is a chosen restriction on capacity, access to supported features, selec
 
 The selected first-playable design has linked inventories for [shared integration](first-playable-world.md), [survival/making](first-playable-survival.md), [camp construction](editable-shelters.md), [cooperation](first-playable-cooperation.md) and [roaming](first-playable-roaming.md). Their authored numbers are selected starting values, with runtime/player qualification still open.
 
-The selected [ND38 skilled action design](../projects/action-execution-and-skill-expression-feature-spec.md) has its own **proposed, unimplemented** [ASE-L01–ASE-L10 limits](action-execution-and-skill-expression.md) for optional timed combat, manual inputs, bounded true per-item pouch fit, faster world clocks and deferred competitive browser trust. It changes no current weapon, recipe, clock or storage limit yet.
+The selected [ND38 combat design](../projects/action-execution-and-skill-expression-feature-spec.md) has [ASE-L01–ASE-L10](action-execution-and-skill-expression.md) for animated timing, native weapon recovery, actual local posture, input lifetime and faster world clocks. Its withdrawn restrictions retain their stable IDs. Practical balance, device response and independent combat enjoyment remain tracked by [ASE](../maintainers/action-execution-and-skill-expression.md).
 
 The selected standalone [Cognition Lab](../projects/cognition-lab-feature-spec.md) has proposed [CLL01–CLL09](cognition-lab.md) for runtime isolation, compact navigation, paging, explicit run bounds and retained capture. Shared provider, cognition, native action and save constraints keep their existing owners; no runtime capacity claim follows from the design.
 

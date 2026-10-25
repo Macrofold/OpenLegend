@@ -1,6 +1,6 @@
 # Repertoires for inhabited worlds
 
-**Skilled participation (ND38):** [The selected design](../projects/action-execution-and-skill-expression-feature-spec.md) joins optional timed combat, moving-target aim and a genuinely distinct fitted-container finishing action. It is designed, not implemented. The 28 canonical catalogues retain stable IDs; Mechanics owns the reusable skill pattern, Combat owns attacks, Work owns finishing, and Abilities owns learned competence.
+**Skilled participation (ND38):** [The selected combat design](../projects/action-execution-and-skill-expression-feature-spec.md) joins optional animated timing, moving-target aim and actual native consequences. [ASE](../maintainers/action-execution-and-skill-expression.md) owns the corrected scope and remaining independent combat acceptance. General craft skill remains an unselected repertoire possibility; ordinary crafting is unchanged.
 
 **28 canonical catalogues: 7,872 non-action entries and 385 action examples.** Each catalogue contains the full descriptions, stable IDs, current priorities, useful worked patterns, applicability, build gaps and research. There is one maintained version of each idea—not separate source inventories and ranking registers. The 270 worked patterns overlap some entries; these are not additive counts of unique features.
 

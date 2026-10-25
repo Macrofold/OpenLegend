@@ -13,6 +13,14 @@ import type {
 export * from './construction.js';
 import type { WorkBatchRequest, WorkBatchSelection } from './work-batches.js';
 export * from './work-batches.js';
+import type {
+  AttackExecutionControl,
+  AttackExecutionView,
+  AttackModeNotice,
+  WorldInputScope,
+  TimedReleaseProfile,
+} from './execution-input.js';
+export * from './execution-input.js';
 import type { Named } from '@open-legend/language';
 import type { AssetRevisionReference } from '@open-legend/assets';
 /** Public wire contract. Never expose the authoritative world or another actor's memory. */
@@ -48,6 +56,10 @@ export interface PlayerInteractionAvailability {
 
 /** Deliberately smaller than the domain command: the server supplies actor/authority. */
 export interface CommandInput {
+  execution?: AttackExecutionControl;
+  aimPoint?: Position;
+  aimBasis?: { bodyReference?: string; surfaceId?: string; shapeId?: string };
+  bodyReference?: string;
   /** A contextual shortcut must still select this exact offer at command admission.
    * Omitted for an explicitly chosen menu action. Not native command authority. */
   primaryAction?: PrimaryActionSelection;
@@ -83,6 +95,7 @@ export interface CommandInput {
     | 'aim'
     | 'shoot-once'
     | 'release-shot'
+    | 'release-strike'
     | 'practice-shot'
     | 'coaching'
     | 'harvest'
@@ -524,6 +537,7 @@ export interface InventoryItemView extends InventoryItemSummary {
 }
 
 export interface TradeLotView {
+  capacity?: number;
   id: string;
   name: string;
   label: string;
@@ -981,6 +995,18 @@ export interface GameView {
     offsetHours: number;
   };
   player: Named & {
+    inputScope?: WorldInputScope;
+    attackModeNotice?: AttackModeNotice;
+    attackSource?: {
+      label: string;
+      enabled: boolean;
+      reason?: string;
+      command: CommandInput;
+      profile?: TimedReleaseProfile;
+    } & (
+      | { kind: 'ranged'; pointFire: boolean; targetRule?: 'living-actor' | 'living-animal' }
+      | { kind: 'melee' }
+    );
     knowledgeRevision: number;
     evasion?: { label: string; readyIn: number };
     life?: number;
@@ -1004,6 +1030,8 @@ export interface GameView {
     position: Position;
     supportSurfaceId: string | null;
     heading: number;
+    /** Current visible body extent, without private pose state or definition pins. */
+    bodySize: { width: number; height: number };
     /** Permitted applicable values, never a raw module state dump. */
     attributes: AttributeView[];
     practice: PracticeProgressView[];
@@ -1021,6 +1049,7 @@ export interface GameView {
       durationSeconds: number;
       elapsedSeconds: number;
       advancing: boolean;
+      execution?: AttackExecutionView;
       controls?: ActionOption[];
       detail?: string;
     } | null;
@@ -1119,6 +1148,8 @@ export interface GamePatch {
 }
 
 export interface ApiResult {
+  inputScope?: WorldInputScope;
+  execution?: AttackExecutionView;
   ok: boolean;
   code: string;
   message: string;

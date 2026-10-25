@@ -14,7 +14,12 @@ import {
   type BodyProfile,
   type WorldPoint,
 } from '@open-legend/spatial';
-import { bodyProfile, setSpatialPosition, spatialMap, flightRouteDigest } from './spatial-state.js';
+import {
+  effectiveBodyProfile,
+  setSpatialPosition,
+  spatialMap,
+  flightRouteDigest,
+} from './spatial-state.js';
 import { emit } from './events.js';
 import { nativeResponseProfile, nativeResponseMovementFactor } from './native-response.js';
 import { readNativeDangers, nativeDangersClearAt } from './native-response-danger.js';
@@ -35,7 +40,7 @@ export class LandingOccupancy {
     string,
     { position: WorldPoint; radius: number; height: number; keys: string[] }
   >();
-  constructor(world: WorldState) {
+  constructor(private readonly world: WorldState) {
     for (const entity of worldRootEntities(world)) this.update(entity);
   }
   private keys(position: WorldPoint, radius: number, height: number): string[] {
@@ -58,7 +63,7 @@ export class LandingOccupancy {
     const old = this.bodies.get(entity.id);
     if (!old && (!entity.actor?.alive || !activelyParticipates(entity))) return;
     const p = worldPosition(entity);
-    const body = bodyProfile(entity);
+    const body = effectiveBodyProfile(this.world, entity);
     if (
       old &&
       entity.actor?.alive &&
@@ -113,10 +118,10 @@ export class LandingOccupancy {
 
 /** A small native locomotion family: explicit corridors, not free-flight physics or AI per frame.
  * docs/spatial-world.md#flying-creatures. Gravity is a game-time tuning value, not Earth physics. */
-const FALL_ACCELERATION = 0.04;
+export const FALL_ACCELERATION = 0.04;
 export const TERMINAL_FALL_SPEED = 3;
 /** Closed-form displacement keeps falling independent of host interval size. */
-function fallingDisplacement(velocity: number, seconds: number): number {
+export function fallingDisplacement(velocity: number, seconds: number): number {
   const v = Math.max(0, Math.min(TERMINAL_FALL_SPEED, -velocity));
   const accelerating = Math.min(seconds, (TERMINAL_FALL_SPEED - v) / FALL_ACCELERATION);
   return (
@@ -403,7 +408,7 @@ export function flightTracks(
     return undefined;
   let route = world.flightRoutes[progress.routeId]!;
   const map = spatialMap(world),
-    body = bodyProfile(entity);
+    body = effectiveBodyProfile(world, entity);
   const track: MotionTrack = { at: [0], pose: [{ ...worldPosition(entity) }] };
   const outcomes: MotionTrack[] = [track];
   const stay = (from: WorldPoint) =>
@@ -463,7 +468,7 @@ export function admittedLanding(
 ) {
   if (!waypoint.landingSurfaceId) return null;
   const map = spatialMap(world),
-    body = bodyProfile(entity);
+    body = effectiveBodyProfile(world, entity);
   const landing = resolveSupport(map, waypoint.position, waypoint.landingSurfaceId);
   if (entity.spatial.flight?.nativeLocomotion && !entity.spatial.flight.stopAtLanding) {
     const episode = entity.animal?.episode;
@@ -520,7 +525,7 @@ export function advanceFlight(
   const state = entity.spatial;
   if (!state.flight && state.fallVelocity === undefined) return;
   const map = spatialMap(world),
-    body = bodyProfile(entity);
+    body = effectiveBodyProfile(world, entity);
   if (
     worldSupport(entity) === null &&
     state.flight &&
@@ -631,6 +636,14 @@ export function advanceFlight(
       to = waypoint.position;
     const separation = distance3D(from, to);
     const speed = flightSpeed(from, to, effectiveFlightSpeed(world, entity, route));
+    // Do not advance an arbitrary prefix of a descent toward a landing already
+    // known to be unavailable. Otherwise the refused pose depends on host slices.
+    // This is current admission only: the footprint is checked again on arrival.
+    if (waypoint.landingSurfaceId && !admittedLanding(world, entity, waypoint, landingOccupancy)) {
+      if (progress.stopAtLanding) recoverUnavailableNativeFlight(entity);
+      else requestFlightChoice(world, entity);
+      return;
+    }
     if (seconds === 0 && separation > SPATIAL_LIMITS.epsilon) {
       // Taking off is a start-boundary transition, not backdated after movement.
       if (

@@ -1,4 +1,21 @@
-import { moveAlongPath } from './action-movement.js';
+import { BASE_SKILLED_TEXT } from './worlds/base/skilled-execution.js';
+import {
+  localPoseBoundary,
+  localPoseBlocksWork,
+  restoreLocalPose,
+  settleLocalPoses,
+} from './local-avoidance.js';
+import {
+  attackExecutionEvidence,
+  bindAttackExecution,
+  attackExecutionCurrent,
+  attackExecutionFactor,
+  attackExecutionScore,
+  attackSubject,
+} from './combat-execution.js';
+import { evaluateTimedRelease, type AdmittedWorldInput } from './execution-input.js';
+import { moveAlongPath, orderedMovementTracks } from './action-movement.js';
+import { canSteer, playerInputBoundary, preparePlayerSteering } from './player-steering.js';
 import { takeRoutineObservation, type RoutineObservation } from './perception-timing.js';
 import { visibleFeature } from './perception-frame.js';
 import { beginNativeChangeFeed, takeNativeChanges } from './native-change-feed.js';
@@ -103,7 +120,11 @@ import {
 } from './combat-encounters.js';
 import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import { inventoryGroupReason, moveInventoryGroup, dropInventoryGroup } from './inventory-group.js';
-import { BASE_EVASION_TEXT, BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
+import {
+  baseRangedTargetPoint,
+  BASE_EVASION_TEXT,
+  BASE_RANGED_TEXT,
+} from './worlds/base/ranged-counterplay.js';
 import { prepareEvasion } from './evasion.js';
 import { recordSemanticChange, captureStateChanges, stateChangesSince } from './dependencies.js';
 import { statusWorkFits } from './native-work.js';
@@ -111,11 +132,15 @@ import {
   bindAim,
   holdAim,
   aimProblem,
+  pointShotProblem,
+  pointShotSubjects,
   captureAimMotion,
+  retargetAim,
   observeAimMotion,
   releaseShot,
   captureProjectileBodies,
   advanceProjectiles,
+  settleProjectiles,
   projectileBoundary,
 } from './ranged.js';
 import { evaluateAssemblyRest, reconcileConstructionAuthority } from './assembly-use.js';
@@ -518,6 +543,7 @@ import {
   distance,
   interactionAnchor,
   findPath,
+  hasLineOfSight,
   hasLineOfEffect,
   canReachEntity,
   findApproachPath,
@@ -671,9 +697,11 @@ function actionReach(world: WorldState, action: Action): number {
   if (action.type === 'strike') {
     const definition = strikeDefinition(action.definitionId, world, action.weaponItemId);
     return (
-      (action.strikeMotion
-        ? definition?.preparationMotion?.standOffRange
-        : definition?.preparationMotion?.startRange) ??
+      (action.attackExecution
+        ? definition?.range
+        : action.strikeMotion
+          ? definition?.preparationMotion?.standOffRange
+          : definition?.preparationMotion?.startRange) ??
       definition?.approachRange ??
       definition?.range ??
       0
@@ -682,8 +710,8 @@ function actionReach(world: WorldState, action: Action): number {
   if (!['hunt', 'practice-shot', 'aim', 'shoot-once'].includes(action.type))
     return SIMULATION_RULES.interactionRadius;
   const range =
-    world.itemDefinitions[itemFor(world, action.weaponItemId ?? '')?.definitionId ?? '']?.launcher
-      ?.range ?? 0;
+    world.itemDefinitions[itemFor(world, action.weaponItemId ?? '')?.definitionId ?? '']
+      ?.rangedWeapon?.range ?? 0;
   // The selected profile owns its approach allowance. Completion rechecks actual range.
   return rangedApproachRange(world, range);
 }
@@ -703,12 +731,16 @@ function approachesChosenDestination(action: Action): boolean {
   }
 }
 function targetPosition(world: WorldState, action: Action): Position | undefined {
+  if (action.ranged?.aimPoint) return action.ranged.aimPoint;
   return approachesChosenDestination(action)
     ? action.destination
-    : worldPosition(entityGet(world.entities, action.targetId ?? action.heatId ?? ''));
+    : worldPosition(actionTarget(world, action));
 }
 function actionTarget(world: WorldState, action: Action): Entity | undefined {
-  return entityGet(world.entities, action.targetId ?? action.heatId ?? '');
+  return entityGet(
+    world.entities,
+    (action.ranged ? action.ranged.aimTarget?.id : (action.targetId ?? action.heatId)) ?? '',
+  );
 }
 function actionInReach(
   world: WorldState,
@@ -726,6 +758,7 @@ function actionInReach(
       distance(origin, action.destination) <=
         (action.type === 'fish' ? actionReach(world, action) : MOVEMENT.arrivalTolerance)
     );
+  if (action.ranged?.aimPoint) return true;
   const target = actionTarget(world, action);
   if (
     target &&
@@ -733,10 +766,19 @@ function actionInReach(
     strikeDefinition(action.definitionId, world, action.weaponItemId)?.preparationMotion
   )
     return movingStrikeInReach(world, actor, target, actionReach(world, action), origin);
-  if (target && ['aim', 'shoot-once', 'hunt'].includes(action.type))
+  if (target && action.ranged)
     return (
-      distance(interactionAnchor(actor, origin), interactionAnchor(target)) <=
-      actionReach(world, action)
+      distance(interactionAnchor(world, actor, origin), baseRangedTargetPoint(world, target)) <=
+        (action.attackExecution
+          ? world.itemDefinitions[itemFor(world, action.weaponItemId!)!.definitionId]!.rangedWeapon!
+              .range
+          : actionReach(world, action)) &&
+      (action.type !== 'practice-shot' ||
+        hasLineOfSight(
+          world,
+          interactionAnchor(world, actor, origin),
+          baseRangedTargetPoint(world, target),
+        ))
     );
   return !!target && canReachEntity(world, actor, target, actionReach(world, action), origin);
 }
@@ -791,6 +833,7 @@ function approachPath(world: WorldState, actor: Entity, action: Action): RoutePl
           actionTarget(world, action)!,
           actionReach(world, action),
           actor.actor?.controller === 'native' && !!actor.animal,
+          action.ranged ? baseRangedTargetPoint(world, actionTarget(world, action)!) : undefined,
         )
       : null;
 }
@@ -1151,7 +1194,13 @@ function productionRecordProblem(
     world,
     entry,
     {
-      ...outcome(true, 'completed', `${definition.name} completed.`),
+      ...outcome(
+        true,
+        'completed',
+        action.type === 'craft'
+          ? `${world.recipes[action.recipeId!]!.name} completed.`
+          : `${definition.name} completed.`,
+      ),
       outputs,
       ...(outputs.length === 1 ? { itemId: outputs[0]!.itemId } : {}),
     },
@@ -1275,7 +1324,9 @@ function startWork(
     const problem = productionRecordProblem(world, actor, action, claims);
     if (problem) return problem;
   }
-  if (action.type === 'craft') reserveManufactureTools(world, actor.id, action);
+  if (action.type === 'craft') {
+    reserveManufactureTools(world, actor.id, action);
+  }
   if (
     claims.length &&
     applyResourceGroup(
@@ -1404,6 +1455,12 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     !['cancel', 'recover'].includes(command.type)
   )
     return reject('capability-restricted', 'This actor cannot act in its current state.');
+  if (
+    localPoseBlocksWork(world, source) &&
+    isActivityCommand(command) &&
+    !['move', 'follow', 'evade', 'say'].includes(command.type)
+  )
+    return reject('posture-held', BASE_SKILLED_TEXT.postureHeld);
   if (command.type === 'say' && capabilityBlocked(world, source, 'speech'))
     return reject('capability-restricted', 'Speech is unavailable.');
   if (
@@ -1522,19 +1579,97 @@ function releaseShotProblem(
   command: Extract<Command, { type: 'release-shot' }>,
 ): Outcome | null {
   const held = actor.actor!.action;
-  if (held?.type !== 'aim' || held.id !== command.aimId || !held.ranged?.ready)
+  if (
+    held?.type !== 'aim' ||
+    held.id !== command.aimId ||
+    (!held.ranged?.ready && !held.attackExecution)
+  )
     return outcome(false, 'aim-changed', BASE_RANGED_TEXT.aimChanged);
-  return aimProblem(
-    world,
-    actor,
-    {
-      ...held,
-      lethalPermission: command.lethalPermission,
-      requiresLethalReview: command.humanInitiated ?? held.requiresLethalReview,
-    },
-    true,
+  if (
+    command.recoveredRelease &&
+    command.releaseInput?.kind !== 'ordinary' &&
+    command.releaseInput !== undefined
+  )
+    return outcome(false, 'invalid-release', BASE_SKILLED_TEXT.recoveredRelease);
+  const proposed = releaseCandidate(held, command);
+  if (
+    proposed.attackExecution &&
+    !evaluateTimedRelease(
+      proposed.attackExecution.profile,
+      proposed.attackExecution.input ?? { kind: 'ordinary' },
+    )
+  )
+    return outcome(false, 'invalid-release', BASE_SKILLED_TEXT.invalidRelease);
+  return aimProblem(world, actor, proposed, true);
+}
+function releaseCandidate(
+  held: Action,
+  command: Extract<Command, { type: 'release-shot' | 'release-strike' }>,
+): Action {
+  return {
+    ...held,
+    ...(held.ranged
+      ? {
+          ranged:
+            command.type === 'release-shot'
+              ? retargetAim(held.ranged, command)
+              : { ...held.ranged },
+        }
+      : {}),
+    ...(held.attackExecution
+      ? {
+          attackExecution: {
+            ...held.attackExecution,
+            input: command.releaseInput ?? { kind: 'ordinary' },
+          },
+        }
+      : {}),
+    lethalPermission: command.lethalPermission,
+    requiresLethalReview: command.humanInitiated ?? held.requiresLethalReview,
+  };
+}
+function releaseStrikeProblem(
+  world: WorldState,
+  actor: Entity,
+  command: Extract<Command, { type: 'release-strike' }>,
+  skipReview = false,
+): Outcome | null {
+  const held = actor.actor!.action;
+  if (combatRecoveryDeadline(world, actor) > world.simTime)
+    return outcome(false, 'combat-recovery', BASE_GUARD_TEXT.recovery);
+  if (
+    held?.type !== 'strike' ||
+    held.id !== command.expectedActionId ||
+    held.strikePhase !== 'windup' ||
+    !held.attackExecution ||
+    !attackExecutionCurrent(world, held)
+  )
+    return outcome(false, 'strike-changed', BASE_SKILLED_TEXT.strikeChanged);
+  if (
+    command.recoveredRelease &&
+    command.releaseInput?.kind !== 'ordinary' &&
+    command.releaseInput !== undefined
+  )
+    return outcome(false, 'invalid-release', BASE_SKILLED_TEXT.recoveredRelease);
+  const candidate = releaseCandidate(held, command);
+  if (
+    !evaluateTimedRelease(
+      candidate.attackExecution!.profile,
+      candidate.attackExecution!.input ?? { kind: 'ordinary' },
+    )
+  )
+    return outcome(false, 'invalid-release', BASE_SKILLED_TEXT.invalidRelease);
+  const target = entityGet(world.entities, held.targetId ?? '');
+  return (
+    attackPermissionProblem(world, actor, target, candidate) ??
+    (target
+      ? skipReview
+        ? null
+        : attackReviewProblem(world, actor, target, candidate)
+      : outcome(false, 'target-unavailable', BASE_SKILLED_TEXT.targetUnavailable))
   );
 }
+
 function operationAfterWork(
   world: WorldState,
   command: Command,
@@ -1549,7 +1684,7 @@ function operationAfterWork(
       chargeWork({ inputBytes: (JSON.stringify(command)?.length ?? 0) * 3 });
       if (command.chosenPurpose !== undefined && !validResponsePurpose(command.chosenPurpose))
         return outcome(false, 'invalid-purpose', 'The selected purpose binding is malformed.');
-      if (command.type === 'release-shot') {
+      if (command.type === 'release-shot' || command.type === 'release-strike') {
         const problem = nativeActorProblem(world, command);
         if (problem) return problem;
         if (!nativeCommandSupported(world, command.type))
@@ -1564,11 +1699,10 @@ function operationAfterWork(
             'work-transition',
             'Releasing this aim preserves its existing preparation.',
           );
-        const releaseProblem = releaseShotProblem(
-          world,
-          entityGet(world.entities, command.actorId)!,
-          command,
-        );
+        const releaseProblem =
+          command.type === 'release-shot'
+            ? releaseShotProblem(world, entityGet(world.entities, command.actorId)!, command)
+            : releaseStrikeProblem(world, entityGet(world.entities, command.actorId)!, command);
         if (releaseProblem) return releaseProblem;
         const capture = prepareActivity(
           world,
@@ -1779,34 +1913,43 @@ export function lethalAttackOffer(
   world: WorldState,
   command: Command,
 ): { command: Command; permission: LethalPermission } | null {
-  if (command.type === 'release-shot') {
-    const actor = entityGet(world.entities, command.actorId),
-      held = actor?.actor?.action;
-    if (
-      !actor ||
-      held?.id !== command.aimId ||
-      held.type !== 'aim' ||
-      !held.ranged?.ready ||
-      aimProblem(world, actor, held, true, true)
-    )
-      return null;
-    const target = entityGet(world.entities, held.targetId!)!;
-    const permission = lethalPermission(world, actor, target, held);
-    return permission ? { command, permission } : null;
+  const actor = entityGet(world.entities, command.actorId);
+  if (!actor) return null;
+  let attack: Action;
+  let exact = command;
+  if (command.type === 'release-shot' || command.type === 'release-strike') {
+    const held = actor.actor?.action;
+    const id = command.type === 'release-shot' ? command.aimId : command.expectedActionId;
+    if (!held || held.id !== id || (!held.attackExecution && !held.ranged?.ready)) return null;
+    attack = releaseCandidate(held, command);
+    const issue =
+      command.type === 'release-shot'
+        ? aimProblem(world, actor, attack, true, true)
+        : releaseStrikeProblem(world, actor, command, true);
+    if (issue) return null;
+  } else {
+    if (!['strike', 'hunt', 'shoot-once', 'aim'].includes(command.type)) return null;
+    const prepared = prepareNativeOperation(world, command, { skipLethalReview: true });
+    if ('ok' in prepared) return null;
+    attack = prepared;
+    if (command.type === 'strike') exact = { ...command, weaponItemId: attack.weaponItemId };
+    else if (command.type === 'hunt' || command.type === 'shoot-once' || command.type === 'aim')
+      exact = { ...command, weaponItemId: attack.weaponItemId, ammoItemId: attack.ammoItemId };
   }
-  if (command.type !== 'strike' && command.type !== 'hunt' && command.type !== 'shoot-once')
-    return null;
-  const prepared = prepareNativeOperation(world, command, { skipLethalReview: true });
-  if ('ok' in prepared) return null;
-  const actor = entityGet(world.entities, command.actorId)!,
-    target = entityGet(world.entities, prepared.targetId!)!;
-  const permission = lethalPermission(world, actor, target, prepared);
-  if (!permission) return null;
-  const exact: Command =
-    command.type === 'strike'
-      ? { ...command, weaponItemId: prepared.weaponItemId }
-      : { ...command, weaponItemId: prepared.weaponItemId, ammoItemId: prepared.ammoItemId };
-  return { command: exact, permission };
+  const subjects = attack.ranged
+    ? pointShotSubjects(world, actor, attack)
+    : [entityGet(world.entities, attack.targetId ?? '')].filter(
+        (value): value is Entity => !!value?.actor?.alive,
+      );
+  const permissions = subjects
+    .map((target) => lethalPermission(world, actor, target, attack))
+    .filter((value): value is LethalPermission => !!value);
+  if (!permissions.length) return null;
+  const [permission, ...additionalTargets] = permissions;
+  return {
+    command: exact,
+    permission: { ...permission!, ...(additionalTargets.length ? { additionalTargets } : {}) },
+  };
 }
 function prepareNativeOperation(
   world: WorldState,
@@ -2091,9 +2234,10 @@ function prepareNativeOperation(
       if (definition.preparationMotion && (!supportedPosition(actor) || !supportedPosition(target)))
         return reject('unsupported', 'A moving contact preparation requires supported bodies.');
       if (
-        definition.preparationMotion
+        !command.manualExecution &&
+        (definition.preparationMotion
           ? !movingStrikeInReach(world, actor, target, definition.preparationMotion.startRange)
-          : !definition.autoMoveToRange && !canReachEntity(world, actor, target, definition.range)
+          : !definition.autoMoveToRange && !canReachEntity(world, actor, target, definition.range))
       )
         return reject('out-of-range', 'Move within strike range first.');
       action = temporary('strike', definition.workSeconds);
@@ -2104,6 +2248,11 @@ function prepareNativeOperation(
       action.weaponItemId = command.weaponItemId;
       action.lethalPermission = command.lethalPermission;
       action.requiresLethalReview = command.humanInitiated;
+      if (command.manualExecution) {
+        action.attackExecution = bindAttackExecution(world, action);
+        if (!action.attackExecution)
+          return reject('execution-unavailable', BASE_SKILLED_TEXT.noHeldRelease);
+      }
       const review = options.skipLethalReview
         ? null
         : attackReviewProblem(world, actor, target, action);
@@ -2291,12 +2440,17 @@ function prepareNativeOperation(
     case 'hunt': {
       if (combatRecoveryDeadline(world, actor) > world.simTime)
         return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
-      const target = entityOwn(world.entities, command.targetId);
+      const point =
+        command.type === 'aim' || command.type === 'shoot-once' ? command.aimPoint : undefined;
+      const selected = entityOwn(world.entities, command.targetId ?? '');
+      const target =
+        point && selected && !rangedTargetAllowed(world, selected) ? undefined : selected;
       const practice = command.type === 'practice-shot';
       if (
-        !target ||
-        target.id === actor.id ||
-        (practice ? !target.practiceTarget : !rangedTargetAllowed(world, target))
+        (!point && !target) ||
+        (target &&
+          (target.id === actor.id ||
+            (practice ? !target.practiceTarget : !rangedTargetAllowed(world, target))))
       )
         return reject(
           'invalid-target',
@@ -2304,17 +2458,17 @@ function prepareNativeOperation(
             ? 'Choose a supported inert practice target.'
             : rangedPolicy(world)!.invalidTargetText,
         );
-      if (!visible(world, actor, target))
+      if (target && !visible(world, actor, target))
         return reject('not-visible', 'The target is out of sight.');
       const weaponItemId =
         command.weaponItemId ?? equippedItem(world, actor.id, 'ranged')?.id ?? '';
       const autoEquip = 'autoEquip' in command && command.autoEquip;
       const item = itemFor(world, weaponItemId);
-      const launcher = item && world.itemDefinitions[item.definitionId]?.launcher;
+      const rangedWeapon = item && world.itemDefinitions[item.definitionId]?.rangedWeapon;
       if (
         !item ||
         !accessiblePossession(world, actor.id, item.id) ||
-        !launcher ||
+        !rangedWeapon ||
         (!equippedItem(world, actor.id, 'ranged', item.id) && !autoEquip)
       )
         return reject('no-weapon', 'Equip a suitable ranged tool first.');
@@ -2322,15 +2476,37 @@ function prepareNativeOperation(
         const problem = equipmentProblem(world, actor.id, item.id, 'ranged', availability);
         if (problem) return reject('weapon-unavailable', problem);
       }
+      if (
+        command.type === 'aim' &&
+        command.manualExecution &&
+        target &&
+        !point &&
+        distance3D(interactionAnchor(world, actor), baseRangedTargetPoint(world, target)) >
+          rangedWeapon.range
+      )
+        return reject('out-of-range', BASE_SKILLED_TEXT.outOfRange);
+      if (point) {
+        const problem = pointShotProblem(
+          world,
+          actor,
+          point,
+          rangedWeapon.range,
+          'aimPointSubject' in command ? command.aimPointSubject : undefined,
+        );
+        if (problem) return problem;
+      }
       const ammo = ammoFor(
         world,
         actor.id,
-        launcher.ammunitionKind,
+        rangedWeapon.ammunitionKind,
         command.ammoItemId,
         availability,
       );
       if (!ammo)
-        return reject('no-ammunition', `Need compatible ${launcher.ammunitionKind} ammunition.`);
+        return reject(
+          'no-ammunition',
+          `Need compatible ${rangedWeapon.ammunitionKind} ammunition.`,
+        );
       const competence = toolPracticeDefinition(world, world.itemDefinitions[item.definitionId]!);
       if (competence && competenceValue(component, competence) === undefined)
         return reject(
@@ -2343,17 +2519,25 @@ function prepareNativeOperation(
             'unsupported-tool',
             'This practice target requires its supported tool mechanism.',
           );
-        if (hasOtherTargetUser(world, actor.id, 'practice-shot', target.id))
+        if (hasOtherTargetUser(world, actor.id, 'practice-shot', target!.id))
           return reject(
             'target-in-use',
             'Another person is using this practice target. Choose a shot after they finish.',
           );
-        if (canReachEntity(world, actor, target!, rangedApproachRange(world, launcher.range))) {
+        if (
+          distance3D(interactionAnchor(world, actor), baseRangedTargetPoint(world, target!)) <=
+            rangedApproachRange(world, rangedWeapon.range) &&
+          hasLineOfSight(
+            world,
+            interactionAnchor(world, actor),
+            baseRangedTargetPoint(world, target!),
+          )
+        ) {
           const safety = practiceLaneProblem(
             world,
             actor,
             target!,
-            launcher.range,
+            rangedWeapon.range,
             competence.practice!,
           );
           if (safety) return safety;
@@ -2361,23 +2545,39 @@ function prepareNativeOperation(
       }
       action = temporary(command.type, shotPreparationSeconds(world, competence?.practice));
       if (competence) action.competencePin = definitionPin(competence);
-      action.targetId = target.id;
+      action.targetId = target?.id;
       action.weaponItemId = item.id;
       action.ammoItemId = ammo.id;
       if (command.type !== 'practice-shot') {
         action.rangedPolicyPin = world.moduleManifest.rangedPolicyPin!;
-        action.targetLife = target!.actor!.physicalLife ?? 0;
+        if (target?.actor) action.targetLife = target.actor.physicalLife ?? 0;
         action.lethalPermission = command.lethalPermission;
         action.requiresLethalReview = command.humanInitiated;
-        const permission = attackPermissionProblem(world, actor, target, action);
+        const permission = target ? attackPermissionProblem(world, actor, target, action) : null;
         if (permission) return permission;
       }
       action.ranged = bindAim(world, actor, action, command.type === 'aim');
+      if (point)
+        action.ranged = retargetAim(action.ranged, {
+          aimPoint: point,
+          aimPointSubject: 'aimPointSubject' in command ? command.aimPointSubject : undefined,
+        });
+      if ('aimPointSubject' in command && command.aimPointSubject)
+        action.ranged.aimPointSubject = { ...command.aimPointSubject };
+      if (command.type === 'aim' && command.manualExecution) {
+        action.attackExecution = bindAttackExecution(world, action);
+        if (!action.attackExecution)
+          return reject('execution-unavailable', BASE_SKILLED_TEXT.noHeldRelease);
+      }
       const review = options.skipLethalReview
         ? null
-        : practice || command.type === 'aim'
+        : practice || (command.type === 'aim' && !command.manualExecution)
           ? null
-          : attackReviewProblem(world, actor, target!, action);
+          : point
+            ? aimProblem(world, actor, action, true)
+            : target
+              ? attackReviewProblem(world, actor, target, action)
+              : null;
       if (review) return review;
       break;
     }
@@ -2615,6 +2815,7 @@ function prepareNativeOperation(
     if (command.combatHelpId) action.combatHelpId = command.combatHelpId;
     if (
       action.type !== 'follow' &&
+      !(action.type === 'strike' && action.attackExecution) &&
       ![
         'craft',
         'guard',
@@ -2883,7 +3084,7 @@ function executeCommandNative(
       : nativeActorProblem(original, command);
   if (prepared && 'ok' in prepared && !prepared.ok)
     return { world: original, events: [], outcome: prepared };
-  const action = prepared && !('ok' in prepared) ? prepared : undefined;
+  let action = prepared && !('ok' in prepared) ? prepared : undefined;
   if (command.type === 'operate-gate' && prepared && 'ok' in prepared && prepared.ok) {
     if (options.preview) return { world: original, events: [], outcome: prepared };
     const recorded = draftWorld(original);
@@ -3131,6 +3332,24 @@ function executeCommandNative(
         )
       : undefined;
   if (experience && 'ok' in experience) return { world: original, events: [], outcome: experience };
+  if (
+    activity &&
+    !['move', 'follow', 'evade', 'say'].includes(command.type) &&
+    restoreLocalPose(world, actor, events)
+  ) {
+    // Restoring matter can intercept an already committed flight at this instant.
+    // Re-admit against that actual body before installing work; ordinary command
+    // refusal still rolls this transaction back rather than publishing partial effects.
+    settleProjectiles(world, events);
+    const current = prepareNativeOperation(world, command, {
+      constructionPermissions: options.constructionPermissions,
+      campAssetPermissions: options.campAssetPermissions,
+      boundaryExits: options.boundaryExits,
+    });
+    if (current && 'ok' in current && !current.ok)
+      return { world: original, events: [], outcome: current };
+    action = current && !('ok' in current) ? current : undefined;
+  }
   if (action) {
     action.id = nextId(world, 'action');
     if (action.ranged) action.ranged.reservationId = `${action.id}:projectile`;
@@ -3175,8 +3394,12 @@ function executeCommandNative(
     );
   if (!action)
     switch (command.type) {
-      case 'release-shot': {
-        const problem = releaseShotProblem(world, actor, command);
+      case 'release-shot':
+      case 'release-strike': {
+        const problem =
+          command.type === 'release-shot'
+            ? releaseShotProblem(world, actor, command)
+            : releaseStrikeProblem(world, actor, command);
         if (problem) return { world: original, events: [], outcome: problem };
         if (options.preview)
           return {
@@ -3184,14 +3407,56 @@ function executeCommandNative(
             events: [],
             outcome: outcome(true, 'available', BASE_RANGED_TEXT.releaseAvailable),
           };
-        const held = component.action!;
-        held.lethalPermission = command.lethalPermission;
-        held.requiresLethalReview = command.humanInitiated ?? held.requiresLethalReview;
-        // An explicit release is a new chosen offense; merely continuing the
-        // already held aim must not undo a deliberate Speak preference.
+        const held = component.action!,
+          candidate = releaseCandidate(held, command);
+        const beforeSubject = attackSubject(held),
+          afterSubject = attackSubject(candidate);
+        if (beforeSubject?.id !== afterSubject?.id || beforeSubject?.life !== afterSubject?.life) {
+          delete held.attackObservers;
+          delete candidate.attackObservers;
+        }
+        const ready = held.ranged?.ready ?? held.attackExecution?.ready;
+        if (held.attackExecution && !ready) {
+          const pending = {
+            input: command.releaseInput ?? { kind: 'ordinary' as const },
+            ...(candidate.ranged?.aimTarget
+              ? { aimTarget: { ...candidate.ranged.aimTarget } }
+              : {}),
+            ...(candidate.ranged?.aimPoint
+              ? {
+                  aimPoint: { ...candidate.ranged.aimPoint },
+                  ...(candidate.ranged.aimPointSubject
+                    ? { aimPointSubject: { ...candidate.ranged.aimPointSubject } }
+                    : {}),
+                }
+              : {}),
+            ...(command.lethalPermission ? { lethalPermission: command.lethalPermission } : {}),
+            ...(command.humanInitiated !== undefined
+              ? { requiresLethalReview: command.humanInitiated }
+              : {}),
+          };
+          if (
+            held.attackExecution.pendingRelease &&
+            !command.recoveredRelease &&
+            canonicalJson(held.attackExecution.pendingRelease) !== canonicalJson(pending)
+          )
+            return reject('release-already-requested', BASE_SKILLED_TEXT.releaseAlreadyRequested);
+          held.attackExecution.pendingRelease = pending;
+          if (candidate.ranged) held.ranged = candidate.ranged;
+          selectOffense(world, actor, held, command);
+          result = outcome(true, 'release-requested', BASE_SKILLED_TEXT.releaseRequested);
+          break;
+        }
+        Object.assign(held, candidate);
+        if (held.attackExecution) delete held.attackExecution.pendingRelease;
         selectOffense(world, actor, held, command);
-        held.ranged!.manual = false;
-        completeAction(world, actor, held, events, constructionBatch);
+        if (command.type === 'release-shot') {
+          held.ranged!.manual = false;
+          completeAction(world, actor, held, events, constructionBatch);
+        } else {
+          held.attackExecution!.ready = false;
+          advanceAction(world, actor, 0, events, constructionBatch);
+        }
         result = outcome(true, 'released', BASE_RANGED_TEXT.releaseCompleted);
         break;
       }
@@ -4217,6 +4482,7 @@ function completeAction(
   action: Action,
   events: WorldEvent[],
   constructionBatch: NativeConstruction,
+  playerInputs?: readonly AdmittedWorldInput[],
 ): void {
   const constructionPermissions = constructionBatch.permissions;
   const component = actor.actor!;
@@ -4497,6 +4763,7 @@ function completeAction(
       for (const output of manufactureOutputLots(world, recipe))
         produce(output.definitionId, output.quantity, output.port);
       if (outputs.length === 1) outputItemId = outputs[0]!.itemId;
+      completion = `${recipe.name} completed.`;
       emit(
         world,
         events,
@@ -4788,6 +5055,102 @@ function completeAction(
   component.action = null;
 }
 
+/** Resolve supported motion in the same order as the native placement pass.
+ * A shortened collision interval is forecast again: an earlier mover's endpoint
+ * at the shorter time can change where its follower is stopped. */
+function intervalMovementTracks(
+  world: WorldState,
+  seconds: number,
+  steering: ReturnType<typeof preparePlayerSteering>,
+  steeringSeconds: number,
+  actionIds: readonly string[],
+): Map<string, import('./flight.js').MotionTrack[]> {
+  if (
+    !steering.size &&
+    !actionIds.some((id) => actionHasMotion(entityGet(world.entities, id)?.actor?.action))
+  )
+    return new Map();
+  return orderedMovementTracks(world, seconds, (shadow, move) => {
+    for (const [id, prepared] of steering) {
+      const actor = entityGet(shadow.entities, id);
+      if (actor && canSteer(shadow, actor))
+        move(id, prepared.path, prepared.distance * (seconds / steeringSeconds), true);
+    }
+    for (const id of actionIds) {
+      if (steering.has(id)) continue;
+      const actor = entityGet(shadow.entities, id),
+        action = actor?.actor?.action;
+      if (actor) move(id, [], 0, false);
+      if (
+        !actor?.actor?.alive ||
+        actor.actor.incapacitated ||
+        !action ||
+        !actionHasMotion(action) ||
+        capabilityBlocked(world, entityGet(world.entities, id), 'locomotion')
+      )
+        continue;
+      if (action.evasion) {
+        // Chosen evasion has its own saved speed and occupied-body path. Ordinary
+        // approach reach/replanning does not describe this committed short motion.
+        move(
+          id,
+          action.path,
+          action.evasion.speed * Math.min(seconds, action.remainingSeconds),
+          true,
+        );
+      } else if (action.strikeMotion) {
+        const target = entityGet(shadow.entities, action.targetId ?? '');
+        if (!action.navigation && target?.actor?.alive && seesEntity(shadow, actor, target))
+          move(
+            id,
+            action.path,
+            nativeMovementSpeed(shadow, actor) * Math.min(seconds, action.remainingSeconds),
+            true,
+          );
+      } else if (action.type === 'follow') {
+        const wasApproaching = action.stage === 'approaching';
+        if (action.follow?.until !== undefined && world.simTime + seconds >= action.follow.until)
+          continue;
+        if (
+          !updateFollowPath(shadow, actor, action) &&
+          wasApproaching &&
+          action.stage === 'approaching' &&
+          !action.navigation
+        )
+          move(id, action.path, nativeMovementSpeed(shadow, actor) * seconds, false);
+      } else if (
+        action.stage === 'approaching' &&
+        !action.navigation &&
+        !actionInReach(shadow, actor, action)
+      ) {
+        const last = action.path.at(-1),
+          target = actionTarget(shadow, action);
+        const useful =
+          last &&
+          (approachesChosenDestination(action)
+            ? last.surfaceId === action.destination!.surfaceId &&
+              distance(last, action.destination!) <=
+                (action.type === 'fish' ? actionReach(shadow, action) : MOVEMENT.arrivalTolerance)
+            : action.ranged
+              ? actionInReach(shadow, actor, action, last)
+              : target && canReachEntity(shadow, actor, target, actionReach(shadow, action), last));
+        if (
+          !useful &&
+          ((action.replans ?? 0) >= MOVEMENT.maxReplans ||
+            approach(shadow, actor, action) ||
+            action.navigation)
+        )
+          continue;
+        move(
+          id,
+          action.path,
+          nativeMovementSpeed(shadow, actor) * seconds,
+          !!action.nativeLocomotion || (actor.actor.controller === 'native' && !!actor.animal),
+        );
+      }
+    }
+  });
+}
 function advanceStrikeMotion(
   world: WorldState,
   actor: Entity,
@@ -4847,12 +5210,43 @@ function advanceStrikeMotion(
   )
     action.path = [];
 }
+/** Accepted input is saved, but only the host's current finite window can arm it. */
+function admitPendingRelease(
+  world: WorldState,
+  actor: Entity,
+  action: Action,
+  inputs?: readonly AdmittedWorldInput[],
+): boolean {
+  const execution = action.attackExecution,
+    pending = execution?.pendingRelease;
+  if (!pending) return false;
+  const permission = inputs?.find((input) => input.actorId === actor.id)?.release;
+  if (
+    !permission ||
+    permission.actionId !== action.id ||
+    permission.endsAt <= permission.startsAt ||
+    world.simTime < permission.startsAt ||
+    world.simTime > permission.endsAt
+  )
+    return false;
+  execution.input = pending.input;
+  action.lethalPermission = pending.lethalPermission;
+  action.requiresLethalReview = pending.requiresLethalReview ?? action.requiresLethalReview;
+  if (action.ranged) {
+    action.ranged = retargetAim(action.ranged, pending);
+    action.ranged.manual = false;
+  }
+  delete execution.pendingRelease;
+  execution.ready = false;
+  return true;
+}
 function advanceAction(
   world: WorldState,
   actor: Entity,
   seconds: number,
   events: WorldEvent[],
   constructionBatch: NativeConstruction,
+  playerInputs?: readonly AdmittedWorldInput[],
 ): void {
   const constructionPermissions = constructionBatch.permissions;
   const action = actor.actor!.action;
@@ -4898,7 +5292,12 @@ function advanceAction(
       failAction(world, actor, events, problem.message);
       return;
     }
-    if (action.ranged.ready && action.ranged.manual) return;
+    if (
+      action.ranged.ready &&
+      action.ranged.manual &&
+      !admitPendingRelease(world, actor, action, playerInputs)
+    )
+      return;
   }
   if (action.evasion) {
     const e = action.evasion;
@@ -4973,6 +5372,7 @@ function advanceAction(
   }
   if (
     action.type !== 'follow' &&
+    !action.ranged &&
     action.targetLife !== undefined &&
     (entityGet(world.entities, action.targetId ?? '')?.actor?.physicalLife ?? 0) !==
       action.targetLife
@@ -4997,6 +5397,7 @@ function advanceAction(
   if (
     action.targetId &&
     action.type !== 'follow' &&
+    !action.ranged &&
     !activelyParticipates(entityGet(world.entities, action.targetId))
   ) {
     failAction(world, actor, events, 'the target is no longer participating.');
@@ -5151,13 +5552,15 @@ function advanceAction(
           ? last.surfaceId === action.destination!.surfaceId &&
             distance(last, action.destination!) <=
               (action.type === 'fish' ? actionReach(world, action) : MOVEMENT.arrivalTolerance)
-          : canReachEntity(
-              world,
-              actor,
-              actionTarget(world, action)!,
-              actionReach(world, action),
-              last,
-            ));
+          : action.ranged
+            ? actionInReach(world, actor, action, last)
+            : canReachEntity(
+                world,
+                actor,
+                actionTarget(world, action)!,
+                actionReach(world, action),
+                last,
+              ));
       if (!endpointUseful) {
         if ((action.replans ?? 0) >= MOVEMENT.maxReplans) {
           failAction(
@@ -5367,6 +5770,11 @@ function advanceAction(
   if (action.remainingSeconds <= TIME_EPSILON) action.remainingSeconds = 0;
   if (action.ranged?.manual && action.remainingSeconds === 0) {
     action.ranged.ready = true;
+    if (action.attackExecution) action.attackExecution.ready = true;
+    if (admitPendingRelease(world, actor, action, playerInputs)) {
+      completeAction(world, actor, action, events, constructionBatch);
+      return;
+    }
     emit(
       world,
       events,
@@ -5384,6 +5792,10 @@ function advanceAction(
     action.type === 'strike' &&
     action.strikePhase === 'windup'
   ) {
+    if (action.attackExecution && !action.attackExecution.input) {
+      action.attackExecution.ready = true;
+      if (!admitPendingRelease(world, actor, action, playerInputs)) return;
+    }
     const definition = strikeDefinition(action.definitionId, world, action.weaponItemId)!;
     const target = entityGet(world.entities, action.targetId!)!;
     const permission = attackPermissionProblem(world, actor, target, action);
@@ -5401,14 +5813,23 @@ function advanceAction(
       (definition.preparationMotion
         ? movingStrikeInReach(world, actor, target, definition.range)
         : canReachEntity(world, actor, target, definition.range));
-    const accuracy = definition.accuracy ?? 1;
+    const score = attackExecutionScore(action);
+    const occurrence = occurrenceFor(world, actor.id, action.id);
+    if (occurrence && action.attackExecution)
+      occurrence.attackExecution = attackExecutionEvidence(action, world.simTime);
+    const accuracy = Math.min(
+      1,
+      (definition.accuracy ?? 1) * attackExecutionFactor(action.attackExecution, score, 'contact'),
+    );
     const hit = inRange && (accuracy === 1 || nextRandom(world) < accuracy);
     const contact = hit
       ? commitContactImpact(
           world,
           actor,
           target,
-          definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
+          definition.damage *
+            scarFactor(world, actor, 'outgoingInjuryFactor') *
+            attackExecutionFactor(action.attackExecution, score, 'injury'),
           action.id,
           events,
         )
@@ -5424,7 +5845,10 @@ function advanceAction(
     action.strikePhase = 'recovery';
     action.totalSeconds = definition.recoverySeconds!;
     action.remainingSeconds = definition.recoverySeconds!;
-    actor.actor!.combatReadyAt = world.simTime + definition.recoverySeconds!;
+    actor.actor!.combatReadyAt = Math.max(
+      actor.actor!.combatReadyAt ?? 0,
+      world.simTime + definition.recoverySeconds!,
+    );
     retainCombatRecovery(world, actor, 'combat', actor.actor!.combatReadyAt);
     // The shared event owner records the world outcome and the actor's own awareness.
     // A completed miss is evidence for another choice, never an automatic retry.
@@ -5700,6 +6124,7 @@ function* integrateEndpoint(
     /** Fires lit when this slice began; postponed time uses the unchanged current state. */
     burning: ReadonlySet<string>;
     deferProgress: (id: string, action: Action, seconds: number) => boolean;
+    playerInputs?: readonly AdmittedWorldInput[];
   },
 ): Generator<void> {
   const { interval } = mechanics;
@@ -5733,7 +6158,14 @@ function* integrateEndpoint(
       if (work.deferProgress(id, component.action, work.seconds)) return;
       const following = component.action?.type === 'follow';
       const stage = component.action?.stage;
-      advanceAction(world, actor, following ? 0 : work.seconds, events, constructionBatch);
+      advanceAction(
+        world,
+        actor,
+        following ? 0 : work.seconds,
+        events,
+        constructionBatch,
+        work.playerInputs,
+      );
       if (following && component.action?.stage !== stage) mechanics.remainingSeconds = 0;
     }
   };
@@ -5920,6 +6352,7 @@ export function advanceWorld(
   original: WorldState,
   elapsedSimSeconds: number,
   options: {
+    playerInputs?: readonly AdmittedWorldInput[];
     maxIntervals?: number;
     nativeRefuges?: NativeRefugePreparations;
     constructionPermissions?: readonly ConstructionPermission[];
@@ -5939,6 +6372,7 @@ export function* advanceWorldSlices(
   original: WorldState,
   elapsedSimSeconds: number,
   options: {
+    playerInputs?: readonly AdmittedWorldInput[];
     maxIntervals?: number;
     nativeRefuges?: NativeRefugePreparations;
     constructionPermissions?: readonly ConstructionPermission[];
@@ -5964,6 +6398,7 @@ function* advanceWorldNative(
   original: WorldState,
   elapsedSimSeconds: number,
   options: {
+    playerInputs?: readonly AdmittedWorldInput[];
     maxIntervals?: number;
     nativeRefuges?: NativeRefugePreparations;
     constructionPermissions?: readonly ConstructionPermission[];
@@ -6402,7 +6837,7 @@ function* advanceWorldNative(
       )
         if (component.action && mechanics?.coarseWork.get(actorId) === component.action.id)
           countDomainWork('nativeCoarseActionCallsAvoided');
-        else advanceAction(world, actor, 0, events, constructionBatch);
+        else advanceAction(world, actor, 0, events, constructionBatch, options.playerInputs);
       if (
         priorFollowStage &&
         (component.action?.stage !== priorFollowStage || component.action.path !== priorFollowPath)
@@ -6623,6 +7058,14 @@ function* advanceWorldNative(
         else discardMechanics();
       }
     }
+    // Due restoration and genuine immediate contacts share this current boundary.
+    // Neither requires a synthetic positive clock tick.
+    const poseChanged = settleLocalPoses(world, participants.projectileBodies, events);
+    const projectileChanged = settleProjectiles(world, events);
+    if (poseChanged || projectileChanged) {
+      discardMechanics();
+      participants = nativeParticipants(world);
+    }
     if (perceiving !== undefined && perceivers() !== perceiving) {
       const observedActors = yield* updateEncounters(world, before, events, participants.actors);
       reconcileOutings(world, events, {
@@ -6793,8 +7236,9 @@ function* advanceWorldNative(
     }
     const { travelFor } = mechanics;
     const territorialReviewAt = nextTerritorialReview(world, participants.territorial);
-    let seconds = sensoryCrossingBound(
+    const inputSeconds = playerInputBoundary(
       world,
+      options.playerInputs ?? [],
       nativeMotionInterval(
         world,
         Math.min(remaining, mechanics.remainingSeconds, territorialReviewAt - world.simTime),
@@ -6802,24 +7246,97 @@ function* advanceWorldNative(
         travelFor,
         mechanics.interval.privateWalkers,
       ),
+      travelFor,
+    );
+    const steering = preparePlayerSteering(world, options.playerInputs ?? [], inputSeconds);
+    const projectileIds = Object.keys(world.projectiles ?? {}),
+      movementActionIds = mechanics.actionCandidates;
+    let motionSeconds = -1,
+      executedMotion = new Map<string, import('./flight.js').MotionTrack[]>();
+    // All physical observers share the same sequential placement forecast. A
+    // shorter interval can leave an earlier blocker closer to its follower, so
+    // only a genuinely changed duration needs another disposable preparation.
+    // docs/projects/action-execution-and-skill-expression-tech-design.md#work-model-and-reuse
+    const movementAt = (span: number) => {
+      if (span !== motionSeconds) {
+        motionSeconds = span;
+        executedMotion =
+          steering.size || projectileIds.length
+            ? intervalMovementTracks(world, span, steering, inputSeconds, movementActionIds)
+            : new Map();
+      }
+      return executedMotion;
+    };
+    let seconds = sensoryCrossingBound(
+      world,
+      inputSeconds,
       participants.actors,
       participants.ambient,
       crossings,
+      movementAt(inputSeconds),
     );
+    let sensedSeconds = inputSeconds;
     for (const id of mechanics.actionCandidates) {
       const action = entityGet(world.entities, id)?.actor?.action;
       if (action?.stage === 'working' && action.assemblyPhase)
         seconds = Math.min(seconds, Math.max(TIME_EPSILON, assemblyWorkBoundary(action)));
     }
     const contributionAt = nextContributionDeadline(constructionBatch);
-    seconds = Math.min(weatherBoundary(world, seconds), contributionAt - world.simTime);
-    const projectileIds = Object.keys(world.projectiles ?? {});
+    seconds = localPoseBoundary(
+      world,
+      participants.projectileBodies,
+      Math.min(weatherBoundary(world, seconds), contributionAt - world.simTime),
+    );
     const projectileBodies = projectileIds.length
       ? captureProjectileBodies(world, participants.projectileBodies)
       : undefined;
-    if (projectileBodies)
-      seconds = projectileBoundary(world, projectileBodies, projectileIds, seconds);
-    const aimMotion = captureAimMotion(world, mechanics.actionCandidates, seconds);
+    if (projectileBodies || steering.size) {
+      let includePassages = true;
+      for (;;) {
+        const motion = movementAt(seconds),
+          sensoryBound =
+            seconds === sensedSeconds
+              ? seconds
+              : sensoryCrossingBound(
+                  world,
+                  seconds,
+                  participants.actors,
+                  participants.ambient,
+                  crossings,
+                  motion,
+                ),
+          projectileBound = projectileBodies
+            ? projectileBoundary(
+                world,
+                projectileBodies,
+                projectileIds,
+                seconds,
+                motion,
+                includePassages,
+              )
+            : seconds,
+          bound = Math.min(sensoryBound, projectileBound);
+        sensedSeconds = seconds;
+        includePassages = false;
+        if (bound >= seconds) break;
+        if (projectileBound < seconds) countDomainWork('projectileForecastRefinements');
+        const refinement = seconds - bound;
+        seconds = bound;
+        // Repeated roots can differ below one representable world-clock step.
+        // Current-time spatial settlement already encloses this numerical residue.
+        if (
+          seconds === 0 ||
+          refinement <= 16 * Number.EPSILON * Math.max(1, world.simTime, seconds)
+        )
+          break;
+      }
+    }
+    const aimMotion = captureAimMotion(
+      world,
+      mechanics.actionCandidates,
+      seconds,
+      movementAt(seconds),
+    );
     const materialExposure = captureMaterialExposure(world);
     // Fixed contributions become ineffective at the endpoint. Their release grants only
     // future movement, never movement over the interval they restricted.
@@ -6884,10 +7401,10 @@ function* advanceWorldNative(
       const animal = entityGet(world.entities, id);
       if (animal) expireNativeAcousticPatterns(world, animal);
     }
-    remaining = Math.max(0, remaining - seconds);
-    // Subtracting several bounded slices can leave less than one representable
-    // clock step. It is not another physical interval with its own side effects.
-    if (remaining <= 4 * Number.EPSILON * Math.max(1, elapsedSimSeconds)) remaining = 0;
+    // The absolute requested cut is the clock authority. Repeated subtraction can
+    // leave a positive residue after the world already reached that exact cut,
+    // causing zero-clock slices to repeat contact/sensing work until admission fails.
+    remaining = Math.max(0, requestedEnd - world.simTime);
     mechanics.remainingSeconds = landing ? 0 : Math.max(0, mechanics.remainingSeconds - seconds);
     motionSlices++;
     countDomainWork('nativeMotionSlices');
@@ -6938,6 +7455,17 @@ function* advanceWorldNative(
     }
     yield* prepareWalking();
     // Move before endpoint effects: a shot/death at the end cannot cause earlier fleeing.
+    for (const [id, prepared] of steering) {
+      const actor = entityGet(world.entities, id);
+      if (actor && canSteer(world, actor) && !movementRestricted.has(id))
+        moveAlongPath(
+          world,
+          actor,
+          prepared.path,
+          prepared.distance * (seconds / inputSeconds),
+          true,
+        );
+    }
     for (const id of approaching) {
       if ((++cooperativeWork & 31) === 0) yield;
       const actor = entityGet(world.entities, id);
@@ -6952,7 +7480,7 @@ function* advanceWorldNative(
           ? { ...worldPosition(actor) }
           : undefined;
         if (action.strikeMotion) advanceStrikeMotion(world, actor, seconds, events);
-        else advanceAction(world, actor, seconds, events, constructionBatch);
+        else advanceAction(world, actor, seconds, events, constructionBatch, options.playerInputs);
         if (from && actor.actor.action?.id === action.id) {
           const limit = travelFor(id);
           const left =
@@ -7105,6 +7633,7 @@ function* advanceWorldNative(
         seconds,
         working,
         burning,
+        playerInputs: options.playerInputs,
         deferProgress: (id, action, elapsed) => {
           const actor = entityGet(world.entities, id)!;
           if (
@@ -7126,8 +7655,8 @@ function* advanceWorldNative(
         },
       },
     );
-    if (projectileBodies)
-      advanceProjectiles(world, projectileBodies, projectileIds, seconds, events);
+    settleLocalPoses(world, participants.projectileBodies, events);
+    advanceProjectiles(world, projectileBodies ?? new Map(), projectileIds, seconds, events);
     if (
       events
         .slice(beforeEffects)
@@ -7150,7 +7679,7 @@ function* advanceWorldNative(
         actor.actor.action?.stage === 'approaching' &&
         !capabilityBlocked(world, actor, 'locomotion')
       ) {
-        advanceAction(world, actor, 0, events, constructionBatch);
+        advanceAction(world, actor, 0, events, constructionBatch, options.playerInputs);
         // advanceAction mutates the action; read its stage afresh.
         const stage: string | undefined = entityGet(world.entities, id)?.actor?.action?.stage;
         if (stage === 'working') observeNativeAttackPreparation(world, actor, events);

@@ -103,7 +103,7 @@ WCAG 2.2 provides web-interface baselines: generally 4.5:1 normal text, 3:1 qual
 
 Check 200% text enlargement and surrounding UI reflow at 320 CSS px. Genuinely two-dimensional map exceptions do not exempt chat/forms/menus. Do not disable browser zoom to prevent mobile input auto-zoom; test readable input sizing and visible-viewport layout instead. [F12](research.md#f12) [S03](research.md#s03)
 
-Modal focus is contained/restored and child popups work within that boundary. Ordinary non-modal panels do not trap focus. Essential explanations have non-hover routes, dragging has alternatives, and canvas shortcuts respect text input. Native disabled controls do not support an assumed focus tooltip; `aria-disabled` needs actual activation guards. [Controls](controls.md#disabled-controls-and-reachable-explanations)
+Modal focus is contained/restored and child popups work within that boundary. Ordinary non-modal panels do not trap focus. If a state change removes or disables the focused task control, restore lost focus to a sensible surviving control in the permitted scope; preserve deliberate focus elsewhere. Essential explanations have non-hover routes, dragging has alternatives, and canvas shortcuts respect text input. Native disabled controls do not support an assumed focus tooltip; `aria-disabled` needs actual activation guards. [Controls](controls.md#disabled-controls-and-reachable-explanations)
 
 Controller support needs its own focus movement, confirm/cancel and return behavior; Tab support is not sufficient evidence. Touch, keyboard and pointer paths need equivalent task access even when gestures differ. [F10](research.md#f10) [F16](research.md#f16)
 

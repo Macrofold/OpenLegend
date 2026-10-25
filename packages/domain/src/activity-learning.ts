@@ -154,6 +154,44 @@ function supportedStockOccurrence(entry: ActivityOccurrence): boolean {
     entry.outputs.reduce((sum, output) => sum + output.quantity, 0) === command.quantity
   );
 }
+/** A completed neutral attack can demonstrate the ordinary subject action. Keep
+ * the exact human occurrence unchanged; never turn a scored phase, point-only shot
+ * or controlled parent span into autonomous work or a promised contact/quality.
+ * docs/projects/action-execution-and-skill-expression-tech-design.md#53-exact-continuation-and-privacy */
+function resolvedLearningOccurrence(entry: ActivityOccurrence): ActivityOccurrence {
+  const command = entry.command;
+  if (!('manualExecution' in command) || command.manualExecution !== true) return entry;
+  if (
+    entry.status !== 'completed' ||
+    entry.parentId !== undefined ||
+    entry.outputs.length !== 0 ||
+    entry.attackExecution?.input.kind !== 'ordinary' ||
+    !(command.type === 'aim' ? entry.release?.aimTarget : command.targetId)
+  )
+    return entry.noLearningControl ? entry : { ...entry, noLearningControl: true };
+  if (command.type === 'strike') {
+    const { manualExecution: _manual, ...ordinary } = command;
+    return { ...entry, command: ordinary, noLearningControl: undefined };
+  }
+  if (command.type === 'aim') {
+    const {
+      manualExecution: _manual,
+      aimPoint: _point,
+      aimPointSubject: _pointBody,
+      ...ordinary
+    } = command;
+    return {
+      ...entry,
+      command: {
+        ...ordinary,
+        type: 'shoot-once',
+        targetId: entry.release!.aimTarget!.id,
+      },
+      noLearningControl: undefined,
+    };
+  }
+  return entry;
+}
 /** Generalize only actual native object bindings. Definitions and demonstrated
  * quantities remain fixed; prose and adjacency never prove equivalence. */
 export function normalizeActivity(
@@ -162,9 +200,9 @@ export function normalizeActivity(
   entries: ActivityOccurrence[],
   incomplete = false,
 ): ActivityCandidate | undefined {
+  if (entries.length < 2 || entries.length > ACTIVITY_LIMITS.nodes) return;
+  entries = entries.map(resolvedLearningOccurrence);
   if (
-    entries.length < 2 ||
-    entries.length > ACTIVITY_LIMITS.nodes ||
     entries.some(
       (entry) =>
         entry.actorId !== actorId ||

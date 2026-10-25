@@ -5,6 +5,13 @@ import { namePhrase } from '@open-legend/language';
 import { WorldComposer, type WorldIntent } from './ui/world-composer';
 import { NearbyEntities } from './ui/nearby-entities';
 import { AimControls } from './ui/aim-controls';
+import { useActionExecution } from './ui/action-execution';
+import { AttackControls, AttackReticle } from './ui/attack-controls';
+import {
+  DEFAULT_ACTION_INPUT,
+  isActionInputPreferences,
+  type ActionInputPreferences,
+} from './ui/action-input';
 import { modalOwnsInput, uiOwnsShortcut } from './ui/keyboard';
 import { Construction } from './ui/construction';
 import { FamilyEditor } from './ui/family-editor';
@@ -64,7 +71,13 @@ import {
 import type { CommandRequestIdentity } from './command-request';
 import { playerEntity } from './entity-view';
 import { createWorldRenderer } from './scene';
-import type { ScreenRect, WorldRenderer, ShadowQuality, SceneLoadProgress } from './world-renderer';
+import type {
+  ScreenRect,
+  WorldRenderer,
+  ShadowQuality,
+  SceneLoadProgress,
+  ConstructionPlacement,
+} from './world-renderer';
 import { observeHudLayout } from './ui/hud-layout';
 import { WorldHover } from './ui/world-hover';
 import { CaptionGapNotice, useMissedCaptions } from './ui/caption-gap-notice';
@@ -258,7 +271,8 @@ function App({
     review: NonNullable<ApiResult['lethalReview']>;
     action: ActionOption;
   } | null>(null);
-  const [lethalBusy, setLethalBusy] = useState(false);
+  const [lethalBusyReviewId, setLethalBusyReviewId] = useState<string | null>(null);
+  const lethalBusy = lethalBusyReviewId !== null && lethalBusyReviewId === lethalReview?.review.id;
   useEffect(
     () => setLethalReview(null),
     [
@@ -281,6 +295,7 @@ function App({
   const [conditionEntry, setConditionEntry] = useState(0);
   const [workEntry, setWorkEntry] = useState(0);
   const [choosingActionSubject, setChoosingActionSubject] = useState(false);
+  const [placingConstruction, setPlacingConstruction] = useState(false);
   const subjectReturnPanels = useRef<PanelId[]>([]);
   const [storyRequest, setStoryRequest] = useState(0);
   const [settingsSection, setSettingsSection] = useState('reading');
@@ -309,6 +324,11 @@ function App({
     [speedPending, setSpeedPending] = useState(false),
     [width, setWidth] = useState(innerWidth),
     [height, setHeight] = useState(innerHeight);
+  const [actionInput, setActionInput] = useLocal<ActionInputPreferences>(
+    'open-legend:action-input',
+    DEFAULT_ACTION_INPUT,
+    isActionInputPreferences,
+  );
   const [theme, setTheme] = useLocal('open-legend:theme', 'wilderness', (v): v is string =>
     ['wilderness', 'fantasy', 'scifi'].includes(String(v)),
   );
@@ -996,7 +1016,16 @@ function App({
     setPicker(null);
     setTargetMode(false);
     const requestedLife = latest.current?.player.life;
-    const requestedScope = latest.current?.access?.scope;
+    const currentCommandOwner = () =>
+      JSON.stringify([
+        latest.current?.worldId,
+        latest.current?.saveTimeline,
+        latest.current?.player.id,
+        latest.current?.player.life,
+        latest.current?.access?.scope,
+        latest.current?.access?.controlGeneration,
+      ]);
+    const requestedOwner = currentCommandOwner();
     // A task switch replaces this group; its pending result still belongs to the original reader.
     const activityFeedback =
       acknowledgement === 'activity'
@@ -1011,9 +1040,13 @@ function App({
       // The original caller may still recover its receipt, but a later character
       // or control session must not receive that action's notification or prompt.
       // docs/ui-ux/react.md#effects-asynchronous-work-and-mutations
-      if (latest.current?.access?.scope !== requestedScope) return r;
+      if (requestedOwner !== currentCommandOwner()) return r;
+      // Held input owns its gesture's lifetime; its hook opens a review only
+      // after checking that a late acknowledgement still belongs to that gesture.
+      if (r.lethalReview && action.command.execution) return r;
       if (
         r.lethalReview &&
+        !latest.current?.clock.paused &&
         !latest.current?.player.death &&
         latest.current?.player.life === requestedLife
       ) {
@@ -1033,7 +1066,7 @@ function App({
       return r;
     } catch (e) {
       const message = `${String(e)} The action's outcome is unconfirmed. Check Events and the world before repeating it; a missing event does not prove it failed.`;
-      if (latest.current?.access?.scope === requestedScope) notify(message);
+      if (requestedOwner === currentCommandOwner()) notify(message);
       return {
         ok: false,
         code: 'unconfirmed',
@@ -1066,15 +1099,21 @@ function App({
   }
   async function confirmLethalAttack() {
     if (!lethalReview || lethalBusy) return;
-    setLethalBusy(true);
+    const confirmingReviewId = lethalReview.review.id;
+    setLethalBusyReviewId(confirmingReviewId);
     try {
-      const result = await command({
-        ...lethalReview.action,
-        command: { ...lethalReview.action.command, lethalReviewId: lethalReview.review.id },
-      });
-      if (!('lethalReview' in result) || !result.lethalReview) setLethalReview(null);
+      const result = lethalReview.action.command.execution
+        ? await attack.confirmReview(lethalReview.action, lethalReview.review.id)
+        : await command({
+            ...lethalReview.action,
+            command: { ...lethalReview.action.command, lethalReviewId: lethalReview.review.id },
+          });
+      if (!('lethalReview' in result) || !result.lethalReview)
+        setLethalReview((current) =>
+          current?.review.id === lethalReview.review.id ? null : current,
+        );
     } finally {
-      setLethalBusy(false);
+      setLethalBusyReviewId((current) => (current === confirmingReviewId ? null : current));
     }
   }
   function talk(id: string) {
@@ -1280,6 +1319,18 @@ function App({
       }
     }
   }
+  const attack = useActionExecution({
+    view,
+    connected: connected && !tabPaused,
+    scene,
+    preferences: actionInput,
+    blocked:
+      !!picker || targeting || choosingActionSubject || placingConstruction || !!lethalReview,
+    ownReview: !!lethalReview?.action.command.execution,
+    command,
+    onReview: (action, review) => setLethalReview({ action, review }),
+    notify,
+  });
   const primaryAction = usePrimaryAction(
     view,
     connected && !tabPaused,
@@ -1294,7 +1345,12 @@ function App({
     browseKnown: (opener) => browseActions({ catalogue: true }, opener),
     nearbySelect: (id) => {
       const entity = latest.current?.entities.find((entry) => entry.id === id);
-      if (entity) choosingActionSubject ? finishActionSubject(entity) : inspect(entity);
+      if (entity)
+        choosingActionSubject
+          ? finishActionSubject(entity)
+          : attack.mode
+            ? attack.selectSubject(entity)
+            : inspect(entity);
     },
     nearbyContextMenu: (id, x, y) => {
       const entity = latest.current?.entities.find((entry) => entry.id === id);
@@ -1584,6 +1640,18 @@ function App({
       }
       if (choosingActionSubject) return;
       if (uiOwnsShortcut(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.shiftKey && e.code === actionInput.attackMode) {
+        if (!view || !connected || e.repeat) return;
+        e.preventDefault();
+        attack.toggle();
+        return;
+      }
+      if (e.shiftKey && e.code === actionInput.create) {
+        if (!view || !connected || e.repeat) return;
+        e.preventDefault();
+        toggle('agent');
+        return;
+      }
       if (e.shiftKey && (e.code === 'KeyS' || e.code === 'KeyA')) {
         if (!view || !connected || e.repeat) return;
         e.preventDefault();
@@ -1594,7 +1662,7 @@ function App({
         setPicker(null);
         return;
       }
-      if (e.key.toLowerCase() === 't') {
+      if (!e.shiftKey && e.key.toLowerCase() === 't') {
         if (!view || picker || !connected || e.repeat) return;
         e.preventDefault();
         if (!view.player.equippedTargetItem) {
@@ -1626,7 +1694,6 @@ function App({
         i: 'inventory',
         c: 'crafting',
         k: 'character',
-        w: 'agent',
         v: 'nearby',
         j: 'events',
       };
@@ -2023,7 +2090,10 @@ function App({
             connected={connected}
             visible={panelVisible('building')}
             command={command}
-            placement={(controls) => scene.current?.setConstructionPlacement(controls)}
+            placement={(controls: ConstructionPlacement | null) => {
+              scene.current?.setConstructionPlacement(controls);
+              setPlacingConstruction(!!controls);
+            }}
             preview={(shapes, valid, transform) =>
               scene.current?.setConstructionPreview(shapes, valid, transform)
             }
@@ -2280,6 +2350,8 @@ function App({
             performance={performance}
             setPerformance={setPerformance}
             browseActions={browseSettingsActions}
+            actionInput={actionInput}
+            setActionInput={setActionInput}
           />
         );
     }
@@ -2484,7 +2556,7 @@ function App({
                   onPress={() => setTimeSettings(!timeSettings)}
                 />
               </div>
-              {view.player.action?.controls && !aimPanel && (
+              {view.player.action?.controls && !view.player.action.execution && !aimPanel && (
                 <div className="ol-card ol-aim-status">
                   <AimControls
                     action={view.player.action}
@@ -2541,6 +2613,7 @@ function App({
                   ).map((id) => (
                     <Launcher
                       key={id}
+                      id={`launcher-${id}`}
                       icon={
                         {
                           inventory: 'ui.inventory',
@@ -2563,7 +2636,7 @@ function App({
                           inventory: 'I',
                           crafting: 'C',
                           character: 'K',
-                          agent: 'W',
+                          agent: `Shift+${actionInput.create.replace('Key', '')}`,
                           nearby: 'V',
                           events: 'J',
                         }[id as 'inventory']
@@ -2674,7 +2747,9 @@ function App({
                             : undefined
                         }
                         footer={
-                          id === aimPanel && view.player.action?.controls ? (
+                          id === aimPanel &&
+                          view.player.action?.controls &&
+                          !view.player.action.execution ? (
                             <AimControls
                               action={view.player.action}
                               connected={connected}
@@ -2779,7 +2854,25 @@ function App({
               className="ol-world-controls"
               data-bounded={narrow && open.length === 0 ? '' : undefined}
             >
+              <div className="ol-execution-controls">
+                <AttackControls
+                  controller={attack}
+                  view={view}
+                  connected={connected}
+                  inView={() => show('nearby')}
+                />
+              </div>
               <div className="ol-quick-position">
+                <Button
+                  size="sm"
+                  variant={attack.mode ? 'primary' : 'secondary'}
+                  aria-pressed={attack.mode}
+                  data-attack-mode-toggle=""
+                  disabled={!connected || !view.access?.controlling}
+                  onPress={attack.toggle}
+                >
+                  Attack mode {attack.mode ? 'on' : 'off'}
+                </Button>
                 <Button
                   icon="ui.search"
                   disabled={!connected || choosingActionSubject}
@@ -3045,11 +3138,28 @@ function App({
           </Modal>
         </ModalOverlay>
       )}
+      {!tabPaused && !lethalReview && <AttackReticle controller={attack} />}
       {lethalReview && !tabPaused && (
         <LethalAttackDialog
           review={lethalReview.review}
           busy={lethalBusy}
-          cancel={() => setLethalReview(null)}
+          cancel={() => {
+            if (lethalReview.action.command.execution) attack.cancelReview(lethalReview.review.id);
+            else
+              void command({
+                id: `cancel-review:${lethalReview.review.id}`,
+                label: 'Cancel attack',
+                enabled: true,
+                command: {
+                  type: 'cancel',
+                  lethalReviewId: lethalReview.review.id,
+                  expectedActionId:
+                    lethalReview.action.command.aimId ??
+                    lethalReview.action.command.expectedActionId,
+                },
+              });
+            setLethalReview(null);
+          }}
           confirm={() => void confirmLethalAttack()}
         />
       )}

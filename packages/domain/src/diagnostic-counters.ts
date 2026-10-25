@@ -4,6 +4,15 @@
  * docs/maintainers/events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership
  */
 export const DOMAIN_COUNTERS = [
+  'projectileBodiesPrepared',
+  'projectileBroadCandidates',
+  'projectileExactTests',
+  'projectileMotionTracksPrepared',
+  'projectileMotionBranchesPrepared',
+  'projectileMotionPiecesPrepared',
+  'projectileForecastRefinements',
+  'projectileCurrentCandidates',
+  'localPoseReturnCandidates',
   /** Native scheduler frequency, independent of host clock and profiling wall time. */
   'nativeForecasts',
   'nativeCapabilityPreparations',

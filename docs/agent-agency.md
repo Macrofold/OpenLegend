@@ -176,7 +176,7 @@ This is a behavioral scenario, not a canned recipe or a required route for every
 
 **Idea.** The actor thinks a flexible branch and a tensioned binding might propel a projectile. It can submit that proposed mechanism immediately, or first request invention and supply its method after neutral clarification. A bow alone is not assumed to solve ammunition, hunting, harvesting, cooking or eating.
 
-**Validation.** The invention service checks the proposal against the supported launcher family, known/permitted material references and world policy. “Fiber” is not silently replaced with finished cord if that changes an essential construction step. Any necessary preparation must be known or proposed. Unsupported assumptions return honestly. The engine does not spawn a bow when it accepts the design.
+**Validation.** The invention service checks the proposal against the supported ranged weapon family, known/permitted material references and world policy. “Fiber” is not silently replaced with finished cord if that changes an essential construction step. Any necessary preparation must be known or proposed. Unsupported assumptions return honestly. The engine does not spawn a bow when it accepts the design.
 
 **Optional commitment.** On receiving the accepted technique, the actor can adopt “Make a hunting bow” as a goal, keep only a short next plan portion, or decide its hunger makes immediate foraging more useful. It may also maintain “Improve our food supply” as a broader aim. No forced goal-setting call is inserted.
 

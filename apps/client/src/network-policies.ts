@@ -200,6 +200,8 @@ routes(
   'current-state',
 );
 routes('POST', ['/api/presence'], 'presence', 5_000, 'latest');
+// Fixed transient input never retries a stale direction or creates a durable action receipt.
+routes('POST', ['/api/input'], 'presence', 1_000, 'latest');
 entries.push(
   {
     method: 'POST',

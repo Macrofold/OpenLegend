@@ -83,7 +83,7 @@ export const BASE_ANIMAL_RESPONSE_PROFILE: NativeResponseProfile = {
     bear: { travel: 0.06, escape: 0.2 },
     bird: { travel: 0.04, escape: 0.075, flightEscape: 0.25 },
   },
-  movementFactors: { injuryPerUnit: 1 / 200, scars: true },
+  movementFactors: { scars: true },
   wander: { distance: 0.4, minimumWaitSeconds: 120, waitChoices: 120 },
   wake: { attributeId: 'wilderness:energy', above: 0, reason: 'perceived-danger' },
   presentation: {

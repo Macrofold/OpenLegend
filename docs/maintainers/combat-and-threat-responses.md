@@ -72,6 +72,14 @@ and two simultaneous retained contacts cover this physical qualification.
 [Current evidence](../verification/combat-and-threat-responses/2026/2026-10-24-control-and-continuation-review.md#simultaneous-retained-projectile-contacts--october-22)
 distinguishes controlled trajectories from ordinary hunting and character choices.
 
+Skilled execution retains that physical law while replacing release deviation with
+an exact ray and an actual shared local contraction. Native regressions additionally
+cover high/low tied shots, restored-body interception, source reentry before later
+work, executed steering/falling and immutable-snapshot contact. The [native stress
+record](../verification/performance/skilled-action-execution.md) separates successful
+established-world continuation from a failed dense fresh-exposure workload. These
+changes do not close CTR10's ordinary hunting, independent-character or player gates.
+
 ## CTR02 — Observer-scoped encounter evidence
 
 Other people’s private danger records are excluded from shared physical observation. Actual contact now grants its recipient a personally felt account without requiring sight of the performer. Native and PostgreSQL checks retain anonymous danger and bodily results without revealing an unseen attacker, weapon or location; the selected interpreted profile creates no automatic fear from that contact. Complete encounter qualification below remains open.
@@ -153,7 +161,7 @@ they do not close the broader CTR03/CTR10 gates or repeat Ada’s unchanged tria
 
 Contract: the canonical [animal profile](../worlds/base/animal-responses.md); its concrete limitations remain in [BW12](../limits/base-world.md#bw12--remains-and-native-escape).
 
-- [x] Bind every existing ordinary species to authored travel/escape speeds and the selected all-danger clearance, retention, safety duration, cadence and candidate policy. Apply existing injury/scar/capability adjustments once.
+- [x] Bind every existing ordinary species to authored travel/escape speeds and the selected all-danger clearance, retention, safety duration, cadence and candidate policy. Apply existing scar/capability adjustments once.
 - [x] Remove the ranged approach allowance’s dependency on the obsolete uniform flee speed while preserving the [explicit ranged-world value](../worlds/base/ranged-counterplay.md#selected-approach-allowance-during-animal-speed-integration). Reconcile Hunt, Aim, Shoot once, Practice shot and their displayed approach facts through the same helper; qualify real range-loss outcomes and the early hunt-to-meal journey.
 - [x] Replace routine position jumps with admitted timed movement. Integrate alarm with the existing world restorative-rest predicates while preserving actual exhaustion and incapacity.
 - [x] Integrate perched and airborne birds through one flight owner and real connected authored escape/perch corridors. Integrate the stag's existing territorial withdrawal without resetting relinquished territory or installing a second prey controller.
@@ -213,7 +221,7 @@ Contract: [interpreted threat reactions](../worlds/base/psychological-reactions.
 
 ## CTR07 — Relevance followed by independent choice
 
-Actor/tool preparation now has one shared domain query for strikes, launchers,
+Actor/tool preparation now has one shared domain query for strikes, ranged weapons,
 ammunition and shields. The real complete catalogue retains every compatible exact
 ammunition lot and admitted damage profile. Native selection of a second lot,
 actual aiming holds and the read-only replacement view have focused coverage.

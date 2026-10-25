@@ -4,10 +4,10 @@ import { getOwn } from './records.js';
 /** Only existing scalar component values are readable; authored metadata cannot traverse state. */
 const scalarFields = {
   packingLoad: (item: ItemDefinition) => item.packingLoad,
-  'launcher.damage': (item: ItemDefinition) => item.launcher?.damage,
-  'launcher.range': (item: ItemDefinition) => item.launcher?.range,
-  'launcher.accuracy': (item: ItemDefinition) => item.launcher?.accuracy,
-  'launcher.ammunitionKind': (item: ItemDefinition) => item.launcher?.ammunitionKind,
+  'rangedWeapon.damage': (item: ItemDefinition) => item.rangedWeapon?.damage,
+  'rangedWeapon.range': (item: ItemDefinition) => item.rangedWeapon?.range,
+  'rangedWeapon.accuracy': (item: ItemDefinition) => item.rangedWeapon?.accuracy,
+  'rangedWeapon.ammunitionKind': (item: ItemDefinition) => item.rangedWeapon?.ammunitionKind,
   'melee.damage': (item: ItemDefinition) => item.melee?.damage,
   'melee.range': (item: ItemDefinition) => item.melee?.range,
   'melee.accuracy': (item: ItemDefinition) => item.melee?.accuracy,

@@ -91,7 +91,7 @@ export const SLING_HANDLING: AttributeDefinition = {
     guidance:
       'Use the sling with compatible ammunition and a clear target in range. Hits and misses both provide practice; handling improves future aim steadiness, not damage or range.',
     improvedText:
-      'Practiced with slings. Your later shots reduce the chance of deviated aim by one quarter. Ammunition, range, damage, moving bodies and solid cover still apply; a hit is never guaranteed.',
+      'Practiced with slings. Your shots are harder to dodge. Ammunition, range, damage, moving bodies and solid cover still apply; a hit is never guaranteed.',
   },
 };
 export const SLING_TARGET = {

@@ -1,6 +1,6 @@
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { readConfig, testRepository } from '../../../tests/fixtures/database.js';
-import { PLAYER_ID } from '@open-legend/domain';
+import { entityGet, PLAYER_ID } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -9,6 +9,7 @@ import { createItemLot, executeCommand, inventoryFor } from '@open-legend/domain
 import type { AiReceipt } from '@open-legend/ai';
 import { SqlGameRepository, type JobRecord, type SavedWorld } from './store.js';
 import { DecisionLedger, levelLimits } from './cognition-budget.js';
+import { validateCurrentWorldState } from './upgrade-world.js';
 
 const opened = new Set<SqlGameRepository>();
 const directories: string[] = [];
@@ -70,6 +71,10 @@ describe('PostgreSQL committed world boundary', () => {
     const path = diskPath();
     let store = await open(path);
     const initial = save();
+    entityGet(initial.world.entities, PLAYER_ID)!.actor!.body!.conditions = {
+      wetness: 12.5,
+      burning: 3,
+    };
     // Persistence coverage must not depend on the bundled world's starting inventory.
     const foodId = createItemLot(initial.world, PLAYER_ID, 'berries', 3, 'fixture-food');
     expect(await store.load()).toBeNull();
@@ -84,6 +89,22 @@ describe('PostgreSQL committed world boundary', () => {
       state: { ...initial, world: changed, speed: 3 },
     });
     const restored = (await store.load())!.state.world;
+    expect(entityGet(restored.entities, PLAYER_ID)!.actor!.body!.conditions).toEqual({
+      wetness: 12.5,
+      burning: 3,
+    });
+    for (const conditions of [
+      { wetness: 0 },
+      { burning: 0 },
+      { wetness: 0, burning: 0, unsupported: 1 },
+      { wetness: -1, burning: 0 },
+      { wetness: 0, burning: 101 },
+      { wetness: NaN, burning: 0 },
+    ]) {
+      const malformed = structuredClone(restored);
+      Reflect.set(entityGet(malformed.entities, PLAYER_ID)!.actor!.body!, 'conditions', conditions);
+      expect(() => validateCurrentWorldState(malformed)).toThrow('Invalid body conditions.');
+    }
     expect(executeCommand(restored, command).world).toBe(restored);
     expect(inventoryFor(restored, PLAYER_ID).find((item) => item.id === foodId)!.quantity).toBe(2);
   });

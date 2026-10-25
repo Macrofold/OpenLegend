@@ -483,7 +483,7 @@ describe('bounded invented mechanisms', () => {
       ),
     ).toBe(true);
   });
-  it('records misses, spends one projectile and makes the animal react', () => {
+  it('records a geometric miss, spends one projectile and preserves sensed near-passage alarm', () => {
     const draft = sling();
     draft.parameters.accuracy = 0.6;
     let world = makeSling(73, draft);
@@ -497,8 +497,16 @@ describe('bounded invented mechanisms', () => {
       { ...prey, x: prey.x - 1 },
       'terrain',
     );
-    world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
-    world = advanceWorld(world, 40).world;
+    world = command(world, {
+      type: 'aim',
+      aimPoint: { x: prey.x + 3, y: prey.y + 0.8, z: prey.z },
+    });
+    world = advanceWorld(world, 18).world;
+    world = command(world, {
+      type: 'release-shot',
+      aimId: entityGet(world.entities, PLAYER_ID)!.actor!.action!.id,
+    });
+    world = advanceWorld(world, 22).world;
     expect(
       world.events.some(
         (event) => event.type === 'projectile-ended' && event.data?.result !== 'hit',

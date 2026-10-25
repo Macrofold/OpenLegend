@@ -5,6 +5,7 @@ import { definitionPin, type DefinitionPin } from './world-modules.js';
 import { sameDefinitionPin } from './state-owners.js';
 import { isSafeRecordId, hasRecordFields } from './records.js';
 import { chargeWork } from './work-budget.js';
+import { MANUFACTURE_LIMITS } from './manufacture-limits.js';
 import {
   availableItemQuantity,
   reserveResource,
@@ -20,13 +21,6 @@ import type {
   RecipeDefinition,
   WorldState,
 } from './types.js';
-
-export const MANUFACTURE_LIMITS = Object.freeze({
-  inputRoles: 4,
-  retainedToolRoles: 2,
-  outputPorts: 4,
-  unitsPerRole: 16,
-});
 
 export interface ManufactureToolBinding {
   role: string;

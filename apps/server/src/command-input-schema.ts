@@ -14,6 +14,7 @@ import {
 } from './construction.js';
 import { workBatchRequestSchema } from './work-batches.js';
 import { knownPlaceReference } from './known-places.js';
+import { executionControlSchema } from './world-input-schema.js';
 
 /** Wire shape validation only. Current permissions, resources and physical
  * preconditions remain with command admission and the authoritative domain. */
@@ -24,6 +25,22 @@ const id = z
   .regex(/^[a-zA-Z0-9_.:-]+$/);
 export const commandInputSchema = z
   .object({
+    execution: executionControlSchema.optional(),
+    aimBasis: z
+      .object({
+        bodyReference: z
+          .string()
+          .regex(/^[0-9a-f]{64}$/)
+          .optional(),
+        surfaceId: id.optional(),
+        shapeId: id.optional(),
+      })
+      .strict()
+      .optional(),
+    aimPoint: z
+      .object({ x: z.number().finite(), y: z.number().finite(), z: z.number().finite() })
+      .strict()
+      .optional(),
     primaryAction: z
       .object({
         targetId: id,
@@ -63,6 +80,7 @@ export const commandInputSchema = z
       'aim',
       'shoot-once',
       'release-shot',
+      'release-strike',
       'practice-shot',
       'coaching',
       'harvest',
@@ -215,6 +233,10 @@ export const commandInputSchema = z
       .optional(),
     inventoryGroup: z.string().min(1).max(4096).optional(),
     targetId: id.optional(),
+    bodyReference: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/)
+      .optional(),
     definitionId: id.optional(),
     distance: z.number().finite().positive().optional(),
     completeFollow: z.literal(true).optional(),
@@ -261,5 +283,59 @@ export const commandInputSchema = z
       .refine((value) => JSON.stringify(value).length <= ACTIVITY_LIMITS.recordBytes)
       .optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    const operation = value.execution?.operation;
+    if (
+      operation &&
+      !(
+        operation === 'begin'
+          ? ['aim', 'strike']
+          : operation === 'release'
+            ? ['release-shot', 'release-strike']
+            : operation === 'cancel'
+              ? ['cancel']
+              : ['aim', 'strike', 'release-shot', 'release-strike']
+      ).includes(value.type)
+    )
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'This command does not accept attack execution input.',
+      });
+    if (operation === 'confirm-review' && !value.lethalReviewId)
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Choose the exact current attack review.',
+      });
+    if (value.aimPoint && !['aim', 'shoot-once', 'release-shot'].includes(value.type))
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'This action does not accept a point shot.',
+      });
+    if (value.aimBasis && !value.aimPoint)
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'An aim basis requires its point.',
+      });
+    if (operation) {
+      const fields: Partial<Record<typeof value.type, readonly string[]>> = {
+        aim: ['targetId', 'bodyReference', 'itemId', 'ammunitionId', 'aimPoint', 'aimBasis'],
+        strike: ['targetId', 'bodyReference', 'definitionId', 'itemId'],
+        'release-shot': ['targetId', 'bodyReference', 'aimId', 'aimPoint', 'aimBasis'],
+        'release-strike': ['expectedActionId'],
+        cancel: ['expectedActionId'],
+      };
+      const allowed = new Set([
+        'type',
+        'execution',
+        'lethalReviewId',
+        ...(fields[value.type] ?? []),
+      ]);
+      if (Object.keys(value).some((key) => !allowed.has(key)))
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'This attack input contains unrelated action fields.',
+        });
+    }
+  });
 export const requestIdSchema = id;

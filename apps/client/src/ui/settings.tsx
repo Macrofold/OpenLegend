@@ -6,6 +6,12 @@ import type { ShadowQuality } from '../world-renderer';
 import { InventionSettings } from './invention-settings';
 import { WorldVisualSettings } from './world-visual-settings';
 import icons from '../design-system/icons/catalog';
+import {
+  DEFAULT_ACTION_INPUT,
+  inputPreferenceProblem,
+  type ActionInputPreferences,
+} from './action-input';
+import { useState } from 'react';
 import './settings.css';
 
 export type SettingsView = Pick<
@@ -31,6 +37,8 @@ export const Settings = memo(function Settings({
   performance,
   setPerformance,
   browseActions,
+  actionInput,
+  setActionInput,
 }: {
   view: SettingsView;
   section: string;
@@ -50,7 +58,16 @@ export const Settings = memo(function Settings({
   performance: boolean;
   setPerformance(value: boolean): void;
   browseActions(opener: HTMLElement): void;
+  actionInput: ActionInputPreferences;
+  setActionInput(value: ActionInputPreferences): void;
 }) {
+  const [inputProblem, setInputProblem] = useState('');
+  function inputChange(key: keyof ActionInputPreferences, value: string) {
+    const next = { ...actionInput, [key]: value };
+    const problem = inputPreferenceProblem(next);
+    setInputProblem(problem ?? '');
+    if (!problem) setActionInput(next);
+  }
   return (
     <Tabs
       className="ol-settings"
@@ -155,6 +172,50 @@ export const Settings = memo(function Settings({
         </Section>
       </TabPanel>
       <TabPanel id="controls" shouldForceMount className="ol-settings-page">
+        <Section title="Movement and attack controls">
+          <p>
+            Move with the movement keys. Attack mode changes a primary click into an attack with the
+            displayed tool. Tap for an ordinary attack; where timing is available, hold to choose a
+            release. Escape or Cancel ends an unfinished attack.
+          </p>
+          {(
+            [
+              ['forward', 'Forward'],
+              ['backward', 'Backward'],
+              ['left', 'Left'],
+              ['right', 'Right'],
+              ['attackMode', 'Toggle attack mode (Shift + key)'],
+              ['create', 'Create (Shift + key)'],
+            ] as const
+          ).map(([key, label]) => (
+            <label key={key}>
+              {label}
+              <select
+                value={actionInput[key]}
+                aria-label={label}
+                onChange={(event) => inputChange(key, event.target.value)}
+              >
+                {Array.from({ length: 26 }, (_, index) => String.fromCharCode(65 + index)).map(
+                  (letter) => (
+                    <option key={letter} value={`Key${letter}`}>
+                      {letter}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+          ))}
+          {inputProblem && <p role="status">{inputProblem}</p>}
+          <Button
+            variant="secondary"
+            onPress={() => {
+              setInputProblem('');
+              setActionInput(DEFAULT_ACTION_INPUT);
+            }}
+          >
+            Reset action controls
+          </Button>
+        </Section>
         <Section title="Interacting with the world">
           <p>
             Click ground to walk. Click an object to look closer. Right-click or Control-click for
@@ -174,7 +235,8 @@ export const Settings = memo(function Settings({
         <Section title="Camera">
           <p>
             Right-drag to rotate and tilt. Shift + right-drag or middle-drag pans. Scroll to zoom.
-            Left-drag does not pan or act on release.
+            In attack mode, primary dragging tracks your aim; release submits the chosen attack.
+            Other primary drags do not pan or act on release.
           </p>
           <p>
             With the world canvas focused, use Left / Right to rotate, Up / Down to tilt, Shift +
@@ -193,7 +255,9 @@ export const Settings = memo(function Settings({
               ['Shift + A', 'Act'],
               ['T', 'Use the equipped item on a target'],
               ['V', 'In view'],
-              ['W', 'Create'],
+              ['W / A / S / D', 'Move (default bindings)'],
+              ['Shift + T', 'Toggle attack mode (default binding)'],
+              ['Shift + W', 'Create (default binding)'],
               ['P', 'Pause or resume the world'],
               ['Shift + ] / [', 'Faster / slower world time'],
               ['Escape', 'Cancel the current choice first; otherwise open or close Game'],

@@ -9,7 +9,7 @@ import {
   worldPosition,
   worldSupport,
 } from '../../packages/domain/src/spatial-state.js';
-import { enterGame } from '../fixtures/browser.js';
+import { blockExternalBrowserRequests, enterGame } from '../fixtures/browser.js';
 import { testRepository, readConfig, closeTestDatabases } from '../fixtures/database.js';
 
 test('inventory keeps its search and focus during unrelated motion and refreshes a changed carried lot', async ({
@@ -44,20 +44,45 @@ test('inventory keeps its search and focus during unrelated motion and refreshes
     }
   });
   await page.addInitScript(() => {
-    // Observe real delivered revisions without introducing a presentation store.
-    const Original = window.EventSource;
-    window.EventSource = class extends Original {
-      constructor(url: string | URL, options?: EventSourceInit) {
-        super(url, options);
-        const record = (event: Event) => {
-          console.debug('fixture-view-revision', JSON.parse((event as MessageEvent).data).revision);
-        };
-        this.addEventListener('patch', record);
-        this.addEventListener('reset', record);
-      }
+    // Observe chunks consumed by the real fetch subscription. Keep the original
+    // response, reader and cancellation owner; do not clone or drain another stream.
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      if (new URL(response.url).pathname !== '/api/events' || !response.body) return response;
+      const getReader = response.body.getReader.bind(response.body);
+      Object.defineProperty(response.body, 'getReader', {
+        value: () => {
+          const reader = getReader();
+          const read = reader.read.bind(reader);
+          const decoder = new TextDecoder();
+          let pending = '';
+          reader.read = async () => {
+            const chunk = await read();
+            if (!chunk.done) {
+              pending += decoder.decode(chunk.value, { stream: true });
+              const frames = pending.split(/\r?\n\r?\n/);
+              pending = frames.pop()!;
+              for (const frame of frames) {
+                const lines = frame.split(/\r?\n/);
+                if (!lines.some((line) => /^event: ?(?:patch|reset)$/.test(line))) continue;
+                const data = lines
+                  .filter((line) => line.startsWith('data:'))
+                  .map((line) => line.slice(5).trimStart())
+                  .join('\n');
+                console.debug('fixture-view-revision', JSON.parse(data).revision);
+              }
+            }
+            return chunk;
+          };
+          return reader;
+        },
+      });
+      return response;
     };
   });
   try {
+    await blockExternalBrowserRequests(page);
     await page.goto(`http://127.0.0.1:${address.port}`);
     await enterGame(page);
     await page.locator('.ol-rail').getByRole('button', { name: 'Inventory', exact: true }).click();

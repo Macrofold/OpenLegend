@@ -258,6 +258,7 @@ export function validateBodyPolicy(
       'description',
       'rangedDescription',
       'confirmLabel',
+      'prepareLabel',
       'cancelLabel',
     ]);
     for (const value of Object.values(policy.lethalAttackReview)) text(value);

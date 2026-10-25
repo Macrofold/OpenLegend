@@ -26,7 +26,7 @@ The test asked for creation, a separate refinement, review and an unsupported-me
 
 ### A simple supported invention
 
-The player asks: “Make a sling using cord and prepared fiber. Favor accuracy even if crafting takes longer.” The application supplies the actual eligible materials, launcher mechanics, field meanings, selected draft if any, and a clear completion instruction. The agent designs the candidate and submits it once for review.
+The player asks: “Make a sling using cord and prepared fiber. Favor accuracy even if crafting takes longer.” The application supplies the actual eligible materials, ranged weapon mechanics, field meanings, selected draft if any, and a clear completion instruction. The agent designs the candidate and submits it once for review.
 
 Native code derives the candidate’s typed dependency graph, runs the supported family’s required checks, records presentation adequacy and current inventor eligibility, saves an immutable revision and creates the exact review plan. The result says that the draft is saved and awaiting human review. The agent briefly explains the tradeoff and finishes. It must not call a valid draft “installed,” claim the player possesses it, or wait in a paid loop for approval. Human approval and Apply retain their existing authority and receipts.
 
@@ -76,7 +76,7 @@ Existing INV/WW owners retain real harness reliability, generated art and richer
 ## Acceptance criteria
 
 1. A supported new recipe and a refinement reach a saved exact review through the real native harness; the agent stops with an accurate explanation. Approval/Apply remain separately verified through existing WW07 coverage.
-2. Relevant materials, units and mechanics are sufficient to design both a launcher and a gathering tool without administrative catalogue exploration. Complex and non-recipe journeys retain needed discovery.
+2. Relevant materials, units and mechanics are sufficient to design both a ranged weapon and a gathering tool without administrative catalogue exploration. Complex and non-recipe journeys retain needed discovery.
 3. Bed/potion/homing requests identify actual capability gaps; an incomplete search never proves a mechanic absent. Owner policy changes require their own explicit scope.
 4. Selected field documentation and examples match strict schemas, native admission and consumers. Adding a property to prose cannot invent an effect.
 5. Failed validation preserves recoverable work as specified; stale edits, duplicate submissions, timeouts, cancellation and restore neither duplicate effects nor misstate completion.

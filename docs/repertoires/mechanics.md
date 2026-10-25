@@ -1,6 +1,6 @@
 # Mechanics and interaction patterns
 
-**Selected cross-activity execution pattern (ND38):** [Skilled action execution](../projects/action-execution-and-skill-expression-feature-spec.md) separates permitted action choice, character ability, optional human gesture, bounded trusted evaluation and world-authoritative result. Timed fighting and non-timed workpiece placement prove reuse without reskinning a combat minigame for every activity. These are already covered by MEC timing/preparation patterns, not a mandate for additional counted catalogue entries. Delivery remains [ASE](../maintainers/action-execution-and-skill-expression.md).
+**Selected combat execution pattern (ND38):** [Skilled action execution](../projects/action-execution-and-skill-expression-feature-spec.md) separates permitted action choice, character ability, optional animated timing, bounded evaluation and native consequences. Its [ASE tracker](../maintainers/action-execution-and-skill-expression.md) owns delivery. The broader catalogue remains possibilities, not a mandate to add a gesture to each activity.
 
 **Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. Entry rows own individual priorities; worked examples provide context without a second ranking. These are proposals, not delivered features.
 

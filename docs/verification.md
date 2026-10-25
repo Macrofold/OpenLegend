@@ -1,5 +1,7 @@
 # Verification
 
+- [Skilled action execution](verification/action-execution-and-skill-expression.md) — native effects, exact input/receipt ownership, fitted capacity, rendered controls, isolated measurements and separate player acceptance.
+
 - [First-playable entry](verification/first-playable-entry.md) — actual loading bar, held/failed required artwork, explicit Retry and current Main selection; bounded animal feeding evidence remains separate.
 
 - [Production custom models](verification/custom-models.md) — implemented native judgment/NPC chat routing, shared inference and benchmark support; configuration, protocol fixtures, actual Macrofold API and native gameplay evidence remain distinct from current Kev/Huihui access and live operating acceptance.

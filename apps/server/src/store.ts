@@ -157,7 +157,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '18';
+export const DATABASE_SCHEMA = '21';
 
 export interface AttemptBudget {
   id: string;

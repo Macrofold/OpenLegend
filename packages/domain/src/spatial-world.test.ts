@@ -181,7 +181,9 @@ describe('native spatial-world integration without providers', () => {
       volume: 'whisper',
     });
     expect(speech.events.find((event) => event.type === 'speech')?.audience).not.toContain(a.id);
-    expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(soundOrigin(b));
+    expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(
+      soundOrigin(world, b),
+    );
     expect(
       speech.world.experience?.awareness[a.id]?.some((entry) =>
         speech.events.some((event) => event.type === 'speech' && event.id === entry.eventId),

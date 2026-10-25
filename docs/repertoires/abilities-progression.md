@@ -1,6 +1,6 @@
 # Abilities, learning and expressive progression
 
-**Skill expression versus learned capability (ND38):** [The selected design](../projects/action-execution-and-skill-expression-feature-spec.md) lets bounded optional human timing/placement improve some actions while native character competence, equipment, bodily condition and training remain important for people and NPCs. Dexterity/focus-like effects only exist if authored and installed for that world; proficiency is applied once, not stacked twice. Normal unassisted actions remain viable. [ASE](../maintainers/action-execution-and-skill-expression.md) owns implementation.
+**Skill expression versus learned capability (ND38):** [The selected design](../projects/action-execution-and-skill-expression-feature-spec.md) lets bounded optional human timing improve supported combat actions while native character competence, equipment, bodily condition and training remain important for people and NPCs. Dexterity/focus-like effects only exist if authored and installed for that world; proficiency is applied once, not stacked twice. Normal unassisted actions remain viable. [ASE](../maintainers/action-execution-and-skill-expression.md) owns implementation.
 
 **Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. Entry rows own individual priorities; worked examples provide context without a second ranking. These are proposals, not delivered features.
 

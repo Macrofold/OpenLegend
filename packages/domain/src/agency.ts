@@ -1,3 +1,4 @@
+import { attackSubject, validAimPointSubject } from './combat-execution.js';
 import { isMaterialInputRole } from './native-inputs.js';
 import { recordSemanticChange } from './dependencies.js';
 import type { NativeExecutionPermissions } from './construction-permissions.js';
@@ -589,7 +590,7 @@ export function stopOwnedOffense(
       if (
         actor.action &&
         actor.action.id === step.actionId &&
-        actor.action.targetLife === targetLife
+        attackSubject(actor.action)?.life === targetLife
       )
         step.resultMemoryId = stopAction();
       else if (step.actionId)
@@ -609,8 +610,8 @@ export function stopOwnedOffense(
   }
   if (
     actor.action?.id === owned.invocationId &&
-    actor.action.targetId === targetId &&
-    actor.action.targetLife === targetLife
+    attackSubject(actor.action)?.id === targetId &&
+    attackSubject(actor.action)?.life === targetLife
   )
     stopAction();
 }
@@ -625,8 +626,8 @@ export function ownedOffenseContinues(
   if (!actor) return false;
   if (
     actor.action?.id === owned.invocationId &&
-    actor.action.targetId === targetId &&
-    actor.action.targetLife === targetLife
+    attackSubject(actor.action)?.id === targetId &&
+    attackSubject(actor.action)?.life === targetLife
   )
     return true;
   const matches = (command: PlannedCommand | Command) =>
@@ -1601,9 +1602,20 @@ export function isPhysicalCommand(command: Command): boolean {
         isSafeRecordId(command.definitionId) &&
         (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId))
       );
-    case 'practice-shot':
     case 'aim':
     case 'shoot-once':
+      return (
+        (command.targetId === undefined ? !!command.aimPoint : isSafeRecordId(command.targetId)) &&
+        (command.aimPoint === undefined || finitePoint(command.aimPoint)) &&
+        (command.aimPointSubject === undefined ||
+          (!!command.aimPoint && validAimPointSubject(command.aimPointSubject))) &&
+        (command.type !== 'aim' ||
+          command.manualExecution === undefined ||
+          command.manualExecution === true) &&
+        (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId)) &&
+        (command.ammoItemId === undefined || isSafeRecordId(command.ammoItemId))
+      );
+    case 'practice-shot':
     case 'hunt':
       return (
         isSafeRecordId(command.targetId) &&
@@ -1918,15 +1930,15 @@ export function stopCooperativeWork(
   const current = actor.action;
   let resultMemoryId: string | undefined;
   if (current && matches(current)) {
+    const aimed = attackSubject(current);
     // Refusing to pause an attack does not commit its future blow. Cancel only
     // this invocation; passing its plan would also stop unrelated attacks.
     if (
       ['strike', 'hunt', 'aim', 'shoot-once'].includes(current.type) &&
       current.strikePhase !== 'recovery' &&
-      current.targetId !== undefined &&
-      current.targetLife !== undefined
+      aimed !== undefined
     ) {
-      stopOwnedOffense(world, actorId, current.targetId, current.targetLife, {
+      stopOwnedOffense(world, actorId, aimed.id, aimed.life, {
         invocationId: current.id,
       });
       resultMemoryId = endActivity(world, actorId, current.id, reason);

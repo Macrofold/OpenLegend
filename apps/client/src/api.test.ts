@@ -294,6 +294,7 @@ function publicView(): import('@open-legend/protocol').GameView {
       position: { x: 0, y: 0, z: 0 },
       supportSurfaceId: null,
       heading: 0,
+      bodySize: { width: 0.7, height: 1.8 },
       alive: true,
       attributes: [],
       practice: [],

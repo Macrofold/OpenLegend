@@ -9,6 +9,8 @@ import type {
   WorldCreationHostStatus,
   WorldAgentWorkResult,
   WorldCreationOperationView,
+  WorldInputUpdate,
+  WorldInputResult,
 } from '@open-legend/protocol';
 
 import { clearTradeDrafts } from './trade-drafts';
@@ -464,6 +466,12 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
   if (!response.ok && !result.message)
     throw new Error(`The request was not accepted (${response.status}).`);
   return result;
+}
+export function updateWorldInput(
+  input: WorldInputUpdate,
+  signal?: AbortSignal,
+): Promise<WorldInputResult> {
+  return post<WorldInputResult>('/api/input', input, signal);
 }
 /** Loading intentionally replaces this timeline. Only the selected load's
  * non-disclosing success acknowledgment may cross that change; no old result

@@ -1,4 +1,5 @@
 import { distance3D, SPATIAL_LIMITS } from '@open-legend/spatial';
+import { attackSubject } from './combat-execution.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { bodyPolicy } from './body-policy.js';
 import { seesEntity, visionQuery } from './perception.js';
@@ -17,6 +18,7 @@ import { prepareCombatMeans } from './combat-means.js';
 import { possessionItems } from './object-access.js';
 import { resourcesAfterEnding } from './resource-claims.js';
 import { canReachEntity } from './spatial.js';
+import { baseRangedTargetPoint } from './worlds/base/ranged-counterplay.js';
 import type { DefinitionPin } from './world-modules.js';
 import type { PreparedResponseObservation } from './prepared-responses.js';
 import { countDomainWork } from './diagnostic-counters.js';
@@ -25,6 +27,24 @@ import { chargeWork } from './work-budget.js';
 interface ObservationBand<T> {
   value: T;
   pending?: { value: T; since: number };
+}
+export interface AttackModeNotice {
+  noticeSequence: number;
+  occurrenceId: string;
+  occurredAt: number;
+  kind: 'own-offensive-action-admitted' | 'personally-experienced-assault';
+}
+/** A notice describes this body's admitted occurrence, never a hidden source. */
+export function noteAttackModeOccurrence(
+  world: WorldState,
+  actor: Entity,
+  occurrenceId: string,
+  kind: AttackModeNotice['kind'],
+): void {
+  if (!actor.actor || actor.actor.attackModeNotice?.occurrenceId === occurrenceId) return;
+  const noticeSequence = (actor.actor.attackModeNotice?.noticeSequence ?? 0) + 1;
+  if (!Number.isSafeInteger(noticeSequence)) throw new Error('Attack notice sequence exhausted.');
+  actor.actor.attackModeNotice = { noticeSequence, occurrenceId, occurredAt: world.simTime, kind };
 }
 interface EncounterWatch {
   definition: DefinitionPin;
@@ -407,9 +427,10 @@ function observeChanges(
     return;
   }
   const action = attackPreparation(world, other);
+  const aimed = action && attackSubject(action);
   const preparation = !action
     ? null
-    : action.targetId === observer.id || (action.targetId && exposed.has(action.targetId))
+    : aimed?.id === observer.id || (aimed && exposed.has(aimed.id))
       ? action.id
       : undefined;
   if (preparation !== undefined) {
@@ -453,13 +474,13 @@ function observeChanges(
     means.strikes.find(
       (strike) => strike.id === own.definitionId && strike.weaponItemId === own.weaponItemId,
     );
-  const selectedLauncher =
+  const selectedRangedWeapon =
     own &&
     own.type !== 'strike' &&
-    means.launchers.find(
-      (launcher) =>
-        launcher.item.id === own.weaponItemId &&
-        launcher.ammunition.some((item) => item.id === own.ammoItemId),
+    means.rangedWeapons.find(
+      (rangedWeapon) =>
+        rangedWeapon.item.id === own.weaponItemId &&
+        rangedWeapon.ammunition.some((item) => item.id === own.ammoItemId),
     );
   const relevantRange =
     selectedOpponent || pair.lastCause || pair.own || Object.keys(pair.active).length;
@@ -467,21 +488,30 @@ function observeChanges(
     ? undefined
     : selectedStrike
       ? selectedStrike.range
-      : selectedLauncher
-        ? selectedLauncher.launcher.range
+      : selectedRangedWeapon
+        ? selectedRangedWeapon.rangedWeapon.range
         : means.strikes.length
           ? Math.min(...means.strikes.map((strike) => strike.range))
           : undefined;
   if (range === undefined) delete watch.range;
   else {
-    const within = canReachEntity(world, observer, other, range);
+    const targetPoint = selectedRangedWeapon ? baseRangedTargetPoint(world, other) : undefined;
+    const within = canReachEntity(world, observer, other, range, undefined, targetPoint);
     if (!watch.range || watch.range.distance !== range)
       watch.range = { distance: range, band: { value: within } };
     else {
       const band = watch.range.band;
       const value =
         within ||
-        (band.value && canReachEntity(world, observer, other, range + profile.limits.rangeMargin));
+        (band.value &&
+          canReachEntity(
+            world,
+            observer,
+            other,
+            range + profile.limits.rangeMargin,
+            undefined,
+            targetPoint,
+          ));
       if (changedBand(world, band, value, profile.limits.stableSeconds, value))
         emit(value ? 'range-entered' : 'range-left', range);
     }
@@ -626,6 +656,10 @@ export function acquireCombatObservation(
     observation.sourceId !== observer.id &&
     ['struck', 'shot-released', 'attack-cue'].includes(observation.eventType ?? '');
   if (!feltContact && !directed) return;
+  // Preparation alone is not a personally experienced assault. Recognized release,
+  // attempted contact, and felt impact can change the control mode without a source leak.
+  if (feltContact || (directed && event.type !== 'attack-cue'))
+    noteAttackModeOccurrence(world, observer, event.id, 'personally-experienced-assault');
   const sourceId = projectileContact ? event.data?.['contactSourceId'] : observation.sourceId;
   const source = typeof sourceId === 'string' ? entityGet(world.entities, sourceId) : undefined;
   const state = owner(world, observer);
@@ -671,8 +705,11 @@ export function selectOffense(
   action: Action,
   command: Command,
 ): void {
-  if (!hasMemory(actor) || !offensive(action) || !action.targetId) return;
-  const other = entityGet(world.entities, action.targetId);
+  if (offensive(action))
+    noteAttackModeOccurrence(world, actor, command.id, 'own-offensive-action-admitted');
+  const aimed = attackSubject(action);
+  if (!hasMemory(actor) || !offensive(action) || !aimed) return;
+  const other = entityGet(world.entities, aimed.id);
   if (!other?.actor || !seesEntity(world, actor, other)) return;
   const pair = pairFor(world, actor, other);
   if (!pair) return;
@@ -749,11 +786,12 @@ export function reconcileCombatSight(
     const source = entityGet(world.entities, id);
     if (!source?.actor) continue;
     const action = attackPreparation(world, source);
-    const target = action?.targetId ? entityGet(world.entities, action.targetId) : undefined;
+    const aimed = action && attackSubject(action);
+    const target = aimed ? entityGet(world.entities, aimed.id) : undefined;
     if (
       !action ||
       !target?.actor ||
-      action.targetLife !== life(target) ||
+      aimed?.life !== life(target) ||
       (target.id !== observer.id && !exposed.has(target.id))
     )
       continue;
@@ -839,8 +877,8 @@ export function reconcileCombatSight(
         active.kind === 'action'
           ? visibleNow &&
             action?.id === active.id &&
-            action.targetId === observer.id &&
-            action.targetLife === life(observer)
+            attackSubject(action)?.id === observer.id &&
+            attackSubject(action)?.life === life(observer)
           : flight &&
             flight.sourceLife === pair.otherLife &&
             visionQuery(world, observer)({ id: flight.id, position: flight.position, height: 0 });
@@ -965,6 +1003,19 @@ export function validateCombatEncounters(world: WorldState): void {
   };
   const boolean = (value: unknown) => typeof value === 'boolean';
   for (const observer of entityValues(world.entities)) {
+    const notice = observer.actor?.attackModeNotice;
+    if (
+      notice &&
+      (!hasRecordFields(notice, ['noticeSequence', 'occurrenceId', 'occurredAt', 'kind']) ||
+        !Number.isSafeInteger(notice.noticeSequence) ||
+        notice.noticeSequence < 1 ||
+        !isSafeRecordId(notice.occurrenceId) ||
+        !Number.isFinite(notice.occurredAt) ||
+        notice.occurredAt < 0 ||
+        notice.occurredAt > world.simTime ||
+        !['own-offensive-action-admitted', 'personally-experienced-assault'].includes(notice.kind))
+    )
+      throw new Error('Invalid personal attack mode notice.');
     const receipts = observer.actor?.action?.attackObservers;
     if (receipts !== undefined) {
       if (!dictionary(receipts)) throw new Error('Invalid attack observation receipts.');

@@ -12,6 +12,9 @@ test.use({ viewport: desktopViewport });
 test('time settings persist with sole-tab entry, explicit transfer, logout and manual world pause', async ({
   page,
 }, info) => {
+  // Three pages, a reload and a fresh sign-in each allocate a software-rendered
+  // scene. Allow the complete journey; individual readiness/input limits remain.
+  test.setTimeout(120_000);
   await blockExternalBrowserRequests(page);
   // Native, zero-budget fixture with explicit server ticks, independent of browser speed.
   const clock = { now: Date.now() };
@@ -81,7 +84,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     await settings.click();
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
     // These images document time controls; full WebGL viewport readbacks can
-    // consume this journey's 60-second deadline without testing more controls.
+    // consume the journey budget without testing more controls.
     const desktopTimeBounds = await page.locator('.ol-time-settings').boundingBox();
     expect(desktopTimeBounds).not.toBeNull();
     await page.screenshot({ path: info.outputPath('time-settings.png'), clip: desktopTimeBounds! });

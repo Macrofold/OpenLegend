@@ -38,7 +38,7 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## Skilled player action execution and real item quality
 
-[Action execution and skilled input (ASE01–ASE12)](action-execution-and-skill-expression.md) owns delivery of [ND38's feature specification](../projects/action-execution-and-skill-expression-feature-spec.md), [technical design](../projects/action-execution-and-skill-expression-tech-design.md), [selected world rules](../worlds/base/skilled-action-execution.md) and [limits](../limits/action-execution-and-skill-expression.md). The design is complete; movement during aim, timed release, real mouse-directed attacks, local bodily evasion and usable fitted-item quality are **not yet implemented or play-qualified**. CTR and ordinary action/craft owners retain authoritative contact, permission and material effects.
+[Action execution and skilled input (ASE01–ASE12)](action-execution-and-skill-expression.md) owns delivery of [ND38's feature specification](../projects/action-execution-and-skill-expression-feature-spec.md), [technical design](../projects/action-execution-and-skill-expression-tech-design.md), [selected world rules](../worlds/base/skilled-action-execution.md) and [limits](../limits/action-execution-and-skill-expression.md). Movement during preparation, animated timed release, exact pointer-directed attacks and bounded local bodily evasion share the native combat owners. ASE tracks the combat-only correction, focused qualification and independent player acceptance. CTR and ordinary action/craft owners retain authoritative contact, permission and material effects.
 
 ## Acoustic stealth and physical sound
 

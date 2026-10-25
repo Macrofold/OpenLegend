@@ -127,6 +127,30 @@ describe('event-time observer facts', () => {
         );
         expect(felt.data?.['healthAfter']).toBe(result.event.data?.['healthAfter']);
         expect(felt.data?.['damage']).toBeGreaterThan(0);
+        const bodyEffect = result.events.find(
+          (entry) => entry.type === 'body-effect' && entry.targetId === result.targetId,
+        )!;
+        expect(bodyEffect.data).toMatchObject({
+          effectId: expect.any(String),
+          healthDelta: expect.any(Number),
+          wetnessDelta: 0,
+          burningDelta: 0,
+        });
+        expect(
+          Object.keys(bodyEffect.data!)
+            .filter((key) => key.endsWith('Delta'))
+            .sort(),
+        ).toEqual(['burningDelta', 'healthDelta', 'wetnessDelta']);
+        const feltBody = projectEventEvidence(
+          bodyEffect,
+          evidence(result.world, bodyEffect, result.targetId),
+        );
+        expect(feltBody.data?.['healthDelta']).toBeLessThan(0);
+        expect(
+          projectEventEvidence(bodyEffect, evidence(result.world, bodyEffect)).data?.[
+            'healthDelta'
+          ],
+        ).toBeUndefined();
       }
     },
   );

@@ -356,6 +356,7 @@ export function SelectField({
   );
 }
 export function Launcher({
+  id,
   icon,
   label,
   open,
@@ -363,6 +364,7 @@ export function Launcher({
   shortcut,
   onPress,
 }: {
+  id?: string;
   icon: string;
   label: string;
   open: boolean;
@@ -374,6 +376,7 @@ export function Launcher({
     <div className="ol-launcher-wrap" data-side={side}>
       <TextTooltip text={`${label}${shortcut ? ` — ${shortcut}` : ''}`}>
         <AriaButton
+          id={id}
           className="ol-launcher"
           aria-label={label}
           aria-expanded={open}

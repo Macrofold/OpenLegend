@@ -1,3 +1,4 @@
+import { attackSourceView } from './attack-execution-view.js';
 import { perceivedOffersBetween, knownTradeLots } from '@open-legend/domain';
 import { contributionWithdrawals } from './handover-actions.js';
 import { localWeatherView, installedActionMeaning } from '@open-legend/domain';
@@ -34,7 +35,7 @@ import {
   type ActivityOccurrence,
 } from '@open-legend/domain';
 import {
-  bodyProfile,
+  effectiveBodyProfile,
   activelyParticipates,
   spatialMap,
   visionFieldOfView,
@@ -74,7 +75,7 @@ import {
   projectStatusEffects,
   statusEffectsReadToken,
 } from '@open-legend/domain';
-import { bodyPolicy } from '@open-legend/domain';
+import { attackSubject, bodyPolicy } from '@open-legend/domain';
 import { isConversationEvent } from '@open-legend/domain';
 import { supportsManualWork } from '@open-legend/domain';
 import { actionAnimation } from './action-animation.js';
@@ -236,7 +237,7 @@ export async function projectView(
       position.x,
       position.y,
       position.z,
-      bodyProfile(observer).eyeHeight,
+      effectiveBodyProfile(world, observer).eyeHeight,
       activelyParticipates(observer),
       angle,
       angle < 2 * Math.PI ? observer.spatial.heading : undefined,
@@ -247,7 +248,7 @@ export async function projectView(
           p.x,
           p.y,
           p.z,
-          bodyProfile(e).height,
+          effectiveBodyProfile(world, e).height,
           activelyParticipates(e),
           e.assembly?.implementation,
         ];
@@ -626,10 +627,12 @@ export async function projectView(
                   entity.spatial.body,
                   entity.spatial.inactiveBody,
                   entity.spatial.softFootprint,
+                  entity.spatial.localPose,
+                  world.moduleManifest,
                   entity.actor.alive,
                 ],
                 () => {
-                  const profile = bodyProfile(entity);
+                  const profile = effectiveBodyProfile(world, entity);
                   return { width: profile.radius * 2, height: profile.height };
                 },
               )
@@ -721,7 +724,7 @@ export async function projectView(
             heading: entity.spatial.heading,
             appearance: entity.appearance ?? 'sprite',
             ...(entity.heat ? { heat: { lit: entity.heat.lit } } : {}),
-            radius: entity.kind === 'campfire' ? 0.5 : 0.35,
+            radius: bodySize ? bodySize.width / 2 : entity.kind === 'campfire' ? 0.5 : 0.35,
             contextActionRevision: contextActionRevision(
               scopeKey(scope),
               world,
@@ -1028,22 +1031,24 @@ export async function projectView(
       reason: 'Resume here before continuing.',
     });
   const work = actor.action;
+  const workTargetId = work?.ranged ? attackSubject(work)?.id : work?.targetId;
   const aimDetails =
     work?.type === 'aim'
       ? attackDetails({
           id: work.id,
           actorId: scope.actorId,
           type: 'aim',
-          targetId: work.targetId!,
+          targetId: workTargetId,
+          ...(work.ranged?.aimPoint ? { aimPoint: work.ranged.aimPoint } : {}),
           weaponItemId: work.weaponItemId,
           ammoItemId: work.ammoItemId,
         })
       : undefined;
 
   const targetName =
-    work?.targetId &&
-    observation.visibleEntities.some((entity) => entity.id === work.targetId) &&
-    observerName(world, player.id, work.targetId).name;
+    workTargetId &&
+    observation.visibleEntities.some((entity) => entity.id === workTargetId) &&
+    observerName(world, player.id, workTargetId).name;
   const workLabels: Record<string, string> = {
     'treat-scar':
       work?.scarId && reincarnation
@@ -1191,12 +1196,23 @@ export async function projectView(
       position: worldPosition(player),
       supportSurfaceId: worldSupport(player),
       heading: player.spatial.heading,
+      bodySize: {
+        width: effectiveBodyProfile(world, player).radius * 2,
+        height: effectiveBodyProfile(world, player).height,
+      },
       attributes: projectAttributes(world, player, 'owner').filter(
         (attribute) => !attributeDefinition(world, attribute.id)?.practice,
       ),
       practice,
       actionAnimation: actionAnimation(world, player),
       alive: actor.alive,
+      ...(service.currentScope(scope, 'play', true)
+        ? { inputScope: service.inputScope(scope) }
+        : {}),
+      ...(actor.attackModeNotice ? { attackModeNotice: actor.attackModeNotice } : {}),
+      ...(actor.alive
+        ? { attackSource: attackSourceView(world, player.id, observation.inventory) }
+        : {}),
       hasWork,
       life: actor.physicalLife ?? 0,
       death:
@@ -1250,6 +1266,9 @@ export async function projectView(
       action: actor.action
         ? {
             id: actor.action.id,
+            ...(actor.action.attackExecution
+              ? { execution: service.executionView(player.id) }
+              : {}),
             // Floating progress is opt-in; routine movement never gets a status.
             showStatus:
               actor.action.type === 'aim' ||
@@ -1293,7 +1312,28 @@ export async function projectView(
                     {
                       id: `cancel:${actor.action.id}`,
                       label: BASE_RANGED_TEXT.cancelName,
-                      command: { type: 'cancel' as const },
+                      command: { type: 'cancel' as const, expectedActionId: actor.action.id },
+                      enabled: true,
+                    },
+                  ],
+                }
+              : {}),
+            ...(actor.action.attackExecution
+              ? {
+                  controls: [
+                    {
+                      id: `release:${actor.action.id}`,
+                      label: 'Attack normally',
+                      command:
+                        actor.action.type === 'aim'
+                          ? { type: 'release-shot' as const, aimId: actor.action.id }
+                          : { type: 'release-strike' as const, expectedActionId: actor.action.id },
+                      enabled: actor.action.attackExecution.ready && !paused,
+                    },
+                    {
+                      id: `cancel:${actor.action.id}`,
+                      label: 'Cancel',
+                      command: { type: 'cancel' as const, expectedActionId: actor.action.id },
                       enabled: true,
                     },
                   ],

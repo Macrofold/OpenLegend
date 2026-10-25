@@ -1,0 +1,115 @@
+.ol-execution-controls {
+  position: absolute;
+  right: calc(var(--hud-inset) + var(--control-md) + var(--space-3));
+  bottom: calc(var(--space-8) + var(--control-md) + var(--space-3));
+  z-index: var(--z-panel);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(360px, calc(100% - 2 * var(--hud-inset)));
+  max-height: 60vh;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.ol-execution-controls:empty {
+  display: none;
+}
+.ol-world-controls[data-bounded] > .ol-execution-controls {
+  position: static;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  flex: none;
+}
+.ol-hud[data-narrow='true'] .ol-execution-controls {
+  right: var(--hud-inset);
+}
+.ol-attack-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  width: 100%;
+  box-sizing: border-box;
+  flex: none;
+  max-height: 55vh;
+  overflow: auto;
+  pointer-events: auto;
+}
+.ol-attack-controls :is(p, strong) {
+  margin: 0;
+}
+.ol-attack-controls .ol-combat-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.ol-attack-reticle {
+  position: fixed;
+  z-index: 15;
+  top: 0;
+  left: 0;
+  width: 160px;
+  height: 160px;
+  margin: -80px;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px #000);
+}
+.ol-attack-reticle svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.ol-timing-ordinary {
+  fill: none;
+  stroke: #d4b558;
+  opacity: 0.45;
+}
+.ol-timing-excellent {
+  fill: none;
+  stroke: #77bc7a;
+  opacity: 0.7;
+  stroke-dasharray: 3 2;
+}
+.ol-timing-boundary {
+  fill: none;
+  stroke: #d6edce;
+  stroke-width: 0.6;
+  stroke-dasharray: 2 3;
+}
+.ol-timing-ring {
+  fill: none;
+  stroke: white;
+  stroke-width: 2;
+}
+.ol-reticle-cross {
+  fill: none;
+  stroke: white;
+  stroke-width: 1.5;
+}
+.ol-reticle-unavailable {
+  display: none;
+  fill: none;
+  stroke: white;
+  stroke-width: 2;
+}
+.ol-attack-reticle[data-aim-available='false'] .ol-reticle-cross {
+  display: none;
+}
+.ol-attack-reticle[data-aim-available='false'] .ol-reticle-unavailable {
+  display: block;
+}
+@media (forced-colors: active) {
+  .ol-timing-ring,
+  .ol-reticle-cross,
+  .ol-reticle-unavailable,
+  .ol-timing-boundary {
+    stroke: CanvasText;
+  }
+  .ol-timing-excellent {
+    stroke: Highlight;
+  }
+  .ol-timing-ordinary {
+    stroke: GrayText;
+  }
+}

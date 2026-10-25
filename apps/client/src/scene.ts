@@ -59,6 +59,8 @@ import type {
   PerceptionOptions,
   ConstructionPlacement,
   ConstructionPreviewTransform,
+  AttackPointerControls,
+  PhysicalAimPoint,
 } from './world-renderer';
 import {
   birdArt,
@@ -243,7 +245,9 @@ export class WildernessScene implements WorldRenderer {
     moved: boolean;
     primaryAction: boolean;
     primaryGesture?: string;
+    attack?: 'active' | 'ignored';
   } | null = null;
+  private attackInput: AttackPointerControls | null = null;
   // Some browsers emit contextmenu on press, others after release. Pointer
   // gestures own their menu; suppress that native duplicate until the next press.
   private pointerContextHandled = false;
@@ -949,6 +953,21 @@ export class WildernessScene implements WorldRenderer {
         this.actors.set(entity.id, entry);
       }
       const card = this.cards.get(entry.sprite);
+      const horizontal = entity.statusEffects?.some((effect) => effect.pose === 'horizontal');
+      // Fit the visible painted extent, not transparent artwork padding. A native
+      // contraction updates the retained resource and its picking transform together.
+      const currentHeight = entity.bodySize?.height;
+      const heightChanged =
+        !!card &&
+        !entity.bodyState &&
+        !horizontal &&
+        currentHeight !== undefined &&
+        card.height !== currentHeight / (1 - card.padding.top - card.padding.bottom);
+      if (heightChanged && card && currentHeight !== undefined) {
+        entry.height = card.height = currentHeight / (1 - card.padding.top - card.padding.bottom);
+      }
+      if (currentHeight !== undefined && !entity.bodyState && !horizontal)
+        entry.model?.setBodyHeight(currentHeight);
       const groundPoseChanged =
         card &&
         (card.horizontalHeading !== entity.heading ||
@@ -959,10 +978,11 @@ export class WildernessScene implements WorldRenderer {
       }
       if (
         card &&
-        (card.horizontalHeight !==
-          (entity.statusEffects?.some((effect) => effect.pose === 'horizontal')
-            ? (entity.bodySize?.width ?? entry.width)
-            : undefined) ||
+        (heightChanged ||
+          card.horizontalHeight !==
+            (entity.statusEffects?.some((effect) => effect.pose === 'horizontal')
+              ? (entity.bodySize?.width ?? entry.width)
+              : undefined) ||
           (card.horizontalHeight !== undefined && groundPoseChanged))
       ) {
         // Use projected presentation, never action names or elapsed client time.
@@ -1073,7 +1093,14 @@ export class WildernessScene implements WorldRenderer {
       entry.root
         .getPosition()
         .clone()
-        .add(new pc.Vec3(0, (entry.model?.visible ? entry.model.height : entry.height) + 0.1, 0)),
+        .add(
+          new pc.Vec3(
+            0,
+            (entry.view.bodySize?.height ??
+              (entry.model?.visible ? entry.model.height : entry.height)) + 0.1,
+            0,
+          ),
+        ),
     );
     return { x: point.x, y: point.y };
   }
@@ -1083,12 +1110,17 @@ export class WildernessScene implements WorldRenderer {
     const entry = this.actors.get(id);
     if (!entry || !this.identifiable(entry)) return null;
     if (!entry.card || entry.model?.visible) return this.screenPosition(id);
-    const transform = entry.sprite.getWorldTransform();
+    const transform = entry.sprite.getWorldTransform(),
+      padding = this.cards.get(entry.sprite)!.padding;
+    const left = -0.5 + padding.left,
+      right = 0.5 - padding.right,
+      top = -0.5 + padding.top,
+      bottom = 0.5 - padding.bottom;
     const points = [
-      new pc.Vec3(-0.5, 0, -0.5),
-      new pc.Vec3(0.5, 0, -0.5),
-      new pc.Vec3(-0.5, 0, 0.5),
-      new pc.Vec3(0.5, 0, 0.5),
+      new pc.Vec3(left, 0, top),
+      new pc.Vec3(right, 0, top),
+      new pc.Vec3(left, 0, bottom),
+      new pc.Vec3(right, 0, bottom),
     ].map((corner) => this.camera.camera!.worldToScreen(transform.transformPoint(corner)));
     return {
       x:
@@ -1440,6 +1472,7 @@ export class WildernessScene implements WorldRenderer {
   }
   setConstructionPlacement(placement: ConstructionPlacement | null): void {
     const entering = placement && !this.constructionPlacement;
+    if (entering) this.cancelDrag();
     this.constructionPlacement = placement;
     this.updateCursor();
     if (entering) this.canvas.focus({ preventScroll: true });
@@ -2736,7 +2769,7 @@ export class WildernessScene implements WorldRenderer {
     this.canvas.style.cursor =
       this.drag?.moved && this.drag.pan
         ? 'grabbing'
-        : this.targeting || this.constructionPlacement
+        : this.targeting || this.constructionPlacement || this.attackInput
           ? 'crosshair'
           : this.commandHeld
             ? 'pointer'
@@ -2977,7 +3010,123 @@ export class WildernessScene implements WorldRenderer {
   private denySelection(): void {
     this.callbacks.selectionDenied(`${this.view?.player.name ?? 'Your character'} can't see this.`);
   }
-  private pick(x: number, y: number): RenderedEntity | null {
+  /** Selection and physical aiming share displayed-geometry intersection. */
+  private entityPointerHit(
+    entry: RenderedEntity,
+    ray: { from: pc.Vec3; to: pc.Vec3 },
+  ): { fraction: number; point: pc.Vec3 } | null {
+    if (entry.view.assembly) {
+      let fraction: number | null = null;
+      for (const shape of entry.view.assembly.shapes) {
+        const hit = shape.panel
+          ? (panelRayFraction(shape.panel, ray.from, ray.to) ?? null)
+          : intersectBox(ray.from, ray.to, { min: shape.min, max: shape.max });
+        if (hit !== null && (fraction === null || hit < fraction)) fraction = hit;
+      }
+      return fraction === null
+        ? null
+        : { fraction, point: new pc.Vec3().lerp(ray.from, ray.to, fraction) };
+    }
+    if (entry.model?.visible) {
+      const hit = entry.model.hit(ray.from, ray.to);
+      return hit
+        ? { fraction: hit.fraction, point: new pc.Vec3(hit.point.x, hit.point.y, hit.point.z) }
+        : null;
+    }
+    if (entry.card) {
+      const image = entry.images[Math.max(0, entry.lastFrame) % entry.images.length];
+      return image ? this.cardHit(entry.sprite, image, ray) : null;
+    }
+    const p = entry.root.getPosition();
+    const fraction = intersectBox(ray.from, ray.to, {
+      min: { x: p.x - entry.width / 2, y: p.y, z: p.z - 0.4 },
+      max: { x: p.x + entry.width / 2, y: p.y + entry.height, z: p.z + 0.4 },
+    });
+    return fraction === null
+      ? null
+      : { fraction, point: new pc.Vec3().lerp(ray.from, ray.to, fraction) };
+  }
+  setAttackInput(controls: AttackPointerControls | null): void {
+    if (!controls && this.drag?.attack) this.cancelDrag();
+    this.attackInput = controls;
+    this.updateCursor();
+  }
+  aimScreenPosition(id: string): { x: number; y: number } | null {
+    const entry = this.actors.get(id);
+    if (!entry || !this.identifiable(entry)) return null;
+    const bodyPoint = entry.root
+      .getPosition()
+      .clone()
+      .add(
+        new pc.Vec3(
+          0,
+          (entry.view.bodySize?.height ??
+            (entry.model?.visible ? entry.model.height : entry.height)) * 0.5,
+          0,
+        ),
+      );
+    const card = this.cards.get(entry.sprite);
+    if (entry.card && !entry.model?.visible && card) {
+      // Choose the center of the painted card, including horizontal presentation;
+      // aimAt converts that visible pixel back through the same physical picker.
+      entry.sprite
+        .getWorldTransform()
+        .transformPoint(new pc.Vec3(0, 0, (card.padding.top - card.padding.bottom) / 2), bodyPoint);
+    }
+    const depth = bodyPoint.clone().sub(this.camera.getPosition()).dot(this.camera.forward);
+    const camera = this.camera.camera!;
+    if (depth < camera.nearClip || depth > camera.farClip) return null;
+    const point = entry.model?.visible
+      ? entry.model.screenPoint(bodyPoint)
+      : camera.worldToScreen(bodyPoint);
+    return this.aimScreenPointVisible(point) ? { x: point.x, y: point.y } : null;
+  }
+  private aimScreenPointVisible(screen: { x: number; y: number }): boolean {
+    return (
+      Number.isFinite(screen.x) &&
+      Number.isFinite(screen.y) &&
+      screen.x >= 0 &&
+      screen.y >= 0 &&
+      screen.x < this.app.graphicsDevice.clientRect.width &&
+      screen.y < this.app.graphicsDevice.clientRect.height
+    );
+  }
+  aimAt(screen: { x: number; y: number }): PhysicalAimPoint | null {
+    if (!this.view || this.suspended || !this.aimScreenPointVisible(screen)) return null;
+    const ray = this.screenRay(screen.x, screen.y);
+    const entity = this.pick(screen.x, screen.y, false);
+    if (entity && this.identifiable(entity)) {
+      const hit = this.entityPointerHit(entity, ray);
+      if (hit)
+        return {
+          position: { x: hit.point.x, y: hit.point.y, z: hit.point.z },
+          targetId: entity.view.id,
+          bodyReference: entity.view.bodyReference,
+          ...(entity.view.bodyReference && !entity.view.bodyState
+            ? {
+                livingBody:
+                  entity.view.kind === 'animal' ? ('animal' as const) : ('actor' as const),
+              }
+            : {}),
+        };
+    }
+    const surface = this.groundPoint(screen.x, screen.y);
+    const shape = rayHits(this.view.map, ray.from, ray.to, 'sight')[0];
+    if (surface) {
+      const surfaceDistance = ray.from.distance(new pc.Vec3(surface.x, surface.y, surface.z));
+      if (
+        !shape ||
+        ray.from.distance(new pc.Vec3(shape.point.x, shape.point.y, shape.point.z)) >=
+          surfaceDistance - 1e-4
+      )
+        return {
+          position: { x: surface.x, y: surface.y, z: surface.z },
+          surfaceId: surface.surfaceId,
+        };
+    }
+    return shape ? { position: { ...shape.point }, shapeId: shape.id } : null;
+  }
+  private pick(x: number, y: number, preferSelection = true): RenderedEntity | null {
     if (!this.view) return null;
     const ray = this.screenRay(x, y);
     const obstruction = this.cameraObstruction(ray);
@@ -2989,33 +3138,12 @@ export class WildernessScene implements WorldRenderer {
       nearestReveal = Infinity;
     for (const entry of this.actors.values()) {
       if (!entry.root.enabled) continue;
-      let fraction: number | null = null,
-        bodyPoint: pc.Vec3 | undefined;
-      if (entry.view.assembly) {
-        for (const shape of entry.view.assembly.shapes) {
-          const hit = shape.panel
-            ? (panelRayFraction(shape.panel, ray.from, ray.to) ?? null)
-            : intersectBox(ray.from, ray.to, { min: shape.min, max: shape.max });
-          if (hit !== null && (fraction === null || hit < fraction)) fraction = hit;
-        }
-      } else if (entry.model?.visible) {
-        const hit = entry.model.hit(ray.from, ray.to);
-        fraction = hit?.fraction ?? null;
-        bodyPoint = hit?.point;
-      } else if (!entry.card) {
-        const p = entry.root.getPosition();
-        fraction = intersectBox(ray.from, ray.to, {
-          min: { x: p.x - entry.width / 2, y: p.y, z: p.z - 0.4 },
-          max: { x: p.x + entry.width / 2, y: p.y + entry.height, z: p.z + 0.4 },
-        });
-      } else {
-        const image = entry.images[Math.max(0, entry.lastFrame) % entry.images.length]!;
-        const hit = this.cardHit(entry.sprite, image, ray);
-        fraction = hit?.fraction ?? null;
-        bodyPoint = hit?.point;
-      }
+      const contact = this.entityPointerHit(entry, ray);
+      const fraction = contact?.fraction ?? null;
+      const bodyPoint = contact?.point;
       if (fraction === null) continue;
-      if (entry.view.id === this.selected && this.identifiable(entry)) return entry;
+      if (preferSelection && entry.view.id === this.selected && this.identifiable(entry))
+        return entry;
       if (fraction <= obstruction + 1e-5 && fraction < nearest) {
         nearest = fraction;
         best = entry;
@@ -3076,6 +3204,7 @@ export class WildernessScene implements WorldRenderer {
       this.pointerContextHandled = true;
       return;
     }
+    if ((event.button !== 0 || event.ctrlKey) && this.drag?.attack) this.cancelDrag();
     if (event.button > 2 || this.drag) return;
     this.canvas.focus({ preventScroll: true });
     this.setModifiers(event.metaKey, event.altKey);
@@ -3093,6 +3222,19 @@ export class WildernessScene implements WorldRenderer {
       moved: false,
       primaryAction: event.button === 0 && event.metaKey,
     };
+    if (
+      event.button === 0 &&
+      !event.metaKey &&
+      !event.altKey &&
+      this.attackInput &&
+      !this.targeting &&
+      !this.constructionPlacement
+    ) {
+      const screen = this.local(event);
+      // Even a refused attack press owns this click, so its up cannot become an
+      // ordinary world action or release a preparation acknowledged meanwhile.
+      this.drag.attack = this.attackInput.begin(this.aimAt(screen), screen) ? 'active' : 'ignored';
+    }
     if (this.drag.primaryAction && !this.targeting && !this.constructionPlacement) {
       const point = this.local(event),
         entry = this.pick(point.x, point.y);
@@ -3116,13 +3258,47 @@ export class WildernessScene implements WorldRenderer {
     }
     if (drag) {
       if (event.pointerId !== drag.pointerId) return;
+      // Chorded mouse buttons change `buttons` through pointermove; they do not
+      // start another pointerdown. End the attack while retaining this capture
+      // for the newly pressed camera button and its eventual release.
+      if (drag.attack && event.buttons & 6) {
+        if (drag.attack === 'active') this.attackInput?.cancel();
+        this.callbacks.cancelPrimaryAction();
+        delete drag.attack;
+        drag.button = event.buttons & 2 ? 2 : 1;
+        drag.pan = true;
+        drag.orbit = drag.button === 2 && !event.shiftKey;
+        drag.primaryAction = false;
+        drag.primaryGesture = undefined;
+        drag.moved = false;
+        drag.x = event.clientX;
+        drag.y = event.clientY;
+        this.pointerContextHandled = false;
+        this.publishHover(null, { x: event.clientX, y: event.clientY });
+        return;
+      }
       const heldButton = drag.button === 1 ? 4 : drag.button === 2 ? 2 : 1;
       if (!(event.buttons & heldButton)) {
-        this.cancelDrag();
+        // Releasing a camera button while another stays held also arrives as a
+        // move. Only that explicit button edge can finish camera/context work;
+        // missing primary input always cancels instead of releasing an attack.
+        if (drag.pan && event.button === drag.button) this.pointerUp(event);
+        else this.cancelDrag();
         return;
       }
       const dx = event.clientX - drag.x,
         dy = event.clientY - drag.y;
+      if (drag.attack) {
+        if (drag.attack === 'ignored') return;
+        const screen = this.local(event);
+        if (dx || dy) {
+          const aim = this.aimAt(screen);
+          this.attackInput?.move(aim, screen, aim?.targetId === this.view?.player.id);
+        }
+        drag.x = event.clientX;
+        drag.y = event.clientY;
+        return;
+      }
       // Accumulate small movements from the press before choosing a drag. Once
       // panning, track incremental motion even if the pointer returns to its start.
       if (!drag.moved && Math.hypot(dx, dy) <= 5) return;
@@ -3144,6 +3320,16 @@ export class WildernessScene implements WorldRenderer {
     const drag = this.drag;
     if (!drag || event.pointerId !== drag.pointerId) return;
     this.cancelDrag(true);
+    if (drag.attack) {
+      if (drag.attack === 'ignored') return;
+      const screen = this.local(event);
+      if (event.button === drag.button) {
+        // Release chooses the current scene beneath the cursor even when only
+        // the body or camera moved between down and up.
+        this.attackInput?.release(this.aimAt(screen), screen);
+      } else this.attackInput?.cancel();
+      return;
+    }
     if (drag.moved || event.button !== drag.button) {
       this.callbacks.cancelPrimaryAction();
       return;
@@ -3255,6 +3441,7 @@ export class WildernessScene implements WorldRenderer {
     this.drag = null;
     this.updateCursor();
     if (!drag) return;
+    if (drag.attack === 'active' && !releasing) this.attackInput?.cancel();
     if (!releasing || drag.moved) this.callbacks.cancelPrimaryAction();
     if (drag.button === 2) this.pointerContextHandled = true;
     this.saveCameraPreferences();

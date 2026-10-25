@@ -266,9 +266,9 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
       schema: {
         type: 'object',
         additionalProperties: false,
-        required: ['launcher', 'ammo'],
+        required: ['rangedWeapon', 'ammo'],
         properties: {
-          launcher: { type: ['string', 'null'] },
+          rangedWeapon: { type: ['string', 'null'] },
           ammo: {
             anyOf: [
               { type: 'null' },
@@ -285,9 +285,9 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
     };
     const result = await createAiClient({
       openai: { apiKey: 'fixture' },
-      fetch: async () => response(generateResponse('{"launcher":null,"ammo":null}')),
+      fetch: async () => response(generateResponse('{"rangedWeapon":null,"ammo":null}')),
     }).generate(nullable);
-    expect(result).toMatchObject({ outcome: 'value', value: { launcher: null, ammo: null } });
+    expect(result).toMatchObject({ outcome: 'value', value: { rangedWeapon: null, ammo: null } });
   });
 
   it('returns refusals without exposing raw refusal text, and rejects incomplete output', async () => {

@@ -1,3 +1,4 @@
+import { BASE_LOCAL_AVOIDANCE } from './skilled-execution.js';
 import { entityGet } from '../../entity-collection.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { seesEntity } from '../../perception.js';
@@ -12,11 +13,13 @@ export const BASE_RANGED_POLICY: RangedPolicy = {
   version: 1,
   implementation: 'finite-shot',
   targetRule: 'living-actor',
+  pointFire: true,
+  localAvoidance: BASE_LOCAL_AVOIDANCE,
   conditionAdjustment: 'none',
   conditionAccuracyFactor: 0.85,
   windupSeconds: BASE_ACTION_DEFAULTS.shotSeconds,
   approachBuffer: 3.5,
-  // Short launchers must not demand a stance inside ordinary body/aim clearance.
+  // Short ranged weapons must not demand a stance inside ordinary body/aim clearance.
   minimumApproachRange: 2,
   invalidTargetText: 'Choose a living permitted target.',
   unavailableText: 'the target or ranged tool is no longer available.',
@@ -37,7 +40,7 @@ export const BASE_HUNTING = {
   purpose: 'for meat',
   scope: 'One attack.',
   knownPrey: ['hare', 'deer', 'bird'] as readonly string[],
-  methods: { melee: true, launcher: true, unarmed: true },
+  methods: { melee: true, rangedWeapon: true, unarmed: true },
   unarmedTool: 'bare hands',
 };
 

@@ -46,6 +46,7 @@ import { sensesFor, sightSampleSeconds, SIGHT_BODY_FRACTIONS } from './perceptio
 import { spatialCandidates } from './spatial.js';
 import {
   bodyProfile,
+  effectiveBodyProfile,
   hasWorldPlacement,
   spatialMap,
   supportedPosition,
@@ -315,7 +316,7 @@ export function movingPointVisionRuns(
         {
           track: own,
           radius,
-          eye: bodyProfile(observer).eyeHeight,
+          eye: effectiveBodyProfile(world, observer).eyeHeight,
           angle: vision?.fieldOfViewRadians,
           heading: observer.spatial.heading,
         },
@@ -488,8 +489,8 @@ function contactRuns(
   horizon: number,
 ): Run[] {
   const map = spatialMap(world);
-  const a = bodyProfile(first.entity),
-    b = bodyProfile(second.entity);
+  const a = effectiveBodyProfile(world, first.entity),
+    b = effectiveBodyProfile(world, second.entity);
   const tolerance = SPATIAL_LIMITS.epsilon,
     reach = a.radius + b.radius + tolerance;
   const pieces = mergedCuts(first.track, second.track);
@@ -566,8 +567,8 @@ function reachRuns(
   horizon: number,
 ): Run[] {
   const map = spatialMap(world),
-    a = bodyProfile(first.entity).interactionHeight,
-    b = bodyProfile(second.entity).interactionHeight;
+    a = effectiveBodyProfile(world, first.entity).interactionHeight,
+    b = effectiveBodyProfile(world, second.entity).interactionHeight;
   const pieces = mergedCuts(first.track, second.track),
     cuts = [...pieces],
     blockers: SightObstacle[] = [];
@@ -776,7 +777,7 @@ function bodyCertificate(
   actors: ReadonlySet<string>,
   ambient: ReadonlySet<string>,
 ): BodyCertificate {
-  const body = bodyProfile(entity);
+  const body = effectiveBodyProfile(world, entity);
   const alive = !!entity.actor?.alive,
     memory = hasMemory(entity);
   const nativeResponse = nativeSensoryObserver(entity);
@@ -1064,6 +1065,7 @@ export function sensoryCrossingBound(
   actorIds: readonly string[],
   ambientIds: readonly string[],
   cache: CrossingCache,
+  inputMotion?: ReadonlyMap<string, MotionTrack[]>,
 ): number {
   if (!(seconds > TIME_EPSILON)) return seconds;
   const entities = readOnlyDraftView(world.entities);
@@ -1087,7 +1089,10 @@ export function sensoryCrossingBound(
     const entity = entityGet(entities, id);
     return (
       entity &&
-      (entity.spatial.flight || actionHasMotion(entity.actor?.action) || entity.animal?.episode)
+      (inputMotion?.has(id) ||
+        entity.spatial.flight ||
+        actionHasMotion(entity.actor?.action) ||
+        entity.animal?.episode)
     );
   });
   for (const id of actorIds) {
@@ -1154,6 +1159,12 @@ export function sensoryCrossingBound(
   let growingNativeRegion = false;
   for (const id of new Set([...ambientIds, ...actorIds])) {
     const entity = entityGet(entities, id);
+    const inputTracks = inputMotion?.get(id);
+    if (inputTracks && entity) {
+      forgetCrossings(cache, [id]);
+      outcomes.set(id, inputTracks);
+      continue;
+    }
     const episode = entity?.animal?.episode,
       profile = episode && nativeResponseProfile(world, episode.profilePin);
     if (
@@ -1498,7 +1509,7 @@ export function sensoryCrossingBound(
             (own, other, span) =>
               bodyDistanceRuns(
                 own,
-                bodyProfile(observer),
+                effectiveBodyProfile(world, observer),
                 other,
                 danger.extent,
                 distance - SPATIAL_LIMITS.epsilon,
@@ -1522,7 +1533,7 @@ export function sensoryCrossingBound(
           ]) {
             const runs = bodyDistanceRuns(
               own,
-              bodyProfile(observer),
+              effectiveBodyProfile(world, observer),
               other,
               extent,
               distance + uncertainty - SPATIAL_LIMITS.epsilon,

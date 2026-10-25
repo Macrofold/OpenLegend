@@ -1,3 +1,5 @@
+import { validateAttackExecutions } from './combat-execution.js';
+import { validLethalPermission } from './combat-consent.js';
 import { validateSensoryProgress } from './perception-timing.js';
 import { validatePersonalSocialEvidence } from './personal-social.js';
 import { validateSupplyOpportunities } from './supply-opportunities.js';
@@ -78,7 +80,11 @@ import { validateFoodPreparations } from './food-preparation.js';
 import { validateFiniteCasts } from './finite-casts.js';
 import { validateActionExperience } from './action-experience.js';
 import { validateActivityHostPins, validateInstalledActivityRequests } from './activity-hosts.js';
-import { nativeCommandSupported, activityHostForCommand } from './activity-hosts.js';
+import {
+  nativeCommandSupported,
+  activityHostForCommand,
+  trustedActivityHost,
+} from './activity-hosts.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { isFuel } from './worlds/base/fire.js';
 import { validateAgency } from './agency.js';
@@ -288,7 +294,10 @@ export function definitionPin<T extends { id: string; version: number }>(
  * data too: a mutable authoring draft cannot hide edits behind unchanged saved pins.
  */
 export function activityManifest(world: WorldState): string {
-  const manifest = world.moduleManifest;
+  // Publication revision does not change a method's meaning. Actual definitions
+  // and executable host pins remain exact.
+  // docs/action-experience.md#learning-and-shared-definitions
+  const { revision: _revision, ...manifest } = world.moduleManifest;
   return canonicalJson({
     ...manifest,
     definitions: manifest.definitions.map(definitionPin),
@@ -1233,6 +1242,7 @@ export function validateWorldModules(world: WorldState): void {
   validateEquipment(world);
   validateContactDefense(world);
   validateRanged(world);
+  validateAttackExecutions(world);
   validateEvasion(world);
   validateFoodPreparations(world);
   validateFiniteCasts(world);
@@ -1353,6 +1363,14 @@ export function validateWorldModules(world: WorldState): void {
       }
     if (e.actor?.body && (!Number.isFinite(e.actor.body.maxHealth) || e.actor.body.maxHealth <= 0))
       throw new Error('Invalid body maximum.');
+    if (
+      e.actor?.body &&
+      (!hasRecordFields(e.actor.body.conditions, ['wetness', 'burning']) ||
+        Object.values(e.actor.body.conditions).some(
+          (value) => !Number.isFinite(value) || value < 0 || value > 100,
+        ))
+    )
+      throw new Error('Invalid body conditions.');
     if (
       e.actor?.body &&
       healthDefinition?.nativeHealth?.precision === 'whole-points' &&
@@ -1522,10 +1540,12 @@ export function validateWorldModules(world: WorldState): void {
       const permission = activeAction.lethalPermission;
       if (
         !['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
+        !validLethalPermission(permission) ||
         permission.actorId !== e.id ||
         permission.sourceLife !== (e.actor!.physicalLife ?? 0) ||
-        permission.targetId !== activeAction.targetId ||
-        permission.targetLife !== activeAction.targetLife ||
+        (activeAction.targetId !== undefined && permission.targetId !== activeAction.targetId) ||
+        (activeAction.targetLife !== undefined &&
+          permission.targetLife !== activeAction.targetLife) ||
         typeof permission.attackDigest !== 'string' ||
         !permission.attackDigest
       )

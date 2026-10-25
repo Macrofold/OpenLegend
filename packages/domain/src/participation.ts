@@ -12,6 +12,7 @@ import { releaseInvocationResources } from './resource-claims.js';
 import { cancelPlan, discardSuspended } from './agency.js';
 import { isSafeRecordId } from './records.js';
 import { TIME_EPSILON } from './simulation-time.js';
+import { forgetProjectileBodyEncounters } from './ranged.js';
 import type { Transition, WorldEvent, WorldState } from './types.js';
 import type { Entity } from './types.js';
 import { reconcileOutings } from './outings.js';
@@ -41,6 +42,11 @@ function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): v
   const support = supportedPosition(entity);
   if (support && canStand(spatialMap(world), support, bodyProfile(entity)))
     state.returnAnchor = support;
+  // Direct administrative departure need not run another native interval before
+  // saving. Retire the visible pose/crossing now; this same living body's response
+  // cooldown survives returning so departure cannot reset an evasion opportunity.
+  delete entity.spatial.localPose;
+  forgetProjectileBodyEncounters(world, entity.id, entity.actor!.physicalLife ?? 0);
   state.phase = 'inactive';
   reconcileOutings(world, events, { changedOnly: true });
   reconcileCompacts(world, events);

@@ -48,6 +48,9 @@ importers:
       '@open-legend/assets':
         specifier: workspace:*
         version: link:../../packages/assets
+      '@open-legend/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@open-legend/language':
         specifier: workspace:*
         version: link:../../packages/language
@@ -176,6 +179,9 @@ importers:
       '@open-legend/assets':
         specifier: workspace:*
         version: link:../assets
+      '@open-legend/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@open-legend/language':
         specifier: workspace:*
         version: link:../language

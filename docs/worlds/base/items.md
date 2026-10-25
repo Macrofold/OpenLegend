@@ -44,7 +44,7 @@ Inventory item details expose **Drop** and a whole-number quantity selector for 
 
 ## Compatible held equipment
 
-One attached placement is the saved truth for each held item. Its admitted definition names the places on the body it occupies and its supported uses; the body supplies available places. The [shield profile](shield-defense.md#compatible-equipment) owns this world’s hand combinations. Knife/gathering tool and shield can coexist, while current sling/bow launchers occupy both hands. Equipping checks custody, body compatibility and all selected/conflicting reservations before atomically individualizing one unit, stowing only conflicts and attaching it. Stowed items remain the same carried items.
+One attached placement is the saved truth for each held item. Its admitted definition names the places on the body it occupies and its supported uses; the body supplies available places. The [shield profile](shield-defense.md#compatible-equipment) owns this world’s hand combinations. Knife/gathering tool and shield can coexist, while current sling/bow ranged weapons occupy both hands. Equipping checks custody, body compatibility and all selected/conflicting reservations before atomically individualizing one unit, stowing only conflicts and attaching it. Stowed items remain the same carried items.
 
 Drop or accepted handover removes the exact attachment through the existing custody owner; an offer alone moves nothing. Removing one item does not release unrelated equipment. Equipment queries use a rebuilt subset of the object placement index, with no actor field mirroring equipment and no saved acceleration map. Current-format validation rejects missing ports, overlapping occupied ports, stale pins or invalid individualized attachments. Body and port identities remain separate even when their names contain colons. Inventory equipment descriptions require every occupied port and show current Equip refusals, including busy work and an incompatible body. Clothing and other bodies require their own authored ports and permissions; no armor or socket system is supplied here.
 
@@ -68,14 +68,6 @@ The retained legacy packing-binding reader is a compatibility exception to retir
 requirement to preserve or convert older development definitions. Refuse incompatible input
 without resetting or replacing it. Nonempty containers cannot be retired without a separate
 content disposition.
-
-## Planned fitted-container consumer
-
-[ND38 fitting](skilled-action-execution.md#the-chosen-noncombat-proof-fitted-woven-container) is **designed, not implemented**. It selects optional finishing only for an exactly admitted woven manufacture method with explicit support; the separately authored woven bag and an item's name do not acquire that option. The [camp-container family](camp-containers.md) still owns real material quantities, ordinary size and labor, with no additional tool or station requirement. The fitting profile alone owns its numerical law and initial choice to omit categorical grades.
-
-The planned result keeps a creation-time property on the same individual item, and one object-owned reader supplies its actual capacity to storage, nested movement, inspection, disclosed trade terms and save validation. Empty packing load and the load of all nested contents still count. Characters currently have no finite total carrying-load limit; the useful comparison is carrying a larger kit as one movable pouch alongside ordinary pouches and direct carrying. Capacity disclosure does not grant container access, reveal hidden contents or teach a recipe.
-
-Craft materials are already spent at work start. The optional **Ready to finish** action must neither require them again nor create output early. Same-version restore preserves working/waiting craft only if native work has not been interrupted; genuine departure or cancellation retains normal material loss and no pouch. The [ND38 technical contract](../../projects/action-execution-and-skill-expression-tech-design.md#4-noncombat-proof-quality-sensitive-woven-container) and [ASE08](../../maintainers/action-execution-and-skill-expression.md#ase08--real-quality-producing-noncombat-proof) own implementation, exact continuation and verification.
 
 ## Shared containers and active work
 

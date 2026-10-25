@@ -135,10 +135,12 @@ export function instanceBillboards(
  * This is derived asset data, not authored anatomy or a physical collision shape. */
 export function spritePadding(images: readonly ImageData[]): {
   bottom: number;
+  top: number;
   left: number;
   right: number;
 } {
   let bottom = 1,
+    top = 1,
     left = 1,
     right = 1;
   for (const image of images) {
@@ -146,12 +148,13 @@ export function spritePadding(images: readonly ImageData[]): {
       for (let x = 0; x < image.width; x++) {
         if (image.data[(y * image.width + x) * 4 + 3]! < 24) continue;
         bottom = Math.min(bottom, (image.height - y - 1) / image.height);
+        top = Math.min(top, y / image.height);
         left = Math.min(left, x / image.width);
         right = Math.min(right, (image.width - x - 1) / image.width);
       }
     }
   }
-  return bottom === 1 ? { bottom: 0, left: 0, right: 0 } : { bottom, left, right };
+  return bottom === 1 ? { bottom: 0, top: 0, left: 0, right: 0 } : { bottom, top, left, right };
 }
 
 /** The inverse of the visual placement, also used for picking/reveal feathering. */

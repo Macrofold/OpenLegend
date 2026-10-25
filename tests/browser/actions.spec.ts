@@ -70,11 +70,21 @@ test('scoped React action search, contextual facts and known unavailable choices
     // The complete catalogue also contains berry and branch gathering choices.
     await search.fill('gather river reeds');
     await search.press('ArrowDown');
-    // Finite gathering is another matching choice; enter at the first row,
-    // then use the opposite edge to reach the known blocked native action.
-    await expect(menu.locator('[data-picker-row]').first()).toBeFocused();
+    // Several current resource locations match this wording. Verify both entry
+    // edges, then navigate to this exact source without assuming its row order.
+    const rows = menu.locator('[data-picker-row]');
+    await expect(rows.first()).toBeFocused();
     await search.focus();
     await search.press('ArrowUp');
+    await expect(rows.last()).toBeFocused();
+    const targetIndex = await rows.evaluateAll((elements) =>
+      elements.findIndex(
+        (element) => element.getAttribute('data-catalogue-action') === 'gather-reeds',
+      ),
+    );
+    expect(targetIndex).toBeGreaterThanOrEqual(0);
+    for (let index = (await rows.count()) - 1; index > targetIndex; index--)
+      await page.keyboard.press('ArrowUp');
     await expect(gather).toBeFocused();
     await expect(tip).toContainText('Resume the world');
     await page.keyboard.press('Enter');

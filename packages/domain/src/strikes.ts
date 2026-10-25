@@ -5,7 +5,12 @@ import {
   SPATIAL_LIMITS,
   type SurfacePoint,
 } from '@open-legend/spatial';
-import { bodyProfile, supportedPosition, worldPosition, spatialMap } from './spatial-state.js';
+import {
+  effectiveBodyProfile,
+  supportedPosition,
+  worldPosition,
+  spatialMap,
+} from './spatial-state.js';
 import { hasLineOfEffect } from './spatial.js';
 import { definitionPin } from './world-modules.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
@@ -260,7 +265,12 @@ export function movingStrikeInReach(
   origin = worldPosition(actor),
 ): boolean {
   return (
-    bodySurfaceDistance(origin, bodyProfile(actor), worldPosition(target), bodyProfile(target)) <=
+    bodySurfaceDistance(
+      origin,
+      effectiveBodyProfile(world, actor),
+      worldPosition(target),
+      effectiveBodyProfile(world, target),
+    ) <=
       reach + SPATIAL_LIMITS.epsilon && hasLineOfEffect(world, actor, target, origin)
   );
 }
@@ -276,7 +286,10 @@ export function movingStrikeStance(
   const dx = from.x - targetPoint.x,
     dz = from.z - targetPoint.z,
     length = Math.hypot(dx, dz),
-    radius = bodyProfile(actor).radius + bodyProfile(target).radius + standOff,
+    radius =
+      effectiveBodyProfile(world, actor).radius +
+      effectiveBodyProfile(world, target).radius +
+      standOff,
     angle = length > 0 ? Math.atan2(dz, dx) : actor.spatial.heading;
   return (
     resolveSupport(

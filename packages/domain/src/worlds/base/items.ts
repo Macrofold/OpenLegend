@@ -1,3 +1,4 @@
+import { BASE_ATTACK_EXECUTION } from './skilled-execution.js';
 import { BASE_CANOPY, CANOPY_ITEMS } from './canopies.js';
 import type { ItemDefinition } from '../../types.js';
 import type { DefinitionPin } from '../../world-modules.js';
@@ -79,6 +80,7 @@ const existingItems: Readonly<Record<string, ItemDefinition>> = {
     },
   },
   spear: {
+    execution: BASE_ATTACK_EXECUTION.spear,
     id: 'spear',
     version: 1,
     portable: true,
@@ -98,6 +100,27 @@ const existingItems: Readonly<Record<string, ItemDefinition>> = {
       recoverySeconds: 36,
     },
     mechanismFields: { story_importance: { story_importance: 8 } },
+  },
+  hammer: {
+    id: 'hammer',
+    version: 1,
+    portable: true,
+    packingLoad: 3,
+    name: 'Camp hammer',
+    description:
+      'A heavy hammer for close contact strikes. It prepares and recovers slowly; a carefully released blow can improve its impact.',
+    properties: ['rigid'],
+    equipment: BASE_SPEAR_EQUIPMENT,
+    characteristics: CONTACT_CHARACTERISTICS,
+    execution: BASE_ATTACK_EXECUTION.hammer,
+    melee: {
+      damage: 14,
+      accuracy: 0.75,
+      range: 1.4,
+      approachRange: 1,
+      windupSeconds: 24,
+      recoverySeconds: 48,
+    },
   },
   woven_bag: {
     icon: 'ui.inventory',

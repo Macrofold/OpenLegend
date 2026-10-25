@@ -23,6 +23,7 @@ export * from './finite-casts.js';
 export { BASE_DEATH_COMMAND_DESCRIPTIONS } from './worlds/base/death.js';
 export * from './reincarnation.js';
 export * from './combat-consent.js';
+export { attackSubject } from './combat-execution.js';
 export * from './combat-encounters.js';
 export * from './combat-means.js';
 export * from './native-response.js';
@@ -30,6 +31,7 @@ export * from './native-response-navigation.js';
 export { reconcileNativeControl } from './native-response-controller.js';
 export * from './ranged.js';
 export * from './worlds/base/ranged-counterplay.js';
+export { BASE_SKILLED_TEXT } from './worlds/base/skilled-execution.js';
 export { describeBodyRemains } from './worlds/base/bodies.js';
 export {
   activeStimuli,
@@ -188,6 +190,7 @@ export * from './invention-attribution.js';
 
 export * from './invention-families.js';
 export * from './manufacture.js';
+export * from './manufacture-limits.js';
 export { BASE_RECIPE_FAMILIES } from './worlds/base/recipe-families.js';
 export { gatheringYield, carriedGatheringChoices } from './gathering.js';
 export { gatheringDescription } from './worlds/base/actions.js';
@@ -413,3 +416,7 @@ export { activityHostRequests } from './activity-hosts.js';
 
 export { isNativeInputField, isMaterialInputRole } from './native-inputs.js';
 export { BOUNDARY_REPAIR_INPUT_LIMIT } from './boundary-repair-inputs.js';
+export * from './execution-input.js';
+export { canSteer } from './player-steering.js';
+
+export { itemContainerCapacity } from './objects.js';

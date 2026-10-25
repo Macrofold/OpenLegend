@@ -9,6 +9,21 @@ export interface ScreenRect extends ScreenPoint {
   width: number;
   height: number;
 }
+export interface PhysicalAimPoint {
+  position: { x: number; y: number; z: number };
+  targetId?: string;
+  bodyReference?: string;
+  /** Current displayed living body; the installed source still selects eligible targets. */
+  livingBody?: 'actor' | 'animal';
+  surfaceId?: string;
+  shapeId?: string;
+}
+export interface AttackPointerControls {
+  begin(aim: PhysicalAimPoint | null, screen: ScreenPoint): boolean;
+  move(aim: PhysicalAimPoint | null, screen: ScreenPoint, deliberateSelf: boolean): void;
+  release(aim: PhysicalAimPoint | null, screen: ScreenPoint): void;
+  cancel(): void;
+}
 export type SceneLoadProgress =
   | { phase: 'loading' | 'preparing' | 'ready'; completed: number; total: number }
   | { phase: 'failed'; completed: number; total: number; message: string };
@@ -56,6 +71,9 @@ export interface ConstructionPreviewTransform {
   rotation: number;
 }
 export interface WorldRenderer {
+  setAttackInput(controls: AttackPointerControls | null): void;
+  aimAt(screen: ScreenPoint): PhysicalAimPoint | null;
+  aimScreenPosition(id: string): ScreenPoint | null;
   setConstructionPreview(
     shapes: readonly ConstructionShape[] | null,
     valid?: boolean,

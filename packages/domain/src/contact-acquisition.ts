@@ -44,7 +44,7 @@ export function* updateContactEpisodes(
     if (
       !source ||
       source.id === observer.id ||
-      !bodiesTouch(observer, source) ||
+      !bodiesTouch(world, observer, source) ||
       !hasLineOfEffect(world, observer, source)
     )
       continue;

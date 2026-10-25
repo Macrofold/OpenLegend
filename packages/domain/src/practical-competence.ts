@@ -5,7 +5,8 @@ import { recordSemanticChange } from './dependencies.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { supportsManualWork } from './living.js';
-import { nearbyBodyEntities, canReachEntity, hasLineOfSight, distance } from './spatial.js';
+import { nearbyBodyEntities, interactionAnchor, hasLineOfSight, distance } from './spatial.js';
+import { baseRangedTargetPoint } from './worlds/base/ranged-counterplay.js';
 import { worldPosition, bodyProfile } from './spatial-state.js';
 import { chargeWork, requireWork, WORK_LIMITS } from './work-budget.js';
 import { definitionPin, type AttributeDefinition, type DefinitionPin } from './world-modules.js';
@@ -219,7 +220,7 @@ export function handlingAccuracy(
 ): { accuracy: number; competence?: 0 | 1; definition?: AttributeDefinition } {
   const definition = toolPracticeDefinition(world, tool);
   const competence = definition && actor.actor && competenceValue(actor.actor, definition);
-  const accuracy = tool.launcher!.accuracy;
+  const accuracy = tool.rangedWeapon!.accuracy;
   return {
     accuracy:
       competence === 1 ? accuracy + definition!.practice!.missReduction * (1 - accuracy) : accuracy,
@@ -386,13 +387,13 @@ export function practiceLaneProblem(
   profile: PracticeProfile,
 ): Outcome | null {
   const margin = profile.laneMargin;
-  if (!canReachEntity(world, actor, target, range))
+  const eye = interactionAnchor(world, actor),
+    aim = baseRangedTargetPoint(world, target);
+  if (distance(eye, aim) > range)
     return outcome(false, 'out-of-reach', profile.presentation.laneOutOfReach);
   const from = worldPosition(actor),
     to = worldPosition(target),
     length = distance(from, to);
-  const eye = { ...from, y: from.y + bodyProfile(actor).height / 2 },
-    aim = { ...to, y: to.y + bodyProfile(target).height / 2 };
   if (!hasLineOfSight(world, eye, aim))
     return outcome(false, 'blocked-lane', profile.presentation.laneBlocked);
   for (const entity of nearbyBodyEntities(world, from, length + margin, true)) {

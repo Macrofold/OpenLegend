@@ -25,7 +25,6 @@ import {
 } from './construction-permissions.js';
 import type { ConstructionPermission } from './assembly-types.js';
 import { cloneValue, entityChangesSince } from './draft.js';
-import { recordMaterialContribution } from './objects.js';
 import { entityGet, entityOwn, entityValues } from './entity-collection.js';
 import { canonicalJson } from './events.js';
 import { subjectNarration } from './narration.js';
@@ -33,6 +32,8 @@ import { emit, emitPrivateObservation, emitWitnessObservation, outcome } from '.
 import { canHandleItems } from './item-handling.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
 import {
+  itemContainerCapacity,
+  recordMaterialContribution,
   directChildIds,
   itemFor,
   moveLot,
@@ -62,6 +63,7 @@ export interface RequestedLot {
   expectedContentsRevision?: number;
 }
 export interface OfferLot {
+  capacity?: number;
   itemId: string;
   definitionPin: DefinitionPin;
   quantity: number;
@@ -239,6 +241,7 @@ function pinLot(world: WorldState, item: ItemInstance, quantity: number): OfferL
     placementRevision: entity.placement!.revision,
     ...(entity.container
       ? {
+          capacity: itemContainerCapacity(world, entity),
           contentsRevision: entity.inventoryRevision ?? 0,
           subtreeRevision: entity.container.subtreeRevision,
         }
@@ -256,7 +259,12 @@ export function pendingItemOfferCounts(world: WorldState, actorId: string, exclu
   return result;
 }
 export function describeOfferLot(world: WorldState, lot: OfferLot): string {
-  return lot.quantity + ' ' + (world.itemDefinitions[lot.definitionPin.id]?.name ?? 'item');
+  return (
+    lot.quantity +
+    ' ' +
+    (world.itemDefinitions[lot.definitionPin.id]?.name ?? 'item') +
+    (lot.capacity === undefined ? '' : ` (capacity ${lot.capacity})`)
+  );
 }
 export function describeItemOffer(
   world: WorldState,
@@ -330,6 +338,8 @@ function lotStillHeld(world: WorldState, holderId: string, lot: OfferLot, exact 
     sameDefinitionPin(entityGet(world.entities, item.id)!.item!.definitionPin, lot.definitionPin) &&
     (!exact ||
       (item.revision === lot.revision && item.placementRevision === lot.placementRevision)) &&
+    (lot.capacity === undefined ||
+      itemContainerCapacity(world, entityGet(world.entities, item.id)!) === lot.capacity) &&
     definition.portable === true &&
     accessiblePossession(world, holderId, item.id) &&
     availableItemQuantity(world, item.id) >= lot.quantity &&
@@ -961,7 +971,7 @@ export function isOfferLot(value: unknown): value is OfferLot {
     !hasRecordFields(
       value,
       ['itemId', 'definitionPin', 'quantity', 'whole', 'revision', 'placementRevision'],
-      ['contentsRevision', 'subtreeRevision'],
+      ['contentsRevision', 'subtreeRevision', 'capacity'],
     )
   )
     return false;
@@ -982,6 +992,7 @@ export function isOfferLot(value: unknown): value is OfferLot {
     typeof lot.whole === 'boolean' &&
     revision(lot.revision) &&
     revision(lot.placementRevision) &&
+    (lot.capacity === undefined || (Number.isSafeInteger(lot.capacity) && lot.capacity > 0)) &&
     (lot.contentsRevision === undefined || revision(lot.contentsRevision)) &&
     (lot.subtreeRevision === undefined || revision(lot.subtreeRevision))
   );

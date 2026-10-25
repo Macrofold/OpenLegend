@@ -109,7 +109,7 @@ This file records current reproducible evidence and acceptance gaps. Fixture evi
 
 ## Invention extensibility review
 
-Reviewed `24f970566f5ed400fd25e197dd3aa624fa0accc9`, which retains main `7bba4866819e5623fc4e42d6f8d82f96ca25877d` plus the preceding invention/performance work. The review implements the finite [world-agent workshop tools](../architecture.md#invention-workshop-tools), not the full invention foundation. [Raw bounded observations](invention-extensibility-review.json) retain workloads and limits.
+Reviewed `24f970566f5ed400fd25e197dd3aa624fa0accc9`, which retains main `7bba4866819e5623fc4e42d6f8d82f96ca25877d` plus the preceding invention/performance work. The review implements the finite [world-agent workshop tools](../architecture.md#invention-workshop-tools), not the full invention foundation. [Raw bounded observations](invention-extensibility-review.json) retain workloads, limits and exact historical payload/digest field names from before the October 25 ranged-weapon terminology change. Those captured bytes are evidence, not current schema examples.
 
 ### Method
 

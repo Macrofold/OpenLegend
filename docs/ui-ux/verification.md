@@ -78,9 +78,11 @@ Pass conditions: no accidental overlap, clipped essential text, inaccessible fin
 | History           | Scroll up during reply, prepend, reconnect/late messages                                                     | Stable chronology/anchor, no duplicate or forced scroll                                        |
 | Invention         | Selective correction, edit during validation, old revision, late art, cancel/scope change                    | One candidate, meaningful evidence/status, no stale overwrite or implicit activation           |
 | Persistence       | Back/Forward, reload, account/world switch with retained draft/search                                        | Correct permitted navigation, no private text exposed in URL or another scope                  |
-| Save/load         | Write failure, uncertain timeout, preservation failure, incompatible save                                    | Truthful receipt/refusal; last-known-good save protected; no reset/migration                   |
+| Save/load         | Write failure, uncertain timeout, preservation failure, incompatible save                                    | Truthful receipt/refusal; supported current-format saves remain intact                         |
 | Notices           | Routine burst plus failure, typing while result arrives, reduced motion                                      | Important information retrievable; no routine focus theft or forced fake pending               |
 | Shared wrapper    | Consumer/internal handlers, ref, label/error IDs, keyboard/pointer activation                                | No overwritten behavior, wrong node, lost association or duplicate mutation                    |
+
+Incompatible development state follows the [root save policy](../../AGENTS.md#development-save-policy).
 
 Large fixtures are not caps. [HV01](../limits/interface.md#hv01) retains earlier 1,001-stack observations; the handbook adds no measurements.
 

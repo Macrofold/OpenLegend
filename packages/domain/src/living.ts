@@ -1,4 +1,5 @@
 import { reconcileNativeControl } from './native-response-controller.js';
+import { forgetProjectileBodyEncounters } from './ranged.js';
 import { entityGet } from './entity-collection.js';
 import { orderedRecordGet, orderedRecordSet } from './ordered-record.js';
 import { person } from './narration.js';
@@ -32,7 +33,7 @@ export interface LivingBody {
   plan: 'biped' | 'quadruped' | 'avian';
   maxHealth: number;
   revision: number;
-  conditions: { injury: number; wetness: number; burning: number };
+  conditions: { wetness: number; burning: number };
   susceptibility: { injury: number; wetness: number; burning: number; healing: number };
   harvestYield: { definitionId: string; quantity: number }[];
 }
@@ -98,6 +99,9 @@ export function reconcileBody(
     if (lifecycle[actor.controller] === 'incapacitate') actor.incapacitated = true;
     else {
       actor.alive = false;
+      delete entity.spatial.localPose;
+      delete entity.spatial.localAvoidanceReadyAt;
+      forgetProjectileBodyEncounters(world, entity.id, actor.physicalLife ?? 0);
       if (entity.animal) {
         delete entity.animal.episode;
         if (entity.animal.foraging) {
@@ -147,6 +151,7 @@ export function reconcileBody(
 }
 export interface BodyEffect {
   targetId: string;
+  /** Injury is susceptibility-scaled health damage, not retained wound state. */
   kind: 'health' | 'injury' | 'healing' | 'wetness' | 'burning';
   amount: number;
 }
@@ -295,10 +300,6 @@ export function commitBodyEffects(
   totals.injury *= scarInjuryFactor;
   const before = actor.health;
   const previous = { ...body.conditions };
-  body.conditions.injury = Math.max(
-    0,
-    Math.min(100, previous.injury + totals.injury - totals.healing),
-  );
   body.conditions.wetness = Math.max(0, Math.min(100, previous.wetness + totals.wetness));
   body.conditions.burning = Math.max(
     0,
@@ -384,7 +385,6 @@ export function commitBodyEffects(
     {
       effectId: cause,
       healthDelta: actor.health - before,
-      injuryDelta: body.conditions.injury - previous.injury,
       wetnessDelta: body.conditions.wetness - previous.wetness,
       burningDelta: body.conditions.burning - previous.burning,
     },

@@ -1,6 +1,6 @@
 # OpenLegend limits and decisions
 
-**Selected skilled action-execution design (ND38):** [ASE-L01–ASE-L10](limits/action-execution-and-skill-expression.md) inventories proposed timing/gesture/stat, useful pouch-fit, client work, physical contact and competitive-claim restrictions; [ASE01–ASE12](maintainers/action-execution-and-skill-expression.md) owns implementation and qualification. Current mechanics remain unchanged until delivered.
+**Skilled combat execution (ND38):** [ASE-L01–ASE-L10](limits/action-execution-and-skill-expression.md) records timing, physical contact and input-lifetime bounds plus the withdrawn fitting/assistance and ownership-neutralization restrictions. [ASE01–ASE12](maintainers/action-execution-and-skill-expression.md) owns the combat-only correction, focused requalification and independent combat acceptance.
 
 The synthetic decision benchmark’s [DB01 envelopes](limits/ai-execution.md#db01--standalone-synthetic-decision-evaluation) bound standalone native model calls and durable evaluation journals. These are experimental-tool limits; current game cognition settings are unchanged.
 

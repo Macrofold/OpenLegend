@@ -1,3 +1,4 @@
+import { itemContainerCapacity } from '@open-legend/domain';
 import { constructionHelpPlans } from './construction.js';
 import { seesEntity, knownCeasefireConsequence } from '@open-legend/domain';
 import { contributionWithdrawals } from './handover-actions.js';
@@ -45,6 +46,7 @@ import {
   strikeDefinition,
   huntingDescription,
   rangedChoiceLabel,
+  baseRangedTargetPoint,
   BASE_EVASION_TEXT,
   nativeActivityViews,
   possessionItems,
@@ -301,7 +303,10 @@ export function buildContext(
           ? {
               container: {
                 load: container.load,
-                capacity: service.world.itemDefinitions[definitionId]!.container!.capacity,
+                capacity: itemContainerCapacity(
+                  service.world,
+                  entityGet(service.world.entities, id)!,
+                )!,
               },
             }
           : {}),
@@ -1028,7 +1033,7 @@ export function npcCandidates(
       })),
     );
   }
-  const { launchers, strikes, shields, ammunitionByKind } = prepareCombatMeans(
+  const { rangedWeapons, strikes, shields, ammunitionByKind } = prepareCombatMeans(
     service.world,
     actorId,
     inventory,
@@ -1045,7 +1050,7 @@ export function npcCandidates(
       (definition.contactDefense ||
         definition.melee ||
         definition.gatheringTool ||
-        (definition.launcher && compatibleAmmo(definition.launcher.ammunitionKind)))
+        (definition.rangedWeapon && compatibleAmmo(definition.rangedWeapon.ammunitionKind)))
     ) {
       const command: CommandInput = { type: 'equip', itemId: item.id };
       if (!previewChoice(command).ok) continue;
@@ -1103,17 +1108,32 @@ export function npcCandidates(
     // for contact. Equal ranges share geometry work within this observed snapshot.
     if (rangedTargetAllowed(service.world, entity) && entity.id !== actorId) {
       const reachable = new Map<number, boolean>();
-      for (const { item, definition, launcher, ammunition: ammunitionLots } of launchers) {
+      const targetPoint = baseRangedTargetPoint(service.world, entity);
+      for (const { item, definition, rangedWeapon, ammunition: ammunitionLots } of rangedWeapons) {
         const description =
-          huntingDescription(entity.actor?.species, 'launcher', entity, definition) ??
+          huntingDescription(entity.actor?.species, 'rangedWeapon', entity, definition) ??
           `${rangedChoiceLabel('shoot-once', namePhrase(entity), namePhrase(definition))}.`;
-        if (!reachable.has(launcher.range))
+        if (!reachable.has(rangedWeapon.range))
           reachable.set(
-            launcher.range,
-            canReachEntity(service.world, observed.actor, entity, launcher.range) ||
-              !!findApproachPath(service.world, observed.actor, entity, launcher.range),
+            rangedWeapon.range,
+            canReachEntity(
+              service.world,
+              observed.actor,
+              entity,
+              rangedWeapon.range,
+              undefined,
+              targetPoint,
+            ) ||
+              !!findApproachPath(
+                service.world,
+                observed.actor,
+                entity,
+                rangedWeapon.range,
+                false,
+                targetPoint,
+              ),
           );
-        if (!reachable.get(launcher.range)) continue;
+        if (!reachable.get(rangedWeapon.range)) continue;
         for (const ammunition of ammunitionLots) {
           const command: CommandInput = {
             type: entity.animal ? 'hunt' : 'shoot-once',

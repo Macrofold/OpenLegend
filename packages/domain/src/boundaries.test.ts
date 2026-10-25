@@ -33,7 +33,7 @@ const draft = (): DeclarationDraft => ({
   ],
   output: {
     name: 'Fixture bow',
-    description: 'Test-only flex launcher.',
+    description: 'Test-only flex ranged weapon.',
   },
   parameters: { workSeconds: 90, damage: 18, range: 7, accuracy: 0.8 },
 });

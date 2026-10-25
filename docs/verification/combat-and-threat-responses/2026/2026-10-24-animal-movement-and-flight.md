@@ -355,7 +355,7 @@ preparation, not delivered native escape: flight choice admission, pinned speed,
 unsafe-landing review, control loss, fallback and combined qualification remain
 open. No unsupported output is counted as completing CTR03–CTR04.
 
-The launcher-family description's obsolete denial of collateral injury was also
+The ranged weapon-family description's obsolete denial of collateral injury was also
 removed; it now uses the same world-owned contact warning as ordinary shooting.
 No external calls were made. Additional Jev cost is **$0**; cumulative reported
 estimates remain Jev **$0.440786** and other providers **$0.207513**, uncertain

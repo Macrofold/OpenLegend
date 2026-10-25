@@ -4,21 +4,21 @@
 
 ## Camp recovery
 
-The selected method is **Recover at camp**. It applies to a living, awake human body with this world's ordinary health, injury, food and energy model, regardless of controller. A current health deficit or nonzero ordinary injury makes it useful. A scar by itself does not. The first independently complete delivery qualifies the human player's self-care; resident use later follows the same method and independent choice.
+The selected method is **Recover at camp**. It applies to a living, awake human body with this world's ordinary health, food and energy model, regardless of controller. A current health deficit makes it useful. A scar by itself does not. The first independently complete delivery qualifies the human player's self-care; resident use later follows the same method and independent choice.
 
 Choose one actual known campfire and remain within **2.2 world units** for **600 uninterrupted game seconds**. A cold campfire qualifies. Fire, fuel, a bed, a clinic, a helper and a consumable are unnecessary. Reach and supporting geometry remain the normal action owner's authority; a label alone cannot create a rest spot. This family does not add automatic campfire construction or teleportation.
 
-At valid completion, restore this body's ordinary health to its actual maximum and reduce ordinary injury to zero together. There is no overheal, temporary protection or additional maximum health. Food and energy are not replenished; scars, wetness, burning and any other independently supported condition are not removed. Actual ongoing harm can interrupt and resume its consequences normally. Treatment does not reverse death.
+At valid completion, restore this body's ordinary health to its actual maximum. There is no overheal, temporary protection or additional maximum health. Food and energy are not replenished; scars, wetness, burning and any other independently supported condition are not removed. Actual ongoing harm can interrupt and resume its consequences normally. Treatment does not reverse death.
 
 Both applicable needs must stay strictly above zero. If the current known ordinary rates already show either reaching zero at or before the planned completion, refuse start and explain the unmet need to its owner. At the current ordinary awake rates this means more than **1.8 fullness and 0.9 energy** at start. These are derived prerequisites, not separately authored new meters or universal engine thresholds. A changed applicable rate changes the read and prerequisite. Unknown future harm or hidden threats are not forecast to refuse the action.
 
 Recovery occupies physical work but keeps the person awake and conversational. Reading details, opening inventory, choosing a draft, typing and speaking are permitted. A successfully admitted choice to move, eat, sleep, manipulate an item, fight or perform other incompatible bodily work ends recovery. A rejected command or dismissed menu does not. Closing the care panel does not stop valid work.
 
-No health/injury change is committed before completion. Cancellation loses only elapsed time and normal need expenditure, with no consumable to refund. Restart begins the short interval again. Incoming damage, zero applicable need, loss of place/reach, departure, unavailability or death interrupts. Damage due at the same completion boundary defeats completion; there is no final instant of care immunity. Ordinary time/body owners must preserve the actual ordering without replaying a past effect.
+No health change is committed before completion. Cancellation loses only elapsed time and normal need expenditure, with no consumable to refund. Restart begins the short interval again. Incoming damage, zero applicable need, loss of place/reach, departure, unavailability or death interrupts. Damage due at the same completion boundary defeats completion; there is no final instant of care immunity. Ordinary time/body owners must preserve the actual ordering without replaying a past effect.
 
 ## Field dressing
 
-This optional later method buys location flexibility. **Dress injuries here** uses **one prepared-fiber unit** and **600 uninterrupted game seconds**, with the same body eligibility, need prerequisites and ordinary recovery outcome. It works at the patient's current supported location without a campfire. The patient stays still; movement ends treatment. Self-dressing remains possible without a helper.
+This conditional later method requires an actual supported wound or condition and a defined useful treatment effect. Its proposed **Dress injuries here** action uses **one prepared-fiber unit** and **600 uninterrupted game seconds**, retaining the camp method's body eligibility and need prerequisites. It does not restore arbitrary health loss or clear an aggregate injury value. It works at the patient's current supported location without a campfire. The patient stays still; movement ends treatment. Self-dressing remains possible without a helper.
 
 The exact unreserved fiber must be directly carried by the performing person under the first selected scope. Select its actual lot; a fiber in a nested bag has a normal move-out route first. Availability neither consumes nor locks it. If the bound unit becomes unavailable, completion cannot choose another without a fresh reviewed attempt. Consume the unit and apply the effect together only upon valid completion.
 
@@ -26,13 +26,13 @@ Assisted dressing is one patient and one helper within **2.2 world units**. Both
 
 The helper supplies the fiber. A patient who wants to supply it may first use an ordinary independently accepted handover. Assent to dressing grants no access to the patient's possessions. Either person can stop without a new generated dialogue; harm, incapacity, death, departure, loss of reach, zero need or incompatible work by either participant cancels the attempt. A stopped helper does not leave an invisible continuing treatment on the patient.
 
-Only **one actual care activity per patient** is admitted. Concurrent offers remain invitations, not ownership. No healing multiplier, medical experience, favor token or automatic social reward is granted for assistance. A healthy patient, a dead body, an old physical life or a scar-only complaint cannot consume a dressing for fictitious benefit.
+Only **one actual care activity per patient** is admitted. Concurrent offers remain invitations, not ownership. No healing multiplier, medical experience, favor token or automatic social reward is granted for assistance. A patient without the matching treatable condition, a dead body, an old physical life or a scar-only complaint cannot consume a dressing for fictitious benefit.
 
 ## What people know
 
 The current world exposes visible bodily health for observed people. Food and energy remain private. The patient receives specific explanations for their own unmet needs; the helper sees only an actor-safe refusal or information the patient actually communicates. Treatment does not reveal a private cause, thought or diagnosis.
 
-The ordinary injury amount supports injury-related slowing. Do not invent a broken limb, infection or prognosis from its value. Someone can hold and express an uncertain explanation, but their language creates no condition or cure. On completion, show the actual ordinary improvement and the separate remaining conditions permitted to that viewer.
+There is no ordinary injury amount or automatic damage-derived slowing. Do not infer a broken limb, infection or prognosis from health loss. Someone can hold and express an uncertain explanation, but their language creates no condition or cure. On completion, show the actual ordinary improvement and the separate remaining conditions permitted to that viewer.
 
 This first profile has no random infection, bleeding, pain meter, treatment-quality roll, daily medical allowance or cooldown. A later condition may need different interruption behavior—for example, a treatment for ongoing bleeding cannot simply inherit a rule making every bleeding tick cancel it. Such a consumer needs its own complete product decision before adoption.
 
@@ -40,7 +40,7 @@ This first profile has no random infection, bleeding, pain meter, treatment-qual
 
 At the current normal clock, 600 game seconds equals **ten real seconds**. Ordinary food depletion over the interval is **1.8 fullness**; ordinary awake energy expenditure is **0.9 energy**. Approach, discovery, human reading, conversation and provider waiting can add to the whole episode. These figures are calculated from current rates, not observed player timings.
 
-An ordinary healthy human hit once by the current stag loses 18 health and gains 18 injury, making nominal movement 91% before scars. Valid camp recovery returns ordinary health to 100 and injury to zero. A stiff-leg scar still applies its existing separate movement consequence. Three ordinary hits similarly do not require three recovery clicks; this is one fixed-duration action to restore the supported ordinary condition.
+An ordinary healthy human hit once by the current stag loses 18 health without an automatic movement penalty. Valid camp recovery would return ordinary health to 100. A stiff-leg scar still applies its existing separate movement consequence. Three ordinary hits similarly do not require three recovery clicks; the proposed camp action restores lost health in one fixed interval.
 
 Current Treat Scar remains **one prepared fiber, 600 game seconds and 2.2-unit campfire reach per scar count**, with its own exact current admission and completion rules. Its behavior is not changed here. The same material also serves real crafting/fire uses, so field dressing adds demand to that existing stock rather than introducing a free medical currency.
 

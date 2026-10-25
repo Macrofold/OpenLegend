@@ -294,14 +294,14 @@ function nativeActionCatalogue(
           });
     // Retain this gesture's established first matching carried-lot choice. A
     // reserved first lot still refuses; selecting another projectile is a new choice.
-    const ammunitionId = definition.launcher
+    const ammunitionId = definition.rangedWeapon
       ? observation.inventory.find(
           (item) =>
             world.itemDefinitions[item.definitionId]?.ammunition?.kind ===
-            definition.launcher!.ammunitionKind,
+            definition.rangedWeapon!.ammunitionKind,
         )?.id
       : undefined;
-    if (target.actor?.alive && definition.launcher)
+    if (target.actor?.alive && definition.rangedWeapon)
       for (const type of ['aim', 'shoot-once'] as const)
         commands.push({
           id: `${type}:${target.id}:${equipment.id}`,
@@ -324,7 +324,7 @@ function nativeActionCatalogue(
         category: 'Gather',
         command: { type: 'gather', targetId: target.id, itemId: equipment.id },
       });
-    if (rangedTargetAllowed(world, target) && definition.launcher)
+    if (rangedTargetAllowed(world, target) && definition.rangedWeapon)
       commands.push({
         id: `hunt-${target.id}`,
         label: rangedPolicy(world)!.actionLabel,
@@ -675,15 +675,17 @@ function nativeActionCatalogue(
     ? observation.inventory.filter(
         (item) =>
           (!context.itemId || item.id === context.itemId) &&
-          (world.itemDefinitions[item.definitionId]?.launcher ||
+          (world.itemDefinitions[item.definitionId]?.rangedWeapon ||
             world.itemDefinitions[item.definitionId]?.melee) &&
           accessiblePossession(world, scope.actorId, item.id),
       )
     : [];
-  const launchers = tools.filter((item) => world.itemDefinitions[item.definitionId]?.launcher);
+  const rangedWeapons = tools.filter(
+    (item) => world.itemDefinitions[item.definitionId]?.rangedWeapon,
+  );
   const projectiles = new Map<string, string | undefined>();
   for (const item of tools) {
-    const kind = world.itemDefinitions[item.definitionId]?.launcher?.ammunitionKind;
+    const kind = world.itemDefinitions[item.definitionId]?.rangedWeapon?.ammunitionKind;
     if (kind && !projectiles.has(kind))
       projectiles.set(kind, ammoFor(world, scope.actorId, kind)?.id);
   }
@@ -791,7 +793,7 @@ function nativeActionCatalogue(
         target.id,
       );
     if (rangedTargetAllowed(world, target) && target.id !== scope.actorId)
-      for (const item of launchers)
+      for (const item of rangedWeapons)
         for (const type of ['aim', 'shoot-once'] as const)
           add(
             `${type}:${target.id}:${item.id}`,
@@ -803,14 +805,14 @@ function nativeActionCatalogue(
               targetId: target.id,
               itemId: item.id,
               ammunitionId: projectiles.get(
-                world.itemDefinitions[item.definitionId]!.launcher!.ammunitionKind,
+                world.itemDefinitions[item.definitionId]!.rangedWeapon!.ammunitionKind,
               ),
             },
             BASE_RANGED_TEXT.keywords,
             target.id,
           );
     if (rangedTargetAllowed(world, target) && target.animal) {
-      if (!launchers.length)
+      if (!rangedWeapons.length)
         add(
           `hunt-${target.id}`,
           `${rangedPolicy(world)!.actionLabel} ${target.name}`,
@@ -819,7 +821,7 @@ function nativeActionCatalogue(
           ['shoot', 'attack', 'ranged'],
           target.id,
         );
-      for (const item of launchers)
+      for (const item of rangedWeapons)
         add(
           `hunt-${target.id}:${item.id}`,
           `${rangedPolicy(world)!.actionLabel} ${target.name} with ${world.itemDefinitions[item.definitionId]!.name}`,
@@ -830,7 +832,7 @@ function nativeActionCatalogue(
             targetId: target.id,
             itemId: item.id,
             ammunitionId: projectiles.get(
-              world.itemDefinitions[item.definitionId]!.launcher!.ammunitionKind,
+              world.itemDefinitions[item.definitionId]!.rangedWeapon!.ammunitionKind,
             ),
           },
           ['shoot', 'attack', 'ranged'],
@@ -941,7 +943,7 @@ function nativeActionCatalogue(
         `Equip ${definition.name}`,
         'Equipment',
         { type: 'equip', itemId: item.id },
-        ['weapon', 'launcher'],
+        ['weapon', 'ranged weapon'],
       );
     if (definition.nutrition && bodyPolicy(world)?.consumption)
       add(

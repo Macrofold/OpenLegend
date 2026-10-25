@@ -51,7 +51,7 @@ export function LethalAttackDialog({
             </ul>
           </div>
           <footer className="ol-modal-actions">
-            <Button variant="secondary" autoFocus isDisabled={busy} onPress={cancel}>
+            <Button variant="secondary" autoFocus onPress={cancel}>
               {review.cancelLabel}
             </Button>
             <Button variant="primary" busy={busy} onPress={confirm}>

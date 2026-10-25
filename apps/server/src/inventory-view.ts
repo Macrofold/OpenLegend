@@ -1,3 +1,4 @@
+import { itemContainerCapacity } from '@open-legend/domain';
 import { mealChoiceForItem } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import { inventoryDisplayGroups, inventoryGroupToken } from './inventory-groups.js';
@@ -273,7 +274,7 @@ export function containerPage(
         ? {
             restricted: !!entity.container.access,
             load: entity.container.load,
-            capacity: world.itemDefinitions[entity.container.definitionPin.id]!.container!.capacity,
+            capacity: itemContainerCapacity(world, entity)!,
           }
         : {}),
     },
@@ -522,7 +523,7 @@ export function activityStorageReader(
       ...(reachable && evidenced && target.container
         ? {
             load: target.container.load,
-            capacity: world.itemDefinitions[target.container.definitionPin.id]!.container!.capacity,
+            capacity: itemContainerCapacity(world, target)!,
           }
         : {}),
       ...(!allowed
@@ -687,7 +688,7 @@ export function inventoryDestinationPage(
       kind: recipient ? 'recipient' : 'container',
       openable: !recipient,
       ...(target.container && definition?.container
-        ? { load: target.container.load, capacity: definition.container.capacity }
+        ? { load: target.container.load, capacity: itemContainerCapacity(world, target)! }
         : {}),
       ...(source
         ? {
@@ -1128,7 +1129,7 @@ export function inventoryItemSummary(
       ? {
           container: {
             load: item.container.load,
-            capacity: definition.container!.capacity,
+            capacity: itemContainerCapacity(world, entityGet(world.entities, item.id)!)!,
             revision: entityGet(world.entities, item.id)!.inventoryRevision ?? 0,
           },
         }

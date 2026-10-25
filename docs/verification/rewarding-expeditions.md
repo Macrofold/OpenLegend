@@ -35,7 +35,7 @@ The local browser session needed renewed sign-in during checks. Interference fro
 
 **Engineer-assessed new option: yes.** The first reward alone gives **2.2-metre contact reach** against the starting knife's **1.3 metres**, with a slower **54-game-second preparation/recovery cycle** against the knife's **24**. It is a useful reach tradeoff rather than a universally better weapon.
 
-The workshop adds a known repeatable **six-metre** stone launcher with **14 authored damage**, manufactured from existing materials without an invention call. Actual manufacture, equipping and ammunition-consuming use demonstrate that option mechanically. Finite stock and portable records mean another visitor's earlier choices matter; materials can also come from ordinary gathering/preparation. This assessment does not establish uncoached enjoyment, preferred balance, repeated-outing motivation or that the player will choose the new option. AV02's two-hand comparison remains an explicit shared integration, not a delivered claim.
+The workshop adds a known repeatable **six-metre** stone ranged weapon with **14 authored damage**, manufactured from existing materials without an invention call. Actual manufacture, equipping and ammunition-consuming use demonstrate that option mechanically. Finite stock and portable records mean another visitor's earlier choices matter; materials can also come from ordinary gathering/preparation. This assessment does not establish uncoached enjoyment, preferred balance, repeated-outing motivation or that the player will choose the new option. AV02's two-hand comparison remains an explicit shared integration, not a delivered claim.
 
 ## Checks and retained limits
 

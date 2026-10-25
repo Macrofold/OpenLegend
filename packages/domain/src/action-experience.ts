@@ -1,3 +1,6 @@
+import { validAttackExecutionEvidence, validAimPointSubject } from './combat-execution.js';
+import { finitePoint } from '@open-legend/spatial';
+import { validTimedReleaseInput } from './execution-input.js';
 import { isNativeInputField } from './native-inputs.js';
 import { releaseGateWork } from './gate-operations.js';
 import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
@@ -106,10 +109,12 @@ export interface ActivityView {
   result?: string;
 }
 export interface ActivityOccurrence {
+  attackExecution?: import('./combat-execution.js').AttackExecutionEvidence;
   /** Historical purpose attribution; it never requires or recreates live consent. */
   cooperation?: import('./cooperation.js').CooperationPurposeBinding;
   release?: {
     eventId: string;
+    aimTarget?: import('./combat-execution.js').AimPointSubject;
     tool: import('./world-modules.js').DefinitionPin;
     family?: import('./world-modules.js').DefinitionPin;
     competence?: number;
@@ -320,7 +325,21 @@ export const emptyActionExperience = (): ActionExperienceState => ({
 export function isRecordedActivityCommand(command: Command): boolean {
   if (isActivityCommand(command)) return true;
   if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
-  if (command.type === 'release-shot') return isSafeRecordId(command.aimId);
+  if (command.type === 'release-shot')
+    return (
+      isSafeRecordId(command.aimId) &&
+      (command.aimTarget === undefined ||
+        (!command.aimPoint && validAimPointSubject(command.aimTarget))) &&
+      (command.aimPoint === undefined || finitePoint(command.aimPoint)) &&
+      (command.aimPointSubject === undefined ||
+        (!!command.aimPoint && validAimPointSubject(command.aimPointSubject))) &&
+      (command.releaseInput === undefined || validTimedReleaseInput(command.releaseInput))
+    );
+  if (command.type === 'release-strike')
+    return (
+      isSafeRecordId(command.expectedActionId) &&
+      (command.releaseInput === undefined || validTimedReleaseInput(command.releaseInput))
+    );
   if (command.type === 'recover') return true;
   if (command.type === 'learn-record')
     return (
@@ -538,7 +557,9 @@ export function prepareActivity(
   } = command;
   command = recordable;
   if (
-    ['strike', 'hunt', 'aim', 'shoot-once', 'release-shot'].includes(command.type) &&
+    ['strike', 'hunt', 'aim', 'shoot-once', 'release-shot', 'release-strike'].includes(
+      command.type,
+    ) &&
     'lethalPermission' in command
   ) {
     const { lethalPermission: _permission, ...physical } = command;
@@ -585,7 +606,11 @@ export function prepareActivity(
   }
   const record: ActivityOccurrence = {
     ...(_cooperation ? { cooperation: cloneValue(_cooperation) } : {}),
-    ...(['practice-shot', 'coaching'].includes(command.type) ||
+    ...(('manualExecution' in command && command.manualExecution) ||
+    ('aimPoint' in command && command.aimPoint) ||
+    command.type === 'release-strike' ||
+    (command.type === 'release-shot' && !!command.releaseInput) ||
+    ['practice-shot', 'coaching'].includes(command.type) ||
     ('sources' in command && command.sources)
       ? { noLearningControl: true }
       : {}),
@@ -1477,6 +1502,7 @@ export function validateActionExperience(world: WorldState): void {
         release &&
         (!['hunt', 'practice-shot', 'aim', 'shoot-once'].includes(entry.command.type) ||
           !isSafeRecordId(release.eventId) ||
+          (release.aimTarget !== undefined && !validAimPointSubject(release.aimTarget)) ||
           !isDefinitionPin(release.tool) ||
           (release.family !== undefined && !isDefinitionPin(release.family)) ||
           (release.competence !== undefined &&
@@ -1497,6 +1523,16 @@ export function validateActionExperience(world: WorldState): void {
             release.damage !== 0))
       )
         throw new Error('Invalid committed shot evidence.');
+      if (
+        entry.attackExecution !== undefined &&
+        (!['aim', 'strike'].includes(entry.command.type) ||
+          !entry.noLearningControl ||
+          !validAttackExecutionEvidence(entry.attackExecution) ||
+          entry.attackExecution.committedAt < entry.at ||
+          entry.attackExecution.committedAt > world.simTime ||
+          (entry.endedAt !== undefined && entry.attackExecution.committedAt > entry.endedAt))
+      )
+        throw new Error('Invalid committed attack execution evidence.');
       validateStockResolution(entry);
       for (const link of entry.connections) {
         const source = all.get(link.from);

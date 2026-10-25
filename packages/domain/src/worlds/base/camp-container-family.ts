@@ -169,10 +169,13 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
         ...(profile ? { contentsExposure: { profile: definitionPin(profile) } } : {}),
         packingLoad,
         properties: ['fiber', 'pouch'],
-        container: { capacity, maximumDepth: rules.maximumDepth },
+        container: {
+          capacity,
+          maximumDepth: rules.maximumDepth,
+        },
         characteristics: [
           {
-            key: 'capacity',
+            key: 'container-capacity',
             label: 'Capacity',
             path: 'container.capacity',
             unit: 'packing-load units',

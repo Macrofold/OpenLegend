@@ -18,13 +18,14 @@ export const MATERIAL_PROPERTIES = [
   'fuel',
 ] as const;
 export type MaterialProperty = (typeof MATERIAL_PROPERTIES)[number];
-export interface Launcher {
+export interface RangedWeapon {
   mechanism: 'swing' | 'flex';
   ammunitionKind: 'stone' | 'arrow';
   damage: number;
   range: number;
   accuracy: number;
   flightSpeed: number;
+  recoverySeconds: number;
 }
 export interface Ammunition {
   kind: 'stone' | 'arrow';
@@ -42,6 +43,7 @@ export interface ItemDefinition extends Named {
   /** Authored labels project existing components; they never duplicate component values. */
   characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
+  execution?: import('./combat-execution.js').AttackExecutionProfile;
   equipment?: import('./equipment.js').EquipmentProfile;
   contactDefense?: import('./contact-defense.js').ContactDefenseProfile;
   /** Consumed by the installed item-handling mechanic; absent means not portable. */
@@ -51,7 +53,10 @@ export interface ItemDefinition extends Named {
   packingLoad?: number;
   /** Authored finite stock dimensions; no general item physics is inferred. */
   stockShape?: { usableLengthMeters: number };
-  container?: { capacity: number; maximumDepth: number };
+  container?: {
+    capacity: number;
+    maximumDepth: number;
+  };
   contentsExposure?: { profile: import('./world-modules.js').DefinitionPin };
   id: string;
   version: number;
@@ -59,7 +64,7 @@ export interface ItemDefinition extends Named {
   properties: MaterialProperty[];
   nutrition?: number;
   cooked?: boolean;
-  launcher?: Launcher;
+  rangedWeapon?: RangedWeapon;
   ammunition?: Ammunition;
   recipeId?: string;
   /** Trusted disclosure of one exact installed method; prose grants no execution. */
@@ -199,6 +204,7 @@ export interface Action {
   combatHelpId?: string;
   evasion?: import('./evasion.js').EvasionState;
   ranged?: import('./ranged.js').AimState;
+  attackExecution?: import('./combat-execution.js').AttackExecutionState;
   competencePin?: import('./world-modules.js').DefinitionPin;
   rangedPolicyPin?: import('./world-modules.js').DefinitionPin;
   coachingEpisodeId?: string;
@@ -289,6 +295,8 @@ export interface CharacterTrait {
 }
 
 export interface ActorComponent {
+  /** Owner-only occurrence notice; contains no assailant identity or location. */
+  attackModeNotice?: import('./combat-encounters.js').AttackModeNotice;
   /** Personally acquired short-lived danger and own offense; never public actor data. */
   encounters?: import('./combat-encounters.js').PersonalEncounters;
   practice?: Record<string, import('./practical-competence.js').PracticeProgress>;
@@ -734,6 +742,7 @@ export type Command = Envelope &
     | { type: 'guard'; itemId: string; targetId?: string; facing?: number; autoEquip?: boolean }
     | {
         type: 'strike';
+        manualExecution?: true;
         autoEquip?: boolean;
         definitionId: string;
         targetId: string;
@@ -741,7 +750,7 @@ export type Command = Envelope &
         lethalPermission?: import('./combat-consent.js').LethalPermission;
       }
     | {
-        type: 'hunt' | 'aim' | 'shoot-once';
+        type: 'hunt';
         autoEquip?: boolean;
         targetId: string;
         weaponItemId?: string;
@@ -749,8 +758,41 @@ export type Command = Envelope &
         lethalPermission?: import('./combat-consent.js').LethalPermission;
       }
     | {
+        type: 'shoot-once';
+        autoEquip?: boolean;
+        targetId?: string;
+        aimPoint?: WorldPoint;
+        aimPointSubject?: import('./combat-execution.js').AimPointSubject;
+        weaponItemId?: string;
+        ammoItemId?: string;
+        lethalPermission?: import('./combat-consent.js').LethalPermission;
+      }
+    | {
+        type: 'aim';
+        autoEquip?: boolean;
+        targetId?: string;
+        aimPoint?: WorldPoint;
+        aimPointSubject?: import('./combat-execution.js').AimPointSubject;
+        manualExecution?: true;
+        weaponItemId?: string;
+        ammoItemId?: string;
+        lethalPermission?: import('./combat-consent.js').LethalPermission;
+      }
+    | {
+        type: 'release-strike';
+        recoveredRelease?: true;
+        expectedActionId: string;
+        releaseInput?: import('./execution-input.js').TimedReleaseInput;
+        lethalPermission?: import('./combat-consent.js').LethalPermission;
+      }
+    | {
         type: 'release-shot';
+        recoveredRelease?: true;
         aimId: string;
+        aimTarget?: import('./combat-execution.js').AimPointSubject;
+        aimPoint?: WorldPoint;
+        aimPointSubject?: import('./combat-execution.js').AimPointSubject;
+        releaseInput?: import('./execution-input.js').TimedReleaseInput;
         lethalPermission?: import('./combat-consent.js').LethalPermission;
       }
     | { type: 'treat-scar'; scarId: string; targetId: string }

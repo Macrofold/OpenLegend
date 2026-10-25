@@ -1,3 +1,6 @@
+import { rangedPolicy } from './ranged-policy.js';
+import { definitionPin, type DefinitionPin } from './world-modules.js';
+import { isDefinitionPin, sameDefinitionPin } from './definition-pins.js';
 import { entityValues } from './entity-collection.js';
 import { recordSemanticChange } from './dependencies.js';
 import { isStatusDefinitionActive, statusDefinitions } from './status-capabilities.js';
@@ -54,13 +57,24 @@ export function flightRouteDigest(route: FlightRoute): string {
   return digest;
 }
 export interface EntitySpatial {
-  /** The current physical shape, initialized from authored content and saved with this body. */
+  /** Ordinary shape, initialized from authored content and saved with this body.
+   * The effective reader derives any admitted temporary local contraction. */
   body: BodyProfile;
   /** Authored inactive posture, if this body changes shape when its actor dies. */
   inactiveBody?: BodyProfile;
   /** A qualified non-solid exposed form, independent of rendered artwork. */
   softFootprint?: { width: number; length: number; height: number };
   heading: number;
+  /** Native contraction pins its authored policy; geometry remains derived, never duplicated. */
+  localPose?: {
+    kind: 'duck';
+    profile: DefinitionPin;
+    physicalLife: number;
+    startedAt: number;
+    restoreAt: number;
+    phase: 'holding' | 'restore-blocked';
+  };
+  localAvoidanceReadyAt?: number;
   /** A native flight routine is saved work; it never grants a capability from sprite artwork. */
   flight?: FlightProgress;
   fallVelocity?: number;
@@ -150,6 +164,43 @@ export function bodyProfile(entity: Entity): BodyProfile {
         interactionHeight: form.height,
       }
     : resolved;
+}
+/** Actual shared capsule and anchors. Route admission deliberately retains bodyProfile. */
+export function effectiveBodyProfile(world: WorldState, entity: Entity): BodyProfile {
+  const ordinary = bodyProfile(entity),
+    pose = entity.spatial.localPose;
+  if (!pose || !entity.actor?.alive || pose.physicalLife !== (entity.actor.physicalLife ?? 0))
+    return ordinary;
+  const policy = rangedPolicy(world),
+    response = policy?.localAvoidance;
+  if (!policy || !response || !sameDefinitionPin(pose.profile, definitionPin(policy)))
+    return ordinary;
+  const height = Math.max(
+      2 * ordinary.radius + SPATIAL_LIMITS.epsilon,
+      response.heightFactor * ordinary.height,
+    ),
+    ratio = height / ordinary.height;
+  return {
+    ...ordinary,
+    height,
+    eyeHeight: ordinary.eyeHeight * ratio,
+    earHeight: ordinary.earHeight * ratio,
+    interactionHeight: ordinary.interactionHeight * ratio,
+  };
+}
+/** Shape changes share spatial invalidation/revision with placement; they never move feet. */
+export function spatialShapeChanged(world: WorldState, entity: Entity): void {
+  const placement = entity.placement;
+  if (placement?.mode !== 'world' || !Number.isSafeInteger(placement.revision + 1))
+    throw new Error('Invalid spatial shape revision.');
+  const position = worldPosition(entity);
+  recordSemanticChange(world, {
+    kind: 'spatial',
+    entityId: entity.id,
+    before: position,
+    after: position,
+  });
+  placement.revision++;
 }
 export function sameBodyProfile(a: BodyProfile, b: BodyProfile): boolean {
   return (
@@ -383,6 +434,48 @@ export function validateSpatialWorld(world: WorldState): void {
   for (const entity of entityValues(world.entities)) {
     validateBodyProfile(entity.spatial?.body);
     if (entity.spatial.inactiveBody !== undefined) validateBodyProfile(entity.spatial.inactiveBody);
+    const s = entity.spatial,
+      pose = s.localPose,
+      policy = rangedPolicy(world),
+      response = policy?.localAvoidance;
+    if (
+      s.localAvoidanceReadyAt !== undefined &&
+      (!entity.actor?.alive ||
+        !Number.isFinite(s.localAvoidanceReadyAt) ||
+        s.localAvoidanceReadyAt < 0)
+    )
+      throw new Error('Invalid local response cooldown.');
+    if (
+      pose !== undefined &&
+      (!hasRecordFields(pose, [
+        'kind',
+        'profile',
+        'physicalLife',
+        'startedAt',
+        'restoreAt',
+        'phase',
+      ]) ||
+        !entity.actor?.alive ||
+        !activelyParticipates(entity) ||
+        !!s.softFootprint ||
+        pose.kind !== 'duck' ||
+        !Number.isSafeInteger(pose.physicalLife) ||
+        pose.physicalLife !== (entity.actor.physicalLife ?? 0) ||
+        !isDefinitionPin(pose.profile) ||
+        !policy ||
+        !sameDefinitionPin(pose.profile, definitionPin(policy)) ||
+        !response?.bodyProfiles.includes(bodyProfile(entity).id) ||
+        ![pose.startedAt, pose.restoreAt].every(Number.isFinite) ||
+        pose.startedAt < 0 ||
+        pose.startedAt > world.simTime ||
+        pose.restoreAt !== pose.startedAt + response.holdSeconds ||
+        s.localAvoidanceReadyAt !== pose.startedAt + response.cooldownSeconds ||
+        !['holding', 'restore-blocked'].includes(pose.phase) ||
+        (pose.phase === 'holding'
+          ? pose.restoreAt < world.simTime
+          : pose.restoreAt > world.simTime))
+    )
+      throw new Error('Invalid native local posture.');
     if (
       entity.retirement ||
       entity.assembly?.retired ||
@@ -390,7 +483,6 @@ export function validateSpatialWorld(world: WorldState): void {
       entity.placement?.mode === 'attached'
     )
       continue;
-    const s = entity.spatial;
     if (
       s?.softFootprint &&
       (entity.actor ||
@@ -520,7 +612,7 @@ export function bodySpace(
   margin = 0,
 ): Bounds3 {
   const point = worldPosition(entity),
-    profile = bodyProfile(entity);
+    profile = effectiveBodyProfile(world, entity);
   const width = profile.radius * 2 + margin * 2,
     length = (horizontal ? profile.height : profile.radius * 2) + margin * 2;
   // Upright bodies have a round footprint. Rotating its bounding square would

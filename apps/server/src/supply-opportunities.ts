@@ -26,7 +26,7 @@ export function supplyOpportunityContext(
       (item) => item.container && !canAccessContainer(world, actorId, item.id),
     ),
     bow = equippedItems(world, actorId)
-      .map((item) => world.itemDefinitions[item.definitionId]?.launcher)
+      .map((item) => world.itemDefinitions[item.definitionId]?.rangedWeapon)
       .find(Boolean),
     quantities = new Map<string, number>();
   let food = 0,

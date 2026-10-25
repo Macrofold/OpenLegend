@@ -270,8 +270,8 @@ claims end normally, while an already released flight keeps its existing owner.
 No movement or projectile executor was added.
 
 The connected native scenario observes an actual departing assailant, selects the
-exact offered follow and starts it with its original finite deadline. A launcher
-definition admitted through the native declaration owner, owned launcher and real
+exact offered follow and starts it with its original finite deadline. A ranged weapon
+definition admitted through the native declaration owner, owned ranged weapon and real
 compatible ammunition produce an offered exact ranged attack that starts normally.
 These are controlled setup/selection checks, not independent invention or choice.
 The first ranged check exposed missing deadline support in the installed host;
@@ -464,7 +464,7 @@ Additional Jev cost is **$0**; cumulative provider-reported Jev estimates remain
 ## Shared combat means and exact ammunition — October 18, 2026
 
 The real character catalogue now reuses one domain query for native/equippable
-strikes, launchers, shields and compatible available ammunition. Native equipment
+strikes, ranged weapons, shields and compatible available ammunition. Native equipment
 and reservation owners still perform their checks. Ammunition is indexed once by
 admitted kind before target expansion; every compatible exact lot remains offered,
 with a structured weapon/ammunition/target identity. The query releases no hold,

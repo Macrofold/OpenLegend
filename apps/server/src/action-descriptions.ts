@@ -97,8 +97,8 @@ function describeCommand(
       if (!recipe) return common;
       return `${recipe.description}\n\nMakes ${recipe.outputs.map((output) => `${output.quantity} ${name(output.definition.id)}`).join(', ')}. Requires: ${recipe.inputs.map((input) => `${input.quantity} ${name(input.definitionId).toLowerCase()}`).join(', ')}. Materials are consumed when work begins and are not refunded if you stop.`;
     case 'equip':
-      return itemDefinition?.launcher
-        ? `${itemDefinition.description}\n\nReady ${namePhrase(itemDefinition, 'definite')} for hunting. It uses ${itemDefinition.launcher!.ammunitionKind} ammunition.`
+      return itemDefinition?.rangedWeapon
+        ? `${itemDefinition.description}\n\nReady ${namePhrase(itemDefinition, 'definite')} for hunting. It uses ${itemDefinition.rangedWeapon!.ammunitionKind} ammunition.`
         : itemDefinition
           ? `${itemDefinition.description}\n\n${common}`
           : common;
@@ -111,7 +111,7 @@ function describeCommand(
       if (command.type === 'practice-shot') {
         const practice = weapon && toolPracticeDefinition(world, weapon);
         const known =
-          weapon?.launcher && practice?.id === target?.practiceTarget?.attributeId
+          weapon?.rangedWeapon && practice?.id === target?.practiceTarget?.attributeId
             ? handlingAccuracy(world, observation.actor, weapon)
             : undefined;
         return practice?.practice
@@ -123,7 +123,7 @@ function describeCommand(
             )
           : common;
       }
-      const handling = weapon?.launcher && handlingAccuracy(world, observation.actor, weapon);
+      const handling = weapon?.rangedWeapon && handlingAccuracy(world, observation.actor, weapon);
       const note = handling?.definition
         ? ` ${handling.definition.name}: ${practiceRank(handling.definition.practice!, handling.competence)}. ${handling.definition.practice!.scope}`
         : '';
@@ -133,7 +133,7 @@ function describeCommand(
         target && rangedTargetAllowed(world, target)
           ? namePhrase(target, 'definite')
           : policy.targetLabel;
-      return `${equipped ? equipmentChangeDescription(world, observation.actor.id, equipped.id) : ''}${policy.actionLabel}: attempt one shot at ${subject}. ${weapon?.launcher ? `${namePhrase(weapon, 'definite', { capitalize: true })} is the selected tool and uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} ${policy.scope}${note} ${policy.accuracyExplanation}`;
+      return `${equipped ? equipmentChangeDescription(world, observation.actor.id, equipped.id) : ''}${policy.actionLabel}: attempt one shot at ${subject}. ${weapon?.rangedWeapon ? `${namePhrase(weapon, 'definite', { capitalize: true })} is the selected tool and uses ${weapon.rangedWeapon.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} ${policy.scope}${note} ${policy.accuracyExplanation}`;
     }
     case 'harvest':
       if (!target?.remains) return common;

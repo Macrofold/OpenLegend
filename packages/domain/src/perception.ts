@@ -31,7 +31,7 @@ import {
   SPEECH_VOLUMES,
   type SpeechVolume,
 } from './acoustics.js';
-import { bodyProfile, spatialMap } from './spatial-state.js';
+import { effectiveBodyProfile, spatialMap } from './spatial-state.js';
 import { current, isDraft } from 'immer';
 import { distance } from './spatial.js';
 import type { Entity, Position, WorldState } from './types.js';
@@ -70,12 +70,12 @@ export const COARSE_TOUCH: SenseDefinition = {
 };
 /** Body profiles are upright cylinders; contact uses their surfaces, never a sense radius.
  * docs/spatial-world.md#physical-contact */
-export function bodiesTouch(first: Entity, second: Entity): boolean {
+export function bodiesTouch(world: WorldState, first: Entity, second: Entity): boolean {
   chargeWork({ tests: 1 });
   if (first.id === second.id || !activelyParticipates(first) || !activelyParticipates(second))
     return false;
-  const a = bodyProfile(first),
-    b = bodyProfile(second),
+  const a = effectiveBodyProfile(world, first),
+    b = effectiveBodyProfile(world, second),
     from = worldPosition(first),
     to = worldPosition(second);
   const tolerance = SPATIAL_LIMITS.epsilon;
@@ -213,7 +213,7 @@ function receiverIndex(world: WorldState, entities: WorldState['entities']): Rec
       id: entity.id,
       order: entries.length,
       position: worldPosition(entity),
-      ear: bodyProfile(entity).earHeight,
+      ear: effectiveBodyProfile(world, entity).earHeight,
       senses: resolveSenses(world, entity),
     });
   }
@@ -267,7 +267,7 @@ export function speechObservers(world: WorldState, source: Entity, volume: Speec
     prepared.trees.set(volume, index);
   }
   const foot = worldPosition(source),
-    ear = soundOrigin(source);
+    ear = soundOrigin(world, source);
   const found: Receiver[] = [];
   index.visit(
     (b) =>
@@ -302,8 +302,8 @@ function speechTransmission(world: WorldState, listener: Entity, source: Entity)
     sourcePosition = worldPosition(source);
   const from = isDraft(listenerPosition) ? current(listenerPosition) : listenerPosition;
   const to = isDraft(sourcePosition) ? current(sourcePosition) : sourcePosition;
-  const fromEar = bodyProfile(listener).earHeight,
-    toEar = bodyProfile(source).earHeight;
+  const fromEar = effectiveBodyProfile(world, listener).earHeight,
+    toEar = effectiveBodyProfile(world, source).earHeight;
   let cache: Map<string, AcousticPath> | undefined;
   if (Object.isFrozen(map) && Object.isFrozen(from) && Object.isFrozen(to)) {
     let observers = acousticPaths.get(map);
@@ -403,7 +403,7 @@ function sightContext(world: WorldState, observer: Entity) {
     angle = senses.visionAngle;
   const position = worldPosition(observer);
   const from = { x: position.x, y: position.y, z: position.z };
-  const eyeHeight = bodyProfile(observer).eyeHeight;
+  const eyeHeight = effectiveBodyProfile(world, observer).eyeHeight;
   const eye = { x: from.x, y: from.y + eyeHeight, z: from.z };
   const heading = angle < 2 * Math.PI ? observer.spatial.heading : undefined;
   const inCone = horizontalCone(from, heading ?? 0, angle);
@@ -554,13 +554,13 @@ export function entityVisionQuery(
         ? { assemblyId: source.id }
         : {}),
       position: isDraft(position) ? current(position) : position,
-      height: bodyProfile(source).height,
+      height: effectiveBodyProfile(world, source).height,
     });
   };
 }
-export function soundOrigin(entity: Entity): Position {
+export function soundOrigin(world: WorldState, entity: Entity): Position {
   const position = worldPosition(entity);
-  return { ...position, y: position.y + bodyProfile(entity).earHeight };
+  return { ...position, y: position.y + effectiveBodyProfile(world, entity).earHeight };
 }
 export function hearingReferenceRadius(world: WorldState, observer: Entity): number {
   const { hearingFloor: floor, policy } = resolveSenses(world, observer);
@@ -569,7 +569,7 @@ export function hearingReferenceRadius(world: WorldState, observer: Entity): num
 /** Readonly display parameters, never new observation tiers. The client may sample
  * only the already-public spatial layout; docs/spatial-world.md#perception-range-guides. */
 export function perceptionGuide(world: WorldState, observer: Entity) {
-  const body = bodyProfile(observer);
+  const body = effectiveBodyProfile(world, observer);
   const { hearingFloor: floor, policy, visionAngle } = resolveSenses(world, observer);
   const enabled =
     activelyParticipates(observer) && !capabilityBlocked(world, observer, 'perception');
@@ -611,13 +611,13 @@ function physicalSoundExposure(
   };
   chargeWork({ tests: 1 });
   if (floor === null || !observer.actor?.alive || !activelyParticipates(observer)) return silent;
-  const listener = soundOrigin(observer),
+  const listener = soundOrigin(world, observer),
     origin = emission.origin;
   const separation = distance3D(listener, origin);
   const reach = acousticReachAtLevel(policy, floor, emission.sourceLevelDbSplAt1m);
   if (separation > Math.max(0.25, reach)) return silent;
   const emitter = emission.emitterId ? entityGet(world.entities, emission.emitterId) : undefined;
-  const actual = emitter && soundOrigin(emitter);
+  const actual = emitter && soundOrigin(world, emitter);
   const transmission =
     emitter && actual && actual.x === origin.x && actual.y === origin.y && actual.z === origin.z
       ? speechTransmission(world, observer, emitter)
@@ -636,7 +636,7 @@ export function speechEmission(
   volume: SpeechVolume,
 ): AcousticEmission {
   return {
-    origin: soundOrigin(source),
+    origin: soundOrigin(world, source),
     emitterId: source.id,
     sourceLevelDbSplAt1m: world.moduleManifest.acoustics.sourceLevelDbSplAt1m[volume],
   };
@@ -666,7 +666,7 @@ export function soundPerception(world: WorldState, observer: Entity, emission: A
     return sight({
       id: entity.id,
       position: isDraft(position) ? current(position) : position,
-      height: bodyProfile(entity).height,
+      height: effectiveBodyProfile(world, entity).height,
     });
   };
   return { ...physicalSoundExposure(world, observer, emission), sees };

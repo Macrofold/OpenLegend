@@ -99,6 +99,7 @@ export const BASE_BODY_POLICY: BodyPolicy = {
     description: lethalAttackDescription,
     rangedDescription: `${lethalAttackDescription} ${BASE_PROJECTILE_CONTACT_WARNING}`,
     confirmLabel: 'Attempt lethal blow',
+    prepareLabel: 'Prepare attack',
     cancelLabel: 'Cancel',
   },
   zeroHealth: {

@@ -27,7 +27,13 @@ import {
   type RoutePlan,
   type CollisionSolid,
 } from '@open-legend/spatial';
-import { bodyProfile, bodySpace, spatialMap, supportedPosition } from './spatial-state.js';
+import {
+  bodyProfile,
+  effectiveBodyProfile,
+  bodySpace,
+  spatialMap,
+  supportedPosition,
+} from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
 
 const CANDIDATE_CELL_SIZE = 28;
@@ -225,17 +231,34 @@ export function isWalkable(
 export function hasLineOfSight(world: WorldState, from: Position, to: Position): boolean {
   return clearSegment(spatialMap(world), from, to);
 }
-export function interactionAnchor(
+/** Geometric center of the current physical body, independent of its work/reach anchors. */
+export function bodyCenter(
+  world: WorldState,
   entity: Entity,
   position: Position = worldPosition(entity),
 ): Position {
-  return { x: position.x, y: position.y + bodyProfile(entity).interactionHeight, z: position.z };
+  return {
+    x: position.x,
+    y: position.y + effectiveBodyProfile(world, entity).height / 2,
+    z: position.z,
+  };
+}
+export function interactionAnchor(
+  world: WorldState,
+  entity: Entity,
+  position: Position = worldPosition(entity),
+): Position {
+  return {
+    x: position.x,
+    y: position.y + effectiveBodyProfile(world, entity).interactionHeight,
+    z: position.z,
+  };
 }
 /** Roots are indexed at their feet, while reach is measured between interaction anchors.
  * Expand by the current indexed bodies before exact checks, including different body heights. */
 export function interactionCandidateBounds(world: WorldState, entity: Entity, reach: number) {
   return {
-    position: interactionAnchor(entity),
+    position: interactionAnchor(world, entity),
     radius: reach + entityIndex(world).interactionHeight,
   };
 }
@@ -247,8 +270,8 @@ export function hasLineOfEffect(
 ): boolean {
   return clearSegment(
     spatialMap(world),
-    interactionAnchor(actor, origin),
-    interactionAnchor(target),
+    interactionAnchor(world, actor, origin),
+    interactionAnchor(world, target),
   );
 }
 export function canReachEntity(
@@ -257,10 +280,12 @@ export function canReachEntity(
   target: Entity,
   reach: number,
   origin: Position = worldPosition(actor),
+  targetPoint: Position = interactionAnchor(world, target),
 ): boolean {
-  const from = interactionAnchor(actor, origin),
-    to = interactionAnchor(target);
-  return distance3D(from, to) <= reach && clearSegment(spatialMap(world), from, to);
+  const from = interactionAnchor(world, actor, origin);
+  return (
+    distance3D(from, targetPoint) <= reach && clearSegment(spatialMap(world), from, targetPoint)
+  );
 }
 /** A real work point and its admitted stance, not a proxy entity or a new location. */
 export interface PhysicalWorkPoint {
@@ -353,7 +378,7 @@ export function physicalWorkPointAvailable(
 ): boolean {
   const map = spatialMap(world),
     profile = bodyProfile(actor),
-    from = interactionAnchor(actor, origin);
+    from = interactionAnchor(world, actor, origin);
   if (
     !canStand(map, candidate.stance, profile) ||
     (origin !== candidate.stance &&
@@ -450,13 +475,13 @@ export function findApproachPath(
   target: Entity,
   reach: number,
   occupiedBodies = false,
+  goal: Position = interactionAnchor(world, target),
 ): RoutePlan | null {
   const start = supportedPosition(actor);
   if (!start) return null;
   const map = spatialMap(world),
     profile = bodyProfile(actor),
-    targetPosition = worldPosition(target),
-    goal = interactionAnchor(target, targetPosition);
+    targetPosition = worldPosition(target);
   // Every candidate uses this call's exact geometry and body state. Capture them once:
   // repeated reads through an Immer draft create avoidable proxies and allocations.
   const anchor = (p: Position): Position => ({
@@ -741,7 +766,7 @@ function entityIndex(world: WorldState, actorsOnly = false, rebuildRoots = false
       livingBodyExtent = 0,
       interactionHeight = 0;
     for (const { entity } of entries) {
-      const body = bodyProfile(entity);
+      const body = effectiveBodyProfile(world, entity);
       const extent = candidateBodyExtent(body);
       bodyExtent = Math.max(bodyExtent, extent);
       if (entity.actor?.alive) livingBodyExtent = Math.max(livingBodyExtent, extent);
@@ -831,7 +856,7 @@ function workingBodyIndex(world: WorldState, actorsOnly: boolean) {
       );
     for (const entity of worldRootEntities(world, true, audit.assigned.size > 0)) {
       if ((actorsOnly && !entity.actor) || !activelyParticipates(entity)) continue;
-      const body = bodyProfile(entity),
+      const body = effectiveBodyProfile(world, entity),
         extent = candidateBodyExtent(body),
         point = {
           id: entity.id,
@@ -874,7 +899,7 @@ function workingBodyIndex(world: WorldState, actorsOnly: boolean) {
       return entityIndex(world, actorsOnly, true);
     }
     const position = worldPosition(entity),
-      body = bodyProfile(entity),
+      body = effectiveBodyProfile(world, entity),
       extent = candidateBodyExtent(body),
       livingExtent = entity.actor?.alive ? extent : 0;
     if (
@@ -921,7 +946,7 @@ export function spatialCandidateMembershipKey(
   reach: number,
 ): string {
   const index = entityIndex(world),
-    position = interactionAnchor(actor),
+    position = interactionAnchor(world, actor),
     radius = reach + index.interactionHeight,
     bounds = JSON.stringify([position, radius]);
   let cached = entityMembershipKeys.get(index);
@@ -930,7 +955,7 @@ export function spatialCandidateMembershipKey(
       entity.id,
       position,
       entity.placement?.revision,
-      bodyProfile(entity),
+      effectiveBodyProfile(world, entity),
       entity.inventoryRevision,
       entity.container?.access,
     ]);

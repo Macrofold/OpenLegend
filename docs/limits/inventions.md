@@ -142,7 +142,7 @@ Original recommendation: **Completed removals**.
 
 **Current — source checked 2026-10-06 · Restrictiveness: Very safe.**
 
-The four original base-world launcher/ammunition/gathering-tool families retain 2–6 ingredient roles, 1–8 units per role and at most 20 units total, plus their required-role/material checks. This is authored family policy, not the engine-wide recipe envelope: cordage requires one fixed-quantity fiber role, while woven containers use two roles and derived quantities under their own contracts.
+The four original base-world ranged weapon/ammunition/gathering-tool families retain 2–6 ingredient roles, 1–8 units per role and at most 20 units total, plus their required-role/material checks. This is authored family policy, not the engine-wide recipe envelope: cordage requires one fixed-quantity fiber role, while woven containers use two roles and derived quantities under their own contracts.
 
 **Reason / tradeoff:** Allow richer recipes when the supported crafting mechanics can execute them correctly, keeping material accounting and balance rules explicit.
 
@@ -178,7 +178,7 @@ Original recommendation: **Expand**.
 
 **Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-The four original base-world launcher/ammunition/gathering-tool families retain an integer crafting-time parameter of 48–480 game seconds. Cordage and woven-container times are instead fixed or derived by their authored family rules; 48–480 is not a universal engine or invention-time law.
+The four original base-world ranged weapon/ammunition/gathering-tool families retain an integer crafting-time parameter of 48–480 game seconds. Cordage and woven-container times are instead fixed or derived by their authored family rules; 48–480 is not a universal engine or invention-time law.
 
 **Reason / tradeoff:** Review the crafting-time range as a balance rule rather than removing it as though it only protects performance.
 
@@ -190,11 +190,11 @@ Original recommendation: **Review**.
 
 **Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-The installed base-world swing launcher family retains damage 10–20 health points, range 3–7 metres and base accuracy 0.6–0.9. Runtime target eligibility, ammunition expenditure and accuracy modifiers remain with the native consumer; these are authored parameter bounds, not a claim of general projectile physics.
+The installed base-world swing ranged weapon family retains damage 10–20 health points, range 3–7 metres and base accuracy 0.6–0.9. Runtime target eligibility, ammunition expenditure and accuracy modifiers remain with the native consumer; these are authored parameter bounds, not a claim of general projectile physics.
 
 **Reason / tradeoff:** Review these weapon values as authored game balance while retaining validation of the mechanics the engine can execute.
 
-[World-owned launcher schema](../../packages/domain/src/worlds/base/recipe-families.ts).
+[World-owned ranged weapon schema](../../packages/domain/src/worlds/base/recipe-families.ts).
 
 Original recommendation: **Review**.
 
@@ -202,11 +202,11 @@ Original recommendation: **Review**.
 
 **Current — source checked 2026-10-22 · Restrictiveness: Safe.**
 
-The installed base-world flex launcher family retains damage 16–28 health points, range 4–30 metres and base accuracy 0.6–0.9. Its body material must also be rigid. These are authored recipe parameters, not a general limit on other worlds or proof that every target is supported.
+The installed base-world flex ranged weapon family retains damage 16–28 health points, range 4–30 metres and base accuracy 0.6–0.9. Its body material must also be rigid. These are authored recipe parameters, not a general limit on other worlds or proof that every target is supported.
 
 **Reason / tradeoff:** The owner expanded the previous 10-metre ceiling on October 22 so bows can reach beyond ordinary prey avoidance. Longer shots also strengthen armed encounters; finite flight, visibility, cover, ammunition and current admission remain strict. These values remain authored game balance rather than a general engine limit.
 
-[World-owned launcher schema and rigidity check](../../packages/domain/src/worlds/base/recipe-families.ts).
+[World-owned ranged weapon schema and rigidity check](../../packages/domain/src/worlds/base/recipe-families.ts).
 
 Original recommendation: **Review**.
 
@@ -250,7 +250,7 @@ Original recommendation: **Keep**.
 
 **Current — source checked 2026-10-06 · Restrictiveness: Medium.**
 
-The bundled world installs eight trusted recipe families: swing launcher, flex launcher, arrow, gathering tool, woven container, cordage, shield and fishing-line tool. The former launcher/ammunition/tool-only description is superseded by the container, cordage, shield and river-tool deliveries under RF01. Candidate data selects one exact installed family and its declared fields; it cannot introduce executable code, new host effects or arbitrary manufactured-material reuse. Another world’s installed manifest determines its supported family set.
+The bundled world installs eight trusted recipe families: swing ranged weapon, flex ranged weapon, arrow, gathering tool, woven container, cordage, shield and fishing-line tool. The former ranged weapon/ammunition/tool-only description is superseded by the container, cordage, shield and river-tool deliveries under RF01. Candidate data selects one exact installed family and its declared fields; it cannot introduce executable code, new host effects or arbitrary manufactured-material reuse. Another world’s installed manifest determines its supported family set.
 
 **Reason / tradeoff:** Keep the boundary between proposed data and executable mechanics; add new invention families through validated engine support.
 
@@ -354,7 +354,7 @@ The strict RecipeCandidate envelope carries a family ID/version, role inputs and
 
 **Reason / tradeoff:** Remove a repeated engine edit requirement for each family while retaining positive proof that an admitted object has real semantics. This deliberately does not pretend arbitrary material/effect composition is solved. Historical PW02 implementation base: inherited planning commit `8005f7c7`; its native four-family admission, repeated receipt, craft/use and exact current-state restore probes passed. Later container and NP03 evidence is linked above; whole request-cost measurements and broader integrated acceptance remain tracked under PW02. [Design](../projects/parallel-batch-01-playable-week-tech-design.md#pw02--family-definitions-not-engine-recipe-switches).
 
-CF02 consumes admitted launcher speed, range, ammunition and injury through the shared straight-flight owner for permitted living opponents. Base accuracy now means release steadiness; actual contact accounts for movement/cover instead of the old extra fleeing factor. [World definitions](../worlds/base/ranged-counterplay.md) retain tuning, and [Batch 06](../maintainers/parallel-batch-06-rivals-and-contested-ground.md) owns the new consumer qualification. No generated trajectory code, arbitrary effect or broader invented-input contract is admitted.
+CF02 consumes admitted ranged weapon speed, range, ammunition and injury through the shared straight-flight owner for permitted living opponents. Base accuracy now means release steadiness; actual contact accounts for movement/cover instead of the old extra fleeing factor. [World definitions](../worlds/base/ranged-counterplay.md) retain tuning, and [Batch 06](../maintainers/parallel-batch-06-rivals-and-contested-ground.md) owns the new consumer qualification. No generated trajectory code, arbitrary effect or broader invented-input contract is admitted.
 
 ## WS01 — World Agent stream delivery
 

@@ -1,4 +1,13 @@
 import type { PreparedNavigationPublication } from './navigation/messages.js';
+import { WorldInputOwner, type WorldInputState } from './world-input.js';
+import { aimPointProblem } from './aim-point-binding.js';
+import type {
+  WorldInputScope,
+  WorldInputUpdate,
+  WorldInputResult,
+  AttackExecutionView,
+} from '@open-legend/protocol';
+import { evaluateTimedRelease, canSteer, type AdmittedWorldInput } from '@open-legend/domain';
 import { completeGeometryBatch } from '@open-legend/spatial';
 import { GeometryBatches } from './geometry-batches.js';
 import { observerDescription, cooperationReceptionProblem } from '@open-legend/domain';
@@ -511,9 +520,138 @@ export class WorldService {
       command: Command;
       permission: LethalPermission;
       view: NonNullable<ApiResult['lethalReview']>;
+      executionInput?: CommandInput;
+      beginCommandId?: string;
+      cancelled?: boolean;
+      confirmed?: boolean;
+      confirmedActionId?: string;
+      released?: boolean;
     }
   >();
   private humanActorIds: readonly string[] = [];
+  private inputOwner?: WorldInputOwner;
+  private acceptAttackEvents(events: readonly WorldEvent[]): void {
+    for (const event of events) {
+      if (event.type !== 'shot-released' && event.type !== 'struck') continue;
+      this.inputOwner?.accepted(event);
+      const review = event.actorId ? this.lethalReviews.get(event.actorId) : undefined;
+      if (review?.confirmedActionId && review.confirmedActionId === event.data?.['actionId'])
+        review.released = true;
+    }
+  }
+  private inputAccountedThrough?: number;
+  private clockAdmission: 'monotonic' | 'duration' = 'duration';
+  /** The host owns wall-time admission; explicit duration callers remain deterministic. */
+  useMonotonicClock(): void {
+    this.clockAdmission = 'monotonic';
+  }
+  private get worldInputs(): WorldInputOwner {
+    return (this.inputOwner ??= new WorldInputOwner(this.config.capacity.presence));
+  }
+  private inputState(scope: RequestScope): WorldInputState {
+    this.reconcileWorldInputs(scope.actorId);
+    const actor = entityGet(this.world.entities, scope.actorId);
+    const generation = this.generation,
+      life = actor?.actor?.physicalLife,
+      alive = actor?.actor?.alive,
+      paused = this.paused;
+    return this.worldInputs.state(
+      scope.actorId,
+      digest({ scope, generation, life, alive, paused }),
+      () =>
+        this.currentScope(scope, 'play', true) &&
+        this.generation === generation &&
+        this.paused === paused &&
+        entityGet(this.world.entities, scope.actorId)?.actor?.physicalLife === life &&
+        entityGet(this.world.entities, scope.actorId)?.actor?.alive === alive,
+    );
+  }
+  inputScope(scope: RequestScope): WorldInputScope {
+    this.worldInputs.expire(performance.now(), scope.actorId);
+    return { ...this.inputState(scope).scope };
+  }
+  private reconcileWorldInputs(actorId?: string): void {
+    this.worldInputs.reconcile(
+      (actorId) => {
+        const action = entityGet(this.world.entities, actorId)?.actor?.action;
+        return action
+          ? { id: action.id, pending: !!action.attackExecution?.pendingRelease }
+          : undefined;
+      },
+      (actorId) => {
+        const actor = entityGet(this.world.entities, actorId);
+        return !!actor && canSteer(this.world, actor);
+      },
+      actorId,
+    );
+  }
+  private accountInputTime(until: number, fallback = this.clockStartedAt): void {
+    this.clockAdmission = 'monotonic';
+    if (this.paused) {
+      this.worldInputs.clear();
+      this.lethalReviews.clear();
+      this.inputAccountedThrough = until;
+      return;
+    }
+    const from = Math.max(this.clockStartedAt, this.inputAccountedThrough ?? fallback);
+    if (until <= from) {
+      this.inputAccountedThrough = from;
+      return;
+    }
+    const ratio = this.config.baseRatio * this.speed;
+    this.worldInputs.credit(from, until, this.world.simTime + this.debtSeconds, ratio);
+    this.debtSeconds += ((until - from) / 1000) * ratio;
+    this.inputAccountedThrough = until;
+  }
+  async updateWorldInput(
+    input: WorldInputUpdate,
+    scope = this.localScope,
+  ): Promise<WorldInputResult> {
+    return this.mutate(async () => {
+      await this.ready;
+      this.assertScope(scope, 'play', true);
+      const now = performance.now();
+      this.accountInputTime(now);
+      this.worldInputs.expire(now, scope.actorId);
+      const state = this.inputState(scope);
+      if (this.paused)
+        return {
+          ok: false,
+          code: 'paused',
+          message: 'Resume the world to move or release.',
+          inputScope: { ...state.scope },
+        };
+      const actor = entityGet(this.world.entities, scope.actorId);
+      if (!actor?.actor?.alive)
+        return {
+          ok: false,
+          code: 'unavailable',
+          message: 'This character cannot move now.',
+          inputScope: { ...state.scope },
+        };
+      if (input.kind === 'steer' && (input.direction.x || input.direction.z)) {
+        if (!canSteer(this.world, actor))
+          return {
+            ok: false,
+            code: 'busy',
+            message: 'This character cannot steer during the current work or condition.',
+            inputScope: { ...state.scope },
+          };
+      }
+      return this.worldInputs.update(state, input, now, this.world.simTime + this.debtSeconds);
+    });
+  }
+  executionView(actorId: string): AttackExecutionView | undefined {
+    const execution = entityGet(this.world.entities, actorId)?.actor?.action?.attackExecution;
+    if (!execution) return;
+    const input = execution.input ?? execution.pendingRelease?.input;
+    return {
+      profile: execution.profile,
+      ready: execution.ready,
+      releaseRequested: !!execution.pendingRelease,
+      ...(input ? { assessment: evaluateTimedRelease(execution.profile, input) } : {}),
+    };
+  }
   private pauseWhenHidden = true;
   private currentProfile!: PlayerProfile;
   private localRequestScope?: RequestScope;
@@ -1240,6 +1378,8 @@ export class WorldService {
                 (item) => this.presenceKey(item) === this.presenceKey(previous),
               )
             ) {
+              this.worldInputs.clear(previous.actorId);
+              this.lethalReviews.delete(previous.actorId);
               this.presence.delete(this.presenceKey(previous));
               this.presenceOrders.delete(this.presenceKey(previous));
               if (
@@ -1406,6 +1546,7 @@ export class WorldService {
   ): void {
     freezeWorld(saved.world);
     this.saved = saved;
+    if (currentAppendCount) this.acceptAttackEvents(historyWorld.events.slice(-currentAppendCount));
     if (currentAppendCount === undefined || saved.world.events !== historyWorld.events)
       this.worldEventsById = new Map(saved.world.events.map((event) => [event.id, event]));
     else
@@ -1860,6 +2001,7 @@ export class WorldService {
         for (const event of next.world.events.slice(this.worldEventsById.size))
           this.worldEventsById.set(event.id, event);
       this.saved = next;
+      if (appended) this.acceptAttackEvents(next.world.events.slice(-appended));
       allocation.commit();
       this.unpersisted = true;
       this.notify(false);
@@ -2666,6 +2808,9 @@ export class WorldService {
         // The restored world may be installed even when its follow-up save fails.
         if (this.storageError) throw new Error(this.storageError);
         this.debtSeconds = 0;
+        this.worldInputs.clear();
+        this.lethalReviews.clear();
+        this.inputAccountedThrough = undefined;
         this.memoryBacklog = null;
         this.notify();
       });
@@ -3102,7 +3247,11 @@ export class WorldService {
         if (!this.presence.has(clientId) && this.presence.size >= this.config.capacity.presence)
           throw new Error('Presence capacity reached. Reconnect before continuing.');
         this.presence.set(clientId, { at: this.now(), scope });
-      } else this.presence.delete(clientId);
+      } else {
+        this.presence.delete(clientId);
+        this.worldInputs.clear(scope.actorId);
+        this.lethalReviews.delete(scope.actorId);
+      }
       await this.reconcileParticipation();
       if (this.paused !== wasPaused || this.world.paused !== this.paused) await this.syncPause();
     });
@@ -3140,6 +3289,7 @@ export class WorldService {
             message: 'This game tab has not reconnected yet. Reload it and try Resume again.',
           };
       }
+      if (this.clockAdmission === 'monotonic') this.accountInputTime(performance.now());
       const next = {
         ...this.saved,
         speed: input.speed ?? this.saved.speed,
@@ -3151,7 +3301,12 @@ export class WorldService {
           next.manuallyPaused || this.maintenanceHeld || this.absent || this.storageError !== null,
       };
       // Speed changes preserve already-admitted time; pausing/resuming starts a fresh clock.
-      if (next.world.paused || this.world.paused) this.debtSeconds = 0;
+      if (next.world.paused || this.world.paused) {
+        this.debtSeconds = 0;
+        this.worldInputs.clear();
+        this.lethalReviews.clear();
+        this.inputAccountedThrough = performance.now();
+      }
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
       const resuming = this.world.paused && !next.world.paused;
       const ok = await this.commit(next, undefined, 'unchanged');
@@ -3177,6 +3332,9 @@ export class WorldService {
       await this.ready;
 
       this.debtSeconds = 0;
+      this.worldInputs.clear();
+      this.lethalReviews.clear();
+      this.inputAccountedThrough = performance.now();
       gaugeMetric('clock.pendingSimSeconds', 0);
       const resuming = this.world.paused && !this.paused;
       if (this.world.paused !== this.paused)
@@ -3268,7 +3426,11 @@ export class WorldService {
         countMetric('clock.discardedPendingSimSeconds', this.debtSeconds);
         gaugeMetric('clock.pendingSimSeconds', 0);
         this.debtSeconds = 0;
+        this.worldInputs.clear();
+        this.lethalReviews.clear();
+        this.inputAccountedThrough = offeredUntil ?? performance.now();
         elapsedRealSeconds = Math.max(0, elapsedRealSeconds - suspendedRealSeconds);
+        this.inputAccountedThrough -= elapsedRealSeconds * 1000;
         if (!elapsedRealSeconds) return;
       }
       // Optional memory maintenance must never stop native time or walking.
@@ -3288,11 +3450,23 @@ export class WorldService {
         this.memoryBacklog = memoryBacklog;
         this.notify(false);
       }
-      const requested = elapsedRealSeconds * this.config.baseRatio * this.speed;
+      const previousDebt = this.debtSeconds;
+      if (offeredUntil !== undefined)
+        this.accountInputTime(offeredUntil, offeredUntil - elapsedRealSeconds * 1000);
+      else {
+        // Duration-only callers cannot prove a real-time permission window.
+        this.clockAdmission = 'duration';
+        this.worldInputs.clear();
+        this.lethalReviews.clear();
+        this.inputAccountedThrough = undefined;
+        this.debtSeconds += elapsedRealSeconds * this.config.baseRatio * this.speed;
+      }
+      this.reconcileWorldInputs();
+      this.worldInputs.expire(performance.now());
+      const requested = this.debtSeconds - previousDebt;
       countMetric('clock.activeRealSeconds', elapsedRealSeconds);
       countMetric('clock.requestedSimSeconds', requested);
       gaugeMetric('clock.requestedSpeed', this.speed);
-      this.debtSeconds += requested;
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
       // Retain offered elapsed time even if a route became pending during the prior batch.
       // The native barrier delays integration; later catch-up charges needs, deadlines and travel.
@@ -3323,6 +3497,7 @@ export class WorldService {
       let nativeMs = 0;
       let advancedSeconds = 0;
       let assetEffect = false;
+      let candidateInputs: readonly AdmittedWorldInput[] = [];
       gaugeMetric('tick.dueSimSeconds', this.debtSeconds);
       // Share compatible internal intervals in one owned edit; the generator returns at
       // a coherent boundary for waiting operations or the existing host budget below.
@@ -3338,8 +3513,10 @@ export class WorldService {
           break;
         const stepStarted = beginTiming();
         const startTime = world.simTime;
+        candidateInputs = this.worldInputs.inputs(performance.now());
         const slices = advanceWorldSlices(world, offered - advancedSeconds, {
           maxIntervals: 4096,
+          playerInputs: candidateInputs,
           nativeRefuges: this.nativeRefugePreparations,
           boundaryExits: this.boundaryExitPreparations,
           constructionPermissions: permissions.permissions,
@@ -3382,6 +3559,13 @@ export class WorldService {
           );
         }
         const advanced = result.value;
+        // Expired private work (including random draws/events) is never published.
+        // Its elapsed debt remains ordinary catch-up for the next bounded batch.
+        if (
+          candidateInputs.length &&
+          !this.worldInputs.authorized(candidateInputs, performance.now())
+        )
+          return;
         if (!advanced.outcome.ok) {
           if (measured) recordDuration('native.noYield', performance.now() - sliceStarted);
           this.storageError = `Required native work stopped before advancing time: ${advanced.outcome.message} Restart after reconciling the admitted workload.`;
@@ -3406,7 +3590,12 @@ export class WorldService {
         if (stepMs !== undefined) nativeMs += stepMs;
         if (measured) recordDuration('native.intervalSimMs', delta * 1000);
         advancedSeconds += delta;
-        if (delta <= 0 || this.pendingOperations > 0 || performance.now() - batchStarted >= 32)
+        if (
+          candidateInputs.length ||
+          delta <= 0 ||
+          this.pendingOperations > 0 ||
+          performance.now() - batchStarted >= 32
+        )
           break;
       }
       if (measured) recordDuration('tick.nativeWork', nativeMs);
@@ -3434,6 +3623,11 @@ export class WorldService {
         assetEffect ||
         !!constructionChanges ||
         world.assemblyGeometryRevision !== this.world.assemblyGeometryRevision;
+      if (
+        candidateInputs.length &&
+        !this.worldInputs.authorized(candidateInputs, performance.now())
+      )
+        return;
       if (
         constructionChanged
           ? await this.commit(saved, undefined, 'append', undefined, undefined, undefined, {
@@ -4249,6 +4443,7 @@ export class WorldService {
     validateSources?: (world: WorldState) => Promise<boolean>,
     command?: Command,
     decision?: DecisionPublication,
+    responseProjection?: (result: Transition) => ApiResult,
   ): Promise<ApiResult> {
     try {
       return await this.mutate(async () => {
@@ -4299,7 +4494,8 @@ export class WorldService {
           return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
         const admissionWorld = this.world;
         const result = operation(admissionWorld);
-        const receipt = gameplay ? { ...gameplay, result: result.outcome } : undefined;
+        const response = responseProjection ? responseProjection(result) : result.outcome;
+        const receipt = gameplay ? { ...gameplay, result: response } : undefined;
         // A rejected/stale background transition with no effects has nothing to save.
         // Explicit commands and response jobs still need their durable outcome/receipt.
         if (
@@ -4309,7 +4505,7 @@ export class WorldService {
           !decision &&
           !result.invalidatedMemoryIds
         )
-          return { ...result.outcome };
+          return { ...response };
         const world = receipt
           ? updateWorld(result.world, (draft) => {
               orderedRecordSet(draft.commandReceipts, receipt.id, undefined);
@@ -4358,7 +4554,7 @@ export class WorldService {
           decision.deliveredAt = decision.now();
           decision.deliveredElapsedMs = Math.max(0, performance.now() - decision.startedMonotonic!);
         }
-        return { ...result.outcome };
+        return { ...response };
       });
     } catch (error) {
       if (error instanceof DecisionClaimLost)
@@ -5609,6 +5805,8 @@ export class WorldService {
           expiresAt: this.now() + COMMAND_RETRY_MS,
         },
         scope ?? this.localScope,
+        true,
+        commandId,
       );
     });
   }
@@ -5742,7 +5940,34 @@ export class WorldService {
     actorId: string,
     humanInitiated = true,
     scope: RequestScope = this.localScope,
+    liveInputRoute = false,
   ): Command | ApiResult {
+    if (input.execution && !liveInputRoute)
+      return {
+        ok: false,
+        code: 'input-route',
+        message: 'Use the current direct attack controls for this input.',
+      };
+    const pointProblem = aimPointProblem(this.world, input, scope);
+    if (pointProblem) return { ok: false, code: 'aim-point', message: pointProblem };
+    const selectedAimBody = input.targetId
+      ? entityGet(this.world.entities, input.targetId)
+      : undefined;
+    if (
+      input.execution &&
+      ['aim', 'shoot-once', 'release-shot'].includes(input.type) &&
+      input.targetId &&
+      !input.aimPoint &&
+      !input.bodyReference
+    )
+      return { ok: false, code: 'aim-target', message: 'Choose the current displayed body.' };
+    const pointBody =
+      input.aimPoint && input.targetId && input.aimBasis?.bodyReference
+        ? entityGet(this.world.entities, input.targetId)
+        : undefined;
+    const aimPointSubject = pointBody?.actor
+      ? { id: pointBody.id, life: pointBody.actor.physicalLife ?? 0 }
+      : undefined;
     let inventorySources: import('@open-legend/domain').ExactInventorySource[] | undefined;
     if (input.inventoryGroup) {
       if (!['transfer-item', 'drop'].includes(input.type) || input.quantity === undefined)
@@ -6313,17 +6538,97 @@ export class WorldService {
           type: 'strike',
           targetId: input.targetId,
           definitionId: input.definitionId,
+          ...(input.execution?.operation === 'begin' ? { manualExecution: true as const } : {}),
           ...(input.itemId ? { weaponItemId: input.itemId } : {}),
         };
         break;
       case 'release-shot':
+        if (input.targetId && !input.aimPoint && !selectedAimBody)
+          return { ok: false, code: 'target', message: 'Choose a target that is still in view.' };
+        if (
+          !input.execution &&
+          entityGet(this.world.entities, actorId)?.actor?.action?.attackExecution?.ready === false
+        )
+          return {
+            ok: false,
+            code: 'not-ready',
+            message: 'This preparation is not ready. Wait, then release deliberately.',
+          };
         if (!input.aimId)
           return { ok: false, code: 'aim', message: 'Choose the current prepared aim.' };
-        command = { ...envelope, type: 'release-shot', aimId: input.aimId };
+        command = {
+          ...envelope,
+          type: 'release-shot',
+          aimId: input.aimId,
+          ...(!input.aimPoint && selectedAimBody
+            ? {
+                aimTarget: {
+                  id: selectedAimBody.id,
+                  life: selectedAimBody.actor?.physicalLife ?? 0,
+                },
+              }
+            : {}),
+          ...(input.aimPoint ? { aimPoint: input.aimPoint } : {}),
+          ...(aimPointSubject ? { aimPointSubject } : {}),
+          ...(input.execution?.operation === 'release'
+            ? { releaseInput: input.execution.input }
+            : !input.execution &&
+                entityGet(this.world.entities, actorId)?.actor?.action?.attackExecution
+              ? { releaseInput: { kind: 'ordinary' as const }, recoveredRelease: true as const }
+              : {}),
+        };
+        break;
+      case 'release-strike':
+        if (
+          !input.execution &&
+          entityGet(this.world.entities, actorId)?.actor?.action?.attackExecution?.ready === false
+        )
+          return {
+            ok: false,
+            code: 'not-ready',
+            message: 'This preparation is not ready. Wait, then release deliberately.',
+          };
+        if (!input.expectedActionId)
+          return { ok: false, code: 'strike', message: 'Choose the exact prepared strike.' };
+        command = {
+          ...envelope,
+          type: 'release-strike',
+          expectedActionId: input.expectedActionId,
+          ...(input.execution?.operation === 'release'
+            ? { releaseInput: input.execution.input }
+            : !input.execution
+              ? { releaseInput: { kind: 'ordinary' as const }, recoveredRelease: true as const }
+              : {}),
+        };
+        break;
+      case 'aim':
+        if (!input.targetId && !input.aimPoint)
+          return { ok: false, code: 'target', message: 'Choose a visible target or point.' };
+        command = {
+          ...envelope,
+          type: 'aim',
+          ...(input.targetId ? { targetId: input.targetId } : {}),
+          ...(input.aimPoint ? { aimPoint: input.aimPoint } : {}),
+          ...(aimPointSubject ? { aimPointSubject } : {}),
+          ...(input.itemId ? { weaponItemId: input.itemId } : {}),
+          ...(input.ammunitionId ? { ammoItemId: input.ammunitionId } : {}),
+          ...(input.execution?.operation === 'begin' ? { manualExecution: true as const } : {}),
+        };
+        break;
+      case 'shoot-once':
+        if (!input.targetId && !input.aimPoint)
+          return { ok: false, code: 'target', message: 'Choose a visible target or point.' };
+        command = {
+          ...envelope,
+          type: 'shoot-once',
+          ...(input.targetId ? { targetId: input.targetId } : {}),
+          ...(input.aimPoint ? { aimPoint: input.aimPoint } : {}),
+          ...(aimPointSubject ? { aimPointSubject } : {}),
+          ...(input.itemId ? { weaponItemId: input.itemId } : {}),
+          ...(input.ammunitionId ? { ammoItemId: input.ammunitionId } : {}),
+        };
         break;
       case 'practice-shot':
-      case 'aim':
-      case 'shoot-once':
       case 'hunt':
         if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a target.' };
         command = {
@@ -6423,13 +6728,73 @@ export class WorldService {
     gameplay?: Omit<GameplayReceipt, 'result'>,
     scope?: RequestScope,
     humanInitiated = true,
+    originalRequestId = commandId,
   ): ApiResult | Promise<ApiResult> {
+    const operation = input.execution;
+    if (operation && (!humanInitiated || actorId !== (scope ?? this.localScope).actorId))
+      return {
+        ok: false,
+        code: 'input-route',
+        message: 'Use the current direct attack controls for this character.',
+      };
+    const { lethalReviewId, execution: _execution, ...semanticInput } = input;
+    const cancelsReview = input.type === 'cancel' && lethalReviewId !== undefined;
+    const reviewScope = scope
+      ? digest({
+          scope,
+          generation: this.generation,
+          life: entityGet(this.world.entities, actorId)?.actor?.physicalLife,
+        })
+      : undefined;
+    const review = lethalReviewId ? this.lethalReviews.get(actorId) : undefined;
+    const executionMeaning =
+      operation?.operation === 'confirm-review' ? review?.executionInput?.execution : operation;
+    // Operational tokens/order can change at confirmation; the frozen sample and
+    // its provenance remain part of the exact reviewed native meaning.
+    const inputDigest = digest({
+      ...semanticInput,
+      ...(executionMeaning
+        ? {
+            executionMeaning: {
+              stage: executionMeaning.operation,
+              ...(executionMeaning.operation === 'release'
+                ? { input: executionMeaning.input }
+                : {}),
+            },
+          }
+        : {}),
+    });
+    if (
+      lethalReviewId &&
+      (!review ||
+        review.view.id !== lethalReviewId ||
+        review.scope !== reviewScope ||
+        review.expiresAt <= this.now())
+    )
+      return {
+        ok: false,
+        code: 'lethal-review-stale',
+        message: 'That attack review expired or changed. Choose the attack again.',
+      };
+    if (
+      lethalReviewId &&
+      !cancelsReview &&
+      (review!.cancelled || review!.confirmed || review!.inputDigest !== inputDigest)
+    )
+      return {
+        ok: false,
+        code: 'lethal-review-stale',
+        message: 'That attack review expired or changed. Choose the attack again.',
+      };
+    const bindingInput =
+      operation?.operation === 'confirm-review' ? (review!.executionInput ?? input) : input;
     const bound = this.bindCommand(
       commandId,
-      input,
+      bindingInput,
       actorId,
       humanInitiated,
       scope ?? this.localScope,
+      humanInitiated,
     );
     if (!('actorId' in bound)) return bound;
     let command = bound;
@@ -6447,29 +6812,215 @@ export class WorldService {
       });
       return { ok: outcome.ok, code: outcome.code, message: outcome.message };
     }
-    const { lethalReviewId, ...unreviewedInput } = input;
-    const inputDigest = digest(unreviewedInput);
-    const reviewScope = scope ? digest({ scope, generation: this.generation }) : undefined;
-    if (lethalReviewId) {
-      const review = this.lethalReviews.get(actorId);
+    if (input.type === 'cancel' && input.expectedActionId && !operation && !cancelsReview) {
+      const action = entityGet(this.world.entities, actorId)?.actor?.action;
       if (
-        !review ||
-        review.view.id !== lethalReviewId ||
-        review.scope !== reviewScope ||
-        review.expiresAt <= this.now() ||
-        review.inputDigest !== inputDigest ||
-        (review.command.type !== 'strike' &&
-          review.command.type !== 'hunt' &&
-          review.command.type !== 'shoot-once' &&
-          review.command.type !== 'release-shot')
+        this.worldInputs.released(actorId, input.expectedActionId) ||
+        (action?.id === input.expectedActionId && !!action.attackExecution?.input)
+      )
+        return this.transition(
+          (world) => ({
+            world,
+            events: [],
+            outcome: { ok: true, code: 'released', message: 'The attack already released.' },
+          }),
+          gameplay,
+          undefined,
+          undefined,
+          command,
+        );
+    }
+    // Closing this exact review is an explicit native cancellation, including
+    // after Confirm won the race. It grants no renewed input authority.
+    if (cancelsReview && !operation) {
+      const state = this.inputState(scope ?? this.localScope);
+      if (
+        review!.beginCommandId &&
+        state.attack &&
+        state.attack.beginCommandId !== review!.beginCommandId
+      )
+        return {
+          ok: false,
+          code: 'lethal-review-stale',
+          message: 'This review belongs to an earlier attack.',
+        };
+      // Ordinary reviews own their native release identity, not an unrelated
+      // retained human-input watermark. A reviewed Begin has no action to stop.
+      const reviewedActionId =
+        review!.command.type === 'release-shot'
+          ? review!.command.aimId
+          : review!.command.type === 'release-strike'
+            ? review!.command.expectedActionId
+            : undefined;
+      const expected =
+        review!.confirmedActionId ??
+        reviewedActionId ??
+        (review!.beginCommandId ? state.attack?.actionId : undefined);
+      if (input.expectedActionId && input.expectedActionId !== expected)
+        return {
+          ok: false,
+          code: 'lethal-review-stale',
+          message: 'This cancellation names a different action.',
+        };
+      review!.cancelled = true;
+      const gesture =
+        review!.beginCommandId || (expected && state.attack?.actionId === expected)
+          ? state.attack
+          : undefined;
+      const released = review!.released || gesture?.phase === 'released';
+      if (gesture) {
+        gesture.window = undefined;
+        if (!released) gesture.phase = 'cancelled';
+      }
+      const action = entityGet(this.world.entities, actorId)?.actor?.action;
+      if (released || !expected || action?.id !== expected)
+        return this.transition(
+          (world) => ({
+            world,
+            events: [],
+            outcome: {
+              ok: true,
+              code: released ? 'released' : 'cancelled',
+              message: released ? 'The attack already released.' : 'Attack preparation cancelled.',
+            },
+          }),
+          gameplay,
+          undefined,
+          undefined,
+          command,
+        );
+      return this.transition(
+        (world) =>
+          executeCommand(world, {
+            id: commandId,
+            actorId,
+            type: 'cancel',
+            expectedActionId: expected,
+          }),
+        gameplay,
+        undefined,
+        undefined,
+        command,
+      );
+    }
+    let inputState: WorldInputState | undefined;
+    if (operation) {
+      const now = performance.now();
+      this.accountInputTime(now);
+      this.worldInputs.expire(now, actorId);
+      inputState = this.inputState(scope ?? this.localScope);
+      const fail = (message: string): ApiResult => ({
+        ok: false,
+        code: 'input-stale',
+        message,
+        inputScope: { ...inputState!.scope },
+      });
+      if (this.paused && operation.operation !== 'cancel')
+        return fail('Resume the world and use a fresh deliberate input.');
+      if (operation.operation === 'confirm-review' && !review?.executionInput)
+        return fail('This review does not continue a held attack.');
+      if (
+        operation.operation === 'confirm-review' &&
+        inputState.attack &&
+        (inputState.attack.beginCommandId !== review!.beginCommandId ||
+          inputState.attack.phase === 'cancelled')
+      )
+        return fail('This review belongs to an abandoned attack.');
+      if (
+        operation.operation === 'cancel' &&
+        input.expectedActionId &&
+        input.expectedActionId !== (review?.confirmedActionId ?? inputState.attack?.actionId)
+      )
+        return fail('This cancellation names a different action.');
+      const attackWasReleased = inputState.attack?.phase === 'released';
+      if (operation.operation === 'cancel' && review) {
+        if (
+          operation.inputEpoch !== inputState.scope.inputEpoch ||
+          operation.attackInputToken !== inputState.scope.attackInputToken ||
+          operation.beginCommandId !== review.beginCommandId
+        )
+          return fail('This review no longer matches these attack controls.');
+        if (inputState.attack && inputState.attack.beginCommandId !== review.beginCommandId)
+          return fail('This review belongs to an earlier attack.');
+        review.cancelled = true;
+        if (inputState.attack) {
+          inputState.attack.phase = 'cancelled';
+          inputState.attack.window = undefined;
+        }
+      } else {
+        const problem = this.worldInputs.begin(
+          inputState,
+          operation,
+          operation.operation === 'confirm-review' ? review!.beginCommandId! : originalRequestId,
+        );
+        if (problem) return fail(problem);
+      }
+      const action = entityGet(this.world.entities, actorId)?.actor?.action;
+      if (operation.operation === 'cancel') {
+        if (attackWasReleased) {
+          inputState.attack!.phase = 'released';
+          return this.transition(
+            (world) => ({
+              world,
+              events: [],
+              outcome: { ok: true, code: 'released', message: 'The attack already released.' },
+            }),
+            gameplay,
+            undefined,
+            undefined,
+            command,
+          );
+        }
+        const expected = review?.confirmedActionId ?? inputState.attack?.actionId;
+        if (input.expectedActionId && input.expectedActionId !== expected)
+          return fail('This cancellation names a different action.');
+        if (!expected || action?.id !== expected)
+          return this.transition(
+            (world) => ({
+              world,
+              events: [],
+              outcome: { ok: true, code: 'cancelled', message: 'Attack preparation cancelled.' },
+            }),
+            gameplay,
+            undefined,
+            undefined,
+            command,
+          );
+        command = { id: commandId, actorId, type: 'cancel', expectedActionId: expected };
+      }
+      if (operation.operation === 'release') {
+        const expected = input.type === 'release-shot' ? input.aimId : input.expectedActionId;
+        if (!expected || expected !== inputState.attack?.actionId || action?.id !== expected)
+          return fail('This release no longer matches its preparation.');
+        if (
+          !action.attackExecution ||
+          !evaluateTimedRelease(action.attackExecution.profile, operation.input)
+        )
+          return fail('Choose a finite release input for this preparation.');
+      }
+    }
+    if (lethalReviewId && operation?.operation !== 'cancel') {
+      if (
+        !['strike', 'hunt', 'shoot-once', 'aim', 'release-shot', 'release-strike'].includes(
+          review!.command.type,
+        )
       )
         return {
           ok: false,
           code: 'lethal-review-stale',
           message: 'That attack review expired or changed. Choose the attack again.',
         };
-      command = { ...review.command, id: commandId, lethalPermission: review.permission };
-    } else if (scope && ['strike', 'hunt', 'shoot-once', 'release-shot'].includes(command.type)) {
+      command = {
+        ...review!.command,
+        id: commandId,
+        lethalPermission: review!.permission,
+      } as Command;
+    } else if (
+      scope &&
+      ['strike', 'hunt', 'shoot-once', 'aim', 'release-shot', 'release-strike'].includes(
+        command.type,
+      )
+    ) {
       const preview = executeCommand(this.world, command, {
         preview: true,
         constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),
@@ -6500,12 +7051,22 @@ export class WorldService {
         )
           return { ...preview, lethalReview: prior.view };
         const attack = nativeActivityView(this.world, offer.command);
-        const { rangedDescription, ...reviewPolicy } = policy;
+        const { rangedDescription, prepareLabel, ...reviewPolicy } = policy;
         const view: NonNullable<ApiResult['lethalReview']> = {
           id: randomUUID(),
           ...reviewPolicy,
-          description: command.type === 'strike' ? policy.description : rangedDescription,
-          targetLabel: observerName(this.world, actorId, offer.permission.targetId).name,
+          ...(bindingInput.execution?.operation === 'begin'
+            ? { confirmLabel: prepareLabel }
+            : command.type === 'release-strike' || command.type === 'release-shot'
+              ? { confirmLabel: attack.name }
+              : {}),
+          description:
+            command.type === 'strike' || command.type === 'release-strike'
+              ? policy.description
+              : rangedDescription,
+          targetLabel: [offer.permission, ...(offer.permission.additionalTargets ?? [])]
+            .map((permission) => observerName(this.world, actorId, permission.targetId).name)
+            .join(', '),
           attack: {
             name: attack.name,
             ...(attack.tool ? { tool: attack.tool } : {}),
@@ -6526,10 +7087,32 @@ export class WorldService {
           command: offer.command,
           permission: offer.permission,
           view,
+          ...(operation
+            ? { executionInput: bindingInput, beginCommandId: inputState!.attack!.beginCommandId }
+            : {}),
         });
-        return { ...preview, lethalReview: view };
+        if (inputState) {
+          this.worldInputs.invalidateMovement(actorId);
+          if (inputState.attack) {
+            inputState.attack.window = undefined;
+            inputState.attack.phase = 'ended';
+          }
+        }
+        // The original request resolves to this exact review, even if its HTTP
+        // response is lost. Persist no transient input tokens and admit no work.
+        return this.transition(
+          (world) => ({ world, events: [], outcome: preview }),
+          gameplay,
+          undefined,
+          undefined,
+          command,
+          undefined,
+          () => ({ ...preview, lethalReview: view }),
+        );
       }
     }
+    let confirmedActionId: string | undefined,
+      confirmedRelease = false;
     return this.transition(
       (world) =>
         executeCommand(world, command, {
@@ -6540,9 +7123,73 @@ export class WorldService {
       undefined,
       undefined,
       command,
+      undefined,
+      (transition) => {
+        const action = entityGet(transition.world.entities, actorId)?.actor?.action;
+        const execution = action?.attackExecution;
+        const sample = execution?.input ?? execution?.pendingRelease?.input;
+        if (review && transition.outcome.ok) {
+          confirmedActionId =
+            command.type === 'release-shot'
+              ? command.aimId
+              : command.type === 'release-strike'
+                ? command.expectedActionId
+                : transition.outcome.actionId;
+          confirmedRelease = transition.events.some(
+            (event) =>
+              event.actorId === actorId &&
+              event.data?.['actionId'] === confirmedActionId &&
+              (event.type === 'shot-released' || event.type === 'struck'),
+          );
+        }
+        return {
+          ...transition.outcome,
+          ...(confirmedActionId ? { actionId: confirmedActionId } : {}),
+          ...(transition.outcome.ok && execution
+            ? {
+                actionId: action!.id,
+                execution: {
+                  profile: execution.profile,
+                  ready: execution.ready,
+                  releaseRequested: !!execution.pendingRelease,
+                  ...(sample
+                    ? { assessment: evaluateTimedRelease(execution.profile, sample) }
+                    : {}),
+                },
+              }
+            : {}),
+        };
+      },
     ).then((result) => {
-      if (lethalReviewId && (result.ok || result.code === 'lethal-review-stale'))
-        this.lethalReviews.delete(actorId);
+      if (inputState?.attack && operation) {
+        const action = entityGet(this.world.entities, actorId)?.actor?.action;
+        if (result.ok && operation.operation !== 'cancel') {
+          inputState.attack.actionId = result.actionId ?? action?.id;
+          if (action?.attackExecution?.pendingRelease && inputState.attack.actionId === action.id)
+            this.worldInputs.arm(
+              inputState,
+              action.id,
+              performance.now(),
+              this.world.simTime + this.debtSeconds,
+            );
+          else if (
+            operation.operation === 'release' ||
+            (operation.operation === 'confirm-review' &&
+              review?.executionInput?.execution?.operation === 'release')
+          )
+            inputState.attack.phase = 'released';
+        } else if (operation.operation !== 'cancel') inputState.attack.phase = 'ended';
+      }
+      if (review) {
+        if (result.ok && operation?.operation !== 'cancel') {
+          // Retain the exact review until expiry so Decline can still stop its
+          // preparation after Confirm won the race, without touching later work.
+          // docs/projects/action-execution-and-skill-expression-tech-design.md#11-one-native-preparation-one-release-exact-recovery
+          review.confirmed = true;
+          review.confirmedActionId = confirmedActionId;
+          review.released = confirmedRelease;
+        } else if (result.code === 'lethal-review-stale') review.cancelled = true;
+      }
       return result;
     });
   }

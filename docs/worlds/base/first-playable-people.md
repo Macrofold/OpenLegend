@@ -39,7 +39,7 @@ Do not derive combat bonuses, friendliness percentages, obedience or scripted ev
 
 ## Knowledge, stock and existing history
 
-The opening retains the four residents' current initial bodily conditions: Ada starts at 35 Food, the Mercenary at 76, Mara at 72 and Tavin at 74; each starts at 85 Energy and full Health without an injury. These values come from the inspected `createActor` calls and installed Energy default, and are authored once in `opening.yaml`, separate from permanent personality. Ada's immediate hunger can compete with conversation or an invitation; it does not select her response. The player's new full starting condition is deliberately separate. Initial values are never reapplied on return or load.
+The opening retains the four residents' current initial bodily conditions: Ada starts at 35 Food, the Mercenary at 76, Mara at 72 and Tavin at 74; each starts at 85 Energy and full Health. These values come from the inspected `createActor` calls and installed Energy default, and are authored once in `opening.yaml`, separate from permanent personality. Ada's immediate hunger can compete with conversation or an invitation; it does not select her response. The player's new full starting condition is deliberately separate. Initial values are never reapplied on return or load.
 
 The survival profile selects elementary methods for the player and all four residents through actual starting recipe-knowledge records, without invention attribution or free output items. Method advice must refer to those records or subsequently acquired knowledge. Advanced field-sling production remains the actual discoverable workshop method; neither this table nor a background story grants it.
 

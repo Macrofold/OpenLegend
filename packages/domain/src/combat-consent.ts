@@ -1,3 +1,5 @@
+import { hasRecordFields, isSafeRecordId } from './records.js';
+import { attackExecutionFactor, attackExecutionScore } from './combat-execution.js';
 import { canonicalJson, outcome } from './events.js';
 import { bodyPolicy } from './body-policy.js';
 import { itemFor } from './objects.js';
@@ -46,6 +48,7 @@ export interface LethalReviewPolicy {
   description: string;
   rangedDescription: string;
   confirmLabel: string;
+  prepareLabel: string;
   cancelLabel: string;
 }
 /** Issued only after authenticated human review. Public commands carry an opaque server
@@ -56,11 +59,45 @@ export interface LethalPermission {
   targetId: string;
   targetLife: number;
   attackDigest: string;
+  additionalTargets?: Array<Omit<LethalPermission, 'additionalTargets'>>;
+}
+export function validLethalPermission(value: unknown): value is LethalPermission {
+  if (
+    !hasRecordFields(
+      value,
+      ['actorId', 'sourceLife', 'targetId', 'targetLife', 'attackDigest'],
+      ['additionalTargets'],
+    )
+  )
+    return false;
+  const permission = value as unknown as LethalPermission;
+  if (
+    ![permission.actorId, permission.targetId].every(isSafeRecordId) ||
+    ![permission.sourceLife, permission.targetLife].every(
+      (n) => Number.isSafeInteger(n) && n >= 0,
+    ) ||
+    typeof permission.attackDigest !== 'string' ||
+    !permission.attackDigest
+  )
+    return false;
+  return (
+    permission.additionalTargets === undefined ||
+    (Array.isArray(permission.additionalTargets) &&
+      permission.additionalTargets.length === 1 &&
+      permission.additionalTargets.every(
+        (other) =>
+          validLethalPermission(other) &&
+          !('additionalTargets' in other) &&
+          other.actorId === permission.actorId &&
+          other.sourceLife === permission.sourceLife &&
+          other.targetId !== permission.targetId,
+      ))
+  );
 }
 export function attackFacts(
   world: WorldState,
   actor: Entity,
-  attack: Pick<Action, 'type' | 'definitionId' | 'weaponItemId' | 'ammoItemId'>,
+  attack: Pick<Action, 'type' | 'definitionId' | 'weaponItemId' | 'ammoItemId' | 'attackExecution'>,
 ): { digest: string; injury: number } | null {
   const weapon = attack.weaponItemId ? itemFor(world, attack.weaponItemId) : undefined;
   const definition = weapon && world.itemDefinitions[weapon.definitionId];
@@ -73,8 +110,8 @@ export function attackFacts(
   const raw =
     attack.type === 'strike'
       ? strike?.damage
-      : definition?.launcher
-        ? definition.launcher.damage + (ammoDefinition?.ammunition?.damageBonus ?? 0)
+      : definition?.rangedWeapon
+        ? definition.rangedWeapon.damage + (ammoDefinition?.ammunition?.damageBonus ?? 0)
         : undefined;
   if (raw === undefined) return null;
   const outgoing = scarFactor(world, actor, 'outgoingInjuryFactor');
@@ -88,6 +125,13 @@ export function attackFacts(
       ammunition: ammoDefinition && definitionPin(ammoDefinition),
       ammoId: ammunition?.id,
       outgoing,
+      execution: attack.attackExecution && {
+        tool: attack.attackExecution.tool,
+        profile: attack.attackExecution.profile,
+        contact: attack.attackExecution.contact,
+        injury: attack.attackExecution.injury,
+        input: attack.attackExecution.input ?? { kind: 'ordinary' },
+      },
     }),
   };
 }
@@ -95,7 +139,7 @@ export function lethalPermission(
   world: WorldState,
   actor: Entity,
   target: Entity,
-  attack: Pick<Action, 'type' | 'definitionId' | 'weaponItemId' | 'ammoItemId'>,
+  attack: Pick<Action, 'type' | 'definitionId' | 'weaponItemId' | 'ammoItemId' | 'attackExecution'>,
 ): LethalPermission | null {
   const facts = attackFacts(world, actor, attack);
   return (
@@ -124,15 +168,22 @@ export function attackReviewProblem(
     | 'ammoItemId'
     | 'lethalPermission'
     | 'requiresLethalReview'
+    | 'attackExecution'
   >,
 ): Outcome | null {
   const policy = bodyPolicy(world),
     facts = attackFacts(world, actor, attack);
   if (!facts || !target.actor?.body)
     return outcome(false, 'attack-unavailable', 'The attack is no longer available.');
-  if (attack.lethalPermission) {
+  const permission =
+    attack.lethalPermission?.targetId === target.id
+      ? attack.lethalPermission
+      : attack.lethalPermission?.additionalTargets?.find((value) => value.targetId === target.id);
+  if (permission) {
+    const { additionalTargets: _otherTargets, ...singlePermission } =
+      permission as LethalPermission;
     const expected = lethalPermission(world, actor, target, attack);
-    if (canonicalJson(expected) !== canonicalJson(attack.lethalPermission))
+    if (canonicalJson(expected) !== canonicalJson(singlePermission))
       return outcome(
         false,
         'lethal-review-stale',
@@ -141,6 +192,11 @@ export function attackReviewProblem(
   }
   const potential =
     facts.injury *
+    attackExecutionFactor(
+      attack.attackExecution,
+      attackExecutionScore(attack as Action),
+      'injury',
+    ) *
     target.actor.body.susceptibility.injury *
     scarFactor(world, target, 'incomingInjuryFactor');
   if (
@@ -148,7 +204,7 @@ export function attackReviewProblem(
     (actor.actor?.controller === 'player' || attack.requiresLethalReview) &&
     policy.zeroHealth[target.actor.controller] === 'die' &&
     potential >= target.actor.health &&
-    !attack.lethalPermission
+    !permission
   )
     return outcome(
       false,

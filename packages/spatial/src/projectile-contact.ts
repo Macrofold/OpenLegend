@@ -22,13 +22,13 @@ function slab(start: number, travel: number, low: number, high: number): Interva
 /** First contact of a point segment with an upright body moving linearly over the same
  * interval. Relative motion preserves crossings even when neither endpoint overlaps.
  * Short bodies use the movement owner's cylinder; taller bodies use its capsule. */
-export function movingBodyContact(
+export function movingBodyContactInterval(
   from: WorldPoint,
   to: WorldPoint,
   bodyFrom: WorldPoint,
   bodyTo: WorldPoint,
   body: Pick<BodyProfile, 'radius' | 'height'>,
-): number | undefined {
+): { enter: number; exit: number } | undefined {
   const p = { x: from.x - bodyFrom.x, y: from.y - bodyFrom.y, z: from.z - bodyFrom.z };
   const d = {
     x: to.x - bodyTo.x - p.x,
@@ -37,7 +37,7 @@ export function movingBodyContact(
   };
   const r = body.radius,
     h = body.height;
-  const candidates: number[] = [];
+  const candidates: Interval[] = [];
   const horizontal = within(
     d.x * d.x + d.z * d.z,
     2 * (p.x * d.x + p.z * d.z),
@@ -46,7 +46,8 @@ export function movingBodyContact(
   const vertical = slab(p.y, d.y, h >= 2 * r ? r : 0, h >= 2 * r ? h - r : h);
   if (horizontal && vertical) {
     const enter = Math.max(horizontal[0], vertical[0]);
-    if (enter <= Math.min(horizontal[1], vertical[1])) candidates.push(enter);
+    if (enter <= Math.min(horizontal[1], vertical[1]))
+      candidates.push([enter, Math.min(horizontal[1], vertical[1])]);
   }
   if (h >= 2 * r)
     for (const center of [r, h - r]) {
@@ -56,7 +57,23 @@ export function movingBodyContact(
         2 * (p.x * d.x + y * d.y + p.z * d.z),
         p.x * p.x + y * y + p.z * p.z - r * r,
       );
-      if (sphere) candidates.push(sphere[0]);
+      if (sphere) candidates.push(sphere);
     }
-  return candidates.length ? Math.min(...candidates) : undefined;
+  return candidates.length
+    ? {
+        enter: Math.min(...candidates.map((part) => part[0])),
+        exit: Math.max(...candidates.map((part) => part[1])),
+      }
+    : undefined;
+}
+
+/** First actual entry uses the same capsule interval as cleared-crossing exits. */
+export function movingBodyContact(
+  from: WorldPoint,
+  to: WorldPoint,
+  bodyFrom: WorldPoint,
+  bodyTo: WorldPoint,
+  body: Pick<BodyProfile, 'radius' | 'height'>,
+): number | undefined {
+  return movingBodyContactInterval(from, to, bodyFrom, bodyTo, body)?.enter;
 }

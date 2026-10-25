@@ -13,7 +13,7 @@ import {
 } from '@open-legend/spatial';
 import { readOnlyDraftView } from './draft.js';
 import { assemblyShapes } from './assembly-geometry.js';
-import { bodyProfile, spatialMap, worldPosition } from './spatial-state.js';
+import { bodyProfile, effectiveBodyProfile, spatialMap, worldPosition } from './spatial-state.js';
 import { worldRootEntities } from './entity-index.js';
 import { exposedMaterialIds } from './objects.js';
 import { incidentRain, dailyRainBoundary } from './rain.js';
@@ -140,7 +140,9 @@ function materialFootprintFromRead(
     if (!root) return;
     const body = bodyProfile(parent),
       point = worldPosition(root);
-    const y = point.y + (root.actor?.alive ? bodyProfile(root).interactionHeight : body.height);
+    const y =
+      point.y +
+      (root.actor?.alive ? effectiveBodyProfile(world, root).interactionHeight : body.height);
     const key = JSON.stringify(['open-contents', parent.id, point.x, point.z, y, body.radius]);
     const previous = read.footprints.get(key);
     if (previous) {
@@ -165,7 +167,7 @@ function materialFootprintFromRead(
   )
     return;
   const point = worldPosition(parent),
-    profile = bodyProfile(parent);
+    profile = effectiveBodyProfile(world, parent);
   const worn = descriptor.role === 'cover' && placement.mode === 'attached';
   const form = worn
     ? family.exposure.worn

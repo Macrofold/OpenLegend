@@ -13,7 +13,8 @@ import { canonicalJson } from './events.js';
 import { getOwn } from './records.js';
 import { isSafeRecordId } from './records.js';
 import { materialInventoryRule } from './material-inventory.js';
-import { manufactureToolProblem, MANUFACTURE_LIMITS } from './manufacture.js';
+import { manufactureToolProblem } from './manufacture.js';
+import { MANUFACTURE_LIMITS } from './manufacture-limits.js';
 import { definitionPin, recipeFamily, type DefinitionPin } from './world-modules.js';
 
 /** Standard JSON Schema scalars and closed one-level records; native validation shares these constraints. */

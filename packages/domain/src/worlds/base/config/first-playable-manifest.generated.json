@@ -493,7 +493,7 @@
     "id": "item-32",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "spear", "version": 1, "digest": "wc8zif" },
+    "definition": { "id": "spear", "version": 1, "digest": "8frlkf" },
     "quantity": 1,
     "parentId": "item-30"
   },
@@ -501,7 +501,7 @@
     "id": "item-33",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "workshop-directions", "version": 1, "digest": "1tydjy5" },
+    "definition": { "id": "hammer", "version": 1, "digest": "1igm4wp" },
     "quantity": 1,
     "parentId": "item-30"
   },
@@ -509,28 +509,36 @@
     "id": "item-34",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "field-sling-record", "version": 1, "digest": "1iaop55" },
+    "definition": { "id": "workshop-directions", "version": 1, "digest": "1tydjy5" },
     "quantity": 1,
-    "parentId": "item-31"
+    "parentId": "item-30"
   },
   "item-35": {
     "id": "item-35",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
-    "quantity": 2,
+    "definition": { "id": "field-sling-record", "version": 1, "digest": "11cybyh" },
+    "quantity": 1,
     "parentId": "item-31"
   },
   "item-36": {
     "id": "item-36",
     "change": "retained",
     "installer": "ordinary-scenario",
+    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
+    "quantity": 2,
+    "parentId": "item-31"
+  },
+  "item-37": {
+    "id": "item-37",
+    "change": "retained",
+    "installer": "ordinary-scenario",
     "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
     "quantity": 1,
     "parentId": "riverside-workshop"
   },
-  "item-37": {
-    "id": "item-37",
+  "item-38": {
+    "id": "item-38",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
@@ -567,19 +575,11 @@
     "installer": "ordinary-scenario",
     "position": { "x": 11, "y": 0, "z": 22.5, "surfaceId": "terrain" }
   },
-  "item-38": {
-    "id": "item-38",
-    "change": "retained",
-    "installer": "ordinary-scenario",
-    "definition": { "id": "stone_tool", "version": 1, "digest": "120f9yt" },
-    "quantity": 1,
-    "parentId": "mara"
-  },
   "item-39": {
     "id": "item-39",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
+    "definition": { "id": "stone_tool", "version": 1, "digest": "120f9yt" },
     "quantity": 1,
     "parentId": "mara"
   },
@@ -587,15 +587,15 @@
     "id": "item-40",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "stone_tool", "version": 1, "digest": "120f9yt" },
+    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
     "quantity": 1,
-    "parentId": "tavin"
+    "parentId": "mara"
   },
   "item-41": {
     "id": "item-41",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
+    "definition": { "id": "stone_tool", "version": 1, "digest": "120f9yt" },
     "quantity": 1,
     "parentId": "tavin"
   },
@@ -603,15 +603,15 @@
     "id": "item-42",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "torn_red_fastening", "version": 1, "digest": "1pflae9" },
+    "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
     "quantity": 1,
-    "parentId": "mending-clearing-spot"
+    "parentId": "tavin"
   },
   "item-43": {
     "id": "item-43",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "tavins_sorting_note", "version": 1, "digest": "pei98e" },
+    "definition": { "id": "torn_red_fastening", "version": 1, "digest": "1pflae9" },
     "quantity": 1,
     "parentId": "mending-clearing-spot"
   },
@@ -619,20 +619,28 @@
     "id": "item-44",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "red_stitched_satchel", "version": 1, "digest": "dmz1ra" },
+    "definition": { "id": "tavins_sorting_note", "version": 1, "digest": "pei98e" },
     "quantity": 1,
-    "parentId": "reed-side-store-pile"
+    "parentId": "mending-clearing-spot"
   },
   "item-45": {
     "id": "item-45",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
-    "quantity": 2,
-    "parentId": "item-44"
+    "definition": { "id": "red_stitched_satchel", "version": 1, "digest": "dmz1ra" },
+    "quantity": 1,
+    "parentId": "reed-side-store-pile"
   },
   "item-46": {
     "id": "item-46",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
+    "quantity": 2,
+    "parentId": "item-45"
+  },
+  "item-47": {
+    "id": "item-47",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
@@ -651,15 +659,15 @@
     "installer": "ordinary-scenario",
     "position": { "x": 103, "y": 0.10000000000000003, "z": 25, "surfaceId": "terrain-5-1" }
   },
-  "item-47": {
-    "id": "item-47",
+  "item-48": {
+    "id": "item-48",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
     "quantity": 1
   },
-  "item-48": {
-    "id": "item-48",
+  "item-49": {
+    "id": "item-49",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "cooked_meat", "version": 1, "digest": "1nuttzc" },
@@ -672,86 +680,86 @@
     "installer": "ordinary-scenario",
     "position": { "x": 106, "y": 0.10000000000000003, "z": 26, "surfaceId": "terrain-5-1" }
   },
-  "item-49": {
-    "id": "item-49",
+  "item-50": {
+    "id": "item-50",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
     "quantity": 1,
     "parentId": "orin"
   },
-  "item-50": {
-    "id": "item-50",
+  "item-51": {
+    "id": "item-51",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "cooked_meat", "version": 1, "digest": "1nuttzc" },
     "quantity": 2,
     "parentId": "orin"
   },
-  "item-51": {
-    "id": "item-51",
-    "change": "retained",
-    "installer": "ordinary-scenario",
-    "definition": { "id": "item-10uvnqg", "version": 1, "digest": "lhm7zm" },
-    "quantity": 1
-  },
   "item-52": {
     "id": "item-52",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "item-hua8to", "version": 1, "digest": "cajaal" },
+    "definition": { "id": "item-10uvnqg", "version": 1, "digest": "lhm7zm" },
     "quantity": 1
   },
   "item-53": {
     "id": "item-53",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "item-stfmma", "version": 1, "digest": "8427iq" },
-    "quantity": 6,
-    "parentId": "orin"
+    "definition": { "id": "item-hua8to", "version": 1, "digest": "eovb3" },
+    "quantity": 1
   },
   "item-54": {
     "id": "item-54",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "field-sling-record", "version": 1, "digest": "1iaop55" },
-    "quantity": 1,
-    "parentId": "watchpost-cache"
+    "definition": { "id": "item-stfmma", "version": 1, "digest": "8427iq" },
+    "quantity": 6,
+    "parentId": "orin"
   },
   "item-55": {
     "id": "item-55",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
-    "quantity": 2,
+    "definition": { "id": "field-sling-record", "version": 1, "digest": "11cybyh" },
+    "quantity": 1,
     "parentId": "watchpost-cache"
   },
   "item-56": {
     "id": "item-56",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
-    "quantity": 1,
+    "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
+    "quantity": 2,
     "parentId": "watchpost-cache"
   },
   "item-57": {
     "id": "item-57",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
-    "quantity": 4,
+    "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
+    "quantity": 1,
     "parentId": "watchpost-cache"
   },
   "item-58": {
     "id": "item-58",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "item-stfmma", "version": 1, "digest": "8427iq" },
+    "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
     "quantity": 4,
     "parentId": "watchpost-cache"
   },
   "item-59": {
     "id": "item-59",
+    "change": "retained",
+    "installer": "ordinary-scenario",
+    "definition": { "id": "item-stfmma", "version": 1, "digest": "8427iq" },
+    "quantity": 4,
+    "parentId": "watchpost-cache"
+  },
+  "item-60": {
+    "id": "item-60",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "watchpost-directions", "version": 1, "digest": "se6i7n" },

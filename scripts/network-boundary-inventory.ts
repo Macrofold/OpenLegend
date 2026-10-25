@@ -158,6 +158,8 @@ export const generatedNetworkArtifacts: Readonly<Record<string, string>> = {
 };
 
 export const fixtureToolOwners: Readonly<Record<string, string>> = {
+  'scripts/performance/profile-action-input.ts':
+    'Disposable PostgreSQL-backed native input measurement; no listener, inference worker or provider calls.',
   'scripts/capture-starting-art-study.ts':
     'Disposable native HTTP journey through bounded test helper; no app deployment import.',
   'scripts/decision-benchmark/escalation-load.ts':

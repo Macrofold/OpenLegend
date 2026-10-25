@@ -3,7 +3,7 @@ import { accessiblePossession, canAccessContainer, possessionItems } from './obj
 import { acquireExposure } from './events.js';
 import { cloneValue } from './draft.js';
 import { isEquipped } from './equipment.js';
-import { itemFor, objectAncestors } from './objects.js';
+import { itemContainerCapacity, itemFor, objectAncestors } from './objects.js';
 import { contentsQuery } from './queries.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { observerName } from './worlds/base/knowledge.js';
@@ -183,7 +183,7 @@ export function inspectedContainer(world: WorldState, actorId: string) {
       ? {
           definitionPin: container.container.definitionPin,
           load: container.container.load,
-          capacity: definition?.container?.capacity,
+          capacity: itemContainerCapacity(world, container),
         }
       : {}),
     inspection,

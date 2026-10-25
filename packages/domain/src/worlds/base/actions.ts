@@ -72,8 +72,7 @@ export function nativeMovementSpeed(
       BASE_ACTION_DEFAULTS.movementTilesPerSecond * (entity.threat?.policy.movementFactor ?? 1)) *
     (profile
       ? nativeResponseMovementFactor(world, entity, profile)
-      : (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200) *
-        scarFactor(world, entity, 'movementFactor'))
+      : scarFactor(world, entity, 'movementFactor'))
   );
 }
 

@@ -56,6 +56,7 @@ export const characterlessRoute = (method: string | undefined, path: string) =>
 /** Ordinary gameplay mutations stop while maintenance holds the world. Creators keep the
  * existing paused-world editing; any job they start waits and is fenced at Ready. */
 const MAINTENANCE_GAMEPLAY = new Set([
+  '/api/input',
   '/api/command',
   '/api/action-attempt',
   '/api/commitment',

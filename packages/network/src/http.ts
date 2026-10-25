@@ -108,7 +108,7 @@ export async function openHttp(
     stopped = true;
     // Preserve the first reader cancellation before abort can synthesize EOF.
     owned?.cancel();
-    controller.abort();
+    controller.abort(operation.signal.reason);
   };
   removeStop = scope.onStop(stop);
   const signalStop = () => stop();
@@ -159,12 +159,12 @@ export async function openHttp(
             cleanup = reader ? reader.cancel() : (response.body?.cancel() ?? Promise.resolve());
           } catch {
             activity.quarantine();
-            controller.abort();
+            controller.abort(operation.signal.reason);
             return;
           }
           // This exact promise is the closure proof, never a second cancel call.
           Promise.resolve(cleanup).then(finish, () => activity.quarantine());
-          controller.abort();
+          controller.abort(operation.signal.reason);
         },
         naturalEnd() {
           if (!cancelRequested) finish();

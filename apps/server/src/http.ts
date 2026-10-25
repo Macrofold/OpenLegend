@@ -94,6 +94,7 @@ import { PostgresDatabase } from './postgres.js';
 import { SqlGameRepository, digest } from './store.js';
 import { WorldService } from './world-service.js';
 import { commandInputSchema, requestIdSchema } from './command-input-schema.js';
+import { worldInputSchema } from './world-input-schema.js';
 import { projectPatch, projectView, ViewChangedError } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue, ActionCatalogueUnavailable } from './action-catalogue.js';
@@ -1622,6 +1623,7 @@ async function initializeGameServer(
           '/api/construction/hearth-preview',
           '/api/work-batches/preview',
           '/api/command',
+          '/api/input',
           '/api/knowledge',
           '/api/control',
           '/api/conversation',
@@ -2090,6 +2092,12 @@ async function initializeGameServer(
                 ),
               );
             }
+            case '/api/input':
+              return send(
+                response,
+                200,
+                await service.updateWorldInput(worldInputSchema.parse(body), scope),
+              );
             case '/api/command/receipt': {
               const value = command.required({ commandEpoch: true }).parse(body);
               return send(
@@ -3691,6 +3699,7 @@ async function initializeGameServer(
           });
       });
   };
+  if (options.tick !== false) service.useMonotonicClock();
   const interval =
     options.tick === false
       ? undefined

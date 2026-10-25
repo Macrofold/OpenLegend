@@ -122,6 +122,7 @@ export function installExpeditions(world: WorldState): void {
   const lookoutCase = addItem(world, 'lookout-equipment', 'lookout-equipment-case', 1);
   const workshopSatchel = addItem(world, 'riverside-workshop', 'workshop-supply-satchel', 1);
   addItem(world, lookoutCase, 'spear', 1);
+  addItem(world, lookoutCase, 'hammer', 1);
   addItem(world, lookoutCase, 'workshop-directions', 1);
   addItem(world, workshopSatchel, 'field-sling-record', 1);
   addItem(world, workshopSatchel, 'cord', 2);

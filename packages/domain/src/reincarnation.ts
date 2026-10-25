@@ -21,6 +21,7 @@ import { reconcileBody } from './living.js';
 import { setBodyHealth } from './body-state.js';
 import { canReachEntity, nearbyLivingEntities } from './spatial.js';
 import { activelyParticipates } from './participation-state.js';
+import { forgetProjectileBodyEncounters } from './ranged.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
 import type { Entity, Outcome, WorldEvent, WorldState } from './types.js';
 
@@ -128,6 +129,8 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
     remains: { ...entity.remains!, sourceId: entity.id, yields: [] },
   };
   delete corpse.spatial.flight;
+  delete corpse.spatial.localPose;
+  delete corpse.spatial.localAvoidanceReadyAt;
   entitySet(world.entities, corpseId, corpse);
   rootMembershipChanged(world, corpseId);
   // Snapshot the existing indexed custody tree before moving anything. Deepest first lets
@@ -308,10 +311,11 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
   const choice =
     choices[choices.length === 1 ? 0 : Math.floor(nextRandom(world) * choices.length)]!;
   const point = choice.points[Math.floor(nextRandom(world) * choice.points.length)]!;
+  forgetProjectileBodyEncounters(world, entity.id, actor.physicalLife ?? 0);
   actor.physicalLife = (actor.physicalLife ?? 0) + 1;
   actor.alive = true;
   actor.incapacitated = false;
-  actor.body!.conditions = { injury: 0, wetness: 0, burning: 0 };
+  actor.body!.conditions = { wetness: 0, burning: 0 };
   setBodyHealth(world, actor, actor.body!.maxHealth);
   actor.action = null;
   delete actor.combatReadyAt;
@@ -319,6 +323,8 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
   delete actor.pendingDeath;
   delete entity.spatial.flight;
   delete entity.spatial.fallVelocity;
+  delete entity.spatial.localPose;
+  delete entity.spatial.localAvoidanceReadyAt;
   setSpatialPosition(world, entity, point, point.surfaceId);
   for (const id of policy.fillAttributes) {
     const definition = attributeDefinition(world, id)!;

@@ -62,7 +62,7 @@ export interface NativeResponseProfile {
     distanceWeightScale: number;
   };
   locomotion: Record<string, { travel: number; escape: number; flightEscape?: number }>;
-  movementFactors: { injuryPerUnit: number; scars: boolean };
+  movementFactors: { scars: boolean };
   wander: { distance: number; minimumWaitSeconds: number; waitChoices: number };
   wake?: { attributeId: string; above: number; reason: 'perceived-danger' };
   presentation: {
@@ -172,12 +172,7 @@ export function nativeResponseMovementFactor(
   entity: Entity,
   profile: NativeResponseProfile,
 ): number {
-  return (
-    Math.max(
-      0,
-      1 - (entity.actor?.body?.conditions.injury ?? 0) * profile.movementFactors.injuryPerUnit,
-    ) * (profile.movementFactors.scars ? scarFactor(world, entity, 'movementFactor') : 1)
-  );
+  return profile.movementFactors.scars ? scarFactor(world, entity, 'movementFactor') : 1;
 }
 
 export interface NativeResponseState {
@@ -825,8 +820,7 @@ export function validateNativeResponseProfile(profile: NativeResponseProfile): v
     )
       invalid();
   if (
-    !hasRecordFields(profile.movementFactors, ['injuryPerUnit', 'scars']) ||
-    !nonnegative(profile.movementFactors.injuryPerUnit) ||
+    !hasRecordFields(profile.movementFactors, ['scars']) ||
     typeof profile.movementFactors.scars !== 'boolean'
   )
     invalid();

@@ -130,6 +130,35 @@ export function emit(
   );
 }
 
+/** A physical occurrence whose witnesses were proved by its native owner. Unlike
+ * an acting person's receipt, a passive result does not grant its source awareness. */
+export function emitObservedOccurrence(
+  world: WorldState,
+  events: WorldEvent[],
+  type: string,
+  text: string | Narration,
+  observers: string[],
+  source: Entity,
+  targetId: string,
+  data: WorldEvent['data'],
+  origin: WorldEvent['origin'],
+): WorldEvent {
+  return recordEvent(
+    world,
+    events,
+    type,
+    text,
+    observers,
+    source,
+    targetId,
+    data,
+    'external',
+    undefined,
+    undefined,
+    origin,
+  );
+}
+
 /** A permitted observation with a named witness, preserving the actual acting person.
  * Private item terms must wake the recipient as a directed action without reaching bystanders. */
 export function emitPrivateObservation(
@@ -345,7 +374,7 @@ function recordEvent(
             // Copy the committed pose without walking a live draft through proxy traps.
             origin:
               type === 'speech'
-                ? soundOrigin(source)
+                ? soundOrigin(world, source)
                 : { ...readOnlyDraftView(worldPosition(source)) },
           }
         : {}),

@@ -1,3 +1,4 @@
+import { itemContainerCapacity } from '@open-legend/domain';
 import {
   worldPosition,
   worldSupport,
@@ -351,6 +352,7 @@ function disclosedView(known: KnownTradeLot, index: number): TradeLotView {
     placementRevision: known.lot.placementRevision,
     contentsRevision: known.lot.contentsRevision,
     whole: known.lot.whole,
+    capacity: known.lot.capacity,
   };
 }
 /** Prepare the observer's compact stock once, shared by all permitted person panels. */
@@ -367,6 +369,7 @@ export function tradeOwnLots(
         name: world.itemDefinitions[item.definitionId]!.name,
         label: BASE_HANDOVER.text.carriedLot(world.itemDefinitions[item.definitionId]!.name, index),
         description: world.itemDefinitions[item.definitionId]!.description,
+        capacity: itemContainerCapacity(world, entityGet(world.entities, item.id)!),
         quantity: availableItemQuantity(world, item.id),
         revision: item.revision ?? 0,
         placementRevision: item.placementRevision ?? 0,
@@ -399,6 +402,7 @@ export function itemTradeView(
       name: named?.name ?? definition?.name ?? 'item',
       label: named?.label ?? definition?.name ?? 'item',
       description: named?.description ?? definition?.description ?? '',
+      capacity: lot.capacity,
       quantity: lot.quantity,
       revision: lot.revision,
       placementRevision: lot.placementRevision,

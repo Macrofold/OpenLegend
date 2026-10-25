@@ -6,7 +6,7 @@ import {
   prepareTradeInventoryReceiptResolution,
   refreshTradeInventoryRecovery,
 } from '../trade-drafts';
-import type { CommandDispatcher } from '../command-request';
+import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
 import {
   inventoryCommandStorageKey,
   readInventoryCommand as restore,
@@ -42,7 +42,7 @@ export function useInventoryCommand({
   recoveryScope?: string;
   epoch?: string;
   connected: boolean;
-  task?: 'construction' | 'hearth' | 'work-batch';
+  task?: 'construction' | 'hearth' | 'work-batch' | 'attack';
   command: CommandDispatcher;
   onResolved(result: ApiResult, request: PendingCommand): void;
 }) {
@@ -151,9 +151,14 @@ export function useInventoryCommand({
       : reason;
   }
 
-  async function dispatch(action: ActionOption, tradeScope?: string): Promise<ApiResult> {
+  async function dispatch(
+    action: ActionOption,
+    tradeScope?: string,
+    identity?: CommandRequestIdentity,
+  ): Promise<ApiResult> {
     if (
       guard.current ||
+      (identity !== undefined && identity.commandEpoch !== epoch) ||
       !connected ||
       !epoch ||
       !action.enabled ||
@@ -190,8 +195,8 @@ export function useInventoryCommand({
     }
     guard.current = true;
     const request: PendingCommand = {
-      commandId: crypto.randomUUID(),
-      commandEpoch: epoch,
+      commandId: identity?.commandId ?? crypto.randomUUID(),
+      commandEpoch: identity?.commandEpoch ?? epoch,
       command: action.command,
       label: action.label,
       ...(tradeScope ? { tradeScope } : {}),

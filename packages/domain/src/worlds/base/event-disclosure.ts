@@ -134,7 +134,7 @@ export const BASE_EVENT_DISCLOSURE: EventDisclosurePolicy = {
     // the attacker. Preserve this policy at acquisition instead of filtering on every read.
     const privateMetrics =
       event.type === 'body-effect'
-        ? ['healthDelta', 'injuryDelta', 'wetnessDelta', 'burningDelta']
+        ? ['healthDelta', 'wetnessDelta', 'burningDelta']
         : event.data?.['contactInjury'] === true
           ? contactMetrics
           : [];

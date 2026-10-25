@@ -104,6 +104,8 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     ...(input.cooperation ? { cooperation: input.cooperation } : {}),
   };
   switch (input.type) {
+    case 'release-strike':
+      throw new Error('Manual execution requires a current player choice.');
     case 'construction':
     case 'repeat-work':
     case 'construction-rest':

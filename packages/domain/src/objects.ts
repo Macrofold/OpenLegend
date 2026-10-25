@@ -44,6 +44,11 @@ import type { Entity, ItemInstance, RecipeDefinition, WorldState } from './types
 import { isAssemblyPlacement } from './spatial-state.js';
 import { equipmentConflicts, equipmentProblem } from './equipment.js';
 
+/** Container capacity is authored by its exact current item definition. */
+export function itemContainerCapacity(world: WorldState, entity: Entity): number | undefined {
+  return entity.item && world.itemDefinitions[entity.item.definitionPin.id]?.container?.capacity;
+}
+
 export interface ItemLot {
   assemblyClaim?: import('./assembly-types.js').AssemblyClaim;
   /** Physical input provenance. Authorization remains in the server's current grant. */
@@ -597,7 +602,7 @@ function ancestorDeltas(
         container.load + (precedingDeltas?.get(id) ?? 0) + delta,
         'packing load',
       );
-      if (next > definition.container.capacity)
+      if (next > itemContainerCapacity(world, entityGet(world.entities, id)!)!)
         throw new Error('The bag does not have enough packing capacity.');
     }
     bump(container.subtreeRevision);
@@ -919,7 +924,8 @@ function quantityPlan(
     if (
       !rule ||
       container.loadRevision !== container.subtreeRevision ||
-      checked(container.load + delta) > rule.capacity
+      checked(container.load + delta) >
+        itemContainerCapacity(world, entityGet(world.entities, id)!)!
     )
       throw new Error('The bag does not have enough packing capacity.');
     bump(container.subtreeRevision);
@@ -1239,7 +1245,7 @@ function jointItemMovePlan(world: WorldState, moves: readonly JointItemMove[]) {
   }
   for (const [id, delta] of deltas) {
     const container = entityGet(world.entities, id)!.container!;
-    const capacity = world.itemDefinitions[container.definitionPin.id]!.container!.capacity;
+    const capacity = itemContainerCapacity(world, entityGet(world.entities, id)!)!;
     if (checked(container.load + delta, 'packing load') > capacity)
       throw new Error('The bag does not have enough packing capacity.');
   }
@@ -1649,7 +1655,7 @@ export function validateObjects(world: WorldState): void {
         height !== entity.container.height ||
         height > definition.container.maximumDepth ||
         load !== entity.container.load ||
-        load > definition.container.capacity ||
+        load > itemContainerCapacity(world, entity)! ||
         entity.container.loadRevision !== entity.container.subtreeRevision
       )
         throw new Error('Container load summary is inconsistent.');

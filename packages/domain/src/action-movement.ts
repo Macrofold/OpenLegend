@@ -1,3 +1,4 @@
+import type { MotionTrack } from './flight.js';
 import {
   canWalkSegment,
   distance3D,
@@ -5,7 +6,8 @@ import {
   SPATIAL_LIMITS,
   type SurfacePoint,
 } from '@open-legend/spatial';
-import { readOnlyDraftView } from './draft.js';
+import { draftWorld, readOnlyDraftView } from './draft.js';
+import { entityGet } from './entity-collection.js';
 import { foragingProfile } from './native-foraging.js';
 import { distance, occupiedBodySweepReader, type occupiedBodySweepQuery } from './spatial.js';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
@@ -14,12 +16,13 @@ import type { Entity, Position, WorldState } from './types.js';
 /** Execute one actor's supported path through the shared placement writer. The
  * simulation coordinator owns phase order; geometry, pursuit limits and partial
  * movement remain here for every caller, including following and animal travel. */
-export function moveAlongPath(
+function followPath(
   world: WorldState,
   actor: Entity,
   path: SurfacePoint[],
   distanceBudget: number,
   occupiedBodies = false,
+  preview?: { seconds: number; track: MotionTrack },
 ): boolean {
   const forage = actor.animal?.foraging,
     work = forage?.work,
@@ -68,6 +71,13 @@ export function moveAlongPath(
       steps++;
     }
     position = { x: point.x, y: point.y, z: point.z, surfaceId: support };
+    if (preview && distanceBudget > 0) {
+      const at = Math.min(preview.seconds, (travelled / distanceBudget) * preview.seconds);
+      if (at > preview.track.at.at(-1)!) {
+        preview.track.at.push(at);
+        preview.track.pose.push({ ...position });
+      } else preview.track.pose[preview.track.pose.length - 1] = { ...position };
+    }
   };
   const map = spatialMap(world),
     profile = bodyProfile(actor);
@@ -158,13 +168,79 @@ export function moveAlongPath(
     }
     return true;
   } finally {
-    if (consumedPoints) path.splice(0, consumedPoints);
-    if (steps) setSpatialPosition(world, actor, position!, position!.surfaceId, { steps, heading });
-    if (territory && travelled)
+    if (!preview && consumedPoints) path.splice(0, consumedPoints);
+    if (!preview && steps)
+      setSpatialPosition(world, actor, position!, position!.surfaceId, { steps, heading });
+    if (!preview && territory && travelled)
       territory.travelledMetres = (territory.travelledMetres ?? 0) + travelled;
-    if (work && steps) {
+    if (!preview && work && steps) {
       work.travelledMetres += travelled;
       work.lastPoint = { ...position! };
     }
   }
+}
+
+/** Read the exact same admitted/truncated path without effects or saved randomness. */
+export function movementTrack(
+  world: WorldState,
+  actor: Entity,
+  path: readonly SurfacePoint[],
+  distanceBudget: number,
+  seconds: number,
+  occupiedBodies = false,
+): { track: MotionTrack; complete: boolean } {
+  const point = supportedPosition(actor)!;
+  const track: MotionTrack = { at: [0], pose: [{ ...point }] };
+  const complete = followPath(world, actor, [...path], distanceBudget, occupiedBodies, {
+    seconds,
+    track,
+  });
+  if (track.at.at(-1)! < seconds || track.at.length === 1) {
+    track.at.push(seconds);
+    track.pose.push({ ...track.pose.at(-1)! });
+  }
+  return { track, complete };
+}
+export function moveAlongPath(
+  world: WorldState,
+  actor: Entity,
+  path: SurfacePoint[],
+  distanceBudget: number,
+  occupiedBodies = false,
+): boolean {
+  return followPath(world, actor, path, distanceBudget, occupiedBodies);
+}
+
+/** Movement collisions are sequential native operations. Forecast each supported
+ * path against the endpoints of earlier movers in an isolated copy-on-write view;
+ * the real world retains all action, RNG, evidence and placement authority. */
+export function orderedMovementTracks(
+  world: WorldState,
+  seconds: number,
+  prepare: (
+    shadow: WorldState,
+    move: (
+      actorId: string,
+      path: readonly SurfacePoint[],
+      distance: number,
+      occupiedBodies: boolean,
+    ) => void,
+  ) => void,
+): Map<string, MotionTrack[]> {
+  const shadow = draftWorld(world, { retainNativeValues: true }),
+    tracks = new Map<string, MotionTrack[]>();
+  prepare(shadow, (actorId, path, distance, occupiedBodies) => {
+    const actor = entityGet(shadow.entities, actorId);
+    if (!actor || !supportedPosition(actor)) return;
+    const predicted = movementTrack(shadow, actor, path, distance, seconds, occupiedBodies).track;
+    tracks.set(actorId, [predicted]);
+    const last = predicted.pose.at(-1)!;
+    // These are placement writes only on the disposable forecast, so a later
+    // mover sees a blocker leave or stop at its real prefix. No event is emitted.
+    const support = (last as SurfacePoint).surfaceId ?? supportedPosition(actor)!.surfaceId;
+    const before = supportedPosition(actor)!;
+    if (distance3D(before, last) > 0 || before.surfaceId !== support)
+      setSpatialPosition(shadow, actor, last, support);
+  });
+  return tracks;
 }

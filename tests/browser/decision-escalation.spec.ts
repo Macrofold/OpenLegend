@@ -131,6 +131,7 @@ test('E36 keeps the pending reply, failure details and a newer speech draft duri
   if (!address || typeof address === 'string') throw new Error('Missing listener.');
   try {
     await useNearCampSight(game.service);
+    await blockExternalBrowserRequests(page);
     await page.goto(`http://127.0.0.1:${address.port}`);
     await enterGame(page);
     await page.getByRole('button', { name: 'In view', exact: true }).click();
@@ -140,6 +141,13 @@ test('E36 keeps the pending reply, failure details and a newer speech draft duri
     const input = page.getByRole('textbox', { name: 'Words to say out loud', exact: true });
     const waiting = page.getByRole('status').filter({ hasText: /is considering a reply/ });
     await input.fill('Could we talk about the plan?');
+    // The native recipient/allowance check is asynchronous. Enter before that
+    // public check completes correctly preserves the draft without sending it.
+    await expect(
+      page
+        .getByRole('region', { name: 'Speak out loud', exact: true })
+        .getByRole('button', { name: 'Speak', exact: true }),
+    ).toBeEnabled();
     await input.press('Enter');
     await expect.poll(() => requests.length).toBe(1);
     expect(requests[0]!.task).toBe('decision-escalation');

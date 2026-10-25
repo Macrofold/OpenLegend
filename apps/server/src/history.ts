@@ -721,7 +721,7 @@ export class HistoryRepository {
     ) as NarratorVoice;
     const impacts: TranscriptItem['impacts'] = combine ? [...prior.item.impacts] : [];
     if (event.type === 'body-effect')
-      for (const field of ['healthDelta', 'injuryDelta', 'wetnessDelta', 'burningDelta']) {
+      for (const field of ['healthDelta', 'wetnessDelta', 'burningDelta']) {
         const delta = event.data?.[field];
         if (typeof delta === 'number' && delta !== 0)
           impacts.push({

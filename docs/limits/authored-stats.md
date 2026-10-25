@@ -38,7 +38,7 @@ Before adopting it, compare the real player's goal, pause/speed controls, helper
 
 ## ST-L08 — First useful competence effect
 
-**Implemented selected consumer · Restrictiveness: Safe.** Sling handling retains states 0 and 1. Practiced handling changes release steadiness from **a** to **a + 0.25 × (1 − a)**, reducing deviation chance by 25%, with the authored 0.6–0.9 range unchanged. [CF02](../worlds/base/ranged-counterplay.md) replaces the old immediate hit draw and subsequent 0.85 fleeing factor with saved straight flight and actual contact. No competence changes damage, range, ammunition or permission. This applies across admitted sling-like definitions, not bows or cosmetic names. Arithmetic and native release evidence do not establish balance, enjoyment or human appreciation; broader ST acceptance remains open.
+**Implemented selected consumer · Restrictiveness: Safe.** Sling handling retains states 0 and 1. Practiced handling is **a + 0.25 × (1 − a)**, with the authored 0.6–0.9 range unchanged. Capture it at release and use it only in a qualified physically feasible bodily evasion contest under [the ranged law](../worlds/base/ranged-counterplay.md); it changes neither shot direction nor the geometry of an inert practice contact. Release consumes no random draw. No competence changes damage, range, ammunition or permission. This applies across admitted sling-like definitions, not bows or cosmetic names. Arithmetic and native evidence do not establish balance, enjoyment or human appreciation; broader ST acceptance remains open.
 
 ## ST-L09 — Finite progression
 
