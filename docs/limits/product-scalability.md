@@ -2,11 +2,11 @@
 
 **Status: strategic constraints and unresolved tuning, not shipped capacity limits.** [Principles](../product-scalability/README.md), [feature specification](../projects/product-scalability-feature-spec.md), [technical design](../projects/product-scalability-tech-design.md), and [tracker](../maintainers/product-scalability.md) are the maintained records.
 
-Each entry identifies the constraint, rationale, current decision, restrictiveness, and reconsideration trigger. Numeric examples in the discussion are not adopted settings. This file is the single product-scalability inventory; implementation-specific measured limits continue to belong to their native owners.
+Each entry identifies the constraint, rationale, current decision, restrictiveness, and reconsideration trigger. Unselected numeric examples are not adopted settings. This file is the single product-scalability inventory; implementation-specific measured limits continue to belong to their native owners.
 
 ## Status and restrictiveness
 
-All new execution policies in this inventory are **Proposed**, not current runtime limits; their accepted product direction is distinguished in the linked specifications. Existing shared inventories remain controlling. Unselected numerical values are not claims of unlimited capacity. Ratings below apply to the proposed behavioral restriction, not to an unmeasured numerical allowance or a security certification.
+New execution policies in this inventory are **Proposed** or explicitly **Selected design; runtime pending**, not current runtime limits; their accepted product direction is distinguished in the linked specifications. Existing shared inventories remain controlling. Unselected numerical values are not claims of unlimited capacity. Ratings below apply to the proposed behavioral restriction, not to an unmeasured numerical allowance or a security certification.
 
 **Medium:** PS-L01, PS-L02, PS-L03, PS-L04, PS-L07, PS-L10, PS-L11, PS-L15 and PS-L16. These permit meaningful activity but deliberately constrain admission, attention, initiative, approximation, exact ambient detail, quality tiers, clock compatibility or campaign participation; actual generosity remains workload-dependent.
 
@@ -28,7 +28,7 @@ Material unresolved product choices are owned by [PS-D01–PS-D06](../../archive
 
 ## PS-L02 — Attention and sensory grouping
 
-**Decision:** bounded attention with retained aggregate surroundings is accepted; exact budgets and grouping parameters are unset. **Reason:** distinguishability and cognition are limited without deleting physical effects. **Restriction:** no top-X shortcut that leaks hidden membership, discards promised understood speech, or suppresses unattended damage. **Select/revisit:** test focus stability, crowd noise, meaningful exceptions, and cost before per-object inference through PS04.
+**Status: Selected design; runtime pending; restrictiveness: Medium.** The [base-world profile](../worlds/base/attention.md#foreground-capacity) selects six total foreground slots at default Focus 50, including one discovery reserve lent when empty. Its Focus-derived range is 3–9; that owner defines the formula and authored actor override. Slots contain bounded coherent threads, not unlimited crowds or transcripts. **Reason:** configurable foreground attention and fair unfamiliar surroundings. **Restriction:** this does not bound physical acquisition, mandatory effects/evidence, candidate work or lifetime history; exact speech and hidden-membership privacy remain protected. Focus and this policy are unimplemented; the numbers are not measured capacity. **Revisit:** PS04-A qualifies focus, discovery and recording; broader PS04 retains crowd/noise and complete-cost qualification.
 
 ## PS-L03 — Background activity density
 
@@ -108,7 +108,7 @@ Material unresolved product choices are owned by [PS-D01–PS-D06](../../archive
 
 ## PS-L21 — Initial attention and scene coverage
 
-**Status: Proposed; restrictiveness: Safe.** The [attention and scenes proposal](../projects/attention-and-scenes-feature-spec.md) begins with easy directed conversation and justified interruptions in a personal world. Ordinary Talk supplies sensible focus; explicit selection is useful when sources compete. The earlier busy-gathering minimum is revised to later conditional scope. Aggregate activity, character-led discussion, private decisions, bodily effects and exact-language exceptions remain required wherever offered. PS-L02/PS-L06 retain shared boundaries; no universal attention-slot, participant ceiling or one-call scene guarantee is selected. Revisit using actual conversational ease, worthwhile participation, secrecy, arrival, noise and complete-cost cases.
+**Status: Selected design; runtime pending; restrictiveness: Safe.** The [attention and scenes design](../projects/attention-and-scenes-feature-spec.md) begins with easy directed conversation and justified interruptions in a personal world. Explicit Speak-to selection supplies sensible conversational focus; explicit selection is useful when sources compete. The earlier busy-gathering minimum is revised to later conditional scope. Aggregate activity, character-led discussion, private decisions, bodily effects and exact-language exceptions remain required wherever offered. [PS-L02](#ps-l02--attention-and-sensory-grouping) owns the selected base-world Focus capacity; it is not a universal limit on noticed facts or participants. Its single discovery slot uses the oldest eligible unconsidered current exposure, stable frontier progress and exact supplied-cut acknowledgment under the [world profile](../worlds/base/attention.md#unfamiliar-surroundings). Repeated sampling creates no new novelty or owed model calls. No universal participant ceiling or one-call scene guarantee is selected; PS-L06 retains shared scene boundaries. Revisit using actual conversational ease, worthwhile participation, secrecy, arrival, noise, discovery starvation and complete-cost cases. Runtime delivery and population/history qualification remain open.
 
 ## PS-L22 — Staged speech and presentation boundary
 

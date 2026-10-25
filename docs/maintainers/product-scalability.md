@@ -1,6 +1,6 @@
 # Product scalability delivery tracker
 
-**Status: documentation foundation and selected technical refinements, October 15, 2026. All runtime work below is proposed and unqualified.** This is the single tracker for integrating the cross-cutting product direction; existing subsystem trackers retain their own implementation detail and evidence.
+**Status: documentation foundation and selected technical refinements, updated October 25, 2026. The core attention slice is selected design only; its runtime delivery and broader qualification remain open.** This is the single tracker for integrating the cross-cutting product direction; existing subsystem trackers retain their own implementation detail and evidence.
 
 ## Maintained records
 
@@ -63,7 +63,7 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Owners:** memory, perception, hearing, ordinary speech, model routing. **Depends on:** scoped history/commitment foundations and the selected [SPK ordinary-speech contract](../projects/speech-and-social-perception-feature-spec.md). PS03 supplies an unattended consumer, but ordinary local conversation and small-group scenes do not depend on offering unattended service.
 
-**Product design proposal:** [Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) first improves ordinary one-resident conversation and useful interruptions. Larger task/promise scenes, aggregate crowds and timed speech must earn their additional burden through the [playability gates](../projects/five-product-feature-specs.md#playability-gates). Current instantaneous speech and caption clocks remain authoritative; full PS04 scope and runtime acceptance remain open.
+**Selected core attention design, October 25, 2026:** [Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) separates received sensory information, bounded optional attention and personal recording before expensive descriptions or model preparation. PS04-A below is independently deliverable. Ordinary one-resident conversation and useful interruptions retain their current owners; larger task/promise scenes, aggregate crowds and timed speech must earn their additional burden through the [playability gates](../projects/five-product-feature-specs.md#playability-gates). Current instantaneous speech and caption clocks remain authoritative; full PS04 scope and runtime acceptance remain open.
 
 **DG18 product expansion, October 6, 2026:** The same owner now develops a gathering worth joining, participant-owned exchanges, meaningful arrival/exit, prospective gist and aggregate activity, individual exceptions and a scoped capacity qualification. The [base-world gathering profile](../worlds/base/social-gatherings.md) owns authored situations and workload values. Current EPR cue/intake work and HE/NC speech/history evidence are foundations; SPK's source-scoped ordinary speech replaces NC membership as a delivery dependency. None is a completed crowd-scene feature. Attended gatherings do not require DG17's unattended service or DG26's timed speech.
 
@@ -91,6 +91,17 @@ Existing valid evidence and a focused comparison against current play can guide 
 - [ ] Evaluate higher character baseline model tiers and escalation without treating model price as correctness evidence.
 
 **First-delivery completion:** the selected exact conversation or small gathering is worth having and understandable through its real player path, with drafts, addressees, actual participation and permitted history preserved. It can finish before the selected compact-background extension is delivered; vocal masking, timed speech and crowd work remain separately selected. **Full PS04 exit:** noisy crowds and coarse social encounters remain intelligible, affordable, and consistent without secret leakage or manufactured human consent. Apply those later criteria only when the corresponding family is offered; retain its unfinished work without blocking an independently complete smaller contribution.
+
+### PS04-A — Core attention and recording
+
+**Design only; runtime open.** The [feature specification](../projects/attention-and-scenes-feature-spec.md) and [technical design](../projects/attention-and-scenes-tech-design.md) own the complete contract; the [world attention profile](../worlds/base/attention.md) owns the actor limit, Focus relationship and discovery reservation. Reuse perception, personal experience, interests, actor work and ordinary cognition. This slice adds no scene resolver, acoustic grouping, timed speech or compiled personality/history matches.
+
+- [ ] Select bounded subject/activity threads from complete already-received evidence before formatting or model work, replacing unconditional nearby actor/object context preparation and integrating SPK05’s bounded speech context where required. Preserve stable focus, bounded references per thread and independent required physical/native/evidence paths; a thread cannot hide an unbounded crowd.
+- [ ] Deliver fair discovery through stable cycles of oldest unconsidered eligible exposures, including existing eligible quiet/ordinary decision boundaries. Lend an empty discovery place without losing its reservation; newer arrivals cannot starve old eligible evidence, and discovery creates no paid call per object.
+- [ ] Acknowledge only exact source revisions actually provided to cognition. Unavailable context, pre-dispatch refusal and relevance rejection leave them unconsidered; newer qualitatively changed meaning survives an older acknowledgment; routine resampling does not renew eligibility. Ordinary cognition may make semantic associations and choose supported explicit focus without a native category whitelist.
+- [ ] Route every automatic producer through common recording admission in the existing personal-experience owner, including the open routine-event finalization bypass. Demonstrate quiet-object discovery, repeated and continually arriving cues, correction/forgetting, delayed consideration and same-version restoration without changing sensory delivery, mandatory records or required reactions.
+
+**Exit:** the actual player/NPC paths distinguish what was received, considered and recorded, with bounded preparation and no forced interpretation, action or model call. Completion does not close the broader PS04 scene, crowd, compact-background or timed-speech checks above.
 
 ## PS05 — Transitions, protection, logout, and clocks
 
@@ -175,7 +186,7 @@ The city-by-city intelligent adversary, damaging siege, supported manifestations
 
 ## Pending policy decisions
 
-The [central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns material unresolved product choices; the [limits register](../limits/product-scalability.md) owns unset operating values, restrictions and reasons. No fixed actor-attention count, player cap, cell size, prewarm radius, logout grace, harm list, scene size, model SKU, price, forecast notice, or implementation date is selected here. Resolve consequential settings before enabling their behavior, not by silently inheriting illustrative numbers from conversation.
+The [central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns material unresolved product choices; the [limits register](../limits/product-scalability.md) owns unset operating values, restrictions and reasons. PS04-A selects a world-owned actor attention limit through the [attention profile](../worlds/base/attention.md), not a universal mind capacity. No player cap, cell size, prewarm radius, logout grace, harm list, scene size, model SKU, price, forecast notice, or implementation date is selected here. Resolve consequential settings before enabling their behavior, not by silently inheriting illustrative numbers from conversation.
 
 DG34 supplies an explicit reviewable first-consumer proposal for PS-D05 in PS-L42–PS-L49, including advertised notice and revision choices. Those proposed values are not adopted service terms, measured fairness or a change to the current world clock. Broader campaign policy and actual release qualification remain open.
 

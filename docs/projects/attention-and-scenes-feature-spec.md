@@ -1,12 +1,14 @@
 # Attention, crowds and scenes — product and behavior specification
 
-| Status      | Current progress                                                                                                                                       | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Exact attended activity, compact background exchanges and independent personal reactions are designed; runtime delivery and qualification remain open. | 2026-10-22   |
+| Status      | Current progress                                                                                               | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Core attention and recording join the selected social designs; runtime delivery and qualification remain open. | 2026-10-25   |
 
 **Selected design, expanded October 15, 2026; not runtime delivery or implementation approval.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds and timed speech remain separate proposals; voice-media delivery and runtime implementation are outside this design assignment.
 
 **Speech integration:** the accepted [speech and social perception design](speech-and-social-perception-feature-spec.md), [technical contract](speech-and-social-perception-tech-design.md) and [SPK implementation work](../maintainers/speech-and-social-perception.md) replace ordinary conversation membership with actual speech, voluntary participation and source-scoped reading. The target sections below use that model and the current WorldComposer/Events interface. An unfamiliar first-heard voice alone establishes no canonical person association. Voice recognition uses familiarity, actual evidence quality and the selected base-world Perception rule; names and current location remain independent. Preserve actual listener evidence, bounded history, destination-specific drafts and independently accepted outings/actions. Derived scene/activity grouping and separately scoped compact-meaning, noise and timed-speech work retain their own owners; SPK does not complete those broader features. Runtime remains unchanged.
+
+**Core attention design updated October 25, 2026, 15:43 EDT.** Actor capacity, fair discovery and separate recording admission below are selected design, not runtime delivery. The [world profile](../worlds/base/attention.md) owns configurable defaults; [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) owns delivery independently of crowds, compact speech and physical investigation.
 
 ## 1. Purpose and recommended experience
 
@@ -38,14 +40,16 @@ The later timed-speech mode is described fully in section 7 so its product choic
 
 ## 3. Distinguish the layers of an event
 
-| Layer                  | Example                                                     | Product consequence                                                       |
-| ---------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Physical occurrence    | A person speaks, a body blocks a doorway, an arrow flies    | Real effects continue even if nobody attends to them                      |
-| Detectable evidence    | A listener hears voices through an open entrance            | Detection does not guarantee names, exact location or words               |
-| Distinguishable source | A familiar visible speaker can be associated with one voice | Association depends on actual evidence, not server identity               |
-| Current focus          | The character follows that speaker                          | Focus favors permitted detail and continuation, not impossible senses     |
-| Interpretation         | The character believes the speaker sounds worried           | Interpretation can be mistaken and belongs to that character              |
-| New choice             | The character interrupts work to investigate                | A choice needs a reason; observation is not automatically a paid decision |
+| Layer                  | Example                                                                    | Product consequence                                                              |
+| ---------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Physical occurrence    | A person speaks, a body blocks a doorway, an arrow flies                   | Real effects continue even if nobody attends to them                             |
+| Detectable evidence    | A listener hears voices through an open entrance                           | Detection does not guarantee names, exact location or words                      |
+| Distinguishable source | A familiar visible speaker can be associated with one voice                | Association depends on actual evidence, not server identity                      |
+| Acquired information   | The actual heard words and measured position enter personal received state | Delivery precedes attention; original scope, uncertainty and times remain intact |
+| Current focus          | The character follows that speaker                                         | Focus favors permitted detail and continuation, not impossible senses            |
+| Interpretation         | The character believes the speaker sounds worried                          | Interpretation can be mistaken and belongs to that character                     |
+| Recording              | A meaningful encounter is admitted to personal memory                      | Attention alone does not create a permanent diary entry                          |
+| New choice             | The character interrupts work to investigate                               | A choice needs a reason; observation is not automatically a paid decision        |
 
 Human camera position, selected object, keyboard focus and a character's attention are different. Panning the camera is not hearing through a wall. Selecting a caption must not accidentally walk the character. Turning down audio, hiding captions or reading a transcript changes presentation, not the evidence the character acquired.
 
@@ -57,7 +61,9 @@ The default is to preserve the current meaningful activity or conversation while
 
 When no deliberate focus exists, use supported evidence, the current activity and meaningful novelty to choose a useful foreground. A character preparing a meal may attend to that work and to someone addressing them. Someone keeping watch may attend to an approach. Authored senses and unusual minds may differ; this is a recommended human-like default, not a universal cognitive law.
 
-Do not choose a universal maximum number of things a mind can notice. The product needs bounded work and intelligible presentation, but a single count would conflate a conversation, a moving crowd, a recognized person and a bodily injury. Qualification should establish supported situations and meaningful limits without pretending that a scientific paper supplies a game-wide attention number.
+Use a finite, actor-configurable capacity for optional foreground subjects. A slot follows one coherent person, activity or disturbance with bounded supporting detail; it is not one coordinate, an unlimited crowd or a full transcript. The selected [base-world profile](../worlds/base/attention.md) uses six total slots for an ordinary person and lets Focus adjust capacity. This is gameplay tuning, not a universal limit on acquired facts or a measured claim about human cognition. Required bodily evidence, native effects and accepted work retain their own authority. Focus does not change Perception, physical gaze or the validity of an admitted watch.
+
+Select from actual received evidence using direct involvement, current work, explicit focus and world-authored physical salience. Preserve a continuing subject against small ranking changes. Do not compile personality or life history into an object/category whitelist: a new portrait can be personally relevant even when no prior rule anticipated it. Ordinary cognition can make that association from the received description and permitted recollection, then choose supported explicit focus; there is no separate model call to interpret every candidate.
 
 ### 4.2 Explicit player focus
 
@@ -82,6 +88,14 @@ Use different interruption outcomes. A brief noticed event may leave focus intac
 After an interruption, preserve enough permitted context to resume the original activity if it is still available. A conversation may have moved on, someone may have left, or the character may no longer want to continue. Show the current situation rather than pretending no time passed.
 
 For a human, offer permitted history and a simple way to resume listening. For an NPC, existing memory and activity owners preserve what they actually heard and intended. Neither needs a generated full replay of the missing interval.
+
+### 4.5 A fair opportunity to discover
+
+Reserve one slot within the total capacity for an eligible surrounding subject not yet considered. Lend it to ordinary focus when none is waiting. Give older waiting exposures their turn before newer ones; loudness or novelty must not perpetually send a quiet portrait to the back. Repeated position samples do not make the same object new. A genuinely changed occurrence may qualify again.
+
+Rotate at already eligible quiet-thinking or ordinary decision opportunities, including when the surroundings are unchanged. Selection supplies the actually received description to ordinary cognition; it forces neither a new model call, interest, investigation nor memory. A portrait of a blacksmith can prompt a personal connection if the character received enough detail to recognize that connection. An indistinct painting cannot disclose its subject merely because the server knows it.
+
+Count a subject as considered only when its selected evidence actually reaches cognition. Keep later qualitatively changed meaning eligible if it arrived while an older view was being considered. This gives eventual consideration in a finite stable scene with continuing opportunities, not a guaranteed delay during endless arrivals or an emergency. Native protection never waits for discovery. Departed, unrecorded surroundings do not accumulate in a lifetime discovery backlog.
 
 ## 5. Crowds as observable groups with individual exceptions
 
@@ -222,6 +236,16 @@ A returning player can learn the important permitted consequences through observ
 
 If a scene is interrupted by arrival, completed gist remains gist. The selected background family requires exact future speech when an eligible human arrives within clear hearing. The transition does not reconstruct the earlier conversation or make all participants agree about what it meant.
 
+### 9.4 Receiving, attending and remembering are separate decisions
+
+All physically delivered information first reaches the shared acquired-information owner. Attention chooses a foreground; recording chooses which experience merits an autobiographical record; retention determines how long admitted records remain available. None changes the original facts or times. Summarizing an exhaustive sensory diary later does not solve over-recording now.
+
+The [world recording policy](../worlds/base/attention.md) preserves required speech, actual consequences, own results, deliberate inspection/learning and existing person-encounter obligations. Routine scenery, passive measurements and merely losing sight do not warrant permanent entries. An attended episode becomes eligible through a meaningful change, consequence or an explicit supported decision to remember it. Entering focus, discovery selection and leaving focus are insufficient on their own. Existing records are not retroactively erased by this target policy.
+
+Keep useful temporal facts without saving a coordinate trail: a person approached, stopped nearby and spoke; a watched tree fell; a tool failed during use. The record needs supported onset/outcome and relevant changes, not every intermediate position or strike. An observer walking toward a stationary person must not remember that person approaching them; a gap in sight must remain a gap. Movement alone proves neither walking gait nor intention. Ordinary current NPC context must receive these supported episodes when relevant, rather than only a final position.
+
+Every automatic recording producer uses one admission boundary, including ended sight/touch confirmations, private/action results and batched awareness. Required source support for captured decisions, learned identity, Known places or retained claims survives through its existing owner even when no narrative memory is warranted. Rejected routine observations leave no second permanent archive to recover later. Lifetime forgetting/coarsening remains separate memory work; foreground capacity alone does not bound ten years of storage.
+
 ## 10. Presentation and accessible control
 
 ### 10.1 Show what supports the next decision
@@ -358,6 +382,8 @@ A supported touch-based participant receives contact evidence rather than sound-
 
 ## 13. Proposed delivery stages
 
+**Core attention and recording slice (PS04-A).** Deliver actor-configurable foreground capacity, fair discovery, compact supported temporal episodes and common recording admission through current producers and NPC consumers. Qualify the cases in §14 before claiming the slice complete. This work needs neither a crowd nor compact speech and does not close full PS04, PP07 or shared stealth acceptance.
+
 **Stage 1: effortless personal conversation and useful interruptions.** Keep exact instantaneous speech and qualify the existing one-live-NPC encounter within the accepted creative loop. Explicit Speak-to selection supplies sensible focus; the player can read captions/Events, reply and continue their own activity without routinely managing attention. Add a simple competing source or meaningful interruption only as needed to prove the behavior. This delivery uses the current world composer and reading surfaces; it does not require a second resident, social membership, prospective gist, new vocal masking, timed speech or unattended service. Existing delivered behavior is not reset, and a useful conversation fix need not wait for full autonomous-life qualification. The combined normal-clock episode, including actual waiting and resident choices, is required before claiming that wider experience works. Busy-setting cases AS-J01–05, AS-J11–12 and physical effects outside focus remain applicable when that setting is introduced.
 
 **Stage 2: a small exact gathering worth joining.** Use the [selected DG18 gathering](#17-dg18--something-worth-showing-and-a-gathering-worth-joining) when another independently acting person adds a worthwhile exchange. Extend Events only for an actual reading gap and keep the next addressee clear in WorldComposer. The people's preferences can differ and the player's involvement can affect an unresolved matter. Qualify actual arrival, secrets, silence, interjections and departure without enrollment or merging. Include enjoyment and credible disagreement without prescribing either as every scene's tone. This exact gathering is independently complete without gist, an aggregate vocal source or a crowd. Later scene grouping and unobserved-scene cases remain with the families that need them and confer no ordinary speech membership. Neither this delivery nor its continuing-lives consumer grants unsupported barter or coercion. If the exchange is mainly administrative dialogue, simplify its subject and interaction before adding more participants.
@@ -369,6 +395,16 @@ A supported touch-based participant receives contact evidence rather than sound-
 **Stage 4: measured crowded operation.** Expand supported scene and crowd families when a gathering offers worthwhile additional encounters, choices or atmosphere, then qualify mixed human/NPC, long-history, mass-arrival, noise-abuse and funding cases. Assess legibility, continuity, meaningful participation and complete cost, not just the number of rendered bodies. This expansion can use the current exact-speech contract and does not require stage 3 first. Broader combat crowds, concerts, media voice and special senses retain their own consumer requirements. If more participants mostly create noise, shrink or separate the gathering rather than treating density as progress.
 
 ## 14. Acceptance and evaluation
+
+For the core attention slice, demonstrate:
+
+- Actor/world capacity changes preserve required evidence and native actions; near-equal salience does not churn a conversation.
+- A quiet unfamiliar portrait gets considered despite occupied ordinary slots and continuing louder arrivals. Unreceived meaning stays unknown; repeated samples, declined selection and unavailable cognition do not consume its turn or create paid work.
+- An observed approach and stop reaches current reasoning as a supported temporal fact; observer movement, loss of sight and discontinuity cannot fabricate a path or intention.
+- Walking past routine scenery, repeated focus changes and ended facets do not create autobiographical rows. Inspection, exact speech, real consequences, learning support and useful chosen episodes retain their required evidence through every producer.
+- A later source change while cognition is pending survives acknowledgment of the older cut. Correction, forgetting and restore preserve source scope without duplicate memories, acquaintance or opportunities.
+
+These are required implementation demonstrations, not results of this design review.
 
 Observe whether players can follow a conversation, understand the basis for an interruption, discover missed permitted information, identify what remains unknown and make a meaningful next choice. Assess text-only, keyboard, enlarged text, varied reading pace and non-audio use. Do not equate a guideline checklist with actual accessibility qualification.
 
@@ -608,6 +644,7 @@ Completion for this slice requires an understandable exact encounter with indepe
 - Product scope and order: [five-specification package](five-product-feature-specs.md).
 - Existing implementation owner: [PS04 and PS-D02](../maintainers/product-scalability.md); the [parent product specification](product-scalability-feature-spec.md) and [attention/scene contract](../product-scalability/attention-and-scenes.md) retain accepted policy.
 - Current effect and presentation owners: [hearing and speech](../hearing-and-speech.md), [narration and conversations](../narration-and-conversations.md), [timed UI](../timed-ui.md), [world interaction](../ui-ux/world-interaction.md) and [chat and invention](../ui-ux/chat-and-invention.md).
+- Core attention: [base-world capacity and recording policy](../worlds/base/attention.md), [PS04-A delivery](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) and [PS-L02/PS-L21 limits](../limits/product-scalability.md).
 - Proposed authored profile: [Something worth showing](../worlds/base/social-gatherings.md), the single owner of selected attendance, initial matters, gist/vocal restrictions and the later busy-camp workload.
 - Limits: [product scalability, especially PS-L28–33](../limits/product-scalability.md) and [hearing and speech](../limits/hearing-and-speech.md). New scope restrictions are proposed; existing captions and acoustic limits remain current until separately changed.
 - Related work: [continuing NPC lives](continuing-lives-feature-spec.md) supplies unattended consumers and the funded-service boundary; ND15 retains future audio-media presentation; ND37 retains reporting and control policy.

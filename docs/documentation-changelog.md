@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 25, 2026 — Bounded attention and separate recording
+
+The [attention design](projects/attention-and-scenes-feature-spec.md#4-stable-attention) selects actor-configurable foreground capacity, a reserved fair discovery opportunity and separate autobiographical admission. The [world profile](worlds/base/attention.md) starts at six total slots, including discovery, with Focus-derived capacity and an authored actor override. These are gameplay defaults, replacing the previously unset foreground count; physical reception, required evidence and native actions keep their own rules. Compiled personality/history matching is deferred because predeclared associations would miss novel relevance and add reflection work; ordinary cognition can make those connections from actually selected evidence.
+
+[PS04-A](maintainers/product-scalability.md#ps04-a--core-attention-and-recording) tracks implementation, including common recording admission and useful supported temporal episodes. Routine final-facet recording and missing approach information in current NPC context remain explicit [perception gaps](maintainers/perspective-perception.md). This is design-only work: no runtime, crowd/long-history capacity or performance improvement is demonstrated, and broader attention, retention and shared stealth acceptance remain open.
+
 ## October 25, 2026 — Supported-channel personal evidence and knowledge
 
 The [perception foundation](verification/personal-perception-foundation.md) connects actual existing sight/touch/speech acquisition to immutable cuts, independently current facets, observer-local people, world-owned Perception/voice recognition and separate names. Exact typed source meaning survives hot/cold retrieval, correction, forgetting, consolidation and current-format restore; complete retained-place preparation supports the finite ordinary-warning testimony adapter.

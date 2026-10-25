@@ -1,4 +1,39 @@
-# Busy-worker attention experiment — not retained
+# Attention and recording in the base world
+
+**Selected design; runtime pending.** The [attention and scenes feature specification](../../projects/attention-and-scenes-feature-spec.md) and [technical design](../../projects/attention-and-scenes-tech-design.md) own the shared behavior and implementation contract. Focus is not currently installed among the base-world attributes, and the foreground capacity, discovery reserve and recording policy below are targets, not delivered runtime behavior or measured cognitive capacity. [PS-L02](../../limits/product-scalability.md#ps-l02--attention-and-sensory-grouping) and [PS-L21](../../limits/product-scalability.md#ps-l21--initial-attention-and-scene-coverage) track their limits and qualification.
+
+## Foreground capacity
+
+The selected human default is **Focus 50**, on a **0–100** attribute scale. One world-owned resolver selects an explicit authored actor capacity override when present; otherwise it resolves total optional foreground slots as **round(3 + 6 × effective Focus / 100)**. The Focus-derived range is **3–9 slots**, with **six at Focus 50**. The engine consumes this resolved capacity; it does not install a second writable capacity derived from the attribute. These starting values make capacity configurable while keeping a manageable ordinary foreground; gameplay and cost qualification remain open.
+
+A slot holds one coherent subject, activity or disturbance with a bounded set of exact acquired-source references under the technical contract's source and context envelopes. It cannot stand for an unlimited crowd, transcript or history. Preserve the current meaningful activity while selecting additional threads; a capacity change does not restart accepted work. Select references before expanding optional source bodies or requesting semantic comparison.
+
+Focus limits optional semantic attention. Perception and the installed senses still determine what physical data arrives. Every delivered item enters acquired evidence unchanged. Required bodily effects, native responses and evidence obligations remain outside optional slot competition; their existing grouping, preparation and overload rules still apply. Focus neither supplies physical gaze nor changes an admitted watch or investigation's actual fulfillment. Those methods remain with [attention and investigation](attention-and-investigation.md).
+
+## Unfamiliar surroundings
+
+**One of the total slots is reserved for discovery.** At Focus 50, that leaves five ordinary optional threads and one discovery thread. Lend the reserved slot to ordinary attention when no eligible unfamiliar surroundings are waiting.
+
+Choose the oldest eligible, unconsidered current exposure first, using a stable cycle/frontier over current acquired evidence. Native meaningful novelty only breaks ties; new arrivals cannot continually displace an older quiet observation. Use the exposure's first eligibility, rather than its latest sample time. Repeated measurements do not make an unchanged subject newly unfamiliar.
+
+Supply that bounded thread through ordinary intake or an already eligible quiet decision opportunity while preserving current useful activity. It does not create a model call for each object or an independent paid cadence. Acknowledge only the exact sources and cut actually supplied to cognition. Scanning, queueing or an unavailable attempt does not acknowledge them, and acknowledgment of an older cut cannot consume newer qualitatively changed meaning or a distinct occurrence. Routine resampling alone does not renew eligibility. Keep this progress with the current exposure/frontier owner; no lifetime seen-object ledger or backlog of owed decisions is selected.
+
+## Recording principles
+
+Attention and recording are separate decisions. An attended observation needs a source-linked installed recording reason: a material event/outcome affecting followed work or an encounter, or a supported explicit decision to remember it. Coalesce a continuous activity into its meaningful episode; source revision, elapsed time, ordinary pose/meter change, focus entry/exit or loss alone is insufficient. Occupying a slot does not create autobiography. One recording policy at the existing experience admission owner applies to **all automatic paths**, including event recording, live-facet finalization and action/inspection results. A producer cannot bypass it by labeling a routine sample a final confirmation. Compiled personality or lifetime-history interest matching is deferred.
+
+| Acquired information                                                 | Selected recording principle                                                                                                                                                                                                                                  |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Routine object/animal presence, coordinates and ordinary meter drift | Keep required current evidence and support; do not create autobiographical entries merely for arrival, resampling, numeric drift or loss.                                                                                                                     |
+| Transient movement                                                   | Keep supported motion evidence. A meaningful approach or stopped episode can retain its supported onset, end and material changes with bounded references and truthful gaps; do not retain a full path or infer walking or intention from displacement alone. |
+| Attended surroundings                                                | Admit a meaningful episode for an explicit recording reason; attention alone is insufficient.                                                                                                                                                                 |
+| Deliberate inspection and learning                                   | Preserve the actually acquired result, its exact support and the owning knowledge grant; do not substitute inferred hidden detail.                                                                                                                            |
+| Real outcomes and consequences                                       | Preserve actual personal action results, bodily consequences and other required accounts under their existing contracts.                                                                                                                                      |
+| Heard speech and person encounters                                   | Preserve existing exact heard-speech and person-encounter obligations, including uncertainty, original identity support and independent fact times.                                                                                                           |
+
+Declining a narrative episode does not discard a capsule already required by learned recognition, Known places, accepted work, a captured cause or a retained derivative. Preserve that minimum exact support through the existing source and lineage owners. Later retention, consolidation, correction and forgetting retain their own policies; recording does not establish a new archive deadline. Neither recording nor attention automatically requests reasoning: cognition triggers remain a separate decision.
+
+## Busy-worker attention experiment — not retained
 
 **Tested and rejected for adoption, updated 2026-10-16 23:33 EDT.** The initial PF17.5 trial let autonomous people busy gathering, preparing or crafting miss unimportant neighboring routine work. Their own outcomes, direct involvement, speech and important events stayed. This would reduce incidental personal chronology; missed facts were never fabricated later.
 
