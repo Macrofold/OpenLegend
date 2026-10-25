@@ -48,6 +48,8 @@ Build connected, testable activities rather than exhaustively completing isolate
 
 Required behavior must work through actual world state, permissions and actions. Authored content and native behavior are valid implementations; effect-free narration or forced demonstration outcomes are not evidence of invention or independent choice. Correctness, privacy, cancellation, accounting and current-format persistence protect the selected scope without justifying unrelated bureaucracy.
 
+The [stealth and awareness selection](../projects/stealth-awareness-feature-spec.md) connects these strands through useful hunting or nonlethal observation, investigating uncertain information, watching an approach and surviving a failed ambush. Select only the sensing, native startle, NPC interpretation, preparation and controls needed for those decisions. Compare quiet approach with ordinary movement, include travel/preparation/recovery in its time cost, and preserve another useful action when investigation finds nothing. This selection neither reorders the build strands nor requires the full psychology, disguise, surveillance or alternate-world catalogues; [its delivery tracker](../maintainers/stealth-awareness.md) owns implementation evidence.
+
 ## Scope, realization and priority are different questions
 
 Keep **Small / Moderate / Large** build scope separate from Priority and from **F / U / C / D** realization labels. F identifies a reusable grounding/control operation, not a player-value endorsement; C means composition, not complexity. Identify a missing dependency explicitly rather than inflating every action that uses it.

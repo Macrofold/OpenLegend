@@ -8,6 +8,10 @@ The selected [ND38 skilled action design](../projects/action-execution-and-skill
 
 The selected standalone [Cognition Lab](../projects/cognition-lab-feature-spec.md) has proposed [CLL01–CLL09](cognition-lab.md) for runtime isolation, compact navigation, paging, explicit run bounds and retained capture. Shared provider, cognition, native action and save constraints keep their existing owners; no runtime capacity claim follows from the design.
 
+The integrated [stealth and awareness inventory](stealth-awareness.md) routes shared boundaries to the A–G inventories, including [vision/gaze](vision-and-gaze.md), [evidence/recognition](perspective-perception.md), [attention](attention-and-investigation.md), [emotions](feelings.md), [preparedness](preparedness-and-surprise.md) and [player controls/presentation](stealth-player-experience.md). These are selected design limits with runtime and player qualification still open; each owner retains its actual constants, overflow behavior and evidence.
+
+The selected [acoustic-stealth inventory](acoustic-stealth.md) owns physical-source, quiet-movement, real-overlap and acoustic-work constraints. It consumes the existing [hearing/speech inventory](hearing-and-speech.md) for shared quantities, speech and native sound-response boundaries; it does not duplicate those limits or imply runtime qualification.
+
 ## One owner per purpose
 
 The accepted [shared NPC text design](../projects/npc-speech-streaming-feature-spec.md) is inventoried in [NST-L01–NST-L09](npc-speech-streaming.md). Shared hearing, cognition, memory, response and HTTP/caption limits retain their existing owners; the new inventory distinguishes selected batching/presentation constraints from unmeasured multiplayer capacity.

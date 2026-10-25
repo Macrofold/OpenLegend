@@ -7,6 +7,8 @@ and [evidence](../../verification/combat-and-threat-responses.md) retain remaini
 population, rendered-gameplay and acceptance gaps. Passing component checks does
 not establish the complete world or independent player experience.
 
+**Accepted extension; implementation and qualification remain open.** [Attention’s source audit](../../projects/attention-and-investigation-tech-design.md#11-existing-owners-and-required-extensions) reuses this single alarm/escape/settling/blocked controller for the selected acoustic and curiosity integration; its presence does not qualify those extensions.
+
 ## Playable purpose
 
 A struck deer should run toward somewhere it can actually reach and remain uneasy while nearby people could still hurt it. Another person in its escape route matters even when that person did not deliver the blow. Obstacles should create readable changes of route. Leaving an animal alone should eventually let it settle and resume its ordinary life. The same episode must continue through pause and save/load without a new random route or an unexplained return to grazing.

@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                                                    | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The complete Main and natural food/tool/camp journeys are delivered; remaining combined checks, performance, independent behavior and human acceptance remain open. | 2026-10-21   |
+| In progress | The complete Main and natural food/tool/camp journeys are delivered; remaining combined checks, performance, independent behavior and human acceptance remain open. | 2026-10-25   |
 
-[Feature specification](../projects/first-playable-world-feature-spec.md) · [Technical design](../projects/first-playable-world-tech-design.md) · [Layout](../worlds/base/first-playable-layout.md) · [Limits](../limits/first-playable-world.md). [FPV](first-playable-validation.md) remains the sole whole-experience/participant-evidence coordinator. This tracker owns only shared integration work; SV, SH, CP, RW, CTR and SPK keep their detailed tasks/status.
+[Feature specification](../projects/first-playable-world-feature-spec.md) · [Technical design](../projects/first-playable-world-tech-design.md) · [Layout](../worlds/base/first-playable-layout.md) · [Limits](../limits/first-playable-world.md). [FPV](first-playable-validation.md) remains the sole whole-experience/participant-evidence coordinator. This tracker owns only shared integration work; SV, SH, CP, RW, CTR, SPK and the integrated [SA specialist owners](stealth-awareness.md) keep their detailed tasks/status.
 
 Follow the [single-AI sequence and shared-change checks](../projects/first-playable-world-tech-design.md#implementation-order-and-independent-task-boundaries): combat, speech, then FPW foundations/survival, camps, cooperation, roaming and complete Main. CTR/SPK implementation is part of that assignment, not an external prerequisite or separate merge.
 
@@ -60,6 +60,7 @@ checks below remain open; component readiness is not full acceptance.
 - [x] Preserve exact request recovery, Stop, partial progress, focus/drafts, keyboard paths and scoped inspection. Unknown/empty/pending/refused/provider-failed remain distinct.
 - [x] Unify daylight presentation and HUD day/night with installed clock boundaries without changing physical perception.
 - [x] Replace supplied-kit readiness assumptions with actual empty-handed food/tool/fire/material/camp routes, valid social/danger prerequisites and exact initial knowledge/authority.
+- [ ] Extend the installed daylight/HUD alignment through B’s one installed clock/optical producer, light-sensitive acquisition and G’s sampled facet/history disclosure. Remembered fires emit no current light and graphics settings cannot change sensing; these accepted sensing/disclosure extensions remain undelivered.
 
 **Dependencies:** delivered SV/SH/CP, applicable CTR/SPK/RW. **Exit:** an ordinary player can complete the selected paths without God controls, hidden IDs, handcrafted requests or test-only permissions; configured candidates cannot claim readiness from old kit/fires.
 
@@ -77,6 +78,7 @@ and performance remain open. See [connected outcome evidence](../verification/fi
 - [ ] Measure cold preparation, warm command/catalogue, dense local danger/social work, actual persistence/publication and browser paths under existing performance gates. Record dimensions, cache eligibility and remaining coverage.
 - [x] Qualify the [combined shared-owner cases](../projects/first-playable-world-tech-design.md#cross-project-qualification-after-shared-changes), including speech during assault, recognition versus physical targeting, one animal continuation, consent endings, changed gate geometry and material exposure/authority. Reuse valid component evidence and rerun cases whose actual assumptions changed.
 - [x] Reconcile affected existing specifications/limits and source evidence after the combined implementation; no broad pending research becomes an asserted dependency or delivered capability.
+- [ ] Qualify the accepted SA extensions to the [combined shared-owner cases](../projects/first-playable-world-tech-design.md#cross-project-qualification-after-shared-changes): combined walking/watch, sampled visual loss, preparation/startle and creator downgrade. Requalify earlier cases only where their actual assumptions change; the completed baseline checks above do not establish these extensions.
 
 **Exit:** actual native/server/browser evidence covers integrated failures and costs, with limitations explicit. Model fixtures do not establish independent human behavior or invention quality.
 
@@ -103,8 +105,6 @@ unchanged Ada or provider trials.
 
 **Exit:** the complete implementation is available for FPV's participant and return-play qualification. FPV09 alone records whole first-playable acceptance; this task does not certify public hosting, payment or wider capacity.
 
-## Source baseline and design handoff
+## Source baseline and evidence boundary
 
-Design baseline is local `main` / `origin/main` commit `0543f9ec61301240c5c4ec3cd007063f4f1c25d6` in `https://github.com/Macrofold/OpenLegend.git`. Design-only verification consists of source/contract inspection, paper traces, independent cross-system review, link checks and formatting. No new game execution, provider call, performance measurement or player test occurred in this design task. The selected design gaps are closed; every unchecked implementation/evidence task above remains real work.
-
-The October 18 combined-design review used local `main` / freshly fetched `origin/main` at `dd73df13bc44593c0f259db6b4d08f26e334904a` in the same repository. It corrected dependency references and the rain-scope contradiction and defined the one-AI sequence and shared-change qualification. This is design/source review, not delivered runtime or measured performance evidence.
+Source inspection used `Macrofold/OpenLegend` commits `0543f9ec61301240c5c4ec3cd007063f4f1c25d6` and `dd73df13bc44593c0f259db6b4d08f26e334904a`. The local specifications define current intended behavior, including the integrated stealth/awareness dependencies. Source/contract inspection and paper review do not establish new game execution, provider quality, performance or player enjoyment. The selected design gaps are closed; every unchecked implementation/evidence task above remains real work. The full controlled-player appraisal policy remains open under SA-D01 without reopening independent sensing, NPC interpretation or native startle design.

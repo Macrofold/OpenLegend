@@ -12,6 +12,12 @@ Start with [first-playable delivery and validation (FPV01–FPV09)](first-playab
 
 The complete selected design is now in the [integrated pair](../projects/first-playable-world-feature-spec.md). Implementation owners are [FPW shared integration](first-playable-world.md), [SV survival/making](first-playable-survival.md), [SH natural camp](editable-shelters.md), [CP people/cooperation](first-playable-cooperation.md) and [RW wildlife/roaming](first-playable-roaming.md). Required CTR/SPK and existing foundation tasks retain their owners. All runtime and player acceptance remains explicit in those trackers and FPV.
 
+[Stealth, awareness and surprise](stealth-awareness.md) owns the completed integrated A–G design and its implementation dependencies. The [feature](../projects/stealth-awareness-feature-spec.md), [architecture](../projects/stealth-awareness-tech-design.md) and [repertoire review](../projects/stealth-awareness-repertoire-review.md) preserve perceived evidence, native startle, preparation and ordinary-player disclosure without marking runtime delivery complete. Shared and specialist design boundaries are reconciled; runtime delivery and qualification remain open. [Playable stealth controls and honest perspective (SPX01–SPX07)](stealth-player-experience.md) owns the selected player-interface delivery and qualification. Controlled-player psychological fear retains one [open policy choice](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters), including retained-appraisal applicability during direct control. Detailed F delivery: [Preparedness and surprise (SUR01–SUR09)](preparedness-and-surprise.md).
+
+[Vision and gaze (VG00–VG08)](vision-and-gaze.md) owns specialist B's [feature specification](../projects/vision-and-gaze-feature-spec.md), [technical design](../projects/vision-and-gaze-tech-design.md), [world policy](../worlds/base/vision-and-gaze.md) and [limits](../limits/vision-and-gaze.md): physical looking while moving, exposed visual detail, world light, canonical sampled values and their declared temporal limits. Implementation and qualification of the integrated A/E/F/G interfaces remain explicit in that tracker.
+
+[Attention and investigation](attention-and-investigation.md) owns finite observation/watch/search, compatible work, native curiosity and the preparation-evidence producer. Its specialist design is complete; ATI01–ATI08 remain runtime work.
+
 ## Game production methods
 
 [Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
@@ -22,6 +28,10 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 [Using engine research to improve OpenLegend](../engine-research-guide.md) connects the current Unreal/Unity study to player value, existing feature/technical owners and [scoped design questions](needs-design.md#current-engine-research-design-questions-and-existing-owners). It is the reading map; the linked maintainers retain delivery and qualification.
 
+## General emotions, bodily reactions and adaptive review
+
+[Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) are complete; implementation/qualification remain open. [SA-D01](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) retains the controlled-player production, retained-appraisal applicability, disclosure, revocation and transfer choice.
+
 ## Combat and immediate threat responses
 
 [Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). CTR owns current delivery and unsatisfied independent acceptance; this index does not repeat its status.
@@ -29,6 +39,10 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 ## Skilled player action execution and real item quality
 
 [Action execution and skilled input (ASE01–ASE12)](action-execution-and-skill-expression.md) owns delivery of [ND38's feature specification](../projects/action-execution-and-skill-expression-feature-spec.md), [technical design](../projects/action-execution-and-skill-expression-tech-design.md), [selected world rules](../worlds/base/skilled-action-execution.md) and [limits](../limits/action-execution-and-skill-expression.md). The design is complete; movement during aim, timed release, real mouse-directed attacks, local bodily evasion and usable fitted-item quality are **not yet implemented or play-qualified**. CTR and ordinary action/craft owners retain authoritative contact, permission and material effects.
+
+## Acoustic stealth and physical sound
+
+[Acoustic stealth (ACS00–ACS08)](acoustic-stealth.md) owns delivery of the completed [feature specification](../projects/acoustic-stealth-feature-spec.md) and [technical design](../projects/acoustic-stealth-tech-design.md), with [constraints](../limits/acoustic-stealth.md) and the bundled [physical-sound policy](../worlds/base/physical-sound.md). SAD-C and the selected ND13/ND16 design slices are complete; implementation and qualification remain open. Supported physical sources and speech share the hearing owner, perspective evidence and native response integration.
 
 ## Speech and social perception
 

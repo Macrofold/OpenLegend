@@ -6,6 +6,20 @@
 
 The base clock converts one real second to one game minute at normal speed. Speed selection scales elapsed game time, not a required count of native updates. The current finite family accepts intervals up to 60 game seconds, shortened by known mechanical deadlines or fidelity bounds. The host usually offers less time at each wake. Partial progress toward that interval boundary survives current-format save/load under the [native interval contract](../../simulation-time.md#native-interval-contract); restoration cannot restart the remaining sampling distance. The finite horizon remains 60 game seconds; the current experimental sensing bound is four metres, as described below. There is no mandatory one-game-second loop for idle scenes, and no 20 FPS render limit.
 
+## Selected stealth reaction durations
+
+**Selected target, not a delivered bodily-startle mechanism.** The [shared emotion/time contract](../../projects/stealth-awareness-tech-design.md#time-and-lifecycle) keeps this world's 60:1 normal clock. A provisional startle of **three normal-speed seconds** admits 180 simulation seconds once through the installed clock/effect owner:
+
+| Runtime speed | Elapsed real time for an uninterrupted 180-simulation-second episode |
+| ------------- | -------------------------------------------------------------------: |
+| 1×            |                                                            3 seconds |
+| 3×            |                                                             1 second |
+| 8×            |                                                        0.375 seconds |
+
+These conversions assume the simulation makes the corresponding progress; technical delay does not spend unadvanced game time. Pause freezes the remaining episode. A speed change affects subsequent clock advance without restarting or rescaling admitted progress. Restore resumes the same cause/life-bound episode and does not create a second onset. The selected G controls expose acceleration only through current creator/debug authority; their presence in local tooling gives an ordinary player no speed or inspection permission.
+
+D specifies supported susceptibility, composition and recovery through the existing status/appraisal owners. Current fear/anger decay remains expressed per game hour; it is not silently converted into the new short reaction unit. Effective fear is a missing accuracy/evasion integration target, with no automatic running/fleeing speed reduction. The [shared tracker](../../maintainers/stealth-awareness.md) owns design and subsequent delivery; this section changes no installed durations, fidelity limits or runtime qualification.
+
 ## Everyday work durations
 
 Fresh bundled worlds use these gathering and preparation times:
@@ -52,6 +66,8 @@ Ordinary wandering’s running timer is now an absolute game-time deadline where
 
 The [certified reuse contract](../../simulation-time.md#native-interval-contract) retains only already-covered, certain paths for the remaining exact sight/contact consumers across unrelated mechanical rebuilds. It changes no base-world range, sample height, horizon, displacement bound, linger window or event timing. Hover, wait, landing and wandering deadlines still constrain certainty through their existing movement owners; unsupported or changed paths recompute.
 
+**Selected visual sampling law; not implemented:** [Vision and gaze](../../projects/vision-and-gaze-tech-design.md#9-actual-trajectories-and-bounded-temporal-sensing) uses fixed-epoch **0.05-normal-second** cells for affected dynamic scopes, actual native discontinuities and existing supported analytic narrow-window assistance. Completed support is held between due measurements; value measurement, actual acquisition and availability remain separate. Shared daylight coefficients use one-normal-second epoch samples. This is an explicit finite model: unsupported subcell flashes/gaps can be missed or held, and no general continuous optical proof or accumulated aliasing bound is promised. [VG05–VG07](../../maintainers/vision-and-gaze.md#vg05--as-visual-producer-and-bounded-temporal-sensing) owns original trajectory/control anchors, preparation and restore. The current four-metre bound remains the implemented displacement approximation and its nonvisual owners remain in force; it cannot substitute for the selected visual cadence. Capture, camera and publication add no samples.
+
 ## Physiology and effects
 
 Food and energy boundaries come from the installed schema bounds, condition descriptions and predicates in the authored status definitions. Their behavior/rates remain owned by [survival](survival.md), the status-effect definitions and the attribute owners. The old fixed threshold list, including unused energy level 5, is removed. An interval stops at depletion or death before charging a subsequent period of starvation or exhaustion. Work beginning on arrival receives no pre-arrival duration.
@@ -77,3 +93,5 @@ Revisit these bounds when fleeting encounters matter to a mechanic, new movement
 ## Selected first-playable clock consumers
 
 The [integrated design](../../projects/first-playable-world-tech-design.md#time-daylight-needs-and-decision-latency) keeps the current 60:1 clock and physical perception, and selects one installed clock source for renderer daylight and HUD day/night. [FPW03](../../maintainers/first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness) owns that correction. Roaming and the selected daily material-rain window use game-time boundaries through their existing native owners, never browser color or wall time. This is designed work, not a current display fix or a new light-sensitive sight rule.
+
+The separate selected [vision/light profile](vision-and-gaze.md) uses that same world clock for authoritative illumination and its [VG04](../../maintainers/vision-and-gaze.md#vg04--authoritative-light-and-consistent-appearance) implementation. FPW03's display correction alone does not deliver light-sensitive sight or the selected visual sampling and continuation above.

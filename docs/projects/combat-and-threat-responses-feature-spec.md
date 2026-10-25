@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                               | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Physical combat, animal responses and busy-character choices are installed; Ada’s counterattacks and final combined qualification remain open. | 2026-10-23   |
+| In progress | Physical combat, animal responses and busy-character choices are installed; Ada’s counterattacks and final combined qualification remain open. | 2026-10-25   |
 
 **Behavior alignment updated:** 2026-10-23T06:11:21Z.
 
@@ -42,6 +42,12 @@ the cadence. This does not change animal speed, avoidance, preparation or harm.
 8. Humanlike characters use a prepared repertoire for this threat-response profile: a cheap Decision API stage selects situation-relevant options, then a second stage chooses what the character actually does. Native feasibility precedes both; it does not substitute for the first semantic decision.
 9. Meaningful changes, including an aggressor withdrawing, leaving effective reach or disappearing, trigger reconsideration. Neither automatic pursuit nor silent permanent pursuit follows from being attacked.
 10. Selection and hovering remain harmless. Command-click uses exact, disclosed action intent and per-opponent evidence, including a short recent-hostility grace period, without exposing hidden intentions.
+
+## Stealth, warning and surprise integration
+
+The [shared stealth feature](stealth-awareness-feature-spec.md) adds an accepted, unimplemented surprise contract to these combat foundations. An unexpected betrayal can surprise a victim who sees the attacker; a genuinely prepared victim can anticipate an attack from an unseen source. Current line of sight, an unknown identity, a failed guard and the contextual Attack preference are insufficient by themselves to decide surprise. A continuous anticipated fight cannot award repeated surprise merely because an opponent steps behind someone.
+
+The [shared combat contract](stealth-awareness-tech-design.md#threat-preparedness-and-surprise) owns the ordering and evidence boundary. Each actual victim is evaluated from their own prior warning and actual preparation before that contact's new bodily and sensory consequences. The provisional initial 2× injury multiplier is authored world policy. Immediate native startle and longer-lived interpreted fear are separate; fear affects accuracy and evasion without automatically reducing running or fleeing speed. The [preparedness and surprise feature](preparedness-and-surprise-feature-spec.md) and [technical design](preparedness-and-surprise-tech-design.md) complete SAD-F's detailed design; [SUR01–SUR09](../maintainers/preparedness-and-surprise.md) and SAI-F retain its implementation. Mature anticipation survives a real confirming contact or own committed offense within its scoped continuity, including consumed guard and recovery; unused ended watch grants none. CTR retains its existing contact, encounter, choice and qualification scope.
 
 ## Playable scope
 

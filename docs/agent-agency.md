@@ -38,14 +38,15 @@ Multiple requested actions are not simultaneous completed actions. For example, 
 
 The conceptual distinction is visibility and authority, not an inheritance hierarchy called `Action`:
 
-| Kind                    | Meaning                                                                                              | What it does not imply                                                                     |
-| ----------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Private thought         | A brief character-authored interpretation, hypothesis, feeling or observation of its own mental life | A public event, a new world fact, or the model's hidden reasoning trace                    |
-| Goal operation          | A choice to maintain, revise, suspend, finish or abandon an intention                                | A promise to someone else, successful execution, or a mandatory task for every bodily need |
-| Plan operation          | A revisable choice of means and a small executable next portion                                      | A prophecy, a globally valid schedule, or permission to control another actor              |
-| Invention proposal      | A proposed purpose and method submitted for the world's existing invention process                   | An installed mechanic, a learned skill, a spawned object or a commitment to build          |
-| External action attempt | A request for the actor to do something in the world                                                 | Permission to bypass mechanics or claim the desired result                                 |
-| Speech                  | An external communicative act processed by conversation and perception rules                         | Guaranteed hearing, understanding, agreement, belief or fulfillment of a promise           |
+| Kind                    | Meaning                                                                                                   | What it does not imply                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Private thought         | A brief character-authored interpretation, hypothesis, feeling or observation of its own mental life      | A public event, a new world fact, or the model's hidden reasoning trace                                     |
+| Emotional review        | An independently admitted private reassessment of supported existing feelings through the appraisal owner | A new deliberate thought, speech, chosen goal, physical action, or authority over another person's feelings |
+| Goal operation          | A choice to maintain, revise, suspend, finish or abandon an intention                                     | A promise to someone else, successful execution, or a mandatory task for every bodily need                  |
+| Plan operation          | A revisable choice of means and a small executable next portion                                           | A prophecy, a globally valid schedule, or permission to control another actor                               |
+| Invention proposal      | A proposed purpose and method submitted for the world's existing invention process                        | An installed mechanic, a learned skill, a spawned object or a commitment to build                           |
+| External action attempt | A request for the actor to do something in the world                                                      | Permission to bypass mechanics or claim the desired result                                                  |
+| Speech                  | An external communicative act processed by conversation and perception rules                              | Guaranteed hearing, understanding, agreement, belief or fulfillment of a promise                            |
 
 Speech can therefore be an external-action subtype in the domain without losing its specialized conversation APIs or presentation. A physical action may create an audible event without being speech. Thinking remains private even though it changes stored actor state.
 
@@ -56,6 +57,8 @@ A character is allowed to be mistaken or dishonest. “I built a bow” can be a
 **Accepted extension; runtime integration and qualification remain open.** Task deliberation, action choice and speech choice use the same permitted situation, optional operation composition and authoritative admission. The [shared runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md#25-shared-deliberation-and-prepared-choices) owns preparation and the lifetime of a decision; [prepared action choices](action-capabilities.md#prepared-choices-and-prospective-work-transitions) preserve exact actions and their consequences for current work. Combat is a demanding first consumer of those contracts, alongside ordinary work and conversation.
 
 The chosen method of deliberation can differ. An already selected native activity continues without inference; a person can select a supplied action without generating language; an unresolved intention or warranted reply can use the existing generated operation composition. The selected threat profile uses relevance/appraisal followed by choice. It does not make those two calls, a generated purpose, or a preliminary category decision compulsory for every situation.
+
+**Selected, unimplemented:** [Emotional review](projects/emotional-physiology-tech-design.md#ep-c08--independently-selectable-emotional-review) can revise existing private feelings while chosen activity continues. It shares cognition preparation, accounting and publication, requires no thought or action selection, and may accompany compatible ordinary cognition or the existing first threat stage. Feeling fear and choosing to flee remain separate operations.
 
 A hungry person reconsidering gathering, a person replying while doing compatible work, and a person responding to an assault all retain current commitments, permitted evidence and truthful alternatives. Each can continue, deliberately change supported work, or produce no new intervention. A chosen task's actual success, failure, changed terms or due review condition returns through existing intake. No new combat, hunger, conversation or interruption planner is created, and available capabilities do not prescribe the person's priorities. [Caller authority](engine-and-world-boundaries.md#shared-callers-distinct-authority) keeps direct human control, native creatures and the out-of-world authoring assistant distinct.
 
@@ -80,6 +83,8 @@ The engine may verify an observable condition such as possessing a crafted item.
 ### One operational source of truth
 
 Accepted inner-world prose continues to hold identity, values, relationships, feelings and broad aspirations. No prescribed collection of belief or goal files is introduced. The active operational goal list has one authoritative owner; its prompt/UI representation is derived from that owner. Do not maintain independently writable copies in `actor.goal`, `actor.goals`, mind facets, a planner scratch file and a new queue.
+
+Source-linked feelings retain their values and lifetimes in the appraisal owner; [effective mechanics](projects/emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution) are derived from appraisals and bodily contributions. Emotional review cannot rewrite identity or goals. Existing reflection and voluntary goal operations retain that authority.
 
 Creator-authored initial goals seed the actor once. They are not reapplied at each cognition opportunity and do not prevent later revision. Historical initialization can remain part of provenance. Existing backstory and identity protection are not removed just because current goals become actor-maintained.
 
@@ -123,7 +128,7 @@ When an attempt needs new mechanics, it can become an invention request. When it
 
 This open route is available even when the immediate feasible-action shortlist is empty or was omitted as irrelevant. It is subject to normal actor capability, scope, budget and policy limits. A routing or attention model selecting existing candidates is not authorized to abolish the proposal route.
 
-The initial approach option moves once to a reachable location near a currently perceived entity, using the existing native movement command and body admission. It is available independently of hand/tool capability. Targets sharing a destination remain distinct choices. The offered description must distinguish this from continuously following a moving entity; the separate native visual-follow activity now maintains proximity until cancellation, interruption or lost sight. Richer tracking senses, stealth and formation relations remain later work.
+The initial approach option moves once to a reachable location near a currently perceived entity, using the existing native movement command and body admission. It is available independently of hand/tool capability. Targets sharing a destination remain distinct choices. The offered description must distinguish this from continuously following a moving entity; the separate native visual-follow activity now maintains proximity until cancellation, interruption or lost sight. Richer tracking senses and formation relations remain separate work. The selected stealth-awareness extension below does not make visual follow track an unseen source.
 
 An expressive fallback is not a loophole. The system must not replace an unsupported consequential action with prose that claims it happened. A nod may be a supported expression. Building a bridge cannot be rendered as a completed, effect-free “expression” when no bridge was built.
 
@@ -191,6 +196,16 @@ An internal goal edit can refresh derived interests without causing another LLM 
 
 Bodily consequences and configured sleep continue natively; urgency may prioritize an eligible decision without selecting food or a target for the person. Incapacitation and lack of a granted cognition capability remain different from hunger, and unavailable or declining cognition may leave a person unfed. [World-owned survival](worlds/base/survival.md) and its linked limits own installed body concerns, recovery and background-thinking gates; [cognition limits](limits/cognition.md) and AG07 retain reconsideration tuning and remaining wake-loop qualification. Do not recreate the removed hunger-to-action controller from an earlier threshold audit.
 
+### Selected investigation, watch and reconsideration target
+
+**Accepted target; attention design is complete and runtime delivery remains open.** [Stealth-awareness contracts](projects/stealth-awareness-tech-design.md#shared-contracts) and [SA](maintainers/stealth-awareness.md) connect perceived cues, chosen attention and active preparation through these agency owners. A reasoning person can choose to look, investigate, warn, flee, fight or continue after a suspicious sound. Detection does not itself rotate the body or choose travel. Native startle and the existing animal response controller remain independent of paid cognition and autobiography; their effects do not invent a person's chosen intention.
+
+The [attention and investigation design](projects/attention-and-investigation-feature-spec.md) and [ATI01–ATI08](maintainers/attention-and-investigation.md) specify this consumer. A watch or investigation uses ordinary admitted action/finite activity ownership, permitted subject or historical region, actual compatible pose, stopping conditions and interruption. A proposal or goal sentence is not active preparation. One reviewed Walk while watching request binds destination, finite attention and compatible orientation through the existing atomic admission owner. Attaching a facet to a current move and later switching to direct steering preserve its original deadline. This capability remains unimplemented; it adds no extra action queue or hidden held-input restart. Existing camp-watch deadlines and receipts do not themselves implement threat coverage. Investigation follows acquired direction/region evidence, never a hidden source's live route; a completed search reports only what was actually checked. The [preparedness contract](projects/stealth-awareness-tech-design.md#threat-preparedness-and-surprise) consumes the exact active work and prior warning without letting a scene focus or current shortcut choose behavior.
+
+The [emotional-review contract](projects/emotional-physiology-tech-design.md#ep-c08--independently-selectable-emotional-review) uses existing appraisal deadlines and one coalesced `ActorWork` ticket. It acknowledges only its own captured opportunities, preserving pending replies, threats and ordinary evidence watermarks. Harmless progress does not cancel review or ongoing work. Finite attempts, material support, dormant no-change outcomes and shared admission bound optional reasoning; native effects and appraisal lifetimes continue when it is unavailable. Emotional intensity alone grants no threat-reserved execution slot.
+
+[Time and lifecycle](projects/stealth-awareness-tech-design.md#time-and-lifecycle) govern saved simulation progress. [SA-D01](maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) remains open for interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior during direct control; bodily effects do not confer autonomous authority over the human player's subjective choices.
+
 ## 9. The intended 80/20
 
 The first useful system needs optional decisions, private persistent intentions, a short revisable plan, an open attempt route, actor-led proposals into the existing invention authority, and feedback that can change later behavior. These provide a practical approximation of continuity, anticipation and adaptation without simulating a brain.
@@ -202,6 +217,7 @@ The [research archive](../archive/02-research/agency-cognition-and-planning.md) 
 ## Maintained records
 
 - Implementation: [Agency tasks](maintainers/agent-agency.md); [cognition tasks](maintainers/cognition-redesign.md).
+- Selected private emotional review: [Emotional physiology design](projects/emotional-physiology-tech-design.md) and [implementation tracker](maintainers/emotional-physiology.md); broader agency acceptance stays here.
 - Limits and constraints: [Cognition and action selection inventory](limits/cognition.md).
 
 ## Learned activities and action history

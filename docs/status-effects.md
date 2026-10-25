@@ -68,6 +68,14 @@ history; an exact retained command receipt still replays without resurrection. N
 commands allocate fresh monotonic episode IDs. Policy maintenance materializes history
 before validating exact pins, including ended contributions.
 
+### Selected bodily shock and effective emotion extension
+
+**Designed; native startle and numeric parameter contributions remain unimplemented under [EP](maintainers/emotional-physiology.md).** [EP-C05](projects/emotional-physiology-tech-design.md#ep-c05--native-bodily-reaction-admission-and-receipts) extends the existing saved contribution with a discriminated native-body origin: exact affected life, original committed cause, definition pins, frozen onset/curve and immutable result receipt. It has no required live `$source`; historical attribution does not prevent source retirement. Existing source-bound attach/refresh rules remain distinct.
+
+Trusted physical or personally acquired causes admit onset without memory or AI. Wrappers of the same original cause cannot repeat it. Active and terminal receipts stay in the existing status/contribution records, with bounded prepared replay lookup before physical mutation; missing required preparation is incomplete rather than no effect. Fixed reactions can outlive their source, end with the affected physical life and never transfer to a new body. [Simulation time](simulation-time.md#selected-stealth-and-emotion-timing) preserves admitted normal-play duration and paused/restored progress.
+
+[EP-C06–EP-C07](projects/emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution) define the complete read-only emotional query, narrow numeric parameter family and ordered combat consumers. They add no writable fear total or inverse-delta cleanup; newly caused shock cannot affect its own impact. [Base psychological reactions](worlds/base/psychological-reactions.md) owns mappings and tuning. Private interpretation/reassessment remains with appraisals and cognition, including the unresolved [SA-D01](maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) control policy.
+
 ## Transitions
 
 `activateStatusEffect`, `deactivateStatusEffect` and `interruptStatusEffects` are the shared mutation boundary. A saved instance contains an active flag, episode ID, elapsed seconds, automatic reactivation deadline and source/target IDs. An occupying actor effect interrupts previous work without refunding consumed inputs, creates one ongoing action tied to its episode, and completes or interrupts the associated plan through the existing owner. Non-occupying effects also work on objects. An occupying effect requires an actor because native plans/actions are currently actor-owned.
@@ -127,6 +135,6 @@ Policy, instances, elapsed time and bindings serialize with the world. Periodic 
 
 ## Maintained records
 
-- Implementation: [Feature tasks](maintainers/state-contributions.md).
+- Implementation: [Feature tasks](maintainers/state-contributions.md), with the selected bodily/numeric extension in [emotional physiology](maintainers/emotional-physiology.md).
 - Reviewed removal: [RD01–RD05](maintainers/parallel-batch-09-reviewed-content-removal.md), under [CE01](maintainers/creator-edits.md#ce01--reviewed-explicit-dependency-cascades).
 - Limits and constraints: [Shared state, resources and effects inventory](limits/state-effects.md).

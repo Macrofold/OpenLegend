@@ -10,6 +10,14 @@ The control guidance below applies after that interaction is chosen. A well-buil
 
 The selected [combat-sensitive Command gesture](world-interaction.md#selected-combat-sensitive-command-action) extends the current shortcut, with exact pointer-down identity, ordered context, visible blockers and deliberate Speak/Stop. Reuse existing keyboard/focus and cancellation primitives; a modifier is not authority to switch an already displayed action or bypass text/modal ownership. Numeric continuity and attack preference belong to the installed world profile. This extension remains unimplemented under CTR09.
 
+## Selected stealth and independent gaze controls
+
+**Designed; implementation and qualification open under [SPX01–SPX07](../maintainers/stealth-player-experience.md).** The [binding table](../projects/stealth-player-experience-feature-spec.md#default-desktop-bindings) and [single input-owner contract](../projects/stealth-player-experience-tech-design.md#input-routing-and-ordinary-movement) select world-focused WASD movement, X crouch/stand, Z quiet/ordinary pace and independent physical Look. Create deliberately moves from W to Shift+W when this profile ships; current W Create help remains truthful meanwhile. Text composition, focused controls, menus, targeting and camera gestures retain their own keys. J opens Events; Character records remains separate.
+
+**Walk while watching** uses one activity review and Start for a permitted destination plus finite attention. It creates one ordinary move with attached observation through [the shared admission owner](../projects/attention-and-investigation-tech-design.md#31-one-admission-transaction). Attaching to an existing compatible walk and later direct steering preserve that watch’s original deadline. Opening the review releases owned held keys; returning focus never restarts them.
+
+A request is not an accepted posture or movement result. Show pending, admitted, completed, blocked and interrupted states from native receipts. Key release ends its owned held movement; **Stop watching** ends the exact attention binding and its owned look directive while preserving compatible work; **Space / Stop** retains the wider stop contract. Scoped remapping must detect conflicts and update displayed hints from the same registry. The [selected accessibility contract](../projects/stealth-player-experience-tech-design.md#accessibility-and-input-customization-implementation) supplies keyboard, non-drag and hold/toggle alternatives without granting additional world senses.
+
 ## Choose the semantic control first
 
 | Player intent                                   | Preferred pattern                                                                            | Avoid                                                                   |

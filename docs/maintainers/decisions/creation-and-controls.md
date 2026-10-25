@@ -6,6 +6,8 @@ These are residual product/design choices transferred from the former archive re
 
 Further camera/style tuning or changes to the selected renderer, editing and asset workflow require their current art/spatial owners. Current pins and delivered assets are not reopened by the older register.
 
+D51’s accepted [body-owned sensing and camera-disclosure boundary](../../projects/stealth-awareness-tech-design.md#player-information-disclosure) supersedes the unimplemented viewport-as-acquisition target. Physical gaze/detail and the selected [vision](../../projects/vision-and-gaze-feature-spec.md) and [player controls](../../projects/stealth-player-experience-feature-spec.md) are designed; implementation and gameplay tuning remain open. Connected foreground/background characters use their admitted body senses independently of camera framing. This settled boundary is not another open camera choice.
+
 Scope/dependencies: Before broad asset production; R01/R02; [visual direction](../../../archive/03-design-proposals/visual-direction.md). Original decision status: **partly agreed**.
 
 ### D20 — Runtime script isolation and declarative extension points
