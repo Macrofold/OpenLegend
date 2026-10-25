@@ -377,6 +377,7 @@ import {
   statusEffectChoiceOutcome,
   deactivateStatusEffect,
   interruptStatusEffects,
+  statusInterruptionRequired,
   capabilityBlocked,
   activeContributionId,
 } from './status-effects.js';
@@ -2355,6 +2356,19 @@ function executeCommandNative(
     (source.actor?.controller !== 'native' || (!source.threat && !source.animal))
   )
     return reject('unsupported-controller', 'This entity has no installed native controller.');
+  // This native route already passed the same profile, controller and geometry
+  // admission above. With no work/status to interrupt, approaching movement has
+  // no remaining setup effects or refusals to execute in a disposable world.
+  if (
+    options.preview &&
+    options.nativeController &&
+    options.nativeMovement &&
+    action?.type === 'move' &&
+    action.stage === 'approaching' &&
+    !source.actor?.action &&
+    !statusInterruptionRequired(original, source, 'new-action')
+  )
+    return { world: original, events: [], outcome: result };
   if (options.preview && command.type === 'handover') {
     if ('itemId' in command) {
       const offer = prepareItemOffer(original, source, command);
@@ -2738,7 +2752,9 @@ function executeCommandNative(
             command.itemId,
           );
           component.inventoryInspection = cursor;
-          recordInspectedItems(world, events, actor.id, { ...cursor, page });
+          cursor.evidenceIds.push(
+            ...recordInspectedItems(world, events, actor.id, { ...cursor, page }),
+          );
           if (
             command.itemId &&
             world.itemDefinitions[itemFor(world, command.itemId)?.definitionId ?? '']?.recipeRecord
@@ -2769,7 +2785,7 @@ function executeCommandNative(
             container?.load !== undefined && container.capacity !== undefined
               ? ` Packing space: ${container.load} of ${container.capacity} units used; ${container.capacity - container.load} units free.`
               : '';
-          emit(
+          const inspectionEvent = emit(
             world,
             events,
             'inventory-inspected',
@@ -2786,6 +2802,7 @@ function executeCommandNative(
             { semanticTrigger: true, importance: 6 },
             'private',
           );
+          cursor.evidenceIds.push(inspectionEvent.id);
           result = outcome(true, 'inventory-inspected', 'Accessible contents inspected.');
         } catch (error) {
           return reject(

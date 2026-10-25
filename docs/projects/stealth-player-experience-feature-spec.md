@@ -1,8 +1,8 @@
 # Playable stealth controls and an honest player perspective
 
-| Status      | Current progress                                                                                                           | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | SPX01 existing-channel publication converted; broader controls, producers and integrated player qualification remain open. | 2026-10-25   |
+| Status      | Current progress                                                                                                           | Last updated         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | SPX01 existing-channel publication converted; broader controls, producers and integrated player qualification remain open. | 2026-10-25 15:35 UTC |
 
 ## Purpose and authority
 
@@ -29,9 +29,11 @@ These are intended benefits, not measured fun. Later uncoached play must assess 
 
 ## Current foundation and selected changes
 
-The inspected contracts base has click-to-walk, selection/Look closer, contextual actions, an equipped-item targeting mode, Speak/Act text entry, ordinary action receipts, current-work controls, perceived speech/history, camera orbit/pan/zoom, observer-filtered entities and faint last-seen images. It has no current WASD movement or completed gaze/posture/attention/surprise integration. Its visibility Boolean does not yet authorize each individual appearance fact.
+The inspected contracts base has click-to-walk, selection/Look closer, contextual actions, an equipped-item targeting mode, Speak/Act text entry, ordinary action receipts, current-work controls, perceived speech/history, camera orbit/pan/zoom, observer-filtered entities and faint last-seen images. It has no current WASD movement or completed gaze/posture/attention/surprise integration. The existing-channel SPX01 conversion now publishes captured appearance/detail facets, retires lost contacts, separates historical references and removes remembered fire lighting; future controls and physical producers remain open.
 
-Selected changes are direct movement through the existing movement owner; explicit crouch and quiet-pace requests; independent physical looking; finite watch/inspection/investigation controls; information-shaped live and historical presentation; and complete ordinary-versus-creator publication separation. Source inspection found concrete gaps in full entity details, map publication, historical selection and remembered fire lighting; [the audit](stealth-player-experience-tech-design.md#inspected-current-behavior) owns the evidence.
+Selected changes are direct movement through the existing movement owner; explicit crouch and quiet-pace requests; independent physical looking; finite watch/inspection/investigation controls; information-shaped live and historical presentation; and complete ordinary-versus-creator publication separation. The contracts-base source inspection identified the publication gaps addressed by the scoped conversion; [the audit](stealth-player-experience-tech-design.md#inspected-current-behavior) owns the evidence.
+
+Existing choices, previews and world-container opening share the acquired-current reference roles. World contents require explicit bounded native inspection; searching the received page does not inspect unopened stock. The [inventory contract](../ui-ux/inventory.md#search-sorting-and-filtering-at-scale) owns paging and result recovery.
 
 ## The screen and the information promise
 

@@ -676,12 +676,41 @@ export function deactivateStatusEffect(
     reason,
   );
 }
+/** Exact read-only no-op proof for the interruption owner. Use raw active flags:
+ * expired contributions may still need their work released and state cleared. */
+export function statusInterruptionRequired(
+  world: WorldState,
+  entity: Entity | undefined,
+  reason: string,
+): boolean {
+  const stored = entity && readOnlyDraftView(entity).statusEffects;
+  if (!entity || !stored) return false;
+  const states = readOnlyDraftView(stored),
+    definitions = statusDefinitions(world);
+  for (const value of Object.values(states)) {
+    const state = readOnlyDraftView(value),
+      contribution = state.contribution && readOnlyDraftView(state.contribution);
+    if (!state.active || !contribution) continue;
+    const definition = definitions.find((candidate) => candidate.id === contribution.definitionId);
+    if (reason === 'body-unavailable' || definition?.interruptOn.includes(reason)) return true;
+  }
+  for (const definition of definitions) {
+    if (reason !== 'body-unavailable' && !definition.interruptOn.includes(reason)) continue;
+    const key = definition.contribution
+      ? activeContributionId(entity, definition.id, entity.id)
+      : definition.id;
+    const state = key && states[key];
+    if (state && readOnlyDraftView(state).active) return true;
+  }
+  return false;
+}
 export function interruptStatusEffects(
   world: WorldState,
   entity: Entity,
   events: WorldEvent[],
   reason: string,
 ): void {
+  if (!statusInterruptionRequired(world, entity, reason)) return;
   for (const state of Object.values(entity.statusEffects ?? {})) {
     if (!state.active || !state.contribution) continue;
     const definition = statusDefinitions(world).find(

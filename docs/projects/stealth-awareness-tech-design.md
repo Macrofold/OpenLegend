@@ -1,8 +1,10 @@
 # Stealth, awareness and surprise — shared technical design
 
-| Status      | Current progress                                                                                                                                        | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared and specialist designs are integrated; runtime delivery and qualification remain open. Controlled-character psychological policy remains SA-D01. | 2026-10-24   |
+| Status      | Current progress                                                                                                                 | Last updated         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Existing-channel personal-evidence foundation delivered; other runtime modules, integrated qualification and SA-D01 remain open. | 2026-10-25 15:35 UTC |
+
+Design used for scoped implementation and review: **2026-10-25 15:35 UTC**.
 
 ## Authority and scope
 

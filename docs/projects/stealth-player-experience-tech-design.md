@@ -1,8 +1,10 @@
 # Playable stealth controls and an honest player perspective — technical design
 
-| Status      | Current progress                                                                                                           | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | SPX01 existing-channel publication converted; broader controls, producers and integrated player qualification remain open. | 2026-10-25   |
+| Status      | Current progress                                                                                                           | Last updated         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | SPX01 existing-channel publication converted; broader controls, producers and integrated player qualification remain open. | 2026-10-25 15:35 UTC |
+
+Design used for scoped implementation and review: **2026-10-25 15:35 UTC**.
 
 ## Scope
 

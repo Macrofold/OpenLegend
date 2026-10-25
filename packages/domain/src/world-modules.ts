@@ -1343,7 +1343,15 @@ export function validateWorldModules(world: WorldState): void {
         !Array.isArray(inspection.itemIds) ||
         inspection.itemIds.length > 16 ||
         new Set(inspection.itemIds).size !== inspection.itemIds.length ||
-        inspection.itemIds.some((id) => typeof id !== 'string' || !id || id.length > 120))
+        inspection.itemIds.some((id) => typeof id !== 'string' || !id || id.length > 120) ||
+        !validName(inspection.containerName) ||
+        !Array.isArray(inspection.itemNames) ||
+        inspection.itemNames.length !== inspection.itemIds.length ||
+        inspection.itemNames.some((name) => !validName(name)) ||
+        !Array.isArray(inspection.evidenceIds) ||
+        inspection.evidenceIds.length !== inspection.itemIds.length + 1 ||
+        new Set(inspection.evidenceIds).size !== inspection.evidenceIds.length ||
+        inspection.evidenceIds.some((id) => typeof id !== 'string' || !isSafeRecordId(id)))
     )
       throw new Error('Invalid saved inventory inspection.');
     if (

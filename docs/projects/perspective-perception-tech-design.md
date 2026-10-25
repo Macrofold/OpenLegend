@@ -1,8 +1,10 @@
 # Observer-specific perception, evidence and recognition — technical design
 
-| Status      | Current progress                                                                                                             | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Supported-channel PP01–PP06 foundation implemented; future physical producers and full PP07/SAI-A qualification remain open. | 2026-10-25   |
+| Status      | Current progress                                                                                                             | Last updated         |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Supported-channel PP01–PP06 foundation implemented; future physical producers and full PP07/SAI-A qualification remain open. | 2026-10-25 15:35 UTC |
+
+Design used for scoped implementation and review: **2026-10-25 15:35 UTC**.
 
 ## Authority, scope and implementation boundary
 
@@ -401,7 +403,7 @@ type CapturedCurrentFacet = Readonly<{
 }>;
 ```
 
-Allocate a lease once through `nextId('perception-lease')` when that direct facet gains support, with local revision `1`. Retain its original fact link and current permitted value from completed B/C input; never dereference today's hidden body to fill it. Advance the working revision and covered support once only when B/C completes new uncovered provider-defined support or a value measurement. Repeated intervals and projection polls change neither. A changed semantic detail, provider-reported loss or incompatible dependency ends that lease; a later return has a new lease. B's explicitly sampled law holds availability between canonical samples; C's interval law holds received anchors. Neither claims continuously measured geometry. Episode grace preserves correlation only, after the affected live leases have ended.
+Allocate a lease once through `nextId('perception-lease')` when that direct facet gains support, with local revision `1`. Retain its original fact link and current permitted value from completed B/C input; never dereference today's hidden body to fill it. Advance the working revision and covered support once only when B/C completes new uncovered provider-defined support or a value measurement. Repeated intervals and projection polls change neither. A changed semantic detail finalizes the old meaning and starts a new immutable fact/support interval. Preserve the continuously perceived body/contact lease and its local individual through appearance, form or public-detail changes; independent carried/pile support can replace its own lease. Provider-reported loss or an incompatible physical dependency ends the affected lease; a later return has a new lease. B's explicitly sampled law holds availability between canonical samples; C's interval law holds received anchors. Neither claims continuously measured geometry. Episode grace preserves correlation only, after the affected live leases have ended.
 
 Keep provider-defined availability coverage separate from the value's measurement and actual acquisition. For unchanged dependency-proved facts, their supported intervals may extend together. For a changing received point or feature, keep only the latest permitted value, `valueMeasuredFrom/Through` and `valueAcquiredAt` in the bounded lease. An instantaneous point has equal measurement endpoints at the actual physical sample; a held cell does not move those endpoints. `confirmedFrom/Through` records completed provider-defined availability, not a claim that the point was stationary or remeasured throughout. Retain immutable snapshots at meaningful acquisition/outcome, a required captured cut or final loss. B/C alone select physical sample boundaries. A, a renderer, a server read and a cut do not introduce another sampling cadence.
 

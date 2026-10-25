@@ -1,8 +1,8 @@
 # Observer-specific perception, evidence and recognition — feature specification
 
-| Status      | Current progress                                                                                                             | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Supported-channel PP01–PP06 foundation implemented; future physical producers and full PP07/SAI-A qualification remain open. | 2026-10-25   |
+| Status      | Current progress                                                                                                             | Last updated         |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Supported-channel PP01–PP06 foundation implemented; future physical producers and full PP07/SAI-A qualification remain open. | 2026-10-25 15:35 UTC |
 
 ## Purpose and selected scope
 
@@ -18,9 +18,9 @@ This completes a scoped evidence and recognition design, not the broader [ND16 h
 
 The source baseline is the exact contracts-branch tip, `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`. The technical design records the relevant domain and service owners and the limits of source inspection. Existing [perception](../../packages/domain/src/perception.ts), [event observation](../../packages/domain/src/event-observation.ts), [experience](../../packages/domain/src/experience.ts) and [base-world knowledge](../../packages/domain/src/worlds/base/knowledge.ts) provide real foundations: scoped observations, personal records, exposure-based associations, authored acquaintances and observer-specific names. Speech already has listener-specific reception, and player views have observer-dependent disclosure.
 
-Those foundations do not deliver this full design. Persistent learned voice/face familiarity, observer-local learned individuals without a canonical binding, independently fresh fact projections, evidence accumulation across compatible cues and the complete retention/consumer path remain implementation work. The inspected baseline has neither the selected shared visual/recognition Perception attribute nor a physical voice-signature recognition subsystem. Their selected laws belong to [base-world recognition policy](../worlds/base/knowledge.md#identity-and-recognition), not an implicit engine-wide capability.
+The existing-channel implementation now adds observer-local individuals, voice familiarity under the selected Perception rule, exact received evidence, independently current details and faithful retained/cold/summary meaning. Native responses, NPC preparation and player publication consume these permitted records. [Implementation evidence](../verification/personal-perception-foundation.md) records supported-channel acquisition, correction, forgetting and restoration. Future visual/acoustic producers, attention/combat integration and full PP07/SAI-A acceptance remain open.
 
-Everything below is the **selected design target**, including its acceptance scenarios. No runtime change, executed gameplay test, measured performance result or demonstrated player enjoyment is claimed.
+The behavior and acceptance below remain the selected complete target. Scoped implementation evidence does not establish future-channel delivery, live-model quality, population capacity or player enjoyment.
 
 ## What makes this worth playing
 
@@ -91,6 +91,8 @@ Current knowledge is a set of independently supported facts, not a periodically 
 | Still later: Ada is seen clearly without a spear.                 | A new visual equipment observation can replace the current equipment view. The older spear sighting remains an accurate historical account.                          | Where the spear went during the unseen interval.                                                     |
 
 The practical account can therefore be: “Ada was last seen by the gate carrying a spear. I heard Ada recently from beyond that wall, but I do not know exactly where she is or what she is doing now.” Each clause comes from distinct structured support. If the voice was only a candidate match, the account must say so.
+
+A continuously perceived body remains the same physical target when its appearance or public condition changes. Its old meaningful detail remains historical and the new detail has its own support interval; this does not reset recognition or silently refresh unrelated facts. Moving positions and passive numeric changes retain the latest supported sample; exact discrete outcomes keep their own event records.
 
 Intermittent visibility preserves the same distinction. A brief occlusion may preserve an acquisition episode or a learned association, while all unsupported live details stop immediately. A later glimpse grants only the newly available facets. It cannot fill the gap with an inferred hidden path. Historical location or bearing may be transformed for a display using its recorded frame, but must remain anchored to that old observation, never the source's unseen movement.
 

@@ -3,6 +3,7 @@ import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { revokePracticeSupport } from './practical-competence.js';
 import { revokeCombatEvidence } from './combat-encounters.js';
 import { revokeActivityEvidence } from './activity-learning.js';
+import { revokeInventoryInspection } from './inventory-inspection.js';
 import {
   invalidateAppraisals,
   changeAppraisal,
@@ -1110,6 +1111,7 @@ export function invalidateExperience(
         expanded = true;
       }
   }
+  revokeInventoryInspection(world, actorId, affected);
   // Learning depends on the actual selected earlier exemplar. Follow immediate
   // edges supplied by cold preparation without erasing later witnessed utterances.
   const recognitionAffected = new Set(affected);

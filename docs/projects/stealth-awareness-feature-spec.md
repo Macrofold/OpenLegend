@@ -1,8 +1,8 @@
 # Stealth, awareness and surprise — feature specification
 
-| Status      | Current progress                                                                                                                              | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design is complete; runtime delivery and play qualification remain open. Controlled-character psychological policy remains SA-D01. | 2026-10-24   |
+| Status      | Current progress                                                                                                                 | Last updated         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Existing-channel personal-evidence foundation delivered; other runtime modules, integrated qualification and SA-D01 remain open. | 2026-10-25 15:35 UTC |
 
 ## Purpose and selected scope
 

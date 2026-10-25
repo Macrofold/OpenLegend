@@ -1,6 +1,7 @@
 import { entityGet } from '../../entity-collection.js';
 import { hasMemory } from '../../living.js';
 import { accessiblePossession } from '../../object-access.js';
+import { inspectedItemName } from '../../inventory-inspection.js';
 import type { Entity, WorldState, WorldEvent, Outcome } from '../../types.js';
 import {
   currentBodyAssociation,
@@ -364,6 +365,8 @@ export function observerName(world: WorldState, observerId: string, subjectId: s
   if (known) return { name: known, nameForm: 'proper', indefiniteArticle: undefined };
   const received = currentBodyObservation(world, observerId, subjectId);
   if (received?.value.body.label) return received.value.body.label;
+  const inspected = inspectedItemName(world, observerId, subjectId);
+  if (inspected) return inspected;
   const entity = entityGet(world.entities, subjectId);
   if (entity && accessiblePossession(world, observerId, subjectId))
     return outwardBodyName(world, entity);

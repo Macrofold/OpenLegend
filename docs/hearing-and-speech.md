@@ -272,7 +272,7 @@ Use existing post-commit publication and reaction intake. One delivered event ca
 
 Keep the hot bootstrap/SSE feed bounded. It is not the comprehensive historical archive. Prefer an existing committed-event update list or a lightweight addition to its normal patch envelope for new perceived events; do not introduce a speech-only transport. A patch gap triggers scoped history recovery and an honest missed-caption notification, not blind replay of every historical row as a new overhead utterance. The current gap signal is the existing SSE `reset` snapshot (and reconnect bootstrap): the overlay counts permitted speech in that snapshot that it never captioned; no speech-only transport or server-side delivery counter is added.
 
-Deduplicate transient captions by world, controlled actor, save timeline/generation, event ID and chunk index. Clear local queues and clocks on a scope/timeline change. Initial loading, opening World Events, older-page reads and ordinary reconnect history recovery do not replay old captions. Background-tab new events remain in permitted history but do not form a large delayed caption queue on return.
+Deduplicate transient captions by world, controlled actor and physical life, save timeline/generation, event ID and chunk index. Clear local queues and clocks on a life, scope or timeline change; a caption from a former body cannot reattach after revival. Initial loading, opening World Events, older-page reads and ordinary reconnect history recovery do not replay old captions. Background-tab new events remain in permitted history but do not form a large delayed caption queue on return.
 
 ## 10. Persistence, cutover, and integration boundaries
 
