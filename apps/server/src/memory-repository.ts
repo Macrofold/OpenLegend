@@ -701,7 +701,9 @@ export class MemoryRepository {
         function* summaryLinks() {
           for (const entry of writes()) {
             const manifest = entry.manifest!;
+            const manifestKey = digest(manifest.coverageKey);
             const personal = function* (sources: readonly PersonalSourceRef[], supportKey: string) {
+              const indexedKey = digest(supportKey);
               for (const source of sources)
                 yield [
                   worldId,
@@ -711,7 +713,7 @@ export class MemoryRepository {
                   source.kind,
                   source.id,
                   source.revision,
-                  digest(supportKey),
+                  indexedKey,
                   -1,
                   -1,
                   '',
@@ -733,7 +735,7 @@ export class MemoryRepository {
                   source.family,
                   source.id,
                   JSON.stringify(source.revision),
-                  digest(manifest.coverageKey),
+                  manifestKey,
                   source.observer.physicalLife,
                   dependency.ordinal ?? -1,
                   alias,

@@ -33,7 +33,9 @@ export function consolidationBatch(
   reviewDay?: number,
 ): ConsolidationBatch | null {
   const all = experiences(world, actorId, true).filter(
-    (memory) => memory.evidence?.exposure?.kind !== 'place',
+    (memory) =>
+      memory.evidence?.exposure?.kind !== 'place' ||
+      memory.importance < EXPERIENCE_LIMITS.protectedImportance,
   );
   // Keep a bounded verbatim source pool for active conversation retrieval.
   const retainedSpeech = retainedSpeechIds(world, actorId);

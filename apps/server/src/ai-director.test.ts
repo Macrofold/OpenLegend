@@ -376,7 +376,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     expect((await h.inventNew('no-keys', 'A sling.')).code).toBe('unconfigured');
     h.director.considerThought();
     await h.service.control({ paused: true });
-    expect((await h.submit('chat', 'pause', 'Hello.')).code).toBe('paused');
+    expect((await h.submit('chat', 'pause', 'Hello.', NPC_ID)).code).toBe('paused');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(0);
     expect(h.calls.generations).toHaveLength(0);

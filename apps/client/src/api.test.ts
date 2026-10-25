@@ -302,12 +302,12 @@ it('applies small entity field changes atomically and keeps unchanged public obj
     radius: 1,
     status: '',
     description: 'Unchanged description',
-    talkUnavailableReason: 'Outside hearing',
+    canTalk: true,
   };
   const stationary = { ...entity, id: 'stationary' };
   previous.entities = [entity, stationary];
   const moved = { ...entity, position: { x: 1, y: 0, z: 0 }, actionAnimation: null };
-  delete moved.talkUnavailableReason;
+  delete moved.canTalk;
   const next = { ...previous, revision: 2, entities: [moved, stationary] };
   const patch = projectPatch(previous, next)!;
   expect(patch.entities?.add).toEqual([]);
@@ -315,7 +315,7 @@ it('applies small entity field changes atomically and keeps unchanged public obj
     {
       id: 'moving',
       set: { position: moved.position, actionAnimation: null },
-      remove: ['talkUnavailableReason'],
+      remove: ['canTalk'],
     },
   ]);
   const wire = JSON.parse(JSON.stringify(patch)) as import('@open-legend/protocol').GamePatch;

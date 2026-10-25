@@ -1,6 +1,7 @@
 import { createRoot, type Root } from 'react-dom/client';
 import type { GameView, PublicEvent, PerceivedSpeech } from '@open-legend/protocol';
 import { Icon } from './design-system/components';
+import { eventSpeechPresentation } from './speech-presentation';
 import { ProgressRing, progressFraction } from './design-system/progress-ring';
 import {
   PresentationClock,
@@ -26,6 +27,7 @@ export type CaptionProjection = {
 };
 type Entry = {
   event: PublicEvent & { speech: PerceivedSpeech };
+  wording: ReturnType<typeof eventSpeechPresentation>;
   chunks: string[];
   chunk: number;
   lifetime: PresentationLifetime;
@@ -71,13 +73,6 @@ export const captionScope = (view: GameView) =>
     view.player.id,
     view.historyEpoch,
   ]);
-const captionText = (event: PublicEvent & { speech: PerceivedSpeech }) =>
-  event.speech.intelligibility === 'none'
-    ? event.text
-    : event.speech.segments
-        .map((segment) => (segment.kind === 'heard' ? segment.text : '[…]'))
-        .join(' ');
-
 /** React owns text; the existing scene callback paints positions and fractions only. */
 export class SpeechCaptions {
   private readonly layer = document.createElement('div');
@@ -202,8 +197,9 @@ export class SpeechCaptions {
       }
       const speaker = event.speech.speakerReference;
       const queueSize = speaker
-        ? [...this.active, ...this.pending].filter((e) => e.event.speech.speakerReference === speaker)
-            .length
+        ? [...this.active, ...this.pending].filter(
+            (e) => e.event.speech.speakerReference === speaker,
+          ).length
         : 0;
       // Overflow stays available in durable World Events; these are presentation limits only.
       if (queueSize >= 3) {
@@ -221,9 +217,11 @@ export class SpeechCaptions {
         this.dropUnshown(this.pending.splice(evict, 1));
       }
       const perceived = event as Entry['event'];
-      const parts = chunks(captionText(perceived));
+      const wording = eventSpeechPresentation(perceived, view.player.id);
+      const parts = chunks(wording.quotation ?? wording.detail);
       const entry: Entry = {
         event: perceived,
+        wording,
         visible: false,
         lastVisibleAt: this.clock.now,
         priority,
@@ -316,6 +314,7 @@ export class SpeechCaptions {
         <>
           {this.active.map((entry) => {
             const speech = entry.event.speech;
+            const wording = entry.wording;
             return (
               <div
                 key={`${entry.event.id}:${entry.chunk}`}
@@ -328,12 +327,7 @@ export class SpeechCaptions {
                 <div aria-hidden="true">
                   <div className="ol-speech-caption-meta">
                     <span>
-                      {speech.speaker?.nameAtTime ?? 'Someone nearby'}
-                      {speech.delivery === 'whisper'
-                        ? ' (whispering)'
-                        : speech.delivery === 'shout'
-                          ? ' (shouting)'
-                          : ''}
+                      {wording.attribution}
                       {speech.intelligibility === 'partial' ? ' (partly heard)' : ''}
                       {entry.chunks.length > 1
                         ? ` (${entry.chunk + 1}/${entry.chunks.length})`
@@ -352,11 +346,6 @@ export class SpeechCaptions {
                       ➜
                     </span>
                   </div>
-                  {speech.addressee && (
-                    <div className="ol-speech-caption-recipient">
-                      To {speech.addressee.nameAtTime}:
-                    </div>
-                  )}
                   <span
                     className="ol-speech-direction-label"
                     ref={(node) => {

@@ -3,12 +3,7 @@ import type { PublicEvent } from '@open-legend/protocol';
 import { MechanicTerm } from '../design-system/components';
 
 /** Occurrence text retains its admitted wording; source inspection is owned by Events. */
-export function PerceivedEventText({
-  event,
-}: {
-  event: PublicEvent;
-  inspectEntity?: (id: string) => void;
-}) {
+export function PerceivedEventText({ event }: { event: PublicEvent }) {
   // Speech participants and literal quotations were already composed from the
   // acquired typed roles. A quoted name never creates a current-person link.
   if (event.speech) return <>{event.text}</>;

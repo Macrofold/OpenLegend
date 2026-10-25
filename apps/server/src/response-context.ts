@@ -43,7 +43,7 @@ export function responseTrigger(
   const time = `(${gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours)})`;
   if (aware.eventType === 'speech') {
     if (!aware.speech) throw new Error('Speech is missing its committed listener perspective.');
-    return `${triggerKind === 'addressed_speech' ? 'Addressed speech (to me)' : triggerKind === 'self_event' ? 'My own speech' : 'Nearby speech'}: ${speechDescription(aware.speech)} ${time}`;
+    return `${triggerKind === 'addressed_speech' ? 'Addressed speech (to me)' : triggerKind === 'self_event' ? 'My own speech' : 'Nearby speech'}: ${speechDescription(aware.speech, { observerId: actorId, targetId: aware.targetId })} ${time}`;
   }
   return `${triggerKind === 'directed_action' ? 'Action directed at me' : aware.modality === 'internal' ? 'Internal change' : 'World change'}: ${aware.content ?? aware.text} ${time}`;
 }

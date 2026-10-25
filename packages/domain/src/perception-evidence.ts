@@ -16,7 +16,9 @@ import { outwardStates } from './perception-frame.js';
 import { equippedItems } from './equipment.js';
 import { itemsForOwner } from './objects.js';
 import { retainObservationConfirmation } from './experience.js';
+import { hasMemory } from './living.js';
 import { knownPlaceEvidence } from './known-place-evidence.js';
+import { validEncounterExposure, type EncounterExposure } from './places.js';
 import {
   selectedBodyIndividual,
   selectedOrdinaryWarning,
@@ -132,6 +134,8 @@ export type SensoryFacet =
   | { kind: 'speech'; speech: NonNullable<Awareness['speech']> }
   | { kind: 'perceived-feature'; sample: NonNullable<Awareness['receivedFeatures']> }
   | { kind: 'sound'; sound: NonNullable<Awareness['sound']> }
+  /** Complete already-admitted inspection/place meaning, independent of its prose. */
+  | { kind: 'encounter-exposure'; exposure: EncounterExposure }
   | {
       kind: 'event';
       eventType: string;
@@ -652,6 +656,9 @@ function currentLeaseEligible(
 }
 
 function finalizeLease(world: WorldState, observer: Entity, lease: LiveFacetSupport): void {
+  // Memoryless native policies already own their retained response capsule. A
+  // dropped live facet does not create an unused autobiographical confirmation.
+  if(!hasMemory(observer))return;
   const snapshot = captureCurrentFacet(lease);
   const contribution = acquireObservation(world, observer, {
     origin: {
@@ -813,11 +820,12 @@ export function reconcileVisualEvidence(
         facet.kind === 'location' &&
         prior?.value.kind === 'location' &&
         prior.value.location.kind === 'point' &&
+        facet.location.kind === 'point' &&
         prior.valueMeasuredThrough < world.simTime &&
         prior.motionContinuityRevision === (placement.motionContinuityRevision ?? 0) &&
-        (JSON.stringify(prior.value.location.point) ===
-          JSON.stringify(facet.location.kind === 'point' ? facet.location.point : null) ||
-          placement.revision > (prior.sourcePlacementRevision ?? -1))
+        placement.revision > (prior.sourcePlacementRevision ?? -1) &&
+        Math.hypot(prior.value.location.point.x-facet.location.point.x,prior.value.location.point.y-facet.location.point.y,prior.value.location.point.z-facet.location.point.z)>
+          prior.value.location.errorRadius+facet.location.errorRadius
       )
         earlierLocation = captureCurrentFacet(prior) as CapturedLocationSample;
       let facetOriginal = original;
@@ -923,7 +931,7 @@ export function reconcileVisualEvidence(
     const locationLease = state.current[`${subject.id}:location`];
     const motionKey = `${subject.id}:observed-motion`;
     const laterLocation =
-      locationLease && (captureCurrentFacet(locationLease) as CapturedLocationSample | undefined);
+      earlierLocation && locationLease && (captureCurrentFacet(locationLease) as CapturedLocationSample | undefined);
     const motion =
       earlierLocation &&
       laterLocation &&
@@ -947,8 +955,8 @@ export function reconcileVisualEvidence(
     if (!motion) {
       if (
         priorMotion &&
-        (!laterLocation ||
-          laterLocation.valueMeasuredThrough > priorMotion.valueMeasuredThrough ||
+        (!locationLease ||
+          locationLease.valueMeasuredThrough > priorMotion.valueMeasuredThrough ||
           priorMotion.motionContinuityRevision !== locationLease?.motionContinuityRevision)
       ) {
         finalizeLease(world, observer, priorMotion);
@@ -1106,6 +1114,8 @@ export function acquireAwarenessObservation(
       location: { kind: 'point', point: { ...event.exposure.point }, errorRadius: 0 },
       frame: { positionAtObservation: { ...readOnlyDraftView(worldPosition(observer)) } },
     });
+  if (awareness.exposure)
+    values.push({ kind: 'encounter-exposure', exposure: cloneValue(awareness.exposure) });
   const visualSubjectId =
     awareness.sourceId === observer.id ? awareness.targetId : awareness.sourceId;
   const visualSubject =
@@ -1235,9 +1245,9 @@ export function acquireAwarenessObservation(
       role:
         value.kind === 'association'
           ? 'inference'
-          : event.exposure?.kind === 'place' &&
-              event.exposure.reportedBy &&
-              value.kind === 'location'
+          : awareness.exposure?.kind === 'place' &&
+              awareness.exposure.reportedBy &&
+              (value.kind === 'location' || value.kind === 'encounter-exposure')
             ? 'testimony'
             : 'direct',
       asOf: event.at,
@@ -1653,6 +1663,10 @@ export function validateObservationContribution(
 
 function validateSensoryFacet(value: SensoryFacet, originals = new Map<string, string>()): void {
   switch (value.kind) {
+    case 'encounter-exposure':
+      if (!validEncounterExposure(value.exposure))
+        throw new Error('Invalid received encounter exposure.');
+      break;
     case 'detected':
       if (
         !['signal', 'surface', 'body', 'impact'].includes(value.detected) ||

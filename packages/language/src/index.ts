@@ -154,3 +154,77 @@ export function parseNarrationToken(
     verb: parsed[4],
   };
 }
+
+/** English speech grammar only. Callers supply their already-admitted participants
+ * and reception; this function discovers no recipient, identity or unheard word. */
+export function speechPresentation(input: {
+  speaker: Named | null;
+  addressee: Named | null;
+  self: boolean;
+  addressed: boolean;
+  directed: boolean;
+  seen: boolean;
+  intelligibility: 'clear' | 'partial' | 'none';
+  delivery: 'whisper' | 'normal' | 'shout' | null;
+  words: string;
+  perspective?: 'first' | 'second';
+}): { attribution: string; quotation: string | null; detail: string; description: string } {
+  const first = input.perspective !== 'second';
+  const speaker = input.self
+    ? first
+      ? 'I'
+      : 'You'
+    : input.speaker
+      ? namePhrase(input.speaker, 'indefinite', { capitalize: true })
+      : 'Someone nearby';
+  const plural = !input.self && input.speaker?.nameForm === 'plural';
+  const recipient = input.addressed
+    ? input.self
+      ? first
+        ? 'myself'
+        : 'yourself'
+      : first
+        ? 'me'
+        : 'you'
+    : input.addressee
+      ? namePhrase(input.addressee, 'indefinite')
+      : input.directed
+        ? input.self
+          ? 'someone'
+          : 'someone else'
+        : null;
+  const destination = recipient ? ` to ${recipient}` : input.directed ? '' : ' aloud';
+  if (input.seen) {
+    const attribution = `${speaker} ${input.self || plural ? 'appear' : 'appears'} to be speaking`;
+    return {
+      attribution,
+      quotation: null,
+      detail: 'No words were heard.',
+      description: `${attribution}.`,
+    };
+  }
+  if (input.intelligibility === 'none') {
+    const verb =
+      input.delivery === 'whisper'
+        ? 'whispering'
+        : input.delivery === 'shout'
+          ? 'shouting'
+          : 'speaking';
+    const attribution = `${speaker} ${input.self ? (first ? 'am' : 'are') : plural ? 'are' : 'is'} ${verb}${destination}`;
+    return {
+      attribution,
+      quotation: null,
+      detail: 'The words are unintelligible.',
+      description: `${attribution}; the words are unintelligible.`,
+    };
+  }
+  const verb =
+    input.delivery === 'whisper' ? 'whispered' : input.delivery === 'shout' ? 'shouted' : 'said';
+  const attribution = `${speaker} ${verb}${destination}`;
+  return {
+    attribution,
+    quotation: input.words,
+    detail: input.words,
+    description: `${attribution}: “${input.words}”${input.intelligibility === 'partial' ? ' (partly heard).' : ''}`,
+  };
+}

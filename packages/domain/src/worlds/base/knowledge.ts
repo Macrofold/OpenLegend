@@ -348,6 +348,23 @@ export function observerName(world: WorldState, observerId: string, subjectId: s
   };
 }
 
+/** The speaker may refer to a genuinely remembered intended person without
+ * reacquiring that person's body. A current unknown body keeps its own local label. */
+export function intendedAddresseeName(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): Named {
+  if (
+    !currentBodyGrant(world, observerId, subjectId) &&
+    canAddressRememberedSubject(world, observerId, subjectId)
+  ) {
+    const name = identityForEntity(world, observerId, subjectId)?.givenName;
+    if (name) return { name, nameForm: 'proper' };
+  }
+  return observerName(world, observerId, subjectId);
+}
+
 export function observerDescription(
   world: WorldState,
   observerId: string,

@@ -123,6 +123,13 @@ function facetValueForModel(
           role: ref.role,
         })),
       };
+    case 'encounter-exposure':
+      return {
+        kind: value.kind,
+        exposure: exposureForModel(value.exposure, (id) =>
+          permittedSourceHandle(world, actorId, ['historical-participant', sourceScope, id]),
+        ),
+      };
     case 'confirmation':
       return { kind: value.kind, snapshot: currentFacetForModel(world, actorId, value.snapshot) };
     case 'observed-motion':
@@ -398,6 +405,13 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
         facet.value.kind === 'speech' &&
         JSON.stringify(facet.value.speech) === JSON.stringify(evidence.speech),
     );
+  const nativeExposure =
+    evidence?.exposure &&
+    memory.observation?.facets.find(
+      (facet) =>
+        facet.value.kind === 'encounter-exposure' &&
+        JSON.stringify(facet.value.exposure) === JSON.stringify(evidence.exposure),
+    );
   return {
     ...(evidence
       ? {
@@ -423,7 +437,9 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
               memory.observation?.id ?? memory.id,
             ),
             ...(evidence.exposure
-              ? { exposure: exposureForModel(evidence.exposure, historyHandle) }
+              ? nativeExposure
+                ? { exposureFacet: nativeExposure.ordinal }
+                : { exposure: exposureForModel(evidence.exposure, historyHandle) }
               : {}),
             references: evidence.references?.map((ref) => ({
               reference: historyHandle(ref.id),

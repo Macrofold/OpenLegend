@@ -159,7 +159,10 @@ export function memoryCandidate(
   // exposure can bind an unnamed speaker; an old canonical ID cannot identify a new exposure.
   // docs/memory-architecture.md#personal-perspective-and-acquisition
   if (awareness?.speech) {
-    summary = speechDescription(awareness.speech);
+    summary = speechDescription(awareness.speech, {
+      observerId: actorId,
+      targetId: awareness.targetId,
+    });
   } else if (awareness && awareness.eventType !== 'speech') {
     // Event roles use the retained observation, never inferred causality or a new exposure.
     // A projectile contact's source may be the struck body, not an unseen shooter.

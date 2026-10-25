@@ -130,6 +130,7 @@ function validateInput(world: WorldState, observer: Entity, input: DetectionSupp
   validateEvidenceSource(input.source);
   if (
     !same(input.source.observer, life(observer)) ||
+    !['native-exposure','native-response'].includes(input.source.family) ||
     !Number.isSafeInteger(input.sample) ||
     input.sample < 0 ||
     !['sight', 'hearing', 'touch'].includes(input.modality) ||
@@ -140,10 +141,11 @@ function validateInput(world: WorldState, observer: Entity, input: DetectionSupp
     input.from > world.simTime ||
     input.through < input.from ||
     input.support.fraction < 0 ||
+    input.support.fraction > 1 ||
     !['rate', 'impulse'].includes(input.support.kind) ||
-    (input.support.kind === 'impulse' &&
-      (input.from !== input.through || input.from !== world.simTime)) ||
-    (input.continuity && !same(input.continuity.observer, life(observer)))
+    (input.ambiguous!==undefined&&typeof input.ambiguous!=='boolean') || (input.contradictory!==undefined&&typeof input.contradictory!=='boolean') ||
+    (input.support.kind === 'impulse' && input.from !== input.through) ||
+    (input.continuity && (!same(input.continuity.observer, life(observer))||typeof input.continuity.episodeId!=='string'||!input.continuity.episodeId))
   )
     throw new Error('Invalid supplied detection support.');
   if (input.location) {
@@ -151,6 +153,7 @@ function validateInput(world: WorldState, observer: Entity, input: DetectionSupp
     if (
       !Number.isFinite(input.location.measuredAt) ||
       input.location.measuredAt > input.from ||
+      (input.location.frame?.forwardAtObservation!==undefined&&!Number.isFinite(input.location.frame.forwardAtObservation)) ||
       ![
         input.location.frame?.positionAtObservation?.x,
         input.location.frame?.positionAtObservation?.y,
@@ -215,6 +218,8 @@ function settlePattern(
   observer: Entity,
   owner: DetectionSupportState,
   pattern: SupportPattern,
+  until=world.simTime,
+  suppliedGap=false,
 ): void {
   const policy = selectedDetectionSupportPolicy(world),
     active = pattern.active;
@@ -223,7 +228,7 @@ function settlePattern(
   else if (active) {
     const input = active.input,
       from = Math.max(through, input.from),
-      to = Math.min(world.simTime, input.through);
+      to = Math.min(until, input.through);
     if (from > through)
       pattern.progress = Math.max(
         0,
@@ -249,18 +254,19 @@ function settlePattern(
         if (pattern.observation) receipt.observation = cloneValue(pattern.observation);
       }
     }
-    if (input.through <= world.simTime) delete pattern.active;
+    if (input.through <= until) delete pattern.active;
   }
-  if (world.simTime > through) {
+  if (suppliedGap && until > through) {
     pattern.progress = Math.max(
       0,
-      pattern.progress - (world.simTime - through) * policy.decayPerGameSecond,
+      pattern.progress - (until - through) * policy.decayPerGameSecond,
     );
     delete pattern.observation;
+    through=until;
   }
-  if (active && active.input.support.fraction === 0 && world.simTime > pattern.through)
+  if (active && active.input.support.fraction === 0 && until > pattern.through)
     delete pattern.observation;
-  pattern.through = world.simTime;
+  pattern.through = through;
 }
 /** Supply the physical family's completed/held span at its actual native boundary.
  * A source revision/sample cannot change its admitted body on redelivery. */
@@ -277,7 +283,7 @@ export function receiveDetectionSupport(
   const observer = entityGet(world.entities, observerId);
   if (!observer?.actor) throw new Error('Detection support requires an observer.');
   validateInput(world, observer, input);
-  settleDetectionSupport(world, observerId);
+  if(input.support.kind==='impulse'&&input.from!==world.simTime)throw new Error('A weak impulse requires its actual native reception boundary.');
   if (!eligible(world, observer, input.detector))
     throw new Error('The supplied detector is not available to this observer.');
   const owner = state(world, observer),
@@ -287,6 +293,7 @@ export function receiveDetectionSupport(
   if (prior && input.sample <= prior.sample) {
     if (input.sample === prior.sample && prior.body !== body)
       throw new Error('A detection support sample changed on replay.');
+    const pattern=owner.patterns[prior.patternId];if(pattern)settlePattern(world,observer,owner,pattern);
     return {
       status: 'replay',
       patternId: prior.patternId,
@@ -300,8 +307,10 @@ export function receiveDetectionSupport(
   if (input.contradictory && continuity)
     for (const pattern of Object.values(owner.patterns))
       if (pattern.continuity === continuity) {
+        settlePattern(world,observer,owner,pattern,Math.max(pattern.through,input.from),true);
         pattern.progress = 0;
         delete pattern.active;
+        delete pattern.observation;
       }
   const candidates = input.contradictory
     ? []
@@ -309,7 +318,7 @@ export function receiveDetectionSupport(
         (pattern) =>
           pattern.modality === input.modality &&
           same(pattern.detector, input.detector) &&
-          world.simTime - pattern.lastSupportedAt <= policy.graceSeconds &&
+          input.from - pattern.lastSupportedAt <= policy.graceSeconds &&
           (!pattern.active || pattern.active.key === key) &&
           ((continuity && pattern.continuity === continuity) ||
             (!continuity &&
@@ -333,9 +342,9 @@ export function receiveDetectionSupport(
       id,
       detector: cloneValue(input.detector),
       modality: input.modality,
-      beganAt: input.from,
-      through: world.simTime,
-      lastSupportedAt: world.simTime,
+      beganAt: Math.max(input.from,prior?.through??input.from),
+      through: Math.max(input.from,prior?.through??input.from),
+      lastSupportedAt: input.from,
       progress: 0,
       ambiguous,
       ...(continuity ? { continuity } : {}),
@@ -345,18 +354,28 @@ export function receiveDetectionSupport(
     const common = intersection(pattern.envelope, input.location.value);
     if (common) pattern.envelope = common;
   }
+  // Completed spans may arrive at their endpoint. Settle the preceding source or
+  // an actual unsupported gap only to this span's start, then consume its uncovered
+  // prefix. A past crossing is an explicit preparation failure, never backdated.
+  if(pattern.through<input.from)settlePattern(world,observer,owner,pattern,input.from,true);
+  pattern.through=Math.max(pattern.through,prior?.through??pattern.through);
   const receipt: SupportReceipt = (owner.sources[key] = {
     sample: input.sample,
     body,
-    through: world.simTime,
+    through: pattern.through,
     patternId: pattern.id,
   });
   if (input.support.kind === 'impulse') {
+    if(pattern.through<world.simTime)settlePattern(world,observer,owner,pattern,world.simTime,true);
     pattern.progress = Math.min(policy.maximum, pattern.progress + input.support.fraction);
     pattern.lastSupportedAt = world.simTime;
+    pattern.through=world.simTime;receipt.through=world.simTime;
     if (pattern.progress >= policy.threshold)
       receipt.observation = cloneValue(detect(world, observer, pattern, input));
-  } else pattern.active = { key, input: cloneValue(input) };
+  } else {
+    pattern.active = { key, input: cloneValue(input) };
+    settlePattern(world,observer,owner,pattern);
+  }
   if (pattern.observation) receipt.observation = cloneValue(pattern.observation);
   chargeWork({ tests: candidates.length + 1, effects: 1 });
   const nextAt = patternBoundary(world, pattern);
@@ -447,9 +466,10 @@ export function validateDetectionSupportState(
       throw new Error('Invalid detection source receipt.');
     const input = JSON.parse(receipt.body) as DetectionSupportInput;
     validateInput(world, observer, input);
-    if (sourceKey(input) !== key || input.sample !== receipt.sample)
+    const pattern=value.patterns[receipt.patternId]!;
+    if (sourceKey(input) !== key || input.sample !== receipt.sample || !same(pattern.detector,input.detector)||pattern.modality!==input.modality)
       throw new Error('Conflicting detection source receipt.');
-    if (receipt.observation) validateObservationContribution(receipt.observation, originals);
+    if (receipt.observation) {validateObservationContribution(receipt.observation, originals);if(!same(receipt.observation.observer,life(observer)))throw new Error('Foreign detection receipt.');}
   }
   for (const [id, pattern] of Object.entries(value.patterns)) {
     if (
@@ -466,7 +486,7 @@ export function validateDetectionSupportState(
     )
       throw new Error('Invalid detection support reduction.');
     if (pattern.envelope) validateObservedLocation(pattern.envelope);
-    if (pattern.observation) validateObservationContribution(pattern.observation, originals);
+    if (pattern.observation) {validateObservationContribution(pattern.observation, originals);if(!same(pattern.observation.observer,life(observer)))throw new Error('Foreign detected pattern.');}
     if (pattern.active) {
       validateInput(world, observer, pattern.active.input);
       if (

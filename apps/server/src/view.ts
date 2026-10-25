@@ -1070,7 +1070,7 @@ export async function projectView(
             event,
             selectedEventPresentation(world),
             player.id,
-            JSON.stringify([world.id, service.timelineId, scopeKey(scope)]),
+              JSON.stringify([world.id, `${service.timelineId}:${scopeKey(scope)}`]),
             (body) => {
               if (
                 body.entityId === player.id &&

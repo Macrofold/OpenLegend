@@ -159,14 +159,7 @@ function ScopedWorldComposer({
       view.communicationReferences.some((reference) => reference.id === intent.targetId)) ||
     view.entities.some((e) => e.id === intent.targetId) ||
     view.player.inventory.some((item) => item.id === intent.targetId);
-  const recipient = intent?.targetId
-    ? view.entities.find(
-        (entity) =>
-          entity.id === intent.targetId || entity.communicationReference === intent.targetId,
-      )
-    : undefined;
-  const requestsReply =
-    intent?.mode === 'speak' && !!intent.targetId && recipient?.talkRequiresAi !== false;
+  const requestsReply = intent?.mode === 'speak' && !!intent.targetId;
   const replyAccount = intent?.targetId ? view.ai.budget.accounts?.[intent.targetId] : undefined;
   const replyUsage = view.ai.budget.perAgent ? replyAccount : view.ai.budget;
   const replyAllowance =
@@ -175,7 +168,6 @@ function ScopedWorldComposer({
   // a reply. Never retry a refused paid request as a second spoken utterance.
   const directReply =
     requestsReply &&
-    !recipient?.talkUnavailableReason &&
     replyAllowance &&
     (view.ai.mode === 'fixture' || (view.ai.jevConfigured && view.ai.llmConfigured));
   const spokenText = `${intent?.mode === 'speak' && mentionedItem ? `About ${mentionedItem.name}: ` : ''}${text.trim()}`;

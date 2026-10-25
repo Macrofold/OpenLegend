@@ -417,8 +417,6 @@ export interface EntityView extends Named {
   description?: string;
   traits?: Array<{ id: string; name: string; description: string }>;
   canTalk?: boolean;
-  talkRequiresAi?: boolean;
-  talkUnavailableReason?: string;
   speechCapable?: boolean;
   health?: number;
   bodyRevision?: number;

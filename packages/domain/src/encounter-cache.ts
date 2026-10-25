@@ -24,6 +24,8 @@ export interface ExposureInput {
   nativeResponse: boolean;
   object: boolean;
   feature: string;
+  /** Full currently disclosed detail dependency; separate from narrative salience. */
+  detailSignature:string;
 }
 /** A new continuous-exposure episode identity. Its format is owned here with its parser. */
 export function perceptionEpisodeId(world: WorldState, sourceId: string): string {
@@ -103,6 +105,7 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
       memory: hasMemory(entity),
       nativeResponse: entity.actor?.controller === 'native' && !!entity.animal?.episode,
       object: !entity.actor && !entity.animal,
+      detailSignature:JSON.stringify([!entity.actor?entity.description:null,!entity.actor?entity.nameForm:null,!entity.actor?entity.indefiniteArticle:null,entity.resource?.quantity,entity.remains?.phase,worldSupport(entity)]),
       ...visibleFeature(entity),
     };
   }
@@ -126,7 +129,7 @@ function withPublicAttributes(
   if (!installed) return capture;
   return {
     ...capture,
-    feature: JSON.stringify([capture.feature, projectAttributes(world, capture.entity, 'public')]),
+    detailSignature: JSON.stringify([capture.detailSignature, projectAttributes(world, capture.entity, 'public')]),
   };
 }
 type Source = ExposureInput & { detail: string; order: number };
@@ -204,7 +207,7 @@ const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
   a.memory === b.memory &&
   a.nativeResponse === b.nativeResponse &&
   a.object === b.object &&
-  a.feature === b.feature;
+  a.feature === b.feature && a.detailSignature===b.detailSignature;
 const snapshot = <T extends object>(value: T): T => (isDraft(value) ? current(value) : value);
 const within = (a: Position, b: Position, radius: number) =>
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) <= radius;
@@ -233,6 +236,8 @@ export function* prepareExposure(
     orderPeople: (ids: readonly string[]) => string[];
     maximumBodyHeight: number;
     maximumBodyRadius: number;
+    /** Identity changes only when this prepared source's relevant input changes. */
+    sourceToken:(id:string)=>object|undefined;
   }
 > {
   countDomainWork('sensoryPhases');

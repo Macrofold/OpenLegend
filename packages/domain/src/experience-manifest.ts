@@ -97,6 +97,15 @@ export function experienceManifest(
         [...(prior?.sources ?? []), ...group.sources].map((ref) => [refKey(ref), ref]),
       ).values(),
     ];
+    const utterances = new Map(
+      (prior?.utterances ?? []).map((utterance) => [refKey(utterance.source), utterance]),
+    );
+    for (const utterance of group.utterances) {
+      const previous = utterances.get(refKey(utterance.source));
+      if (previous && canonicalJson(previous) !== canonicalJson(utterance))
+        throw new Error('Conflicting original utterance revision; original evidence retained.');
+      utterances.set(refKey(utterance.source), utterance);
+    }
     speech.set(key, {
       ...roles,
       sources,
@@ -104,14 +113,7 @@ export function experienceManifest(
       firstAt: Math.min(prior?.firstAt ?? Infinity, group.firstAt),
       lastAt: Math.max(prior?.lastAt ?? -Infinity, group.lastAt),
       sourceCount: sources.length,
-      utterances: [
-        ...new Map(
-          [...(prior?.utterances ?? []), ...group.utterances].map((utterance) => [
-            refKey(utterance.source),
-            utterance,
-          ]),
-        ).values(),
-      ],
+      utterances: [...utterances.values()],
     });
   };
   for (const child of children) {
@@ -258,8 +260,17 @@ export function validateExperienceManifest(
       !['none', 'partial', 'clear'].includes(group.intelligibility)
     )
       throw new Error('Invalid remembered speech attribution.');
+  const utterances = new Map<string, string>();
   for (const group of manifest.speech)
-    for (const utterance of group.utterances) validatePerceivedSpeech(utterance.speech);
+    for (const utterance of group.utterances) {
+      validatePerceivedSpeech(utterance.speech);
+      const key = refKey(utterance.source),
+        body = canonicalJson(utterance),
+        prior = utterances.get(key);
+      if (prior !== undefined && prior !== body)
+        throw new Error('Conflicting original utterance revision.');
+      utterances.set(key, body);
+    }
 }
 /** Exact native dependencies and explicit personal aliases share the existing reverse
  * source index. Aliases route correction only; they never replace source revisions. */

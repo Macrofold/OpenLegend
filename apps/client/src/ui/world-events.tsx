@@ -12,6 +12,7 @@ import { EventTime, clockParts } from './event-time';
 import { PerceivedEventText } from './perceived-event-text';
 import './world-events.css';
 import { formatDisplayNumber } from '@open-legend/language';
+import { eventSpeechPresentation } from '../speech-presentation';
 import { LoadingIndicator } from '../design-system/loading';
 import { ConversationThread } from './conversation';
 import { getScoped, post } from '../api';
@@ -69,6 +70,7 @@ export const WorldEvents = memo(function WorldEvents({
     <ScopedComparisonOwner
       key={ownerScope}
       {...props}
+      observerId={view.player.id}
       canShowAll={!!view.godMode}
       controlScope={view.access?.scope ?? ''}
       historyEpoch={view.historyEpoch ?? ''}
@@ -84,6 +86,7 @@ export const WorldEvents = memo(function WorldEvents({
 });
 
 type HistoryProps = Omit<Props, 'view'> & {
+  observerId: string;
   day: number;
   offsetHours: number;
   controlScope: string;
@@ -94,6 +97,7 @@ type HistoryProps = Omit<Props, 'view'> & {
 // Only clock formatting/date bounds reach the historical reader; live positions and
 // meters must not rebuild all loaded event rows on every world update.
 const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
+  observerId,
   controlScope,
   historyEpoch,
   canShowAll,
@@ -213,6 +217,7 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
     <ScopedWorldEvents
       key={`${historyEpoch}:${canShowAll}`}
       scope={scope}
+      observerId={observerId}
       controlScope={controlScope}
       historyEpoch={historyEpoch}
       canShowAll={canShowAll}
@@ -247,6 +252,7 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
 });
 
 function ScopedWorldEvents({
+  observerId,
   canShowAll,
   day,
   offsetHours,
@@ -550,7 +556,7 @@ function ScopedWorldEvents({
               <div className="ol-world-event-line">
                 <Icon name={event.presentation?.icon ?? 'ui.inview'} size={16} />
                 <p>
-                  <PerceivedEventText event={event} inspectEntity={inspectEntity} />
+                  <PerceivedEventText event={event} />
                 </p>
               </div>
               <details className="ol-world-event-detail">
@@ -583,7 +589,14 @@ function ScopedWorldEvents({
                     {event.attributeChange.unit}
                   </p>
                 )}
-                {event.speech?.addressee && <p>To {event.speech.addressee.nameAtTime}</p>}
+                {event.speech && (
+                  <p>
+                    {
+                      eventSpeechPresentation({ ...event, speech: event.speech }, observerId)
+                        .attribution
+                    }
+                  </p>
+                )}
                 {inspectEntity &&
                   (event.references ?? []).map((ref) => (
                     <button
@@ -622,7 +635,17 @@ function ScopedWorldEvents({
         ),
       };
     });
-  }, [events, slots, choosingSlot, type, query, inspectEntity, offsetHours, currentPage]);
+  }, [
+    events,
+    slots,
+    choosingSlot,
+    type,
+    query,
+    inspectEntity,
+    offsetHours,
+    currentPage,
+    observerId,
+  ]);
 
   const visibleSlotIndices = [0, 1] as const;
 

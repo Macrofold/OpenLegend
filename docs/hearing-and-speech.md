@@ -19,10 +19,10 @@ A visible, associated speaker receives a plain caption above its head. Speech fr
 | Perception                                                    | Example presentation                                                                                  |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Clear words, visible associated speaker                       | Speech icon and `“Meet me behind the mill.”` above the speaker                                        |
-| Clear words, unidentified source                              | `You hear someone talking nearby: “Meet me behind the mill.”` on the directional ring, when localized |
-| Partial words, unidentified source                            | `You partly hear someone nearby: “Meet me […] mill.”`                                                 |
-| Detected speech, no intelligible words                        | `You hear indistinct speech nearby.` No quotation                                                     |
-| Recognized speaker and delivery, no words                     | `John is whispering something.` No quotation                                                          |
+| Clear words, unidentified source                              | `Someone nearby said aloud: “Meet me behind the mill.”` on the directional ring, when localized |
+| Partial words, unidentified source                            | `Someone nearby said aloud: “Meet me […] mill.” (partly heard).`                                                 |
+| Detected speech, no intelligible words                        | `Someone nearby is speaking aloud; the words are unintelligible.` No quotation                                                     |
+| Recognized speaker and delivery, no words                     | `John is whispering aloud; the words are unintelligible.` No quotation                                                          |
 | No sound detected                                             | No auditory caption or heard evidence                                                                 |
 | A separately permitted visible speaking action, without sound | `John appears to be speaking.` Visual evidence only                                                   |
 
@@ -135,7 +135,7 @@ The speaker does not receive an omniscient list of listeners. Likewise, an actua
 
 ## 5. One occurrence, listener-specific evidence
 
-Speech remains `WorldEvent.type === 'speech'`. The world event contains actual utterance data and the existing immutable event-time origin, identity, order, and scope. Add resolved volume, source profile/version and source level to its typed speech data; do not duplicate common event-envelope fields or create a parallel speech log.
+Speech remains `WorldEvent.type === 'speech'`. The world event contains actual utterance data and the existing immutable event-time origin, identity, order, and scope. It carries resolved volume, source profile/version and source level in its typed speech data; do not duplicate common event-envelope fields or create a parallel speech log.
 
 For each eligible listener, native perception produces one actor/event awareness result, with different fields permitted for different listeners. Hearing detection is not the same as speaker recognition, spatial localization, or intelligibility.
 
@@ -147,11 +147,13 @@ type SpeechSegment = { kind: 'heard'; text: string } | { kind: 'unintelligible' 
 type PerceivedSpeech = {
   intelligibility: 'none' | 'partial' | 'clear';
   segments: SpeechSegment[];
-  speaker: { entityId: string; nameAtTime: string } | null;
+  speaker: { nameAtTime: string } | null;
+  addressing: 'ambient' | 'directed' | null;
+  addressee: { nameAtTime: string } | null;
   delivery: SpeechVolume | null;
   direction: {
     sector: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-    elevation: 'above' | 'level' | 'below' | 'unknown';
+    elevation: 'above' | 'level' | 'below';
   } | null;
 };
 ```
@@ -278,7 +280,7 @@ The delivered rich hearing queries distinguish physical exposure, detection and 
 
 Selecting an awareness-qualified event and then rendering `event.text` or `event.data.text` remains a regression hazard, not the intended rich-speech projection. Consumers must project the listener’s stored evidence in the hot view, paginated history, Talk, World Events, narration, cognition, embedding, summaries, social appraisal and promise/commitment handling. The delivered HE02–HE04 integrations are not a requirement to rebuild these paths; remaining coverage belongs to HE05. Shared privileged indexes cannot rank or describe secret words for a listener.
 
-Use one native structured speech-evidence projection and reusable formatters for permitted linguistic content, attribution and recipient roles, with UI-specific formatting outside the domain. Cognition, retrieval, consolidation and human-facing display consume the same permitted facts through their appropriate adapters; do not reconstruct typed roles or quantities by parsing a display sentence. Do not copy schemas/formulas between client and server or add a renderer import to domain code. Brief why-comments should link to the relevant privacy, clock, or event-time section.
+Use one native structured speech-evidence projection and reusable formatters for permitted linguistic content, attribution and recipient roles, with UI-specific formatting outside the domain. Shared English presentation separates attribution from the unchanged quotation. Native experience and cognition use the observer's first person; captions use the player's second person. Captions and Events distinguish speech to the observer, a known third person, someone else or no addressee, including detected speech with unintelligible words. Their roles come from the actual permitted event wrapper, without a second recipient store or world lookup; caption wording is prepared once when that event enters the display queue. Cognition, retrieval, consolidation and human-facing display consume the same permitted facts through their appropriate adapters; do not reconstruct typed roles or quantities by parsing a display sentence. Do not copy schemas/formulas between client and server or add a renderer import to domain code. Brief why-comments should link to the relevant privacy, clock, or event-time section.
 
 ## 11. Performance contract
 

@@ -1,7 +1,12 @@
 import { entityGet } from './entity-collection.js';
-import { namePhrase, personalPronoun, validName, type Named } from '@open-legend/language';
+import { speechPresentation, validName, type Named } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
-import { observerName, recognizesSubject, observerIndividual } from './worlds/base/knowledge.js';
+import {
+  observerName,
+  intendedAddresseeName,
+  recognizesSubject,
+  observerIndividual,
+} from './worlds/base/knowledge.js';
 import {
   validRecognitionFeatures,
   validateIndividualRecognition,
@@ -9,6 +14,8 @@ import {
 import { hasMemory } from './living.js';
 import { selectedVoiceReception } from './world-composition.js';
 import { currentBodyLocalSubject } from './perception-evidence.js';
+import { validObserverSubject } from './knowledge.js';
+import { isSafeRecordId } from './records.js';
 import { speechPerception } from './perception.js';
 import { contentLabel } from './events.js';
 import type { SpeechVolume } from './acoustics.js';
@@ -89,20 +96,27 @@ export function speechWords(speech: PerceivedSpeech): string {
     .map((segment) => (segment.kind === 'heard' ? segment.text : '[…]'))
     .join(' ');
 }
-export function speechDescription(speech: PerceivedSpeech): string {
-  const name = speech.speaker
-    ? namePhrase({ ...speech.speaker, name: speech.speaker.nameAtTime }, 'indefinite', {
-        capitalize: speech.perception === 'seen' || speech.intelligibility === 'none',
-      })
-    : undefined;
-  if (speech.perception === 'seen') return `${name ?? 'Someone'} appears to be speaking.`;
-  const words = speechWords(speech);
-  if (speech.perception === 'self') return `${personalPronoun('subject')} said: “${words}”`;
-  if (speech.intelligibility === 'none')
-    return name
-      ? `${name} is ${speech.delivery === 'whisper' ? 'whispering' : speech.delivery === 'shout' ? 'shouting' : 'saying'} something; the words are unintelligible.`
-      : `${personalPronoun('subject')} hear indistinct speech nearby.`;
-  return `${personalPronoun('subject')} ${speech.intelligibility === 'partial' ? 'partly heard' : 'heard'} ${name ?? 'someone nearby'}: “${words}”${speech.intelligibility === 'partial' && speech.segments.some((part) => part.kind === 'unintelligible') ? ' Other words were unintelligible.' : ''}`;
+export function perceivedSpeechPresentation(
+  speech: PerceivedSpeech,
+  roles: { observerId?: string; targetId?: string } = {},
+) {
+  return speechPresentation({
+    speaker: speech.speaker ? { ...speech.speaker, name: speech.speaker.nameAtTime } : null,
+    addressee: speech.addressee ? { ...speech.addressee, name: speech.addressee.nameAtTime } : null,
+    self: speech.perception === 'self',
+    addressed: roles.observerId !== undefined && roles.targetId === roles.observerId,
+    directed: speech.addressing === 'directed',
+    seen: speech.perception === 'seen',
+    intelligibility: speech.intelligibility,
+    delivery: speech.delivery,
+    words: speechWords(speech),
+  });
+}
+export function speechDescription(
+  speech: PerceivedSpeech,
+  roles?: { observerId?: string; targetId?: string },
+): string {
+  return perceivedSpeechPresentation(speech, roles).description;
 }
 /** Called once per utterance/listener inside event commitment, never during projection.
  * docs/hearing-and-speech.md#5-one-occurrence-listener-specific-evidence */
@@ -268,7 +282,9 @@ export function perceiveSpeech(
       : undefined;
   const addressed = !self && perceivedRecipient === observer.id;
   if (perceivedRecipient) {
-    const name = observerName(world, observer.id, perceivedRecipient);
+    const name = self
+      ? intendedAddresseeName(world, observer.id, perceivedRecipient)
+      : observerName(world, observer.id, perceivedRecipient);
     speech.addressee = {
       nameAtTime: name.name,
       nameForm: name.nameForm,
@@ -292,7 +308,7 @@ export function perceiveSpeech(
     at: event.at,
     sequence: event.order ?? event.sequence,
     eventType: 'speech',
-    text: speechDescription(speech),
+    text: speechDescription(speech, { observerId: observer.id, targetId }),
     content: speechWords(speech),
     speech,
     modality: perception === 'self' ? 'internal' : perception === 'seen' ? 'observed' : 'heard',
@@ -370,6 +386,13 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('Invalid committed observer facts.');
   const evidence = value as Partial<EventEvidence>;
+  if (
+    !isSafeRecordId(evidence.actorId) ||
+    (evidence.sourceId !== undefined && !isSafeRecordId(evidence.sourceId)) ||
+    (evidence.targetId !== undefined && !isSafeRecordId(evidence.targetId)) ||
+    (evidence.sourceSubject !== undefined && !validObserverSubject(evidence.sourceSubject))
+  )
+    throw new Error('Invalid observer or acquired subject reference.');
   if (evidence.recognition !== undefined) validateIndividualRecognition(evidence.recognition);
   if (evidence.receivedFeatures !== undefined) validateReceivedFeatures(evidence.receivedFeatures);
   if (
