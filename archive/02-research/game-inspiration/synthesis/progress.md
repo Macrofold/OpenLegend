@@ -4,9 +4,11 @@
 
 **Scope:** these records track assessment and incorporation into the 35 learning topics. They do not replace per-game or world research ledgers, certify that a source dossier is complete, allocate features, or record implementation progress. Building or reviewing the framework is distinct from filling its guides.
 
-## Current snapshot — October 18, 2026
+<a id="current-snapshot--october-18-2026"></a>
 
-The [coverage matrix](coverage.csv) records current per-source/per-topic status. Earlier intelligence and combat sources retain their cited revisions in [assessment evidence](assessment-records.md); the Sea of Stars evidence is anchored to the G178 dossier and art study at `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`.
+## Current snapshot — October 25, 2026
+
+The [coverage matrix](coverage.csv) records current per-source/per-topic status. Earlier intelligence and combat sources retain their cited revisions in [assessment evidence](assessment-records.md); the Sea of Stars evidence is anchored to the G178 dossier and art study at `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`. The [two Elden Ring assessments](assessment-records.md#elden-ring-focused-incorporation--october-25-2026) use the October 24 source cutoff and dossier chapters at `63a2dcf824f0431d5fe28cf7f4d34ef32de86b22`.
 
 | Measure                     | State |
 | --------------------------- | ----- |
@@ -14,10 +16,10 @@ The [coverage matrix](coverage.csv) records current per-source/per-topic status.
 | Game/case sources           | 187 stable keys: 178 roster subjects, the unnumbered EVE Online essay case and eight unnumbered topic-only subjects. |
 | Available game/case sources | 161 full dossier files and ten scoped sources: EVE Online plus nine topic-only dossiers. Availability is not full research certification. |
 | Queued game sources         | G150–G166 remain roster-only except G159's focused study; G168–G177 are available but unassessed in this synthesis. |
-| Game matrix                 | 187 × 35 = 6,545 cells: 37 I, 5310 U, 526 W, 672 X. |
+| Game matrix                 | 187 × 35 = 6,545 cells: 39 I, 5308 U, 526 W, 672 X. |
 | NPC column                  | 30 scoped incorporations; wider coverage remains open. |
-| COMBAT column               | Five scoped incorporations after adding G178; wider combat research remains open. |
-| PRESENT / EXPLORE           | G178 incorporated in each at a single-game scope; broader comparison remains open. |
+| COMBAT column               | Six scoped incorporations, including G75 and G178; wider combat research remains open. |
+| PRESENT / EXPLORE           | PRESENT retains one scoped G178 incorporation; EXPLORE has two, G178 and G75. Broader comparison remains open. |
 | World matrix                | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X. |
 | Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent. |
 
@@ -88,7 +90,7 @@ Edit only the intended source/topic cells and evidence records; preserve other t
 
 ## Verification and remaining work
 
-The framework review delivered the source/goal review, organized topic set, skeletons, template and tracking. The subsequent intelligence/simulation pass fills NPC at its declared 30-source scope and adds general research. The October 17 pass fills COMBAT for four selected sources; the October 18 G178 pass adds one COMBAT assessment and focused PRESENT/EXPLORE guides and questions. Twenty-seven other shells remain unfilled; four existing owners require scoped coverage reconciliation. The NPC guide's wider source and relationship coverage is not complete. World essays were read for structural coverage, not falsely marked incorporated into each new guide.
+The framework review delivered the source/goal review, organized topic set, skeletons, template and tracking. The subsequent intelligence/simulation pass fills NPC at its declared 30-source scope and adds general research. The October 17 pass fills COMBAT for four selected sources; the October 18 G178 pass adds one COMBAT assessment and focused PRESENT/EXPLORE guides and questions. The October 25 G75 incorporation contributes to existing COMBAT-L005 and EXPLORE-L001–L003, with [source scopes and limits](assessment-records.md#elden-ring-focused-incorporation--october-25-2026). Twenty-seven other shells remain unfilled; four existing owners require scoped coverage reconciliation. The NPC guide's wider source and relationship coverage is not complete. World essays were read for structural coverage, not falsely marked incorporated into each new guide.
 
 Check unique source keys and topic columns, valid codes, equal row widths, expected source identities, preserved existing cell meanings, working local paths/anchors and the actual affected diff. These are documentation checks, not game execution, fresh verification of every inherited fact, or a whole-archive audit. Check results belong in the handoff or focused review record, not fabricated assessment entries.
 
