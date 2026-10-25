@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 25, 2026 — Supported-channel personal evidence and knowledge
+
+The [perception foundation](verification/personal-perception-foundation.md) connects actual existing sight/touch/speech acquisition to immutable cuts, independently current facets, observer-local people, world-owned Perception/voice recognition and separate names. Exact typed source meaning survives hot/cold retrieval, correction, forgetting, consolidation and current-format restore; complete retained-place preparation supports the finite ordinary-warning testimony adapter.
+
+Player and NPC consumers use received detail and distinct current-body, remembered communication and private-note roles. Losing contact immediately retires live detail and action references; history keeps its original evidence. Existing public attribute disclosure remains world-owned and sampled. This replaces broad live-entity publication and implicit last-seen/light behavior, trading omniscient convenience for honest current and historical information. PP07, future sensing, attention/combat integration, full SAI-A/SPX qualification and live/human usefulness remain open in [their trackers](maintainers/stealth-awareness.md).
+
 ## October 22, 2026 — Surprise follows earned anticipation and actual contact
 
 The [preparedness feature](projects/preparedness-and-surprise-feature-spec.md), [technical design](projects/preparedness-and-surprise-tech-design.md) and [SUR tracker](maintainers/preparedness-and-surprise.md) complete specialist F's selected design. Native warning registration distinguishes inadequate information from an expected attack that is physically impossible to evade. The [authored world policy](worlds/base/combat.md#preparedness-policy) selects a once-only initial 2× direct-contact consequence, finite broad assault expectation and narrower opponent/approach continuity through real attacks, consumed guards and recovery. No rear-angle reset, duplicate threat tracker, new combat engine or fear-induced running slowdown is selected.

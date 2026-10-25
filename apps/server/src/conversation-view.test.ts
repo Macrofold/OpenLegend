@@ -6,7 +6,14 @@ import { readConfig } from '../../../tests/fixtures/database.js';
 import { SqlGameRepository, type JobRecord } from './store.js';
 import { projectView } from './view.js';
 import { WorldService } from './world-service.js';
-import { entityGet, entityValues, projectAttributes } from '@open-legend/domain';
+import {
+  currentBodyObservation,
+  entityGet,
+  entityValues,
+  initializePerception,
+  projectAttributes,
+} from '@open-legend/domain';
+import { currentContactReference } from './public-contact-references.js';
 import { draftWorld, finishWorld, freezeWorld } from '../../../packages/domain/src/draft.js';
 import { editWorld } from '../../../tests/fixtures/service.js';
 import { reconcileConditions } from '../../../packages/domain/src/conditions.js';
@@ -58,14 +65,23 @@ it('refreshes public visibility when a fixed perception restriction expires with
   );
   expect(result.ok, result.message).toBe(true);
   const before = await projectView(service);
+  expect(currentBodyObservation(service.world, PLAYER_ID, NPC_ID)).toBeUndefined();
   expect(before.entities.some((entity) => entity.id === NPC_ID)).toBe(false);
   const anchor = service.world;
-  const expired = freezeWorld({ ...anchor, simTime: anchor.simTime + 2 });
+  const resumed = draftWorld(anchor);
+  resumed.simTime += 2;
+  initializePerception(resumed, []);
+  const expired = freezeWorld(finishWorld(resumed));
   expect(expired.entities).toBe(anchor.entities);
   const read = vi.spyOn(service, 'world', 'get').mockReturnValue(expired);
   try {
     const after = await projectView(service);
-    expect(after.entities.some((entity) => entity.id === NPC_ID)).toBe(true);
+    const contact = currentContactReference(
+      expired,
+      service.localScope,
+      entityGet(expired.entities, NPC_ID)!,
+    );
+    expect(after.entities.some((entity) => entity.id === contact)).toBe(true);
   } finally {
     read.mockRestore();
   }
@@ -152,11 +168,14 @@ it('refreshes public meters when exact native progress retains an unchanged acto
       reconcileStatusEffects(world, entity, []);
       reconcileConditions(world, entity, []);
     }
+    initializePerception(world, []);
   });
   const anchor = entityGet(service.world.entities, NPC_ID)!;
   const before = await projectView(service);
   const oldValue = before.entities
-    .find((entity) => entity.id === NPC_ID)!
+    .find(
+      (entity) => entity.id === currentContactReference(service.world, service.localScope, anchor),
+    )!
     .attributes!.find((attribute) => attribute.id === attributeId)!.value;
   // Isolate the real retained family. Ordinary ticks also change energy eagerly,
   // replacing this actor and hiding a missing retained-window cache dependency.
@@ -166,13 +185,22 @@ it('refreshes public meters when exact native progress retains an unchanged acto
   );
   world.simTime += 0.13;
   integrateStatusRates(world, intervals, 0.13, [], [], false, undefined, true);
+  initializePerception(world, []);
   const observed = freezeWorld(finishWorld(world));
   expect(observed.pendingNativeIntegration).toBeDefined();
   expect(entityGet(observed.entities, NPC_ID)!.actor).toBe(anchor.actor);
   const read = vi.spyOn(service, 'world', 'get').mockReturnValue(observed);
   try {
     const after = await projectView(service);
-    const current = after.entities.find((entity) => entity.id === NPC_ID)!.attributes!;
+    const current = after.entities.find(
+      (entity) =>
+        entity.id ===
+        currentContactReference(
+          observed,
+          service.localScope,
+          entityGet(observed.entities, NPC_ID)!,
+        ),
+    )!.attributes!;
     expect(current).toEqual(
       projectAttributes(observed, entityGet(observed.entities, NPC_ID)!, 'public'),
     );

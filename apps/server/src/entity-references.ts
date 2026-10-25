@@ -1,5 +1,5 @@
 import type { NameArticle } from '@open-legend/language';
-import { observerDescription, recognizesSubject } from '@open-legend/domain';
+import { observerDescription, recognizesSubject, currentBodyObservation } from '@open-legend/domain';
 import type {
   ActorResponse,
   ActivityRequestDescriptor,
@@ -17,6 +17,11 @@ export function permittedSourceHandle(world: WorldState, observerId: string, ide
   return createHmac('sha256', bodyReferenceKey)
     .update(JSON.stringify(['personal-source', world.id, observerId, identity]))
     .digest('hex');
+}
+/** Preserve exact evidence-family identity across fact, support and confirmation views. */
+export function evidenceSourceHandle(world:WorldState,observerId:string,source:import('@open-legend/domain').EvidenceSource):string {
+  return permittedSourceHandle(world,observerId,['evidence',source.family,source.observer.actorId,
+    source.observer.physicalLife,source.id,source.revision]);
 }
 export function subjectHandle(world: WorldState, observerId: string, subject: ObserverSubject): string {
   return permittedSourceHandle(world, observerId, ['subject', subject]);
@@ -44,7 +49,7 @@ export function entityHandle(
   return createHmac('sha256', bodyReferenceKey)
     .update(JSON.stringify([
       'personal-reference', world.id, observerId, id,
-      world.perceptionEpisodes?.[observerId]?.[id] ??
+      currentBodyObservation(world, observerId, id)?.id ??
         (recognizesSubject(world, observerId, id) ? 'known' : world.sequence),
     ]))
     .digest('hex');
@@ -97,11 +102,16 @@ export function resolveResponseEntities(
   knowledgeReferences: Record<string, ObserverSubject> = {},
   activityRequests: ActivityRequestDescriptor[] = [],
   identityReferences: Record<string, ObserverSubject> = {},
+  physicalReferences: Record<string, string> = {},
 ): ActorResponse {
   const resolve = (handle: string) => {
     if (!Object.hasOwn(references, handle))
       throw new Error(`Unpermitted entity reference: ${handle}`);
     return references[handle]!;
+  };
+  const physical = (handle: string) => {
+    if (!Object.hasOwn(physicalReferences, handle)) throw new Error('A current physical reference is required.');
+    return physicalReferences[handle]!;
   };
   return {
     operations: response.operations.map((op) => ({
@@ -131,9 +141,9 @@ export function resolveResponseEntities(
                   invocation: {
                     ...op.act.invocation,
                     targetEntityId: op.act.invocation.targetEntityId
-                      ? resolve(op.act.invocation.targetEntityId)
+                      ? physical(op.act.invocation.targetEntityId)
                       : null,
-                    itemId: op.act.invocation.itemId ? resolve(op.act.invocation.itemId) : null,
+                    itemId: op.act.invocation.itemId ? physical(op.act.invocation.itemId) : null,
                     ...(op.act.invocation.parameters
                       ? {
                           parameters: Object.fromEntries(
@@ -142,7 +152,7 @@ export function resolveResponseEntities(
                               activityRequests.find(
                                 (request) => request.id === op.act!.invocation!.family,
                               )?.fields[key]?.type === 'entity'
-                                ? resolve(String(value))
+                                ? physical(String(value))
                                 : value,
                             ]),
                           ),
@@ -155,19 +165,19 @@ export function resolveResponseEntities(
               ? {
                   slots: {
                     ...op.act.slots,
-                    itemId: op.act.slots.itemId ? resolve(op.act.slots.itemId) : null,
+                    itemId: op.act.slots.itemId ? physical(op.act.slots.itemId) : null,
                     instrumentId: op.act.slots.instrumentId
-                      ? resolve(op.act.slots.instrumentId)
+                      ? physical(op.act.slots.instrumentId)
                       : null,
                     recipientId: op.act.slots.recipientId
-                      ? resolve(op.act.slots.recipientId)
+                      ? physical(op.act.slots.recipientId)
                       : null,
                   },
                 }
               : {}),
-            targetEntityId: op.act.targetEntityId ? resolve(op.act.targetEntityId) : null,
+            targetEntityId: op.act.targetEntityId ? physical(op.act.targetEntityId) : null,
             description: op.act.description
-              ? resolveEntityMarkers(op.act.description, references)
+              ? resolveEntityMarkers(op.act.description, physicalReferences)
               : null,
           }
         : null,

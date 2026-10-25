@@ -26,6 +26,7 @@ import {
 } from './worlds/base/knowledge.js';
 import {
   experienceManifest,
+  manifestDependsOn,
   summaryMemory,
   type PersonalSourceRef,
   type PreparedExperience,
@@ -994,7 +995,10 @@ export function invalidateExperience(
         ...(entry.observation ? [entry.observation] : []),
         ...(entry.observations ?? []),
       ];
-      if (affected.has(entry.eventId) || observations.some((value) => affected.has(value.id))) {
+      if (
+        affected.has(entry.eventId) ||
+        (entry.observation && affected.has(entry.observation.id))
+      ) {
         include(entry.eventId);
         for (const observation of observations) include(observation.id);
       }
@@ -1005,7 +1009,11 @@ export function invalidateExperience(
         ...(memory.observations ?? []),
         ...(memory.manifest?.observations ?? []),
       ];
-      if (affected.has(memory.id) || observations.some((value) => affected.has(value.id))) {
+      if (
+        affected.has(memory.id) ||
+        (memory.observation && affected.has(memory.observation.id)) ||
+        (memory.manifest && manifestDependsOn(memory.manifest, affected))
+      ) {
         include(memory.id);
         for (const observation of observations) include(observation.id);
       }
@@ -1016,7 +1024,8 @@ export function invalidateExperience(
         observation.facets.some(
           (facet) =>
             facet.value.kind === 'claim' &&
-            facet.value.support.some((key) => affected.has(key.source.id)),
+            (facet.value.support.some((key) => affected.has(key.source.id)) ||
+              facet.value.supportAliases?.some((alias) => affected.has(alias.id))),
         )
       )
         include(observation.id);
@@ -1045,10 +1054,7 @@ export function invalidateExperience(
         expanded = true;
       }
     for (const summary of state.summaries[actorId] ?? [])
-      if (
-        !affected.has(summary.id) &&
-        summary.manifest.coverage.some((ref) => affected.has(ref.id))
-      ) {
+      if (!affected.has(summary.id) && manifestDependsOn(summary.manifest, affected)) {
         affected.add(summary.id);
         expanded = true;
       }

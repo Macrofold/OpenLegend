@@ -51,11 +51,14 @@ export async function prepareHistoryEdit(
         SELECT actor_id,event_id AS source_id FROM history_perspectives WHERE world_id=? AND event_id=ANY(?::text[])
         UNION SELECT actor_id,event_id FROM recall_sources WHERE world_id=? AND event_id=ANY(?::text[])
         UNION SELECT actor_id,source_id FROM mind_summary_sources WHERE world_id=? AND source_id=ANY(?::text[])
+        UNION SELECT actor_id,alias_id FROM mind_summary_sources WHERE world_id=? AND alias_id=ANY(?::text[])
         UNION SELECT actor_id,source_id FROM mind_corrections WHERE world_id=? AND source_id=ANY(?::text[])
         UNION SELECT actor_id,correction_id FROM mind_corrections WHERE world_id=? AND correction_id=ANY(?::text[])
       `,
         )
         .all(
+          worldId,
+          eventIds,
           worldId,
           eventIds,
           worldId,
@@ -88,7 +91,7 @@ export async function prepareHistoryEdit(
         UNION SELECT result_memory_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND result_memory_id IS NOT NULL
         UNION SELECT source_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND result_memory_id=a.source_id
         UNION SELECT payload::jsonb->>'activityId' FROM mind_memories WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND payload::jsonb->>'activityId' IS NOT NULL
-        UNION SELECT summary_id FROM mind_summary_sources WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id
+        UNION SELECT summary_id FROM mind_summary_sources WHERE world_id=? AND actor_id=a.actor_id AND (source_id=a.source_id OR alias_id=a.source_id)
         UNION SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=a.actor_id AND correction_id=a.source_id
       ) d
     ) SELECT actor_id,source_id FROM affected`,

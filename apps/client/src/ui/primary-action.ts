@@ -53,10 +53,8 @@ export function usePrimaryAction(
         return;
       const target = latest.view?.entities.find((candidate) => candidate.id === entity.id);
       if (!latest.view || !target) return;
-      // A body can die and return under the same entity ID during this read.
-      // Ordinary injury or healing must not invalidate the intended recipient.
-      if (entity.bodyReference !== undefined && target.bodyReference !== entity.bodyReference)
-        return latest.notify('That character changed while checking actions. Choose it again.');
+      // The current contact reference includes this acquisition and physical life.
+      // An omitted or replaced contact cannot become this click's new target.
       if (!result.ok)
         return current.current.notify(result.message ?? 'Unable to read these actions.');
       const action = result.catalogue.actions.find(

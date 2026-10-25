@@ -1,19 +1,27 @@
 import { entityGet, entityHas } from '@open-legend/domain';
 import { accessiblePossession, worldPosition } from '@open-legend/domain';
-import { knowledgeDocument, characterCount, recognizesSubject, observerIndividual, identityForEntity, subjectLabel, type ObserverSubject } from '@open-legend/domain';
+import {
+  knowledgeDocument,
+  characterCount,
+  currentBodyObservation,
+  currentBodySubject,
+  canAddressRememberedSubject,
+  recognizesSubject,
+  observerIndividual,
+  identityForEntity,
+  subjectLabel,
+  observerName,
+  type ObserverSubject,
+} from '@open-legend/domain';
 import {
   awarenessBindsSubject,
   entityLabel,
   entityReferenceMap,
   entityHandle,
   subjectHandle,
+  permittedSourceHandle,
 } from './entity-references.js';
-import {
-  seesEntity,
-  speechDescription,
-  type Awareness,
-  type WorldState,
-} from '@open-legend/domain';
+import { speechDescription, type Awareness, type WorldState } from '@open-legend/domain';
 import { gameTime } from './recall.js';
 import type { JsonValue } from '@open-legend/ai';
 import type { WorldService } from './world-service.js';
@@ -62,32 +70,46 @@ export function responseTriggerContext(
     recipientId && awarenessBindsSubject(world, actorId, aware, recipientId)
       ? entityGet(world.entities, recipientId)
       : undefined;
-  const observer = entityGet(world.entities, actorId);
+  const sourceBody =
+    aware.sourceBody && currentBodyObservation(world, actorId, aware.sourceBody.entityId);
+  const sourceVisible =
+    !!sourceBody &&
+    sourceBody.id === aware.sourceBody!.leaseId &&
+    aware.sourceBody!.physicalLife ===
+      (entityGet(world.entities, aware.sourceBody!.entityId)?.actor?.physicalLife ?? 0);
+  const occurrenceLabel = (role: 'actor' | 'target') =>
+    aware.references?.find((reference) => reference.role === role)?.label;
   return {
     eventId: aware.eventId,
     eventTime: gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours),
     ageGameSeconds: Math.max(0, world.simTime - aware.at),
     observerRelationship: aware.triggerKind ?? 'observed_event',
-    // Omit inapplicable roles: strict AI serialization rejects undefined before dispatch.
-    // docs/architecture.md#cognition-attribution-and-pacing
-    ...(aware.eventType === 'speech'
+    ...(aware.speech
       ? {
-          speaker: source ? entityLabel(world, source, actorId) : 'Unknown speaker',
-          intendedRecipient: recipient
-            ? entityLabel(world, recipient, actorId)
-            : 'Unknown; no recipient identity perceived',
+          speaker: aware.speech.speaker?.nameAtTime ?? 'Unknown speaker',
+          addressing: aware.speech.addressing,
+          intendedRecipient:
+            aware.speech.addressee?.nameAtTime ??
+            (aware.speech.addressing === 'ambient'
+              ? 'Ambient speech'
+              : 'Unknown; no recipient identity perceived'),
+          ...(aware.sourceSubject?.kind === 'individual'
+            ? { speakerSubject: subjectHandle(world, actorId, aware.sourceSubject) }
+            : {}),
         }
       : {}),
-    ...(source && aware.eventType !== 'speech'
-      ? { source: entityLabel(world, source, actorId), sourceIsMe: source.id === actorId }
+    ...(source && !aware.speech
+      ? { source: occurrenceLabel('actor') ?? 'Unknown source', sourceIsMe: source.id === actorId }
       : {}),
-    ...(aware.eventType !== 'speech' && recipient
+    ...(!aware.speech && recipient
       ? {
-          subject: entityLabel(world, recipient, actorId),
-          subjectCurrentlyVisible: !!(observer && seesEntity(world, observer, recipient)),
+          subject: occurrenceLabel('target') ?? 'Unidentified subject',
+          subjectCurrentlyVisible: !!currentBodyObservation(world, actorId, recipient.id),
         }
       : {}),
-    sourceCurrentlyVisible: !!(source && observer && seesEntity(world, observer, source)),
+    sourceCurrentlyVisible: aware.speech
+      ? sourceVisible
+      : !!(source && currentBodyObservation(world, actorId, source.id)),
   };
 }
 
@@ -161,7 +183,7 @@ export function readableDecisionContext(
     );
   sections.push(
     `## Response format\nReturn {"operations":[]} to continue without intervention. At most 16 operations and 40000 UTF-8 bytes in total. Each operation has localId (unique lowercase letter followed by letters/digits/underscores, max 24), requiresAccepted (earlier localIds only), and exactly one non-null field among talk, act, think, goal, plan, note, name; all six unused fields must be null. Operations are admitted in order; requiresAccepted means admission, never physical completion.
-Speech: talk={"text":"words","addresseeEntityId":"permitted ID","selfIntroduction":null,"volume":"normal"}, max 1200 characters. Choose volume whisper, normal or shout; whispering is not guaranteed private. Thought: think={"text":"brief private feeling","aboutEntityIds":[]}, max 240 characters.
+Speech: talk={"text":"words","addresseeEntityId":"permitted ID","selfIntroduction":null,"volume":"normal"}, max 1200 characters. Use null addresseeEntityId for ambient speech. Choose volume whisper, normal or shout; whispering is not guaranteed private. Thought: think={"text":"brief private feeling","aboutEntityIds":[]}, max 240 characters.
 Action: act={"kind":"${capabilities?.expressions ? 'known|expression|proposal|invoke' : 'known|proposal|invoke'}","actionId":null,"verb":null,"targetEntityId":null,"description":null,"invocation":null,"slots":null,"mode":"enqueue|replace|interrupt"}. For known, fill only actionId; ${capabilities?.expressions ? 'for expression, fill verb and optionally targetEntityId; ' : ''}for proposal, fill description (max 500), optionally targetEntityId, and optionally slots={"itemId":null,"instrumentId":null,"recipientId":null,"quantity":null,"quantityMode":null,"until":null,"method":null}: exact permitted IDs for the item acted on, the tool used and the recipient; a whole quantity with quantityMode exact (units handled) or held (total to carry afterwards); ${namedTimes.length ? `until ${namedTimes.join('|')}` : 'until null (this world names no stopping times)'}; method keeps required wording such as quietly. Slots are null for other kinds. Complete typed proposals such as "drop 2 ITEM", "pick up ITEM" or "follow NAME at 4 m" bind without interpretation; a refused one states why. For invoke, fill invocation using Native navigation or an optional installed activity request; actionId, verb, description and top-level targetEntityId remain null. Request families use only their exact parameters and null navigation fields; their selected mode equals act.mode. A chosen request is neither a learned method nor completed work. Unlisted attempts remain available with no action suggestions. No unsupported effects are implied.
 Goal: goal={"operation":"create|revise|pause|resume|complete|abandon","goalId":null,"expectedRevision":null,"objective":null,"parentId":null}. Create supplies objective (max 500), optional parentId; revise supplies existing goalId/revision, objective and optional parentId. Status changes supply only existing goalId/revision. Eight active/paused goals maximum. Completion is a subjective declaration.
 Plan: plan={"mode":"enqueue|replace|cancel","expectedRevision":0,"goalId":null,"steps":[]}. Copy current plan revision (0 if absent). At most eight sequential steps. A step selects {"actionId":"supplied handle","itemFromStep":null,"useItemAs":null}, or consumes an earlier item output with {"actionId":null,"itemFromStep":0,"useItemAs":"equip"} (also "eat"). Indexes are zero-based within this submitted frontier. Only ${outputs} supply item outputs. Later steps wait for earlier completion and recheck prerequisites. Cancel has empty steps and null goalId. A new goal may be referenced as "$localId" only with that localId in requiresAccepted. Physical work takes simulation time. A plan may have no goal.
@@ -190,6 +212,7 @@ export function responseReferences(
   inspectedIds: string[] = [],
   learnedSubjects: ObserverSubject[] = [],
 ) {
+  visibleIds = visibleIds.filter((id) => !!currentBodyObservation(world, actorId, id));
   const evidence = new Set(evidenceIds);
   const awareness = (retainedEvidence ?? world.experience?.awareness[actorId] ?? []).filter(
     (entry) => evidence.has(entry.eventId),
@@ -198,7 +221,6 @@ export function responseReferences(
     ...new Set([
       actorId,
       ...visibleIds,
-      ...rememberedIds.filter((id) => entityHas(world.entities, id)),
       ...awareness
         .flatMap((entry) =>
           [entry.sourceId, entry.targetId, ...entry.entityIds].filter(
@@ -209,16 +231,22 @@ export function responseReferences(
     ]),
   ];
   const visible = new Set(visibleIds);
-  const recognizedIds = new Set([actorId, ...ids.filter(id => recognizesSubject(world, actorId, id))]);
+  const remembered = [
+    ...new Set([
+      ...rememberedIds,
+      ...awareness.flatMap((entry) => (entry.recognized && entry.sourceId ? [entry.sourceId] : [])),
+    ]),
+  ].filter((id) => id !== actorId && canAddressRememberedSubject(world, actorId, id));
+  const rememberedHandle = (id: string) =>
+    permittedSourceHandle(world, actorId, ['remembered-person', id]);
+  const roleHandle = (id: string) =>
+    id === actorId || visible.has(id) ? entityHandle(world, actorId, id) : rememberedHandle(id);
+  const identityReferences: Record<string, ObserverSubject> = {};
   const roles = new Map<string, { evidenceId: string; role: string }[]>();
   for (const entry of awareness) {
-    if (entry.recognized && entry.sourceId) recognizedIds.add(entry.sourceId);
     for (const [id, role] of [
       [entry.sourceId, 'source'],
-      [
-        entry.targetId,
-        entry.eventType === 'speech' ? 'intended_recipient' : 'subject',
-      ],
+      [entry.targetId, entry.eventType === 'speech' ? 'intended_recipient' : 'subject'],
     ] as const) {
       if (!id || !awarenessBindsSubject(world, actorId, entry, id)) continue;
       const entries = roles.get(id) ?? [];
@@ -232,24 +260,56 @@ export function responseReferences(
   const piled = pileItemIds.filter((id) => !ids.includes(id) && !possessions.includes(id));
   const references = ids.map((id) => {
     const entity = entityGet(world.entities, id)!;
-    return JSON.stringify({
-      entityId: entityHandle(world, actorId, id),
-      label: recognizedIds.has(id)
+    const received = visible.has(id) ? currentBodyObservation(world, actorId, id) : undefined;
+    const currentSubject = received ? currentBodySubject(world, actorId, id) : undefined;
+    if (currentSubject) identityReferences[roleHandle(id)] = currentSubject;
+    const label =
+      id === actorId
         ? entityLabel(world, entity, actorId)
-        : `Unidentified ${entity.actor ? 'actor' : 'entity'} (ID:${entityHandle(world, actorId, id)})`,
-      ...(visible.has(id) && entity.actor ? { species: entity.actor.species ?? 'unknown' } : {}),
+        : received
+          ? observerName(world, actorId, id).name
+          : 'Unidentified source';
+    return JSON.stringify({
+      entityId: roleHandle(id),
+      label,
       ...(id === actorId ? { relation: 'myself' } : {}),
-      ...(visible.has(id) ? { position: worldPosition(entity) } : {}),
-      ...(recognizesSubject(world, actorId, id)
+      currentBody: !!received,
+      ...(received
         ? {
-            noteRevision: knowledgeDocument(world, actorId, {kind:'entity',entityId:id})?.revision ?? 0,
-            noteCharacters: characterCount(knowledgeDocument(world, actorId, {kind:'entity',entityId:id})?.text ?? ''),
-            nameRevision: identityForEntity(world, actorId, id)?.revision ?? 0,
+            position: received.value.body.position,
+            positionMeasuredFrom: received.valueMeasuredFrom,
+            positionMeasuredThrough: received.valueMeasuredThrough,
+            positionAcquiredAt: received.valueAcquiredAt,
+          }
+        : {}),
+      ...(currentSubject
+        ? {
+            noteRevision: knowledgeDocument(world, actorId, currentSubject)?.revision ?? 0,
+            noteCharacters: characterCount(
+              knowledgeDocument(world, actorId, currentSubject)?.text ?? '',
+            ),
+            nameRevision: observerIndividual(world, actorId, currentSubject)?.revision ?? 0,
           }
         : { knowledgeBinding: 'unresolved' }),
       triggerRoles: roles.get(id) ?? [],
     });
   });
+  for (const id of remembered) {
+    const subject: ObserverSubject = { kind: 'entity', entityId: id };
+    const handle = rememberedHandle(id);
+    identityReferences[handle] = subject;
+    references.push(
+      JSON.stringify({
+        entityId: handle,
+        label: subjectLabel(world, actorId, subject),
+        role: 'remembered-person',
+        communication: true,
+        currentBody: false,
+        nameRevision: identityForEntity(world, actorId, id)?.revision ?? 0,
+        noteRevision: knowledgeDocument(world, actorId, subject)?.revision ?? 0,
+      }),
+    );
+  }
   for (const id of possessions)
     references.push(
       JSON.stringify({
@@ -281,20 +341,57 @@ export function responseReferences(
         relation: 'current permitted activity choice or inspected container page',
       }),
     );
-  const all = [...ids, ...possessions, ...piled, ...inspected];
-  const identityReferences: Record<string, ObserverSubject> = {};
-  for (const subject of [...learnedSubjects, ...awareness.flatMap(entry => entry.sourceSubject ? [entry.sourceSubject] : [])]) {
+  const all = [...new Set([...ids, ...remembered, ...possessions, ...piled, ...inspected])];
+  for (const subject of [
+    ...learnedSubjects,
+    ...awareness.flatMap((entry) => (entry.sourceSubject ? [entry.sourceSubject] : [])),
+  ]) {
     if (subject.kind !== 'individual') continue;
     const identity = observerIndividual(world, actorId, subject);
     if (!identity || identity.seedOnly) continue;
     const handle = subjectHandle(world, actorId, subject);
     if (identityReferences[handle]) continue;
     identityReferences[handle] = subject;
-    references.push(JSON.stringify({ subjectReference: handle, label: subjectLabel(world, actorId, subject),
-      role:'remembered-individual', currentBody:false, nameRevision:identity.revision,
-      noteRevision:knowledgeDocument(world, actorId, subject)?.revision ?? 0 }));
+    references.push(
+      JSON.stringify({
+        subjectReference: handle,
+        label: subjectLabel(world, actorId, subject),
+        role: 'remembered-individual',
+        currentBody: false,
+        nameRevision: identity.revision,
+        noteRevision: knowledgeDocument(world, actorId, subject)?.revision ?? 0,
+      }),
+    );
   }
-  return { entityIds: all, references, entityReferences: entityReferenceMap(world, all, actorId), identityReferences };
+  const physicalIds = [
+    ...new Set([
+      actorId,
+      ...visibleIds,
+      ...possessions,
+      ...piled,
+      ...inspected.filter(
+        (id) =>
+          accessiblePossession(world, actorId, id) || !!currentBodyObservation(world, actorId, id),
+      ),
+    ]),
+  ];
+  return {
+    entityIds: all,
+    references,
+    entityReferences: {
+      ...Object.fromEntries(ids.map((id) => [roleHandle(id), id])),
+      ...Object.fromEntries(remembered.map((id) => [rememberedHandle(id), id])),
+      ...entityReferenceMap(world, [...possessions, ...piled, ...inspected], actorId),
+    },
+    physicalEntityReferences: entityReferenceMap(world, physicalIds, actorId),
+    entityLeases: Object.fromEntries(
+      visibleIds.flatMap((id) => {
+        const received = currentBodyObservation(world, actorId, id);
+        return received ? [[id, received.id]] : [];
+      }),
+    ),
+    identityReferences,
+  };
 }
 
 function formatIntentions(value: unknown): string {

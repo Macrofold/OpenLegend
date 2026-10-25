@@ -100,7 +100,7 @@ export function clearAccess(options?: {
   }
 }
 export function acceptAccess(view: GameView): void {
-  currentContacts = new Set(view.entities.map(entity => entity.id));
+  currentContacts = new Set(view.entities.map((entity) => entity.id));
   const generation = view.historyEpoch?.split(':')[0] ?? '';
   const scope = view.access?.scope ?? '';
   if (generation === worldGeneration && scope === viewScope) return;
@@ -304,7 +304,7 @@ export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<
   const result = (await response.json()) as T;
   if (generation !== accessGeneration)
     throw new Error('Your access or world changed. Reload this information.');
-  if (contactReferences.some(reference => !currentContacts.has(reference)))
+  if (contactReferences.some((reference) => !currentContacts.has(reference)))
     throw new Error('That observed target is no longer available.');
   return result;
 }
@@ -381,7 +381,9 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
     ...current,
     revision: patch.revision,
     evaluationCut: patch.evaluationCut,
-    ...(patch.communicationReferences ? { communicationReferences: patch.communicationReferences } : {}),
+    ...(patch.communicationReferences
+      ? { communicationReferences: patch.communicationReferences }
+      : {}),
     ...(patch.commandEpoch !== undefined ? { commandEpoch: patch.commandEpoch } : {}),
     ...(patch.historyEpoch !== undefined ? { historyEpoch: patch.historyEpoch } : {}),
     ...(patch.worldEventsRevision !== undefined

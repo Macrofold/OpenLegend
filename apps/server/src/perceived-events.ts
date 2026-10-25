@@ -67,11 +67,18 @@ export function publicEvent(
             : {}),
         }
       : undefined;
-  const references: NonNullable<PublicEvent['references']> = (event.references ?? []).map(ref => ({
-    id: createHmac('sha256', historicalReferenceKey)
-      .update(JSON.stringify([observerId, event.id, ref.id, ref.role])).digest('hex'),
-    label: ref.label, role: ref.role, kind:'historical',
-  }));
+  const references: NonNullable<PublicEvent['references']> = (event.references ?? []).map(
+    (ref) => ({
+      id: createHmac('sha256', historicalReferenceKey)
+        .update(JSON.stringify([observerId, event.id, ref.id, ref.role]))
+        .digest('hex'),
+      label: ref.label,
+      role: ref.role,
+      kind: 'historical',
+    }),
+  );
+  const speakerReference = createHmac('sha256', historicalReferenceKey)
+    .update(JSON.stringify([observerId, 'speech-participant', event.actorId === observerId ? 'self' : event.sourceSubject ?? event.id])).digest('hex');
   const speakerContact = event.sourceBody && currentContact?.(event.sourceBody);
   // Render only facts already granted to this observer. Older wording may be noisy,
   // but a missing cause must never be filled from today's body or world state.
@@ -125,8 +132,19 @@ export function publicEvent(
     text,
     modality: event.modality,
     ...(event.actorId === observerId ? { actorId: observerId } : {}),
-    ...(event.speech ? { speech: { ...event.speech, ...(speakerContact ? { speakerContact } : {}) } } : {}),
-    ...(event.sound ? { sound: { kind: event.sound.kind, direction: event.sound.direction, listenerPosition: event.sound.listenerPosition } } : {}),
+    ...(event.targetId === observerId ? { targetId: observerId } : {}),
+    ...(event.speech
+      ? { speech: { ...event.speech, speakerReference, ...(speakerContact ? { speakerContact } : {}) } }
+      : {}),
+    ...(event.sound
+      ? {
+          sound: {
+            kind: event.sound.kind,
+            direction: event.sound.direction,
+            listenerPosition: event.sound.listenerPosition,
+          },
+        }
+      : {}),
   };
 }
 type Position = { order: number; id: string };

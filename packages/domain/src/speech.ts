@@ -3,13 +3,11 @@ import { namePhrase, personalPronoun, validName, type Named } from '@open-legend
 import { worldPosition } from './spatial-state.js';
 import { observerName, recognizesSubject, observerIndividual } from './worlds/base/knowledge.js';
 import {
-  BASE_VOICE_FEATURE_FAMILY,
   validRecognitionFeatures,
-  perceiveVoice,
-  receivedVoiceFeatures,
   validateIndividualRecognition,
 } from './worlds/base/recognition.js';
 import { hasMemory } from './living.js';
+import { selectedVoiceReception } from './world-composition.js';
 import { speechPerception } from './perception.js';
 import { contentLabel } from './events.js';
 import type { SpeechVolume } from './acoustics.js';
@@ -136,39 +134,35 @@ export function perceiveSpeech(
           elevation: dy > 2 ? 'above' : dy < -2 ? 'below' : 'level',
         }
       : null;
-  const receivedFeatures =
-    hasMemory(observer) &&
-    observer.actor?.individualRecognition &&
-    source.actor?.voiceProfile &&
-    perception === 'heard'
-      ? receivedVoiceFeatures(source.actor.voiceProfile)
-      : undefined;
-  const voice =
-    hasMemory(observer) &&
-    !self &&
-    perception === 'heard' &&
-    receivedFeatures &&
-    contact?.clarityMarginDb !== null &&
-    contact?.clarityMarginDb !== undefined
-      ? perceiveVoice(
+  const reception =
+    !self && perception === 'heard' && contact?.clarityMarginDb != null
+      ? selectedVoiceReception(
           world,
-          observer.id,
+          observer,
+          source,
           event,
-          receivedFeatures!,
           contact.clarityMarginDb,
           visible ? source.id : undefined,
         )
       : undefined;
+  const receivedFeatures = reception?.features;
+  const voice = reception?.recognition;
   const learnedSubject = voice?.subject ?? voice?.learnedSubject;
   const individual = learnedSubject && observerIndividual(world, observer.id, learnedSubject);
-  const speaker = visible
-    ? observerName(world, observer.id, source.id)
-    : individual
+  const speaker =
+    voice?.recognized && individual
       ? {
           name: individual.givenName || 'unidentified voice',
           nameForm: individual.givenName ? ('proper' as const) : ('count' as const),
         }
-      : undefined;
+      : visible
+        ? observerName(world, observer.id, source.id)
+        : individual
+          ? {
+              name: individual.givenName || 'unidentified voice',
+              nameForm: individual.givenName ? ('proper' as const) : ('count' as const),
+            }
+          : undefined;
   const sourceId = visible ? source.id : voice?.recognized ? individual?.canonicalId : undefined;
   if (!hasMemory(observer) || observer.actor?.capabilities?.comprehendsSpeech === false) {
     if (
@@ -199,7 +193,7 @@ export function perceiveSpeech(
         ? {
             receivedFeatures: {
               modality: 'hearing' as const,
-              family: BASE_VOICE_FEATURE_FAMILY,
+              family: reception!.family,
               features: receivedFeatures,
               quality: voice.quality,
             },
@@ -261,7 +255,7 @@ export function perceiveSpeech(
   const perceivedRecipient =
     intendedId &&
     perception !== 'seen' &&
-    (self || intendedId === observer.id || (visible && recipient && contact?.sees(recipient)))
+    (self || intendedId === observer.id || (recipient && contact?.sees(recipient)))
       ? intendedId
       : undefined;
   const addressed = !self && perceivedRecipient === observer.id;
@@ -312,7 +306,7 @@ export function perceiveSpeech(
       ? {
           receivedFeatures: {
             modality: 'hearing' as const,
-            family: BASE_VOICE_FEATURE_FAMILY,
+            family: reception!.family,
             features: receivedFeatures,
             quality: voice.quality,
           },
@@ -433,6 +427,7 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
 export type ActorEvent = WorldEvent & {
   /** Private event-time physical grant for later scoped publication, not voice identity. */
   sourceBody?: Awareness['sourceBody'];
+  sourceSubject?: Awareness['sourceSubject'];
   speech?: PerceivedSpeech;
   sound?: PerceivedSound;
   modality: Awareness['modality'];
@@ -459,6 +454,7 @@ export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence)
     ...(evidence.sourceId ? { actorId: evidence.sourceId } : {}),
     ...(evidence.targetId ? { targetId: evidence.targetId } : {}),
     ...(evidence.sourceBody ? { sourceBody: evidence.sourceBody } : {}),
+    ...(evidence.sourceSubject ? { sourceSubject: evidence.sourceSubject } : {}),
     importance: evidence.importance,
     urgency: evidence.urgency,
     ...(evidence.sound ? { sound: evidence.sound, data: {} } : {}),

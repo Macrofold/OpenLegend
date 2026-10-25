@@ -361,15 +361,14 @@ function perceiveIndividual(
     associated = Object.values(records).find(
       (identity) =>
         !identity.seedOnly &&
-        identity.canonicalId === visibleSourceId &&
-        (identity.authored ||
-          identity.encounterId === world.perceptionEpisodes?.[observerId]?.[visibleSourceId]),
+        !identity.authored &&
+        !!identity.encounterId &&
+        identity.encounterId === world.perceptionEpisodes?.[observerId]?.[visibleSourceId],
     );
     if (!associated) {
       const individualId = allocateIndividual(records);
       associated = records[individualId] = {
         individualId,
-        canonicalId: visibleSourceId,
         givenName: '',
         revision: 1,
         encounterId: world.perceptionEpisodes?.[observerId]?.[visibleSourceId] ?? null,

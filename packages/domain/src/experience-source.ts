@@ -1,5 +1,8 @@
 import type { ExperienceEntry } from './types.js';
 
+/** Existing working-set allowance, never a retained-history or world-size cap. */
+export const PERSONAL_EVIDENCE_PREPARATION = { rows: 8192, bytes: 4 * 1024 * 1024 } as const;
+
 /** Exact source identity in the owning world/observer partition. */
 export interface PersonalSourceRef {
   kind: ExperienceEntry['source'];

@@ -7,6 +7,7 @@ import { activelyParticipates } from './participation-state.js';
 import { visibleFeature } from './perception-frame.js';
 import { bodyProfile, spatialMap, worldPosition } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
+import { projectAttributes } from './world-modules.js';
 import { SpatialCandidateIndex } from './spatial.js';
 import { nextSensoryPhase, recordSensoryChange, MAX_CHANGE_SCOPES } from './dependencies.js';
 import { countDomainWork } from './diagnostic-counters.js';
@@ -81,12 +82,12 @@ const captures = new WeakMap<Entity, ExposureCapture | null>();
  * immutable record reuses its capture across slices; a live draft is captured afresh.
  * Returns null for a root that does not currently participate. Callers only read it.
  * PF03/09: static roots otherwise rebuilt identical inputs on every slice. */
-export function captureExposure(entity: Entity): ExposureCapture | null {
+export function captureExposure(world: WorldState, entity: Entity): ExposureCapture | null {
   countDomainWork('sensoryCaptures');
   const frozen = Object.isFrozen(entity);
   if (frozen) {
     const cached = captures.get(entity);
-    if (cached !== undefined) return cached;
+    if (cached !== undefined) return withPublicAttributes(world, cached);
   }
   let capture: ExposureCapture | null = null;
   if (activelyParticipates(entity)) {
@@ -106,7 +107,25 @@ export function captureExposure(entity: Entity): ExposureCapture | null {
     };
   }
   if (frozen) captures.set(entity, capture);
-  return capture;
+  return withPublicAttributes(world, capture);
+}
+const publicAttributeFamilies = new WeakMap<object,boolean>();
+function withPublicAttributes(
+  world: WorldState,
+  capture: ExposureCapture | null,
+): ExposureCapture | null {
+  if (!capture?.entity.actor) return capture;
+  const definitions=readOnlyDraftView(world.moduleManifest.definitions);
+  let installed = Object.isFrozen(definitions) ? publicAttributeFamilies.get(definitions) : undefined;
+  if(installed===undefined) {
+    installed=definitions.some(definition=>definition.disclosure==='public');
+    if(Object.isFrozen(definitions))publicAttributeFamilies.set(definitions,installed);
+  }
+  if(!installed)return capture;
+  return {
+    ...capture,
+    feature: JSON.stringify([capture.feature, projectAttributes(world, capture.entity, 'public')]),
+  };
 }
 type Source = ExposureInput & { detail: string; order: number };
 interface ObserverInput {
@@ -293,7 +312,7 @@ export function* prepareExposure(
   let orderChanged = audit.orderChanged;
   const update = (id: string, entity: Entity | undefined) => {
     const old = prepared.inputs.get(id);
-    const capture = entity ? captureExposure(entity) : null;
+    const capture = entity ? captureExposure(world, entity) : null;
     countDomainWork('sensoryComparisons');
     if (capture && equal(old, capture)) return;
     orderChanged ||= !!old !== !!capture;

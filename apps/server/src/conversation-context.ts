@@ -4,7 +4,8 @@ import {
   validateExperienceManifest,
   type ExperienceManifest,
 } from '@open-legend/domain';
-import { experienceManifestForModel } from './recall.js';
+import { experienceManifestForModel, gameTime } from './recall.js';
+import { memoryMeaningForModel } from './experience-context.js';
 import { entityGet } from '@open-legend/domain';
 import type { CognitionPreparation } from './memory-repository.js';
 import { z } from 'zod';
@@ -79,6 +80,58 @@ const joinedBytes = (prefix: number, suffix: number) =>
   prefix + suffix + (prefix && suffix ? 1 : 0);
 const summaryLine = (summary: string, structure: unknown) =>
   `Summary of older personally experienced speech (derived, not authoritative). “The memory owner” means you, the responding actor; other speakers are distinct people:\n${summary}\nStructured original attribution: ${JSON.stringify(structure)}`;
+/** Equal roles, locations and field names are stated once within this selected view.
+ * Exact variable values remain per turn; original native bodies stay unchanged. Arrays
+ * are explicitly tagged so authored words cannot collide with formatting references. */
+function conversationLines(
+  turns: readonly { text: string; label: string; meaning: unknown }[],
+): string[] {
+  if (!turns.length) return [];
+  const shapes = new Map<string, { keys: string[]; count: number; common: Map<string, string> }>();
+  // JSON is the model boundary: omitted optional fields have no tuple positions.
+  const values: unknown[] = turns.map((turn) => JSON.parse(JSON.stringify(turn.meaning)));
+  const count = (value: unknown) => {
+    if (!value || typeof value !== 'object') return;
+    if (!Array.isArray(value)) {
+      const keys = Object.keys(value),
+        key = JSON.stringify(keys),
+        prior = shapes.get(key);
+      const common = new Map(
+        keys.map((field) => [field, JSON.stringify((value as Record<string, unknown>)[field])]),
+      );
+      if (prior)
+        for (const [field, body] of prior.common)
+          if (common.get(field) !== body) prior.common.delete(field);
+      shapes.set(key, prior ? { ...prior, count: prior.count + 1 } : { keys, count: 1, common });
+    }
+    for (const child of Object.values(value)) count(child);
+  };
+  for (const value of values) count(value);
+  const fields = [...shapes.values()].map((shape) => ({
+    fields: shape.keys.filter((key) => shape.count === 1 || !shape.common.has(key)),
+    constants:
+      shape.count === 1
+        ? {}
+        : Object.fromEntries([...shape.common].map(([key, value]) => [key, JSON.parse(value)])),
+  }));
+  const fieldIds = new Map([...shapes.keys()].map((key, index) => [key, index]));
+  const encode = (value: unknown): unknown => {
+    if (!value || typeof value !== 'object') return value;
+    if (Array.isArray(value)) return ['array', ...value.map(encode)];
+    const id = fieldIds.get(JSON.stringify(Object.keys(value)))!;
+    return [
+      'object',
+      id,
+      ...fields[id]!.fields.map((field) => encode((value as Record<string, unknown>)[field])),
+    ];
+  };
+  const lines = turns.map(
+    (turn, index) => `${turn.label} ${JSON.stringify(encode(values[index]))}`,
+  );
+  lines[0] = `Exact conversation formatting: ${JSON.stringify({ encoding: 'Objects are [object, field-set index, values in field order]; merge the field set constants. Arrays are [array, items].', fields })}\n${lines[0]}`;
+  const expanded = turns.map((turn) => turn.text);
+  return bytes(lines) < bytes(expanded) ? lines : expanded;
+}
 function perspective(world: WorldState, actorId: string, entityIds: string[]): string {
   if (!entityIds.length) return digest([]);
   return digest(
@@ -239,6 +292,8 @@ export async function buildConversationContext(input: {
         },
         at: entry.memory.at,
         text,
+        label: `${gameTime(entry.memory.at, world.statusEffectPolicy.clockOffsetHours)} [${entry.memory.source}]:`,
+        meaning: memoryMeaningForModel(world, actorId, entry.memory),
         references: candidate.entityIds,
         entityIds: [
           ...new Set([
@@ -314,7 +369,7 @@ export async function buildConversationContext(input: {
     }
   };
   let calls = 0;
-  const fullLines = turns.filter((turn) => !required.has(turn.id)).map((turn) => turn.text);
+  const fullLines = conversationLines(turns.filter((turn) => !required.has(turn.id)));
   let lines = cached
     ? [
         summaryLine(cached.summary, experienceManifestForModel(world, actorId, cached.manifest)),
@@ -323,7 +378,9 @@ export async function buildConversationContext(input: {
     : fullLines;
   if (bytes(lines) > maxBytes) {
     if (!input.generate || !repository || !scope || !conversationId)
-      throw new Error('Conversation compaction required but unavailable; no speech was omitted.');
+      throw new Error(
+        `Conversation compaction required but unavailable (${bytes(lines)} of ${maxBytes} bytes); no speech was omitted.`,
+      );
     if (summaryBytes < 256)
       throw new Error('Insufficient conversation allowance for a faithful summary.');
     // Reserve summary formatting overhead, then keep a contiguous exact suffix.
@@ -349,10 +406,7 @@ export async function buildConversationContext(input: {
     )
       throw new MemoryPreparationError();
     if (!older.length) throw new Error('Conversation summary does not fit its allowance.');
-    const recent = turns
-      .slice(split)
-      .filter((turn) => !required.has(turn.id))
-      .map((turn) => turn.text);
+    const recent = conversationLines(turns.slice(split).filter((turn) => !required.has(turn.id)));
     const chunks: (typeof older)[] = [];
     let chunk: typeof older = [];
     let chunkBytes = 2; // JSON array delimiters; the per-turn comma count is conservative.

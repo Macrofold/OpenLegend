@@ -200,11 +200,10 @@ export class SpeechCaptions {
         this.drop(event);
         continue;
       }
-      const speaker = event.speech.speakerContact;
+      const speaker = event.speech.speakerReference;
       const queueSize = speaker
-        ? [...this.active, ...this.pending].filter(
-            (e) => e.event.speech.speakerContact === speaker,
-          ).length
+        ? [...this.active, ...this.pending].filter((e) => e.event.speech.speakerReference === speaker)
+            .length
         : 0;
       // Overflow stays available in durable World Events; these are presentation limits only.
       if (queueSize >= 3) {
@@ -301,8 +300,8 @@ export class SpeechCaptions {
     if (this.options.enabled && !document.hidden) {
       for (let i = 0; this.active.length < 8 && i < this.pending.length; ) {
         const entry = this.pending[i]!;
-        const speaker = entry.event.speech.speakerContact;
-        if (speaker && this.active.some((e) => e.event.speech.speakerContact === speaker)) {
+        const speaker = entry.event.speech.speakerReference;
+        if (speaker && this.active.some((e) => e.event.speech.speakerReference === speaker)) {
           i++;
           continue;
         }

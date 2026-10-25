@@ -322,6 +322,8 @@ export function sensoryDraftWrites(
           (latest[key] as Record<symbol, ImmerState>)[IMMER_STATE]?.modified_ === true),
     );
   };
+  const publicAttributes = world.moduleManifest.definitions.filter((definition) => definition.disclosure === 'public').map((definition) => definition.id);
+  const publicHealth = world.moduleManifest.definitions.some((definition) => definition.disclosure === 'public' && definition.implementation === 'native-health-v1');
   for (const value of audit.values.values()) {
     countDomainWork('sensoryDraftsVisited');
     if (!isDraft(value)) continue;
@@ -341,6 +343,8 @@ export function sensoryDraftWrites(
       changed(entity.heat, ['lit']) ||
       changed(entity.resource, ['quantity']) ||
       changed(entity.remains, ['harvested']) ||
+      changed(entity.actor?.attributes, publicAttributes) ||
+      (publicHealth && changed(entity.actor, ['health'])) ||
       changed(entity.actor, [
         'alive',
         'incapacitated',

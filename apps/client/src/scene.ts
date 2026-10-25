@@ -518,8 +518,7 @@ export class WildernessScene implements WorldRenderer {
     }
     this.mercenary?.setArtTreatment(style);
     this.presentation.setArtTreatment(style);
-    if (relight && this.view)
-      this.presentation.lighting(this.view);
+    if (relight && this.view) this.presentation.lighting(this.view);
     this.app.renderNextFrame = true;
     for (const texture of this.textures) {
       if ([...this.environmentTiles.values()].includes(texture)) continue;

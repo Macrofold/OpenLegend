@@ -1010,7 +1010,9 @@ function App({
     );
     setWorldIntent({
       mode: 'speak',
-      ...(recipient ? { targetId: recipient.communicationReference ?? recipient.id, label: recipient.name } : {}),
+      ...(recipient
+        ? { targetId: recipient.communicationReference ?? recipient.id, label: recipient.name }
+        : {}),
       item: { id: item.itemId, name: item.name },
       owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
     });
@@ -1702,7 +1704,12 @@ function App({
         }}
         presentation={presentation}
         visible={visible}
-        picker={{...picker,entity:picker.entity ? view.entities.find(entity=>entity.id===picker.entity?.id) ?? null : null}}
+        picker={{
+          ...picker,
+          entity: picker.entity
+            ? (view.entities.find((entity) => entity.id === picker.entity?.id) ?? null)
+            : null,
+        }}
         view={view}
         connected={connected}
         close={closePicker}
@@ -1720,7 +1727,10 @@ function App({
             targetId !== view.player.id &&
             (mode === 'act' || !!picker.entity?.canTalk)
               ? {
-                  targetId: mode === 'speak' ? picker.entity?.communicationReference ?? targetId : targetId,
+                  targetId:
+                    mode === 'speak'
+                      ? (picker.entity?.communicationReference ?? targetId)
+                      : targetId,
                   label: picker.item?.name ?? picker.entity?.name,
                   possession: !!picker.context.itemId,
                 }
@@ -2578,6 +2588,7 @@ function App({
                 canvas.current?.focus();
               }}
               setup={() => show('ai')}
+              changeAddressee={(targetId,label)=>setWorldIntent(current=>current?{...current,targetId,label}:null)}
             />
             {!tabPaused &&
               view.godMode &&

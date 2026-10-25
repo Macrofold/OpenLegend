@@ -112,6 +112,8 @@ export async function prepareReconsideration(
     namedClockTimes(service.world),
     activityRequestDescriptors(service.world),
     appraisal?.schema,
+    Object.keys(prepared.binding.identityReferences ?? {}),
+    Object.keys(prepared.binding.physicalEntityReferences ?? {}),
   );
   const current = async () => {
     if (
@@ -211,6 +213,8 @@ export async function prepareReconsideration(
           prepared.entityReferences,
           prepared.binding.knowledgeReferences,
           activityRequestDescriptors(service.world),
+          prepared.binding.identityReferences,
+          prepared.binding.physicalEntityReferences,
         );
       }
       if (!(await current()))
@@ -251,6 +255,8 @@ export async function prepareReconsideration(
               prepared.binding.evidenceIds,
               prepared.binding.knowledgeReferences,
               appraisal?.bindings,
+              prepared.binding.identityReferences,
+              prepared.binding.entityLeases,
             );
           },
           undefined,

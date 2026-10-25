@@ -1,3 +1,4 @@
+import { currentBodyObservation } from './perception-evidence.js';
 import { entityGet, entityHas, entityOwn } from './entity-collection.js';
 import { changeAppraisal, type AppraisalChange, type AppraisalBindings } from './appraisals.js';
 import { accessiblePossession } from './object-access.js';
@@ -20,6 +21,7 @@ import {
 } from './knowledge.js';
 import {
   assignSubjectName,
+  canAddressRememberedSubject,
   observerIndividual,
   canRememberSubject,
   rememberSubject,
@@ -364,6 +366,7 @@ export function commitActorResponse(
   knowledgeReferences: Record<string, ObserverSubject> = {},
   appraisalBindings?: AppraisalBindings,
   identityReferences: Record<string, ObserverSubject> = {},
+  entityLeases: Record<string, string> = {},
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -388,6 +391,7 @@ export function commitActorResponse(
     evidenceIds,
     knowledgeReferences,
     identityReferences,
+    entityLeases,
     ...(appraisalBindings ? { appraisalBindings } : {}),
   });
   const prior = getOwn(input.responseReceipts ?? {}, id);
@@ -557,9 +561,25 @@ export function commitActorResponse(
       );
       continue;
     }
-    if (directTarget) actionCommands.push({ actorId, targetId: directTarget });
+    if (directTarget && op.act) actionCommands.push({ actorId, targetId: directTarget });
     if (op.act?.slots?.recipientId)
       actionCommands.push({ actorId, targetId: op.act.slots.recipientId });
+    if (
+      actionCommands.some(
+        (command) =>
+          command.targetId &&
+          entityLeases[command.targetId] !== undefined &&
+          currentBodyObservation(world, actorId, command.targetId)?.id !==
+            entityLeases[command.targetId],
+      )
+    ) {
+      components[localId] = outcome(
+        false,
+        'stale-body',
+        'The observed body is no longer the same current observation.',
+      );
+      continue;
+    }
     if (targetEpisodes && !actionTargetsCurrent(world, actorId, actionCommands, targetEpisodes)) {
       components[localId] = outcome(
         false,
@@ -579,6 +599,7 @@ export function commitActorResponse(
     if (
       subject?.kind === 'entity' &&
       !noteReference &&
+      !canAddressRememberedSubject(world, actorId, subject.entityId) &&
       expectedEncounters &&
       expectedEncounters[subject.entityId] !==
         world.perceptionEpisodes?.[actorId]?.[subject.entityId]
@@ -607,7 +628,8 @@ export function commitActorResponse(
       const rememberable =
         subject === null ||
         (subject.kind === 'entity'
-          ? canRememberSubject(world, actorId, subject.entityId)
+          ? canRememberSubject(world, actorId, subject.entityId) ||
+            canAddressRememberedSubject(world, actorId, subject.entityId)
           : !!observerIndividual(world, actorId, subject)?.individualId);
       if (subject !== null && (noteReference ? !existingDocument : !rememberable))
         components[localId] = outcome(

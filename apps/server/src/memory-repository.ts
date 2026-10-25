@@ -4,8 +4,8 @@ import { LexicalProjection } from './lexical-projection.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
 import { matchesSearch, scanMatches, searchWords } from './text-search.js';
 // Preparation allowance, not a retained-history or searchable-corpus limit.
-export const RETRIEVAL_ROWS = 8192;
-export const RETRIEVAL_BYTES = 4 * 1024 * 1024;
+export const RETRIEVAL_ROWS = PERSONAL_EVIDENCE_PREPARATION.rows;
+export const RETRIEVAL_BYTES = PERSONAL_EVIDENCE_PREPARATION.bytes;
 export class MemoryPreparationError extends Error {
   override readonly name = 'MemoryPreparationError';
   constructor() {
@@ -25,11 +25,13 @@ import type {
 } from '@open-legend/domain';
 import {
   EXPERIENCE_LIMITS,
+  PERSONAL_EVIDENCE_PREPARATION,
   validEncounterExposure,
   validateEventEvidence,
   awarenessMemory,
   summaryMemory,
   validateExperienceManifest,
+  observationDependencies,
   validPersonalSourceRef,
   type PersonalSourceRef,
   prepareKnownPlaceEvidence,
@@ -393,10 +395,12 @@ export class MemoryRepository {
       CREATE INDEX IF NOT EXISTS recall_required ON recall_sources(world_id,actor_id,required,eligible,id);
       CREATE INDEX IF NOT EXISTS recall_record ON recall_sources(world_id,source_kind,record_id);
       CREATE TABLE IF NOT EXISTS mind_summary_sources (
-        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,summary_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,source_revision TEXT NOT NULL,support_key TEXT NOT NULL,
-        PRIMARY KEY(world_id,actor_id,summary_id,source_kind,source_id,source_revision,support_key));
+        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,summary_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,source_revision TEXT NOT NULL,support_key TEXT NOT NULL,source_life BIGINT NOT NULL,facet_ordinal BIGINT NOT NULL,alias_id TEXT NOT NULL,
+        PRIMARY KEY(world_id,actor_id,summary_id,source_kind,source_id,source_revision,support_key,source_life,facet_ordinal,alias_id));
       CREATE INDEX IF NOT EXISTS mind_summary_world_source ON mind_summary_sources(world_id,source_id,actor_id,summary_id);
       CREATE INDEX IF NOT EXISTS mind_summary_reverse ON mind_summary_sources(world_id,actor_id,source_id);
+      CREATE INDEX IF NOT EXISTS mind_summary_alias_reverse ON mind_summary_sources(world_id,actor_id,alias_id);
+      CREATE INDEX IF NOT EXISTS mind_summary_world_alias ON mind_summary_sources(world_id,alias_id,actor_id,summary_id);
       CREATE TABLE IF NOT EXISTS mind_source_versions (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,
         revision TEXT NOT NULL,payload TEXT NOT NULL,retired_revision BIGINT NOT NULL,
@@ -670,28 +674,8 @@ export class MemoryRepository {
         function* summaryLinks() {
           for (const entry of writes()) {
             const manifest = entry.manifest!;
-            for (const source of entry.sources)
-              yield [
-                worldId,
-                entry.actorId,
-                entry.id,
-                source.kind,
-                source.id,
-                source.revision,
-                'derivation',
-              ];
-            for (const source of manifest.coverage)
-              yield [
-                worldId,
-                entry.actorId,
-                entry.id,
-                source.kind,
-                source.id,
-                source.revision,
-                manifest.coverageKey,
-              ];
-            for (const group of manifest.speech)
-              for (const source of group.sources)
+            const personal = function* (sources: readonly PersonalSourceRef[], supportKey: string) {
+              for (const source of sources)
                 yield [
                   worldId,
                   entry.actorId,
@@ -699,8 +683,33 @@ export class MemoryRepository {
                   source.kind,
                   source.id,
                   source.revision,
-                  group.supportKey,
+                  supportKey,
+                  -1,
+                  -1,
+                  '',
                 ];
+            };
+            yield* personal(entry.sources, 'derivation');
+            yield* personal(manifest.coverage, manifest.coverageKey);
+            for (const group of manifest.speech) yield* personal(group.sources, group.supportKey);
+            for (const dependency of observationDependencies(manifest.observations)) {
+              const source = dependency.source;
+              if (source.observer.actorId !== entry.actorId)
+                throw new Error('Remembered native support belongs to another observer.');
+              for (const alias of dependency.aliases.length ? dependency.aliases : [''])
+                yield [
+                  worldId,
+                  entry.actorId,
+                  entry.id,
+                  source.family,
+                  source.id,
+                  JSON.stringify(source.revision),
+                  manifest.coverageKey,
+                  source.observer.physicalLife,
+                  dependency.ordinal ?? -1,
+                  alias,
+                ];
+            }
           }
         }
         await insertRows(this.db, 'mind_summary_sources', summaryLinks(), 'ON CONFLICT DO NOTHING');
@@ -772,7 +781,8 @@ export class MemoryRepository {
           corrected AS MATERIALIZED (SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=?),
           aware AS MATERIALIZED (SELECT id FROM recall_sources WHERE world_id=? AND actor_id=? AND source_kind='awareness'),
           invalid_summaries AS MATERIALIZED (SELECT summary_id FROM mind_summary_sources WHERE world_id=? AND actor_id=? AND
-            (source_id IN (SELECT source_id FROM forgotten) OR source_id IN (SELECT source_id FROM corrected)))
+            (source_id IN (SELECT source_id FROM forgotten) OR source_id IN (SELECT source_id FROM corrected)
+             OR alias_id IN (SELECT source_id FROM forgotten) OR alias_id IN (SELECT source_id FROM corrected)))
           UPDATE recall_sources AS r SET eligible=CASE WHEN
             r.id NOT IN (SELECT source_id FROM forgotten) AND (r.event_id IS NULL OR r.event_id NOT IN (SELECT source_id FROM forgotten))
             AND (r.source_kind<>'memory' OR ((r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
@@ -816,7 +826,7 @@ export class MemoryRepository {
             WHERE r.world_id=? AND r.actor_id=c.actor_id
             AND (r.event_id=c.id OR (c.fresh_kind IS NOT NULL AND r.id=c.id AND r.source_kind<>c.fresh_kind))
             AND NOT (c.fresh_kind IS NOT NULL AND r.id=c.id AND r.source_kind=c.fresh_kind)
-          UNION SELECT s.actor_id,s.summary_id FROM changed c CROSS JOIN mind_summary_sources s WHERE s.world_id=? AND s.actor_id=c.actor_id AND s.source_id=c.id)`;
+          UNION SELECT s.actor_id,s.summary_id FROM changed c CROSS JOIN mind_summary_sources s WHERE s.world_id=? AND s.actor_id=c.actor_id AND (s.source_id=c.id OR s.alias_id=c.id))`;
       const params = [...pairs.flat(), worldId, worldId, worldId, worldId];
       const target = '(r.actor_id,r.id) IN (SELECT actor_id,id FROM affected)';
 
@@ -1069,9 +1079,11 @@ export class MemoryRepository {
       const target = ids
         ? ` IN (${batch.map(() => 'SELECT ?').join(' UNION ')}
         UNION SELECT id FROM recall_sources WHERE world_id=? AND actor_id=? AND event_id IN (${params})
-        UNION SELECT summary_id FROM mind_summary_sources WHERE world_id=? AND actor_id=? AND source_id IN (${params}))`
+        UNION SELECT summary_id FROM mind_summary_sources WHERE world_id=? AND actor_id=? AND (source_id IN (${params}) OR alias_id IN (${params})))`
         : '';
-      const args = ids ? [...batch, worldId, actorId, ...batch, worldId, actorId, ...batch] : [];
+      const args = ids
+        ? [...batch, worldId, actorId, ...batch, worldId, actorId, ...batch, ...batch]
+        : [];
       await this.db
         .prepare(
           `DELETE FROM memory_index_queue WHERE world_id=? AND actor_id=?${ids ? ` AND source_id${target}` : ''}`,
@@ -1103,8 +1115,8 @@ export class MemoryRepository {
       AND NOT (r.memory_kind='episode' AND r.event_id IS NOT NULL AND EXISTS (SELECT 1 FROM recall_sources a WHERE a.world_id=r.world_id AND a.actor_id=r.actor_id AND a.source_kind='awareness' AND a.id=r.event_id))))
     AND (r.source_kind<>'summary' OR NOT EXISTS (
       SELECT 1 FROM mind_summary_sources s WHERE s.world_id=r.world_id AND s.actor_id=r.actor_id AND s.summary_id=r.id AND
-      (EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=s.world_id AND f.actor_id=s.actor_id AND f.source_id=s.source_id)
-       OR EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=s.world_id AND c.actor_id=s.actor_id AND c.source_id=s.source_id))))`;
+      (EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=s.world_id AND f.actor_id=s.actor_id AND (f.source_id=s.source_id OR f.source_id=s.alias_id))
+       OR EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=s.world_id AND c.actor_id=s.actor_id AND (c.source_id=s.source_id OR c.source_id=s.alias_id)))))`;
   private params(scope: MemoryScope) {
     return [scope.worldId, scope.actorId, scope.generation];
   }

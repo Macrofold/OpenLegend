@@ -1,5 +1,5 @@
 import { original, isDraft } from 'immer';
-import { validPersonalSourceRef } from './experience-source.js';
+import { PERSONAL_EVIDENCE_PREPARATION, validPersonalSourceRef } from './experience-source.js';
 import { validateEvidenceSource, validateObservedLocation } from './perception-values.js';
 import type { PersonalSourceRef } from './experience-source.js';
 import type { Awareness } from './experience.js';
@@ -14,6 +14,8 @@ export interface KnownPlaceCapsule {
   source: EvidenceSource;
   facetOrdinal: number;
   personalSource?: PersonalSourceRef;
+  /** Original personal occurrence alias, used only for correction/forgetting routing. */
+  sourceEventId?: string;
   observedAt: number;
   acquiredAt: number;
   provenance: 'observed' | 'testimony' | 'authored';
@@ -49,6 +51,7 @@ export class KnownPlacePreparationError extends Error {
 export function prepareKnownPlaceEvidence(
   capsules: readonly KnownPlaceCapsule[],
 ): PreparedKnownPlaceEvidence {
+  if (capsules.length > PERSONAL_EVIDENCE_PREPARATION.rows) throw new KnownPlacePreparationError();
   const labels = new Map<string, KnownPlaceCapsule[]>();
   let bytes = 0;
   for (const capsule of capsules) {
@@ -64,6 +67,8 @@ export function prepareKnownPlaceEvidence(
       !Number.isFinite(capsule.acquiredAt) ||
       capsule.observedAt > capsule.acquiredAt ||
       !['observed', 'testimony', 'authored'].includes(capsule.provenance) ||
+      (capsule.provenance !== 'authored' &&
+        (typeof capsule.sourceEventId !== 'string' || !capsule.sourceEventId)) ||
       (capsule.personalSource !== undefined && !validPersonalSourceRef(capsule.personalSource))
     )
       throw new KnownPlacePreparationError();
@@ -71,6 +76,7 @@ export function prepareKnownPlaceEvidence(
     validateObservedLocation(capsule.location);
     const value = copyCapsule(capsule);
     bytes += textEncoder.encode(JSON.stringify(value)).length;
+    if (bytes > PERSONAL_EVIDENCE_PREPARATION.bytes) throw new KnownPlacePreparationError();
     const matches = labels.get(value.label);
     if (matches) matches.push(value);
     else labels.set(value.label, [value]);
@@ -132,6 +138,7 @@ export function knownPlaceCapsule(
       revision: observation.revision,
     },
     facetOrdinal: location.ordinal,
+    sourceEventId: entry.eventId,
     ...(personalSource ? { personalSource } : {}),
     observedAt: location.asOf,
     acquiredAt: location.acquiredAt,
@@ -155,15 +162,20 @@ export function acquireKnownPlaceEvidence(world: WorldState, entry: Awareness): 
   }
   labels.set(capsule.label, [...(labels.get(capsule.label) ?? []), capsule]);
   const capsules = [...current.capsules.filter((value) => value.placeId !== exposure.id), capsule];
-  const encoder = textEncoder;
-  installKnownPlaceEvidence(world, entry.actorId, {
-    capsules,
-    labels,
-    bytes:
-      current.bytes -
-      (prior ? encoder.encode(JSON.stringify(prior)).length : 0) +
-      encoder.encode(JSON.stringify(capsule)).length,
-  });
+  const bytes =
+    current.bytes -
+    (prior ? textEncoder.encode(JSON.stringify(prior)).length : 0) +
+    textEncoder.encode(JSON.stringify(capsule)).length;
+  if (
+    capsules.length > PERSONAL_EVIDENCE_PREPARATION.rows ||
+    bytes > PERSONAL_EVIDENCE_PREPARATION.bytes
+  ) {
+    // Retention already committed to its source owner. Hold only dependent native use;
+    // neither truncating the index nor rejecting the source would preserve that meaning.
+    invalidateKnownPlaceEvidence(world, entry.actorId);
+    return;
+  }
+  installKnownPlaceEvidence(world, entry.actorId, { capsules, labels, bytes });
 }
 export function invalidateKnownPlaceEvidence(world: WorldState, actorId: string): void {
   const actors = new Map(currentPreparation(world) ?? []);

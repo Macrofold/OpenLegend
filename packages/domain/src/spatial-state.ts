@@ -55,7 +55,13 @@ export interface FlightRoute {
   points: Array<{ position: WorldPoint; landingSurfaceId?: string; waitSeconds: number }>;
 }
 export type Placement =
-  | { mode: 'world'; position: WorldPoint; supportSurfaceId: string | null; revision: number }
+  | {
+      mode: 'world';
+      position: WorldPoint;
+      supportSurfaceId: string | null;
+      revision: number;
+      motionContinuityRevision?: number;
+    }
   | { mode: 'contained'; parentEntityId: string; revision: number }
   | { mode: 'attached'; parentEntityId: string; portId: string; revision: number }
   | ({
@@ -151,6 +157,7 @@ export function setSpatialPosition(
   entity: Entity,
   point: WorldPoint,
   supportSurfaceId: string | null,
+  continuity: 'relocation' | 'physical' = 'relocation',
 ): void {
   if (!finitePoint(point)) throw new Error('Invalid authoritative position.');
   const dx = point.x - worldPosition(entity).x,
@@ -178,6 +185,9 @@ export function setSpatialPosition(
   placement.position = { x: point.x, y: point.y, z: point.z };
   placement.supportSurfaceId = supportSurfaceId;
   placement.revision++;
+  // Only the native walk/flight owners prove a physically continuous change.
+  // Recovery, reincarnation and authored relocation cannot create received motion.
+  if (continuity === 'relocation') placement.motionContinuityRevision = placement.revision;
 }
 
 /** A newly chosen ground approach or actual relocation replaces a finished

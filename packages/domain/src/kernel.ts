@@ -10,7 +10,12 @@ import {
   type AnimalWanderPreparation,
 } from './worlds/base/animal-wander-queue.js';
 import { entityGet, entityOwn } from './entity-collection.js';
-import { reconcileVisualEvidence, endCurrentEvidence } from './perception-evidence.js';
+import {
+  reconcileVisualEvidence,
+  endCurrentEvidence,
+  currentBodyObservation,
+  recentExposureEpisode,
+} from './perception-evidence.js';
 import {
   prospectiveWork,
   validResponsePurpose,
@@ -204,7 +209,7 @@ import {
   mergeLots,
   custodian,
 } from './objects.js';
-import { worldPosition, worldSupport } from './spatial-state.js';
+import { worldPosition, worldSupport, worldPlacement } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
 import { finishSimulatedExits } from './participation.js';
 import {
@@ -3849,7 +3854,7 @@ function moveAlongPath(
     const delta = distance(start, point);
     if (delta <= SPATIAL_LIMITS.epsilon) {
       if (!withinTerritory(point) || !canWalkSegment(map, start, point, profile)) return false;
-      setSpatialPosition(world, actor, point, point.surfaceId);
+      setSpatialPosition(world, actor, point, point.surfaceId, 'physical');
       path.shift();
       continue;
     }
@@ -3876,17 +3881,23 @@ function moveAlongPath(
           else high = fraction;
         }
         if (low > 0)
-          setSpatialPosition(world, actor, interpolate(start, next, low), start.surfaceId);
+          setSpatialPosition(
+            world,
+            actor,
+            interpolate(start, next, low),
+            start.surfaceId,
+            'physical',
+          );
       }
       return false;
     }
 
     if (delta <= remaining) {
-      setSpatialPosition(world, actor, point, point.surfaceId);
+      setSpatialPosition(world, actor, point, point.surfaceId, 'physical');
       path.shift();
       remaining -= delta;
     } else {
-      setSpatialPosition(world, actor, next, start.surfaceId);
+      setSpatialPosition(world, actor, next, start.surfaceId, 'physical');
       remaining = 0;
     }
   }
@@ -6038,8 +6049,9 @@ function* updateEncounters(
                 }),
             ),
             vision,
+            SIGHTING_POLICY.episodeLingerSeconds,
           );
-        } else endCurrentEvidence(world, actor.id, 'sight');
+        } else endCurrentEvidence(world, actor.id, 'sight', SIGHTING_POLICY.episodeLingerSeconds);
         reconcileNativeExposure(world, entityGet(world.entities, actor.id)!, candidates);
       }
       continue;
@@ -6075,7 +6087,7 @@ function* updateEncounters(
         () => frame.nearby(actor.position, touchRadius, 'contact'),
       );
     if (radius === 0 || blocked) {
-      endCurrentEvidence(world, actor.id, 'sight');
+      endCurrentEvidence(world, actor.id, 'sight', SIGHTING_POLICY.episodeLingerSeconds);
       if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
       if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
       if (Object.keys(world.visiblePlaces?.[actor.id] ?? {}).length)
@@ -6173,14 +6185,7 @@ function* updateEncounters(
     }
     // Persistent exposure episodes do not imply identity recognition across a disappearance;
     // a return within the linger window is the same episode. docs/knowledge.md#subject-binding
-    const lingering = (id: string) => {
-      const record = sightings?.get(id);
-      return record &&
-        !record.present &&
-        world.simTime - record.at <= SIGHTING_POLICY.episodeLingerSeconds
-        ? record.episode
-        : undefined;
-    };
+    const lingering = (id: string) => recentExposureEpisode(world, actor.id, id);
     const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
     const certified = Object.isFrozen(priorEpisodes)
       ? episodeMembership.get(priorEpisodes)
@@ -6214,6 +6219,7 @@ function* updateEncounters(
         entityGet(world.entities, actor.id)!,
         [...seen, ...objectIds].flatMap((id) => entityGet(world.entities, id) ?? []),
         vision,
+        SIGHTING_POLICY.episodeLingerSeconds,
       );
     const newlySeen = samePeople
       ? []
@@ -6337,17 +6343,27 @@ export function observeActor(
     }));
   const knownRecipeIds = new Set(knownRecipes.map((recipe) => recipe.id));
   const definitionIds = new Set(inventory.map((item) => item.definitionId));
-  const sees = entityVisionQuery(world, actor);
-  const visibleEntities = nearbyEntities(world, worldPosition(actor), visionRadius(world, actor))
-    .filter((entity) => entity.id !== actorId && sees(entity))
-    .map((entity) => {
+  // This is a private native menu/admission read. Eligible bodies and their
+  // transforms come only from already acquired current evidence; downstream model
+  // and player projections consume facets rather than these authority records.
+  const visibleEntities = Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})
+    .filter((lease) => lease.value.kind === 'body' && lease.subjectId !== actorId)
+    .flatMap((lease) => {
+      const received = currentBodyObservation(world, actorId, lease.subjectId);
+      const entity = entityGet(world.entities, lease.subjectId);
+      if (!received || !entity) return [];
       // Shape the permitted view before its one final deep copy. Cloning a private plan or
       // long future route just to erase it wastes work proportional to invisible state.
       // docs/architecture.md#dependencies-and-authority
       const copy: Entity = {
         ...entity,
         ...observerName(world, actorId, entity.id),
-        spatial: { ...entity.spatial },
+        spatial: { ...entity.spatial, heading: received.value.body.heading },
+        placement: worldPlacement(
+          received.value.body.position,
+          received.value.body.supportSurfaceId,
+        ),
+        appearance: received.value.body.appearance,
         ...(entity.actor
           ? {
               actor: {
@@ -6399,7 +6415,7 @@ export function observeActor(
         copy.actor.planGeneration = 0;
       }
       if (copy.resource) definitionIds.add(copy.resource.definitionId);
-      return copy;
+      return [copy];
     });
   const pileIds = new Set(visibleEntities.filter((e) => e.kind === 'item-pile').map((e) => e.id));
   const groundItems = [...pileIds].flatMap((id) => itemsForOwner(world, id));

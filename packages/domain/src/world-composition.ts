@@ -37,7 +37,53 @@ import type {
   PreparedResponseSituation,
   PreparedResponseObservation,
 } from './prepared-responses.js';
-import { ordinaryWarningPlace, ordinaryWarningDurationSeconds } from './worlds/base/recognition.js';
+import {
+  ordinaryWarningPlace,
+  ordinaryWarningDurationSeconds,
+  BASE_VOICE_FEATURE_FAMILY,
+  receivedVoiceFeatures,
+  perceiveVoice,
+} from './worlds/base/recognition.js';
+import { hasMemory } from './living.js';
+import { ensureBodyIndividual, outwardBodyName } from './worlds/base/knowledge.js';
+
+/** Current direct-path voice interpretation is selected world behavior. Future
+ * acoustic producers supply their own admitted received feature evidence. */
+export function selectedVoiceReception(
+  world: WorldState,
+  observer: import('./types.js').Entity,
+  source: import('./types.js').Entity,
+  event: import('./types.js').WorldEvent,
+  clarityMarginDb: number,
+  visibleSourceId?: string,
+) {
+  selectedCreationProfileForWorld(world);
+  if (!hasMemory(observer) || !observer.actor?.individualRecognition || !source.actor?.voiceProfile)
+    return undefined;
+  const features = receivedVoiceFeatures(source.actor.voiceProfile);
+  return {
+    family: BASE_VOICE_FEATURE_FAMILY,
+    features,
+    recognition: perceiveVoice(
+      world,
+      observer.id,
+      event,
+      features,
+      clarityMarginDb,
+      visibleSourceId,
+    ),
+  };
+}
+
+/** Outward category wording belongs to the selected world and is sampled with the body. */
+export function selectedOutwardBodyName(world: WorldState, entity: import('./types.js').Entity) {
+  selectedCreationProfileForWorld(world);
+  return outwardBodyName(world, entity);
+}
+export function selectedBodyIndividual(world: WorldState, observerId: string, subjectId: string) {
+  selectedCreationProfileForWorld(world);
+  return ensureBodyIndividual(world, observerId, subjectId);
+}
 
 /** The selected world owns understood warning grammar and its stated duration. */
 export function selectedOrdinaryWarning(

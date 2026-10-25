@@ -200,12 +200,14 @@ export function boundResponseSchema(
   requests: InstalledActivityRequests = [],
   appraisal?: z.ZodType<DecisionAppraisalProposal>,
   identityReferences: string[] = [],
+  physicalEntityIds: string[] = [],
 ) {
   const until = namedTimes.length
     ? z.enum(namedTimes as [string, ...string[]]).nullable()
     : z.null();
   if (!entityIds.length) throw new Error('A response requires a permitted actor ID.');
   const entityId = z.enum(entityIds as [string, ...string[]]);
+  const physicalEntityId = physicalEntityIds.length ? z.enum(physicalEntityIds as [string, ...string[]]).nullable() : z.null();
   const noteSubject = z.enum([...entityIds, ...knowledgeReferences, ...identityReferences] as [string, ...string[]]);
   const nameSubject = z.enum([...entityIds, ...identityReferences] as [string, ...string[]]);
   const actionId = actionIds.length
@@ -224,16 +226,16 @@ export function boundResponseSchema(
     act: operationSchema.shape.act
       .unwrap()
       .extend({
-        targetEntityId: entityId.nullable(),
+        targetEntityId: physicalEntityId,
         actionId,
         invocation: actionInvocationSchema(requests)
-          .extend({ targetEntityId: entityId.nullable(), itemId: entityId.nullable(), until })
+          .extend({ targetEntityId: physicalEntityId, itemId: physicalEntityId, until })
           .nullable(),
         slots: intentSlotsSchema
           .extend({
-            itemId: entityId.nullable(),
-            instrumentId: entityId.nullable(),
-            recipientId: entityId.nullable(),
+            itemId: physicalEntityId,
+            instrumentId: physicalEntityId,
+            recipientId: physicalEntityId,
             until,
           })
           .nullable(),

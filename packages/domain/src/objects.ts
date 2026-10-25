@@ -1350,6 +1350,11 @@ export function validateObjects(world: WorldState): void {
       !placement ||
       !Number.isSafeInteger(placement.revision) ||
       placement.revision < 0 ||
+      (placement.mode === 'world' &&
+        placement.motionContinuityRevision !== undefined &&
+        (!Number.isSafeInteger(placement.motionContinuityRevision) ||
+          placement.motionContinuityRevision < 0 ||
+          placement.motionContinuityRevision > placement.revision)) ||
       !['world', 'contained', 'attached'].includes(placement.mode)
     )
       throw new Error('Invalid physical placement.');
@@ -1367,6 +1372,7 @@ export function validateObjects(world: WorldState): void {
               ...(placement.portId === 'assembly' ? ['local', 'slot'] : []),
             ]
           : ['mode', 'parentEntityId', 'revision'],
+      placement.mode === 'world' ? ['motionContinuityRevision'] : [],
     );
     if (!placementFieldsValid) throw new Error('Conflicting physical placement fields.');
     if (placement.mode !== 'world') {

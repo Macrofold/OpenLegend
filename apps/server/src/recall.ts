@@ -6,7 +6,7 @@ import { personalPronoun } from '@open-legend/language';
 import { memoryMeaningForModel } from './experience-context.js';
 export { experienceManifestForModel } from './experience-context.js';
 import { MemoryPreparationError, RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
-import { stimulusSalience, STIMULUS_POLICY } from '@open-legend/domain';
+import { STIMULUS_POLICY } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import type {
   RetrievedMemory,
@@ -15,7 +15,12 @@ import type {
   CurrentMemorySource,
 } from './memory-repository.js';
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
-import { recognizesSubject, observerGivenName, observerDescription, speechDescription } from '@open-legend/domain';
+import {
+  currentBodyObservation,
+  identityForEntity,
+  observerIndividual,
+  speechDescription,
+} from '@open-legend/domain';
 import {
   entityHandle,
   projectEntityMarkers,
@@ -95,6 +100,44 @@ export function gameTime(at: number, offsetHours: number): string {
   const minute = Math.floor(clock / 60) % 60;
   return `Day ${Math.floor(at / 86400) + 1}, ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 }
+/** Identity follows the observer's retained role, never a raw history entity ID.
+ * A later face/voice recognition cannot retroactively identify an unknown episode. */
+function retainedMemoryEntities(
+  world: WorldState,
+  actorId: string,
+  memory: MemoryRecord,
+  awareness?: Awareness,
+): Set<string> {
+  const subjects = [
+    ...(memory.evidence?.sourceSubject ? [memory.evidence.sourceSubject] : []),
+    ...(memory.manifest?.speech.flatMap((group) =>
+      group.sourceSubject ? [group.sourceSubject] : [],
+    ) ?? []),
+    ...[
+      ...(memory.observation ? [memory.observation] : []),
+      ...(memory.manifest?.observations ?? []),
+    ].flatMap((observation) =>
+      observation.facets.flatMap((facet) =>
+        facet.value.kind === 'association' && facet.value.strength === 'supported'
+          ? [facet.value.subject]
+          : [],
+      ),
+    ),
+  ];
+  return new Set([
+    actorId,
+    ...subjects.flatMap((subject) => {
+      const id =
+        subject.kind === 'entity'
+          ? subject.entityId
+          : observerIndividual(world, actorId, subject)?.canonicalId;
+      return id ? [id] : [];
+    }),
+    ...memory.entityIds.filter(
+      (id) => !!awareness && awarenessBindsSubject(world, actorId, awareness, id),
+    ),
+  ]);
+}
 export function memoryCandidate(
   memory: MemoryRecord,
   world: WorldState,
@@ -108,12 +151,10 @@ export function memoryCandidate(
 ): AttentionCandidate {
   const matches = (ids: Set<string>) =>
     ids.has(memory.id) || (memory.eventId ? ids.has(memory.eventId) : false);
-  let summary = memory.summary.replace(/\(ID:([^()\s]+)\)/g, (marker, id: string) => {
-    const entity = entityGet(world.entities, id);
-    return entity?.actor && !observerGivenName(world, actorId, entity.id)
-      ? observerDescription(world, actorId, entity.id)
-      : marker;
-  });
+  const permittedEntities = retainedMemoryEntities(world, actorId, memory, awareness);
+  let summary = memory.summary.replace(/\(ID:([^()\s]+)\)/g, (marker, id: string) =>
+    permittedEntities.has(id) ? marker : '',
+  );
   // Preserve who spoke to whom using this observer's event-time evidence. An ongoing
   // exposure can bind an unnamed speaker; an old canonical ID cannot identify a new exposure.
   // docs/memory-architecture.md#personal-perspective-and-acquisition
@@ -148,9 +189,17 @@ export function memoryCandidate(
     hasStructuredExperience,
     subjects: [
       ...(memory.evidence?.sourceSubject ? [memory.evidence.sourceSubject] : []),
-      ...(memory.manifest?.speech.flatMap(group => group.sourceSubject ? [group.sourceSubject] : []) ?? []),
-      ...[...(memory.observation ? [memory.observation] : []), ...(memory.manifest?.observations ?? [])]
-        .flatMap(observation => observation.facets.flatMap(facet => facet.value.kind === 'association' ? [facet.value.subject] : [])),
+      ...(memory.manifest?.speech.flatMap((group) =>
+        group.sourceSubject ? [group.sourceSubject] : [],
+      ) ?? []),
+      ...[
+        ...(memory.observation ? [memory.observation] : []),
+        ...(memory.manifest?.observations ?? []),
+      ].flatMap((observation) =>
+        observation.facets.flatMap((facet) =>
+          facet.value.kind === 'association' ? [facet.value.subject] : [],
+        ),
+      ),
     ],
     ...(awareness
       ? {
@@ -161,10 +210,8 @@ export function memoryCandidate(
     required,
     requiredSource: required,
     automatic: matches(automaticIds),
-    entityIds: [...new Set(memory.entityIds)].filter(
-      (id) =>
-        recognizesSubject(world, actorId, id) ||
-        (!!awareness && awarenessBindsSubject(world, actorId, awareness, id)),
+    entityIds: [...permittedEntities].filter(
+      (id) => id !== actorId || memory.entityIds.includes(id),
     ),
     at: memory.at,
     salience: memory.importance,
@@ -241,10 +288,10 @@ export function candidateSet(
   const duplicateMemories = new Map<string, AttentionCandidate>();
   // Remembering a named individual is separate from recognizing a current exposure.
   const namedMemoryIds = new Set(
-    recallable
+    memories
       .filter((memory) =>
         memory.entityIds.some(
-          (id) => id !== actorId && !!observerGivenName(world, actorId, id),
+          (id) => id !== actorId && !!identityForEntity(world, actorId, id)?.givenName,
         ),
       )
       .map((memory) => memory.id),
@@ -308,7 +355,9 @@ export function candidateSet(
     groundItems.set(item.ownerId, contents);
   }
   for (const e of observed.visibleEntities) {
-    const description = perceivedEntityText(e, definitions, world, actorId, groundItems.get(e.id));
+    const received = currentBodyObservation(world, actorId, e.id);
+    const description = perceivedEntityText(world, actorId, e.id);
+    if (!received || !description) continue;
     const embeddingText = description.replace(/ \(ID:[a-f0-9]+\)/g, '');
     candidates.push({
       id: `entity:${e.id}`,
@@ -319,10 +368,18 @@ export function candidateSet(
       required: false,
       automatic: false,
       entityIds: [e.id],
-      at: world.simTime,
+      at: received.valueAcquiredAt,
       // Ongoing physical salience ranks a burning fire or a fallen person earlier in
       // optional attention; it forces nothing into context (EPR06).
-      salience: 3 + stimulusSalience(e, STIMULUS_POLICY),
+      salience:
+        3 +
+        Math.max(
+          0,
+          ...received.value.body.outward.map(
+            (state) =>
+              Object.entries(STIMULUS_POLICY.salience).find(([name]) => name === state)?.[1] ?? 0,
+          ),
+        ),
     });
   }
   for (const item of observed.inventory) {

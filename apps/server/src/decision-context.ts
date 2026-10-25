@@ -1,3 +1,4 @@
+import { currentBodyObservation } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import {
   bindNativeChoice,
@@ -902,7 +903,7 @@ export async function prepareDecision(
       .flatMap((pile) => portableItems(currentWorld, pile.id).map((item) => item.id))
       .slice(0, 16),
     activityDecisionReferences(currentActivity),
-    currentSelection.flatMap(candidate => candidate.subjects ?? []),
+    currentSelection.flatMap((candidate) => candidate.subjects ?? []),
   );
   context['references'] = references.references;
   const planningTargetIds = planOffers.flatMap(({ command }) =>
@@ -924,6 +925,19 @@ export async function prepareDecision(
     ),
     knowledgeReferences: selectedKnowledgeReferences(currentWorld, actorId, currentSelection),
     identityReferences: references.identityReferences,
+    physicalEntityReferences: {
+      ...references.physicalEntityReferences,
+      ...entityReferenceMap(currentWorld, planningTargetIds, actorId),
+    },
+    entityLeases: {
+      ...references.entityLeases,
+      ...Object.fromEntries(
+        planningTargetIds.flatMap((id) => {
+          const received = currentBodyObservation(currentWorld, actorId, id);
+          return received ? [[id, received.id]] : [];
+        }),
+      ),
+    },
     actorId,
     decisionId: jobId,
     policy: MIND_POLICY,
@@ -1133,7 +1147,19 @@ export async function selectDecisionActions(
   };
   const offered = selected.map((candidate) => allOffers[candidates.indexOf(candidate)]!);
   const entityReferences = actionEntityReferences(prepared, selected);
-  const binding = { ...prepared.binding, actions, entityIds: Object.values(entityReferences) };
+  const binding: CognitionBinding = {
+    ...prepared.binding,
+    actions,
+    entityIds: Object.values(entityReferences),
+    physicalEntityReferences: {
+      ...prepared.binding.physicalEntityReferences,
+      ...Object.fromEntries(
+        Object.entries(prepared.visibleEntityReferences).filter(([, id]) =>
+          Object.values(entityReferences).includes(id),
+        ),
+      ),
+    },
+  };
   const prompt = readableDecisionContext(prepared.context, offered, true);
   const inputBytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   if (inputBytes > CONTEXT_BYTE_LIMIT)

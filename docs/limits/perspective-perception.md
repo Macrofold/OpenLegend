@@ -2,7 +2,7 @@
 
 Module A's [feature specification](../projects/perspective-perception-feature-spec.md), [technical design](../projects/perspective-perception-tech-design.md) and [PP00–PP07 tracker](../maintainers/perspective-perception.md) own the selected behavior, implementation and qualification. The [base-world policy](../worlds/base/perception-recognition.md) owns the numerical recognition/detection law. This inventory records its limits, reasons and boundaries without making them universal engine rules.
 
-**Evidence baseline:** documentation and source inspection at contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`, reviewed October 19, 2026 in the maintainer's local timezone. All new A limits below are **Proposed — selected design, unimplemented and unqualified** unless explicitly marked otherwise. No reported throughput, model accuracy or player enjoyment is inferred from a chosen number. Existing hearing, memory and native-controller delivery retain their own measured/historical evidence.
+**Evidence baseline:** documentation and source inspection at contracts tip `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`, reviewed October 19, 2026 in the maintainer's local timezone. The existing-channel implementation is recorded in [the scoped evidence](../verification/personal-perception-foundation.md). Numerical policies below remain unqualified gameplay/capacity choices; physical B/C limits and full PP07 acceptance remain open. No reported throughput, model accuracy or player enjoyment is inferred from a chosen number. Existing hearing, memory and native-controller delivery retain their own measured/historical evidence.
 
 ## PP-L01 — Supported sensory and interpretation families
 

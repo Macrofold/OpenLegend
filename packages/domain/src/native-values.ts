@@ -1,6 +1,6 @@
 import { draftWorld, finishWorld, readOnlyDraftView } from './draft.js';
 import { entityGet } from './entity-collection.js';
-import { recordSemanticChange } from './dependencies.js';
+import { recordSemanticChange, recordSensoryChange } from './dependencies.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { getOwn, hasRecordFields, isSafeRecordId } from './records.js';
 import {
@@ -299,6 +299,13 @@ export function retainNativeIntegration(
   for (const binding of bindings) {
     // Eligibility already proved whether any meter changes. Clamped accounting-only
     // continuation sends no invented attribute invalidation or repeated replay.
+    if (
+      Object.entries(binding.attributes).some(
+        ([id, attribute]) =>
+          attribute.changed && attributeDefinition(world, id)?.disclosure === 'public',
+      )
+    )
+      recordSensoryChange(world, binding.entityId);
     if (Object.values(binding.attributes).some((attribute) => attribute.changed))
       recordSemanticChange(world, {
         kind: 'state',

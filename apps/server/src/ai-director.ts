@@ -446,11 +446,14 @@ export class AiDirector {
     slots: IntentSlots | null = null,
     expression = false,
   ): Promise<ApiResult> {
-    const targetReference = targetId;
+    let targetReference = targetId;
     return this.admission(() =>
       this.service.authorized(authority, 'play', true, async () => {
         this.service.assertScope(authority, 'play', true);
-        if (expression && targetId === authority.actorId) targetId = undefined;
+        if (expression && targetId === authority.actorId) {
+          targetId = undefined;
+          targetReference = undefined;
+        }
         const identity = playerActionIdentity(
           this.service.world.id,
           this.service.timelineId,
@@ -2107,7 +2110,7 @@ export class AiDirector {
       required,
     );
     const validityFor = (world: WorldState) =>
-      preparedResponseValidity(world, actorId, interpretations.scopes);
+      preparedResponseValidity(world, actorId, interpretations.scopes, prepared.binding.entityLeases);
     run.validityFor = validityFor;
     run.validity = validityFor(this.service.world);
     const current = async () => {
@@ -2197,6 +2200,7 @@ export class AiDirector {
               prepared.binding.knowledgeReferences,
               interpretations.bound.bindings,
               prepared.binding.identityReferences,
+              prepared.binding.entityLeases,
             );
             // Only this serialized native result can advance the expected feeling revisions.
             // Subscribers see the postcommit guard, while external changes stay fenced.
@@ -2318,6 +2322,7 @@ export class AiDirector {
             choice.prepared.binding.knowledgeReferences,
             undefined,
             choice.prepared.binding.identityReferences,
+            choice.prepared.binding.entityLeases,
           );
         },
         undefined,
@@ -3155,6 +3160,7 @@ export class AiDirector {
       activityRequestDescriptors(this.service.world),
       appraisals?.schema,
       Object.keys(prepared.binding.identityReferences ?? {}),
+      Object.keys(prepared.binding.physicalEntityReferences ?? {}),
     );
     const schema = actorInvention.enabled
       ? baseSchema.extend({ invention: actorInvention.schema })
@@ -3210,6 +3216,7 @@ export class AiDirector {
                     prepared.binding.knowledgeReferences,
                     activityRequestDescriptors(this.service.world),
                     prepared.binding.identityReferences,
+                    prepared.binding.physicalEntityReferences,
                   ).operations[0] ?? null)
                 : null;
             },
@@ -3357,6 +3364,7 @@ export class AiDirector {
       prepared.binding.knowledgeReferences,
       activityRequestDescriptors(this.service.world),
       prepared.binding.identityReferences,
+      prepared.binding.physicalEntityReferences,
     );
     const proposedInvention =
       actorInvention.enabled && 'invention' in reply
@@ -3434,6 +3442,7 @@ export class AiDirector {
             prepared.binding.knowledgeReferences,
             appraisals?.bindings,
             prepared.binding.identityReferences,
+            prepared.binding.entityLeases,
           );
         },
         undefined,

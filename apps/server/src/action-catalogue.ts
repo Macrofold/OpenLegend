@@ -92,7 +92,13 @@ export function primaryActionRefusal(
     throw error;
   }
   const action = catalogue.actions.find((entry) => entry.id === catalogue.defaultActionId);
-  if (!action || (publicSelection ? publicActionReference(scope, action.id) : action.id) !== input.primaryAction.actionId || action.intent.kind !== 'command') return stale;
+  if (
+    !action ||
+    (publicSelection ? publicActionReference(scope, action.id) : action.id) !==
+      input.primaryAction.actionId ||
+    action.intent.kind !== 'command'
+  )
+    return stale;
   const { primaryAction: _selection, lethalReviewId: _review, ...command } = input;
   // Compare the wire meaning: optional undefined fields disappear in transport,
   // and object property order must not change an otherwise identical choice.

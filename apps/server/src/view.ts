@@ -1,6 +1,6 @@
-import { currentBodyObservation, currentObservedFacets, recognizesSubject } from '@open-legend/domain';
+import { currentBodyObservation, currentObservedFacets, recognizesSubject, canAddressRememberedSubject, subjectLabel, currentCommunicationSubject } from '@open-legend/domain';
 import { currentContactReference, communicationReference, projectCommandContactReferences } from './public-contact-references.js';
-import { permittedSourceHandle } from './entity-references.js';
+import { permittedSourceHandle, evidenceSourceHandle } from './entity-references.js';
 import { entityGet } from '@open-legend/domain';
 import { selectedEventPresentation } from '@open-legend/domain';
 import {
@@ -101,7 +101,6 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { describeEntity } from './entity-description.js';
-import { entityBodyReference } from './entity-references.js';
 import { reincarnationPolicy, scarTreatmentProblem } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
 
@@ -421,7 +420,8 @@ export async function projectView(
     const facets = currentObservedFacets(world, player.id, entity.id);
     const pile = facets.find(facet => facet.value.kind === 'pile-contents');
     const carried = facets.find(facet => facet.value.kind === 'carried');
-    const display = body.label ?? observerName(world, player.id, entity.id);
+    const publicAttributes = facets.find(facet => facet.value.kind === 'public-attributes');
+    const display = observerName(world, player.id, entity.id);
     const kind: EntityView['kind'] = body.kind === 'animal' ? 'animal'
       : body.kind === 'npc' || body.kind === 'player' ? 'actor'
       : body.kind === 'remains' ? 'remains'
@@ -440,18 +440,20 @@ export async function projectView(
         controls.push(action(option.id, option.shortLabel, option.command, preview.ok, preview.message));
       }
     }
+    const rememberedAddressee = currentCommunicationSubject(world,player.id,entity.id);
     const installedControls = controls.filter(option => nativeCommandSupported(world, nativeCommandKind(option.command.type)));
-    const speechCapable = entity.actor ? canSpeak(entity) : undefined;
+
     return {
       id: currentContactReference(world, scope, entity), ...display,
       observation: { kind:'current', modality:'sight', measurementAt:received.valueMeasuredThrough,
         acquiredAt:received.valueAcquiredAt, confirmedThrough:received.confirmedThrough,
-        sourceReference:permittedSourceHandle(world, player.id, received.original) },
+        sourceReference:evidenceSourceHandle(world,player.id,{family:'native-exposure',observer:received.original.observer,id:received.original.id,revision:received.original.revision}) },
       kind, subtype:body.kind, position:body.position, supportSurfaceId:body.supportSurfaceId,
       heading:body.heading, appearance:body.appearance, radius:body.radius,
       bodySize:{width:body.radius*2,height:body.height},
       status:body.outward.filter(Boolean).join(', '),
       ...(body.description ? {description:body.description} : {}),
+      ...(publicAttributes?.value.kind === 'public-attributes' ? {attributes:publicAttributes.value.attributes} : {}),
       ...(body.quantity !== undefined ? {quantity:body.quantity} : {}),
       ...(body.heatLit !== undefined ? {heat:{lit:body.heatLit}} : {}),
       ...(body.remainsPhase === 'fresh' || body.remainsPhase === 'rotting'
@@ -462,11 +464,8 @@ export async function projectView(
         confirmedThrough:carried.confirmedThrough,
       }} : {}),
       ...(entity.actor ? {
-        speechCapable, canTalk:speechCapable && body.outward[0] === 'alive',
-        talkRequiresAi:entity.actor.controller === 'npc',
-        bodyReference:entityBodyReference(scopeKey(scope),entity),
-        ...(recognizesSubject(world,player.id,entity.id)
-          ? {communicationReference:communicationReference(scope,entity)} : {}),
+        canTalk:body.outward[0] === 'alive',
+        ...(rememberedAddressee ? {communicationReference:communicationReference(scope,{id:rememberedAddressee})} : {}),
         ...(entity.actor.alive && canHandleItems(world,entity) ? {
           trade:projectCommandContactReferences(world,scope,itemTradeView(world,player.id,
             memo('tradeOwnLots',[observation.inventory,world.itemDefinitions],()=>tradeOwnLots(world,observation.inventory)),
@@ -953,8 +952,8 @@ export async function projectView(
     },
     entities,
     communicationReferences: [...new Set(Object.values(world.observerIdentities?.[player.id] ?? {})
-      .flatMap(identity => !identity.seedOnly && identity.canonicalId && recognizesSubject(world, player.id, identity.canonicalId) ? [identity.canonicalId] : []))]
-      .map(id => ({id:communicationReference(scope,{id}),label:observerDescription(world,player.id,id)})),
+      .flatMap(identity => !identity.seedOnly && identity.canonicalId && canAddressRememberedSubject(world, player.id, identity.canonicalId) ? [identity.canonicalId] : []))]
+      .map(id => ({id:communicationReference(scope,{id}),label:subjectLabel(world,player.id,{kind:'entity',entityId:id})})),
     recipes: memo<GameView['recipes']>(
       'recipes',
       [

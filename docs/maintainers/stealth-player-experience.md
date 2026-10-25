@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Design: integrated for SAD-G's selected scope. Implementation: not started by this work. UX, accessibility, performance and security qualification: not performed.** Updated 2026-10-24.
+**Design: integrated for SAD-G's selected scope. Implementation: SPX01 existing-channel conversion is under final verification. Broader UX, accessibility, performance and security qualification remains open.** Updated 2026-10-24.
 
 [Feature behavior](../projects/stealth-player-experience-feature-spec.md) owns controls, feedback and all ten player journeys. [Technical design](../projects/stealth-player-experience-tech-design.md) owns projection, input, component boundaries, invalid states and G-AC acceptance. [Limits](../limits/stealth-player-experience.md) owns discretionary defaults and remaining capacity questions. [SA coordination](stealth-awareness.md) owns A–G/I integration; this tracker is the focused SAI-G implementation owner.
 
@@ -26,13 +26,15 @@ The [source audit](../projects/stealth-player-experience-tech-design.md#contract
 
 ## SPX01 — Integrate contracts and protect publication
 
-**Status: Not started.** Dependencies: integrated shared schema; A current/history/reference families; B visible patch/detail/illumination; C cue precision; existing server authority.
+**Status: Existing-channel implementation; broader producer/qualification work open.** [Scoped native/browser evidence](../verification/personal-perception-foundation.md) covers frozen facets, role-specific targets, current loss, history, light and delayed completion. B/C future producers and the full G-AC matrix remain unchecked.
+
+Dependencies: integrated shared schema; A current/history/reference families; B visible patch/detail/illumination; C cue precision; existing server authority.
 
 - [ ] Consume canonical A evidence/reference families, B's frozen 50 ms visual samples and B/C movement composition. Preserve exact revision types and measurement times; do not derive fresh transforms between samples.
 - [ ] Replace whole-entity publication with permitted facet/contact records across full views, patches, descriptions, histories and all lazy reads.
 - [ ] Separate current body, historical/source association and anonymous cue references; bind action targeting only through eligible current body references.
 - [ ] Restrict map/dynamic geometry, appearance assets, animation, shadow, light, sound, DOM/accessibility and diagnostic metadata to the same audience.
-- [ ] Replace remembered fire illumination with history-only art; permit current source-free glow only from current authorized appearance.
+- [x] Replace remembered fire illumination with history-only art; permit current source-free glow only from current authorized appearance.
 - [ ] Apply facet removals and scope invalidation before rendering; fence async reads/asset loads/receipts and stale patches.
 - [ ] Qualify G-AC01–12 and all applicable lifecycle/projection cases in the technical acceptance table.
 

@@ -1,120 +1,62 @@
-import { entityGet } from '@open-legend/domain';
+import { namePhrase } from '@open-legend/language';
 import {
+  currentBodyObservation,
+  currentObservedFacets,
+  observerName,
   worldPosition,
-  observedBodyHealth,
-  fireFuelDescription,
-  BASE_GUARD_TEXT,
-  BASE_RANGED_TEXT,
-  BASE_EVASION_TEXT,
-  observedCombatActivity,
+  type Entity,
+  type WorldState,
 } from '@open-legend/domain';
-import { entityLabel } from './entity-references.js';
-import type { Action, Entity, ItemDefinition, ItemInstance, WorldState } from '@open-legend/domain';
+import { entityHandle } from './entity-references.js';
 import type { AttentionCandidate } from './recall.js';
 
-const propertyDescriptions: Record<ItemDefinition['properties'][number], string> = {
-  fiber: 'fibrous material',
-  binding: 'suitable for tying',
-  flexible: 'flexible',
-  rigid: 'rigid',
-  shaft: 'usable as a shaft',
-  pouch: 'usable as a pouch',
-  point: 'has a point',
-  projectile: 'usable as a projectile',
-  food: 'edible',
-  fuel: 'usable as fuel',
-};
-
-const activities: Record<Action['type'], string | undefined> = {
-  assemble: undefined,
-  pickup: 'picking up items',
-  follow: 'following',
-  move: 'moving',
-  evade: BASE_EVASION_TEXT.activity,
-  gather: 'gathering',
-  prepare: 'preparing materials',
-  craft: 'crafting',
-  'practice-shot': 'practicing a shot',
-  coaching: 'participating in guided feedback',
-  hunt: 'hunting',
-  aim: BASE_RANGED_TEXT.aimingActivity,
-  'shoot-once': BASE_RANGED_TEXT.shootingActivity,
-  harvest: 'harvesting',
-  cook: 'cooking',
-  fish: 'fishing',
-  strike: 'striking',
-  guard: BASE_GUARD_TEXT.activity,
-  replenish: 'replenishing a supply',
-  'tend-fire': 'tending a fire',
-  'treat-scar': 'treating an injury',
-  // The internal effect identifier is not itself an observable activity description.
-  'status-effect': undefined,
-};
-
-/** Describe only the permitted observation, never a private route or inferred intent.
- * docs/memory-architecture.md#3-one-compact-model-facing-context
- */
+/** Describe exact currently permitted values. Native menu preparation can retain
+ * private admission records, but none of those records are character evidence. */
 export function perceivedEntityText(
-  entity: Entity,
-  definitions: Map<string, ItemDefinition>,
   world: WorldState,
   observerId: string,
-  contents: readonly ItemInstance[] = [],
-) {
-  const facts = [
-    `I can see ${entityLabel(world, entity, observerId, 'indefinite')}.${entity.actor ? ` Species: ${entity.actor.species ?? 'unknown'}.` : ''}`,
+  entityId: string,
+): string | undefined {
+  const body = currentBodyObservation(world, observerId, entityId);
+  if (!body) return undefined;
+  const facts = currentObservedFacets(world, observerId, entityId);
+  const label = namePhrase(observerName(world, observerId, entityId), 'indefinite');
+  const received = (facet: (typeof facts)[number]) =>
+    `Measured at simulation second ${facet.valueMeasuredFrom}${facet.valueMeasuredThrough !== facet.valueMeasuredFrom ? `–${facet.valueMeasuredThrough}` : ''}; received at ${facet.valueAcquiredAt}.`;
+  const text = [
+    `I can see ${label} (ID:${entityHandle(world, observerId, entityId)}). ${received(body)}`,
   ];
-  const combat =
-    entityGet(world.entities, observerId) &&
-    observedCombatActivity(world, entityGet(world.entities, observerId)!, entity);
-  if (combat) facts.push(combat);
-  const health = observedBodyHealth(world, observerId, entity.id);
-  if (health) facts.push(health);
-  if (entity.actor && !entity.actor.alive) facts.push('It is dead.');
-  // Same coarse outward state that ranks a fallen being earlier in attention (EPR06).
-  else if (entity.actor?.incapacitated) facts.push('It has collapsed and is not moving.');
-  else if (entity.actor?.action) {
-    const action = entity.actor.action;
-    // No action record is not evidence of stillness: native movement uses other state.
-    const activity =
-      action.stage === 'approaching'
-        ? 'moving'
-        : action.assemblyPhase
-          ? world.assemblyFamilies?.[action.assemblyPhase.familyId]?.labels[
-              action.assemblyPhase.operation
-            ].toLowerCase()
-          : activities[action.type];
-    if (activity) facts.push(`It is ${activity}.`);
-  }
-  if (entity.resource?.cast) {
-    const definition = world.castDefinitions[entity.resource.cast.definitionId];
-    if (definition)
-      facts.push(
-        definition.description,
-        entity.resource.quantity > 0 ? definition.supplyUnknownText : definition.exhaustedText,
+  if (body.value.body.description)
+    text.push(`Observed description: ${body.value.body.description}`);
+  const outward = body.value.body.outward.filter(Boolean);
+  if (outward.length) text.push(`Observed outward signs: ${outward.join(', ')}.`);
+  for (const facet of facts) {
+    if (facet.value.kind === 'carried')
+      text.push(
+        `Observed carried things: ${facet.value.items.map((item) => item.itemKindAsObserved).join('; ') || 'none observed'}. ${received(facet)}`,
       );
-  } else if (entity.resource) {
-    const item = definitions.get(entity.resource.definitionId);
-    facts.push(
-      `${entity.resource.quantity} units of ${item?.name ?? 'unidentified material'} remain.`,
-    );
+    if (facet.value.kind === 'pile-contents')
+      text.push(
+        `Observed pile contents: ${facet.value.items.map((item) => `${item.quantity} × ${item.name}`).join('; ') || 'none observed'}. ${received(facet)}`,
+      );
   }
-  if (entity.kind === 'item-pile')
-    facts.push(
-      `Contents: ${contents.map((item) => `${item.quantity} × ${definitions.get(item.definitionId)?.name ?? 'unidentified item'}`).join('; ')}.`,
-    );
-  if (entity.heat)
-    facts.push(
-      `The fire is ${entity.heat.lit ? 'lit' : 'unlit'}, with ${fireFuelDescription(entity.heat)}.`,
-    );
-  return facts.join(' ');
+  return text.join(' ');
 }
 
-/** Relative geometry is observed location, not proof of a traversable route. */
-export function relativeLocation(observer: Entity, target: Entity): string {
-  const dx = worldPosition(target).x - worldPosition(observer).x;
-  const dz = worldPosition(target).z - worldPosition(observer).z;
-  const dy = worldPosition(target).y - worldPosition(observer).y;
+/** Relative geometry uses the frozen received position and the observer's own
+ * present pose. It neither polls another body nor predicts a traversable route. */
+export function relativeLocation(
+  world: WorldState,
+  observer: Entity,
+  target: Entity,
+): string | undefined {
+  const received = currentBodyObservation(world, observer.id, target.id);
+  if (!received) return undefined;
+  const position = received.value.body.position;
+  const here = worldPosition(observer);
+  const dx = position.x - here.x,
+    dz = position.z - here.z,
+    dy = position.y - here.y;
   const horizontal = Math.hypot(dx, dz);
   const directions = [
     'ahead of me',
@@ -126,15 +68,13 @@ export function relativeLocation(observer: Entity, target: Entity): string {
     'to my left',
     'ahead and to my left',
   ];
-  // Right-handed, Y-up: facing +Z puts the right hand at -X, so clockwise bearing is
-  // heading minus the target's angle (the same frame as actor-relative movement).
   const bearing = observer.spatial.heading - Math.atan2(dx, dz);
   const direction = directions[((Math.round(bearing / (Math.PI / 4)) % 8) + 8) % 8];
   const height =
     Math.abs(dy) < 0.1
       ? 'at roughly my elevation'
       : `about ${Math.abs(dy).toFixed(1)} m ${dy > 0 ? 'above' : 'below'} me`;
-  return `${horizontal < 0.1 ? 'At my horizontal position' : `About ${horizontal.toFixed(1)} m horizontally ${direction}`}, ${height}.`;
+  return `${horizontal < 0.1 ? 'At my horizontal position' : `About ${horizontal.toFixed(1)} m horizontally ${direction}`}, ${height}. Position measured at simulation second ${received.valueMeasuredFrom}; received at ${received.valueAcquiredAt}.`;
 }
 
 export { describePossession as possessionText } from '@open-legend/domain';

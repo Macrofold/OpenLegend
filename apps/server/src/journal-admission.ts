@@ -1,6 +1,8 @@
 import { toUSVString } from 'node:util';
 import {
   definitionPin,
+  observationDependencies,
+  type ExperienceSummary,
   entityGet,
   sameDefinitionPin,
   type WorldState,
@@ -161,9 +163,16 @@ export function journalTableFamily(
           return false;
       }
       if (table === 'mind_summaries') {
-        const links = (value as Record<string, unknown>)['sources'];
-        if (!Array.isArray(links)) return false;
-        relatedRows += links.length;
+        const summary = value as ExperienceSummary;
+        if (!Array.isArray(summary.sources) || !summary.manifest) return false;
+        relatedRows +=
+          summary.sources.length +
+          summary.manifest.coverage.length +
+          summary.manifest.speech.reduce((sum, group) => sum + group.sources.length, 0) +
+          observationDependencies(summary.manifest.observations).reduce(
+            (sum, dependency) => sum + Math.max(1, dependency.aliases.length),
+            0,
+          );
         if (relatedRows > CONSTRAINT_LOOKUPS) return false;
       }
       const columns = Object.values(node.columns ?? {});

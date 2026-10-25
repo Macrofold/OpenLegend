@@ -2028,8 +2028,6 @@ export class WorldService {
                   latest.set(capsule.placeId, capsule);
               }
               const result = prepareKnownPlaceEvidence([...latest.values()]);
-              if (result.capsules.length > RETRIEVAL_ROWS || result.bytes > RETRIEVAL_BYTES)
-                throw new KnownPlacePreparationError();
               return result;
             })();
       installKnownPlaceEvidence(candidate, actorId, index);

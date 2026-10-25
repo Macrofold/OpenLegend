@@ -2,7 +2,9 @@ import { entityGet } from '@open-legend/domain';
 import {
   characterCount,
   knowledgeDocument,
-  recognizesSubject,
+  currentCommunicationSubject,
+  currentBodySubject,
+  sameSubject,
   subjectKey,
   subjectLabel,
   observerIndividual,
@@ -14,7 +16,10 @@ import type { AttentionCandidate } from './recall.js';
 import { createHash } from 'node:crypto';
 
 const noteReference = (actorId: string, subjectId: ObserverSubject): string =>
-  `note-${createHash('sha256').update(JSON.stringify([actorId, subjectKey(subjectId)])).digest('hex').slice(0, 32)}`;
+  `note-${createHash('sha256')
+    .update(JSON.stringify([actorId, subjectKey(subjectId)]))
+    .digest('hex')
+    .slice(0, 32)}`;
 
 /** A document reference permits editing remembered prose, never targeting a perceived body. */
 export function selectedKnowledgeReferences(
@@ -59,12 +64,21 @@ export function subjectKnowledgeCandidates(
 ): AttentionCandidate[] {
   return Object.entries(world.actorKnowledge?.[actorId] ?? {}).flatMap(([id, doc]) => {
     if (doc.subjectId === null || !doc.text) return [];
-    const entity = doc.subjectId.kind === 'entity' ? entityGet(world.entities, doc.subjectId.entityId) : undefined;
-    const bound = doc.subjectId.kind === 'individual'
-      ? !!observerIndividual(world, actorId, doc.subjectId)
-      : recognizesSubject(world, actorId, doc.subjectId.entityId);
+    const entity =
+      doc.subjectId.kind === 'entity'
+        ? entityGet(world.entities, doc.subjectId.entityId)
+        : undefined;
+    const bound =
+      doc.subjectId.kind === 'individual'
+        ? !!observerIndividual(world, actorId, doc.subjectId)
+        : doc.subjectId.entityId === actorId ||
+          currentCommunicationSubject(world, actorId, doc.subjectId.entityId) ===
+            doc.subjectId.entityId;
     const name = observerIndividual(world, actorId, doc.subjectId)?.givenName;
-    const label = entity && bound ? entityLabel(world, entity, actorId) : subjectLabel(world, actorId, doc.subjectId);
+    const label =
+      entity && bound
+        ? entityLabel(world, entity, actorId)
+        : subjectLabel(world, actorId, doc.subjectId);
     return [
       {
         id: `notepad:${id}`,
@@ -73,7 +87,13 @@ export function subjectKnowledgeCandidates(
         embeddingText: `Notes about ${name || 'a subject'}: ${doc.text}`,
         // A new preferred name changes semantic search text; exposure tokens do not.
         revision: JSON.stringify([doc.revision, name ?? '']),
-        required: bound && doc.subjectId.kind === 'entity' && involved.has(doc.subjectId.entityId),
+        required:
+          doc.subjectId.kind === 'entity'
+            ? bound && involved.has(doc.subjectId.entityId)
+            : [...involved].some((entityId) => {
+                const subject = currentBodySubject(world, actorId, entityId);
+                return !!subject && sameSubject(subject, doc.subjectId!);
+              }),
         automatic: false,
         entityIds: bound && doc.subjectId.kind === 'entity' ? [doc.subjectId.entityId] : [],
         at: world.simTime,

@@ -393,7 +393,7 @@ export function advanceFlight(
     };
     const support = supportBelow(map, worldPosition(entity));
     if (support && destination.y <= support.y) {
-      setSpatialPosition(world, entity, support, support.surfaceId);
+      setSpatialPosition(world, entity, support, support.surfaceId, 'physical');
       delete state.fallVelocity;
       emitOccurrence(
         world,
@@ -406,7 +406,7 @@ export function advanceFlight(
       // The finite starter's ground always bounds its corridors. A missing support remains
       // a technical unsupported state; do not delete a body or fabricate a landing.
       if (destination.y < -16) throw new Error('Falling actor left the supported spatial world.');
-      setSpatialPosition(world, entity, destination, null);
+      setSpatialPosition(world, entity, destination, null, 'physical');
       state.fallVelocity = velocity;
     }
     return;
@@ -477,7 +477,7 @@ export function advanceFlight(
           [worldSupport(entity), waypoint.landingSurfaceId].filter((id): id is string => !!id),
         )
       ) {
-        setSpatialPosition(world, entity, from, null);
+        setSpatialPosition(world, entity, from, null, 'physical');
         emitOccurrence(
           world,
           events,
@@ -502,7 +502,7 @@ export function advanceFlight(
       fraction === 1 ? admittedLanding(world, entity, waypoint, landingOccupancy) : null;
     if (waypoint.landingSurfaceId && fraction === 1 && !landing) return;
     const wasGrounded = worldSupport(entity) !== null;
-    setSpatialPosition(world, entity, next, landing?.surfaceId ?? null);
+    setSpatialPosition(world, entity, next, landing?.surfaceId ?? null, 'physical');
     if (wasGrounded && !landing)
       emitOccurrence(
         world,

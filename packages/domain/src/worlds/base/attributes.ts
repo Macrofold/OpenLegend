@@ -7,7 +7,7 @@ export const PERCEPTION: AttributeDefinition = {
   implementation: 'number-v1',
   name: 'Perception',
   disclosure: 'owner',
-  presentation: { icon: 'meter.perception', color: 'meter.perception' },
+  presentation: { icon: 'ui.inview', color: 'accent' },
   schema: { kind: 'number', min: 0, max: 100, initial: 50, unit: '' },
   meaning:
     'Perception supports noticing and recognizing the physical details this person can actually receive. It does not improve hearing range, memory or combat accuracy.',

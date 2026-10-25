@@ -1,0 +1,28 @@
+# Personal perception foundation
+
+## Scope and environment
+
+The supported-channel slice starts at `Macrofold/OpenLegend`, remote `https://github.com/Macrofold/OpenLegend.git`, explicit base `codex/design-stealth-08-integration` at `b0c1ca4b06562a65178367a53a26e83ca9402511`, on `codex/stealth-runtime-01-evidence`. Evidence below was collected locally on October 25, 2026 with native execution and disposable PostgreSQL databases. Additional Jev cost and cumulative task provider cost are **$0**; no live provider calls were made.
+
+This covers PP01–PP04 and supported-channel PP05–PP06, the required SPK01–SPK04 consumers, and the existing-channel SPX01 conversion. It does not qualify future B optics/50 ms samples, C physical acoustics, E attention, F warning/preparation/combat choices, full PP07/SAI-A, live-model quality, dense capacity or uncoached player usefulness.
+
+## Controlled native and storage evidence
+
+- Actual acquisition supplies source-bound received facets before native response callbacks. Repeated capture reads allocate no new acquisition. A cut retains its exact received membership and frozen values after subsequent movement. Independent body/location/carried/public-attribute leases retain their original measurement/acquisition times; loss removes current permission and retains final confirmation through personal experience.
+- Actual speech execution supplies different linguistic and physical reception. First unfamiliar unseen hearing retains words without canonical speaker identity. Two qualified, separated samples learn a local voice; later reception recognizes that voice. A permitted introduction and typed private note/name edit use that local subject. With lexical comprehension disabled, voice recognition does not invent words or addressing. A memoryless receiver obtains physical sound with no autobiographical insertion.
+- The real service acquired Camp hearth through arrival, then heard an unfamiliar unseen speaker say “Danger at Camp hearth now.” The heard source retained four direct facets plus separate grounded testimony. Hot and cold records matched exactly. Typed consolidation retained exact source references, speech attribution and native fact timing; SQL reload preserved the manifest.
+- `correctMemory` on the place source invalidated its prepared place entry and dependent hot/cold warning summary without deleting the original heard utterance. `forgetMemory` on the correcting utterance preserved the original place observation and explicit missing-correction/disputed state. Same-format repository restoration preserved the revoked summary's absence.
+- Complete Known-place preparation used indexed place/source/correction reads. One small fixture contained one capsule, 511 bytes; one measured complete preparation took 2.728 ms, with SQL execution 0.044 ms. These are tiny-fixture measurements, not capacity acceptance. The existing 8,192-row/4 MiB preparation allowance refuses incomplete required work; it neither truncates retained places nor turns preparation failure into an unknown label.
+- A current public contact resolved while acquired; a raw canonical actor ID was refused. Loss retired the contact immediately. Reacquiring the same actor and physical life created a different contact, and the old reference remained refused. Delayed player and NPC physical decisions retain the captured contact/lease; remembered communication and private notes have separate roles.
+
+## Player publication evidence
+
+A disposable native HTTP/Vite world was inspected in the desktop browser. The ordinary In view list and inspector showed an unidentified person, received public meters and native action choices. Moving the source away through the actual service and advancing native perception removed its mesh/list entry and all protected inspector details/actions. The panel showed **No longer in sight**. Returning the source added a new contact while the old inspector stayed retired. This was controlled interaction, not natural stealth or a usability study.
+
+Current appearance, geometry, carried-kind details, pile contents and public attributes come from captured facets. The publication includes original times; carried details retain independent times. Historical Events keep occurrence-time labels/words and source inspection, without live person links or body upgrades. Captions group by acquired participant references and anchor only to an independently current body. Omitted contacts are removed before rendering; remembered fires emit no current light. Static map publication remains the existing explicitly public authored topology, excluding the separate dynamic native assembly map. Ordinary embodied views do not become creator views merely because the account holds inspection/creation grants.
+
+## Checks and remaining qualification
+
+The selected existing checks, TypeScript, production build and affected-file formatting are recorded at the final implementation checkpoint. Fixture changes follow the new current contracts: native acquisition precedes publication, and public contact references replace raw actor targets. No new maintained automated tests were added.
+
+[PP07](../maintainers/perspective-perception.md#pp07--whole-path-qualification-and-documentation-completion), [SPK11](../maintainers/speech-and-social-perception.md#spk11--integrated-qualification-and-final-reconciliation) and [SPX07](../maintainers/stealth-player-experience.md#spx07--integrated-verification-performance-and-player-fun) retain their complete acceptance obligations. In particular, no live inference, optical/acoustic extension, threat outcome, broad penetration test, dense living-neighborhood workload or human fun pass is inferred from this foundation.

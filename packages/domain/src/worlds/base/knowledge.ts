@@ -1,5 +1,11 @@
 import { entityGet } from '../../entity-collection.js';
-import type { WorldState, WorldEvent, Outcome } from '../../types.js';
+import { hasMemory } from '../../living.js';
+import type { Entity, WorldState, WorldEvent, Outcome } from '../../types.js';
+import {
+  currentBodyAssociation,
+  currentBodyGrant,
+  currentBodyObservation,
+} from '../../perception-evidence.js';
 import { namePhrase, type Named, type NameArticle } from '@open-legend/language';
 import { outcome } from '../../events.js';
 import { characterCount, advanceKnowledgeRevision, type KnowledgePolicy } from '../../knowledge.js';
@@ -71,18 +77,99 @@ export function observerIndividual(
     ? world.observerIdentities?.[observerId]?.[subject.individualId]
     : identityForEntity(world, observerId, subject.entityId);
 }
+/** The current body must itself supply the association. Authored voice familiarity
+ * alone never identifies a body that has only been seen. A private name assigned
+ * during this uninterrupted encounter remains an independent body association. */
+function currentBodyIdentity(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): ObserverIdentity | undefined {
+  const association = currentBodyAssociation(world, observerId, subjectId);
+  if (association) return observerIndividual(world, observerId, association);
+  const encounterId = world.perceptionEpisodes?.[observerId]?.[subjectId];
+  if (!encounterId || !currentBodyGrant(world, observerId, subjectId)) return undefined;
+  return Object.values(world.observerIdentities?.[observerId] ?? {}).find(
+    (identity) => !identity.seedOnly && !identity.authored && identity.encounterId === encounterId,
+  );
+}
+/** Local subject for this exact current body, separate from remembered people. */
+export function currentBodySubject(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): ObserverSubject | undefined {
+  const association = currentBodyAssociation(world, observerId, subjectId);
+  if (association) return association;
+  const identity = currentBodyIdentity(world, observerId, subjectId);
+  return identity?.individualId
+    ? { kind: 'individual', individualId: identity.individualId }
+    : undefined;
+}
+/** Called only by actual body observation after its lease has been installed.
+ * Seeing an unfamiliar body permits a continuous local subject, never a face profile
+ * or a join to an authored acquaintance with the same private physical route. */
+export function ensureBodyIndividual(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): ObserverSubject | undefined {
+  const observer = entityGet(world.entities, observerId);
+  if (
+    !observer ||
+    !hasMemory(observer) ||
+    !entityGet(world.entities, subjectId)?.actor ||
+    observerId === subjectId ||
+    !currentBodyGrant(world, observerId, subjectId)
+  )
+    return undefined;
+  const existing = currentBodySubject(world, observerId, subjectId);
+  if (existing) return existing;
+  const encounterId = world.perceptionEpisodes?.[observerId]?.[subjectId];
+  if (!encounterId) return undefined;
+  const identities = ((world.observerIdentities ??= {})[observerId] ??= {});
+  let ordinal = 1;
+  while (Object.hasOwn(identities, `individual-${ordinal}`)) ordinal++;
+  const individualId = `individual-${ordinal}`;
+  identities[individualId] = {
+    individualId,
+    givenName: '',
+    revision: 0,
+    encounterId,
+    authored: false,
+  };
+  advanceKnowledgeRevision(world, observerId);
+  return { kind: 'individual', individualId };
+}
+/** Only an actually received recognition can connect this body to a remembered
+ * canonical addressee. A newly individuated current stranger has no such link. */
+export function currentCommunicationSubject(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): string | undefined {
+  const association = currentBodyAssociation(world, observerId, subjectId);
+  return association ? observerIndividual(world, observerId, association)?.canonicalId : undefined;
+}
 export function recognizesSubject(
   world: WorldState,
   observerId: string,
   subjectId: string,
 ): boolean {
+  return observerId === subjectId || !!currentBodyIdentity(world, observerId, subjectId);
+}
+/** A remembered intended addressee is an acquired person association. It survives
+ * sensory loss; no name, anonymous seed or candidate creates this permission. */
+export function canAddressRememberedSubject(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): boolean {
+  if (!entityGet(world.entities, subjectId)?.actor) return false;
   if (observerId === subjectId) return true;
-  const identity = identityForEntity(world, observerId, subjectId);
-  return (
-    !!identity &&
-    (identity.authored ||
-      (!!identity.encounterId &&
-        identity.encounterId === world.perceptionEpisodes?.[observerId]?.[subjectId]))
+  return Object.values(world.observerIdentities?.[observerId] ?? {}).some(
+    (identity) =>
+      !!identity.individualId && !identity.seedOnly && identity.canonicalId === subjectId,
   );
 }
 /** Existing creator-authored acquaintances persist across encounters; other identities do not.
@@ -108,9 +195,7 @@ export function observerGivenName(
   subjectId: string,
 ): string | undefined {
   if (observerId === subjectId) return entityGet(world.entities, subjectId)?.name;
-  return recognizesSubject(world, observerId, subjectId)
-    ? identityForEntity(world, observerId, subjectId)?.givenName || undefined
-    : undefined;
+  return currentBodyIdentity(world, observerId, subjectId)?.givenName || undefined;
 }
 export function assignGivenName(
   world: WorldState,
@@ -139,6 +224,7 @@ export function assignGivenName(
   if (
     !authored &&
     !recognizesSubject(world, observerId, edit.subjectId) &&
+    !canAddressRememberedSubject(world, observerId, edit.subjectId) &&
     (!encounterId || current)
   )
     return outcome(
@@ -224,23 +310,33 @@ export function rememberSubject(
   };
 }
 
+/** Snapshot the selected world's outward category only when the body is measured.
+ * This does not identify an individual or inherit a hidden authored actor name. */
+export function outwardBodyName(_world: WorldState, entity: Entity): Named {
+  if (!entity.actor)
+    return {
+      name: entity.name,
+      nameForm: entity.nameForm,
+      indefiniteArticle: entity.indefiniteArticle,
+    };
+  const species = entity.actor.species;
+  const noun = !species || species === 'human' ? 'person' : species;
+  return { name: noun, nameForm: 'count', indefiniteArticle: undefined };
+}
+
 /** Select permitted identity before applying presentation grammar. */
 export function observerName(world: WorldState, observerId: string, subjectId: string): Named {
   const known = observerGivenName(world, observerId, subjectId);
   if (known) return { name: known, nameForm: 'proper', indefiniteArticle: undefined };
+  const received = currentBodyObservation(world, observerId, subjectId);
+  if (received?.value.body.label) return received.value.body.label;
   const entity = entityGet(world.entities, subjectId);
-  if (!entity?.actor)
-    return entity
-      ? {
-          name: entity.name,
-          nameForm: entity.nameForm,
-          indefiniteArticle: entity.indefiniteArticle,
-        }
-      : { name: 'unidentified object', nameForm: 'count', indefiniteArticle: undefined };
-  const species = entity.actor.species;
-  const noun = !species || species === 'human' ? 'person' : species;
-  // A permitted label replaces all grammar of the hidden authored name, including overrides.
-  return { name: noun, nameForm: 'count', indefiniteArticle: undefined };
+  if (entity && !entity.actor) return outwardBodyName(world, entity);
+  return {
+    name: entity?.actor ? 'unidentified person' : 'unidentified object',
+    nameForm: 'count',
+    indefiniteArticle: undefined,
+  };
 }
 
 export function observerDescription(
@@ -273,10 +369,17 @@ export function assignSubjectName(
       edit.subjectId.entityId,
     ]);
   const identity = observerIndividual(world, observerId, edit.subjectId);
+  const currentBody =
+    identity?.encounterId &&
+    Object.entries(world.perceptionEpisodes?.[observerId] ?? {}).some(
+      ([id, episode]) =>
+        episode === identity.encounterId && !!currentBodyGrant(world, observerId, id),
+    );
   if (
     !identity?.individualId ||
     identity.seedOnly ||
     (!identity.authored &&
+      !currentBody &&
       !(
         identity.canonicalId &&
         ((identity.voice?.samples.length ?? 0) >= 1 ||
@@ -377,8 +480,8 @@ export function learnSpeechIntroduction(
 
 /** Bundled cognition policy text; the engine response envelope only carries typed proposals. */
 export function knowledgePolicyInstructions(policy: KnowledgePolicy): string {
-  return `Knowledge: note={"subjectId":null,"expectedRevision":0,"text":"replacement text"}. Null subject is general knowledge (${policy.maxCharacters.general} characters); a supplied entity token selects its subject pad (${policy.maxCharacters.subject}). A supplied note- reference selects an existing remembered pad, even without current recognition. Note references are valid only in note.subjectId; they never identify a visible body, speech recipient or action target. Count Unicode code points including whitespace. Copy the current revision, or 0 for a missing pad. Rewrite, summarize or shorten the complete pad to fit; never truncate facts mechanically. Use empty text to clear. These are editable beliefs, not events or capabilities. Do not repeat About me, inventory or operational goals. Useful uncertainty matters. Notes are optional; do not edit just to fill the schema.
-Given name: name={"subjectId":"supplied entity token","expectedRevision":0,"givenName":"preferred individual label"}. Deliberately individuate a currently observed subject or update a recognized individual's preferred name. Observation alone does not assign a name. Accepting an introduction can update it; no global renaming occurs. Use a separate operation before the note with requiresAccepted if the edit depends on naming. Re-identification after losing sight needs supported recognition; do not guess from the server reference.
+  return `Knowledge: note={"subjectId":null,"expectedRevision":0,"text":"replacement text"}. Null subject is general knowledge (${policy.maxCharacters.general} characters); a supplied current-body, remembered-person or learned-individual token selects its admitted subject pad (${policy.maxCharacters.subject}). A supplied note- reference selects an existing remembered pad, even without current recognition. Note references are valid only in note.subjectId; they never identify a visible body, speech recipient or action target. Count Unicode code points including whitespace. Copy the current revision, or 0 for a missing pad. Rewrite, summarize or shorten the complete pad to fit; never truncate facts mechanically. Use empty text to clear. These are editable beliefs, not events or capabilities. Do not repeat About me, inventory or operational goals. Useful uncertainty matters. Notes are optional; do not edit just to fill the schema.
+Given name: name={"subjectId":"supplied subject token","expectedRevision":0,"givenName":"preferred individual label"}. Deliberately individuate a currently observed subject or update an independently remembered individual's preferred name. Observation alone does not assign a name. Accepting an introduction can update it; no global renaming occurs. Use a separate operation before the note with requiresAccepted if the edit depends on naming. Re-identification after losing sight needs supported recognition; do not guess from the server reference.
 Spoken introductions: when your speech introduces your own name or preferred label, put that exact spoken name in talk.selfIntroduction (up to 120 characters); otherwise use null. This tells listeners what you just called yourself. It does not change your own name. Quoted names, names of other people, and ordinary descriptions of yourself are not introductions. Do not emit a private name operation to introduce yourself.`;
 }
 

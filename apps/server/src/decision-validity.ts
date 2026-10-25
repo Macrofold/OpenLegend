@@ -1,5 +1,6 @@
 import {
   entityGet,
+  currentBodyObservation,
   activeAppraisals,
   appraisalDefinition,
   attributeDefinition,
@@ -19,6 +20,7 @@ export function preparedResponseValidity(
   world: WorldState,
   actorId: string,
   scopes: readonly AppraisalScope[],
+  entityLeases: Readonly<Record<string, string>> = {},
 ): string {
   const entity = entityGet(world.entities, actorId),
     actor = entity?.actor;
@@ -35,6 +37,11 @@ export function preparedResponseValidity(
       actor?.personality,
       actor?.backstory,
     ],
+    currentBodyLeases: Object.entries(entityLeases).map(([id, expected]) => [
+      id,
+      expected,
+      currentBodyObservation(world, actorId, id)?.id ?? null,
+    ]),
     life: actor?.physicalLife,
     controller: actor?.controller,
     alive: actor?.alive,
@@ -145,4 +152,18 @@ export function decisionValidity(world: WorldState, actorId: string): string {
         }
       : null,
   });
+}
+
+/** A remembered individual or grace period never renews a captured physical body. */
+export function physicalEntityReferencesCurrent(
+  world: WorldState,
+  actorId: string,
+  entityLeases: Readonly<Record<string, string>>,
+  targetIds: readonly string[] = Object.keys(entityLeases),
+): boolean {
+  return targetIds.every(
+    (id) =>
+      entityLeases[id] === undefined ||
+      currentBodyObservation(world, actorId, id)?.id === entityLeases[id],
+  );
 }

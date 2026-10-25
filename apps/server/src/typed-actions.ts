@@ -1565,10 +1565,18 @@ export async function commitTypedAction(
     (world) => {
       if (request.targetReference) {
         try {
-          if (!job.authority || resolveContactTarget(world, job.authority, request.targetReference) !== request.targetId) throw new ContactReferenceError();
+          if (
+            !job.authority ||
+            resolveContactTarget(world, job.authority, request.targetReference) !== request.targetId
+          )
+            throw new ContactReferenceError();
         } catch (error) {
           if (!(error instanceof ContactReferenceError)) throw error;
-          return { world, events: [], outcome: { ok: false, code: error.code, message: error.message } };
+          return {
+            world,
+            events: [],
+            outcome: { ok: false, code: error.code, message: error.message },
+          };
         }
       }
       const binding = typedAction(world, actorId, request, 'action');

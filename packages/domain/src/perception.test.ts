@@ -2,7 +2,14 @@ import { entityGet } from './entity-collection.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from './index.js';
 import { expect, it } from 'vitest';
-import { canSee, createWorld, executeCommand, experienceEntry, observeActor } from './index.js';
+import {
+  canSee,
+  createWorld,
+  executeCommand,
+  experienceEntry,
+  observeActor,
+  initializePerception,
+} from './index.js';
 
 it('sees distant objects without extending speech exposure', () => {
   const world = createWorld();
@@ -18,6 +25,7 @@ it('sees distant objects without extending speech exposure', () => {
     { y: 0, x: 22, z: 2 },
     worldSupport(entityGet(world.entities, NPC_ID)!),
   );
+  initializePerception(world, []);
   expect(
     observeActor(world, PLAYER_ID)!.visibleEntities.some((entity) => entity.id === NPC_ID),
   ).toBe(true);
@@ -69,6 +77,7 @@ it('keeps an authoritative outer sight boundary even though the renderer can rem
     { y: 0, x: 27, z: 23 },
     worldSupport(entityGet(world.entities, NPC_ID)!),
   );
+  initializePerception(world, []);
   expect(
     observeActor(world, PLAYER_ID)!.visibleEntities.some((entity) => entity.id === NPC_ID),
   ).toBe(false);

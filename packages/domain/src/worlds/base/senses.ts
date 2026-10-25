@@ -15,9 +15,8 @@ export const SIGHTING_POLICY = {
   /** One arrival and one departure record per subject per window; later comings and goings
    * within it stay current visibility only (docs/limits/cognition.md#cg10). */
   recordWindowSeconds: 3600,
-  /** A return this soon after the window's first *recorded* departure is the same encounter
-   * episode (a brief occlusion or edge flicker), even after further brief exits; a return
-   * later than that starts a new episode. Live exposure and action reach stay exact. */
+  /** A return this soon after actual sensory loss keeps encounter correlation.
+   * Native live body/detail leases still end immediately, independent of story quotas. */
   episodeLingerSeconds: 30,
 } as const;
 /** Ongoing perceived conditions (EPR06). A fire or an incapacitated being stays salient while

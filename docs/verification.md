@@ -1,5 +1,7 @@
 # Verification
 
+- [Personal perception foundation](verification/personal-perception-foundation.md) — supported-channel evidence, local recognition, faithful retention, complete place preparation and safe player/NPC publication; future sensing and full integrated acceptance remain open.
+
 - [Combat and threat responses](verification/combat-and-threat-responses.md) — initial actual-contact native checks and explicit remaining combat qualification.
 
 - [Optional performance collection](verification/performance/profiling-controls.md) — default-off server/worker collection, capture cleanup, tool modes, actual functional checks and required overhead-comparison limits.

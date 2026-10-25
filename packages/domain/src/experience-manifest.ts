@@ -1,12 +1,20 @@
 import { validSpeechLabel } from './speech.js';
 import { validObserverSubject } from './knowledge.js';
 import { validPersonalSourceRef, type PersonalSourceRef } from './experience-source.js';
-export { validPersonalSourceRef, type PersonalSourceRef } from './experience-source.js';
+export {
+  PERSONAL_EVIDENCE_PREPARATION,
+  validPersonalSourceRef,
+  type PersonalSourceRef,
+} from './experience-source.js';
 import { canonicalJson } from './events.js';
 import type { Awareness, ExperienceSummary } from './experience.js';
 import type { ExperienceEntry, MemoryRecord } from './types.js';
 import { validateObservationContribution } from './perception-evidence.js';
-import type { ObservationContribution } from './perception-evidence.js';
+import type {
+  EvidenceSource,
+  SensoryFacet,
+  ObservationContribution,
+} from './perception-evidence.js';
 
 export interface PreparedExperience {
   entry: ExperienceEntry;
@@ -205,6 +213,68 @@ export function validateExperienceManifest(value: unknown): asserts value is Exp
       !['none', 'partial', 'clear'].includes(group.intelligibility)
     )
       throw new Error('Invalid remembered speech attribution.');
+}
+/** Exact native dependencies and explicit personal aliases share the existing reverse
+ * source index. Aliases route correction only; they never replace source revisions. */
+export interface ManifestEvidenceDependency {
+  source: EvidenceSource;
+  ordinal: number | null;
+  aliases: string[];
+}
+export function observationDependencies(
+  observations: readonly ObservationContribution[],
+): ManifestEvidenceDependency[] {
+  const dependencies = new Map<string, ManifestEvidenceDependency>();
+  const add = (source: EvidenceSource, ordinal: number | null, aliases: readonly string[]) => {
+    const key = canonicalJson([source, ordinal]);
+    const prior = dependencies.get(key);
+    dependencies.set(key, {
+      source,
+      ordinal,
+      aliases: [...new Set([...(prior?.aliases ?? []), ...aliases])],
+    });
+  };
+  const facet = (value: SensoryFacet) => {
+    if (value.kind === 'claim') {
+      const aliases = (value.supportAliases ?? []).map((alias) => alias.id);
+      for (const support of value.support) add(support.source, support.ordinal, aliases);
+    } else if (value.kind === 'confirmation') {
+      visit(value.snapshot.original);
+      add(value.snapshot.confirmation, value.snapshot.originalOrdinal, []);
+      facet(value.snapshot.value);
+    } else if (value.kind === 'observed-motion') {
+      for (const sample of [value.earlier, value.later]) {
+        visit(sample.original);
+        add(sample.confirmation, sample.originalOrdinal, []);
+      }
+    }
+  };
+  const visit = (observation: ObservationContribution) => {
+    add(
+      {
+        family: 'native-exposure',
+        observer: observation.observer,
+        id: observation.id,
+        revision: observation.revision,
+      },
+      null,
+      observation.origin.kind === 'occurrence' ? [observation.origin.eventId] : [],
+    );
+    for (const item of observation.facets) facet(item.value);
+  };
+  for (const observation of observations) visit(observation);
+  return [...dependencies.values()];
+}
+export function manifestDependsOn(
+  manifest: ExperienceManifest,
+  affected: ReadonlySet<string>,
+): boolean {
+  return (
+    manifest.coverage.some((ref) => affected.has(ref.id)) ||
+    observationDependencies(manifest.observations).some(
+      ({ source, aliases }) => affected.has(source.id) || aliases.some((id) => affected.has(id)),
+    )
+  );
 }
 export function summaryMemory(summary: ExperienceSummary, actorId: string): MemoryRecord {
   validateExperienceManifest(summary.manifest);
