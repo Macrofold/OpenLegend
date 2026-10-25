@@ -167,6 +167,8 @@ export interface JobRecord extends AiJobView {
       expressionLife?: number;
       mode: 'enqueue' | 'replace' | 'interrupt';
       targetId?: string;
+      /** Original public current-body lease; loss/return cannot rebind a queued intention. */
+      targetReference?: string;
       slots?: import('@open-legend/domain').IntentSlots;
       expectedPlan: number;
       targetEpisodes?: import('@open-legend/domain').ActionTargetEpisodes;

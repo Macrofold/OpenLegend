@@ -152,7 +152,7 @@ function KnowledgeEditor({
     let active = true;
     void post<MindSubjectPage | { ok: false; message?: string }>(subjectPath(owned), {
       actorId: mind.actorId,
-      subjectId: subject.id,
+      subjectId: subject.subject,
     })
       .then((result) => {
         if (!active || latestSubjectRead.current !== subjectReadKey) return;
@@ -326,7 +326,7 @@ function KnowledgeEditor({
                 actorId: mind.actorId,
                 worldId: mind.worldId,
                 generation: mind.generation,
-                subjectId: subject?.id ?? null,
+                subjectId: subject?.subject ?? null,
                 expectedRevision: base.revision,
                 text,
                 ...(subject && name !== base.name
@@ -418,11 +418,16 @@ function AuthoredFeeling({
         value={subject}
         onSelect={setSubject}
         onlyRecognized
+        entityOnly
       />
       <Button
         disabled={busy}
         onPress={() =>
-          send({ kind: 'create', definitionPin: policy.pin, targetId: subject?.id ?? null })
+          send({
+            kind: 'create',
+            definitionPin: policy.pin,
+            targetId: subject?.subject.kind === 'entity' ? subject.subject.entityId : null,
+          })
         }
       >
         Author feeling
@@ -599,7 +604,7 @@ export function Mind({
               {mind.notepads
                 ?.filter((doc) => doc.subjectId && doc.text)
                 .map((doc) => (
-                  <details key={doc.subjectId}>
+                  <details key={JSON.stringify(doc.subjectId)}>
                     <summary>{doc.label}</summary>
                     <p className="ol-prose">{doc.text}</p>
                     <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>

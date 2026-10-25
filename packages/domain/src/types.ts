@@ -276,6 +276,7 @@ export interface ActorComponent {
     memory: boolean;
     innerWorld: boolean;
     speech: boolean;
+    comprehendsSpeech?: boolean;
   };
   health: number;
   alive: boolean;

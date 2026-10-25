@@ -1,3 +1,6 @@
+type ReflectionChanges = import('zod').infer<
+  typeof import('./cognition-contracts.js').reflectionSchema
+>;
 import { entityGet } from '@open-legend/domain';
 import { foundationCapabilities } from './foundation-capabilities.js';
 import type { WorldAgentReply } from '@open-legend/protocol';
@@ -1329,8 +1332,8 @@ export class MacrofoldBackend implements AiClient {
       thoughts: string[];
       appraisalChanges?: import('./cognition-contracts.js').AppraisalProposal[];
       goalChanges: import('@open-legend/domain').GoalChange[];
-      knowledgeChanges: import('@open-legend/domain').KnowledgeEdit[];
-      nameChanges: import('@open-legend/domain').GivenNameEdit[];
+      knowledgeChanges: ReflectionChanges['knowledgeChanges'];
+      nameChanges: ReflectionChanges['nameChanges'];
       files: import('@open-legend/domain').InnerWorld['files'];
       revision: string;
     }>
@@ -1390,8 +1393,8 @@ export class MacrofoldBackend implements AiClient {
         thoughts: string[];
         appraisalChanges?: import('./cognition-contracts.js').AppraisalProposal[];
         goalChanges: import('@open-legend/domain').GoalChange[];
-        knowledgeChanges: import('@open-legend/domain').KnowledgeEdit[];
-        nameChanges: import('@open-legend/domain').GivenNameEdit[];
+        knowledgeChanges: ReflectionChanges['knowledgeChanges'];
+        nameChanges: ReflectionChanges['nameChanges'];
       }>(request.schema, JSON.parse(output));
       const exported = await adapter.export(workspace.worktreeId, signal);
       signal.throwIfAborted();

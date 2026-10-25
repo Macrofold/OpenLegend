@@ -1,4 +1,5 @@
 import { entityGet, entityHas } from '@open-legend/domain';
+import { resolveContactTarget, ContactReferenceError } from './public-contact-references.js';
 import {
   activityCommandFields,
   isCookingInputField,
@@ -79,6 +80,7 @@ export interface TypedActionRequest {
   text: string;
   targetId: string | null;
   slots: IntentSlots | null;
+  targetReference?: string;
 }
 
 /** Plain summary for callers that cannot interpret free text (no provider allowance). Clock
@@ -1561,6 +1563,14 @@ export async function commitTypedAction(
   });
   const result = await service.transition(
     (world) => {
+      if (request.targetReference) {
+        try {
+          if (!job.authority || resolveContactTarget(world, job.authority, request.targetReference) !== request.targetId) throw new ContactReferenceError();
+        } catch (error) {
+          if (!(error instanceof ContactReferenceError)) throw error;
+          return { world, events: [], outcome: { ok: false, code: error.code, message: error.message } };
+        }
+      }
       const binding = typedAction(world, actorId, request, 'action');
       const visibleIds = [
         actorId,

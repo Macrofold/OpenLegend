@@ -1,5 +1,7 @@
 import {
   appendedEventCount,
+  entityGet,
+  hasMemory,
   appendedRecordCount,
   type WorldState,
   type Awareness,
@@ -121,7 +123,10 @@ export function prepareHistoryAppend(inputs: ReturnType<typeof prepareHistory>) 
     accounts: [...new Set(event.audience)].flatMap((actor): [string, Awareness][] => {
       if (inputs.forgotten(actor).has(event.id)) return [];
       const awareness = inputs.perspective(actor, event.id);
-      if (!awareness) throw new Error('Committed event audience is missing its perspective.');
+      if (!awareness) {
+        if (!hasMemory(entityGet(inputs.world.entities, actor))) return [];
+        throw new Error('Committed event audience is missing its perspective.');
+      }
       return [[actor, awareness]];
     }),
   }));

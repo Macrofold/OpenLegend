@@ -30,6 +30,8 @@ import {
   publishInnerWorld,
   mindFor,
   EXPERIENCE_LIMITS,
+  subjectKey,
+  type ObserverSubject,
 } from '@open-legend/domain';
 import type { AiClient, AiResult, GenerateRequest } from '@open-legend/ai';
 import { summarySchema, reflectionSchema, REFLECTION_INSTRUCTIONS } from './cognition-contracts.js';
@@ -1172,7 +1174,15 @@ export class CognitionMaintenance {
         actorId,
         job.id,
         prepared.binding.evidenceIds,
-        { ...prepared.entityReferences, ...prepared.binding.knowledgeReferences },
+        {
+          ...prepared.entityReferences,
+          ...Object.fromEntries(
+            Object.entries(prepared.binding.knowledgeReferences ?? {}).flatMap(
+              ([handle, subject]) =>
+                subject.kind === 'entity' ? [[handle, subject.entityId]] : [],
+            ),
+          ),
+        },
       );
       prepared.context['feelings'] = appraisals.context;
       await this.log.record(
@@ -1215,7 +1225,7 @@ export class CognitionMaintenance {
       const edits = resolveResponseEntities(
         {
           operations: [
-            ...value.nameChanges.map((name, i) => ({
+            ...parsedReflection.nameChanges.map((name, i) => ({
               localId: `name${i}`,
               requiresAccepted: [],
               talk: null,
@@ -1225,7 +1235,7 @@ export class CognitionMaintenance {
               plan: null,
               name,
             })),
-            ...value.knowledgeChanges.map((note, i) => ({
+            ...parsedReflection.knowledgeChanges.map((note, i) => ({
               localId: `note${i}`,
               requiresAccepted: [],
               talk: null,
@@ -1239,7 +1249,18 @@ export class CognitionMaintenance {
         },
         prepared.entityReferences,
         prepared.binding.knowledgeReferences,
+        [],
+        prepared.binding.identityReferences,
       );
+      const subjectFromReference = (reference: string): ObserverSubject => {
+        const subject =
+          prepared.binding.knowledgeReferences?.[reference] ??
+          prepared.binding.identityReferences?.[reference];
+        if (subject) return subject;
+        if (prepared.binding.entityIds.includes(reference))
+          return { kind: 'entity', entityId: reference };
+        throw new Error('The reflected subject was not supplied.');
+      };
       await this.log.record(`${job.id}:files`, 'Workspace publication proposal', {
         sourceSnapshot: value.revision,
         files: value.files,
@@ -1272,11 +1293,34 @@ export class CognitionMaintenance {
             null,
             0,
             value.goalChanges,
-            edits.operations.flatMap((op) => (op.note ? [op.note] : [])),
-            edits.operations.flatMap((op) => (op.name ? [op.name] : [])),
-            prepared.binding.entityIds.map((entityId) => ({ kind: 'entity' as const, entityId })),
+            edits.operations.flatMap((op) =>
+              op.note
+                ? [
+                    {
+                      ...op.note,
+                      subjectId:
+                        op.note.subjectId === null ? null : subjectFromReference(op.note.subjectId),
+                    },
+                  ]
+                : [],
+            ),
+            edits.operations.flatMap((op) =>
+              op.name ? [{ ...op.name, subjectId: subjectFromReference(op.name.subjectId) }] : [],
+            ),
+            [
+              ...prepared.binding.entityIds.map((entityId) => ({
+                kind: 'entity' as const,
+                entityId,
+              })),
+              ...Object.values(prepared.binding.identityReferences ?? {}),
+            ],
             prepared.binding.entityEpisodes,
-            prepared.binding.knowledgeReferences,
+            Object.fromEntries(
+              Object.values(prepared.binding.knowledgeReferences ?? {}).map((subject) => [
+                subjectKey(subject),
+                subject,
+              ]),
+            ),
             appraisalChanges,
             appraisals.bindings,
           );

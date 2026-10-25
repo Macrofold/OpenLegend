@@ -3116,8 +3116,8 @@ function executeCommandNative(
         if (!isSpeechVolume(volume))
           return reject('invalid-volume', 'Choose whisper, normal or shout.');
         const target = command.targetId ? entityOwn(world.entities, command.targetId) : undefined;
-        const intendedRecipientId = command.targetId;
-        if (intendedRecipientId && !entityOwn(world.entities, intendedRecipientId))
+        const addresseeId = command.targetId;
+        if (addresseeId && !entityOwn(world.entities, addresseeId))
           return reject('invalid-recipient', 'The intended recipient no longer exists.');
         if (command.targetId && !target?.actor)
           return reject('invalid-recipient', 'The intended recipient is not a person.');

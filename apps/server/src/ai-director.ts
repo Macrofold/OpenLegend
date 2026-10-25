@@ -1,4 +1,5 @@
 import { entityGet } from '@open-legend/domain';
+import { resolveContactTarget } from './public-contact-references.js';
 import { undispatchedReceipt } from './decision-state.js';
 import { playerActionIdentity } from './action-request-recovery.js';
 import { humanRequestId } from './human-request-id.js';
@@ -445,6 +446,7 @@ export class AiDirector {
     slots: IntentSlots | null = null,
     expression = false,
   ): Promise<ApiResult> {
+    const targetReference = targetId;
     return this.admission(() =>
       this.service.authorized(authority, 'play', true, async () => {
         this.service.assertScope(authority, 'play', true);
@@ -515,6 +517,9 @@ export class AiDirector {
             code: 'actor-unavailable',
             message: 'Your character cannot act now.',
           };
+        // Keep the public reference in the original request fingerprint, then bind
+        // its currently acquired body only after the durable duplicate lookup.
+        if (targetReference) targetId = resolveContactTarget(this.service.world, authority, targetReference);
         if (
           targetId &&
           targetId !== actorId &&
@@ -535,7 +540,7 @@ export class AiDirector {
             this.service,
             { id, authority, fingerprint },
             actorId,
-            { text, targetId: targetId ?? null, slots },
+            { text, targetId: targetId ?? null, slots, ...(targetReference ? { targetReference } : {}) },
             mode,
           ));
         if (typed) return typed;
@@ -579,6 +584,7 @@ export class AiDirector {
                 : {}),
               mode,
               targetId,
+              ...(targetReference ? { targetReference } : {}),
               ...(slots ? { slots } : {}),
               expectedPlan: actor.planGeneration,
               targetEpisodes: captureActionTargets(this.service.world, actorId, [
@@ -849,6 +855,7 @@ export class AiDirector {
       authority,
       volume,
       mode,
+      true,
     );
   }
 
@@ -880,6 +887,7 @@ export class AiDirector {
     authority?: RequestScope,
     volume: SpeechVolume = 'normal',
     mode?: 'workshop',
+    publicReferences = false,
   ): Promise<ApiResult> {
     authority ??= initiatingActor ? undefined : this.service.localScope;
     const admit = async () => {
@@ -951,10 +959,10 @@ export class AiDirector {
         volume = original.request.volume ?? 'normal';
         npcId = original.request.npcId;
       }
-      const targetId =
+      let targetId =
         kind === 'chat' ? (npcId ?? this.service.availableDefaultResidentEntityId) : undefined;
       if (
-        kind === 'chat' &&
+        kind === 'chat' && (!publicReferences || !!retryOf) &&
         (!targetId || entityGet(this.service.world.entities, targetId)?.actor?.controller !== 'npc')
       )
         return {
@@ -991,6 +999,11 @@ export class AiDirector {
               code: 'idempotency-conflict',
               message: 'That request ID was already used for different input.',
             };
+      if (kind === 'chat' && publicReferences && !retryOf && npcId) {
+        targetId = resolveContactTarget(this.service.world, authority!, npcId, { communication: true });
+        if (entityGet(this.service.world.entities, targetId)?.actor?.controller !== 'npc')
+          return { ok: false, code: 'resident-unavailable', message: 'Select an available resident for this conversation.' };
+      }
       let parent: JobRecord | undefined;
       if (continuation) {
         parent = await this.service.store.getJob(continuation.parentId);
@@ -1215,7 +1228,8 @@ export class AiDirector {
             message: `${namePhrase(observerName(this.service.world, inventorId, target.id), 'definite', { capitalize: true })} cannot respond right now. Retry when they are awake and able to respond.`,
           };
         if (!original) {
-          const spoken = await this.service.say(`${id}:player`, inventorId, text, targetId, volume);
+          const spoken = await this.service.say(`${id}:player`, inventorId, text, targetId, volume,
+            publicReferences && npcId && authority ? { scope: authority, reference: npcId } : undefined);
           if (!spoken.ok) return spoken;
           for (let i = this.service.world.events.length - 1; i >= 0; i--) {
             const event = this.service.world.events[i]!;
@@ -1473,6 +1487,14 @@ export class AiDirector {
           run.job.request.action.expressionLife !== (actor.actor.physicalLife ?? 0)))
     )
       throw new StopJob('stale', 'The actor or action timeline changed.');
+    if (run.job.kind === 'action' && run.job.request.action?.targetReference) {
+      try {
+        if (!run.job.authority || resolveContactTarget(this.service.world, run.job.authority, run.job.request.action.targetReference) !== run.job.request.action.targetId)
+          throw new Error('retired-contact');
+      } catch {
+        throw new StopJob('stale', 'The selected observed target changed or left perception. Submit a fresh action.');
+      }
+    }
     if (
       run.job.kind === 'thought' &&
       (actor.actor.incapacitated ||
@@ -2174,6 +2196,7 @@ export class AiDirector {
               prepared.binding.evidenceIds,
               prepared.binding.knowledgeReferences,
               interpretations.bound.bindings,
+              prepared.binding.identityReferences,
             );
             // Only this serialized native result can advance the expected feeling revisions.
             // Subscribers see the postcommit guard, while external changes stay fenced.
@@ -2293,6 +2316,8 @@ export class AiDirector {
             choice.prepared.binding.entityEpisodes,
             choice.prepared.binding.evidenceIds,
             choice.prepared.binding.knowledgeReferences,
+            undefined,
+            choice.prepared.binding.identityReferences,
           );
         },
         undefined,
@@ -3129,6 +3154,7 @@ export class AiDirector {
       namedClockTimes(this.service.world),
       activityRequestDescriptors(this.service.world),
       appraisals?.schema,
+      Object.keys(prepared.binding.identityReferences ?? {}),
     );
     const schema = actorInvention.enabled
       ? baseSchema.extend({ invention: actorInvention.schema })
@@ -3183,6 +3209,7 @@ export class AiDirector {
                     prepared.entityReferences,
                     prepared.binding.knowledgeReferences,
                     activityRequestDescriptors(this.service.world),
+                    prepared.binding.identityReferences,
                   ).operations[0] ?? null)
                 : null;
             },
@@ -3329,6 +3356,7 @@ export class AiDirector {
       prepared.entityReferences,
       prepared.binding.knowledgeReferences,
       activityRequestDescriptors(this.service.world),
+      prepared.binding.identityReferences,
     );
     const proposedInvention =
       actorInvention.enabled && 'invention' in reply
@@ -3405,6 +3433,7 @@ export class AiDirector {
             prepared.binding.evidenceIds,
             prepared.binding.knowledgeReferences,
             appraisals?.bindings,
+            prepared.binding.identityReferences,
           );
         },
         undefined,

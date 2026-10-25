@@ -1,3 +1,4 @@
+import { hasMemory } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import {
   initializePerceivedEventIndexes,
@@ -526,7 +527,10 @@ export class HistoryRepository {
                     typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text,
                 };
         }
-        if (!evidence) throw new Error('Committed event audience is missing its perspective.');
+        if (!evidence) {
+          if (!hasMemory(entityGet(world.entities, actorId))) continue;
+          throw new Error('Committed event audience is missing its perspective.');
+        }
         const { source, pending: perspectiveFlush } = batch.perspective(
           event,
           actorId,

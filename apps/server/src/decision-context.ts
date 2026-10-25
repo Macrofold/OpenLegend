@@ -902,6 +902,7 @@ export async function prepareDecision(
       .flatMap((pile) => portableItems(currentWorld, pile.id).map((item) => item.id))
       .slice(0, 16),
     activityDecisionReferences(currentActivity),
+    currentSelection.flatMap(candidate => candidate.subjects ?? []),
   );
   context['references'] = references.references;
   const planningTargetIds = planOffers.flatMap(({ command }) =>
@@ -922,6 +923,7 @@ export async function prepareDecision(
       entityGet(currentWorld.entities, actorId)!,
     ),
     knowledgeReferences: selectedKnowledgeReferences(currentWorld, actorId, currentSelection),
+    identityReferences: references.identityReferences,
     actorId,
     decisionId: jobId,
     policy: MIND_POLICY,
@@ -963,7 +965,8 @@ export async function prepareDecision(
         projectEntityMarkers(JSON.stringify(value), currentWorld, actorId),
         (field, entry) =>
           typeof entry === 'string' &&
-          /^(entityId|actorId|targetId|sourceId|targetEntityId|addresseeEntityId)$/.test(field)
+          /^(entityId|actorId|targetId|sourceId|targetEntityId|addresseeEntityId)$/.test(field) &&
+          Object.values(entityReferences).includes(entry)
             ? entityHandle(currentWorld, actorId, entry)
             : entry,
       );

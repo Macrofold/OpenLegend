@@ -20,6 +20,7 @@ export function SubjectPicker({
   value,
   onSelect,
   onlyRecognized = false,
+  entityOnly = false,
   disabled = false,
 }: {
   actorId: string;
@@ -31,6 +32,7 @@ export function SubjectPicker({
   onSelect(subject: MindSubject | null): void;
   /** Notes-only subjects stay visible but cannot be chosen. */
   onlyRecognized?: boolean;
+  entityOnly?: boolean;
   disabled?: boolean;
 }) {
   const [text, setText] = useState(value?.label ?? none);
@@ -104,9 +106,13 @@ export function SubjectPicker({
         onLoadMore={next && !loading ? () => load(next) : undefined}
         disabledKeys={[
           ...(disabled ? ['', ...choices.map((subject) => subject.id)] : []),
-          ...(onlyRecognized
-            ? choices.filter((subject) => subject.status === 'notes-only').map((s) => s.id)
-            : []),
+          ...choices
+            .filter(
+              (subject) =>
+                (onlyRecognized && subject.status === 'notes-only') ||
+                (entityOnly && subject.subject.kind !== 'entity'),
+            )
+            .map((subject) => subject.id),
         ]}
         options={[
           { id: '', label: none },

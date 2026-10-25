@@ -80,7 +80,7 @@ export const invocationFields: Partial<
     required: ['targetId', 'definitionId', 'operation'],
     optional: ['facingHeading', 'restingPlaceId', 'restingBay'],
   },
-  say: { required: ['text'], optional: ['targetId', 'volume'] },
+  say: { required: ['text'], optional: ['targetId', 'selfIntroduction', 'volume'] },
 };
 export function exactFields(value: object, fields: string[]): void {
   if (

@@ -583,7 +583,7 @@ function ScopedWorldEvents({
                     {event.attributeChange.unit}
                   </p>
                 )}
-                {event.speech?.recipient && <p>To {event.speech.recipient.nameAtTime}</p>}
+                {event.speech?.addressee && <p>To {event.speech.addressee.nameAtTime}</p>}
                 {inspectEntity &&
                   (event.references ?? []).map((ref) => (
                     <button

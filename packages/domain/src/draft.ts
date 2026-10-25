@@ -329,8 +329,15 @@ export function sensoryDraftWrites(
     if (child?.modified_ !== true) continue;
     const entity = readOnlyDraftView(value) as Entity;
     const source =
-      changed(value, ['name', 'kind', 'appearance', 'placement', 'retirement']) ||
-      changed(entity.spatial, ['body', 'inactiveBody', 'softFootprint']) ||
+      changed(value, [
+        'name',
+        'kind',
+        'appearance',
+        'placement',
+        'retirement',
+        'inventoryRevision',
+      ]) ||
+      changed(entity.spatial, ['body', 'inactiveBody', 'softFootprint', 'heading']) ||
       changed(entity.heat, ['lit']) ||
       changed(entity.resource, ['quantity']) ||
       changed(entity.remains, ['harvested']) ||
@@ -340,6 +347,7 @@ export function sensoryDraftWrites(
         'capabilities',
         'controller',
         'participation',
+        'physicalLife',
         'action',
       ]) ||
       // Component installation/removal also changes participation and outward facts.

@@ -377,11 +377,24 @@ function recordEvent(
     event.audience = [...audience];
   }
   const nativeTarget = targetId ? entityGet(world.entities, targetId) : undefined;
-  if (nativeTarget?.actor?.controller === 'native' && nativeTarget.actor.alive && activelyParticipates(nativeTarget) &&
+  if (
+    nativeTarget?.actor?.controller === 'native' &&
+    nativeTarget.actor.alive &&
+    activelyParticipates(nativeTarget) &&
     !audience.includes(nativeTarget.id) &&
-    ['struck', 'projectile-contact', 'projectile-passage', 'shot-released', 'attack-cue', 'action-started'].includes(type) &&
-    (feltTargetId === nativeTarget.id || type === 'projectile-contact' || type === 'projectile-passage' ||
-      (source && seesEntity(world, nativeTarget, source)))) {
+    [
+      'struck',
+      'projectile-contact',
+      'projectile-passage',
+      'shot-released',
+      'attack-cue',
+      'action-started',
+    ].includes(type) &&
+    (feltTargetId === nativeTarget.id ||
+      type === 'projectile-contact' ||
+      type === 'projectile-passage' ||
+      (source && seesEntity(world, nativeTarget, source)))
+  ) {
     audience.push(nativeTarget.id);
     event.audience = [...audience];
   }
@@ -421,9 +434,9 @@ function recordEvent(
     if (conversation) conversation.lastActivityAt = world.simTime;
   }
   const acquired: Awareness[] = [];
-  if (world.experience) {
-    countDomainWork('awarenessWritten', audience.length);
+  if (world.experience || audience.length) {
     for (const actorId of audience) {
+      if (hasMemory(entityGet(world.entities, actorId))) countDomainWork('awarenessWritten');
       const speech = speechAwareness.get(actorId);
       if (speech) {
         speech.observation = acquireAwarenessObservation(world, event, speech);
@@ -435,9 +448,15 @@ function recordEvent(
       // Native participants and grammar are rendered once for this observer; literal
       // prose/quotes retain their supplied ownership. Speech has listener-specific evidence.
       // docs/architecture.md#private-perception-and-evidence-batches
-      const nativeContact = actorId === nativeTarget?.id &&
+      const nativeContact =
+        actorId === nativeTarget?.id &&
         (type === 'projectile-contact' || type === 'projectile-passage');
-      const perceived = observeEvent(world, event, actorId, nativeContact ? { feltImpact: true } : undefined);
+      const perceived = observeEvent(
+        world,
+        event,
+        actorId,
+        nativeContact ? { feltImpact: true } : undefined,
+      );
       const perceivedText = perceived.text;
       const awareness: Awareness = {
         ...(event.exposure ? { exposure: cloneValue(event.exposure) } : {}),
@@ -546,11 +565,11 @@ function recordEvent(
   // later placement decision, never another observation or an ordering clock.
   for (const awareness of acquired) {
     if (!awareness.speech) acquireCombatObservation(world, awareness, event);
-    if (awarenessBatch)
+    if (awarenessBatch && hasMemory(entityGet(world.entities, awareness.actorId)))
       awarenessBatch.push({ operation: 'add', entry: { source: 'awareness', value: awareness } });
   }
   if (!awarenessBatch) acquireEventAwareness(world, acquired);
-  learnSpeechIntroduction(world, event);
+  learnSpeechIntroduction(world, event, acquired);
   // Finalize optional native metadata before handing an immutable record to persistence.
   if (audience.length || importance >= selectedSocialPolicy(world).notableThreshold)
     appendEvents(world, [cloneValue(event)]);

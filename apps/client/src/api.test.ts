@@ -102,6 +102,8 @@ it('reports lost window focus immediately and does not let a visible-tab heartbe
 function publicView(): import('@open-legend/protocol').GameView {
   return {
     schemaVersion: 3,
+    evaluationCut: 0,
+    communicationReferences: [],
     revision: 1,
     worldId: 'world:a',
     saveTimeline: 'timeline:1',
@@ -243,6 +245,7 @@ it('retains entity removal/order and refuses an update for a different audience 
   const entity = (id: string): import('@open-legend/protocol').EntityView => ({
     id,
     name: id,
+    observation: {kind:'current',modality:'sight',measurementAt:0,acquiredAt:0,confirmedThrough:0,sourceReference:'fixture'},
     kind: 'actor',
     subtype: '',
     position: { x: 0, y: 0, z: 0 },
@@ -275,6 +278,7 @@ it('applies small entity field changes atomically and keeps unchanged public obj
   const entity: import('@open-legend/protocol').EntityView = {
     id: 'moving',
     name: 'Walker',
+    observation: {kind:'current',modality:'sight',measurementAt:0,acquiredAt:0,confirmedThrough:0,sourceReference:'fixture'},
     kind: 'actor',
     subtype: 'human',
     position: { x: 0, y: 0, z: 0 },
@@ -325,6 +329,7 @@ it('keeps inventory preparation stable through received movement but updates rel
   const resident: import('@open-legend/protocol').EntityView = {
     id: 'resident',
     name: 'Resident',
+    observation: {kind:'current',modality:'sight',measurementAt:0,acquiredAt:0,confirmedThrough:0,sourceReference:'fixture'},
     kind: 'actor',
     subtype: 'human',
     position: { x: 1, y: 0, z: 1 },

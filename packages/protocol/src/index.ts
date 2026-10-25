@@ -366,6 +366,10 @@ export interface StatusEffectView {
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
 }
 export interface EntityView extends Named {
+  observation: { kind:'self' } | { kind:'current'; modality:'sight'; measurementAt:number; acquiredAt:number; confirmedThrough:number; sourceReference:string };
+  observedCarried?: { items:Array<{itemKindAsObserved:string}>; measurementAt:number; confirmedThrough:number };
+  /** Remembered communication is distinct from the current physical contact. */
+  communicationReference?: string;
   icon?: string;
   /** Native root placement is public; contents revision requires current contents access. */
   storage?: { containerId: string; placementRevision: number; revision?: number };
@@ -529,8 +533,11 @@ export interface PerceivedSpeech {
   perception: 'heard' | 'seen' | 'self';
   intelligibility: 'none' | 'partial' | 'clear';
   segments: Array<{ kind: 'heard'; text: string } | { kind: 'unintelligible' }>;
-  speaker: (Omit<Named, 'name'> & { entityId: string; nameAtTime: string }) | null;
-  recipient?: (Omit<Named, 'name'> & { entityId: string; nameAtTime: string }) | null;
+  speaker: (Omit<Named, 'name'> & { nameAtTime: string }) | null;
+  addressing: 'ambient' | 'directed' | null;
+  addressee: (Omit<Named, 'name'> & { nameAtTime: string }) | null;
+  /** A separately admitted current physical contact; voice recognition supplies none. */
+  speakerContact?: string;
   delivery: SpeechVolume | null;
   direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
   listenerPosition: Position;
@@ -679,7 +686,7 @@ export interface PublicEvent {
     displayToPlayer?: boolean;
   };
   /** Only identities and names admitted when this character perceived the occurrence. */
-  references?: Array<{ id: string; label: string; role: 'actor' | 'target' | 'participant' }>;
+  references?: Array<{ id: string; label: string; role: 'actor' | 'target' | 'participant'; kind: 'historical' }>;
   /** Perceived descriptive expression, with no mechanical effects. */
   descriptive?: true;
   /** Actual committed change, taken only from this observer's permitted evidence. */
@@ -696,6 +703,7 @@ export interface PublicEvent {
     kind?: 'health';
   };
   speech?: PerceivedSpeech;
+  sound?: { kind: 'voice-like'; direction: PerceivedSpeech['direction']; listenerPosition: { x: number; y: number; z: number } };
   modality?: 'heard' | 'observed' | 'felt' | 'internal';
   source?: WorldEventSourceReference;
   id: string;
@@ -751,6 +759,10 @@ export interface AiJobView {
 }
 
 export interface GameView {
+  /** Native simulation time through which this acquired projection is complete. */
+  evaluationCut: number;
+  /** Remembered communication roles; no current body, location or state is implied. */
+  communicationReferences: Array<{ id: string; label: string }>;
   /** Exact installed asset release; absent authorizes only bootstrap depiction. */
   presentationRelease?: AssetRevisionReference;
   presentationReleaseRevision?: number;
@@ -929,6 +941,8 @@ export interface EntityFieldPatch {
   remove?: Array<keyof Omit<EntityView, 'id'>>;
 }
 export interface GamePatch {
+  evaluationCut: number;
+  communicationReferences?: GameView['communicationReferences'];
   /** JSON omits undefined. Removed fields are explicit; null remains a meaningful value. */
   remove?: {
     view?: Array<
@@ -1109,7 +1123,7 @@ export interface GodMindView {
   worldId?: string;
   generation?: string;
   notepads?: {
-    subjectId: string | null;
+    subjectId: ObserverSubject | null;
     origin: 'authored-starting' | 'actor-edit';
     label: string;
     text: string;
@@ -1158,8 +1172,10 @@ export interface GodMindView {
 
 /** One subject for private notes/feelings, as the inspected character knows them.
  * Labels are that character's own given names or species descriptions, never global names. */
+export type ObserverSubject = { kind: 'entity'; entityId: string } | { kind: 'individual'; individualId: string };
 export interface MindSubject {
   id: string;
+  subject: ObserverSubject;
   label: string;
   status: 'in-view' | 'known' | 'notes-only';
   detail: string;

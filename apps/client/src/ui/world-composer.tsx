@@ -153,13 +153,14 @@ function ScopedWorldComposer({
   const targetAvailable =
     !intent?.targetId ||
     intent.possession ||
+    (intent.mode === 'speak' && view.communicationReferences.some(reference => reference.id === intent.targetId)) ||
     view.entities.some((e) => e.id === intent.targetId) ||
     view.player.inventory.some((item) => item.id === intent.targetId);
   const recipient = intent?.targetId
-    ? view.entities.find((entity) => entity.id === intent.targetId)
+    ? view.entities.find((entity) => entity.id === intent.targetId || entity.communicationReference === intent.targetId)
     : undefined;
   const requestsReply =
-    intent?.mode === 'speak' && !!recipient && recipient.talkRequiresAi !== false;
+    intent?.mode === 'speak' && !!intent.targetId && recipient?.talkRequiresAi !== false;
   const replyAccount = intent?.targetId ? view.ai.budget.accounts?.[intent.targetId] : undefined;
   const replyUsage = view.ai.budget.perAgent ? replyAccount : view.ai.budget;
   const replyAllowance =

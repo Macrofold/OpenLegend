@@ -1077,15 +1077,30 @@ export function validateWorldModules(world: WorldState): void {
   )
     throw new Error('Invalid selected normal-time rate.');
   validatePerceptionEvidenceState(world);
-  for (const entries of Object.values(world.memories))
+  for (const [actorId, entries] of Object.entries(world.memories))
     for (const memory of entries) {
+      if (memory.actorId !== actorId) throw new Error('Foreign personal memory owner.');
       if (memory.evidence) validateEventEvidence(memory.evidence);
-      if (memory.observation) validateObservationContribution(memory.observation);
-      for (const observation of memory.observations ?? [])
+      for (const observation of [
+        ...(memory.observation ? [memory.observation] : []),
+        ...(memory.observations ?? []),
+      ]) {
         validateObservationContribution(observation);
-      if (memory.manifest) validateExperienceManifest(memory.manifest);
+        if (observation.observer.actorId !== actorId || observation.acquiredAt > world.simTime)
+          throw new Error('Foreign or future personal observation.');
+      }
+      if (memory.manifest) {
+        validateExperienceManifest(memory.manifest);
+        if (
+          memory.manifest.observations.some(
+            (observation) =>
+              observation.observer.actorId !== actorId || observation.acquiredAt > world.simTime,
+          )
+        )
+          throw new Error('Foreign or future remembered observation.');
+      }
     }
-  for (const entries of Object.values(world.experience?.summaries ?? {}))
+  for (const [actorId, entries] of Object.entries(world.experience?.summaries ?? {}))
     for (const summary of entries) {
       if (
         !Array.isArray(summary.sources) ||
@@ -1093,6 +1108,13 @@ export function validateWorldModules(world: WorldState): void {
       )
         throw new Error('Invalid exact summary sources.');
       validateExperienceManifest(summary.manifest);
+      if (
+        summary.manifest.observations.some(
+          (observation) =>
+            observation.observer.actorId !== actorId || observation.acquiredAt > world.simTime,
+        )
+      )
+        throw new Error('Foreign or future summary observation.');
     }
   validateSocialPolicy(world);
   validateCombatEncounters(world);

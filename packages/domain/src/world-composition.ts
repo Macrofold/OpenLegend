@@ -40,10 +40,15 @@ import type {
 import { ordinaryWarningPlace, ordinaryWarningDurationSeconds } from './worlds/base/recognition.js';
 
 /** The selected world owns understood warning grammar and its stated duration. */
-export function selectedOrdinaryWarning(world: WorldState, segments: readonly import('./speech.js').SpeechSegment[]) {
+export function selectedOrdinaryWarning(
+  world: WorldState,
+  segments: readonly import('./speech.js').SpeechSegment[],
+) {
   selectedCreationProfileForWorld(world);
   const label = ordinaryWarningPlace(segments);
-  return label === undefined ? undefined : { label, duration: ordinaryWarningDurationSeconds(world) };
+  return label === undefined
+    ? undefined
+    : { label, duration: ordinaryWarningDurationSeconds(world) };
 }
 
 /** A selected pin chooses linked trusted native templates. It cannot load code or

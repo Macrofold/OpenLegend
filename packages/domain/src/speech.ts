@@ -2,13 +2,29 @@ import { entityGet } from './entity-collection.js';
 import { namePhrase, personalPronoun, validName, type Named } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
 import { observerName, recognizesSubject, observerIndividual } from './worlds/base/knowledge.js';
-import { perceiveVoice, receivedVoiceFeatures } from './worlds/base/recognition.js';
+import {
+  BASE_VOICE_FEATURE_FAMILY,
+  validRecognitionFeatures,
+  perceiveVoice,
+  receivedVoiceFeatures,
+  validateIndividualRecognition,
+} from './worlds/base/recognition.js';
 import { hasMemory } from './living.js';
 import { speechPerception } from './perception.js';
 import { contentLabel } from './events.js';
 import type { SpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
 import type { Entity, Position, WorldEvent, WorldState } from './types.js';
+
+export interface PerceivedSound {
+  kind: 'voice-like';
+  receivedLevelDbSpl: number;
+  clarityMarginDb: number;
+  direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
+  listenerPosition: Position;
+}
+export const soundDescription = (_sound: PerceivedSound): string =>
+  'You hear a voice-like sound nearby.';
 
 export type SpeechSegment = { kind: 'heard'; text: string } | { kind: 'unintelligible' };
 /** This entire shape is observer-permitted, including only the observer's own acquisition pose. */
@@ -100,8 +116,7 @@ export function perceiveSpeech(
   words?: ReturnType<typeof prepareSpeechWords>,
 ): Awareness | null {
   const self = observer.id === source.id;
-  if (!hasMemory(observer) || (!self && (!observer.actor?.alive || observer.actor.incapacitated)))
-    return null;
+  if (!self && (!observer.actor?.alive || observer.actor.incapacitated)) return null;
   const contact = self ? null : speechPerception(world, observer, source, volume);
   if (!self && !contact) return null;
   const detail = self ? 'clear' : contact!.detail;
@@ -114,17 +129,32 @@ export function perceiveSpeech(
   const dx = origin.x - listener.x,
     dz = origin.z - listener.z,
     dy = origin.y - listener.y;
+  const direction: PerceivedSound['direction'] =
+    !self && perception === 'heard' && Math.hypot(dx, dz) >= Math.max(0.25, Math.abs(dy))
+      ? {
+          sector: (Math.round(Math.atan2(dz, dx) / (Math.PI / 4)) + 8) % 8,
+          elevation: dy > 2 ? 'above' : dy < -2 ? 'below' : 'level',
+        }
+      : null;
+  const receivedFeatures =
+    hasMemory(observer) &&
+    observer.actor?.individualRecognition &&
+    source.actor?.voiceProfile &&
+    perception === 'heard'
+      ? receivedVoiceFeatures(source.actor.voiceProfile)
+      : undefined;
   const voice =
+    hasMemory(observer) &&
     !self &&
     perception === 'heard' &&
-    source.actor?.voiceProfile &&
+    receivedFeatures &&
     contact?.clarityMarginDb !== null &&
     contact?.clarityMarginDb !== undefined
       ? perceiveVoice(
           world,
           observer.id,
           event,
-          receivedVoiceFeatures(source.actor.voiceProfile),
+          receivedFeatures!,
           contact.clarityMarginDb,
           visible ? source.id : undefined,
         )
@@ -140,6 +170,59 @@ export function perceiveSpeech(
         }
       : undefined;
   const sourceId = visible ? source.id : voice?.recognized ? individual?.canonicalId : undefined;
+  if (!hasMemory(observer) || observer.actor?.capabilities?.comprehendsSpeech === false) {
+    if (
+      perception !== 'heard' ||
+      contact?.receivedLevelDbSpl == null ||
+      contact.clarityMarginDb == null
+    )
+      return null;
+    const sound: PerceivedSound = {
+      kind: 'voice-like',
+      receivedLevelDbSpl: contact.receivedLevelDbSpl,
+      clarityMarginDb: contact.clarityMarginDb,
+      direction,
+      listenerPosition: { ...listener },
+    };
+    return {
+      eventId: event.id,
+      actorId: observer.id,
+      at: event.at,
+      sequence: event.order ?? event.sequence,
+      eventType: 'sound',
+      sound,
+      text: soundDescription(sound),
+      modality: 'heard',
+      recognized: voice?.recognized === true,
+      ...(voice ? { recognition: voice } : {}),
+      ...(voice && receivedFeatures
+        ? {
+            receivedFeatures: {
+              modality: 'hearing' as const,
+              family: BASE_VOICE_FEATURE_FAMILY,
+              features: receivedFeatures,
+              quality: voice.quality,
+            },
+          }
+        : {}),
+      ...(hasMemory(observer) && sourceId ? { sourceId } : {}),
+      ...(hasMemory(observer) && learnedSubject ? { sourceSubject: learnedSubject } : {}),
+      intelligible: false,
+      entityIds: [],
+      importance: event.importance ?? 3,
+      urgency: event.urgency ?? 4,
+      triggerKind: 'observed_event',
+    };
+  }
+  const bodyLease =
+    visible && !self
+      ? Object.values(world.perceptionEvidence?.[observer.id]?.current ?? {}).find(
+          (facet) =>
+            facet.subjectId === source.id &&
+            facet.subjectPhysicalLife === (source.actor?.physicalLife ?? 0) &&
+            facet.value.kind === 'body',
+        )
+      : undefined;
   const speech: PerceivedSpeech = {
     perception,
     intelligibility: detail === 'clear' || detail === 'partial' ? detail : 'none',
@@ -160,13 +243,7 @@ export function perceiveSpeech(
       : null,
     delivery: visible && perception !== 'seen' ? volume : null,
     // A coarse direct-path bearing is not a source location or a future tracking handle.
-    direction:
-      !self && perception === 'heard' && Math.hypot(dx, dz) >= Math.max(0.25, Math.abs(dy))
-        ? {
-            sector: (Math.round(Math.atan2(dz, dx) / (Math.PI / 4)) + 8) % 8,
-            elevation: dy > 2 ? 'above' : dy < -2 ? 'below' : 'level',
-          }
-        : null,
+    direction,
     listenerPosition: { ...listener },
   };
   const introduction = event.data?.['selfIntroduction'];
@@ -221,6 +298,26 @@ export function perceiveSpeech(
       (visible && recognizesSubject(world, observer.id, source.id)) || voice?.recognized === true,
     intelligible: speech.intelligibility !== 'none',
     ...(sourceId ? { sourceId } : {}),
+    ...(self || bodyLease
+      ? {
+          sourceBody: {
+            entityId: source.id,
+            physicalLife: source.actor?.physicalLife ?? 0,
+            leaseId: self ? null : bodyLease!.id,
+          },
+        }
+      : {}),
+    ...(voice ? { recognition: voice } : {}),
+    ...(voice && receivedFeatures
+      ? {
+          receivedFeatures: {
+            modality: 'hearing' as const,
+            family: BASE_VOICE_FEATURE_FAMILY,
+            features: receivedFeatures,
+            quality: voice.quality,
+          },
+        }
+      : {}),
     ...(learnedSubject ? { sourceSubject: learnedSubject } : {}),
     ...(targetId ? { targetId } : {}),
     entityIds,
@@ -253,10 +350,15 @@ export type EventEvidence = Pick<
   | 'content'
   | 'modality'
   | 'sourceId'
+  | 'sourceBody'
+  | 'recognition'
+  | 'receivedFeatures'
   | 'targetId'
   | 'sourceSubject'
   | 'observation'
+  | 'observations'
   | 'speech'
+  | 'sound'
   | 'importance'
   | 'urgency'
   | 'exposure'
@@ -266,6 +368,23 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('Invalid committed observer facts.');
   const evidence = value as Partial<EventEvidence>;
+  if (evidence.recognition !== undefined) validateIndividualRecognition(evidence.recognition);
+  if (evidence.receivedFeatures !== undefined) validateReceivedFeatures(evidence.receivedFeatures);
+  if (
+    evidence.sourceBody !== undefined &&
+    (!evidence.sourceBody ||
+      typeof evidence.sourceBody.entityId !== 'string' ||
+      !evidence.sourceBody.entityId ||
+      !Number.isSafeInteger(evidence.sourceBody.physicalLife) ||
+      evidence.sourceBody.physicalLife < 0 ||
+      !evidence.speech ||
+      evidence.sourceBody.entityId !== evidence.sourceId ||
+      (evidence.sourceBody.leaseId === null
+        ? evidence.speech?.perception !== 'self' ||
+          evidence.sourceBody.entityId !== evidence.actorId
+        : typeof evidence.sourceBody.leaseId !== 'string' || !evidence.sourceBody.leaseId))
+  )
+    throw new Error('Invalid acquired speech body correspondence.');
   if (
     evidence.references !== undefined &&
     (!Array.isArray(evidence.references) ||
@@ -291,23 +410,12 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
     !/^[a-z][a-z0-9_.:-]{0,63}$/.test(evidence.eventType)
   )
     throw new Error('Invalid committed observer event type.');
-  if (evidence.eventType === 'speech') {
-    if (!evidence.speech) throw new Error('Speech is missing its committed listener perspective.');
-    const recipient = evidence.speech.addressee;
-    if (
-      !['ambient', 'directed', null].includes(evidence.speech.addressing) ||
-      (evidence.speech.perception === 'seen'
-        ? evidence.speech.addressing !== null
-        : evidence.speech.addressing === null)
-    )
-      throw new Error('Invalid committed speech addressing.');
-    if (
-      recipient != null &&
-      (typeof recipient !== 'object' ||
-        Array.isArray(recipient) ||
-        !validName({ ...recipient, name: recipient.nameAtTime }))
-    )
-      throw new Error('Invalid occurrence-time speech recipient.');
+  if (evidence.eventType === 'sound') {
+    if (!evidence.sound || evidence.speech || evidence.targetId || evidence.content)
+      throw new Error('Sound-only evidence cannot contain linguistic or canonical source facts.');
+    validatePerceivedSound(evidence.sound);
+  } else if (evidence.eventType === 'speech') {
+    validatePerceivedSpeech(evidence.speech);
   } else if (
     !evidence.eventData ||
     typeof evidence.eventData !== 'object' ||
@@ -323,14 +431,17 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
     throw new Error('Event is missing valid committed observer facts.');
 }
 export type ActorEvent = WorldEvent & {
+  /** Private event-time physical grant for later scoped publication, not voice identity. */
+  sourceBody?: Awareness['sourceBody'];
   speech?: PerceivedSpeech;
+  sound?: PerceivedSound;
   modality: Awareness['modality'];
   references?: Awareness['references'];
 };
 export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence): ActorEvent {
-  if (event.type === 'speech' && !evidence.speech)
+  if (event.type === 'speech' && !evidence.speech && !evidence.sound)
     throw new Error('Speech is missing its committed listener perspective.');
-  if (!evidence.speech && (!evidence.eventData || !evidence.eventType))
+  if (!evidence.speech && !evidence.sound && (!evidence.eventData || !evidence.eventType))
     throw new Error('Event is missing its committed observer facts.');
   return {
     id: event.id,
@@ -347,8 +458,10 @@ export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence)
     ...(evidence.exposure ? { exposure: evidence.exposure } : {}),
     ...(evidence.sourceId ? { actorId: evidence.sourceId } : {}),
     ...(evidence.targetId ? { targetId: evidence.targetId } : {}),
+    ...(evidence.sourceBody ? { sourceBody: evidence.sourceBody } : {}),
     importance: evidence.importance,
     urgency: evidence.urgency,
+    ...(evidence.sound ? { sound: evidence.sound, data: {} } : {}),
     ...(evidence.speech
       ? {
           speech: evidence.speech,
@@ -360,6 +473,138 @@ export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence)
               : {}),
           },
         }
-      : { data: evidence.eventData }),
+      : evidence.sound
+        ? {}
+        : { data: evidence.eventData }),
   };
+}
+
+function validListenerPosition(value: unknown): value is Position {
+  if (!value || typeof value !== 'object') return false;
+  const position = value as Position;
+  return [position.x, position.y, position.z].every(
+    (number) => typeof number === 'number' && Number.isFinite(number),
+  );
+}
+function validDirection(value: unknown): boolean {
+  if (value === null) return true;
+  if (!value || typeof value !== 'object') return false;
+  const direction = value as PerceivedSound['direction'];
+  return (
+    !!direction &&
+    Number.isInteger(direction.sector) &&
+    direction.sector >= 0 &&
+    direction.sector < 8 &&
+    ['above', 'level', 'below'].includes(direction.elevation)
+  );
+}
+export function validatePerceivedSound(value: unknown): asserts value is PerceivedSound {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Invalid received sound.');
+  const sound = value as PerceivedSound;
+  if (
+    Object.keys(value).some(
+      (key) =>
+        ![
+          'kind',
+          'receivedLevelDbSpl',
+          'clarityMarginDb',
+          'direction',
+          'listenerPosition',
+        ].includes(key),
+    )
+  )
+    throw new Error('Unsupported received sound field.');
+  if (
+    sound.kind !== 'voice-like' ||
+    !Number.isFinite(sound.receivedLevelDbSpl) ||
+    !Number.isFinite(sound.clarityMarginDb) ||
+    !validDirection(sound.direction) ||
+    !validListenerPosition(sound.listenerPosition)
+  )
+    throw new Error('Invalid received sound.');
+}
+export function validSpeechLabel(value: unknown): value is PerceivedSpeech['speaker'] {
+  if (value === null) return true;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const label = value as NonNullable<PerceivedSpeech['speaker']>;
+  return (
+    Object.keys(label).every((key) =>
+      ['nameAtTime', 'nameForm', 'indefiniteArticle'].includes(key),
+    ) && validName({ ...label, name: label.nameAtTime })
+  );
+}
+export function validatePerceivedSpeech(value: unknown): asserts value is PerceivedSpeech {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Invalid received speech.');
+  const speech = value as PerceivedSpeech;
+  if (
+    Object.keys(value).some(
+      (key) =>
+        ![
+          'perception',
+          'intelligibility',
+          'segments',
+          'speaker',
+          'addressing',
+          'addressee',
+          'delivery',
+          'direction',
+          'listenerPosition',
+          'nameClaim',
+        ].includes(key),
+    )
+  )
+    throw new Error('Unsupported received speech field.');
+  if (
+    !['heard', 'seen', 'self'].includes(speech.perception) ||
+    !['none', 'partial', 'clear'].includes(speech.intelligibility) ||
+    !Array.isArray(speech.segments) ||
+    speech.segments.some(
+      (segment) =>
+        !segment ||
+        (segment.kind === 'unintelligible'
+          ? Object.keys(segment).length !== 1
+          : !(
+              segment.kind === 'heard' &&
+              typeof segment.text === 'string' &&
+              Object.keys(segment).length === 2
+            )),
+    ) ||
+    !validSpeechLabel(speech.speaker) ||
+    !validSpeechLabel(speech.addressee) ||
+    !['ambient', 'directed', null].includes(speech.addressing) ||
+    (speech.perception === 'seen'
+      ? speech.addressing !== null || speech.segments.length > 0
+      : speech.addressing === null) ||
+    (speech.delivery !== null && !['whisper', 'normal', 'shout'].includes(speech.delivery)) ||
+    !validDirection(speech.direction) ||
+    !validListenerPosition(speech.listenerPosition) ||
+    (speech.nameClaim !== undefined &&
+      (typeof speech.nameClaim !== 'string' ||
+        !speech.nameClaim.trim() ||
+        Array.from(speech.nameClaim).length > 120))
+  )
+    throw new Error('Invalid received speech.');
+}
+
+export function validateReceivedFeatures(
+  value: unknown,
+): asserts value is NonNullable<Awareness['receivedFeatures']> {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Invalid received individual features.');
+  const sample = value as NonNullable<Awareness['receivedFeatures']>;
+  if (
+    !['sight', 'hearing'].includes(sample.modality) ||
+    !sample.family ||
+    typeof sample.family.id !== 'string' ||
+    !sample.family.id ||
+    !Number.isSafeInteger(sample.family.version) ||
+    sample.family.version < 1 ||
+    !validRecognitionFeatures(sample.features) ||
+    !Number.isFinite(sample.quality) ||
+    sample.quality < 0 ||
+    sample.quality > 1
+  )
+    throw new Error('Invalid received individual features.');
 }

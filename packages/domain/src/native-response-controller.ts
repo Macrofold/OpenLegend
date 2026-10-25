@@ -37,6 +37,7 @@ import { activelyParticipates } from './participation-state.js';
 import { releaseInvocationResources } from './resource-claims.js';
 import type { SurfacePoint } from '@open-legend/spatial';
 import { retireTerritorialControl } from './territorial-threat.js';
+import { receivedEventObservation } from './perception-evidence.js';
 
 function changed(world: WorldState, animal: Entity): void {
   recordAnimalClockWrite(world, animal.id);
@@ -99,18 +100,24 @@ export function acquireNativeResponseEvent(
   )
     return;
   if (event.scope === 'private' && !event.audience.includes(animal.id)) return;
-  const source = event.actorId ? entityGet(world.entities, event.actorId) : undefined;
-  const felt =
-    event.type === 'projectile-contact' ||
-    event.type === 'projectile-passage' ||
-    (event.type === 'struck' && event.data?.['contactInjury'] === true);
+  const observation = receivedEventObservation(world, animal.id, event.id);
+  if (!observation) return;
+  const permittedEvent = observation.facets.find((facet) => facet.value.kind === 'event')?.value;
+  const sourcePermitted =
+    permittedEvent?.kind === 'event' &&
+    permittedEvent.references.some(
+      (reference) => reference.role === 'actor' && reference.id === event.actorId,
+    );
+  const source =
+    sourcePermitted && event.actorId ? entityGet(world.entities, event.actorId) : undefined;
+  const felt = observation.modality === 'touch';
   const preparation = event.type === 'action-started' || event.type === 'attack-cue';
   if (
     preparation &&
     (!source || !attackPreparation(world, source) || source.actor?.action?.targetId !== animal.id)
   )
     return;
-  if (!felt && (!source || source.id === animal.id || !seesEntity(world, animal, source))) return;
+  if (!felt && (!source || source.id === animal.id)) return;
   if (preparation && source) {
     observeNativeAttackPreparation(world, source, events);
     return;
@@ -124,17 +131,20 @@ export function acquireNativeResponseEvent(
   if (!episode) return;
   if (felt) {
     const projectileId = event.data?.['projectileId'];
+    const receivedLocation = observation.facets.find(
+      (facet) => facet.value.kind === 'location',
+    )?.value;
     const origin =
-      event.type === 'projectile-contact' || event.type === 'projectile-passage'
-        ? (event.origin ?? worldPosition(animal))
+      receivedLocation?.kind === 'location' && receivedLocation.location.kind === 'point'
+        ? receivedLocation.location.point
         : worldPosition(animal);
     const regionSource =
       typeof projectileId === 'string'
         ? { kind: 'projectile' as const, id: projectileId }
         : { kind: 'event' as const, id: event.id };
-    const x = event.data?.['incomingX'],
-      y = event.data?.['incomingY'],
-      z = event.data?.['incomingZ'];
+    const x = permittedEvent?.kind === 'event' ? permittedEvent.data['incomingX'] : undefined,
+      y = permittedEvent?.kind === 'event' ? permittedEvent.data['incomingY'] : undefined,
+      z = permittedEvent?.kind === 'event' ? permittedEvent.data['incomingZ'] : undefined;
     episode.dangers[nativeRegionDangerKey(regionSource)] = {
       kind: 'region',
       source: regionSource,

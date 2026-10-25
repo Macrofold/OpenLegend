@@ -1,3 +1,6 @@
+import { currentBodyObservation, currentObservedFacets, recognizesSubject } from '@open-legend/domain';
+import { currentContactReference, communicationReference, projectCommandContactReferences } from './public-contact-references.js';
+import { permittedSourceHandle } from './entity-references.js';
 import { entityGet } from '@open-legend/domain';
 import { selectedEventPresentation } from '@open-legend/domain';
 import {
@@ -217,11 +220,13 @@ export async function projectView(
     ),
     visibleEntities: memo(
       'visibleEntities',
-      [world.entities, world.map, world.moduleManifest, sightRadius],
-      () =>
-        nearbyEntities(world, worldPosition(observer), sightRadius).filter(
-          (entity) => entity.id !== scope.actorId && seesEntity(world, observer, entity),
-        ),
+      [world.entities, world.perceptionEvidence?.[scope.actorId]],
+      () => [...new Set(Object.values(world.perceptionEvidence?.[scope.actorId]?.current ?? {})
+        .filter(lease => lease.value.kind === 'body').map(lease => lease.subjectId))]
+        .flatMap(id => {
+          const entity = entityGet(world.entities, id);
+          return entity && id !== scope.actorId && currentBodyObservation(world, scope.actorId, id) ? [entity] : [];
+        }),
     ),
     knownRecipes: memo('knownRecipes', [world.knowledge[scope.actorId], world.recipes], () =>
       (world.knowledge[scope.actorId] ?? [])
@@ -233,38 +238,6 @@ export async function projectView(
   for (const id of cache.entities.keys()) if (!visibleIds.has(id)) cache.entities.delete(id);
   for (const key of cache.values.keys())
     if (key.startsWith('entity:') && !visibleIds.has(key.slice(7))) cache.values.delete(key);
-  const pileContents = memo(
-    'pileContents',
-    [
-      observation.visibleEntities,
-      world.objectState,
-      world.itemDefinitions,
-      world.entities,
-      world.assemblyGeometryRevision,
-      world.simTime,
-    ],
-    () => {
-      const byOwner = new Map<string, NonNullable<EntityView['contents']>>();
-      for (const pile of observation.visibleEntities.filter(
-        (entity) => entity.kind === 'item-pile' || !!entity.remains,
-      )) {
-        for (const item of itemsForOwner(world, pile.id)) {
-          const definition = world.itemDefinitions[item.definitionId]!;
-          const contents = byOwner.get(item.ownerId) ?? [];
-          contents.push({
-            id: item.id,
-            definitionId: item.definitionId,
-            name: definition.name,
-            quantity: item.quantity,
-            portable: definition.portable === true,
-            materialCondition: materialExposureView(world, item.id),
-          });
-          byOwner.set(item.ownerId, contents);
-        }
-      }
-      return byOwner;
-    },
-  );
   const player = entityGet(world.entities, scope.actorId)!;
   const presentation = memo(
     'presentation',
@@ -439,371 +412,73 @@ export async function projectView(
     ],
     () => inventoryItems.map((item) => inventoryItemSummary(service, scope, item)),
   );
-  const entities: EntityView[] = observation.visibleEntities
-    .filter((entity) => entity.id !== scope.actorId)
-    .map((entity) =>
-      memo<EntityView>(
-        `entity:${entity.id}`,
-        [
-          entity,
-          nativeValuesFor(entity.id),
-          nativeValuesFor(player.id),
-          // Effects may expire or lose a source without changing the subject. An
-          // attacker likewise tracks a moving target. These remain conservative
-          // until those readers expose their complete narrower dependencies.
-          entity.statusEffects || entity.remains || entity.actor?.action?.type === 'strike'
-            ? world.entities
-            : undefined,
-          entity.statusEffects ? world.simTime : undefined,
-          entity.assembly ? world.entities : undefined,
-          entity.assembly ? world.simTime : undefined,
-          // Recovery can count down while the body itself stays unchanged. Rebuild only
-          // when the whole-second description changes, rather than on every clock tick.
-          entity.actor
-            ? Math.max(0, Math.ceil(combatRecoveryDeadline(world, entity) - world.simTime))
-            : undefined,
-          entity.assembly ? service.constructionAllowed(scope.actorId) : undefined,
-          world.observerIdentities?.[scope.actorId]?.[entity.id],
-          world.perceptionEpisodes?.[scope.actorId]?.[entity.id],
-          entity.kind === 'item-pile' || entity.remains ? pileContents.get(entity.id) : undefined,
-          // Fire care availability depends on the player's carried tinder, drill and fuel.
-          entity.heat || entity.resource?.cast ? player.inventoryRevision : undefined,
-          entity.heat ? world.foodPreparations : undefined,
-          entity.resource?.cast ? world.castDefinitions : undefined,
-          // Offer replies appear and disappear with pending offers between the two people.
-          ...(entity.actor
-            ? (() => {
-                const { incoming, outgoing } = offersBetween(world, scope.actorId, entity.id);
-                return [...incoming, ...outgoing];
-              })()
-            : []),
-          entity.actor ? actor.knownTradeLots?.[entity.id] : undefined,
-          entity.actor ? player.inventoryRevision : undefined,
-          // Starting/stopping work can bind a promised tool without changing its lot.
-          entity.actor ? actor.action : undefined,
-          // Agreement and observation can change without either person's action changing.
-          entity.actor ? coaching : undefined,
-          // Manual action choices depend on physical form, not unrelated body conditions.
-          entity.actor ? actor.body?.plan : undefined,
-          entity.actor ? service.timelineId : undefined,
-          world.itemDefinitions,
-          active,
-          paused,
-          pauseReason,
-          player.inventoryRevision,
-          (actor.combatReadyAt ?? 0) > world.simTime,
-          observation.knownRecipes,
-          worldPosition(player),
-          player.spatial,
-          player.placement,
-          world.itemHandling,
-          player.statusEffects,
-          world.map,
-          actor.attributes,
-          actor.scars,
-          actor.physicalLife,
-          world.participationPolicy,
-          world.exitExposures?.[entity.id],
-          // Only fading subjects depend on the clock. Other entity projections stay reusable.
-          world.exitExposures?.[entity.id] !== undefined ? world.simTime : undefined,
-          world.moduleManifest,
-          world.statusEffectPolicy,
-        ],
-        () => {
-          let values = cache.entities.get(entity.id);
-          if (!values) cache.entities.set(entity.id, (values = new Map()));
-          const block = memoizer({ values });
-          const attributes = block(
-            'attributes',
-            [entity.actor, world.moduleManifest, nativeValuesFor(entity.id)],
-            () => (entity.actor ? projectAttributes(world, entity, 'public') : []),
-          );
-          const effects = projectStatusEffects(world, entity);
-          const display = observerName(world, scope.actorId, entity.id);
-          const description = block(
-            'description',
-            [
-              display.name,
-              display.nameForm,
-              display.indefiniteArticle,
-              entity.remains,
-              entity.threat?.policy,
-              entity.threat?.mode,
-              entity.threat?.relinquished,
-              entity.actor?.action?.strikePhase,
-              entity.resource,
-              world.itemDefinitions,
-              world.castDefinitions,
-              entity.description,
-              entity.actor?.description,
-              entity.actor?.alive,
-              entity.animal?.episode?.mode,
-              entity.heat,
-            ],
-            () =>
-              describeEntity(
-                { ...entity, ...display },
-                world.itemDefinitions,
-                world.castDefinitions,
-              ),
-          );
-          const bodySize = entity.actor
-            ? block(
-                'body-size',
-                [
-                  entity.spatial.body,
-                  entity.spatial.inactiveBody,
-                  entity.spatial.softFootprint,
-                  entity.actor.alive,
-                ],
-                () => {
-                  const profile = bodyProfile(entity);
-                  return { width: profile.radius * 2, height: profile.height };
-                },
-              )
-            : undefined;
-          const displayName = display.name;
-          const sentenceName = namePhrase(display, 'definite');
-          const subjectName = namePhrase(display, 'definite', { capitalize: true });
-          const controls: ActionOption[] = [];
-          // Existing agreements stay directly answerable without preparing possible new work.
-          if (
-            coaching &&
-            entity.actor &&
-            [coaching.learnerId, coaching.coachId].includes(entity.id)
-          )
-            for (const option of competenceOptions(world, scope.actorId, entity, [])) {
-              const preview = service.previewCommand(option.command, scope.actorId);
-              controls.push(
-                action(option.id, option.label, option.command, preview.ok, preview.message),
-              );
-            }
-          if (entity.actor)
-            for (const option of handoverOptions(
-              world,
-              scope.actorId,
-              observation.inventory,
-              entity,
-              { offers: false },
-            )) {
-              const preview = service.previewCommand(option.command, scope.actorId);
-              controls.push(
-                action(option.id, option.shortLabel, option.command, preview.ok, preview.message),
-              );
-            }
-          const speechCapable = canSpeak(entity);
-          const talkUnavailableReason = !entity.actor
-            ? undefined
-            : !speechCapable
-              ? `${subjectName} cannot speak.`
-              : !entity.actor.alive
-                ? `${subjectName} is dead and cannot respond.`
-                : entity.actor.incapacitated
-                  ? `${subjectName} is incapacitated and cannot respond.`
-                  : capabilityBlocked(world, entity, 'speech')
-                    ? `${subjectName} cannot speak in their current state.`
-                    : speechExposure(
-                          world,
-                          entity,
-                          player,
-                          loudestSpeechVolume(world.moduleManifest.acoustics),
-                        ).detail === 'undetected'
-                      ? `Move within hearing range of ${sentenceName} to talk.`
-                      : undefined;
-          const kind: EntityView['kind'] = entity.practiceTarget
-            ? 'practice-target'
-            : entity.kind === 'item-pile'
-              ? 'item-pile'
-              : entity.remains
-                ? 'remains'
-                : entity.animal
-                  ? 'animal'
-                  : entity.actor
-                    ? 'actor'
-                    : entity.resource || entity.kind === 'resource'
-                      ? 'resource'
-                      : 'station';
-          const installedControls = controls.filter((option) =>
-            nativeCommandSupported(world, nativeCommandKind(option.command.type)),
-          );
-          return {
-            id: entity.id,
-            ...(entity.assembly
-              ? {
-                  assembly: assemblyView(
-                    world,
-                    entity.id,
-                    service.constructionAllowed(scope.actorId),
-                  ),
-                }
-              : {}),
-            ...display,
-            icon: entity.resource
-              ? world.itemDefinitions[entity.resource.definitionId]?.icon
-              : entity.icon,
-            storage: inventoryStorageHint(service, scope, entity.id),
-            ...(entity.kind === 'item-pile' || entity.remains
-              ? { contents: pileContents.get(entity.id) ?? [] }
-              : {}),
-            description,
-            ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),
-            kind,
-            subtype: entity.actor?.species ?? entity.resource?.definitionId ?? entity.kind,
-            position: worldPosition(entity),
-            supportSurfaceId: worldSupport(entity),
-            heading: entity.spatial.heading,
-            appearance: entity.appearance ?? 'sprite',
-            ...(entity.heat ? { heat: { lit: entity.heat.lit } } : {}),
-            radius: entity.kind === 'campfire' ? 0.5 : 0.35,
-            ...(entity.actor
-              ? {
-                  bodySize,
-                }
-              : {}),
-            ...(entity.actor?.body ? { bodyPlan: entity.actor.body.plan } : {}),
-            ...(world.exitExposures?.[entity.id] !== undefined &&
-            world.participationPolicy?.exitExposureSeconds
-              ? {
-                  departureProgress: Math.max(
-                    0,
-                    Math.min(
-                      1,
-                      1 -
-                        (world.exitExposures[entity.id]! - world.simTime) /
-                          world.participationPolicy.exitExposureSeconds,
-                    ),
-                  ),
-                }
-              : {}),
-            ...(entity.actor
-              ? {
-                  speechCapable,
-                  canTalk: !talkUnavailableReason,
-                  talkRequiresAi: entity.actor.controller === 'npc',
-                  ...(talkUnavailableReason ? { talkUnavailableReason } : {}),
-                }
-              : {}),
-            statusEffects: effects,
-            actionAnimation: actionAnimation(world, entity),
-            status: entity.actor
-              ? !entity.actor.alive
-                ? ((entity.remains?.phase === 'rotting'
-                    ? bodyPolicy(world)?.remains?.rottingLabel
-                    : bodyPolicy(world)?.remains?.freshLabel) ?? '')
-                : (observedCombatActivity(world, player, entity) ??
-                  (effects.length
-                    ? effects.map((d) => d.label).join(', ')
-                    : entity.actor.action
-                      ? ({
-                          assemble: entity.actor.action.assemblyPhase
-                            ? world.assemblyFamilies?.[entity.actor.action.assemblyPhase.familyId]
-                                ?.labels[entity.actor.action.assemblyPhase.operation]
-                            : undefined,
-                          guard: BASE_GUARD_TEXT.activityLabel,
-                          pickup: 'Picking up items',
-                          move: 'Walking',
-                          evade: bodyPolicy(world)?.evasion?.label,
-                          follow: 'Following',
-                          replenish:
-                            attributeDefinition(world, entity.actor.action.attributeId ?? '')
-                              ?.reservoir?.actionLabel ?? 'Working',
-                          gather: 'Gathering',
-                          'status-effect': 'Active state',
-                          hunt: rangedPolicy(world)?.activityLabel,
-                          aim: BASE_RANGED_TEXT.aimingLabel,
-                          'shoot-once': BASE_RANGED_TEXT.shootingLabel,
-                          'practice-shot': practiceDefinition(
-                            world,
-                            entity.actor.action.competencePin?.id ?? '',
-                          )?.practice?.presentation.practiceActivityLabel,
-                          coaching: practiceDefinition(
-                            world,
-                            entity.actor.action.competencePin?.id ?? '',
-                          )?.practice?.presentation.coachingActivityLabel,
-                          strike: 'Striking',
-                          harvest: 'Harvesting',
-                          cook: 'Cooking',
-                          fish: 'Fishing',
-                          'tend-fire': 'Tending a fire',
-                          'treat-scar': 'Treating an injury',
-                          prepare: 'Preparing',
-                          craft: 'Crafting',
-                        }[entity.actor.action.type] ?? 'Working')
-                      : entity.threat
-                        ? ''
-                        : entity.animal
-                          ? entity.animal.episode?.mode === 'escaping'
-                            ? 'Fleeing'
-                            : 'Foraging'
-                          : 'Watching the surroundings'))
-              : entity.animal
-                ? !entity.actor!.alive
-                  ? 'Dead'
-                  : entity.animal.episode?.mode === 'escaping'
-                    ? 'Fleeing'
-                    : 'Foraging'
-                : entity.remains
-                  ? entity.remains.harvested
-                    ? 'Harvested'
-                    : 'Fresh remains'
-                  : entity.heat
-                    ? entity.heat.lit
-                      ? `Lit, cooking heat; ${fireFuelDescription(entity.heat)}`
-                      : `Cold; ${fireFuelDescription(entity.heat)}`
-                    : entity.replenisher
-                      ? `${Math.round(entity.replenisher.remaining)} units of supply`
-                      : entity.kind === 'item-pile'
-                        ? `${pileContents.get(entity.id)?.length ?? 0} item stack${pileContents.get(entity.id)?.length === 1 ? '' : 's'}`
-                        : entity.resource
-                          ? entity.resource.cast
-                            ? entity.resource.quantity > 0
-                              ? world.castDefinitions[entity.resource.cast.definitionId]!
-                                  .availableText
-                              : world.castDefinitions[entity.resource.cast.definitionId]!
-                                  .exhaustedText
-                            : 'Gatherable'
-                          : '',
-            ...(entity.resource && !entity.resource.cast
-              ? { quantity: entity.resource.quantity }
-              : {}),
-            ...(entity.actor
-              ? {
-                  attributes,
-                  ...(attributes.some((attribute) => attribute.bodyHealth)
-                    ? { health: entity.actor.health }
-                    : {}),
-                  bodyRevision: entity.actor.body?.revision,
-                  bodyReference: entityBodyReference(scopeKey(scope), entity),
-                  ...(!entity.actor.alive
-                    ? {
-                        bodyState:
-                          entity.remains?.phase === 'rotting'
-                            ? ('rotting' as const)
-                            : ('dead' as const),
-                      }
-                    : {}),
-                  species: entity.actor.species,
-                  ...(entity.actor.alive && canHandleItems(world, entity)
-                    ? {
-                        trade: itemTradeView(
-                          world,
-                          scope.actorId,
-                          memo('tradeOwnLots', [observation.inventory, world.itemDefinitions], () =>
-                            tradeOwnLots(world, observation.inventory),
-                          ),
-                          entity,
-                          JSON.stringify([privateDraftScopeKey(scope), service.timelineId]),
-                          installedControls,
-                        ),
-                      }
-                    : {}),
-                }
-              : {}),
-            ...(installedControls.length ? { controls: installedControls } : {}),
-          };
-        },
-      ),
-    );
+  // The current-channel producer owns measured values. Publication consumes its
+  // frozen facets and does not rerun sight or fill missing detail from an Entity.
+  const entities: EntityView[] = observation.visibleEntities.map(entity => {
+    const received = currentBodyObservation(world, player.id, entity.id);
+    if (!received) throw new ViewChangedError();
+    const body = received.value.body;
+    const facets = currentObservedFacets(world, player.id, entity.id);
+    const pile = facets.find(facet => facet.value.kind === 'pile-contents');
+    const carried = facets.find(facet => facet.value.kind === 'carried');
+    const display = body.label ?? observerName(world, player.id, entity.id);
+    const kind: EntityView['kind'] = body.kind === 'animal' ? 'animal'
+      : body.kind === 'npc' || body.kind === 'player' ? 'actor'
+      : body.kind === 'remains' ? 'remains'
+      : body.kind === 'item-pile' ? 'item-pile'
+      : body.kind === 'resource' ? 'resource'
+      : body.kind === 'practice-target' ? 'practice-target' : 'station';
+    const controls: ActionOption[] = [];
+    if (entity.actor) {
+      if (coaching && [coaching.learnerId, coaching.coachId].includes(entity.id))
+        for (const option of competenceOptions(world, player.id, entity, [])) {
+          const preview = service.previewCommand(option.command, player.id);
+          controls.push(action(option.id, option.label, option.command, preview.ok, preview.message));
+        }
+      for (const option of handoverOptions(world, player.id, observation.inventory, entity, { offers:false })) {
+        const preview = service.previewCommand(option.command, player.id);
+        controls.push(action(option.id, option.shortLabel, option.command, preview.ok, preview.message));
+      }
+    }
+    const installedControls = controls.filter(option => nativeCommandSupported(world, nativeCommandKind(option.command.type)));
+    const speechCapable = entity.actor ? canSpeak(entity) : undefined;
+    return {
+      id: currentContactReference(world, scope, entity), ...display,
+      observation: { kind:'current', modality:'sight', measurementAt:received.valueMeasuredThrough,
+        acquiredAt:received.valueAcquiredAt, confirmedThrough:received.confirmedThrough,
+        sourceReference:permittedSourceHandle(world, player.id, received.original) },
+      kind, subtype:body.kind, position:body.position, supportSurfaceId:body.supportSurfaceId,
+      heading:body.heading, appearance:body.appearance, radius:body.radius,
+      bodySize:{width:body.radius*2,height:body.height},
+      status:body.outward.filter(Boolean).join(', '),
+      ...(body.description ? {description:body.description} : {}),
+      ...(body.quantity !== undefined ? {quantity:body.quantity} : {}),
+      ...(body.heatLit !== undefined ? {heat:{lit:body.heatLit}} : {}),
+      ...(body.remainsPhase === 'fresh' || body.remainsPhase === 'rotting'
+        ? {bodyState:body.remainsPhase === 'fresh' ? 'dead' as const : 'rotting' as const} : {}),
+      ...(pile?.value.kind === 'pile-contents' ? {contents:pile.value.items} : {}),
+      ...(carried?.value.kind === 'carried' ? {observedCarried:{
+        items:carried.value.items, measurementAt:carried.valueMeasuredThrough,
+        confirmedThrough:carried.confirmedThrough,
+      }} : {}),
+      ...(entity.actor ? {
+        speechCapable, canTalk:speechCapable && body.outward[0] === 'alive',
+        talkRequiresAi:entity.actor.controller === 'npc',
+        bodyReference:entityBodyReference(scopeKey(scope),entity),
+        ...(recognizesSubject(world,player.id,entity.id)
+          ? {communicationReference:communicationReference(scope,entity)} : {}),
+        ...(entity.actor.alive && canHandleItems(world,entity) ? {
+          trade:projectCommandContactReferences(world,scope,itemTradeView(world,player.id,
+            memo('tradeOwnLots',[observation.inventory,world.itemDefinitions],()=>tradeOwnLots(world,observation.inventory)),
+            entity,JSON.stringify([privateDraftScopeKey(scope),service.timelineId]),installedControls)),
+        } : {}),
+      } : {}),
+      ...(installedControls.length ? {controls:installedControls.map(option=>({
+        ...option,id:permittedSourceHandle(world,player.id,['control',option.id]),
+        command:projectCommandContactReferences(world,scope,option.command),
+      }))} : {}),
+    };
+  });
   const events = memo(
     'visibleEvents',
     [world.events, world.experience?.awareness[scope.actorId]],
@@ -835,7 +510,7 @@ export async function projectView(
     memo('usage', [telemetryRevision], () =>
       service.store.usage(
         service.config.budgetUsd,
-        service.currentScope(scope, 'inspect') ? undefined : scope.actorId,
+        scope.audience === 'authorized-inspection' && service.currentScope(scope, 'inspect') ? undefined : scope.actorId,
       ),
     ),
     {
@@ -1003,6 +678,7 @@ export async function projectView(
   const presentationRelease = await service.presentationReleaseFor(scope);
   const projected: GameView = {
     schemaVersion: 3,
+    evaluationCut: world.simTime,
     checkpoint: service.mayManageSaves(scope)
       ? {
           scope: scopeKey(scope),
@@ -1038,13 +714,13 @@ export async function projectView(
     presentation,
     saveTimeline: service.timelineId,
     commandEpoch: service.commandEpoch,
-    godMode: service.config.godMode && service.currentScope(scope, 'create'),
+    godMode: service.config.godMode && scope.audience === 'authorized-inspection' && service.currentScope(scope, 'create'),
     inventionPolicy: {
       revision: world.inventionPolicy.revision,
       playerLocked: world.inventionPolicy.playerLocked,
       agentLocked: world.inventionPolicy.agentLocked,
     },
-    ...(service.config.godMode && service.currentScope(scope, 'create')
+    ...(service.config.godMode && scope.audience === 'authorized-inspection' && service.currentScope(scope, 'create')
       ? {
           godTools: {
             familyLabel: BASE_FAMILY_POLICY.title,
@@ -1245,7 +921,7 @@ export async function projectView(
       // Step-by-step work states are a developer view (God mode); players use Stop current
       // work and the plain answers to their own requests. Owner decision, 2026-09-29.
       work:
-        service.config.godMode && service.currentScope(scope, 'create')
+        service.config.godMode && scope.audience === 'authorized-inspection' && service.currentScope(scope, 'create')
           ? memo(
               'player-work',
               // Labels use this observer's names and encounters and learned method names.
@@ -1276,6 +952,9 @@ export async function projectView(
       },
     },
     entities,
+    communicationReferences: [...new Set(Object.values(world.observerIdentities?.[player.id] ?? {})
+      .flatMap(identity => !identity.seedOnly && identity.canonicalId && recognizesSubject(world, player.id, identity.canonicalId) ? [identity.canonicalId] : []))]
+      .map(id => ({id:communicationReference(scope,{id}),label:observerDescription(world,player.id,id)})),
     recipes: memo<GameView['recipes']>(
       'recipes',
       [
@@ -1311,7 +990,13 @@ export async function projectView(
         // Recognize legacy movement records that predate structured action types.
         .filter(isJournalEvent)
         .slice(-60)
-        .map((event) => publicEvent(event, selectedEventPresentation(world), player.id)),
+        .map((event) => publicEvent(event, selectedEventPresentation(world), player.id, body => {
+          if (body.entityId === player.id && body.physicalLife === (player.actor?.physicalLife ?? 0)) return player.id;
+          const entity = entityGet(world.entities, body.entityId);
+          const received = entity && currentBodyObservation(world, player.id, entity.id);
+          return entity && received && body.leaseId === received.id && body.physicalLife === (entity.actor?.physicalLife ?? 0)
+            ? currentContactReference(world, scope, entity) : undefined;
+        })),
     ),
     conversation: conversationEntries.map((event) => {
       const reply = replies.get(event.id);
@@ -1341,13 +1026,11 @@ export async function projectView(
                 : {}),
             }
           : {}),
-        speakerId: event.actorId,
+        ...(event.actorId === scope.actorId ? { speakerId: scope.actorId } : {}),
         speech: event.speech,
         speaker: event.speech
           ? (event.speech.speaker?.nameAtTime ?? 'Someone')
-          : event.actorId
-            ? observerDescription(world, scope.actorId, event.actorId)
-            : 'Someone',
+          : event.references?.find(reference => reference.role === 'actor')?.label ?? 'Someone',
         text:
           event.speech?.intelligibility === 'none'
             ? event.text
@@ -1472,6 +1155,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
   const removedAi = removedFields(previous.ai, next.ai);
   return {
     schemaVersion: 3,
+    evaluationCut: next.evaluationCut,
     scope: next.access?.scope,
     ...(removedView.length || removedClock || removedPlayer || removedAi
       ? {
@@ -1483,6 +1167,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
           },
         }
       : {}),
+    ...(!same(previous.communicationReferences, next.communicationReferences) ? { communicationReferences: next.communicationReferences } : {}),
     ...(previous.commandEpoch !== next.commandEpoch ? { commandEpoch: next.commandEpoch } : {}),
     baseRevision: previous.revision,
     revision: next.revision,

@@ -87,7 +87,9 @@ export interface MindProposal {
   removeRecords: Array<{ id: string; expectedRevision: number }>;
 }
 export interface CognitionBinding {
-  knowledgeReferences?: Record<string, string>;
+  knowledgeReferences?: Record<string, import('./knowledge.js').ObserverSubject>;
+  /** Learned people may be labeled without gaining a current body/action reference. */
+  identityReferences?: Record<string, import('./knowledge.js').ObserverSubject>;
   actorId: string;
   decisionId: string;
   policy: string;

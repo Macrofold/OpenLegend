@@ -996,7 +996,7 @@ function App({
     if (!current || !recipient) return;
     setWorldIntent({
       mode: 'speak',
-      targetId: id,
+      targetId: recipient.communicationReference ?? id,
       label: recipient.name,
       owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
     });
@@ -1010,7 +1010,7 @@ function App({
     );
     setWorldIntent({
       mode: 'speak',
-      ...(recipient ? { targetId: recipient.id, label: recipient.name } : {}),
+      ...(recipient ? { targetId: recipient.communicationReference ?? recipient.id, label: recipient.name } : {}),
       item: { id: item.itemId, name: item.name },
       owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
     });
@@ -1702,7 +1702,7 @@ function App({
         }}
         presentation={presentation}
         visible={visible}
-        picker={picker}
+        picker={{...picker,entity:picker.entity ? view.entities.find(entity=>entity.id===picker.entity?.id) ?? null : null}}
         view={view}
         connected={connected}
         close={closePicker}
@@ -1720,7 +1720,7 @@ function App({
             targetId !== view.player.id &&
             (mode === 'act' || !!picker.entity?.canTalk)
               ? {
-                  targetId,
+                  targetId: mode === 'speak' ? picker.entity?.communicationReference ?? targetId : targetId,
                   label: picker.item?.name ?? picker.entity?.name,
                   possession: !!picker.context.itemId,
                 }

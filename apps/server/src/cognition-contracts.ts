@@ -57,7 +57,7 @@ export const operationSchema = z
     talk: z
       .object({
         text: z.string().trim().min(1).max(1200),
-        addresseeEntityId: z.string().min(1).max(120),
+        addresseeEntityId: z.string().min(1).max(120).nullable(),
         selfIntroduction: z.string().nullable(),
         volume: z.enum(['whisper', 'normal', 'shout']),
       })
@@ -199,13 +199,15 @@ export function boundResponseSchema(
   namedTimes: string[] = [],
   requests: InstalledActivityRequests = [],
   appraisal?: z.ZodType<DecisionAppraisalProposal>,
+  identityReferences: string[] = [],
 ) {
   const until = namedTimes.length
     ? z.enum(namedTimes as [string, ...string[]]).nullable()
     : z.null();
   if (!entityIds.length) throw new Error('A response requires a permitted actor ID.');
   const entityId = z.enum(entityIds as [string, ...string[]]);
-  const noteSubject = z.enum([...entityIds, ...knowledgeReferences] as [string, ...string[]]);
+  const noteSubject = z.enum([...entityIds, ...knowledgeReferences, ...identityReferences] as [string, ...string[]]);
+  const nameSubject = z.enum([...entityIds, ...identityReferences] as [string, ...string[]]);
   const actionId = actionIds.length
     ? z.enum(actionIds as [string, ...string[]]).nullable()
     : z.null();
@@ -215,9 +217,9 @@ export function boundResponseSchema(
       .unwrap()
       .extend({ subjectId: noteSubject.nullable() })
       .nullable(),
-    name: operationSchema.shape.name.unwrap().extend({ subjectId: entityId }).nullable(),
+    name: operationSchema.shape.name.unwrap().extend({ subjectId: nameSubject }).nullable(),
     talk: capabilities.speech
-      ? operationSchema.shape.talk.unwrap().extend({ addresseeEntityId: entityId }).nullable()
+      ? operationSchema.shape.talk.unwrap().extend({ addresseeEntityId: entityId.nullable() }).nullable()
       : z.null(),
     act: operationSchema.shape.act
       .unwrap()

@@ -20,6 +20,7 @@ let viewScope = '';
 let privateDraftNamespace = '';
 let privateDraftTimeline = '';
 let accessGeneration = 0;
+let currentContacts = new Set<string>();
 export class AccessError extends Error {}
 /** A missing session is a normal entry state, distinct from a refused world grant. */
 export class SignInRequiredError extends AccessError {}
@@ -71,6 +72,7 @@ export function clearAccess(options?: {
   accessGeneration++;
   worldGeneration = '';
   viewScope = '';
+  currentContacts.clear();
   privateDraftNamespace = '';
   privateDraftTimeline = '';
   clearTradeDrafts();
@@ -98,6 +100,7 @@ export function clearAccess(options?: {
   }
 }
 export function acceptAccess(view: GameView): void {
+  currentContacts = new Set(view.entities.map(entity => entity.id));
   const generation = view.historyEpoch?.split(':')[0] ?? '';
   const scope = view.access?.scope ?? '';
   if (generation === worldGeneration && scope === viewScope) return;
@@ -289,6 +292,7 @@ export async function getOperations(): Promise<OperationsView> {
 export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<T> {
   const scope = viewScope;
   const generation = accessGeneration;
+  const contactReferences = decodeURIComponent(path).match(/contact-[a-f0-9]{64}/g) ?? [];
   const response = await fetch(path, {
     credentials: 'same-origin',
     cache: 'no-store',
@@ -300,6 +304,8 @@ export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<
   const result = (await response.json()) as T;
   if (generation !== accessGeneration)
     throw new Error('Your access or world changed. Reload this information.');
+  if (contactReferences.some(reference => !currentContacts.has(reference)))
+    throw new Error('That observed target is no longer available.');
   return result;
 }
 function applyFields<T extends object>(
@@ -314,6 +320,7 @@ function applyFields<T extends object>(
 }
 const requiredEntityFields = new Set([
   'id',
+  'observation',
   'name',
   'kind',
   'subtype',
@@ -373,6 +380,8 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
   const next: GameView = {
     ...current,
     revision: patch.revision,
+    evaluationCut: patch.evaluationCut,
+    ...(patch.communicationReferences ? { communicationReferences: patch.communicationReferences } : {}),
     ...(patch.commandEpoch !== undefined ? { commandEpoch: patch.commandEpoch } : {}),
     ...(patch.historyEpoch !== undefined ? { historyEpoch: patch.historyEpoch } : {}),
     ...(patch.worldEventsRevision !== undefined

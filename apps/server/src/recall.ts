@@ -3,6 +3,8 @@ import { isEquipped } from '@open-legend/domain';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { CognitionExecution, ExecutionLease } from './cognition-execution.js';
 import { personalPronoun } from '@open-legend/language';
+import { memoryMeaningForModel } from './experience-context.js';
+export { experienceManifestForModel } from './experience-context.js';
 import { MemoryPreparationError, RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
 import { stimulusSalience, STIMULUS_POLICY } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
@@ -13,7 +15,7 @@ import type {
   CurrentMemorySource,
 } from './memory-repository.js';
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
-import { recognizesSubject, observerGivenName, observerDescription } from '@open-legend/domain';
+import { recognizesSubject, observerGivenName, observerDescription, speechDescription } from '@open-legend/domain';
 import {
   entityHandle,
   projectEntityMarkers,
@@ -36,6 +38,7 @@ import {
   type MemoryRecord,
   type WorldState,
   type Awareness,
+  type ObserverSubject,
 } from '@open-legend/domain';
 import { embeddingBatches } from './embedding-batches.js';
 import {
@@ -53,6 +56,9 @@ import type { IntelligenceLog } from './intelligence-log.js';
 import { randomUUID } from 'node:crypto';
 import { interactiveAllowance } from './cognition-budget.js';
 export interface AttentionCandidate {
+  subjects?: ObserverSubject[];
+  /** Structured source meaning cannot be grouped by an equal display sentence. */
+  hasStructuredExperience?: boolean;
   id: string;
   kind: 'memory' | 'conversation' | 'entity' | 'possession' | 'knowledge' | 'action';
   text: string;
@@ -111,19 +117,8 @@ export function memoryCandidate(
   // Preserve who spoke to whom using this observer's event-time evidence. An ongoing
   // exposure can bind an unnamed speaker; an old canonical ID cannot identify a new exposure.
   // docs/memory-architecture.md#personal-perspective-and-acquisition
-  if (awareness?.eventType === 'speech' && awareness.content !== undefined) {
-    const participant = (id: string | undefined) =>
-      id && entityGet(world.entities, id) && awarenessBindsSubject(world, actorId, awareness, id)
-        ? entityLabel(world, entityGet(world.entities, id)!, actorId, 'indefinite')
-        : 'an unidentified individual';
-    const recipient = awareness.intendedRecipientId;
-    const relation =
-      awareness.sourceId === actorId
-        ? `${personalPronoun('subject')} said${recipient ? ` to ${recipient === actorId ? personalPronoun('reflexive') : participant(recipient)}` : ''}`
-        : `${participant(awareness.sourceId)} said${recipient === actorId ? ` to ${personalPronoun('object')}` : recipient ? ` to ${participant(recipient)} (overheard; not addressed to ${personalPronoun('object')})` : ' nearby (recipient unknown)'}`;
-    summary = awareness.intelligible
-      ? `${relation}: ${JSON.stringify(awareness.content)}`
-      : `${personalPronoun('subject')} heard indistinct speech.`;
+  if (awareness?.speech) {
+    summary = speechDescription(awareness.speech);
   } else if (awareness && awareness.eventType !== 'speech') {
     // Event roles use the retained observation, never inferred causality or a new exposure.
     // A projectile contact's source may be the struck body, not an unseen shooter.
@@ -144,10 +139,19 @@ export function memoryCandidate(
     (memory.kind === 'commitment' && !memory.resolved) ||
     !!corrections[memory.id] ||
     correctedIds.has(memory.id);
+  const meaning = memoryMeaningForModel(world, actorId, memory);
+  const hasStructuredExperience = Object.keys(meaning).length > 0;
   return {
     id: memory.id,
     kind: matches(conversationIds) ? 'conversation' : 'memory',
-    text: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${summary}`,
+    text: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${summary}${hasStructuredExperience ? `\nPermitted experience: ${JSON.stringify(meaning)}` : ''}`,
+    hasStructuredExperience,
+    subjects: [
+      ...(memory.evidence?.sourceSubject ? [memory.evidence.sourceSubject] : []),
+      ...(memory.manifest?.speech.flatMap(group => group.sourceSubject ? [group.sourceSubject] : []) ?? []),
+      ...[...(memory.observation ? [memory.observation] : []), ...(memory.manifest?.observations ?? [])]
+        .flatMap(observation => observation.facets.flatMap(facet => facet.value.kind === 'association' ? [facet.value.subject] : [])),
+    ],
     ...(awareness
       ? {
           embeddingText: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${memory.summary}`,
@@ -240,7 +244,7 @@ export function candidateSet(
     recallable
       .filter((memory) =>
         memory.entityIds.some(
-          (id) => id !== actorId && !!world.observerIdentities?.[actorId]?.[id]?.givenName,
+          (id) => id !== actorId && !!observerGivenName(world, actorId, id),
         ),
       )
       .map((memory) => memory.id),
@@ -250,7 +254,7 @@ export function candidateSet(
     // The observer's own identity does not prevent grouping encounters with unnamed animals.
     // docs/memory-architecture.md#named-and-generic-memory-subjects
     const namedOther = namedMemoryIds.has(memory.id);
-    if (memory.required || memory.automatic || namedOther) {
+    if (memory.required || memory.automatic || namedOther || memory.hasStructuredExperience) {
       candidates.push(memory);
       continue;
     }
@@ -309,7 +313,7 @@ export function candidateSet(
     candidates.push({
       id: `entity:${e.id}`,
       kind: 'entity',
-      text: `${description} ${relativeLocation(observed.actor, e)}`,
+      text: `${description} ${relativeLocation(world, observed.actor, e)}`,
       embeddingText,
       revision: digest(embeddingText),
       required: false,

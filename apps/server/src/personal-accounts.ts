@@ -17,12 +17,16 @@ export function personalEventEvidence(awareness: EventEvidence): EventEvidence {
     sourceId,
     targetId,
     speech,
+    sound,
     importance,
     urgency,
     exposure,
     observation,
     observations,
     sourceSubject,
+    sourceBody,
+    recognition,
+    receivedFeatures,
   } = awareness;
   return {
     actorId,
@@ -35,12 +39,16 @@ export function personalEventEvidence(awareness: EventEvidence): EventEvidence {
     sourceId,
     targetId,
     speech,
+    sound,
     importance,
     urgency,
     exposure,
     observation,
     observations,
     sourceSubject,
+    sourceBody,
+    recognition,
+    receivedFeatures,
   };
 }
 

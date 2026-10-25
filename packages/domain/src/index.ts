@@ -352,3 +352,7 @@ export type {
   PreparedResponsePurpose,
   PreparedResponseOption,
 } from './prepared-responses.js';
+
+export * from './worlds/base/recognition.js';
+
+export { normalSpeedSeconds } from './simulation-time.js';

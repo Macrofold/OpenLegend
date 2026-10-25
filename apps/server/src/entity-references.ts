@@ -94,8 +94,9 @@ export function projectEntityMarkers(text: string, world: WorldState, observerId
 export function resolveResponseEntities(
   response: ActorResponse,
   references: Record<string, string>,
-  knowledgeReferences: Record<string, string> = {},
+  knowledgeReferences: Record<string, ObserverSubject> = {},
   activityRequests: ActivityRequestDescriptor[] = [],
+  identityReferences: Record<string, ObserverSubject> = {},
 ): ActorResponse {
   const resolve = (handle: string) => {
     if (!Object.hasOwn(references, handle))
@@ -111,6 +112,7 @@ export function resolveResponseEntities(
               ...op.note,
               subjectId: op.note.subjectId
                 ? Object.hasOwn(knowledgeReferences, op.note.subjectId)
+                  || Object.hasOwn(identityReferences, op.note.subjectId)
                   ? op.note.subjectId
                   : resolve(op.note.subjectId)
                 : null,
@@ -118,8 +120,9 @@ export function resolveResponseEntities(
             },
           }
         : {}),
-      ...(op.name ? { name: { ...op.name, subjectId: resolve(op.name.subjectId) } } : {}),
-      talk: op.talk ? { ...op.talk, addresseeEntityId: resolve(op.talk.addresseeEntityId) } : null,
+      ...(op.name ? { name: { ...op.name, subjectId: Object.hasOwn(identityReferences, op.name.subjectId)
+        ? op.name.subjectId : resolve(op.name.subjectId) } } : {}),
+      talk: op.talk ? { ...op.talk, addresseeEntityId: op.talk.addresseeEntityId === null ? null : resolve(op.talk.addresseeEntityId) } : null,
       act: op.act
         ? {
             ...op.act,

@@ -75,6 +75,7 @@ export function nativeActor(
       memory: false,
       innerWorld: false,
       speech: false,
+      comprehendsSpeech: false,
     },
     health: body.maxHealth,
     alive: true,

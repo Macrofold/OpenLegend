@@ -17,6 +17,8 @@ import type { SqlDatabase } from './store.js';
 import { storyAccountSql, storySourceRow } from './personal-accounts.js';
 import { SEARCH_SCAN_ROWS, matchesSearch, scanMatches, searchTerms } from './text-search.js';
 import { HistoryCursorError } from './history-cursor-error.js';
+import { createHmac, randomBytes } from 'node:crypto';
+const historicalReferenceKey = randomBytes(32);
 export { HistoryCursorError } from './history-cursor-error.js';
 
 export function worldEventSourceReference(
@@ -38,6 +40,7 @@ export function publicEvent(
   event: ActorEvent,
   presentation?: EventPresentationPolicy,
   observerId?: string,
+  currentContact?: (body: NonNullable<ActorEvent['sourceBody']>) => string | undefined,
 ): PublicEvent {
   const change = event.type === 'attribute-changed' ? event.data : undefined;
   const attributeChange =
@@ -64,19 +67,12 @@ export function publicEvent(
             : {}),
         }
       : undefined;
-  const references: NonNullable<PublicEvent['references']> = [...(event.references ?? [])];
-  if (event.speech?.speaker)
-    references.push({
-      id: event.speech.speaker.entityId,
-      label: event.speech.speaker.nameAtTime,
-      role: 'actor',
-    });
-  if (event.speech?.recipient)
-    references.push({
-      id: event.speech.recipient.entityId,
-      label: event.speech.recipient.nameAtTime,
-      role: 'target',
-    });
+  const references: NonNullable<PublicEvent['references']> = (event.references ?? []).map(ref => ({
+    id: createHmac('sha256', historicalReferenceKey)
+      .update(JSON.stringify([observerId, event.id, ref.id, ref.role])).digest('hex'),
+    label: ref.label, role: ref.role, kind:'historical',
+  }));
+  const speakerContact = event.sourceBody && currentContact?.(event.sourceBody);
   // Render only facts already granted to this observer. Older wording may be noisy,
   // but a missing cause must never be filled from today's body or world state.
   const subject =
@@ -128,9 +124,9 @@ export function publicEvent(
     type: event.type,
     text,
     modality: event.modality,
-    ...(event.actorId ? { actorId: event.actorId } : {}),
-    ...(event.targetId ? { targetId: event.targetId } : {}),
-    ...(event.speech ? { speech: event.speech } : {}),
+    ...(event.actorId === observerId ? { actorId: observerId } : {}),
+    ...(event.speech ? { speech: { ...event.speech, ...(speakerContact ? { speakerContact } : {}) } } : {}),
+    ...(event.sound ? { sound: { kind: event.sound.kind, direction: event.sound.direction, listenerPosition: event.sound.listenerPosition } } : {}),
   };
 }
 type Position = { order: number; id: string };

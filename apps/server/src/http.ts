@@ -1,4 +1,29 @@
+import { KnownPlacePreparationError } from '@open-legend/domain';
+import { MemoryPreparationError } from './memory-repository.js';
+import {
+  validateEventEvidence,
+  validateObservationContribution,
+  validateExperienceManifest,
+  validPersonalSourceRef,
+  validObserverSubject,
+  type ObservationContribution,
+  type ExperienceManifest,
+  type PersonalSourceRef,
+  type PerceivedSpeech,
+  validatePerceivedSpeech,
+  validatePerceivedSound,
+  type PerceivedSound,
+  validateIndividualRecognition,
+  type IndividualRecognition,
+} from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
+import {
+  resolveCommandContactReferences,
+  resolveContactTarget,
+  projectCommandContactReferences,
+  projectActionCatalogue,
+  ContactReferenceError,
+} from './public-contact-references.js';
 import { recoverPlayerAction } from './action-request-recovery.js';
 import { recoverHumanRequest } from './human-request-recovery.js';
 import { CognitionExecution } from './cognition-execution.js';
@@ -254,8 +279,94 @@ const godPersonEditor = z
     meters: z.record(requestIdSchema, z.number().finite()),
   })
   .strict();
+const nativeObservation = z.custom<ObservationContribution>((value) => {
+  try {
+    validateObservationContribution(value);
+    return true;
+  } catch {
+    return false;
+  }
+});
+const nativeManifest = z.custom<ExperienceManifest>((value) => {
+  try {
+    validateExperienceManifest(value);
+    return true;
+  } catch {
+    return false;
+  }
+});
+const nativeSource = z.custom<PersonalSourceRef>(validPersonalSourceRef);
+const nativeEvidence = z.custom<import('@open-legend/domain').EventEvidence>((value) => {
+  try {
+    validateEventEvidence(value);
+    return true;
+  } catch {
+    return false;
+  }
+});
 const godAwareness = z
   .object({
+    observation: nativeObservation.optional(),
+    observations: z.array(nativeObservation).optional(),
+    receivedFeatures: z
+      .custom<import('@open-legend/domain').Awareness['receivedFeatures']>()
+      .optional(),
+    recognition: z
+      .custom<IndividualRecognition>((value) => {
+        try {
+          validateIndividualRecognition(value);
+          return true;
+        } catch {
+          return false;
+        }
+      })
+      .optional(),
+    sourceBody: z
+      .object({
+        entityId: requestIdSchema,
+        physicalLife: z.number().int().nonnegative(),
+        leaseId: z.string().nullable(),
+      })
+      .strict()
+      .optional(),
+    sourceSubject: z
+      .custom<import('@open-legend/domain').ObserverSubject>(validObserverSubject)
+      .optional(),
+    speech: z
+      .custom<PerceivedSpeech>((value) => {
+        try {
+          validatePerceivedSpeech(value);
+          return true;
+        } catch {
+          return false;
+        }
+      })
+      .optional(),
+    sound: z
+      .custom<PerceivedSound>((value) => {
+        try {
+          validatePerceivedSound(value);
+          return true;
+        } catch {
+          return false;
+        }
+      })
+      .optional(),
+    eventData: z
+      .record(z.string(), z.union([z.string(), z.number().finite(), z.boolean(), z.null()]))
+      .optional(),
+    references: z
+      .array(
+        z
+          .object({
+            id: requestIdSchema,
+            label: z.string(),
+            role: z.enum(['actor', 'target', 'participant']),
+          })
+          .strict(),
+      )
+      .optional(),
+    entityEpisodes: z.record(z.string(), z.string()).optional(),
     exposure: z
       .custom<import('@open-legend/domain').EncounterExposure>(validEncounterExposure)
       .optional(),
@@ -285,9 +396,23 @@ const godAwareness = z
     importance: z.number().finite(),
     urgency: z.number().finite().min(0).max(10).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    try {
+      validateEventEvidence(value);
+    } catch (error) {
+      context.addIssue({
+        code: 'custom',
+        message: error instanceof Error ? error.message : 'Invalid observer account.',
+      });
+    }
+  });
 const godMemory = z
   .object({
+    evidence: nativeEvidence.optional(),
+    observation: nativeObservation.optional(),
+    observations: z.array(nativeObservation).optional(),
+    manifest: nativeManifest.optional(),
     activityId: requestIdSchema.optional(),
     obligation: z
       .object({
@@ -327,7 +452,8 @@ const godSummary = z
     sequence: z.number().int().min(0).optional(),
     from: z.number().finite().min(0),
     to: z.number().finite().min(0),
-    sourceIds: z.array(requestIdSchema).max(1000),
+    sources: z.array(nativeSource),
+    manifest: nativeManifest,
     entityIds: z.array(requestIdSchema).max(100),
     importance: z.number().finite(),
     revision: z.number().int().min(0).optional(),
@@ -1812,15 +1938,37 @@ async function initializeGameServer(
               }
             }
             case '/api/actions': {
-              const context = actionContext.parse(body);
+              const context = resolveCommandContactReferences(
+                service.world,
+                scope,
+                actionContext.parse(body),
+              );
               return send(response, 200, {
                 ok: true,
-                catalogue: actionCatalogue(service, context, scope),
+                catalogue: projectActionCatalogue(
+                  service.world,
+                  scope,
+                  actionCatalogue(service, context, scope),
+                ),
               });
             }
             case '/api/activity-requests': {
               const value = z.object({ targetId: requestIdSchema.optional() }).strict().parse(body);
-              return send(response, 200, activityRequests(service, scope, value.targetId));
+              return send(
+                response,
+                200,
+                projectCommandContactReferences(
+                  service.world,
+                  scope,
+                  activityRequests(
+                    service,
+                    scope,
+                    value.targetId
+                      ? resolveContactTarget(service.world, scope, value.targetId)
+                      : undefined,
+                  ),
+                ),
+              );
             }
             case '/api/activity-choices': {
               const value = z
@@ -1953,6 +2101,7 @@ async function initializeGameServer(
                     undefined,
                     value.commandEpoch,
                     scope,
+                    true,
                   ),
                 ),
               );
@@ -2731,7 +2880,9 @@ async function initializeGameServer(
                   worldId: requestIdSchema,
                   generation: requestIdSchema,
                   actorId: requestIdSchema,
-                  subjectId: requestIdSchema.nullable(),
+                  subjectId: z
+                    .custom<import('@open-legend/domain').ObserverSubject>(validObserverSubject)
+                    .nullable(),
                   expectedRevision: z.number().int().nonnegative(),
                   text: z.string(),
                   givenName: z.string().optional(),
@@ -2815,7 +2966,9 @@ async function initializeGameServer(
                   actorId: requestIdSchema,
                   query: z.string().max(120).optional(),
                   after: z.string().max(2048).optional(),
-                  subjectId: requestIdSchema.optional(),
+                  subjectId: z
+                    .custom<import('@open-legend/domain').ObserverSubject>(validObserverSubject)
+                    .optional(),
                 })
                 .strict()
                 .parse(body);
@@ -3472,6 +3625,8 @@ async function initializeGameServer(
           response.setHeader('Retry-After', '1');
           return send(response, 503, { ok: false, code: 'busy', message: error.message });
         }
+        if (error instanceof KnownPlacePreparationError || error instanceof MemoryPreparationError)
+          return send(response, 503, { ok: false, code: 'evidence-preparation', message: error.message });
         if (error instanceof AuthorityError) {
           responseScope = undefined;
           return send(response, error.code === 'session' ? 401 : 403, {
@@ -3488,6 +3643,8 @@ async function initializeGameServer(
           (error instanceof Error && error.message === 'body-limit');
         if (error instanceof ActionCatalogueUnavailable)
           return send(response, 400, { ok: false, code: 'action-context', message: error.message });
+        if (error instanceof ContactReferenceError)
+          return send(response, 409, { ok: false, code: error.code, message: error.message });
         if (error instanceof AuthoringRequestError)
           return send(response, 409, {
             ok: false,

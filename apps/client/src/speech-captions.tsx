@@ -200,10 +200,10 @@ export class SpeechCaptions {
         this.drop(event);
         continue;
       }
-      const speaker = event.speech.speaker?.entityId;
+      const speaker = event.speech.speakerContact;
       const queueSize = speaker
         ? [...this.active, ...this.pending].filter(
-            (e) => e.event.speech.speaker?.entityId === speaker,
+            (e) => e.event.speech.speakerContact === speaker,
           ).length
         : 0;
       // Overflow stays available in durable World Events; these are presentation limits only.
@@ -301,8 +301,8 @@ export class SpeechCaptions {
     if (this.options.enabled && !document.hidden) {
       for (let i = 0; this.active.length < 8 && i < this.pending.length; ) {
         const entry = this.pending[i]!;
-        const speaker = entry.event.speech.speaker?.entityId;
-        if (speaker && this.active.some((e) => e.event.speech.speaker?.entityId === speaker)) {
+        const speaker = entry.event.speech.speakerContact;
+        if (speaker && this.active.some((e) => e.event.speech.speakerContact === speaker)) {
           i++;
           continue;
         }
@@ -353,9 +353,9 @@ export class SpeechCaptions {
                       ➜
                     </span>
                   </div>
-                  {speech.recipient && (
+                  {speech.addressee && (
                     <div className="ol-speech-caption-recipient">
-                      To {speech.recipient.nameAtTime}:
+                      To {speech.addressee.nameAtTime}:
                     </div>
                   )}
                   <span
@@ -403,7 +403,7 @@ export class SpeechCaptions {
       const node = entry.node;
       if (!node) continue;
       const speech = entry.event.speech;
-      const head = speech.speaker ? p.head(speech.speaker.entityId) : null;
+      const head = speech.speakerContact ? p.head(speech.speakerContact) : null;
       const { width, height } = entry;
       if (!width || !height) continue;
       const inBounds = (point: CaptionPoint) =>

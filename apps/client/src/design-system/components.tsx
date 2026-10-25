@@ -435,6 +435,7 @@ export function Condition({
           'meter.health': 'health',
           'meter.food': 'food',
           'meter.energy': 'energy',
+          'meter.perception': 'perception',
           accent: 'accent',
           'ink-muted': 'ink-muted',
         };

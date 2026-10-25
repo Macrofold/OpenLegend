@@ -19,7 +19,12 @@ export interface EventDisclosurePolicy {
 /** Capture permitted facts once, before later movement or cold history can change them.
  * The audience grants the occurrence; it does not grant every participant or payload field.
  * docs/events-perception-and-reactions.md#event-time-evidence-versus-current-action-authority */
-export function observeEvent(world: WorldState, event: WorldEvent, observerId: string, reception?: { feltImpact: true }) {
+export function observeEvent(
+  world: WorldState,
+  event: WorldEvent,
+  observerId: string,
+  reception?: { feltImpact: true },
+) {
   const policy = selectedEventDisclosure(world);
   const owned = event.scope === 'private' || event.actorId === observerId;
   const names = (sourceId?: string, targetId?: string) => [

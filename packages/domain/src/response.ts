@@ -17,7 +17,6 @@ import {
   knowledgeDocument,
   type KnowledgeEdit,
   type ObserverSubject,
-  subjectKey,
 } from './knowledge.js';
 import {
   assignSubjectName,

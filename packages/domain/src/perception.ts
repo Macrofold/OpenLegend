@@ -25,7 +25,6 @@ import {
 import { bodyProfile, spatialMap } from './spatial-state.js';
 import { current, isDraft } from 'immer';
 import { distance } from './spatial.js';
-import { hasMemory } from './living.js';
 import type { Entity, Position, WorldState } from './types.js';
 
 export { PERCEPTION_RULES } from './worlds/base/senses.js';
@@ -152,7 +151,8 @@ function receiverIndex(world: WorldState, entities: WorldState['entities']): Rec
   if (existing) return existing;
   const entries: Receiver[] = [];
   for (const entity of entityValues(entities)) {
-    if (!hasMemory(entity) || !activelyParticipates(entity)) continue;
+    if (!entity.actor?.alive || entity.actor.incapacitated || !activelyParticipates(entity))
+      continue;
     chargeWork({ candidates: 1 });
     entries.push({
       id: entity.id,

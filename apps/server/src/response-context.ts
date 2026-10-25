@@ -1,11 +1,12 @@
 import { entityGet, entityHas } from '@open-legend/domain';
 import { accessiblePossession, worldPosition } from '@open-legend/domain';
-import { knowledgeDocument, characterCount, recognizesSubject } from '@open-legend/domain';
+import { knowledgeDocument, characterCount, recognizesSubject, observerIndividual, identityForEntity, subjectLabel, type ObserverSubject } from '@open-legend/domain';
 import {
   awarenessBindsSubject,
   entityLabel,
   entityReferenceMap,
   entityHandle,
+  subjectHandle,
 } from './entity-references.js';
 import {
   seesEntity,
@@ -56,7 +57,7 @@ export function responseTriggerContext(
     aware.sourceId && awarenessBindsSubject(world, actorId, aware, aware.sourceId)
       ? entityGet(world.entities, aware.sourceId)
       : undefined;
-  const recipientId = aware.intendedRecipientId ?? aware.targetId;
+  const recipientId = aware.targetId;
   const recipient =
     recipientId && awarenessBindsSubject(world, actorId, aware, recipientId)
       ? entityGet(world.entities, recipientId)
@@ -187,6 +188,7 @@ export function responseReferences(
   pileItemIds: string[] = [],
   /** Current prepared request choices and an explicitly inspected container page. */
   inspectedIds: string[] = [],
+  learnedSubjects: ObserverSubject[] = [],
 ) {
   const evidence = new Set(evidenceIds);
   const awareness = (retainedEvidence ?? world.experience?.awareness[actorId] ?? []).filter(
@@ -199,7 +201,7 @@ export function responseReferences(
       ...rememberedIds.filter((id) => entityHas(world.entities, id)),
       ...awareness
         .flatMap((entry) =>
-          [entry.sourceId, entry.intendedRecipientId ?? entry.targetId, ...entry.entityIds].filter(
+          [entry.sourceId, entry.targetId, ...entry.entityIds].filter(
             (id): id is string => !!id && awarenessBindsSubject(world, actorId, entry, id),
           ),
         )
@@ -207,15 +209,14 @@ export function responseReferences(
     ]),
   ];
   const visible = new Set(visibleIds);
-  const recognizedIds = new Set([actorId, ...visibleIds]);
+  const recognizedIds = new Set([actorId, ...ids.filter(id => recognizesSubject(world, actorId, id))]);
   const roles = new Map<string, { evidenceId: string; role: string }[]>();
   for (const entry of awareness) {
     if (entry.recognized && entry.sourceId) recognizedIds.add(entry.sourceId);
-    if (entry.intendedRecipientId) recognizedIds.add(entry.intendedRecipientId);
     for (const [id, role] of [
       [entry.sourceId, 'source'],
       [
-        entry.intendedRecipientId ?? entry.targetId,
+        entry.targetId,
         entry.eventType === 'speech' ? 'intended_recipient' : 'subject',
       ],
     ] as const) {
@@ -236,16 +237,14 @@ export function responseReferences(
       label: recognizedIds.has(id)
         ? entityLabel(world, entity, actorId)
         : `Unidentified ${entity.actor ? 'actor' : 'entity'} (ID:${entityHandle(world, actorId, id)})`,
-      ...(entity.actor
-        ? { species: recognizedIds.has(id) ? (entity.actor.species ?? 'unknown') : 'unknown' }
-        : {}),
+      ...(visible.has(id) && entity.actor ? { species: entity.actor.species ?? 'unknown' } : {}),
       ...(id === actorId ? { relation: 'myself' } : {}),
       ...(visible.has(id) ? { position: worldPosition(entity) } : {}),
-      ...(recognizesSubject(world, actorId, id) || !world.observerIdentities?.[actorId]?.[id]
+      ...(recognizesSubject(world, actorId, id)
         ? {
-            noteRevision: knowledgeDocument(world, actorId, id)?.revision ?? 0,
-            noteCharacters: characterCount(knowledgeDocument(world, actorId, id)?.text ?? ''),
-            nameRevision: world.observerIdentities?.[actorId]?.[id]?.revision ?? 0,
+            noteRevision: knowledgeDocument(world, actorId, {kind:'entity',entityId:id})?.revision ?? 0,
+            noteCharacters: characterCount(knowledgeDocument(world, actorId, {kind:'entity',entityId:id})?.text ?? ''),
+            nameRevision: identityForEntity(world, actorId, id)?.revision ?? 0,
           }
         : { knowledgeBinding: 'unresolved' }),
       triggerRoles: roles.get(id) ?? [],
@@ -283,7 +282,19 @@ export function responseReferences(
       }),
     );
   const all = [...ids, ...possessions, ...piled, ...inspected];
-  return { entityIds: all, references, entityReferences: entityReferenceMap(world, all, actorId) };
+  const identityReferences: Record<string, ObserverSubject> = {};
+  for (const subject of [...learnedSubjects, ...awareness.flatMap(entry => entry.sourceSubject ? [entry.sourceSubject] : [])]) {
+    if (subject.kind !== 'individual') continue;
+    const identity = observerIndividual(world, actorId, subject);
+    if (!identity || identity.seedOnly) continue;
+    const handle = subjectHandle(world, actorId, subject);
+    if (identityReferences[handle]) continue;
+    identityReferences[handle] = subject;
+    references.push(JSON.stringify({ subjectReference: handle, label: subjectLabel(world, actorId, subject),
+      role:'remembered-individual', currentBody:false, nameRevision:identity.revision,
+      noteRevision:knowledgeDocument(world, actorId, subject)?.revision ?? 0 }));
+  }
+  return { entityIds: all, references, entityReferences: entityReferenceMap(world, all, actorId), identityReferences };
 }
 
 function formatIntentions(value: unknown): string {

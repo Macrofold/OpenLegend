@@ -16,7 +16,13 @@ export const subjectKey = (subject: ObserverSubject): string =>
 export const sameSubject = (a: ObserverSubject, b: ObserverSubject): boolean =>
   subjectKey(a) === subjectKey(b);
 export function validObserverSubject(subject: unknown): subject is ObserverSubject {
-  if (!subject || typeof subject !== 'object' || Array.isArray(subject)) return false;
+  if (
+    !subject ||
+    typeof subject !== 'object' ||
+    Array.isArray(subject) ||
+    Object.keys(subject).length !== 2
+  )
+    return false;
   const value = subject as Partial<ObserverSubject> & {
     entityId?: unknown;
     individualId?: unknown;
@@ -122,7 +128,8 @@ export function editKnowledge(
       !permittedSubjects.some((subject) => sameSubject(subject, edit.subjectId!)) ||
       (edit.subjectId.kind === 'entity'
         ? !entityGet(world.entities, edit.subjectId.entityId) && !current
-        : !world.observerIdentities?.[actorId]?.[edit.subjectId.individualId]))
+        : world.observerIdentities?.[actorId]?.[edit.subjectId.individualId]?.individualId !==
+          edit.subjectId.individualId))
   )
     return outcome(false, 'unpermitted-subject', 'The knowledge subject was not supplied.');
   if (
@@ -179,7 +186,11 @@ export function validateKnowledge(world: WorldState): void {
       if (
         !['authored-starting', 'actor-edit'].includes(document.origin) ||
         id !== knowledgeKey(document.subjectId) ||
-        (document.subjectId !== null && !validObserverSubject(document.subjectId)) ||
+        (document.subjectId !== null &&
+          (!validObserverSubject(document.subjectId) ||
+            (document.subjectId.kind === 'individual' &&
+              world.observerIdentities?.[actorId]?.[document.subjectId.individualId]
+                ?.individualId !== document.subjectId.individualId))) ||
         !Number.isSafeInteger(document.revision) ||
         document.revision < 1 ||
         typeof document.text !== 'string' ||

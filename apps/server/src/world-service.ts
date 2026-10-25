@@ -1,3 +1,19 @@
+import { historyPositions } from './history-residency.js';
+import {
+  resolveCommandContactReferences,
+  resolveContactTarget,
+  ContactReferenceError,
+} from './public-contact-references.js';
+import { personalAccountRevision } from './personal-accounts.js';
+import { RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
+import {
+  captureKnownPlaceEvidence,
+  knownPlaceEvidenceReady,
+  installKnownPlaceEvidence,
+  prepareKnownPlaceEvidence,
+  knownPlaceCapsule,
+  KnownPlacePreparationError,
+} from '@open-legend/domain';
 import { reconcileNativeControl } from '@open-legend/domain';
 import { entityGet, entityKeys, entityValues, projectWorldHistory } from '@open-legend/domain';
 import {
@@ -85,7 +101,12 @@ import {
   appraisalCreationIdentity,
   type Outcome,
 } from '@open-legend/domain';
-import { knowledgeDocument, canRememberSubject } from '@open-legend/domain';
+import {
+  knowledgeDocument,
+  canRememberSubject,
+  observerIndividual,
+  assignSubjectName,
+} from '@open-legend/domain';
 import { HostWork } from './host-work.js';
 import { WorkBudgetError } from '@open-legend/domain';
 import { changeParticipation } from '@open-legend/domain';
@@ -979,6 +1000,7 @@ export class WorldService {
         attempt,
       ]),
     );
+    await this.prepareNativeKnownPlaces();
     // Restart has no verified live transports. Existing deadlines are retained, never extended.
     // Before the first entry, absence is not a fictional physical departure. Later
     // restarts retain the ordinary saved-work and participation recovery behavior.
@@ -1450,6 +1472,7 @@ export class WorldService {
     historyWorld: WorldState,
     currentAppendCount: number | undefined,
   ): void {
+    captureKnownPlaceEvidence(historyWorld)(saved.world);
     freezeWorld(saved.world);
     this.saved = saved;
     if (currentAppendCount === undefined || saved.world.events !== historyWorld.events)
@@ -1944,6 +1967,73 @@ export class WorldService {
       before.experience?.corrections?.[actorId] !== after.experience?.corrections?.[actorId]
     )
       await this.whenDurable();
+  }
+
+  /** Hearing consumes this already-complete, observer-owned index synchronously.
+   * Rebuild only an invalidated/new actor. Source selection runs in the existing writer
+   * turn; warm native work performs no history or database query.
+   * docs/memory-architecture.md#personal-perspective-and-acquisition */
+  private async prepareNativeKnownPlaces(
+    candidate = this.world,
+    completeSources = false,
+  ): Promise<void> {
+    const actors = Object.keys(candidate.experience?.awareness ?? {}).filter(
+      (actorId) =>
+        !!entityGet(candidate.entities, actorId)?.actor &&
+        !knownPlaceEvidenceReady(candidate, actorId),
+    );
+    if (!actors.length) return;
+    if (candidate === this.world && !completeSources && (this.unpersisted || this.backgroundSave)) {
+      await this.backgroundSave?.done;
+      if (this.unpersisted && !(await this.commit(this.saved, undefined, 'append')))
+        throw new KnownPlacePreparationError();
+      candidate = this.world;
+    }
+    const repository = !completeSources ? this.store.memories : undefined;
+    const head = repository ? await this.store.records?.head() : undefined;
+    if (repository && !head) throw new KnownPlacePreparationError();
+    for (const actorId of actors) {
+      if (knownPlaceEvidenceReady(candidate, actorId)) continue;
+      const index =
+        repository && head
+          ? await repository.prepareKnownPlaceEvidence({
+              worldId: candidate.id,
+              actorId,
+              generation: head.generation,
+            })
+          : (() => {
+              // No-database worlds and complete save candidates already own all originals.
+              // A released resident tail is never enough to establish an empty result.
+              const entries = candidate.experience!.awareness[actorId] ?? [];
+              const placement = historyPositions.get(entries);
+              if (placement && !placement.complete) throw new KnownPlacePreparationError();
+              const forgotten = new Set(candidate.experience?.forgotten[actorId] ?? []);
+              const corrected = candidate.experience?.corrections?.[actorId] ?? {};
+              const latest = new Map<string, import('@open-legend/domain').KnownPlaceCapsule>();
+              for (const entry of entries) {
+                if (
+                  forgotten.has(entry.eventId) ||
+                  corrected[entry.eventId] ||
+                  entry.exposure?.kind !== 'place'
+                )
+                  continue;
+                const capsule = knownPlaceCapsule(entry, {
+                  kind: 'awareness',
+                  id: entry.eventId,
+                  revision: personalAccountRevision(JSON.stringify(entry)),
+                });
+                if (!capsule) throw new KnownPlacePreparationError();
+                const prior = latest.get(capsule.placeId);
+                if (!prior || capsule.observedAt >= prior.observedAt)
+                  latest.set(capsule.placeId, capsule);
+              }
+              const result = prepareKnownPlaceEvidence([...latest.values()]);
+              if (result.capsules.length > RETRIEVAL_ROWS || result.bytes > RETRIEVAL_BYTES)
+                throw new KnownPlacePreparationError();
+              return result;
+            })();
+      installKnownPlaceEvidence(candidate, actorId, index);
+    }
   }
 
   /** Cold actor history is scoped to one serialized operation, then released. */
@@ -2608,6 +2698,7 @@ export class WorldService {
         for (const [actorId, ids] of Object.entries(ledger ?? {}))
           for (const sourceId of ids)
             restored.world = forgetExperience(restored.world, actorId, sourceId).world;
+        await this.prepareNativeKnownPlaces(restored.world, true);
         restored.manuallyPaused = true;
         restored.world.paused = true;
         const epoch = {
@@ -3256,6 +3347,7 @@ export class WorldService {
           Math.max(0, (offeredUntil - this.clockStartedAt) / 1000),
         );
       if (this.paused || elapsedRealSeconds < 0) return;
+      await this.prepareNativeKnownPlaces();
       // The host distinguishes missing callbacks from callbacks during a busy batch.
       // Direct callers retain the suspension default (docs/performance.md#simulation-cpu-and-growing-history).
       if (suspendedRealSeconds > 0) {
@@ -3800,6 +3892,7 @@ export class WorldService {
         // for holding the writer still apply (docs/ui-ux/world-interaction.md#paused-game-tabs).
         if (this.paused && !this.commandWhileManuallyPaused(command))
           return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
+        await this.prepareNativeKnownPlaces();
         const admissionWorld = this.world;
         const result = operation(admissionWorld);
         const receipt = gameplay ? { ...gameplay, result: result.outcome } : undefined;
@@ -3948,6 +4041,7 @@ export class WorldService {
       const apply = async () => {
         this.assertScope(scope, 'create');
         this.assertScope(scope, 'inspect');
+        await this.prepareNativeKnownPlaces();
         const result = await operation(this.world);
         if (!result.outcome.ok) return result.outcome;
         const receipt: GameplayReceipt = {
@@ -4033,6 +4127,7 @@ export class WorldService {
     return this.mutate(async () => {
       await this.ready;
 
+      await this.prepareNativeKnownPlaces();
       const result = operation(this.world);
       if (!result.outcome.ok) return result.outcome;
       if (
@@ -4229,33 +4324,49 @@ export class WorldService {
         message: 'Knowledge edit rejected.',
       };
       const candidate = updateWorld(world, (draft) => {
+        const subject = value.subjectId;
+        const recognized =
+          subject &&
+          (subject.kind === 'entity'
+            ? canRememberSubject(draft, value.actorId, subject.entityId)
+            : !!observerIndividual(draft, value.actorId, subject)?.individualId);
         const permitted =
-          value.subjectId &&
-          (mode === 'creator' ||
-            canRememberSubject(draft, value.actorId, value.subjectId) ||
-            knowledgeDocument(draft, value.actorId, value.subjectId))
-            ? [value.subjectId]
+          subject &&
+          (mode === 'creator' || recognized || knowledgeDocument(draft, value.actorId, subject))
+            ? [subject]
             : [];
-        if (value.givenName !== undefined && value.subjectId) {
-          const named = assignGivenName(
-            draft,
-            value.actorId,
-            {
-              subjectId: value.subjectId,
-              givenName: value.givenName,
-              expectedRevision: value.nameRevision ?? 0,
-            },
-            permitted,
-            mode === 'creator',
-          );
+        if (value.givenName !== undefined && subject) {
+          const named =
+            mode === 'creator' && subject.kind === 'entity'
+              ? assignGivenName(
+                  draft,
+                  value.actorId,
+                  {
+                    subjectId: subject.entityId,
+                    givenName: value.givenName,
+                    expectedRevision: value.nameRevision ?? 0,
+                  },
+                  [subject.entityId],
+                  true,
+                )
+              : assignSubjectName(
+                  draft,
+                  value.actorId,
+                  {
+                    subjectId: subject,
+                    givenName: value.givenName,
+                    expectedRevision: value.nameRevision ?? 0,
+                  },
+                  permitted,
+                );
           if (!named.ok) {
             edited = named;
             return;
           }
         }
         edited = editKnowledge(draft, value.actorId, value, permitted);
-        if (edited.ok && value.subjectId)
-          rememberSubject(draft, value.actorId, value.subjectId, mode === 'creator');
+        if (edited.ok && subject?.kind === 'entity')
+          rememberSubject(draft, value.actorId, subject.entityId, mode === 'creator');
       });
       return { world: edited.ok ? candidate : world, events: [], outcome: edited };
     });
@@ -4851,6 +4962,7 @@ export class WorldService {
     actorId?: string,
     epoch?: string,
     scope?: RequestScope,
+    publicReferences = false,
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
@@ -4865,20 +4977,29 @@ export class WorldService {
       // Legacy callers retain their old identity rules; new clients bind retries to their issued epoch.
       if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
       const prepare = async () => {
-        const refusal = input.primaryAction
-          ? primaryActionRefusal(this, input, scope ?? this.localScope)
+        let currentInput = input;
+        if (scope && publicReferences) {
+          try {
+            currentInput = resolveCommandContactReferences(this.world, scope, input);
+          } catch (error) {
+            if (!(error instanceof ContactReferenceError)) throw error;
+            return { ok: false, code: error.code, message: error.message };
+          }
+        }
+        const refusal = currentInput.primaryAction
+          ? primaryActionRefusal(this, currentInput, scope ?? this.localScope, publicReferences)
           : undefined;
         if (refusal) return refusal;
-        if (!input.knownPlace) return input;
-        if (input.type !== 'move')
+        if (!currentInput.knownPlace) return currentInput;
+        if (currentInput.type !== 'move')
           return {
             ok: false,
             code: 'invalid-command',
             message: 'A remembered place can only select a movement destination.',
           };
-        const result = await resolveKnownPlaceMove(this, actor, input.knownPlace);
+        const result = await resolveKnownPlaceMove(this, actor, currentInput.knownPlace);
         if (!('position' in result)) return result;
-        const { knownPlace: _reference, ...command } = input;
+        const { knownPlace: _reference, ...command } = currentInput;
         return { ...command, position: result.position };
       };
       if (epoch === undefined || !this.store.commands) {
@@ -5732,17 +5853,37 @@ export class WorldService {
     text: string,
     targetId?: string,
     volume: SpeechVolume = 'normal',
+    targetBinding?: { scope: RequestScope; reference: string },
   ): Promise<ApiResult> {
-    return await this.transition((world) =>
-      executeCommand(world, {
+    return await this.transition((world) => {
+      if (targetBinding) {
+        this.assertScope(targetBinding.scope, 'play', true);
+        try {
+          if (
+            targetBinding.scope.actorId !== actorId ||
+            resolveContactTarget(world, targetBinding.scope, targetBinding.reference, {
+              communication: true,
+            }) !== targetId
+          )
+            throw new ContactReferenceError();
+        } catch (error) {
+          if (!(error instanceof ContactReferenceError)) throw error;
+          return {
+            world,
+            events: [],
+            outcome: { ok: false, code: error.code, message: error.message },
+          };
+        }
+      }
+      return executeCommand(world, {
         id: requestId,
         actorId,
         type: 'say',
         text,
         volume,
         ...(targetId ? { targetId } : {}),
-      }),
-    );
+      });
+    });
   }
 
   async correctMemory(

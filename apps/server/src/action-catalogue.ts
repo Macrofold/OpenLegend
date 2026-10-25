@@ -1,4 +1,5 @@
 import { entityGet } from '@open-legend/domain';
+import { publicActionReference } from './public-contact-references.js';
 import { nativeCommandKind } from './native-command-kind.js';
 import {
   canonicalJson,
@@ -73,6 +74,7 @@ export function primaryActionRefusal(
   service: WorldService,
   input: CommandInput,
   scope: RequestScope,
+  publicSelection = false,
 ): ApiResult | undefined {
   // Confirming a lethal review explicitly chooses that bound attack; the native
   // review owner still checks the exact reviewed command, bodies and permission.
@@ -90,7 +92,7 @@ export function primaryActionRefusal(
     throw error;
   }
   const action = catalogue.actions.find((entry) => entry.id === catalogue.defaultActionId);
-  if (action?.id !== input.primaryAction.actionId || action.intent.kind !== 'command') return stale;
+  if (!action || (publicSelection ? publicActionReference(scope, action.id) : action.id) !== input.primaryAction.actionId || action.intent.kind !== 'command') return stale;
   const { primaryAction: _selection, lethalReviewId: _review, ...command } = input;
   // Compare the wire meaning: optional undefined fields disappear in transport,
   // and object property order must not change an otherwise identical choice.

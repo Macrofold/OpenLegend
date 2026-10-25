@@ -6,7 +6,11 @@ import { characterCount, advanceKnowledgeRevision, type KnowledgePolicy } from '
 import { isSafeRecordId } from '../../records.js';
 import config from './config/knowledge.generated.json' with { type: 'json' };
 import { learnRecipe, sameSubject, type ObserverSubject } from '../../knowledge.js';
-import { installAuthoredVoice, validateRecognition, type VoiceKnowledge } from './recognition.js';
+import {
+  installAuthoredVoice,
+  validateRecognition,
+  type RecognitionKnowledge,
+} from './recognition.js';
 export { revokeRecognitionEvidence } from './recognition.js';
 
 export function startingRecipeKnowledge(
@@ -24,7 +28,8 @@ export interface ObserverIdentity {
   individualId?: string;
   canonicalId?: string;
   seedOnly?: boolean;
-  voice?: VoiceKnowledge;
+  voice?: RecognitionKnowledge;
+  sight?: RecognitionKnowledge;
   nameEvidenceIds?: string[];
   givenName: string;
   revision: number;
@@ -221,9 +226,6 @@ export function rememberSubject(
 
 /** Select permitted identity before applying presentation grammar. */
 export function observerName(world: WorldState, observerId: string, subjectId: string): Named {
-  const remains = entityGet(world.entities, subjectId)?.remains;
-  if (remains && remains.sourceId !== subjectId)
-    return observerName(world, observerId, remains.sourceId);
   const known = observerGivenName(world, observerId, subjectId);
   if (known) return { name: known, nameForm: 'proper', indefiniteArticle: undefined };
   const entity = entityGet(world.entities, subjectId);
@@ -277,10 +279,14 @@ export function assignSubjectName(
     (!identity.authored &&
       !(
         identity.canonicalId &&
-        identity.encounterId &&
-        identity.encounterId === world.perceptionEpisodes?.[observerId]?.[identity.canonicalId]
+        ((identity.voice?.samples.length ?? 0) >= 1 ||
+          (identity.sight?.samples.length ?? 0) >= 1 ||
+          (!!identity.encounterId &&
+            identity.encounterId ===
+              world.perceptionEpisodes?.[observerId]?.[identity.canonicalId]))
       ) &&
-      (!identity.voice || (!identity.voice.authored && identity.voice.samples.length < 2)))
+      (!identity.voice || (!identity.voice.authored && identity.voice.samples.length < 2)) &&
+      (!identity.sight || (!identity.sight.authored && identity.sight.samples.length < 1)))
   )
     return outcome(false, 'recognition-unavailable', 'No learned individual supports this name.');
   if (!Number.isSafeInteger(edit.expectedRevision) || edit.expectedRevision !== identity.revision)
@@ -299,7 +305,8 @@ export function subjectLabel(
   subject: ObserverSubject,
 ): string {
   return subject.kind === 'entity'
-    ? observerDescription(world, observerId, subject.entityId)
+    ? identityForEntity(world, observerId, subject.entityId)?.givenName ||
+        observerDescription(world, observerId, subject.entityId)
     : observerIndividual(world, observerId, subject)?.givenName || 'unidentified voice';
 }
 const introductionWords = new Intl.Segmenter('und', { granularity: 'word' });
@@ -312,7 +319,11 @@ function containsNameWords(text: string, name: string[]): boolean {
 }
 /** An introduction uses only the listener's actually understood name and supported
  * local individual. A canonical speaker or a current visible body is unnecessary. */
-export function learnSpeechIntroduction(world: WorldState, event: WorldEvent): void {
+export function learnSpeechIntroduction(
+  world: WorldState,
+  event: WorldEvent,
+  acquired: readonly import('../../experience.js').Awareness[],
+): void {
   if (event.type !== 'speech' || !event.actorId) return;
   const proposed = event.data?.['selfIntroduction'];
   const text = event.data?.['text'];
@@ -333,7 +344,7 @@ export function learnSpeechIntroduction(world: WorldState, event: WorldEvent): v
     .map((word) => word.segment);
   for (const observerId of event.audience) {
     if (observerId === event.actorId) continue;
-    const evidence = world.experience?.awareness[observerId]?.at(-1);
+    const evidence = acquired.find((entry) => entry.actorId === observerId);
     if (
       evidence?.eventId !== event.id ||
       evidence.speech?.perception !== 'heard' ||

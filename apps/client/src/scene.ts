@@ -519,10 +519,7 @@ export class WildernessScene implements WorldRenderer {
     this.mercenary?.setArtTreatment(style);
     this.presentation.setArtTreatment(style);
     if (relight && this.view)
-      this.presentation.lighting(
-        this.view,
-        [...this.actors.values()].map((entry) => entry.view),
-      );
+      this.presentation.lighting(this.view);
     this.app.renderNextFrame = true;
     for (const texture of this.textures) {
       if ([...this.environmentTiles.values()].includes(texture)) continue;
@@ -633,10 +630,7 @@ export class WildernessScene implements WorldRenderer {
   }
   setShadowQuality(quality: ShadowQuality): void {
     if (this.presentation.setShadowQuality(quality) && this.view)
-      this.presentation.lighting(
-        this.view,
-        [...this.actors.values()].map((entry) => entry.view),
-      );
+      this.presentation.lighting(this.view);
   }
   setPerceptionOptions(options: PerceptionOptions): void {
     this.perception.setOptions(options);
@@ -737,39 +731,24 @@ export class WildernessScene implements WorldRenderer {
         this.callbacks.select(null);
       }
     }
-    const departed = new Set(
-      view.events
-        .filter(
-          (event) =>
-            (event.type === 'departed' || event.type === 'body-removed') &&
-            !this.knownEvents.has(event.id),
-        )
-        .map((event) => event.actorId),
-    );
     this.knownEvents = new Set(view.events.map((event) => event.id));
+    // Omission is not a memory grant. Explicit personal history remains available
+    // through its source reader; a removed contact loses all live rendering now.
     for (const [id, entry] of this.actors)
-      if (!visible.has(entry.view.id)) {
-        // Loose piles have no renderer ghost: occlusion and collection both hide the heap.
-        // docs/worlds/base/items.md#ground-piles
-        if (
-          entry.view.kind === 'item-pile' ||
-          (entry.view.id === view.player.id && playerAbsent) ||
-          (departed.has(id) && document.documentElement.dataset.reduceMotion === 'true')
-        ) {
-          this.releaseEntity(entry);
-          this.actors.delete(id);
-          continue;
-        }
-        // Absence can mean occlusion, not disappearance. Retain only the last authorized image;
-        // an unobserved ghost has no interaction or current-state knowledge.
-        if (departed.has(id)) entry.departedAt = this.elapsed;
-        entry.observed = false;
-        entry.root.setPosition(entry.view.position.x, entry.view.position.y, entry.view.position.z);
+      if (!visible.has(id)) {
+        this.releaseEntity(entry);
+        this.actors.delete(id);
+        this.movingEntries.delete(id);
       }
+    if (this.selected && !visible.has(this.selected)) {
+      this.selected = null;
+      this.callbacks.select(null);
+    }
     for (const entity of entities) {
       let entry = this.actors.get(entity.id);
       if (entry?.observed && entry.view === entity) continue;
-      this.movingEntries.add(entity.id);
+      if (entity.id === view.player.id) this.movingEntries.add(entity.id);
+      else this.movingEntries.delete(entity.id);
       const signature = `${
         entity.contents
           ?.slice(0, 12)
@@ -818,20 +797,15 @@ export class WildernessScene implements WorldRenderer {
           );
       }
       entry.view = entity;
+      if (entity.id !== view.player.id) {
+        entry.root.setPosition(entity.position.x, entity.position.y, entity.position.z);
+        entry.renderedSupport = entity.supportSurfaceId;
+      }
       entry.observed = true;
       delete entry.departedAt;
     }
-    // A bounded, session-only visual memory; never a second source of live facts.
-    const remembered = [...this.actors].filter(([, entry]) => !entry.observed);
-    for (const [id, entry] of remembered.slice(0, Math.max(0, remembered.length - 128))) {
-      this.releaseEntity(entry);
-      this.actors.delete(id);
-    }
     this.updateEntityPresentation();
-    this.presentation.lighting(
-      view,
-      [...this.actors.values()].map((entry) => entry.view),
-    );
+    this.presentation.lighting(view);
     if (this.options.notices !== false) this.statuses.observe(view);
     this.statusIndicators.observe(entities);
     this.speech.observe(view);
@@ -965,7 +939,7 @@ export class WildernessScene implements WorldRenderer {
         return { x: p.x, y: p.y - 54, source: p };
       },
       direction: (speech, captionWidth, captionHeight) => {
-        const speaker = speech.speaker ? this.actors.get(speech.speaker.entityId) : undefined;
+        const speaker = speech.speakerContact ? this.actors.get(speech.speakerContact) : undefined;
         let dx: number,
           dy: number,
           approximate = false;

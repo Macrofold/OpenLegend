@@ -17,12 +17,12 @@ import {
   type KnowledgeEdit,
 } from './knowledge.js';
 import {
-  assignGivenName,
+  assignSubjectName,
   canRememberSubject,
   rememberSubject,
   revokeRecognitionEvidence,
   observerIndividual,
-  type GivenNameEdit,
+  type SubjectNameEdit,
 } from './worlds/base/knowledge.js';
 import {
   experienceManifest,
@@ -31,7 +31,12 @@ import {
   type PreparedExperience,
   type ExperienceManifest,
 } from './experience-manifest.js';
-import { acquireKnownPlaceEvidence, invalidateKnownPlaceEvidence } from './known-place-evidence.js';
+import {
+  acquireKnownPlaceEvidence,
+  invalidateKnownPlaceEvidence,
+  installKnownPlaceEvidence,
+  prepareKnownPlaceEvidence,
+} from './known-place-evidence.js';
 import { dreamStatus, dreamPolicy } from './cognition-policy.js';
 import { current, isDraft } from 'immer';
 import { changeGoal, type GoalChange } from './agency.js';
@@ -73,6 +78,7 @@ export interface Awareness {
   exposure?: import('./places.js').EncounterExposure;
   entityEpisodes?: Record<string, string>;
   speech?: import('./speech.js').PerceivedSpeech;
+  sound?: import('./speech.js').PerceivedSound;
   eventId: string;
   actorId: string;
   text: string;
@@ -88,6 +94,15 @@ export interface Awareness {
   /** Stable event-time trigger semantics survive rotation of the bounded world-event feed. */
   eventType?: string;
   sourceId?: string;
+  /** Speech body correspondence at acquisition; never inferred from a learned voice. */
+  sourceBody?: { entityId: string; physicalLife: number; leaseId: string | null };
+  recognition?: import('./worlds/base/recognition.js').IndividualRecognition;
+  receivedFeatures?: {
+    modality: 'sight' | 'hearing';
+    family: { id: string; version: number };
+    features: import('./worlds/base/recognition.js').RecognitionFeatures;
+    quality: number;
+  };
   targetId?: string;
   triggerKind?:
     | 'addressed_speech'
@@ -647,7 +662,10 @@ export function migrateCognition(world: WorldState): void {
   world.innerWorlds ??= {};
   for (const entity of entityValues(world.entities)) {
     if (!hasMemory(entity)) continue;
-    world.experience.awareness[entity.id] ??= [];
+    if (!Object.hasOwn(world.experience.awareness, entity.id)) {
+      world.experience.awareness[entity.id] = [];
+      installKnownPlaceEvidence(world, entity.id, prepareKnownPlaceEvidence([]));
+    }
     if (world.innerWorlds[entity.id]) continue;
     const mind = ((world.minds ??= {})[entity.id] ??= mindFor(world, entity.id));
     const files = mind.documents.map((doc) => ({
@@ -968,6 +986,41 @@ export function invalidateExperience(
   };
   while (expanded) {
     expanded = false;
+    // Personal source IDs and native contributions are aliases of one received account.
+    // Revoke descendants before pruning any body, including required native support that
+    // is independent of the small resident autobiographical tail.
+    for (const entry of state.awareness[actorId] ?? []) {
+      const observations = [
+        ...(entry.observation ? [entry.observation] : []),
+        ...(entry.observations ?? []),
+      ];
+      if (affected.has(entry.eventId) || observations.some((value) => affected.has(value.id))) {
+        include(entry.eventId);
+        for (const observation of observations) include(observation.id);
+      }
+    }
+    for (const memory of world.memories[actorId] ?? []) {
+      const observations = [
+        ...(memory.observation ? [memory.observation] : []),
+        ...(memory.observations ?? []),
+        ...(memory.manifest?.observations ?? []),
+      ];
+      if (affected.has(memory.id) || observations.some((value) => affected.has(value.id))) {
+        include(memory.id);
+        for (const observation of observations) include(observation.id);
+      }
+    }
+    for (const observation of world.perceptionEvidence?.[actorId]?.received ?? []) {
+      if (
+        (observation.origin.kind === 'occurrence' && affected.has(observation.origin.eventId)) ||
+        observation.facets.some(
+          (facet) =>
+            facet.value.kind === 'claim' &&
+            facet.value.support.some((key) => affected.has(key.source.id)),
+        )
+      )
+        include(observation.id);
+    }
     // A native action and its experienced result are two views of the same source.
     // Forgetting either must not let the other reintroduce that private experience.
     for (const memory of world.memories[actorId] ?? []) {
@@ -1000,22 +1053,79 @@ export function invalidateExperience(
         expanded = true;
       }
   }
-  revokeRecognitionEvidence(world, actorId, affected);
+  const retainedDirect = new Set<string>();
+  if (forget) {
+    // Losing the correction does not turn its earlier direct observation back into
+    // established information. Keep that occurrence and its explicit disputed marker.
+    for (const [source, correction] of Object.entries(state.corrections?.[actorId] ?? {}))
+      if (affected.has(correction) && !sourceIds.includes(source)) retainedDirect.add(source);
+    for (const entry of state.awareness[actorId] ?? [])
+      if (retainedDirect.has(entry.eventId))
+        for (const observation of [
+          ...(entry.observation ? [entry.observation] : []),
+          ...(entry.observations ?? []),
+        ])
+          retainedDirect.add(observation.id);
+    for (const memory of world.memories[actorId] ?? [])
+      if (retainedDirect.has(memory.eventId ?? '') || retainedDirect.has(memory.id)) {
+        retainedDirect.add(memory.id);
+        for (const observation of [
+          ...(memory.observation ? [memory.observation] : []),
+          ...(memory.observations ?? []),
+        ])
+          retainedDirect.add(observation.id);
+      }
+  }
+  const native = world.perceptionEvidence?.[actorId];
+  if (native) {
+    const remap = new Map<number, number>();
+    native.received = native.received.filter((value, index) => {
+      if (affected.has(value.id)) return false;
+      remap.set(index, remap.size);
+      return true;
+    });
+    native.receipts = Object.fromEntries(
+      Object.entries(native.receipts).flatMap(([key, index]) => {
+        const position = remap.get(index);
+        return position === undefined ? [] : [[key, position]];
+      }),
+    );
+    for (const [id, lease] of Object.entries(native.current))
+      if (
+        affected.has(lease.original.id) ||
+        (lease.original.origin.kind === 'occurrence' && affected.has(lease.original.origin.eventId))
+      )
+        delete native.current[id];
+  }
+  revokeRecognitionEvidence(
+    world,
+    actorId,
+    new Set(
+      [...affected].flatMap((id) => [id, `awareness:${id}`, `memory:${id}`, `summary:${id}`]),
+    ),
+  );
   revokeActivityEvidence(world, actorId, [...affected]);
   revokePracticeSupport(world, actorId, affected);
   revokeCombatEvidence(world, actorId, affected);
   if (forget) {
-    state.forgotten[actorId] = [...new Set([...(state.forgotten[actorId] ?? []), ...affected])];
+    state.forgotten[actorId] = [
+      ...new Set([
+        ...(state.forgotten[actorId] ?? []),
+        ...[...affected].filter((id) => !retainedDirect.has(id)),
+      ]),
+    ];
     state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(
-      (a) => !affected.has(a.eventId),
+      (a) => !affected.has(a.eventId) || retainedDirect.has(a.eventId),
     );
     world.memories[actorId] = (world.memories[actorId] ?? []).filter(
-      (m) => (m.kind === 'commitment' && !m.resolved) || !affected.has(m.id),
+      (m) =>
+        (m.kind === 'commitment' && !m.resolved) || !affected.has(m.id) || retainedDirect.has(m.id),
     );
     const corrections = state.corrections?.[actorId];
     if (corrections)
       for (const [id, evidence] of Object.entries(corrections))
-        if (affected.has(id) || affected.has(evidence)) delete corrections[id];
+        if (!retainedDirect.has(id) && (affected.has(id) || affected.has(evidence)))
+          delete corrections[id];
   }
   // Privacy invalidation must also reach accepted canvases and observer identity associations.
   // docs/knowledge.md#privacy-and-correction
@@ -1028,7 +1138,6 @@ export function invalidateExperience(
       document.revision++;
     }
   }
-  if (forget && world.observerIdentities?.[actorId]) world.observerIdentities[actorId] = {};
   const roots = new Set(sourceIds);
   const summaries = state.summaries[actorId] ?? [];
   const retained = summaries.filter((s) => !affected.has(s.id) || (!forget && roots.has(s.id)));
@@ -1066,7 +1175,7 @@ export function publishInnerWorld(
   _processedThrough = 0,
   goalChanges: GoalChange[] = [],
   knowledgeChanges: KnowledgeEdit[] = [],
-  nameChanges: GivenNameEdit[] = [],
+  nameChanges: SubjectNameEdit[] = [],
   permittedSubjects: ObserverSubject[] = [],
   expectedEncounters?: Record<string, string>,
   knowledgeReferences: Record<string, ObserverSubject> = {},
@@ -1158,8 +1267,9 @@ export function publishInnerWorld(
     expectedEncounters &&
     (nameChanges.some(
       (edit) =>
-        expectedEncounters[edit.subjectId] !==
-        world.perceptionEpisodes?.[actorId]?.[edit.subjectId],
+        edit.subjectId.kind === 'entity' &&
+        expectedEncounters[edit.subjectId.entityId] !==
+          world.perceptionEpisodes?.[actorId]?.[edit.subjectId.entityId],
     ) ||
       knowledgeChanges.some(
         (edit) =>
@@ -1171,12 +1281,7 @@ export function publishInnerWorld(
   )
     return reject('A knowledge subject encounter changed during reflection.');
   for (const edit of nameChanges) {
-    const result = assignGivenName(
-      world,
-      actorId,
-      edit,
-      permittedSubjects.flatMap((subject) => (subject.kind === 'entity' ? [subject.entityId] : [])),
-    );
+    const result = assignSubjectName(world, actorId, edit, permittedSubjects, evidenceIds);
     if (!result.ok) return reject(result.message);
   }
   for (const edit of knowledgeChanges) {

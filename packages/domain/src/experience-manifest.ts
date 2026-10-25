@@ -1,15 +1,13 @@
-import { canonicalJson, contentLabel } from './events.js';
+import { validSpeechLabel } from './speech.js';
+import { validObserverSubject } from './knowledge.js';
+import { validPersonalSourceRef, type PersonalSourceRef } from './experience-source.js';
+export { validPersonalSourceRef, type PersonalSourceRef } from './experience-source.js';
+import { canonicalJson } from './events.js';
 import type { Awareness, ExperienceSummary } from './experience.js';
 import type { ExperienceEntry, MemoryRecord } from './types.js';
 import { validateObservationContribution } from './perception-evidence.js';
 import type { ObservationContribution } from './perception-evidence.js';
 
-/** Exact source identity in the owning world/observer partition. */
-export interface PersonalSourceRef {
-  kind: ExperienceEntry['source'];
-  id: string;
-  revision: string;
-}
 export interface PreparedExperience {
   entry: ExperienceEntry;
   ref: PersonalSourceRef;
@@ -38,20 +36,8 @@ export interface ExperienceManifest {
   speech: SpeechAttributionGroup[];
 }
 const refKey = (ref: PersonalSourceRef) => canonicalJson([ref.kind, ref.id, ref.revision]);
-export function validPersonalSourceRef(value: unknown): value is PersonalSourceRef {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const ref = value as PersonalSourceRef;
-  return (
-    Object.keys(ref).length === 3 &&
-    ['awareness', 'memory', 'summary'].includes(ref.kind) &&
-    typeof ref.id === 'string' &&
-    !!ref.id &&
-    typeof ref.revision === 'string' &&
-    /^[a-f0-9]{64}$/.test(ref.revision)
-  );
-}
 export function manifestCoverageKey(refs: readonly PersonalSourceRef[]): string {
-  return contentLabel(canonicalJson(refs.map(refKey).sort()));
+  return canonicalJson(refs.map(refKey).sort());
 }
 /** Structured meaning is native-derived, independent of a model's paraphrase.
  * Child manifests already carry exact leaf coverage; never replay lifetime history.
@@ -63,6 +49,13 @@ export function experienceManifest(
   const coverage = new Map<string, PersonalSourceRef>();
   const observations = new Map<string, ObservationContribution>();
   const speech = new Map<string, SpeechAttributionGroup>();
+  const addObservation = (value: ObservationContribution) => {
+    const key = canonicalJson([value.observer, value.id, value.revision]);
+    const prior = observations.get(key);
+    if (prior && canonicalJson(prior) !== canonicalJson(value))
+      throw new Error('Conflicting original observation revision; original evidence retained.');
+    observations.set(key, value);
+  };
   const addGroup = (group: SpeechAttributionGroup) => {
     const {
       supportKey: _key,
@@ -96,11 +89,7 @@ export function experienceManifest(
   for (const child of children) {
     validateExperienceManifest(child);
     for (const source of child.coverage) coverage.set(refKey(source), source);
-    for (const observation of child.observations)
-      observations.set(
-        canonicalJson([observation.observer, observation.id, observation.revision]),
-        observation,
-      );
+    for (const observation of child.observations) addObservation(observation);
     for (const group of child.speech) addGroup(group);
   }
   for (const { entry, ref } of inputs) {
@@ -120,14 +109,25 @@ export function experienceManifest(
           : undefined;
     if (child) validateExperienceManifest(child);
     for (const original of child?.coverage ?? [ref]) coverage.set(refKey(original), original);
-    const observation = entry.source === 'summary' ? undefined : entry.value.observation;
-    for (const value of child?.observations ?? [
-      ...(observation ? [observation] : []),
-      ...(entry.source === 'summary' ? [] : (entry.value.observations ?? [])),
-    ])
-      observations.set(canonicalJson([value.observer, value.id, value.revision]), value);
+    const originals =
+      entry.source === 'summary'
+        ? []
+        : [
+            ...(entry.value.observation ? [entry.value.observation] : []),
+            ...(entry.value.observations ?? []),
+            ...(entry.source === 'memory' && entry.value.evidence?.observation
+              ? [entry.value.evidence.observation]
+              : []),
+            ...(entry.source === 'memory' ? (entry.value.evidence?.observations ?? []) : []),
+          ];
+    for (const value of child?.observations ?? originals) addObservation(value);
     for (const group of child?.speech ?? []) addGroup(group);
-    const awareness = entry.source === 'awareness' ? entry.value : undefined;
+    const awareness =
+      entry.source === 'awareness'
+        ? entry.value
+        : entry.source === 'memory' && entry.value.evidence
+          ? { ...entry.value.evidence, at: entry.value.at }
+          : undefined;
     const heard = awareness?.speech;
     if (awareness && heard)
       addGroup({
@@ -193,6 +193,13 @@ export function validateExperienceManifest(value: unknown): asserts value is Exp
       !Number.isFinite(group.firstAt) ||
       !Number.isFinite(group.lastAt) ||
       group.firstAt > group.lastAt ||
+      !validSpeechLabel(group.speaker) ||
+      !validSpeechLabel(group.addressee) ||
+      !['ambient', 'directed', null].includes(group.addressing) ||
+      (group.acquisition === 'seen' ? group.addressing !== null : group.addressing === null) ||
+      (group.sourceSubject !== undefined && !validObserverSubject(group.sourceSubject)) ||
+      (group.speakerId !== undefined && typeof group.speakerId !== 'string') ||
+      (group.targetId !== undefined && typeof group.targetId !== 'string') ||
       !['self', 'addressed', 'overheard', 'ambient', 'seen'].includes(group.observerRelation) ||
       !['self', 'heard', 'seen'].includes(group.acquisition) ||
       !['none', 'partial', 'clear'].includes(group.intelligibility)

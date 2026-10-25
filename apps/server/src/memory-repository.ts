@@ -34,6 +34,7 @@ import {
   type PersonalSourceRef,
   prepareKnownPlaceEvidence,
   type KnownPlaceCapsule,
+  knownPlaceCapsule,
 } from '@open-legend/domain';
 import { z } from 'zod';
 import type { SqlDatabase } from './store.js';
@@ -620,24 +621,13 @@ export class MemoryRepository {
         kind === 'awareness' && exposure?.kind === 'place' ? exposure.id : null,
         kind === 'awareness' && exposure?.kind === 'place' ? exposure.label : null,
         kind === 'awareness' && exposure?.kind === 'place'
-          ? JSON.stringify({
-              placeId: exposure.id,
-              label: exposure.label,
-              location: { kind: 'point', point: exposure.point, errorRadius: 0 },
-              source: {
-                family: 'awareness',
-                id,
+          ? JSON.stringify(
+              knownPlaceCapsule(value as unknown as Awareness, {
+                kind: 'awareness',
+                id: String(id),
                 revision: personalAccountRevision(row.payload),
-                observer: (value['observation'] as Awareness['observation'])?.observer ?? {
-                  actorId,
-                  physicalLife: 0,
-                },
-              },
-              observedAt: value['at'],
-              acquiredAt:
-                (value['observation'] as Awareness['observation'])?.acquiredAt ?? value['at'],
-              provenance: exposure.reportedBy ? 'testimony' : 'observed',
-            })
+              }),
+            )
           : null,
         value[kind === 'memory' ? 'summary' : 'text'] ?? '',
       ];
@@ -934,6 +924,8 @@ export class MemoryRepository {
    * This exceptional activation work is never performed by a hearing callback or cut. */
   async prepareKnownPlaceEvidence(scope: MemoryScope) {
     return this.snapshot(async () => {
+      const head = await this.db.prepare('SELECT generation FROM world_head WHERE id=1').get();
+      if (head?.['generation'] !== scope.generation) throw new MemoryPreparationError();
       const predicate = `${this.eligible} AND r.source_kind='awareness' AND r.place_latest=1 AND r.place_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=r.world_id AND c.actor_id=r.actor_id AND c.source_id=r.id)`;
       const size = await this.db
         .prepare(
@@ -947,13 +939,20 @@ export class MemoryRepository {
         throw new MemoryPreparationError();
       const rows = await this.db
         .prepare(
-          `SELECT r.place_capsule FROM recall_sources r WHERE ${predicate} ORDER BY r.place_id`,
+          `SELECT r.id,r.revision,r.place_capsule FROM recall_sources r WHERE ${predicate} ORDER BY r.place_id`,
         )
         .all(...this.params(scope));
       if (rows.length !== Number(size?.['count'] ?? 0)) throw new MemoryPreparationError();
       const capsules = rows.map((row) => {
         if (typeof row['place_capsule'] !== 'string') throw new MemoryPreparationError();
-        return JSON.parse(row['place_capsule']) as KnownPlaceCapsule;
+        const capsule = JSON.parse(row['place_capsule']) as KnownPlaceCapsule;
+        if (
+          capsule.personalSource?.kind !== 'awareness' ||
+          capsule.personalSource.id !== row['id'] ||
+          capsule.personalSource.revision !== row['revision']
+        )
+          throw new MemoryPreparationError();
+        return capsule;
       });
       return prepareKnownPlaceEvidence(capsules);
     });
@@ -1547,7 +1546,7 @@ export class MemoryRepository {
                 `WHEN '${kind}' THEN (SELECT ${payloadBytes} FROM ${table} t WHERE t.world_id=r.world_id AND t.id=r.record_id)`,
             )
             .join(' ')} END AS payload_bytes FROM recall_sources r
-        WHERE ${this.eligible} AND r.at>=? AND r.at${mode === 'daily' ? '<' : '<='}?
+        WHERE ${this.eligible} AND NOT (r.place_id IS NOT NULL AND r.importance>=${EXPERIENCE_LIMITS.protectedImportance}) AND r.at>=? AND r.at${mode === 'daily' ? '<' : '<='}?
         AND (r.at,r.sequence,r.id) > (?,?,?)
         AND (r.source_kind='awareness' OR r.memory_kind='episode'${mode === 'daily' ? " OR r.source_kind='summary'" : ''})
         AND r.id NOT IN (SELECT s.id FROM recall_sources s JOIN mind_awareness a ON a.world_id=s.world_id AND a.id=s.record_id WHERE s.world_id=? AND s.actor_id=? AND s.eligible=1 AND s.source_kind='awareness' AND s.event_type='speech' AND ${this.linguisticSpeech} ORDER BY s.at DESC,s.sequence DESC,s.id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech})
