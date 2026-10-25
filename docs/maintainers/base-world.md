@@ -45,9 +45,9 @@ Cross-cutting deferred automated checks are in [TODO](TODO.md#base-world-items--
 
 - [x] **BW12 — Spoken name learning:** carry optional self-introduction meaning with generated speech and learn its stated label for permitted listeners through the existing observer-name mutation, including player listeners. Preserve speech on invalid metadata and retain visibility/recognition boundaries. Automated and broader language-quality qualification remain in TODO.
 
-## Recovery and care proposal
+## Selected injury and care design
 
-[DG21 recovery and care](../projects/recovery-and-care-feature-spec.md) proposes a complete short recovery from survived harm at an existing camp, with separately selected field dressing and willing help. [CARE01–CARE05](recovery-and-care.md) owns delivery beneath ACT04/BW14, and the [world profile](../worlds/base/recovery-and-care.md) and [care inventory](../limits/recovery-and-care.md) own its values. The original source audit used main [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425); actual death/Continue/scars and scar treatment remain implemented in current main. This proposal does not restore the superseded collapse law or change mortality/participation policy. Broader medical detail remains conditional.
+[DG21 injuries and care](../projects/recovery-and-care-feature-spec.md) and its [technical design](../projects/recovery-and-care-tech-design.md) specify independently persistent injuries with useful effects, plausible harm-based selection and real recovery/treatment. [CARE00–CARE08](recovery-and-care.md) owns the design and undelivered implementation beneath ACT04/BW14; the [world profile](../worlds/base/recovery-and-care.md) and [care inventory](../limits/recovery-and-care.md) own its catalog and tuning. Health recovery, particular injury resolution and installed death-scar treatment remain distinct. Broader illness, rescue and precise anatomical targeting retain conditional scope rather than becoming requirements for this selected journey.
 
 ## BW26 — Heat, ignition and material consequences
 

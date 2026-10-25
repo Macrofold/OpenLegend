@@ -319,7 +319,7 @@ These are fictional simulation interactions, not real-world medical instructions
 
 | ID      | Example intent                                            | Seed worlds | Priority     | Level | Related mechanics and entities         | Distinction to preserve                                         |
 | ------- | --------------------------------------------------------- | ----------- | ------------ | ----- | -------------------------------------- | --------------------------------------------------------------- |
-| CARE-02 | Apply the known bandaging treatment.                      | ALL         | 1 Core       | U     | wounds, treatment, supplies            | Method, body part and finite materials are explicit.            |
+| CARE-02 | Apply the known bandaging treatment.                      | ALL         | 1 Core       | U     | wounds, treatment, supplies            | Exact condition, method and finite materials are explicit.      |
 | CARE-01 | Ask whether Ada wants help with her injury.               | ALL         | 2 Complete   | U     | conversation, consent                  | Asking is not treatment or a diagnosis.                         |
 | CARE-03 | Carry the unconscious person out of danger.               | ALL         | 2 Complete   | U     | carrying, load, body, emergency-policy | Inability to consent and emergency authority are world rules.   |
 | CARE-05 | Bring water rather than trying to treat the wound.        | ALL         | 2 Complete   | C     | delivery, requested-method             | Do not substitute an unsolicited medical intervention.          |

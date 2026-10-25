@@ -135,7 +135,7 @@ These profiles concern actual reach, posture, growth and bodily state, not a hie
 
 ## Injury and recovery
 
-These are fictional body states. [Combat](combat-rescue.md) owns causing injuries and evacuation; [Work](work-crafting.md) owns treatment; [Objects](objects.md) owns aids. The rows specify consequences without prescribing real treatment.
+These are fictional body states. [Combat](combat-rescue.md) owns causing injuries and evacuation; [Work](work-crafting.md) owns treatment; [Objects](objects.md) owns aids. The rows specify consequences without prescribing real treatment. The selected [injury and care design](../projects/recovery-and-care-feature-spec.md) represents each injury as an independent condition with a specific effect and recovery rule. Source location can inform selection without requiring the condition to occupy a body slot. Its [technical design](../projects/recovery-and-care-tech-design.md) and [CARE tracker](../maintainers/recovery-and-care.md) own the unimplemented scope; this catalogue does not require an anatomy simulator.
 
 | ID      | Idea                                       | Seed worlds | Use   | Priority     | Level | Specific behavior and payoff                                                                                                                                      | Build scope / gap                                                     | Inspiration                       |
 | ------- | ------------------------------------------ | ----------- | ----- | ------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------- |
@@ -773,4 +773,4 @@ Life-cycle care, synthetic citizens, radically different atmospheres and distrib
 
 ## Current first death-scar consumer
 
-The bundled world's [Player Death](../worlds/base/player-death.md#death-scars) now implements stiff leg, unsteady hands and tender chest as removable bodily penalties. They are separate from descriptive personality traits and reuse movement/injury/treatment owners. The broader lasting-injury/scar repertoire remains ideas for selected future consumers, not a universal installed status catalog.
+The bundled world's [Player Death](../worlds/base/player-death.md#death-scars) now implements stiff leg, unsteady hands and tender chest as removable bodily penalties. They are separate from descriptive personality traits and reuse movement/injury/treatment owners. The [selected injury and care design](../projects/recovery-and-care-feature-spec.md) defines the next independent-condition consumer; it is not installed behavior. The broader repertoire remains optional, and neither body slots nor a universal status catalogue are required.

@@ -92,7 +92,7 @@ Free sharing, paid distribution, visits and a funded program are separately scop
 
 ## Product design groups 21–25
 
-[Group assignment](../projects/completed/product-design-groups-21-25.md). Delivery owners: DG21 [recovery and care](recovery-and-care.md); DG22 [INV-20 commissions/associations](inventions-and-world-evolution.md); DG23 [EC character outlook and recollection](cognition-redesign.md); DG24 [NC22 text messages](narration-and-conversations.md); DG25 [HE06 correction](hearing-and-speech.md) and [SL10 shared restore](save-and-load.md).
+[Group assignment](../projects/completed/product-design-groups-21-25.md). Delivery owners: DG21 [individual injuries, recovery and care](recovery-and-care.md), with its [feature/technical pair](../projects/recovery-and-care-feature-spec.md); DG22 [INV-20 commissions/associations](inventions-and-world-evolution.md); DG23 [EC character outlook and recollection](cognition-redesign.md); DG24 [NC22 text messages](narration-and-conversations.md); DG25 [HE06 correction](hearing-and-speech.md) and [SL10 shared restore](save-and-load.md).
 
 ## Product design groups 16–20
 
