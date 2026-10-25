@@ -10,7 +10,12 @@ import {
 } from '../../perception-evidence.js';
 import { namePhrase, type Named, type NameArticle } from '@open-legend/language';
 import { outcome } from '../../events.js';
-import { characterCount, advanceKnowledgeRevision, type KnowledgePolicy } from '../../knowledge.js';
+import {
+  characterCount,
+  advanceKnowledgeRevision,
+  allocateObserverIndividual,
+  type KnowledgePolicy,
+} from '../../knowledge.js';
 import { isSafeRecordId } from '../../records.js';
 import config from './config/knowledge.generated.json' with { type: 'json' };
 import { learnRecipe, sameSubject, type ObserverSubject } from '../../knowledge.js';
@@ -136,9 +141,7 @@ export function ensureBodyIndividual(
   const encounterId = world.perceptionEpisodes?.[observerId]?.[subjectId];
   if (!encounterId) return undefined;
   const identities = ((world.observerIdentities ??= {})[observerId] ??= {});
-  let ordinal = 1;
-  while (Object.hasOwn(identities, `individual-${ordinal}`)) ordinal++;
-  const individualId = `individual-${ordinal}`;
+  const individualId = allocateObserverIndividual(world, observerId);
   identities[individualId] = {
     individualId,
     givenName: '',
@@ -178,6 +181,36 @@ export function canAddressRememberedSubject(
   return Object.values(world.observerIdentities?.[observerId] ?? {}).some(
     (identity) =>
       !!identity.individualId && !identity.seedOnly && identity.canonicalId === subjectId,
+  );
+}
+/** Prepare the remembered addressees once per caller. Resolving each person by
+ * rescanning every identity turns a complete chooser into quadratic history work. */
+export function rememberedCommunicationSubjects(
+  world: WorldState,
+  observerId: string,
+): { id: string; label: string }[] {
+  const selected = new Map<
+    string,
+    { identity: ObserverIdentity; preferred: boolean; permitted: boolean }
+  >();
+  for (const identity of Object.values(world.observerIdentities?.[observerId] ?? {})) {
+    const id = identity.canonicalId;
+    if (!id || identity.seedOnly) continue;
+    const prior = selected.get(id);
+    const preferred =
+      identity.authored ||
+      (!!identity.encounterId &&
+        identity.encounterId === world.perceptionEpisodes?.[observerId]?.[id]);
+    selected.set(id, {
+      identity: !prior || (!prior.preferred && preferred) ? identity : prior.identity,
+      preferred: prior?.preferred || preferred,
+      permitted: prior?.permitted || !!identity.individualId,
+    });
+  }
+  return [...selected].flatMap(([id, { identity, permitted }]) =>
+    permitted && entityGet(world.entities, id)?.actor
+      ? [{ id, label: identity.givenName || observerDescription(world, observerId, id) }]
+      : [],
   );
 }
 /** Existing creator-authored acquaintances persist across encounters; other identities do not.
@@ -248,12 +281,7 @@ export function assignGivenName(
   if (current?.givenName === edit.givenName.trim() && (!authored || current.authored))
     return outcome(true, 'given-name-unchanged', 'Preferred name is already current.');
   const identities = ((world.observerIdentities ??= {})[observerId] ??= {});
-  let individualId = current?.individualId;
-  if (!individualId) {
-    let ordinal = 1;
-    while (Object.hasOwn(identities, `individual-${ordinal}`)) ordinal++;
-    individualId = `individual-${ordinal}`;
-  }
+  const individualId = current?.individualId ?? allocateObserverIndividual(world, observerId);
   const assigned: ObserverIdentity = (identities[individualId] = {
     ...current,
     individualId,
@@ -305,9 +333,7 @@ export function rememberSubject(
     return;
   }
   const identities = ((world.observerIdentities ??= {})[observerId] ??= {});
-  let ordinal = 1;
-  while (Object.hasOwn(identities, `individual-${ordinal}`)) ordinal++;
-  const individualId = `individual-${ordinal}`;
+  const individualId = allocateObserverIndividual(world, observerId);
   identities[individualId] = {
     individualId,
     canonicalId: subjectId,

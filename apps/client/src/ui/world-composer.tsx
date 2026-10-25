@@ -461,13 +461,6 @@ function ScopedWorldComposer({
             const label =
               view.communicationReferences.find((entry) => entry.id === reference)?.label ??
               view.entities.find((entity) => entity.id === reference)?.name;
-            const nextKey = composerDraftKey(
-              composerDraftScope(view),
-              'speak',
-              targetId ?? null,
-              intent.item?.id ?? null,
-            );
-            if (nextKey) writeDraft(nextKey, { ...draft });
             changeAddressee(targetId, label);
           }}
         />

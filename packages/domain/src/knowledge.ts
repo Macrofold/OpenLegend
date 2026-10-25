@@ -2,6 +2,7 @@ import { entityGet } from './entity-collection.js';
 import type { Outcome, WorldState } from './types.js';
 import { recordSemanticChange } from './dependencies.js';
 import { getOwn, isSafeRecordId } from './records.js';
+import { nextId } from './data.js';
 import { outcome } from './events.js';
 import type { KnowledgeRecord } from './types.js';
 
@@ -52,6 +53,15 @@ export interface KnowledgePolicy {
   maxCharacters: { general: number; subject: number };
 }
 export type ActorKnowledge = Record<string, KnowledgeDocument>;
+/** Identity allocation is a mechanism; the selected world decides what evidence
+ * establishes an individual. Reuse the saved sequence instead of searching from
+ * one for each new record, while checking this observer's actual namespace. */
+export function allocateObserverIndividual(world: WorldState, observerId: string): string {
+  const records = world.observerIdentities?.[observerId];
+  let id = nextId(world, 'individual');
+  while (records && Object.hasOwn(records, id)) id = nextId(world, 'individual');
+  return id;
+}
 /** Callers own admission; this is the single mutation for exact learned recipe knowledge. */
 export function learnRecipe(
   world: WorldState,

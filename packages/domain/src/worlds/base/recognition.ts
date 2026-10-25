@@ -2,6 +2,7 @@ import { cloneValue } from '../../draft.js';
 import { entityGet, entityValues } from '../../entity-collection.js';
 import {
   advanceKnowledgeRevision,
+  allocateObserverIndividual,
   validObserverSubject,
   type ObserverSubject,
 } from '../../knowledge.js';
@@ -222,11 +223,6 @@ const localSubject = (identity: ObserverIdentity): ObserverSubject => ({
   kind: 'individual',
   individualId: identity.individualId!,
 });
-function allocateIndividual(records: Record<string, ObserverIdentity>): string {
-  let ordinal = 1;
-  while (Object.hasOwn(records, `individual-${ordinal}`)) ordinal++;
-  return `individual-${ordinal}`;
-}
 function addCredit(
   world: WorldState,
   voice: RecognitionKnowledge,
@@ -383,7 +379,7 @@ function perceiveIndividual(
         identity.encounterId === world.perceptionEpisodes?.[observerId]?.[visibleSourceId],
     );
     if (!associated) {
-      const individualId = allocateIndividual(records);
+      const individualId = allocateObserverIndividual(world, observerId);
       associated = records[individualId] = {
         individualId,
         givenName: '',
@@ -446,7 +442,8 @@ function perceiveIndividual(
   ) {
     result.learningSupport = [seed.prior.sourceKey];
     sample.support.push(seed.prior.sourceKey);
-    const individualId = seed.identity.individualId ?? allocateIndividual(records);
+    const individualId =
+      seed.identity.individualId ?? allocateObserverIndividual(world, observerId);
     const identity: ObserverIdentity = seed.identity.individualId
       ? seed.identity
       : {

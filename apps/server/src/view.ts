@@ -1,8 +1,7 @@
 import {
   currentBodyObservation,
   currentObservedFacets,
-  canAddressRememberedSubject,
-  subjectLabel,
+  rememberedCommunicationSubjects,
   currentCommunicationSubject,
 } from '@open-legend/domain';
 import {
@@ -1016,20 +1015,12 @@ export async function projectView(
       },
     },
     entities,
-    communicationReferences: [
-      ...new Set(
-        Object.values(world.observerIdentities?.[player.id] ?? {}).flatMap((identity) =>
-          !identity.seedOnly &&
-          identity.canonicalId &&
-          canAddressRememberedSubject(world, player.id, identity.canonicalId)
-            ? [identity.canonicalId]
-            : [],
-        ),
-      ),
-    ].map((id) => ({
-      id: communicationReference(scope, { id }),
-      label: subjectLabel(world, player.id, { kind: 'entity', entityId: id }),
-    })),
+    communicationReferences: rememberedCommunicationSubjects(world, player.id).map(
+      ({ id, label }) => ({
+        id: communicationReference(scope, { id }),
+        label,
+      }),
+    ),
     recipes: memo<GameView['recipes']>(
       'recipes',
       [
