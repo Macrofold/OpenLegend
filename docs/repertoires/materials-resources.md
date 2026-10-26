@@ -62,6 +62,8 @@ Seeds and references: [Noita](source-atlas.md#g32), [Oxygen Not Included](source
 
 A spring is abundant overall but reaches the hill district only through a disputed channel. Repair, rationing and governance offer different solutions; purchasing water does not automatically purchase the source. Builders can stage cooperation around infrastructure. Separate drinking safety from fictional ownership and avoid requiring a detailed chemistry simulation to tell a basic neighborhood story.
 
+In a selected dispute, channel keeper Daro knowingly diverts a working supply to a better-paying expedition while hill resident Sen loses water needed for her livelihood. The expedition's purpose and potential profit are real; so is Sen's shortage. Players can inspect the diversion, buy a share, negotiate another supply, contest the keeper's claim or take a paid side through supported actions. A restored channel can improve life and remain reliable; a profitable diversion need not trigger supernatural punishment or automatic repayment. This is a consequential use of ordinary water, not a new resource type or a requirement that every supplier exploit someone.
+
 Distribution agreements belong in [Economy](economy-logistics.md); institutional authority belongs in [Institutions](institutions-politics.md).
 
 Related entries: [MAT-021](#water-soil-air-and-cultivation-conditions).
@@ -589,3 +591,4 @@ Useful food, cultivation, protection, tools, construction, art supplies and atta
 Sharpening stone (MAT-065), patch offcuts (MAT-055), bedding straw (MAT-025), spare seals (MAT-174), specialist repair bundles (MAT-289), commemorative repair enamel (MAT-283) and staffed recovery capacity (MAT-260) are Detail as their full described maintenance or management additions. Ordinary sharpening and patching can be Small with supported conditions and recipes. Do not build wear, detailed staffing or per-part provenance to manufacture a need for these supplies. Basic healing and basic construction remain earlier capabilities.
 
 Depth retains interesting substitutions, cultivation tradeoffs and bounded magical properties. Specialist covers resources whose defining use requires a different industrial, space-habitat or reality-law premise, not merely a difficult implementation. Substantial peaceful crafting and artistic activity can be Complete; narrowly differentiated decoration and material history need not be. Source recommendations, real-world safety disclaimers and ownership boundaries remain intact.
+

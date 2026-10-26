@@ -1,6 +1,6 @@
 # Whole-game coverage
 
-[Library](README.md) · [Priority policy](gameplay-priorities.md) · [270 patterns](README.md#catalogue-map) · [385 actions](actions.md) · [Worked situations](combinations.md)
+[Library](README.md) · [Priority policy](gameplay-priorities.md) · [272 patterns](README.md#catalogue-map) · [385 actions](actions.md) · [Worked situations](combinations.md)
 
 **Current survival-adventure priorities · October 24, 2026.** Coverage tables describe broader families than the illustrative pattern cards. This guide decomposes those families into the basic player capabilities and later elaborations they contain. It prevents a catalogue full of interesting refinements from hiding an absent weapon, enemy, objective, reward or usable camp. It is selection policy, not a second delivery tracker, implementation audit or approval to adopt an optional world's lore. The [existing opening specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the required survival-first scenario; [FPV](../maintainers/first-playable-validation.md) connects it to actual design, delivery and player evidence.
 
@@ -89,7 +89,17 @@ The last column records deferral, not permission to violate protected engine con
 
 [Combinations](combinations.md) contains all 25 complete scenes with their current priority and selection boundary beside each description. They combine owned entries; they are not another inventory of required systems. A simpler adaptation can deliver an opening experience without adopting a scene's entire politics, psychology or physics.
 
-The [toll tower](combinations.md#the-toll-tower-at-dawn), [recognizable quarry](combinations.md#the-quarry-that-learns), [wedding crossing](combinations.md#the-wedding-bridge), [local predator mystery](combinations.md#the-wolf-at-the-school-gate) and [companion allegiance](combinations.md#the-companion-who-changes-sides) offer different combinations of challenge, invention, knowledge and personal consequence. Pick a coherent small experience rather than implementing this list as a quest queue.
+The reading order starts with the toll tower, quarry, championship, festival contract, ruined crown and homecoming, then develops companion allegiance and other discoveries before the longer run of selected domestic and service examples. It changes prominence, not the scenes' priorities, world badges or implementation scope. Pick a coherent small experience rather than implementing the list as a quest queue.
+
+| Experience to find | Representative situations and patterns |
+| --- | --- |
+| Active opposition and useful victory | [Defended crossing](combinations.md#the-toll-tower-at-dawn), [dangerous quarry](combinations.md#the-quarry-that-learns), [profitable bandit](characters-backstories.md#the-bandit-at-a-profitable-crossing) |
+| Discovery that changes a possibility | [Observatory and high pass](adventure-discovery.md#the-observatory-above-the-cloud), [ruined crown](combinations.md#the-crown-below-the-ruins), [borrowed doorway](combinations.md#the-borrowed-doorway), [founding bell and present claims](history-myth.md#the-founding-bell) |
+| Mastery, invention and substantial reward | [Fair championship](abilities-progression.md#the-open-championship), [festival commission](combinations.md#the-festival-contract), [inventive rescue](combat-rescue.md#the-lift-above-the-flood) |
+| Relationship change and ordinary friction | [Companion allegiance](combinations.md#the-companion-who-changes-sides), [rival crossing](relationships.md#rivals-who-need-the-same-bridge), [wedding celebration](combinations.md#the-wedding-bridge), [deliberate betrayal](relationships.md#the-plan-sold-to-a-rival) |
+| Enjoyment, recovery and chosen continuation | [Victory homecoming](combinations.md#the-household-after-the-victory), [completed work](combinations.md#a-good-job-becomes-smaller), [summit outing](combinations.md#soup-before-the-summit), [a holiday](arts-leisure.md#a-holiday-after-completion) |
+
+This is navigation across overlapping experiences, not another emotional taxonomy or acceptance report. The remaining practical and comic scenes retain their useful scope; quiet pleasure and accessibility do not need a hidden crisis to belong. Apply [the selected scene-mix review](selection-and-scale.md#review-the-selected-scene-mix) rather than tallying negative words or requiring every scene to contain every mood.
 
 ## Optional world families
 
@@ -102,3 +112,4 @@ A future explicit product choice can rerank an alternate family for its own inte
 “Prepare supplies” uses the existing inventory, bags, equipment and consumables unless a concrete missing interaction is demonstrated. “Agree on a task” and “report completion” are not substitutes for enjoyable help or hunting. The required player-built defensible camp belongs alongside opposition, exploration, invention and rewards; it is not permission to put domestic administration ahead of that whole experience. A realistic consequence is a correctness requirement for a chosen feature, not by itself a reason to choose more detail.
 
 No scores in this guide close implementation tasks or establish fun empirically. Use existing owners to audit gaps and qualify the selected slice while preserving the complete required scenario. The [selection guide](selection-and-scale.md) explains how to evaluate candidates without treating old domestic-first or nearest-code ordering as current priority.
+

@@ -66,6 +66,8 @@ Surprise works when the outcome is unexpected yet understandable from the people
 
 These are hypothetical authored situations, not current gameplay claims or prescribed character responses. Their required objects, actions and consequences must be supported before use.
 
+For a larger occasion with concrete ambitions, see [the festival contract](../repertoires/combinations.md#the-festival-contract): Jo and Vic want to realize different performances, the audience wants an excellent evening, and the outcome changes pay, recognition and relationships. It can be funny, tense or sincere without requiring any particular reaction; the modern-world badge remains part of that example.
+
 - **The memorial carpenter.** A carpenter orders excellent timber for a solemn commission, then admits the deceased would have preferred a hideous design. The player can explore the tension between craftsmanship, affection and the family's wishes. Humor may emerge from specific memories while the loss remains real.
 - **The retired herald's breakfast.** Adapt [CB-221](../repertoires/characters-backstories.md#absurd-uncanny-and-impossible-lives): a former apocalypse herald wants customers to appreciate the rolls. A request for an ordinary recommendation keeps being interpreted as prophecy. Give the baker an actual preference and a life beyond the misunderstanding.
 - **The unexpectedly successful expedition.** Adapt RSH-242 from [everyday friendship](../repertoires/relationships.md#everyday-friendship): friends who celebrate spectacular failed ventures finally succeed. Their familiar ritual needs a new meaning; they can take genuine pleasure in both the victory and their ridiculous history.
@@ -86,3 +88,4 @@ Narration may shape rhythm, imagery and tone around permitted facts. It cannot i
 - What actual consequence makes a later encounter different?
 
 Judge the whole encounter and its aftermath. A good line is useful when it contributes to an experience the player wants to have.
+

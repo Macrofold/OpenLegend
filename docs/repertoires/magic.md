@@ -487,6 +487,32 @@ Returning a skill, moving a soul and restoring a person are different promises. 
 | MG-299 | A town's skipped winter                      | —           | Play | 5 Specialist | D     | Suspend an explicitly consenting bounded settlement's local time for one winter, with a reliable external release rule; the surrounding world continues, so debts, politics and absent travelers do not pause with it.                            | Large; temporal boundary, occupancy consent and persistent external history.   | [Outer Wilds][outer]; original extrapolation                |
 | MG-300 | A dead god's finite spring                   | —           | Play | 5 Specialist | D     | Let rites draw a finite life-supporting power from the remains of a dead deity, nourishing a strange inhabited refuge until the reserve ends; using the power neither revives the god nor makes its custodians rightful rulers.                   | Large; explicit divine-remains law, finite reserve and Ecology dependence.     | [The Broken Earth][broken]; original extrapolation          |
 
+## Echo carpentry
+
+**FA · Play · D.** Gap: temporary supported geometry with load, duration and defined expiry outcomes.
+
+A carpenter restores the brief outline of a doorway or bridge from an observed trace. The echo lasts only while anchored to surviving material and bears a limited load. Explorers choose who crosses and what stays behind. Expiry needs warning and defined outcomes for occupants, including falling, escape or rescue; memory cannot conjure arbitrary structures from an omniscient historical database.
+
+For a developed discovery, carpenter Iven wants to be the first of his school to reach a ruined cliff observatory. Surviving foundations can support a short echo span; a rival offers an anchor but wants credit, while a companion doubts the return plan. Players examine the trace, practice on a small gap, negotiate, cross within the actual limits or choose a supported ordinary route. Reaching the instrument and the view can be a beautiful reward; the learned application may help a later expedition. Failure can strand equipment or lose the opening without proving Iven foolish or secretly corrupt. This variant selects the echo tradition explicitly; it does not install it in Borrowed Dawn's narrower heat-transfer opening. The [ordinary observatory](adventure-discovery.md#the-observatory-above-the-cloud) supplies a different approach to the same kind of desirable destination.
+
+Seeds and references: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Dishonored 2](source-atlas.md#g119), [Middle-earth](source-atlas.md#w01).
+
+## The school of deliberate limits
+
+**FA · Play · C.** Gap: authored training plus supported spell-family admission.
+
+A magical school teaches three dependable techniques through civic problems, controlled duels and hazardous fieldwork. Advancement adds understanding, combinations and responsibility before more powers. Players can change schools without losing all learned competence. Limits should be legible and generative, not arbitrary class gates that prevent a plausible ordinary solution or demand hours of prerequisite grinding.
+
+Seeds and references: [Slay the Spire](source-atlas.md#g43), [Final Fantasy III](source-atlas.md#g80), [Final Fantasy IX](source-atlas.md#g86), [Earthsea](source-atlas.md#w11).
+
+## A dragon's weather debt
+
+**FA · Play · D.** Gap: bounded regional weather influence and durable negotiated commitments.
+
+A dragon can lift fog from one valley by thickening it in another. Farmers, travelers and the dragon negotiate when and where the trade is acceptable. The dragon has its own household, plans and reasons for accepting or refusing the arrangement. Keep the affected region finite and forecasts legible; weather bargaining must not become a global climate simulation or inevitable tribute grind.
+
+Seeds and references: [Elden Ring](source-atlas.md#g75), [Dune](source-atlas.md#w09), [Avatar: The Last Airbender](source-atlas.md#w13).
+
 ## Borrowed warmth
 
 **FA · Play · D.** Gap: bounded transfer effects with source, sink, range and conservation.
@@ -495,21 +521,13 @@ A hearth-worker warms a frostbitten traveler by cooling a basin of water. The sa
 
 Seeds and references: [Noita](source-atlas.md#g32), [Divinity: Original Sin](source-atlas.md#g56), [Divinity: Original Sin II](source-atlas.md#g57).
 
-## Promise knots
+## Moonbound forms
 
-**FA · Play · D.** Gap: voluntary bounded commitments linked to defined magical effects.
+**FA · Play · D.** Gap: voluntary transformations with clear cycle and identity continuity.
 
-Two willing people tie a cord that glows when a specified obligation is due. It cannot force action or decide ambiguous moral questions. A courier uses it as a reminder; a community uses several to coordinate a festival. Wording, release and failure are visible; the cord performs the accepted reminder and no additional binding.
+A lineage can adopt a night-running form when moonlight reaches a prepared mark, using cloth or architecture to control exposure. Couriers, dancers and rescuers find different uses. The voluntary transformation preserves identity while changing movement and equipment needs. Communities develop customs around it, and individuals use it differently.
 
-Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [A Song of Ice and Fire](source-atlas.md#w10).
-
-## Echo carpentry
-
-**FA · Play · D.** Gap: temporary supported geometry with load, duration and defined expiry outcomes.
-
-A carpenter restores the brief outline of a doorway or bridge from an observed trace. The echo lasts only while anchored to surviving material and bears a limited load. Explorers choose who crosses and what stays behind. Expiry needs warning and defined outcomes for occupants, including falling, escape or rescue; memory cannot conjure arbitrary structures from an omniscient historical database.
-
-Seeds and references: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Dishonored 2](source-atlas.md#g119), [Middle-earth](source-atlas.md#w01).
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Caves of Qud](source-atlas.md#g33), [His Dark Materials](source-atlas.md#w20).
 
 ## Names as invitations
 
@@ -527,22 +545,6 @@ Combine “when wet,” “this cloth” and “stiffen briefly” to make a rai
 
 Seeds and references: [Noita](source-atlas.md#g32), [Balatro](source-atlas.md#g42), [Final Fantasy VII](source-atlas.md#g84).
 
-## Moonbound forms
-
-**FA · Play · D.** Gap: voluntary transformations with clear cycle and identity continuity.
-
-A lineage can adopt a night-running form when moonlight reaches a prepared mark, using cloth or architecture to control exposure. Couriers, dancers and rescuers find different uses. The voluntary transformation preserves identity while changing movement and equipment needs. Communities develop customs around it, and individuals use it differently.
-
-Seeds and references: [Wildermyth](source-atlas.md#g25), [Caves of Qud](source-atlas.md#g33), [His Dark Materials](source-atlas.md#w20).
-
-## A dragon's weather debt
-
-**FA · Play · D.** Gap: bounded regional weather influence and durable negotiated commitments.
-
-A dragon can lift fog from one valley by thickening it in another. Farmers, travelers and the dragon negotiate when and where the trade is acceptable. The dragon has its own household, plans and reasons for accepting or refusing the arrangement. Keep the affected region finite and forecasts legible; weather bargaining must not become a global climate simulation or inevitable tribute grind.
-
-Seeds and references: [Elden Ring](source-atlas.md#g75), [Dune](source-atlas.md#w09), [Avatar: The Last Airbender](source-atlas.md#w13).
-
 ## Ink that keeps a threshold
 
 **FA · Play · D.** Gap: spatially bounded wards with explicit triggers and revocation.
@@ -559,13 +561,13 @@ A mender aligns broken pottery with a remembered or recorded pattern, but must s
 
 Seeds and references: [Black Myth: Wukong](source-atlas.md#g76), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Spirited Away](source-atlas.md#w25).
 
-## The school of deliberate limits
+## Promise knots
 
-**FA · Play · C.** Gap: authored training plus supported spell-family admission.
+**FA · Play · D.** Gap: voluntary bounded commitments linked to defined magical effects.
 
-A magical school teaches three dependable techniques through civic problems, controlled duels and hazardous fieldwork. Advancement adds understanding, combinations and responsibility before more powers. Players can change schools without losing all learned competence. Limits should be legible and generative, not arbitrary class gates that prevent a plausible ordinary solution or demand hours of prerequisite grinding.
+Two willing people tie a cord that glows when a specified obligation is due. It cannot force action or decide ambiguous moral questions. A courier uses it as a reminder; a community uses several to coordinate a festival. Wording, release and failure are visible; the cord performs the accepted reminder and no additional binding.
 
-Seeds and references: [Slay the Spire](source-atlas.md#g43), [Final Fantasy III](source-atlas.md#g80), [Final Fantasy IX](source-atlas.md#g86), [Earthsea](source-atlas.md#w11).
+Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [A Song of Ice and Fire](source-atlas.md#w10).
 
 ## Research coverage
 
@@ -646,3 +648,4 @@ Household heating circuits (MG-002), mending (MG-061), cleaning (MG-063), laundr
 Performance, creative expression and beautiful spaces retain genuine value. Elaborate shared memories, ecology and distinct embodiment can follow as Depth; independent dream residents, cross-time settlements and new universal cosmologies remain Specialist. Not every magical idea is Specialist merely because it is impossible in ordinary reality. Scores select fictional possibilities, not installed capabilities or real-world claims.
 
 Finite costs, actual destinations, sensible release and counterplay are mandatory for every selected effect. A summoned construct, a corpse, a recorded voice and an independent person remain different things. Coercion is not consent or friendship, private observations are not omniscience, and a source's magical exception cannot bypass trusted engine authority or the development save policy. These constraints govern implementation without making every related supporting feature urgent.
+

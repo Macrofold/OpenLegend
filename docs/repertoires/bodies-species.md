@@ -32,6 +32,8 @@ The original pattern research pointers below are retained as provenance of that 
 
 A broad-backed traveler carries a stretcher while a small companion opens tight gates; neither is reduced to a strength score. Design carts, slings and shared loads so different bodies participate. The interesting decision is coordinating space and attention. Avoid assigning one body type permanent servant work, and let equipment change which solutions are available.
 
+Give the people purposes beyond their carrying roles. Scout Nemi has an injured shoulder from the actual expedition and still wants her survey delivered; strong traveler Hadr wants to reach the same observatory but is already exhausted; smaller companion Ves knows a narrow return passage and wants to lead. Players can redistribute equipment, choose another route, rest or continue with an honestly reduced load. [Needs](needs.md) and [care's existing owner](../projects/recovery-and-care-feature-spec.md) govern hunger, injury and recovery; this example adds no anatomical penalties. A successful [rescue](combat-rescue.md#win-by-getting-everyone-home) or a later accommodated expedition can preserve Nemi's ambition without prescribing a cure or making anyone's body determine courage or kindness.
+
 Seeds and references: [PEAK](source-atlas.md#g47), [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60), [Cataclysm: Dark Days Ahead](source-atlas.md#g122).
 
 ## Touch-mapped citizen
@@ -774,3 +776,4 @@ Life-cycle care, synthetic citizens, radically different atmospheres and distrib
 ## Current first death-scar consumer
 
 The bundled world's [Player Death](../worlds/base/player-death.md#death-scars) now implements stiff leg, unsteady hands and tender chest as removable bodily penalties. They are separate from descriptive personality traits and reuse movement/injury/treatment owners. The [selected injury and care design](../projects/recovery-and-care-feature-spec.md) defines the next independent-condition consumer; it is not installed behavior. The broader repertoire remains optional, and neither body slots nor a universal status catalogue are required.
+

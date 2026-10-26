@@ -94,6 +94,8 @@ Seeds and references: [Baldur's Gate 3](source-atlas.md#g26), [Dragon Age II](so
 
 Moving a relay lets a healer reach an inaccessible courtyard; turning a flooded cellar into a passage changes where conflict happens. Let players alter relationships among spaces rather than only damage numbers. Preview affected routes and occupants, bound edits to supported structures, and make required capabilities discoverable before commitment. Ordinary routes can offer alternatives; an explicitly specialized challenge may still demand a particular kind of capability.
 
+In a selected encounter, the courtyard contains a trapped companion and the cellar offers a bypass around a rival's toll gate. Opening it can secure an evacuation, a profitable convoy route or access to a coveted discovery. The rival may contest the entrance because the lost toll matters to them. Successful access remains available under its actual structural conditions; a companion saved or payment earned is a real gain. The connector mechanism decides reachable paths and costs, while people and world rules decide claims, hostility and use. No moral score or recurring disaster is needed to keep the result meaningful.
+
 Previews must not reveal unexplored destinations.
 
 Related entries: [MEC-051–060](#access-distance-and-changing-topology).
@@ -891,3 +893,4 @@ Protected stock (MEC-022), promised-work reservations (MEC-121), successor hando
 Industrial flow elaboration, nuanced relationships, causal composition and creator tooling follow where they add worthwhile Depth. Alternative constitutions, cross-world imports and special collection/reset modes are Specialist. **MEC-197's compatibility proposal remains blocked by the [root development policy](../../AGENTS.md#development-save-policy); its inclusion is not authorization to preserve legacy code or saves.** The source is a proposal library, not an override of accepted contracts.
 
 Peaceful creation and performance retain real value: appearance can be the reward, calm can be a successful outcome, and players may perform a solved routine personally for pleasure. The priority change removes compulsory busyness, not those activities. Privacy, authority, independent participation, cancellation and accounting remain requirements whenever a selected feature relies on them, regardless of the score of a particular optional elaboration.
+

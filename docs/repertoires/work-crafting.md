@@ -18,25 +18,29 @@ Keep household production, agriculture, construction, arms and armor, repair, te
 
 The selected [combat and threat response design](../projects/combat-and-threat-responses-feature-spec.md) requires urgent reconsideration to retain all relevant action choices while a person is working. Current work supplies its actual stop, replacement or noninterruptible consequences; it cannot hide every defensive alternative from cognition. This preserves the value of work without making a craft activity an accidental inability to respond to a threat. Long-lived workpieces such as WORK-283 remain separate proposed capabilities.
 
+## The prototype club
+
+**ALL · Play · Moderate/Extend.** Gap: bounded trials, recorded outcomes and supported definition revision.
+
+Makers meet to test competing answers to a useful problem, with an audience and potential collaborators. A successful device can earn an expedition commission, open a route or replace a chore; different clients may value different tradeoffs. Proud rivals can resent credit while still respecting the better result. Ordinary trials such as carrying soup, opening a high window or protecting a seedling remain available for chosen workshop play. Failures produce specific feedback: a friendly workshop can favor recoverable mishaps, while a dangerous prototype can cause real damage under the selected rules. Distinguish a simulated test from descriptive speculation, and never treat a successful demonstration as permission to deploy an unsafe or unsupported capability everywhere.
+
+### The lift above the flood
+
+For the [rescue encounter](combat-rescue.md#the-lift-above-the-flood), keep the craft challenge concrete: inspect WORK-243's intact assembly, establish compatible mounts, available power and capacity, then compare WORK-200's working alternatives. The intact-drive version is **MO SC**; a different world's lifting equipment needs its own selected support. Ena and Ors can pursue method and credit while Tala contributes actual knowledge of the hall. A proven invention can open a later expedition or commission. Manufacture, learning and deployment still require their existing owners; describing a dramatic solution does not create a method or complete the rescue.
+
+Related entries: [WORK-184](#commissioning-workshop-organization-and-learning-through-work), [WORK-200](#commissioning-workshop-organization-and-learning-through-work), [WORK-243](#diagnosis-machinery-utilities-and-technical-service).
+
+Seeds and references: [Dreams](source-atlas.md#g13), [Noita](source-atlas.md#g32), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
+
 ## The commission with room for taste
 
 **ALL · Play · Moderate/Extend.** Gap: requirements, negotiable preferences and inspectable acceptance.
 
-A client wants a rainproof market sign readable by an elderly parent, leaving material and style open. The maker can prototype, ask questions or propose an unexpected form. Craft becomes interpretation, not exact recipe guessing. Distinguish mandatory function from taste; a client may dislike a color without falsely declaring the sign mechanically unusable.
+A client wants a rainproof market sign readable by an elderly parent, leaving material and style open. A modest attractive sign can be a complete commission. In a selected competitive version, it is the public centerpiece for a new expedition outfitter: substantial pay and a larger order give two capable makers reason to care. One wants a lasting name, another urgently needs the income; a rejected bid or a patron's favoritism can leave disappointment and rivalry without making either maker incompetent. The player can prototype, ask questions, demonstrate the result or propose an unexpected form. Winning can bring genuine recognition and useful money. Craft becomes interpretation, not exact recipe guessing. Distinguish mandatory function from taste; a client may dislike a color without falsely declaring the sign mechanically unusable.
 
 Related entries: [WORK-181](#commissioning-workshop-organization-and-learning-through-work).
 
 Seeds and references: [Assassin's Creed III](source-atlas.md#g99), [Kingdom Come: Deliverance II](source-atlas.md#g114), [Ultima VII: The Black Gate](source-atlas.md#g128).
-
-## Teach the workshop one good routine
-
-**ALL · Play · Moderate/Extend.** Gap: demonstrated plans with bounded inputs, stops and explanation.
-
-The player shows a helper how to sort usable offcuts and reserve enough for repairs. Once understood, the routine runs until a meaningful exception occurs. Experts gain relief from repetitive work. Show what will be consumed and why work stopped; delegation must not invent missing materials, spend beyond agreement or require a new model call for each scrap.
-
-Related entries: [WORK-182](#commissioning-workshop-organization-and-learning-through-work).
-
-Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Kingdom Come: Deliverance II](source-atlas.md#g114), [Automation](automation-creators.md).
 
 ## Make do beautifully
 
@@ -50,15 +54,25 @@ Related entries: [WORK-183](#commissioning-workshop-organization-and-learning-th
 
 Seeds and references: [Minecraft](source-atlas.md#g20), [Against the Storm](source-atlas.md#g45), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
 
-## The diagnostic profession
+## A master who still learns
 
-**ALL · Play · Moderate/Extend.** Gap: observable faults, tests and bounded causal explanations.
+**ALL · Play · Small/Compose.** Gap: authored reciprocal teaching; capability learning requires supported paths.
 
-A repairer listens, measures and asks about recent changes before deciding whether a pump needs cleaning or replacement. Different evidence supports different methods. Skilled play is learning what matters, with tools that improve inspection. Avoid fake investigation where every clue merely increments a hidden counter before the only permitted repair button unlocks.
+An expert carpenter learns a folding joint from a traveling novice who grew up with portable homes. The expert contributes tools and structural judgment; the novice contributes a different problem history. Expertise becomes a network rather than a ladder with one top. Avoid universal masters who instantly know every variation, and let a lesson change later work visibly.
 
-Related entries: [WORK-101](#diagnosis-machinery-utilities-and-technical-service). Observation and testimony follow the [perception design](../projects/perspective-perception-feature-spec.md).
+Related entries: [WORK-187](#commissioning-workshop-organization-and-learning-through-work).
 
-Seeds and references: [Project Zomboid](source-atlas.md#g37), [The Witcher 3: Wild Hunt](source-atlas.md#g72), [Prey (2017)](source-atlas.md#g118).
+Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [Star Trek](source-atlas.md#w04).
+
+## Work worth sharing credit for
+
+**ALL · Blend · Moderate/Extend.** Gap: contribution records and negotiated attribution.
+
+A bridge needs surveying, cooking, hauling and persuasion as well as construction. A celebration can recognize different contributions without ranking everyone by damage or output. Creators can build cooperative projects with several useful roles. In a separately selected exploitative commission, a foreman knowingly claims an apprentice's invention and withholds earned wages to keep them dependent; the apprentice wants an independent order, not just an apology. Evidence, bargaining, departure or a new partnership can alter their future, while a successful theft of credit can still benefit its author. A genuine joint achievement remains a valid alternative. Keep attribution coarse and contestable where evidence is incomplete; measuring every minute can turn generosity into a competition for points.
+
+Related entries: [WORK-185](#commissioning-workshop-organization-and-learning-through-work).
+
+Seeds and references: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Assassin's Creed III](source-atlas.md#g99).
 
 ## Craft as performance
 
@@ -70,35 +84,15 @@ Related entries: [WORK-061](#ceramics-textiles-clothing-and-personal-style).
 
 Seeds and references: [Clair Obscur: Expedition 33](source-atlas.md#g77), [Kingdom Come: Deliverance II](source-atlas.md#g114), [Persona 5 Royal](source-atlas.md#g124).
 
-## A profession that changes its clients
+## The diagnostic profession
 
-**ALL · Play · Moderate/Extend.** Gap: recurring service relationships and persistent improvements.
+**ALL · Play · Moderate/Extend.** Gap: observable faults, tests and bounded causal explanations.
 
-An itinerant tutor teaches enough arithmetic that shopkeepers eventually need fewer lessons and request new ones. Success changes the work instead of endlessly regenerating the same ignorance. Players can establish a school, train a successor or move on. The service should leave observable benefits, while former clients remain people with their own lives and disagreements.
+A repairer listens, measures and asks about recent changes before deciding whether a pump needs cleaning or replacement. Different evidence supports different methods. Skilled play is learning what matters, with tools that improve inspection. Avoid fake investigation where every clue merely increments a hidden counter before the only permitted repair button unlocks.
 
-Related entries: [WORK-145](#care-instruction-intimate-work-and-personal-services).
+Related entries: [WORK-101](#diagnosis-machinery-utilities-and-technical-service). Observation and testimony follow the [perception design](../projects/perspective-perception-feature-spec.md).
 
-Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Assassin's Creed III](source-atlas.md#g99), [Fallout: New Vegas](source-atlas.md#g112).
-
-## The prototype club
-
-**ALL · Play · Moderate/Extend.** Gap: bounded trials, recorded outcomes and supported definition revision.
-
-Makers meet to test one new device against ordinary problems: carry soup, open a high window, protect a seedling. Failures produce specific feedback: a friendly workshop can favor recoverable mishaps, while a dangerous prototype can cause real damage under the selected rules. Inventors get an audience and collaborators. Distinguish a simulated test from descriptive speculation, and never treat a successful demonstration as permission to deploy an unsafe or unsupported capability everywhere.
-
-Related entries: [WORK-184](#commissioning-workshop-organization-and-learning-through-work).
-
-Seeds and references: [Dreams](source-atlas.md#g13), [Noita](source-atlas.md#g32), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
-
-## Work worth sharing credit for
-
-**ALL · Blend · Moderate/Extend.** Gap: contribution records and negotiated attribution.
-
-A bridge needs surveying, cooking, hauling and persuasion as well as construction. A celebration can recognize different contributions without ranking everyone by damage or output. Creators can build cooperative projects with several useful roles. Keep attribution coarse and contestable where evidence is incomplete; measuring every minute can turn generosity into a competition for points.
-
-Related entries: [WORK-185](#commissioning-workshop-organization-and-learning-through-work).
-
-Seeds and references: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Assassin's Creed III](source-atlas.md#g99).
+Seeds and references: [Project Zomboid](source-atlas.md#g37), [The Witcher 3: Wild Hunt](source-atlas.md#g72), [Prey (2017)](source-atlas.md#g118).
 
 ## An inherited method questioned
 
@@ -110,15 +104,25 @@ Related entries: [WORK-186](#commissioning-workshop-organization-and-learning-th
 
 Seeds and references: [Final Fantasy II](source-atlas.md#g79), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Earthsea](source-atlas.md#w11).
 
-## A master who still learns
+## A profession that changes its clients
 
-**ALL · Play · Small/Compose.** Gap: authored reciprocal teaching; capability learning requires supported paths.
+**ALL · Play · Moderate/Extend.** Gap: recurring service relationships and persistent improvements.
 
-An expert carpenter learns a folding joint from a traveling novice who grew up with portable homes. The expert contributes tools and structural judgment; the novice contributes a different problem history. Expertise becomes a network rather than a ladder with one top. Avoid universal masters who instantly know every variation, and let a lesson change later work visibly.
+An itinerant tutor teaches enough arithmetic that shopkeepers eventually need fewer lessons and request new ones. Success changes the work instead of endlessly regenerating the same ignorance. Players can establish a school, train a successor or move on. The service should leave observable benefits, while former clients remain people with their own lives and disagreements.
 
-Related entries: [WORK-187](#commissioning-workshop-organization-and-learning-through-work).
+Related entries: [WORK-145](#care-instruction-intimate-work-and-personal-services).
 
-Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [Star Trek](source-atlas.md#w04).
+Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Assassin's Creed III](source-atlas.md#g99), [Fallout: New Vegas](source-atlas.md#g112).
+
+## Teach the workshop one good routine
+
+**ALL · Play · Moderate/Extend.** Gap: demonstrated plans with bounded inputs, stops and explanation.
+
+The player shows a helper how to sort usable offcuts and reserve enough for repairs. Once understood, the routine runs until a meaningful exception occurs. Experts gain relief from repetitive work. Show what will be consumed and why work stopped; delegation must not invent missing materials, spend beyond agreement or require a new model call for each scrap.
+
+Related entries: [WORK-182](#commissioning-workshop-organization-and-learning-through-work).
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Kingdom Come: Deliverance II](source-atlas.md#g114), [Automation](automation-creators.md).
 
 ## Kitchens, food production, and hospitality
 
@@ -374,7 +378,7 @@ Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final F
 | WORK-290 | Carrier-preserving cargo extraction | ALL         | Play  | 2 Complete   | C     | Recover an exposed load from a moving creature, abandoned service frame, or disabled convoy without making destruction of its carrier a requirement. The chosen approach may be harder or easier than a fight; it succeeds through actual access and removal.                | Moderate: cargo attachment, reach, custody and release; Combat owns hostile resistance.                                 | Creative synthesis: [Tears of the Kingdom][totk] and [XCOM 2][xcom], securing the desired material and destroying a target are different achievements.              |
 | WORK-291 | Deadline-bounded partial harvest    | ALL         | Play  | 2 Complete   | C     | Take the useful portion of a finite field source before darkness or weather makes further work unwise. Retain actual gathered goods and spent time; leaving an unfinished carcass, timber lot, or ore face is a valid decision rather than a failed all-or-nothing recipe.   | Moderate: partial yields, remaining source state and observed deadline; Ecology owns exposure.                          | Creative synthesis: [The Long Dark][longdark], work time, carrying capacity and shelter can compete within one expedition.                                          |
 | WORK-172 | Baggage concealment commission      | ALL         | Play  | 3 Depth      | C     | A maker creates a fictional concealed compartment within declared object limits; the commission can serve privacy or crime and does not guarantee undetectability.                                                                                                           | Moderate: bounded container geometry and inspection.                                                                    | Original synthesis.                                                                                                                                                 |
-| WORK-173 | Counterfeit prop fabrication        | ALL         | Play  | 3 Depth      | C     | Make an openly commissioned stage imitation or a deliberately deceptive fictional object; appearance, real function, and attribution remain distinct.                                                                                                                        | Moderate: independent visual and functional properties.                                                                 | [Among Us][am]; synthesis.                                                                                                                                          |
+| WORK-173 | Stage props and deliberate counterfeits        | ALL         | Play  | 3 Depth      | C     | Make an openly commissioned stage imitation or a deliberately deceptive fictional object; appearance, real function, and attribution remain distinct.                                                                                                                        | Moderate: independent visual and functional properties.                                                                 | [Among Us][am]; synthesis.                                                                                                                                          |
 | WORK-178 | Spirit residue cleanup              | FA          | Play  | 3 Depth      | D     | Remove one known lingering material effect after an encounter, recovering useful residue where supported without rewriting what happened there.                                                                                                                              | Moderate: bounded magical aftermath processing.                                                                         | [D&D][dd]; creative leap.                                                                                                                                           |
 | WORK-179 | Stormglass field tending            | SC FA       | Blend | 3 Depth      | D     | Maintain a selected charging field, inspect saturation, and harvest finite charged stock; the worker's skill lies in the chosen law, not universal weather control.                                                                                                          | Moderate: authored charging and inspection.                                                                             | Retained material pattern.                                                                                                                                          |
 | WORK-276 | Shelter-preserving ore cut          | SC FA       | Play  | 3 Depth      | D     | Extract selected pieces of [MAT-273](materials-resources.md#stone-clay-glass-and-mineral-bodies) while observing the sheltering field left around the deposit. Leave a useful refuge, mine it all for a valuable commission, or bargain over who bears the changed exposure. | Large: bounded extraction and local environmental feedback; Economy owns agreements.                                    | Creative synthesis: [Once Human][once], a material can have a local use before it becomes portable stock.                                                           |
@@ -586,3 +590,4 @@ Peaceful activities also earn Complete: pottery, music, portraits, costume-makin
 The general repair bench (WORK-081), sharpening service (WORK-085), shield refacing (WORK-086), strap replacement (WORK-087), laundry (WORK-141), packing (WORK-161), custody-handoff elaboration (WORK-163), contribution reviews (WORK-185), maintenance contracts (WORK-197) and injured-specialist handoffs (WORK-250) are Detail. WORK-085 and WORK-087 already describe Small bounded operations; keep that scope rather than equating low priority with complexity. Basic item transfer, truthful results, interruption integrity and participation remain required where used. Their correctness does not elevate a new administrative profession into the opening game.
 
 Distinctive commissions and bounded magical work remain Depth where they fit this experience. Industrial infrastructure, separate adult-service settings, unfamiliar reality laws and dedicated experiments are Specialist here. The original source descriptions, safety caveats, build gaps and fictional-world boundaries remain unchanged.
+

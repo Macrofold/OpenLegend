@@ -4,6 +4,8 @@
 
 The intended pleasure is gradually understanding a place through a life there. A discovery can offer immediate usefulness, beauty, company or a changed interpretation before the player cares about the larger mystery. Learning more should create possibilities for action and affection as well as explain the past.
 
+For a complementary example with a consequential public claim, see [the founding bell](../repertoires/history-myth.md#the-founding-bell): craft achievement, displaced households, separately attributed traces and present choices about land or commemoration. The quiet flooded-district example below retains its own useful scale; both apply the same method.
+
 ## Prepare a small, connected piece of history
 
 Start with one event that still matters to somebody. Record enough to make its traces coherent, then develop what a player can encounter:
@@ -75,3 +77,4 @@ During the existing [rehearsal](../production-workflows/characters-and-play.md#3
 During a [cheap rehearsal](../production-workflows/characters-and-play.md#3-rehearse-the-uncertain-premise-cheaply), compare the three entry orders, a refused conversation and arrival after somebody else has completed the work. Ask what remains enjoyable without full understanding, what each source adds, and which present choice becomes more meaningful. Preserve unexpected attractions as well as repairing confusing dependencies.
 
 Then use the existing workflow to identify supported content and any concrete missing capability. Keep the chosen facts, individual accounts, actual opportunities and useful aftermath in their existing world/project owners. The [play and revision guidance](../production-workflows/characters-and-play.md#7-play-judge-and-revise-the-right-part) owns assessing the resulting experience; this example is not evidence that the game already delivers it.
+
