@@ -1,6 +1,6 @@
 # G91 — Final Fantasy XIV
 
-**Research baseline:** September 26, 2026; **refresh:** October 26, 2026. **Scope:** the original 2010 service, A Realm Reborn and its expansions. The baseline systems check covers shipped rules through 7.56; dated refresh evidence below distinguishes subsequent status from announced content. **Use:** gameplay and production reference, not accepted OpenLegend design or an implementation task list.
+**Research baseline:** September 26, 2026; **refresh:** October 26, 2026. **Scope:** the original 2010 service, A Realm Reborn and its expansions. The September systems check covers rules through 7.56; the October refresh confirms 7.57 and distinguishes announced content from delivery. **Use:** gameplay and production reference, not accepted OpenLegend design or an implementation task list.
 
 [Library](../README.md) · [Canonical roster](../research-roster.md) · [Completion requirements](../research-requirements.md) · [Progress and resume ledger](../research-progress.md) · [G88: Final Fantasy XI](final-fantasy-xi.md)
 
@@ -21,13 +21,15 @@ The failed **2010 version** and **A Realm Reborn, relaunched August 27, 2013**, 
 | Shadowbringers, 2019 | The First, a reversal of light/dark expectations, and the NPC-party era. | The original umbrella use of “Trust” predates the later Duty Support/Trust split. |
 | Endwalker, 2021 | A conclusion to the Hydaelyn/Zodiark saga, followed by new adventures rather than termination of the MMO. | An ending to an authored arc is not an ending to the service. |
 | Dawntrail, 2024, and the 7.x service | Tural, a new political cast, Pictomancer/Viper, graphical changes, and later side systems. | Launch reviews do not describe every subsequent job adjustment or added activity. |
-| 7.5–7.56, 2026 | Expanded trial, Switch 2 service, and the new limited Beastmaster job. | Features explicitly scheduled for later in 2026 or Evercold are not shipped merely because they share a promotional page. |
+| 7.5–7.57, 2026 | Expanded trial, Switch 2 service, limited Beastmaster, and Japan's expanded matching scope. | Features scheduled for later in 2026 or Evercold are not shipped merely because they share a promotional page. |
 
 The dates and boundaries above combine the official release archive, expansion material, and the relaunch interview; their role is to keep mechanics and reception attached to the version actually described. [S6](#s6) [S21](#s21) [S23](#s23) [S52](#s52) [S53](#s53) [S54](#s54) [S55](#s55)
 
+**October status.** Patch 7.57 had shipped by October 13. Same-region matchmaking and party recruitment now cross Japan's logical data centers; other regions remain conditional on a later rollout. This supersedes older blanket inter-data-center party restrictions in the travel guide. [E26-01](#e26-01) [E26-02](#e26-02)
+
 **Current access check.** The 7.5 page explicitly expands the free trial and Starter Edition through **Shadowbringers, level 80**, and identifies the Switch 2 service date as **August 4, 2026**. This resolves an internally stale sentence on the general trial page that still names only the earlier expansions. The trial is not a normal subscription with an indefinite free period: gil, chat, trading, market, retainer, Free Company and PvP restrictions materially change its economic and social experience. Trial users can use Duty Finder and accept party invitations, but cannot recruit via Party Finder. [S17](#s17) [S21](#s21)
 
-The product page distinguishes Windows/Steam, Mac and console licenses and subscriptions; the Switch 2 subscription has separate terms. A cross-platform game is not necessarily a single interchangeable purchase. Exact regional prices are intentionally not frozen here. **Evercold, announced for January 2027**, and its proposed new battle-mode direction remain future material. Likewise, the 7.5 promotional page explicitly schedules **Keybound Brawler for October 28, 2026**; this dossier does not count it as a playable Gold Saucer attraction on the research date. [S22](#s22) [S56](#s56) [S21](#s21)
+The product page distinguishes Windows/Steam, Mac and console licenses and subscriptions. [S22](#s22) Switch 2 has its own subscription, discounted when another platform subscription is active; linking the existing service account preserves character access, and Nintendo Switch Online is not required. [E26-16](#e26-16) A cross-platform game is not necessarily a single interchangeable purchase. Exact regional prices are intentionally not frozen here. **Evercold, announced for January 2027**, and its proposed new battle-mode direction remain future material. Likewise, the 7.5 promotional page explicitly schedules **Keybound Brawler for October 28, 2026**; this dossier does not count it as a playable Gold Saucer attraction on the research date. [S22](#s22) [S56](#s56) [S21](#s21)
 
 ## 2. Player identity and the everyday action vocabulary
 
@@ -107,6 +109,8 @@ In **Carpenter synthesis**, progress must finish before durability runs out. Qua
 
 A player moves through authored regions, settlements and instanced duties rather than one uninterrupted, freely alterable landscape. ARR criticism values the diversity of those places but also identifies repetitive errands and repeated travel as costs. Improving the scenic world does not itself make every journey or task meaningful. [S1](#s1)
 
+**Persistent identity, bounded spaces.** The international service divides Japan, North America, Europe and Oceania into logical data centers and home Worlds. World Visit crosses Worlds within a logical center; Data Center Travel uses a character-selection/title-screen transition, with Oceania the current cross-physical-region destination. Retainers, housing purchase and some social functions remain restricted while visiting. Logout normally preserves the visit; prolonged absence may return the character home. Japan's newer matching exception above does not remove every home-World restriction. Persistence therefore concerns character/history continuity across spaces, not one seamless simulation. [E26-03](#e26-03) [E26-04](#e26-04)
+
 **Flight** in expansion zones requires attuning to field and quest-linked Aether Currents. The Aether Compass supplies direction and distance to the nearest field current. Flight thus arrives after a phase of ground-level traversal and story progress rather than replacing it immediately. Current counts in older expansions have been reduced; the design reference is the staged access, not a timeless number of collectibles per map. [S41](#s41)
 
 **FATEs** are public, time-limited objectives such as enemy waves, bosses, escorts and collections. Entering the event area permits participation; contribution and level sync affect rewards. They can interrupt an existing journey with an optional social activity. This is event-based activity, not proof that the world generates new political or ecological stories independently. [S39](#s39)
@@ -133,7 +137,7 @@ A player moves through authored regions, settlements and instanced duties rather
 
 Sources are the party/support manuals and the specific rules for each activity, not one review generalized across the whole service. [S9](#s9) [S10](#s10) [S34](#s34) [S43](#s43) [S44](#s44) [S45](#s45) [S46](#s46) [S47](#s47) [S48](#s48) [S49](#s49) [S50](#s50)
 
-**Palace of the Dead** starts its own level progression, substitutes aetherpool equipment for ordinary gear power, and gives the party a shared, limited stock of pomanders. Some reveal information or alter combat; some transform a player temporarily. Fixed-party saves preserve a particular team/composition, unlike the matching route. Later floors restrict matching and invalidate a run after a party defeat. Aetherpool progress is independently persistent. The resulting risk is partly the expedition state, not just the price of a resurrection. [S43](#s43)
+**Palace of the Dead** substitutes internal levels and aetherpool equipment for ordinary progression. Parties share limited pomanders for information, combat and transformations. Fixed-party saves retain a particular team/composition; later floors restrict matching and invalidate a run after a wipe. Aetherpool progress persists separately from the expedition state. [S43](#s43)
 
 **Eureka's Magia Board** connects enemy element, offensive affinity and defensive affinity. Rotating the board consumes a replenishing resource. The 4.25 introduction also establishes elemental-level death penalties and rescue opportunities. **Bozja's Lost Actions**, by contrast, come from appraised fragments and occupy a capacity-limited holster before assignment or use. One is elemental alignment; the other is a carried supplemental capability set. Calling both merely “another grind” misses their different action structures. [S44](#s44) [S45](#s45)
 
@@ -166,6 +170,12 @@ Endgame also contains non-power goals: a desired outfit, collection completion, 
 Free Companies, linkshell-style communication, party chat and community recruitment provide different social containers. A guild-like organization, a temporary encounter party and a recurring chat circle are not the same relationship. Likewise, the **Ceremony of Eternal Bonding** is a player-to-player ritual with reservations and customization; it is not a systemic NPC romance model. The venue process requires coordinating participants and agreeing on a reservation, making a relationship visible through a scheduled shared occasion. [S9](#s9) [S17](#s17) [S38](#s38)
 
 **Housing** adds persistent place and presentation but also scarcity and administration. The official land guide distinguishes personal and Free Company eligibility and describes the lottery cycle, deposit, winner claim and refund rules. Buying land and obtaining the construction permit are separate steps. A lottery does not mean every interested player obtains a plot. This is a useful warning against letting a desired social fantasy depend on scarce infrastructure without acknowledging exclusion. [S37](#s37)
+
+**Decorating is a separate activity from acquisition.** The documented native workflow previews furnishings, moves and rotates them, and transfers them between placement and a housing storeroom. Patch 4.1 records both owner/authorized-tenant access and the distinction between storing an item and returning it to ordinary inventory; some otherwise irretrievable furnishings can be stored but not safely withdrawn. Patch 3.1 introduced separately configurable tenant rights for furnishing changes, gardening and stabling. Those dated records establish composition and delegated authority, not timeless caps. [S60](#s60) [S61](#s61)
+
+The current 7.5 implementation raises indoor placement limits to 150 for apartments/private chambers and 300/450/600 for estate sizes, while limiting simultaneous displayed furnishings to 400. It also ships furnishings originating in the 2025 design contest. Thus native creative participation includes assembling a room and curated contributions to the shared asset catalog; rendering constraints and publisher selection still bound both. [S62](#s62)
+
+**Leaving has different costs for different possessions.** Under the ordinary estate-reclamation rule, a private owner or a member of the owning Free Company must enter the respective estate within 45 days; temporary suspensions can qualify that clock. A preserved character account therefore does not guarantee indefinite preservation of a scarce plot during absence. [E26-07](#e26-07) [E26-08](#e26-08)
 
 The game's central companions can accumulate enormous authored history with the player across expansions, while most ordinary conversations remain quest- and scene-controlled. That is a different achievement from simulating every citizen's relationships. For OpenLegend, the relevant question is where persistent history is emotionally legible, not whether a familiar face is automatically evidence of autonomous cognition.
 
@@ -219,7 +229,7 @@ The important feel contrast is between quiet repetition and concentrated group a
 
 ## 9. Story and worldbuilding — spoilers for expansion premises and prior-arc outcomes
 
-**Spoiler boundary:** this section discusses the end of the Dragonsong War, subsequent liberation arcs, the First, and the overall Endwalker conclusion. It avoids pretending the main story is dynamically rewritten by the player.
+**Spoiler boundary:** this section discusses the end of the Dragonsong War, subsequent liberation arcs, the First, ancient sacrifices and the overall Endwalker conclusion. It avoids pretending the main story is dynamically rewritten by the player.
 
 ARR establishes an adventurer's place within Eorzea and the Scions' larger struggle. Its sequel-like rebuild also gives the world a history before a new player's arrival. The useful structural lesson is that the player can enter a world already marked by catastrophe and prior heroes, rather than needing to witness every foundational event firsthand. The official ARR presentation supplies the setting/promise; the interpretation about entry into history is ours. [S58](#s58)
 
@@ -233,9 +243,15 @@ ARR establishes an adventurer's place within Eorzea and the Scions' larger strug
 
 **Dawntrail** shifts attention toward Wuk Lamat and the succession contest in Tural, with the established hero often serving as support. This directly divides the critics: Wood and Buchanan welcome the new focal character and rebuilt stakes, while Hashimoto finds the development insufficiently earned. The disagreement is especially useful for a persistent protagonist: lowering the player's narrative centrality can renew a world for one audience and feel like enforced passivity to another. Later 7.x material continues beyond the launch campaign; its current plot developments should not be retroactively attributed to those launch reviews. [S3](#s3) [S4](#s4) [S18](#s18) [S7](#s7)
 
+**Cosmology becomes a conflict over people and memory.** The official story *Ere Our Curtain Falls* gives a concrete aether interaction: Azem plans to draw a volcano's excess into the fire manifestation Ifrita and disperse it elsewhere. In the same account, Emet-Selch remembers Elidibus becoming Zodiark's heart and later clinging to duty while losing personal memories, despite crystals preserving the Convocation's recollections. These are canonical fictional events, not a player-accessible volcano or memory-editing mechanic. Their design value is the link between a world rule, an institution and a particular person's cost. [S63](#s63)
+
+*A Friendship of Record* makes the opposed motive explicit. After Zodiark averts the Final Days, his devotees intend to exchange new lives for those sacrificed. Venat's faction refuses to make the future pay for recovering the past and sacrifices itself to manifest Hydaelyn, with Venat as her heart. Her earlier curiosity, travels and willingness to learn from others give that stance personal roots. The resulting interpretive lesson is more specific than “deep lore”: revelations can change what familiar powers and historical sites mean without becoming a list of unrelated proper names. These official companion stories supplement, rather than substitute for, the campaign evidence above. [S64](#s64)
+
 **Narrative limitation:** the reviewed structure mainly offers an authored route, recurring companions and controlled callbacks, not freely branching faction sovereignty, permanently murdered quest providers, or player-created political endings. This is a boundary for OpenLegend comparison. Emotional continuity alone should not be labeled emergent narrative.
 
 ## 10. Production history and constraints
+
+Yoshida's **GDC 2014 slides** identify organizational causes of the original failure: graphics took priority over functioning systems, the team lacked contemporary MMO knowledge, and prior success encouraged confidence that launch problems could be repaired afterward. His response combined continued service work with a new game developed over two years and eight months. Core direction was centralized while experienced leads owned details; quest plans and interface mockups preceded volume production. Work on the old version supplied experiments and operational knowledge, while public updates and internal communication rebuilt confidence. The transferable analysis concerns production priorities, delegated competence and usable feedback changing together. It does not establish a generally affordable rescue or a hierarchy for OpenLegend to copy. The slides were read; the talk was not watched. [P26-01](#p26-01)
 
 In the **August 26, 2013 PlayStation interview**, Yoshida emphasizes restoring trust, rebuilding the play experience and fulfilling the promised PS3 release. He specifically discusses a controller-oriented Cross Hot Bar rather than merely transplanting the mouse interface. He also describes housing, PvP and a regular update cadence as plans, and rejects mandatory voice communication because it can pressure beginners. These are attributed priorities at relaunch, not a guarantee that every proposal or timetable survived unchanged. [S15](#s15)
 
@@ -251,7 +267,13 @@ The **August 31, 2018 publisher announcement** reports **more than 14 million re
 
 The present entry funnel combines the expanded trial, familiar franchise identity, continuing announcements and several platform storefronts. The 2026 Evercold announcement ties the next expansion to Fan Festival in Anaheim and reveals future crossover material. Such channels let current players anticipate events, returning players identify a reentry point and newcomers inspect a large amount of content. That funnel explanation is our inference; no source here allocates customer acquisition or retention causally among trailers, memes, trials, streamers, concerts or expansions. [S17](#s17) [S21](#s21) [S22](#s22) [S56](#s56)
 
-The product is not just the purchase of one campaign: licenses, subscription terms, expansions and optional services coexist. The accessible record does not provide a product-level development budget, margin, active-subscriber series or cohort-retention model. Steam alone would also miss non-Steam PC and console participation. This dossier deliberately does not manufacture a current total player count from old registrations or platform samples.
+**Paid mechanisms.** A purchased job boost supplies level 90, equipment and 500,000 gil through vendorable pieces; the separate Endwalker story skip advances quests without raising job level. These buy acceleration and resources, without establishing purchase of current level-100 raid completion. [E26-05](#e26-05) Additional paid retainers expand storage, market-selling and Venture capacity. On expiry, their property persists but access requires reactivation. Persistent data, entitlement and practical economic capacity are different things. [E26-06](#e26-06)
+
+These payment/platform/travel details concern the international edition. Official Korean and mainland-Chinese sites show separate continuing services; UserJoy records a 2025 Traditional Chinese release. Their entitlements and interoperability must not be assumed identical. [E26-14](#e26-14) [E26-15](#e26-15) [E26-17](#e26-17)
+
+**Outcome and limits.** Square Enix reported over **30 million total registered accounts** in April 2026, not active or paying population. [E26-13](#e26-13) Sony's October 2021 Yoshida interview described XIV as the franchise's most profitable title, without publishing a numeric profit or accounting method. [E26-10](#e26-10) The **multi-title MMO subsegment**, not XIV alone, reported **¥41.0bn net sales and ¥15.1bn operating income** for the year ended March 2026; management explained the decline against the preceding Dawntrail launch year. [E26-11](#e26-11) April–June 2026 figures were **¥12.7bn/¥3.6bn**: management credited improved XIV activity for sales growth while pre-expansion development and marketing limited profit growth. [E26-12](#e26-12)
+
+The reported profitability and continuing investment support an inference of durable commercial recovery. Expansion timing and continuing costs complicate any single-quarter verdict on game quality. **Title lifetime revenue, numerical profit and total development/operating cost are not estimable** from the disclosed inputs; targeted budget and subscription searches supplied no defensible model. Neither cumulative registrations, Steam activity, company write-offs nor the entire MMO subsegment can stand in for XIV's accounts. This preserves the original unknown-cost limitation while replacing an unduly vague outcome account with scoped evidence.
 
 ## 12. Reception — five substantive written reviews
 
@@ -261,11 +283,13 @@ The product is not just the purchase of one campaign: licenses, subscription ter
 
 **2. Brittany Vincent — GameSpot, ARR on PS4.** Praises the console presentation, Cross Hot Bar, touchpad use and then-relevant Vita Remote Play. Demanding Primal encounters and noncombat alternatives broaden the attraction, but class/job terminology, leveling and housing costs impose friction. This is a platform-focused account, not another vote on Dawntrail. Simplified lore claims and historical PvP descriptions are not used as current rules. [S2](#s2)
 
-**3. Kazuma Hashimoto — GamesRadar+, Dawntrail, 2024.** Welcomes new jobs and more demanding duties but strongly dislikes the central narrative and aspects of its English performance. Job homogenization is another concern. The review is particularly useful because battle enjoyment does not cancel dissatisfaction with characterization and world coherence. Its launch Viper and other job descriptions are not silently applied after subsequent adjustments. [S3](#s3)
+**3. Kazuma Hashimoto — GamesRadar+, Dawntrail, July 11, 2024.** Welcomes new jobs and more demanding duties but strongly dislikes the central narrative and aspects of its English performance. Job homogenization is another concern. The review is particularly useful because battle enjoyment does not cancel dissatisfaction with characterization and world coherence. Its launch Viper and other job descriptions are not silently applied after subsequent adjustments. [S3](#s3)
 
 **4. Rhys Wood — TechRadar, Dawntrail, August 2, 2024.** Welcomes Wuk Lamat's central role and the lower-stakes new beginning, with enthusiasm for Pictomancer and encounter design. Still identifies pacing drops and a largely unchanged progression template. The declared testing covers story, several jobs, Normal raids and Extreme trials, not only a launch-day story impression. This directly contradicts the idea that all critics rejected the narrative shift. [S4](#s4)
 
 **5. Colin Buchanan — Noisy Pixel, Dawntrail, July 9, 2024.** Appreciates the established protagonist's supporting role, local character development and more demanding baseline duties. Criticizes a prolonged middle-story slowdown after a promised reveal, and notes visual imperfections despite the upgrade. The disclosed White Mage playthrough, Expert dungeons and Extreme attempts give context to its emphasis. The embedded video was not treated as watched evidence. [S18](#s18)
+
+**Mature-play counterpoint.** James Galizio's April 22, 2026 retrospective praises later Savage tiers and Pilgrim's Traverse while criticizing Chaotic rewards, the difficulty of assembling a Forked Tower group in one instance, and weak narrative framing around side content. His position as an active raider matters: rewarding encounters for one audience can coexist with poor access or purpose for another. This is firsthand criticism of mature Dawntrail, not a subscriber survey, proof of universal abandonment or evidence that an announced remedy succeeded. [R26-01](#r26-01)
 
 **Synthesis:** recurring attractions include role flexibility, presentation, long-form continuity and cooperative encounter learning. Recurring criticisms include repetitive gates or errands, pacing and the cost of making jobs easier to standardize. The important disagreement is not simply a score spread: critics differ about the value of shifting the established hero into a supporting role. That distinction should remain visible in any design comparison.
 
@@ -276,6 +300,8 @@ The product is not just the purchase of one campaign: licenses, subscription ter
 **Positive surface.** A May 29, 2021 review values changing jobs without abandoning one character, while acknowledging separate leveling. A June 5, 2017 account updated through September 2021 values music, help for beginners and the long story, but calls ordinary dungeons relatively conventional. A June 28, 2021 account discusses the slow opening and multiple reasons to continue rather than offering unconditional praise. Historical prices, trial limits, level caps and encounter counts in these reviews are not current facts. [S19](#s19)
 
 **Negative surface.** A December 22, 2017 account likes the game but criticizes Steam-specific purchasing constraints; a February 1, 2024 account likewise separates affection for the MMO from launcher/connection frustration. A substantial June 15, 2025 account appreciates blind or minimum-item-level discovery but objects to optimization pressure, misrepresented Party Finder expectations, loot gates and Dawntrail pacing. Its unsupported claims about specific gear sharing or writing responsibility are not adopted as facts. Another review updated May 28, 2026 reports installation interruptions; that report was not independently reproduced. [S20](#s20)
+
+**October 26 contrast.** The helpful-review surfaces were accessible again; these additional accounts were search-selected. Discepless values one-character jobs, crafting, story and self-paced play. Merdo reports registration, early-game and subscription friction when attempting to return. Their stages differ; the positive account's “no FOMO” judgment does not erase housing or reward timers, and an attempted return is not verified permanent departure. [R26-02](#r26-02) [R26-03](#r26-03)
 
 The actionable distinction is between **access failure**, **group-expectation mismatch**, **activity fatigue**, and **dislike of the underlying experience**. A negative recommendation does not identify which of these applies without reading the body. No prevalence or causal commercial estimate is inferred from this sample.
 
@@ -318,6 +344,8 @@ These hypotheses inform existing work; they do not select additional MMO systems
 
 **Preservation:** the September 26 dossier is the evidence baseline for this refresh, including its eight worked situations and qualified historical systems. It supplements the original game chapters, essays and evidence notebook. The [packet-provenance map](../references/packet-provenance.md) remains authoritative about the supplied seven-file packet. This pass does not claim the library-wide preservation gates are complete. Existing G81–G90 research and work on other branches remain independent.
 
+Related owners remain intact: the [FFXIV interface study](../../../../docs/ui-ux/games/final-fantasy-xiv.md) preserves eight inspected images and its return-to-play explanation; [COMBAT-L001](../synthesis/combat-and-encounters.md#combat-l001) and its [assessment](../synthesis/assessment-records.md#combat--final-fantasy-xiv) own combat-interface implications; the [G91 engagement evidence](../references/fun-and-engagement-dossier-evidence-g81-g148.md) feeds the [fun and sustainable engagement essay](../essays/fun-and-sustainable-engagement.md). This refresh neither repeats their visual analysis nor claims a new runtime inspection.
+
 | Requirement | Substantive coverage |
 | --- | --- |
 | R01 identity and editions | Sections 1–2, including current/future separation and access limits. |
@@ -330,14 +358,14 @@ These hypotheses inform existing work; they do not select additional MMO systems
 | R08 story and worldbuilding | Section 9, with spoiler warning and authored-versus-emergent distinction. |
 | R09 development history | Section 10 and relaunch evidence in section 1. |
 | R10 discovery and community | Section 11 and primary staff/community accounts. |
-| R11 economics | Dated registration milestones, business-model boundaries and explicit unavailable measures in section 11. |
+| R11 economics | Section 11: dated registrations, actual paid mechanisms, scoped segment results, commercial-outcome inference and explicit estimation limits. |
 | R12 criticism and player testimony | Five written bodies in section 12 and dated helpful positive/negative Steam evidence in section 13. |
 | R13 transfer and limitations | Section 14; proposals remain hypotheses. |
 | R14 sources and reading routes | Section 15 and annotated register below; access and viewing limitations retained. |
 
 ### Annotated source register
 
-Sources S1–S59 were accessed **September 26, 2026**; additions below record the **October 26, 2026** refresh. Official guides are mutable snapshots. Patch notes are dated historical rules unless explicitly identified as current. Community references are not first-party documentation or source-code audits. Critical opinions and player reports remain attributed.
+Sources S1–S59 were accessed **September 26, 2026**; additions below record the **October 26, 2026** refresh. Selected review passages were rechecked in October; the fresh S2 fetch was blocked, so its earlier body-read record remains the evidence. Official guides are mutable snapshots. Patch notes are dated historical rules unless explicitly identified as current. Community references are not first-party documentation or source-code audits. Critical opinions and player reports remain attributed.
 
 <a id="s1"></a>**S1.** Kevin VanOrd, [GameSpot — ARR review](https://www.gamespot.com/reviews/final-fantasy-xiv-online-a-realm-reborn-review/1900-6414792/). Written firsthand criticism; early rules and displayed May 5, 2014 date.
 
@@ -456,3 +484,64 @@ Sources S1–S59 were accessed **September 26, 2026**; additions below record th
 <a id="s58"></a>**S58.** Square Enix, [ARR official site](https://na.finalfantasyxiv.com/a_realm_reborn/). Setting/promise and media route; trailers not watched in this pass.
 
 <a id="s59"></a>**S59.** Square Enix, [Gear Placed in the Armoury Chest](https://eu.finalfantasyxiv.com/uiguide/equipment/equipment-chest/equipment_where_is.html). Equipment storage and overflow behavior.
+
+
+#### October 26 core-system and lore additions
+
+<a id="s60"></a>**S60.** Square Enix, [Patch 4.1 notes](https://na.finalfantasyxiv.com/lodestone/topics/detail/cfd6b53bc9cd08b494512a662c04942848db9539), October 9, 2017. Housing/storeroom body read; historical preview, placement and storage distinctions. Old numerical caps are not reused.
+
+<a id="s61"></a>**S61.** Square Enix, [Patch 3.1 notes](https://na.finalfantasyxiv.com/lodestone/topics/detail/903444f2b2789767bba60554a1ad32e90623d123), November 9, 2015. Estate-sharing body read; delegated native permissions at introduction, not a fresh UI audit.
+
+<a id="s62"></a>**S62.** Square Enix, [Patch 7.5 notes](https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/), 2026. Housing body read, including placement/display limits and delivered contest furnishings. The full patch inventory was not used as a feature checklist.
+
+<a id="s63"></a>**S63.** Square Enix, [*Ere Our Curtain Falls*, Tales from the Shadows](https://na.finalfantasyxiv.com/lodestone/special/tales_from_the_shadows/sidestory_07/). Full official story body read; Emet-Selch's narrated perspective and Shadowbringers-era spoilers, not direct play observation.
+
+<a id="s64"></a>**S64.** Square Enix, [*A Friendship of Record*, Tales from the Dawn](https://na.finalfantasyxiv.com/lodestone/special/tales_from_the_dawn/sidestory_01/). Full official story body read; Venat/Hydaelyn's motive and an archivist's perspective, with Endwalker spoilers.
+
+
+#### October 26 reception additions
+
+<a id="r26-01"></a>**R26-01.** James Galizio, [MMORPG.com — The Successes and Failures of Final Fantasy XIV: Dawntrail](https://www.mmorpg.com/editorials/the-successes-and-failures-of-final-fantasy-xiv-dawntrail-2000137875), April 22, 2026. Full relevant body read; active-raider retrospective, not a new scored review. Embedded videos not watched.
+
+<a id="r26-02"></a>**R26-02.** [Discepless's recommended Steam review](https://steamcommunity.com/profiles/76561198039086014/recommended/39210/). Full body/metadata read: August 24, year omitted by UI but body identifies 2026; 907.4 hours at review, 96 helpful votes. Snapshot, not a representative sample.
+
+<a id="r26-03"></a>**R26-03.** [Merdo's negative Steam review](https://steamcommunity.com/id/Merdo_v9/recommended/39210). Full body/metadata read: May 14, 2026 per search metadata; UI omits year. 10.2 displayed Steam hours, 43 helpful votes. Claimed returning-player status does not establish total non-Steam experience.
+
+
+#### October 26 service and economics additions
+
+<a id="e26-01"></a>**E26-01.** Square Enix, [7.57 notes](https://na.finalfantasyxiv.com/lodestone/topics/detail/6f063f4b9a856812a296954827b771da1426b4fb/), October 2026. Body read; Japan-only initial matching rollout.
+
+<a id="e26-02"></a>**E26-02.** Square Enix, [7.57 issue notice](https://na.finalfantasyxiv.com/lodestone/news/detail/ef3faa0cdf98be4cad2c55f2605b626e6def47ce), October 13, updated October 21, 2026. Body establishes prior release; its resolved restriction is not a current defect claim.
+
+<a id="e26-03"></a>**E26-03.** Square Enix, [World Visit](https://na.finalfantasyxiv.com/lodestone/playguide/contentsguide/worldvisit/). Current guide body read; home/visited World and logout continuity.
+
+<a id="e26-04"></a>**E26-04.** Square Enix, [Data Center Travel](https://na.finalfantasyxiv.com/lodestone/playguide/contentsguide/datacentertravel/). Body read; topology and restrictions, with E26-01 superseding older party-access language.
+
+<a id="e26-05"></a>**E26-05.** Square Enix, [Tales of Adventure](https://na.finalfantasyxiv.com/tales_of_adventure/). Current product body read; distinct job/story purchases and included resources.
+
+<a id="e26-06"></a>**E26-06.** Square Enix, [Additional Retainer Service](https://na.finalfantasyxiv.com/lodestone/playguide/option_service/additional_retainer/). Body read; capacity, activity and suspended access. Conflicting old maximum-count FAQs excluded.
+
+<a id="e26-07"></a>**E26-07.** Square Enix, [Estate reclamation](https://na.finalfantasyxiv.com/lodestone/topics/detail/424658bcd52a5737194a4088eb3e7ccabefa9954), October 20, 2015. Body read for the entry rule; obsolete resale pricing excluded.
+
+<a id="e26-08"></a>**E26-08.** Square Enix, [Demolition-counter resumption notice](https://na.finalfantasyxiv.com/lodestone/news/detail/ff0334468a9e32da6ee45ff0a44b2b181117a23e), October 22, 2026. Body read; temporary suspension and scheduled October 26 resumption, not observed runtime.
+
+<a id="e26-10"></a>**E26-10.** Sony, [Naoki Yoshida interview](https://blog.playstation.com/?p=354966), October 13, 2021. Body read; comparative profitability characterization without audited title figures.
+
+<a id="e26-11"></a>**E26-11.** Square Enix, [FY2026 results](https://www.hd.square-enix.com/eng/ir/news/pdf/26q4slides.pdf), May 14, 2026, printed slide 11. Extracted PDF text read; multi-title MMO scope, no successful visual inspection.
+
+<a id="e26-12"></a>**E26-12.** Square Enix, [FY2027 Q1 outline](https://www.hd.square-enix.com/eng/ir/library/pdf/27q1outline.pdf), August 10, 2026, p.3. Extracted text read; April–June segment results and management attribution.
+
+<a id="e26-13"></a>**E26-13.** Square Enix, [7.5 press release](https://press.na.square-enix.com/FOLLOW-THE-PATHS-OF-FATE-WITH-FINAL-FANTASY-XIV-PATCH-75-TRAIL-TO-THE-), April 28, 2026. Body read; cumulative registration threshold.
+
+<a id="e26-14"></a>**E26-14.** UserJoy, [Company milestones](https://www.userjoy.com.tw/en/about/about_05.aspx). Body read; Traditional Chinese release under 2025.
+
+<a id="e26-15"></a>**E26-15.** [Korean official service](https://www.ff14.co.kr/main). October 2026 notices/patch body read; regional continuity only.
+
+<a id="e26-16"></a>**E26-16.** Square Enix, [Switch 2 registration/subscription](https://na.finalfantasyxiv.com/lodestone/topics/detail/cd235c020c1016a289792d8f2da9c03bdb91bb4b), September 2, 2026. Body read; current account/subscription terms, not an ongoing introductory free period.
+
+<a id="e26-17"></a>**E26-17.** [Mainland China 7.5 site](https://actff1.web.sdo.com/project/20240927dawntrail/patch75/index.html). Official localized body read; April 28, 2026 release/current updates, not Japan's rollout rules.
+
+#### October 26 production addition
+
+<a id="p26-01"></a>**P26-01.** Naoki Yoshida, [GDC 2014 primary slides](https://media.gdcvault.com/GDC2014/Presentations/GDC2014_FFXIV_Behind_The_Realm_Reborn_NaokiYoshida_v2.pdf). PDF text inspected for failure, rebuilding and production organization; no claim of watching the talk.
