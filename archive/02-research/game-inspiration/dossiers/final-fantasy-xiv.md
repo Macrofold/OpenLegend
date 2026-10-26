@@ -12,16 +12,16 @@ The failed **2010 version** and **A Realm Reborn, relaunched August 27, 2013**, 
 
 ### Edition and access map
 
-| Layer | What this study uses it for | What must not be carried forward unqualified |
-| --- | --- | --- |
-| Original XIV, 2010 | The project and trust failure that preceded the rebuild. | Original interface, map, class, combat and launch reception are not modern ARR rules. |
-| ARR, 2013, and early console editions | Rebuilt regions, accessible party entry, one-character professions, and the early campaign. | Reviews describing cross-class prerequisites, early dungeon layouts, PS3 limitations or Vita Remote Play are historical accounts. |
-| Heavensward, 2015 | Ishgard, flight, Au Ra, and three additional jobs; a larger expansion structure. | Its original job kits and balancing judgments are not current job guides. |
-| Stormblood, 2017 | Liberation in two regions, Samurai/Red Mage, and swimming/diving-era expansion of traversal and activities. | Earlier role-action selection, inventories, caps and PvP kits changed subsequently. |
-| Shadowbringers, 2019 | The First, a reversal of light/dark expectations, and the NPC-party era. | The original umbrella use of “Trust” predates the later Duty Support/Trust split. |
-| Endwalker, 2021 | A conclusion to the Hydaelyn/Zodiark saga, followed by new adventures rather than termination of the MMO. | An ending to an authored arc is not an ending to the service. |
-| Dawntrail, 2024, and the 7.x service | Tural, a new political cast, Pictomancer/Viper, graphical changes, and later side systems. | Launch reviews do not describe every subsequent job adjustment or added activity. |
-| 7.5–7.57, 2026 | Expanded trial, Switch 2 service, limited Beastmaster, and Japan's expanded matching scope. | Features scheduled for later in 2026 or Evercold are not shipped merely because they share a promotional page. |
+| Layer                                 | What this study uses it for                                                                                 | What must not be carried forward unqualified                                                                                      |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Original XIV, 2010                    | The project and trust failure that preceded the rebuild.                                                    | Original interface, map, class, combat and launch reception are not modern ARR rules.                                             |
+| ARR, 2013, and early console editions | Rebuilt regions, accessible party entry, one-character professions, and the early campaign.                 | Reviews describing cross-class prerequisites, early dungeon layouts, PS3 limitations or Vita Remote Play are historical accounts. |
+| Heavensward, 2015                     | Ishgard, flight, Au Ra, and three additional jobs; a larger expansion structure.                            | Its original job kits and balancing judgments are not current job guides.                                                         |
+| Stormblood, 2017                      | Liberation in two regions, Samurai/Red Mage, and swimming/diving-era expansion of traversal and activities. | Earlier role-action selection, inventories, caps and PvP kits changed subsequently.                                               |
+| Shadowbringers, 2019                  | The First, a reversal of light/dark expectations, and the NPC-party era.                                    | The original umbrella use of “Trust” predates the later Duty Support/Trust split.                                                 |
+| Endwalker, 2021                       | A conclusion to the Hydaelyn/Zodiark saga, followed by new adventures rather than termination of the MMO.   | An ending to an authored arc is not an ending to the service.                                                                     |
+| Dawntrail, 2024, and the 7.x service  | Tural, a new political cast, Pictomancer/Viper, graphical changes, and later side systems.                  | Launch reviews do not describe every subsequent job adjustment or added activity.                                                 |
+| 7.5–7.57, 2026                        | Expanded trial, Switch 2 service, limited Beastmaster, and Japan's expanded matching scope.                 | Features scheduled for later in 2026 or Evercold are not shipped merely because they share a promotional page.                    |
 
 The dates and boundaries above combine the official release archive, expansion material, and the relaunch interview; their role is to keep mechanics and reception attached to the version actually described. [S6](#s6) [S21](#s21) [S23](#s23) [S52](#s52) [S53](#s53) [S54](#s54) [S55](#s55)
 
@@ -39,14 +39,14 @@ The player alternates among movement and observation; target selection; hotbar a
 
 ### Progression and attributes
 
-| System | Concrete function | Consequence for play |
-| --- | --- | --- |
-| Profession levels and unlocks | Jobs acquire actions and traits; the normal current battle guides describe kits through level 100. | Switching occupation preserves identity, but not an automatically trained second kit. |
-| Primary combat attributes | Strength/Dexterity support their associated physical jobs; Intelligence supports magical damage; Mind supports healing; Vitality supports HP. | Equipment appropriate to one role is not automatically useful to another. |
-| Secondary combat attributes | Critical Hit, Direct Hit, Determination and speed statistics affect different aspects of output; Tenacity and Piety have role-specific relevance. | Similar item levels can conceal different stat fits; more of a statistic is not universally the right choice. |
-| Crafting attributes | Craftsmanship, Control and CP concern completion, quality and action resources. | A strong fighter does not thereby have an effective crafting loadout. |
-| Gathering attributes | Gathering, Perception and GP affect obtaining materials, quality-related opportunities and resource spending. | Gathering has its own equipment and action budget rather than using weapon damage. |
-| Story and feature flags | Quests unlock places, duties, systems and later narrative chapters. | Being high-level is not the same as having the required content access. |
+| System                        | Concrete function                                                                                                                                 | Consequence for play                                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Profession levels and unlocks | Jobs acquire actions and traits; the normal current battle guides describe kits through level 100.                                                | Switching occupation preserves identity, but not an automatically trained second kit.                         |
+| Primary combat attributes     | Strength/Dexterity support their associated physical jobs; Intelligence supports magical damage; Mind supports healing; Vitality supports HP.     | Equipment appropriate to one role is not automatically useful to another.                                     |
+| Secondary combat attributes   | Critical Hit, Direct Hit, Determination and speed statistics affect different aspects of output; Tenacity and Piety have role-specific relevance. | Similar item levels can conceal different stat fits; more of a statistic is not universally the right choice. |
+| Crafting attributes           | Craftsmanship, Control and CP concern completion, quality and action resources.                                                                   | A strong fighter does not thereby have an effective crafting loadout.                                         |
+| Gathering attributes          | Gathering, Perception and GP affect obtaining materials, quality-related opportunities and resource spending.                                     | Gathering has its own equipment and action budget rather than using weapon damage.                            |
+| Story and feature flags       | Quests unlock places, duties, systems and later narrative chapters.                                                                               | Being high-level is not the same as having the required content access.                                       |
 
 The attribute distinctions are a current community rules reference, not a reconstruction of proprietary formulas or an optimization recommendation. Exact stat weights are deliberately omitted. Job progression is separately checked against the official job guide. [S26](#s26) [S5](#s5)
 
@@ -56,9 +56,9 @@ The official inventory distinguishes tanks, healers, melee damage, physical-rang
 
 Target-based actions have ranges, cast times, recasts, resources and conditions. Mobility therefore competes with some casts, and an otherwise available attack may be inappropriate because of enemy position or an incoming mechanic. Role cooperation and encounter rules sit above the button sequence. This is not free-aim action combat, nor a general simulation in which a fire spell necessarily burns arbitrary scenery. Current action tables make the first distinction explicit; the broader environmental limitation is the boundary of the documented systems, not a source-code claim. [S11](#s11) [S24](#s24)
 
-**White Mage:** combat-time Lilies fund designated instant healing actions. Spending three Lilies nourishes the Blood Lily, enabling Afflatus Misery. Healing resource expenditure therefore connects to a later offensive opportunity. Swiftcast instead makes the next spell immediate; that can matter for recovery rather than damage. Potencies, trait levels and PvP variants are version-specific, so the PvP table must not be read as the PvE kit. [S11](#s11)
+**White Mage:** combat-time Lilies fund instant heals. Spending three nourishes the Blood Lily, enabling Afflatus Misery and connecting recovery to offense. Swiftcast makes the next spell immediate, which can aid recovery rather than damage. Potencies, trait levels and PvP variants are version-specific; the PvP table is not the PvE kit. [S11](#s11)
 
-**Red Mage:** Black and White Mana build through different spells and enable enchanted weapon attacks. Dualcast follows a cast-time spell with an instant spell, creating a movement and recovery rhythm as well as damage flow. Verraise is a resurrection spell with a substantial MP cost. Thus the kit can contribute something other than its next damage action during a failing encounter. [S24](#s24)
+**Red Mage:** different spells build Black and White Mana for enchanted weapon attacks. Dualcast follows a cast-time spell with an instant spell, creating a movement and recovery rhythm. Verraise resurrects at substantial MP cost, so a damage kit can serve another role during a failing encounter. [S24](#s24)
 
 **Blue Mage:** witnessing an enemy use a learnable attack and then defeating it can add the spell to a collection. The player chooses up to 24 active actions, with saved sets and restrictions on changes during combat or particular duties. The Masked Carnivale makes enemy weaknesses and advance preparation meaningful. Its level-80 cap and limited-duty access separate this highly configurable spell collection from the ordinary endgame balance environment. [S25](#s25)
 
@@ -78,16 +78,16 @@ A **glamour prism** can store an item's appearance in the glamour dresser; glamo
 
 ### Items and economic transformations
 
-| Object or resource | Where it participates | Important boundary |
-| --- | --- | --- |
-| Equipment and materia | Role power, spiritbond, enhancement and later appearance collection. | Not every item is tradeable, meldable or appropriate to every role. |
-| Glamour prisms and dyes | Appearance conversion and outfit construction. | Cosmetics and statistics are related through the item, but are not identical goals. |
-| Logs, ore, textiles, ingredients and intermediate goods | Gathering, recipes and trade. | Different professions and unlocks create dependencies; a recipe is not arbitrary natural-language fabrication. |
-| Food and medicines | Consumable preparation for activities. | These are manufactured resources, not a survival-hunger simulation. |
-| Furnishings | Residence or supported decorating systems. | Placement permissions and inventories are bounded; the public world is not freely rebuildable. |
-| Timeworn maps | Tradeable opportunity leading to interpretation, travel and a fight. | Deciphering changes the map's state; opening the cache risks losing the opportunity. |
-| Tomestones and activity currencies | Earned equipment/reward paths. | A weekly allowance and an inventory ceiling are different constraints. |
-| Ventures and retainer equipment | Delegated resource procurement. | Delegation has unlocks, assignments and waiting; it is not a general autonomous worker economy. |
+| Object or resource                                      | Where it participates                                                | Important boundary                                                                                             |
+| ------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Equipment and materia                                   | Role power, spiritbond, enhancement and later appearance collection. | Not every item is tradeable, meldable or appropriate to every role.                                            |
+| Glamour prisms and dyes                                 | Appearance conversion and outfit construction.                       | Cosmetics and statistics are related through the item, but are not identical goals.                            |
+| Logs, ore, textiles, ingredients and intermediate goods | Gathering, recipes and trade.                                        | Different professions and unlocks create dependencies; a recipe is not arbitrary natural-language fabrication. |
+| Food and medicines                                      | Consumable preparation for activities.                               | These are manufactured resources, not a survival-hunger simulation.                                            |
+| Furnishings                                             | Residence or supported decorating systems.                           | Placement permissions and inventories are bounded; the public world is not freely rebuildable.                 |
+| Timeworn maps                                           | Tradeable opportunity leading to interpretation, travel and a fight. | Deciphering changes the map's state; opening the cache risks losing the opportunity.                           |
+| Tomestones and activity currencies                      | Earned equipment/reward paths.                                       | A weekly allowance and an inventory ceiling are different constraints.                                         |
+| Ventures and retainer equipment                         | Delegated resource procurement.                                      | Delegation has unlocks, assignments and waiting; it is not a general autonomous worker economy.                |
 
 The table connects the official crafting families, market interface, historical venture introduction, treasure rules and current currency reference. It is an inventory of documented uses, not a claim that all outputs exchange freely in one universal market. [S13](#s13) [S30](#s30) [S31](#s31) [S35](#s35) [S42](#s42)
 
@@ -121,19 +121,19 @@ A player moves through authored regions, settlements and instanced duties rather
 
 ### Encounter and side-content inventory
 
-| Family | What makes it a different activity | Failure, persistence, or access boundary |
-| --- | --- | --- |
-| Main-scenario quests and supported story duties | Sequential scenes and tasks connect regions, NPCs and playable confrontations. | Story flags gate subsequent content; NPC support is not available for every possible duty. |
-| Dungeons, trials and raids | Party roles meet authored enemy mechanics; higher-difficulty versions emphasize learning and coordination. | Repeated attempts and equipment preparation do not substitute for understanding the encounter. |
-| Duty roulettes and older synchronized content | Matchmaking and rewards bring later characters back into an older content pool. | Current-level mastery may rely on actions removed by sync. |
-| Palace of the Dead and related deep dungeons | Reconfigured floors, internal levels, aetherpool equipment and shared consumables create an expedition. | Its internal power is distinct from ordinary gear; later Palace floors impose stricter save/failure conditions. |
-| Eureka | Elemental experience and the Magia Board add regional combat progression. | Elemental death penalties and rescue stakes differ from routine overworld defeat. |
-| Bozja | Resistance rank, skirmishes, critical engagements and a limited holster of Lost Actions. | Mettle can be lost without reducing attained Resistance rank; carried actions are a deliberate loadout. |
-| Occult Crescent | Knowledge levels plus Phantom Jobs supplement the ordinary battle job. | Knowledge loss, party-level relationships and regional action rules bound this extra power. |
-| Cosmic Exploration | Crafting/gathering missions contribute to shared construction and personal rewards. | Project stages and participation systems constrain how the public location changes. |
-| Island Sanctuary | Gathering, crops, animals, buildings and scheduled mammet work create a personal production space. | Separate resources/currencies and visitor permissions prevent it from being unrestricted multiplayer land simulation. |
-| Gold Saucer | Cards, racing, minigames and other noncombat competitions reward different competencies. | Collection and specialized currencies are their own progression, not simply combat item level. |
-| PvP | Objective-based combat uses its own action/balance context. | A strong PvE kit or item collection is not automatically the same advantage here. |
+| Family                                          | What makes it a different activity                                                                         | Failure, persistence, or access boundary                                                                              |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Main-scenario quests and supported story duties | Sequential scenes and tasks connect regions, NPCs and playable confrontations.                             | Story flags gate subsequent content; NPC support is not available for every possible duty.                            |
+| Dungeons, trials and raids                      | Party roles meet authored enemy mechanics; higher-difficulty versions emphasize learning and coordination. | Repeated attempts and equipment preparation do not substitute for understanding the encounter.                        |
+| Duty roulettes and older synchronized content   | Matchmaking and rewards bring later characters back into an older content pool.                            | Current-level mastery may rely on actions removed by sync.                                                            |
+| Palace of the Dead and related deep dungeons    | Reconfigured floors, internal levels, aetherpool equipment and shared consumables create an expedition.    | Its internal power is distinct from ordinary gear; later Palace floors impose stricter save/failure conditions.       |
+| Eureka                                          | Elemental experience and the Magia Board add regional combat progression.                                  | Elemental death penalties and rescue stakes differ from routine overworld defeat.                                     |
+| Bozja                                           | Resistance rank, skirmishes, critical engagements and a limited holster of Lost Actions.                   | Mettle can be lost without reducing attained Resistance rank; carried actions are a deliberate loadout.               |
+| Occult Crescent                                 | Knowledge levels plus Phantom Jobs supplement the ordinary battle job.                                     | Knowledge loss, party-level relationships and regional action rules bound this extra power.                           |
+| Cosmic Exploration                              | Crafting/gathering missions contribute to shared construction and personal rewards.                        | Project stages and participation systems constrain how the public location changes.                                   |
+| Island Sanctuary                                | Gathering, crops, animals, buildings and scheduled mammet work create a personal production space.         | Separate resources/currencies and visitor permissions prevent it from being unrestricted multiplayer land simulation. |
+| Gold Saucer                                     | Cards, racing, minigames and other noncombat competitions reward different competencies.                   | Collection and specialized currencies are their own progression, not simply combat item level.                        |
+| PvP                                             | Objective-based combat uses its own action/balance context.                                                | A strong PvE kit or item collection is not automatically the same advantage here.                                     |
 
 Sources are the party/support manuals and the specific rules for each activity, not one review generalized across the whole service. [S9](#s9) [S10](#s10) [S34](#s34) [S43](#s43) [S44](#s44) [S45](#s45) [S46](#s46) [S47](#s47) [S48](#s48) [S49](#s49) [S50](#s50)
 
@@ -243,9 +243,9 @@ ARR establishes an adventurer's place within Eorzea and the Scions' larger strug
 
 **Dawntrail** shifts attention toward Wuk Lamat and the succession contest in Tural, with the established hero often serving as support. This directly divides the critics: Wood and Buchanan welcome the new focal character and rebuilt stakes, while Hashimoto finds the development insufficiently earned. The disagreement is especially useful for a persistent protagonist: lowering the player's narrative centrality can renew a world for one audience and feel like enforced passivity to another. Later 7.x material continues beyond the launch campaign; its current plot developments should not be retroactively attributed to those launch reviews. [S3](#s3) [S4](#s4) [S18](#s18) [S7](#s7)
 
-**Cosmology becomes a conflict over people and memory.** The official story *Ere Our Curtain Falls* gives a concrete aether interaction: Azem plans to draw a volcano's excess into the fire manifestation Ifrita and disperse it elsewhere. In the same account, Emet-Selch remembers Elidibus becoming Zodiark's heart and later clinging to duty while losing personal memories, despite crystals preserving the Convocation's recollections. These are canonical fictional events, not a player-accessible volcano or memory-editing mechanic. Their design value is the link between a world rule, an institution and a particular person's cost. [S63](#s63)
+**Cosmology becomes a conflict over people and memory.** The official story _Ere Our Curtain Falls_ gives a concrete aether interaction: Azem plans to draw a volcano's excess into the fire manifestation Ifrita and disperse it elsewhere. In the same account, Emet-Selch remembers Elidibus becoming Zodiark's heart and later clinging to duty while losing personal memories, despite crystals preserving the Convocation's recollections. These are canonical fictional events, not a player-accessible volcano or memory-editing mechanic. Their design value is the link between a world rule, an institution and a particular person's cost. [S63](#s63)
 
-*A Friendship of Record* makes the opposed motive explicit. After Zodiark averts the Final Days, his devotees intend to exchange new lives for those sacrificed. Venat's faction refuses to make the future pay for recovering the past and sacrifices itself to manifest Hydaelyn, with Venat as her heart. Her earlier curiosity, travels and willingness to learn from others give that stance personal roots. The resulting interpretive lesson is more specific than “deep lore”: revelations can change what familiar powers and historical sites mean without becoming a list of unrelated proper names. These official companion stories supplement, rather than substitute for, the campaign evidence above. [S64](#s64)
+_A Friendship of Record_ makes the opposed motive explicit. After Zodiark averts the Final Days, his devotees intend to exchange new lives for those sacrificed. Venat's faction refuses to make the future pay for recovering the past and sacrifices itself to manifest Hydaelyn, with Venat as her heart. Her earlier curiosity, travels and willingness to learn from others give that stance personal roots. The resulting interpretive lesson is more specific than “deep lore”: revelations can change what familiar powers and historical sites mean without becoming a list of unrelated proper names. These official companion stories supplement, rather than substitute for, the campaign evidence above. [S64](#s64)
 
 **Narrative limitation:** the reviewed structure mainly offers an authored route, recurring companions and controlled callbacks, not freely branching faction sovereignty, permanently murdered quest providers, or player-created political endings. This is a boundary for OpenLegend comparison. Emotional continuity alone should not be labeled emergent narrative.
 
@@ -273,7 +273,7 @@ These payment/platform/travel details concern the international edition. Officia
 
 **Outcome and limits.** Square Enix reported over **30 million total registered accounts** in April 2026, not active or paying population. [E26-13](#e26-13) Sony's October 2021 Yoshida interview described XIV as the franchise's most profitable title, without publishing a numeric profit or accounting method. [E26-10](#e26-10) The **multi-title MMO subsegment**, not XIV alone, reported **¥41.0bn net sales and ¥15.1bn operating income** for the year ended March 2026; management explained the decline against the preceding Dawntrail launch year. [E26-11](#e26-11) April–June 2026 figures were **¥12.7bn/¥3.6bn**: management credited improved XIV activity for sales growth while pre-expansion development and marketing limited profit growth. [E26-12](#e26-12)
 
-The reported profitability and continuing investment support an inference of durable commercial recovery. Expansion timing and continuing costs complicate any single-quarter verdict on game quality. **Title lifetime revenue, numerical profit and total development/operating cost are not estimable** from the disclosed inputs; targeted budget and subscription searches supplied no defensible model. Neither cumulative registrations, Steam activity, company write-offs nor the entire MMO subsegment can stand in for XIV's accounts. This preserves the original unknown-cost limitation while replacing an unduly vague outcome account with scoped evidence.
+The reported profitability and continuing investment support an inference of durable commercial recovery. Expansion timing and continuing costs complicate any single-quarter verdict on game quality. **Title lifetime revenue, numerical profit and total development/operating cost are not estimable** from the disclosed inputs; targeted budget and subscription searches supplied no defensible model. Neither cumulative registrations, Steam activity, company write-offs nor the entire MMO subsegment can stand in for XIV's accounts.
 
 ## 12. Reception — five substantive written reviews
 
@@ -325,14 +325,34 @@ The actionable distinction is between **access failure**, **group-expectation mi
 
 These hypotheses inform existing work; they do not select additional MMO systems.
 
-| Reference question | Existing owner and concrete use |
-| --- | --- |
-| Can different people contribute without confusing compatible roles with compatible intentions? | [CP01–CP10](../../../../docs/maintainers/first-playable-cooperation.md) and [PS07.4/PS07.7](../../../../docs/maintainers/product-scalability.md): observe voluntary help, exact custody and worthwhile aftermath, including partial success. |
-| Does a place carry history into a later visit? | [ND01/DG34](../../../../docs/maintainers/needs-design.md#nd01--assemble-a-new-world-from-a-creators-premise) and [discoverable-history authoring](../../../../docs/narrative/authoring-discoverable-history.md): rehearse a place, object and encounter in different discovery orders; retain named motives and recognizable consequences. |
-| Is a home useful after the effort of obtaining and improving it? | [SH12/DG13](../../../../docs/maintainers/needs-design.md#dg13--editable-shelter-and-useful-places) and [FPV06–FPV08](../../../../docs/maintainers/first-playable-validation.md): assess construction, actual use, revision and return against the complete effort. Scarce plots are not a proposed OpenLegend requirement. |
-| Can an unusual capability or creative work travel with understandable limits? | [ND12/INV-8/EWF11](../../../../docs/maintainers/needs-design.md#nd12--cross-world-invention-libraries-and-usable-pack-publishing) and [ND23/PACK](../../../../docs/maintainers/published-packs-and-creator-revenue.md): test preview, dependencies, destination permissions and update/removal within selected scope. Preserve world-owned rules and accepted paid authoring. |
+| Reference question                                                                             | Existing owner and concrete use                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Can different people contribute without confusing compatible roles with compatible intentions? | [CP01–CP10](../../../../docs/maintainers/first-playable-cooperation.md) and [PS07.4/PS07.7](../../../../docs/maintainers/product-scalability.md): observe voluntary help, exact custody and worthwhile aftermath, including partial success.                                                                                                                                  |
+| Does a place carry history into a later visit?                                                 | [ND01/DG34](../../../../docs/maintainers/needs-design.md#nd01--assemble-a-new-world-from-a-creators-premise) and [discoverable-history authoring](../../../../docs/narrative/authoring-discoverable-history.md): rehearse a place, object and encounter in different discovery orders; retain named motives and recognizable consequences.                                    |
+| Is a home useful after the effort of obtaining and improving it?                               | [SH12/DG13](../../../../docs/maintainers/needs-design.md#dg13--editable-shelter-and-useful-places) and [FPV06–FPV08](../../../../docs/maintainers/first-playable-validation.md): assess construction, actual use, revision and return against the complete effort. Scarce plots are not a proposed OpenLegend requirement.                                                    |
+| Can an unusual capability or creative work travel with understandable limits?                  | [ND12/INV-8/EWF11](../../../../docs/maintainers/needs-design.md#nd12--cross-world-invention-libraries-and-usable-pack-publishing) and [ND23/PACK](../../../../docs/maintainers/published-packs-and-creator-revenue.md): test preview, dependencies, destination permissions and update/removal within selected scope. Preserve world-owned rules and accepted paid authoring. |
 
-## 15. Reading routes, preservation, and completion map
+## 15. Player creation and external ecosystem — R15
+
+**Applicability: yes, desktop Windows, October 26, 2026.** A substantial catalog, maintained tools and authored packages demonstrate sustained community creation; they do not measure its share of players. Square Enix prohibits third-party programs/tools. Community distribution review is therefore distinct from publisher approval. Dalamud injects client code; it neither supplies the game's server source nor establishes a safe data-only sandbox. Equivalent console support and Linux/macOS wrappers were not established here. No game, plugin or installer was run. [M26-01](#m26-01) [M26-03](#m26-03) [M26-09](#m26-09)
+
+**Creation to another player's use.** SamplePlugin supplies a command, main/settings windows, an image and configuration. An author changes its C# project, builds a DLL and loads it through a development-plugin location; edits require rebuilding/reloading. Code, manifest, API version and author/repository metadata have distinct roles. A constructed test changes a control, exercises command → window → saved setting → close/reopen, checks unload cleanup and profiles UI cost. That is a documented-workflow example, not an executed test. [M26-04](#m26-04) [M26-05](#m26-05) [M26-07](#m26-07)
+
+Publishing submits a manifest referencing an exact public repository commit. New submissions enter testing before reviewed stable distribution; updates supply another commit and changelog. Players obtain community-supported plugins through the in-game `/xlplugins` installer, rather than building each project. A programmer extending a plugin and a player enabling it face different work. The game supplies the existing world and authoritative service; the community framework supplies loading/APIs, while creators supply code or asset work, testing, packaging and continued support. [M26-06](#m26-06) [M26-09](#m26-09)
+
+**Contrasting creations and authorship.** Caraxi's **SimpleTweaks** collects small usability changes that did not warrant separate plugins, including keeping tooltips on screen and retaining a Party Finder description. **Penumbra**, maintained under xivdev, substitutes assets without rewriting base files and exposes ordering, conflicts and missing-file redirections. Its model/material/texture dependencies make composition more demanding than selecting a thumbnail. **Brio** began with Asgard and is maintained by Minmoose, crediting Anamnesis, Ktisis and other projects. It supports GPose actors, posing, cameras and saved scenes. Those presentation actors are not persistent server inhabitants; these projects do not establish a player-authored replacement for the server's rules. [M26-10](#m26-10) [M26-11](#m26-11) [M26-12](#m26-12) [M26-13](#m26-13)
+
+**Failure, maintenance and trust.** Penumbra resolves overlapping replacements by ordering, but importing TexTools packages is expressly best effort; deleting files can leave broken redirections. Dalamud waits for client-version compatibility after patches, and individual plugins may need further repair. Duplicate manual installations can interfere with updates. Maintainers describe spare-time constraints, so capability depends on continued maintenance. Community admission rules restrict automation, unfair information and account-identifier exposure; technical guidance asks for minimal data collection and consent for additional telemetry. Review and visible build provenance support accountability without proving arbitrary client code secure. [M26-07](#m26-07) [M26-08](#m26-08) [M26-09](#m26-09) [M26-10](#m26-10) [M26-11](#m26-11)
+
+The privacy failure is concrete. In January 2025 Yoshida addressed tools correlating characters through part of an internal account identifier, while distinguishing that exposure from addresses or payment information. Announced countermeasures establish a response, not independently verified enforcement. The design question concerns another person's ability to link and publish data available to one client. [M26-02](#m26-02)
+
+**Rights and incentives.** Creator **Cultist** distinguishes private edits, credited public derivatives, paid work, redistributed files and use outside XIV. Support/payment links coexist with older creations requiring manual Dawntrail updates. This demonstrates mixed free/paid work and upkeep demands, not typical earnings or universal permission. Open-source plugin code does not license game assets or every imported package. No defensible aggregate creator-income estimate was found. [M26-14](#m26-14)
+
+Native decorating and publisher-selected furnishing designs remain the separate supported creation path described in section 6. [S60](#s60) [S61](#s61) [S62](#s62) OpenLegend's existing ND12/ND23 and package routes above can use the lessons about dependency visibility, previews, rights, failure reports and support ownership. They do not adopt arbitrary DLL loading or this unofficial architecture. The [current root policies](../../../../AGENTS.md), including development-save compatibility and generated-content boundaries, still govern; accepted paid authoring remains intact.
+
+<a id="15-reading-routes-preservation-and-completion-map"></a>
+
+## 16. Reading routes, preservation, and completion map
 
 **To study interacting rules:** read the Red Mage and White Mage action/gauge sections, then Blue Mage's active-set rules, Beastmaster's restrictions, and the Palace and field-operation guides. Compare ordinary job identity with a supplemental or restricted power system. The worked situations above are constructed explanations, not substituted gameplay observations.
 
@@ -340,28 +360,31 @@ These hypotheses inform existing work; they do not select additional MMO systems
 
 **To study the service:** read the 2013 and 2016 Yoshida interviews, then the staff anniversary messages and dated publisher milestones. Compare the five reviews before drawing an audience conclusion. For current rules, follow the patch index to the relevant individual note rather than relying on old review descriptions.
 
+**To study creation:** compare native housing in section 6 with SamplePlugin's build/publication path, Penumbra's dependency inspection and Brio's presentation tools in section 15. Read the publisher policy before the community's admission rules; the two authorities are distinct.
+
 **Viewing route:** the official ARR and current expansion sites contain trailers/media routes, and the Noisy Pixel review contains an embedded review video. They are pointers for subsequent viewing only. No playback, transcript review, timestamps or scene-specific observations are claimed here. Sources are linked, not redistributed.
 
 **Preservation:** the September 26 dossier is the evidence baseline for this refresh, including its eight worked situations and qualified historical systems. It supplements the original game chapters, essays and evidence notebook. The [packet-provenance map](../references/packet-provenance.md) remains authoritative about the supplied seven-file packet. This pass does not claim the library-wide preservation gates are complete. Existing G81–G90 research and work on other branches remain independent.
 
 Related owners remain intact: the [FFXIV interface study](../../../../docs/ui-ux/games/final-fantasy-xiv.md) preserves eight inspected images and its return-to-play explanation; [COMBAT-L001](../synthesis/combat-and-encounters.md#combat-l001) and its [assessment](../synthesis/assessment-records.md#combat--final-fantasy-xiv) own combat-interface implications; the [G91 engagement evidence](../references/fun-and-engagement-dossier-evidence-g81-g148.md) feeds the [fun and sustainable engagement essay](../essays/fun-and-sustainable-engagement.md). This refresh neither repeats their visual analysis nor claims a new runtime inspection.
 
-| Requirement | Substantive coverage |
-| --- | --- |
-| R01 identity and editions | Sections 1–2, including current/future separation and access limits. |
-| R02 mechanics inventory | Sections 2–6: combat, crafting, gathering, traversal, events, modes, social and NPC systems. |
-| R03 objects and combinations | Section 3 and the named job/side-system resources. |
-| R04 progression, economy, time and failure | Sections 2–5 and 11; bounded regional and expedition consequences. |
-| R05 worked situations | Section 7: eight constructed intention-to-consequence examples with limits. |
-| R06 people and AI | Section 6, supported by party/support/Trust and social-place evidence. |
-| R07 presentation and usability | Section 8, with attributed visual disagreement, sound production and UI/accessibility boundaries. |
-| R08 story and worldbuilding | Section 9, with spoiler warning and authored-versus-emergent distinction. |
-| R09 development history | Section 10 and relaunch evidence in section 1. |
-| R10 discovery and community | Section 11 and primary staff/community accounts. |
-| R11 economics | Section 11: dated registrations, actual paid mechanisms, scoped segment results, commercial-outcome inference and explicit estimation limits. |
-| R12 criticism and player testimony | Five written bodies in section 12 and dated helpful positive/negative Steam evidence in section 13. |
-| R13 transfer and limitations | Section 14; proposals remain hypotheses. |
-| R14 sources and reading routes | Section 15 and annotated register below; access and viewing limitations retained. |
+| Requirement                                | Substantive coverage                                                                                                                                                      |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R01 identity and editions                  | Sections 1–2, including current/future separation and access limits.                                                                                                      |
+| R02 mechanics inventory                    | Sections 2–6: combat, crafting, gathering, traversal, events, modes, social and NPC systems.                                                                              |
+| R03 objects and combinations               | Section 3 and the named job/side-system resources.                                                                                                                        |
+| R04 progression, economy, time and failure | Sections 2–5 and 11; bounded regional and expedition consequences.                                                                                                        |
+| R05 worked situations                      | Section 7: eight constructed intention-to-consequence examples with limits.                                                                                               |
+| R06 people and AI                          | Section 6, supported by party/support/Trust and social-place evidence.                                                                                                    |
+| R07 presentation and usability             | Section 8, with attributed visual disagreement, sound production and UI/accessibility boundaries.                                                                         |
+| R08 story and worldbuilding                | Section 9, with spoiler warning and authored-versus-emergent distinction.                                                                                                 |
+| R09 development history                    | Section 10 and relaunch evidence in section 1.                                                                                                                            |
+| R10 discovery and community                | Section 11 and primary staff/community accounts.                                                                                                                          |
+| R11 economics                              | Section 11: dated registrations, actual paid mechanisms, scoped segment results, commercial-outcome inference and explicit estimation limits.                             |
+| R12 criticism and player testimony         | Five written bodies in section 12 and dated helpful positive/negative Steam evidence in section 13.                                                                       |
+| R13 transfer and limitations               | Section 14; proposals remain hypotheses.                                                                                                                                  |
+| R14 sources and reading routes             | Section 16 and annotated register below; baseline examples, owner links and access/viewing limitations retained.                                                          |
+| R15 player-creation ecosystem              | Section 15: yes gate; client/server and native boundaries, actual workflow, contrasting projects, composition/maintenance, rights/incentives and existing-owner transfer. |
 
 ### Annotated source register
 
@@ -485,7 +508,6 @@ Sources S1–S59 were accessed **September 26, 2026**; additions below record th
 
 <a id="s59"></a>**S59.** Square Enix, [Gear Placed in the Armoury Chest](https://eu.finalfantasyxiv.com/uiguide/equipment/equipment-chest/equipment_where_is.html). Equipment storage and overflow behavior.
 
-
 #### October 26 core-system and lore additions
 
 <a id="s60"></a>**S60.** Square Enix, [Patch 4.1 notes](https://na.finalfantasyxiv.com/lodestone/topics/detail/cfd6b53bc9cd08b494512a662c04942848db9539), October 9, 2017. Housing/storeroom body read; historical preview, placement and storage distinctions. Old numerical caps are not reused.
@@ -494,10 +516,9 @@ Sources S1–S59 were accessed **September 26, 2026**; additions below record th
 
 <a id="s62"></a>**S62.** Square Enix, [Patch 7.5 notes](https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/), 2026. Housing body read, including placement/display limits and delivered contest furnishings. The full patch inventory was not used as a feature checklist.
 
-<a id="s63"></a>**S63.** Square Enix, [*Ere Our Curtain Falls*, Tales from the Shadows](https://na.finalfantasyxiv.com/lodestone/special/tales_from_the_shadows/sidestory_07/). Full official story body read; Emet-Selch's narrated perspective and Shadowbringers-era spoilers, not direct play observation.
+<a id="s63"></a>**S63.** Square Enix, [_Ere Our Curtain Falls_, Tales from the Shadows](https://na.finalfantasyxiv.com/lodestone/special/tales_from_the_shadows/sidestory_07/). Full official story body read; Emet-Selch's narrated perspective and Shadowbringers-era spoilers, not direct play observation.
 
-<a id="s64"></a>**S64.** Square Enix, [*A Friendship of Record*, Tales from the Dawn](https://na.finalfantasyxiv.com/lodestone/special/tales_from_the_dawn/sidestory_01/). Full official story body read; Venat/Hydaelyn's motive and an archivist's perspective, with Endwalker spoilers.
-
+<a id="s64"></a>**S64.** Square Enix, [_A Friendship of Record_, Tales from the Dawn](https://na.finalfantasyxiv.com/lodestone/special/tales_from_the_dawn/sidestory_01/). Full official story body read; Venat/Hydaelyn's motive and an archivist's perspective, with Endwalker spoilers.
 
 #### October 26 reception additions
 
@@ -506,7 +527,6 @@ Sources S1–S59 were accessed **September 26, 2026**; additions below record th
 <a id="r26-02"></a>**R26-02.** [Discepless's recommended Steam review](https://steamcommunity.com/profiles/76561198039086014/recommended/39210/). Full body/metadata read: August 24, year omitted by UI but body identifies 2026; 907.4 hours at review, 96 helpful votes. Snapshot, not a representative sample.
 
 <a id="r26-03"></a>**R26-03.** [Merdo's negative Steam review](https://steamcommunity.com/id/Merdo_v9/recommended/39210). Full body/metadata read: May 14, 2026 per search metadata; UI omits year. 10.2 displayed Steam hours, 43 helpful votes. Claimed returning-player status does not establish total non-Steam experience.
-
 
 #### October 26 service and economics additions
 
@@ -545,3 +565,33 @@ Sources S1–S59 were accessed **September 26, 2026**; additions below record th
 #### October 26 production addition
 
 <a id="p26-01"></a>**P26-01.** Naoki Yoshida, [GDC 2014 primary slides](https://media.gdcvault.com/GDC2014/Presentations/GDC2014_FFXIV_Behind_The_Realm_Reborn_NaokiYoshida_v2.pdf). PDF text inspected for failure, rebuilding and production organization; no claim of watching the talk.
+
+#### October 26 player-creation additions
+
+<a id="m26-01"></a>**M26-01.** Square Enix, [Prohibited activities](https://support.na.square-enix.com/faqarticle.php?id=5382&kid=68216&la=1). Current third-party-software policy body read; publisher authority.
+
+<a id="m26-02"></a>**M26-02.** Naoki Yoshida, [Account-identifier tools statement](https://forum.square-enix.com/ffxiv/threads/515102), January 24, 2025. Staff body read; correlation scope and proposed response.
+
+<a id="m26-03"></a>**M26-03.** Dalamud, [Community plugin catalog](https://goatcorp.github.io/DalamudPlugins/plugins). Entries inspected for breadth/authorship, not a population census or comprehensive code audit.
+
+<a id="m26-04"></a>**M26-04.** [SamplePlugin README](https://github.com/goatcorp/SamplePlugin/blob/master/README.md). Build/load/reload body read; blob `f792e33402d406007e17208b2465e62cc78f9d7a`. Old SDK-version advice not adopted as current.
+
+<a id="m26-05"></a>**M26-05.** Dalamud, [Project layout](https://dalamud.dev/plugin-development/project-layout/). Entry point, manifest, metadata and cleanup body read.
+
+<a id="m26-06"></a>**M26-06.** Dalamud, [Submission](https://dalamud.dev/plugin-publishing/submission/). Exact-commit build and testing/stable distribution body read.
+
+<a id="m26-07"></a>**M26-07.** Dalamud, [Technical considerations](https://dalamud.dev/plugin-development/technical-considerations/). UI profiling and data-minimization guidance read, not tested.
+
+<a id="m26-08"></a>**M26-08.** Dalamud, [Restrictions](https://dalamud.dev/plugin-publishing/restrictions/). Community admission rules read; not Square Enix permission.
+
+<a id="m26-09"></a>**M26-09.** [XIVLauncher/Dalamud troubleshooting](https://github.com/goatcorp/faq/blob/main/xl_troubleshooting.md). Architecture, installer, patch gates, dependencies/support/uninstall body read; blob `2fab7553f4d2529252b6633c3e9610ac311f7ad2`. Antivirus-bypass advice excluded.
+
+<a id="m26-10"></a>**M26-10.** [Penumbra README](https://github.com/xivdev/Penumbra/blob/testing/README.md). Assets, conflicts/import limits and support read; blob `d4be2605a2a34635762d7c997cd948a21fa8e6cf`.
+
+<a id="m26-11"></a>**M26-11.** Penumbra, [Advanced Editing](https://github.com/xivdev/Penumbra/wiki/Advanced-Editing). Dependency/redirection body read; illustrations not separately inspected.
+
+<a id="m26-12"></a>**M26-12.** [Brio README](https://github.com/Etheirys/Brio/blob/main/README.md). Features, original/current authors and acknowledgements read; blob `ebc3f619dbf9ff54b82153615dee9b7ae42a2450`.
+
+<a id="m26-13"></a>**M26-13.** Caraxi, [SimpleTweaks README](https://github.com/Caraxi/SimpleTweaksPlugin/blob/main/README.md) and [feature list](https://github.com/Caraxi/SimpleTweaksPlugin/blob/main/Tweaks.md). Author purpose/features read; README blob `25b9fac45acba1f53e2e9802ee9c60093c1f373f`.
+
+<a id="m26-14"></a>**M26-14.** Cultist, [Links and permissions](https://www.xivmodarchive.com/modid/79004). Creator terms/support/update body read; one author's rules. Linked assets/images not inspected.
