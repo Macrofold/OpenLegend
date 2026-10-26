@@ -30,6 +30,19 @@ export function hasRecordFields(
 }
 
 const immutableData = new WeakSet<object>();
+const jsonEncodings = new WeakMap<object, { json: string; bytes: number }>();
+const encoder = new TextEncoder();
+
+/** Equal received values need the same encoding in comparison and byte accounting.
+ * Reuse only complete immutable data; mutable builders always encode afresh. */
+export function jsonEncoding(value: object): { json: string; bytes: number } {
+  const held = jsonEncodings.get(value);
+  if (held) return held;
+  const json = JSON.stringify(value);
+  const encoded = { json, bytes: encoder.encode(json).byteLength };
+  if (isImmutableData(value)) jsonEncodings.set(value, encoded);
+  return encoded;
+}
 /** Memoization needs immutable nested data, not merely a frozen outer record. */
 export function isImmutableData(value: unknown): boolean {
   if (!value || typeof value !== 'object') return typeof value !== 'function';

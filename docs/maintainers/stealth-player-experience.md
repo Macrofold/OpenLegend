@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Design: integrated for SAD-G's selected scope. Implementation: SPX01 existing-channel conversion is implemented with scoped native/browser verification. Broader UX, accessibility, performance and security qualification remains open.** Updated 2026-10-25.
+**Design: integrated for SAD-G's selected scope. Implementation: SPX01 existing-channel conversion is implemented with scoped native/browser verification. Broader UX, accessibility, performance and security qualification remains open.** Updated 2026-10-26.
 
 [Feature behavior](../projects/stealth-player-experience-feature-spec.md) owns controls, feedback and all ten player journeys. [Technical design](../projects/stealth-player-experience-tech-design.md) owns projection, input, component boundaries, invalid states and G-AC acceptance. [Limits](../limits/stealth-player-experience.md) owns discretionary defaults and remaining capacity questions. [SA coordination](stealth-awareness.md) owns A–G/I integration; this tracker is the focused SAI-G implementation owner.
 
@@ -37,6 +37,7 @@ Dependencies: integrated shared schema; A current/history/reference families; B 
 - [x] Stop retained fire records from emitting current light; current sources require an acquired body facet.
 - [ ] Qualify historical art and source-free current glow with their actual B/G producers.
 - [ ] Apply facet removals and scope invalidation before rendering; fence async reads/asset loads/receipts and stale patches.
+- [x] Connect broad current facts, exact recent receipts and fallible lasting impressions to ordinary World/Character/Events readers, including actor-scoped cold reads and exact delayed-read expiry/correction fences. Historical measurements use retained compatible-time facts, not current hidden sources.
 - [ ] Complete integrated PS04-A qualification for broad current context, shared-receipt recent history and remembered-impression fidelity through ordinary World/Character/Events readers. Preserve human visibility/choice beyond detailed-attention capacity and actor-first cold hydration; AI noticing is not a rendering gate.
       The Character reader now includes searchable recent observations; its native/PostgreSQL and narrow-screen browser checks pass. [Core evidence](../verification/attention-and-memory-core.md) tracks the remaining combined acceptance.
 - [ ] Qualify G-AC01–12 and all applicable lifecycle/projection cases in the technical acceptance table.
@@ -59,7 +60,7 @@ Dependencies: integrated shared schema; A current/history/reference families; B 
 
 ## SPX03 — Attention, history and sensory interaction
 
-**Status: Not started.** Dependencies: SPX01–02; E methods, actual maintained-method start and own fulfillment; A/C original evidence; F's preparation qualification.
+**Status: PS04-A ordinary detail focus implemented; physical investigation methods not started.** The existing object inspector offers Focus here/Stop focusing through current contact authority, without speech, movement, physical gaze or a watch action. Dependencies for the remaining work: SPX01–02; E methods, actual maintained-method start and own fulfillment; A/C original evidence; F's preparation qualification.
 
 - [ ] Expose installed finite Watch, Watch for danger, Listen, Scan, Inspect and Investigate through existing action discovery and Current work.
 - [ ] Reuse valid contextual scope/defaults directly in activity review with one Start. Offer Walk while watching as one atomic destination-plus-finite-attention admission, alongside attachment to a compatible current walk. Offer the optional area/vantage selector only for missing/changed choices: keyboard/tap, offered extents, Confirm distinct from Start, Cancel, exact stale handling and no hidden-source defaults.

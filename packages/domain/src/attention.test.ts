@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld, NPC_ID, PLAYER_ID } from './worlds/base/world.js';
-import { entityGet, entitySet } from './entity-collection.js';
+import { entityGet, entitySet, emptyEntities } from './entity-collection.js';
 import {
   acquireObservation,
   observationFactKey,
@@ -40,7 +40,10 @@ import {
   retainedIndividualEvidenceKeys,
 } from './worlds/base/knowledge.js';
 import { createReservoirDemo } from './world-presets.js';
-import { executeCommand } from './kernel.js';
+import { selectedAttentionPolicy } from './world-composition.js';
+import { executeCommand, initializePerception } from './kernel.js';
+import { worldPlacement } from './spatial-state.js';
+import { commitHealthChange } from './living.js';
 
 function scene(count: number, capacity = 10) {
   const world = createWorld();
@@ -135,6 +138,73 @@ function scene(count: number, capacity = 10) {
 }
 
 describe('received detailed attention', () => {
+  it('keeps the oldest quiet discovery while ten actual visible deaths supply urgent received evidence, then expires their priority', () => {
+    const world = createWorld(131),
+      observer = entityGet(world.entities, PLAYER_ID)!,
+      prototype = structuredClone(entityGet(world.entities, NPC_ID)!);
+    world.entities = emptyEntities();
+    observer.actor!.attentionCapacity = 10;
+    observer.placement = worldPlacement({ x: 1, y: 0, z: 2 }, null);
+    entitySet(world.entities, PLAYER_ID, observer);
+    const body = (id: string, x: number) => {
+      const person = structuredClone(prototype);
+      person.id = id;
+      person.name = 'Private identity';
+      person.placement = worldPlacement({ x, y: 0, z: 2 }, null);
+      person.actor!.capabilities!.memory = false;
+      person.actor!.capabilities!.cognition = false;
+      entitySet(world.entities, id, person);
+      return person;
+    };
+    const quiet = body('quiet-old-source', 3);
+    initializePerception(world, []);
+    const sources = Array.from({ length: 10 }, (_, index) =>
+      body(`actual-urgent-source-${index}`, 4 + index / 2),
+    );
+    initializePerception(world, []);
+    const events: import('./types.js').WorldEvent[] = [];
+    for (const source of sources)
+      commitHealthChange(
+        world,
+        source,
+        -source.actor!.health,
+        'fixture-native-body-effect',
+        events,
+      );
+    expect(
+      sources.every((source) => !source.actor!.alive && source.remains?.phase === 'fresh'),
+    ).toBe(true);
+    expect(events.filter((event) => event.type === 'death')).toHaveLength(10);
+    initializePerception(world, []);
+    const state = world.perceptionEvidence![PLAYER_ID]!.attention!;
+    expect(
+      Object.values(state.candidates).filter((candidate) => candidate.urgency >= 8),
+    ).toHaveLength(10);
+    expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(10);
+    expect(
+      currentDetailedAttention(world, PLAYER_ID).find((entry) => entry.sourceId === quiet.id)
+        ?.basis,
+    ).toBe('discovery');
+    const cue = Object.values(state.candidates).find(
+      (candidate) => candidate.sourceId === sources[0]!.id,
+    )!;
+    expect(cue.urgencySource).toBeDefined();
+    revokeAttentionEvidence(world, PLAYER_ID, new Set([cue.urgencySource!.source.id]));
+    expect(
+      state.candidates[
+        Object.keys(state.candidates).find(
+          (key) => state.candidates[key]!.sourceId === sources[0]!.id,
+        )!
+      ]!.urgency,
+    ).toBe(0);
+    world.simTime = 120;
+    updateAttention(world, PLAYER_ID, { changedSourceIds: [] });
+    expect(Object.values(state.candidates).every((candidate) => candidate.urgency === 0)).toBe(
+      true,
+    );
+    expect(JSON.stringify(state)).not.toContain('Private identity');
+    validateAttentionState(state, selectedAttentionPolicy(world).maximumCapacity);
+  });
   it('resolves only the actually accepted native condition generation and withdraws corrected proof', () => {
     let { world, owner } = scene(2, 2);
     const anchor = currentDetailedAttention(world, PLAYER_ID)[0]!,
@@ -208,7 +278,7 @@ describe('received detailed attention', () => {
         .filter((identity) => identity.individualId?.startsWith('fixture-local-'))
         .every((identity) => !identity.canonicalId),
     ).toBe(true);
-    validateAttentionState(owner.attention);
+    validateAttentionState(owner.attention, selectedAttentionPolicy(world).maximumCapacity);
   });
 
   it('lends unused ongoing slots and fairly rotates unconsidered discovery', () => {
@@ -224,7 +294,7 @@ describe('received detailed attention', () => {
     }
     expect(encountered.size).toBe(18);
     expect(owner.attention!.entries).toHaveLength(3);
-    validateAttentionState(owner.attention);
+    validateAttentionState(owner.attention, selectedAttentionPolicy(world).maximumCapacity);
   });
 
   it('keeps a stable current choice but allows a strong actual cue to interrupt it', () => {
@@ -245,6 +315,20 @@ describe('received detailed attention', () => {
     expect(
       currentDetailedAttention(world, PLAYER_ID).some((entry) => entry.sourceId === challenger),
     ).toBe(true);
+    const candidate = Object.values(
+      world.perceptionEvidence![PLAYER_ID]!.attention!.candidates,
+    ).find((candidate) => candidate.sourceId === challenger)!;
+    const deadline = candidate.urgencyThrough;
+    world.simTime = 1;
+    updateAttention(world, PLAYER_ID, { changedSourceIds: [], urgency: { [challenger]: 2 } });
+    expect(candidate.urgencyThrough).toBe(deadline);
+    world.simTime = 120;
+    updateAttention(world, PLAYER_ID, { changedSourceIds: [] });
+    expect(
+      Object.values(world.perceptionEvidence![PLAYER_ID]!.attention!.candidates).find(
+        (candidate) => candidate.sourceId === challenger,
+      )!.urgency,
+    ).toBe(0);
   });
 
   it('acknowledges only the exact provided revision and retains newer received motion', () => {
@@ -329,7 +413,7 @@ describe('received detailed attention', () => {
     expect(
       applyAttentionRelationEvaluations(world, PLAYER_ID, [{ ...evaluation, revision: 'again' }]),
     ).toHaveLength(1);
-    validateAttentionState(owner.attention);
+    validateAttentionState(owner.attention, selectedAttentionPolicy(world).maximumCapacity);
   });
 
   it('does not bridge an all-clear interval across a brief loss of its neighbor', () => {

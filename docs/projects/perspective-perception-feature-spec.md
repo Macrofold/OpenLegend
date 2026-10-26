@@ -1,10 +1,10 @@
 # Observer-specific perception, evidence and recognition — feature specification
 
-| Status      | Current progress                                                                                                                           | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Existing-channel evidence foundation delivered; shared temporal retention, future producers and full PP07/SAI-A qualification remain open. | 2026-10-25   |
+| Status      | Current progress                                                                                                                     | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Existing-channel evidence and shared temporal retention implemented; future producers and full PP07/SAI-A qualification remain open. | 2026-10-26   |
 
-Temporal/familiarity design reconciled and architecture consulted **October 25, 2026, 23:24 EDT**; these additions remain implementation targets.
+Architecture consulted for the supported-channel temporal/familiarity implementation **2026-10-26 21:15:56 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
 
 ## Purpose and selected scope
 
@@ -24,9 +24,9 @@ The existing-channel implementation now adds observer-local individuals, voice f
 
 The behavior and acceptance below remain the selected complete target. Scoped implementation evidence does not establish future-channel delivery, live-model quality, population capacity or player enjoyment.
 
-**Selected temporal-retention target; runtime open.** The [attention and memory design](attention-and-scenes-tech-design.md#53-recent-chronology-without-narrative-boundaries) adds shared immutable source fragments and exact observer receipt references through these existing owners. Ordinary detailed attention automatically retains changes to supported received facets/events, rather than a recorder with a list of activities. Common values can be shared; different heard fragments, precision, frames and uncertainty remain personal. Current broad perception and current motion support remain available without attention, but there is no separate background-history sampler. Beginning attention captures the actual current receipt; earlier chronology is available only if that actor independently retained it. Another observer's retained source never grants retrospective witnessing.
+**Shared temporal retention is implemented for supported channels.** The [attention and memory design](attention-and-scenes-tech-design.md#53-recent-chronology-without-narrative-boundaries) adds shared immutable source fragments and exact observer receipt references through these existing owners. Ordinary detailed attention automatically retains changes to supported received facets/events, rather than a recorder with a list of activities. Common values can be shared; different heard fragments, precision, frames and uncertainty remain personal. Current broad perception and current motion support remain available without attention, but there is no separate background-history sampler. Beginning attention captures the actual current receipt; earlier chronology is available only if that actor independently retained it. Another observer's retained source never grants retrospective witnessing.
 
-The selected [subject-wide familiarity target](../worlds/base/perception-recognition.md#shared-subject-familiarity-target) likewise remains unimplemented. It replaces the foundation's modality-specific familiarity-credit accumulation while leaving physically available modality features and supported matching necessary. Familiarity can influence optional attention only through its world policy; it grants no new sensory evidence, source identity or unseen location.
+The selected [subject-wide familiarity law](../worlds/base/perception-recognition.md#shared-subject-familiarity-target) is implemented for supported contacts. It replaces modality-specific familiarity-credit accumulation while leaving physically available modality features and supported matching necessary. Future discriminating visual-feature producers remain open. Familiarity can influence optional attention only through its world policy; it grants no new sensory evidence, source identity or unseen location.
 
 ## What makes this worth playing
 

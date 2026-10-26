@@ -6,7 +6,7 @@ import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
 import { ensureExperienceAccounting } from './remembered-impressions.js';
 import { personalFactAlias } from './experience-source.js';
-import { isImmutableData } from './records.js';
+import { jsonEncoding } from './records.js';
 import { selectedRecognitionSupportSourceIds } from './world-composition.js';
 import type { WorldState } from './types.js';
 import type { ObserverSubject } from './knowledge.js';
@@ -206,17 +206,8 @@ const blockIndexes = new WeakMap<
   { id: string; length: number; index: Map<string, number> }
 >();
 const motionValues = new WeakMap<object, TemporalMotionValue>();
-const valueEncodings = new WeakMap<object, { json: string; bytes: number }>();
 function valueEncoding(value: TemporalValue): { json: string; bytes: number } {
-  const supplied = readOnlyDraftView(value);
-  const held = valueEncodings.get(supplied);
-  if (held) return held;
-  const json = JSON.stringify(supplied);
-  const encoded = { json, bytes: encoder.encode(json).byteLength };
-  // These are derived bytes, not an evidence registry. Weak ownership follows the
-  // actual immutable source, while builders and shallow-frozen data stay fresh.
-  if (isImmutableData(supplied)) valueEncodings.set(supplied, encoded);
-  return encoded;
+  return jsonEncoding(readOnlyDraftView(value));
 }
 const equalValue = (left: TemporalValue, right: TemporalValue) =>
   valueEncoding(left).json === valueEncoding(right).json;

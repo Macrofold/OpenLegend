@@ -1125,7 +1125,8 @@ export function validateWorldModules(world: WorldState): void {
     )
       throw new Error('Invalid actor attention capacity.');
   for (const owner of Object.values(world.perceptionEvidence ?? {}))
-    if (owner.attention !== undefined) validateAttentionState(owner.attention);
+    if (owner.attention !== undefined)
+      validateAttentionState(owner.attention, selectedAttentionPolicy(world).maximumCapacity);
   for (const [actorId, entries] of Object.entries(world.memories))
     for (const memory of entries) {
       if (memory.retention) validateExperienceRetention(memory.retention, actorId);

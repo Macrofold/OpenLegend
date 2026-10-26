@@ -1,12 +1,10 @@
 # Observer-specific perception, evidence and recognition — technical design
 
-| Status      | Current progress                                                                                                                           | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Existing-channel evidence foundation delivered; shared temporal retention, future producers and full PP07/SAI-A qualification remain open. | 2026-10-25   |
+| Status      | Current progress                                                                                                                     | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Existing-channel evidence and shared temporal retention implemented; future producers and full PP07/SAI-A qualification remain open. | 2026-10-26   |
 
-Design used for scoped implementation and review: **2026-10-25 15:35 UTC**.
-
-Temporal/familiarity design reconciled and architecture consulted **October 25, 2026, 23:24 EDT**; these additions remain implementation targets.
+Architecture consulted for the supported-channel temporal/familiarity implementation **2026-10-26 21:15:56 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
 
 ## Authority, scope and implementation boundary
 
@@ -16,7 +14,7 @@ The source audit below records the design baseline; current delivery and evidenc
 
 A owns acquisition of observer-permitted evidence, classification, association, individual recognition, per-fact retention and projections from those meanings. B owns geometric sight, occlusion, lighting and physically visible features. C owns emission, acoustic propagation, received sound features and physical hearing opportunities. E owns attention, investigation, action choice and native responses; D owns fear/startle and effective conditions; F owns preparedness and surprise; G owns input and authorized presentation. A never answers any of those owners' decisions by looking at a hidden entity or by equating detection with a behavioral response.
 
-**Selected extension, not delivered temporal history:** [attention and memory §5.3](attention-and-scenes-tech-design.md#53-recent-chronology-without-narrative-boundaries) owns shared source fragments, exact personal receipt references and attended/required recent chronology. A remains the acquisition and cut authority. The [shared temporal target below](#shared-temporal-source-and-receipt-target) specifies its boundary with A; PP07 and full SAI-A remain open.
+**Shared temporal extension implemented for supported channels:** [attention and memory §5.3](attention-and-scenes-tech-design.md#53-recent-chronology-without-narrative-boundaries) owns shared source fragments, exact personal receipt references and attended/required recent chronology. A remains the acquisition and cut authority. The [shared temporal target below](#shared-temporal-source-and-receipt-target) specifies its boundary with A; PP07 and full SAI-A remain open.
 
 Reuse the existing world, timeline, observer, body life, personal-source and server audience/control boundaries. The reusable engine supports narrow installed sense/profile families; it does not hard-code a human voice, Perception attribute, name grammar or one world's emotional law. The selected world can make an ordinary useful inference natively. No AI request is required for each footstep, visible change or recognizable voice.
 
@@ -579,7 +577,7 @@ The inspected active history tail of 256 rows / 1 MiB is a residency bound, not 
 
 ### Shared temporal source and receipt target
 
-**Selected design; runtime open.** [Attention and memory §5.3](attention-and-scenes-tech-design.md#53-recent-chronology-without-narrative-boundaries) owns the shared temporal records, atomic write flow, bounded retention and source reclamation. Extend the existing exposure/event and experience owners rather than a raw whole-world change archive. Common source fragments may serve several actual receivers; each observer retains their own exact acquisition, frame, precision, role, local association and coverage. Direct source references are usable only where the producer supplied that exact received value. Different masked/quantized values require their own immutable received variants; equal values can share payload without merging occurrences, witnesses or learning credit.
+**Implemented for supported channels; combined qualification remains open in PS04-A.** [Attention and memory §5.3](attention-and-scenes-tech-design.md#53-recent-chronology-without-narrative-boundaries) owns the shared temporal records, atomic write flow, bounded retention and source reclamation. Extend the existing exposure/event and experience owners rather than a raw whole-world change archive. Common source fragments may serve several actual receivers; each observer retains their own exact acquisition, frame, precision, role, local association and coverage. Direct source references are usable only where the producer supplied that exact received value. Different masked/quantized values require their own immutable received variants; equal values can share payload without merging occurrences, witnesses or learning credit.
 
 Compact receipt runs encode consecutive source entries that were actually acquired under the same supported conditions. Extending a run requires each real receipt; visible endpoints, private source equality or a later history read cannot fill a gap. Family-specific source revisions and the original permitted `FactKey` remain authoritative; receipt/chunk ordinals are storage locators, not another physical clock or a universal source revision. Captured cuts resolve only their observer's eligible receipts and retain their exact acquired membership. Sharing a source body does not authorize a consumer to hydrate another observer's receipt or expose the private originating entity.
 

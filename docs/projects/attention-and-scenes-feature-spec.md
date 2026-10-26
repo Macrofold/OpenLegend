@@ -1,8 +1,8 @@
 # Attention, crowds and scenes — product and behavior specification
 
-| Status      | Current progress                                                                                                                | Last updated            |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| In progress | Native attention, familiarity and recent-memory paths are implemented; integrated semantic and scale qualification remain open. | 2026-10-26 21:15:56 UTC |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Native attention, familiarity and recent-memory paths are implemented; integrated semantic and scale qualification remain open. | 2026-10-26   |
 
 **Architecture consulted 2026-10-26 21:15:56 UTC.**
 

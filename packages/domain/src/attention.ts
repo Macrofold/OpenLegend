@@ -926,7 +926,10 @@ export function revokeAttentionEvidence(
 }
 
 /** Current-save boundary: exact references are validated by the owning perception validator. */
-export function validateAttentionState(value: unknown): asserts value is AttentionState {
+export function validateAttentionState(
+  value: unknown,
+  maximumCapacity: number,
+): asserts value is AttentionState {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('Invalid attention continuation.');
   const state = value as AttentionState;
@@ -939,9 +942,9 @@ export function validateAttentionState(value: unknown): asserts value is Attenti
     typeof state.candidates !== 'object' ||
     Array.isArray(state.candidates) ||
     !Array.isArray(state.entries) ||
-    state.entries.length > 15 ||
+    state.entries.length > maximumCapacity ||
     !Array.isArray(state.explicit) ||
-    state.explicit.length > 15 ||
+    state.explicit.length > maximumCapacity ||
     new Set(state.explicit).size !== state.explicit.length ||
     !state.latches ||
     typeof state.latches !== 'object' ||
@@ -1030,7 +1033,12 @@ export function validateAttentionState(value: unknown): asserts value is Attenti
     for (const fact of [candidate.urgencySource, candidate.directSource])
       if (fact) {
         validateEvidenceSource(fact.source);
-        if (!Number.isSafeInteger(fact.ordinal) || fact.ordinal < 0)
+        if (
+          !Number.isSafeInteger(fact.ordinal) ||
+          fact.ordinal < 0 ||
+          fact.source.observer.actorId !== candidate.exposure.observer.actorId ||
+          fact.source.observer.physicalLife !== candidate.exposure.observer.physicalLife
+        )
           throw new Error('Invalid received attention cue.');
       }
   }

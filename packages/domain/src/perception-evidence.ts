@@ -49,7 +49,7 @@ import {
 import { hasMemory } from './living.js';
 import { knownPlaceEvidence } from './known-place-evidence.js';
 import { validEncounterExposure, type EncounterExposure } from './places.js';
-import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
+import { hasRecordFields, isSafeRecordId, isImmutableData, jsonEncoding } from './records.js';
 import {
   selectedBodyIndividual,
   selectedPruneObserverIndividuals,
@@ -1168,7 +1168,8 @@ export function reconcileVisualEvidence(
       // Drafting every unchanged nested body here makes later native previews copy it.
       const previous = prior && effectiveCurrentFacetSupport(world, observer.id, prior),
         previousValue = previous && readOnlyDraftView(previous.value);
-      const changed = !previousValue || JSON.stringify(previousValue) !== JSON.stringify(facet);
+      const changed =
+        !previousValue || jsonEncoding(previousValue).json !== jsonEncoding(facet).json;
       if (changed) attentionChanges.add(subject.id);
       if (
         prior &&
@@ -1960,6 +1961,8 @@ export function acquireAwarenessObservation(
       ? bodyLease
       : undefined;
   const receivedBody =
+    // A familiar unseen voice does not attach urgency to a body by canonical ID.
+    // Hearing requires the exact actually seen speech-body grant from this event.
     boundBody ??
     (!awareness.speech && modality === 'sight' && visualSubjectId
       ? eligibleBodyLease(world, observer.id, visualSubjectId)
