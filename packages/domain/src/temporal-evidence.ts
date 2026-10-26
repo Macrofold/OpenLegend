@@ -1,10 +1,14 @@
 import { nextId } from './data.js';
+import { freeze } from 'immer';
 import { cloneValue, readOnlyDraftView } from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
 import { ensureExperienceAccounting } from './remembered-impressions.js';
+import { personalFactAlias } from './experience-source.js';
+import { selectedRecognitionSupportSourceIds } from './world-composition.js';
 import type { WorldState } from './types.js';
+import type { ObserverSubject } from './knowledge.js';
 import type {
   EvidenceSource,
   LiveFacetSupport,
@@ -81,6 +85,7 @@ export interface TemporalReceipt extends TemporalReceiptLocator {
   origin?: ObservationOrigin;
   /** Observer-local continuous exposure, not a canonical identity. */
   subject: string;
+  subjectIdentity?: ObserverSubject;
   change: 'baseline' | 'change' | 'loss' | 'occurrence' | 'attention-exit';
   required: boolean;
   /** Original account aliases are needed for scoped correction, never for hidden hydration. */
@@ -98,6 +103,7 @@ export interface TemporalChunk {
   throughAt: number;
   subjects: string[];
   sourceIds: string[];
+  individualIds: string[];
   sourceRefs: string[];
   bytes: number;
   count: number;
@@ -136,6 +142,8 @@ export interface TemporalSupportCapsule {
 }
 export interface TemporalEvidenceState {
   version: 1;
+  /** Existing server timeline identity on restoration; native creation uses saved IDs. */
+  namespace: string;
   sources: Record<string, TemporalSourceBlock>;
   actors: Record<string, TemporalActorHistory>;
   activeBoundary?: string;
@@ -149,6 +157,7 @@ export interface TemporalRetentionPolicy {
 }
 export interface TemporalCaptureInput {
   subject: string;
+  subjectIdentity?: ObserverSubject;
   change: TemporalReceipt['change'];
   required?: boolean;
   sourceIds?: string[];
@@ -170,28 +179,42 @@ export interface TemporalCaptureInput {
 const encoder = new TextEncoder();
 const byteLength = (value: unknown) => encoder.encode(JSON.stringify(value)).byteLength;
 const boundary = (world: WorldState) => `${world.sequence}:${world.simTime}`;
-const blockIndexes = new WeakMap<object, { id: string; length: number; index: Map<string, number> }>();
+const blockIndexes = new WeakMap<
+  object,
+  { id: string; length: number; index: Map<string, number> }
+>();
 const sourceValues = new WeakMap<object, Map<string, TemporalValueReference>>();
 const motionValues = new WeakMap<object, TemporalMotionValue>();
-const equalValue = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
+const equalValue = (left: unknown, right: unknown) =>
+  JSON.stringify(left) === JSON.stringify(right);
 function temporalValue(value: TemporalCaptureInput['facets'][number]['value']): TemporalValue {
   if (value.kind !== 'observed-motion') return value;
   const original = readOnlyDraftView(value);
   const held = motionValues.get(original);
   if (held) return held;
   const sample = (input: typeof value.earlier): TemporalMotionSample => ({
-    location: cloneValue(input.value.location), frame: cloneValue(input.value.frame),
-    measuredFrom: input.valueMeasuredFrom, measuredThrough: input.valueMeasuredThrough,
+    location: cloneValue(input.value.location),
+    frame: cloneValue(input.value.frame),
+    measuredFrom: input.valueMeasuredFrom,
+    measuredThrough: input.valueMeasuredThrough,
     acquiredAt: input.valueAcquiredAt,
     original: {
-      source: { family: 'native-exposure', id: input.original.id, revision: input.original.revision, observer: { ...input.observer } },
+      source: {
+        family: 'native-exposure',
+        id: input.original.id,
+        revision: input.original.revision,
+        observer: { ...input.observer },
+      },
       ordinal: input.originalOrdinal,
     },
     confirmation: cloneValue(input.confirmation),
   });
   const result: TemporalMotionValue = {
-    kind: 'received-motion', exposure: cloneValue(value.exposure),
-    earlier: sample(value.earlier), later: sample(value.later), correspondence: value.correspondence,
+    kind: 'received-motion',
+    exposure: cloneValue(value.exposure),
+    earlier: sample(value.earlier),
+    later: sample(value.later),
+    correspondence: value.correspondence,
   };
   motionValues.set(original, result);
   return result;
@@ -204,7 +227,11 @@ function initialBytes(value: { bytes: number }): number {
   }
   return value.bytes;
 }
-function adjustHeaderBytes<T extends { bytes: number }>(value: T, previousHeader: number, header: () => number): number {
+function adjustHeaderBytes<T extends { bytes: number }>(
+  value: T,
+  previousHeader: number,
+  header: () => number,
+): number {
   let change = 0;
   for (let attempt = 0; attempt < 4; attempt++) {
     const next = header();
@@ -219,7 +246,7 @@ function adjustHeaderBytes<T extends { bytes: number }>(value: T, previousHeader
 
 function state(world: WorldState): TemporalEvidenceState | undefined {
   if (!world.experience) return;
-  return (world.experience.temporal ??= { version: 1, sources: {}, actors: {} });
+  return (world.experience.temporal ??= { version: 1, namespace: nextId(world, 'receipt-timeline'), sources: {}, actors: {} });
 }
 function actorHistory(
   world: WorldState,
@@ -234,7 +261,7 @@ function actorHistory(
   if (!actor) {
     actor = temporal.actors[actorId] = {
       physicalLife: life,
-      epoch: nextId(world, 'receipt-epoch'),
+      epoch: `${temporal.namespace}-${nextId(world, 'receipt-epoch')}`,
       nextOrdinal: 0,
       chunks: [],
       bytes: 0,
@@ -245,29 +272,57 @@ function actorHistory(
     };
   } else if (actor.physicalLife !== life) {
     actor.physicalLife = life;
-    actor.epoch = nextId(world, 'receipt-epoch');
+    actor.epoch = `${temporal.namespace}-${nextId(world, 'receipt-epoch')}`;
     actor.nextOrdinal = 0;
     actor.captures = {};
   }
   return { state: temporal, actor };
 }
-export function temporalActorHistory(world: WorldState, actorId: string): TemporalActorHistory | undefined {
+export function temporalActorHistory(
+  world: WorldState,
+  actorId: string,
+): TemporalActorHistory | undefined {
   return actorHistory(world, actorId)?.actor;
 }
-function retainValue(world: WorldState, temporal: TemporalEvidenceState, value: TemporalValue, maxBytes: number, sharedSourceId?: string) {
+/** Restore starts a new append address space without replaying any perception. */
+export function beginTemporalReceiptEpoch(world: WorldState, namespace: string): void {
+  const temporal = world.experience?.temporal;
+  if (!temporal) return;
+  if (!namespace.trim() || namespace.length > 64) throw new Error('A receipt timeline requires its admitted namespace.');
+  temporal.namespace = namespace;
+  for (const actor of Object.values(temporal.actors)) {
+    actor.epoch = `${temporal.namespace}-${nextId(world, 'receipt-epoch')}`;
+    actor.nextOrdinal = 0;
+    actor.captures = {};
+  }
+  delete temporal.activeBoundary;
+  delete temporal.activeSource;
+}
+function retainValue(
+  world: WorldState,
+  temporal: TemporalEvidenceState,
+  value: TemporalValue,
+  maxBytes: number,
+  sharedSourceId?: string,
+) {
   const entity = sharedSourceId && entityGet(world.entities, sharedSourceId);
   const source = entity && readOnlyDraftView(entity);
   const previous = source && sourceValues.get(source)?.get(value.kind);
   const existing = previous && temporal.sources[previous.blockId]?.values[previous.valueOrdinal];
   // Reuse never reads a hidden value into evidence: the actual receiver supplied
   // the complete value first, and equality is checked against that received body.
-  if (previous && existing && equalValue(existing, value)) return { reference: previous, addedBytes: 0 };
+  if (previous && existing && equalValue(existing, value))
+    return { reference: previous, addedBytes: 0 };
   const atBoundary = boundary(world);
   let block = temporal.activeSource && temporal.sources[temporal.activeSource];
   let addedBytes = 0;
   const key = JSON.stringify(value);
   const valueBytes = encoder.encode(key).byteLength;
-  if (!block || temporal.activeBoundary !== atBoundary || (block.values.length > 0 && block.bytes + valueBytes + 1 > maxBytes)) {
+  if (
+    !block ||
+    temporal.activeBoundary !== atBoundary ||
+    (block.values.length > 0 && block.bytes + valueBytes + 1 > maxBytes)
+  ) {
     block = {
       id: nextId(world, 'temporal-source'),
       at: world.simTime,
@@ -283,8 +338,13 @@ function retainValue(world: WorldState, temporal: TemporalEvidenceState, value: 
   }
   let prepared = blockIndexes.get(world);
   if (!prepared || prepared.id !== block.id || prepared.length !== block.values.length) {
-    prepared = { id: block.id, length: block.values.length,
-      index: new Map(readOnlyDraftView(block).values.map((entry, ordinal) => [JSON.stringify(entry), ordinal])) };
+    prepared = {
+      id: block.id,
+      length: block.values.length,
+      index: new Map(
+        readOnlyDraftView(block).values.map((entry, ordinal) => [JSON.stringify(entry), ordinal]),
+      ),
+    };
     blockIndexes.set(world, prepared);
   }
   const index = prepared.index;
@@ -292,7 +352,7 @@ function retainValue(world: WorldState, temporal: TemporalEvidenceState, value: 
   if (ordinal === undefined) {
     const before = block.bytes;
     ordinal = block.values.length;
-    const copy = cloneValue(readOnlyDraftView(value));
+    const copy = freeze(cloneValue(readOnlyDraftView(value)), true);
     const previousHeader = byteLength({ ...block, values: [] });
     block.values.push(copy);
     block.bytes += valueBytes + (block.values.length > 1 ? 1 : 0);
@@ -304,7 +364,7 @@ function retainValue(world: WorldState, temporal: TemporalEvidenceState, value: 
   const reference = { blockId: block.id, valueOrdinal: ordinal };
   if (source) {
     let values = sourceValues.get(source);
-    if (!values) sourceValues.set(source, values = new Map());
+    if (!values) sourceValues.set(source, (values = new Map()));
     values.set(value.kind, reference);
   }
   return { reference, addedBytes };
@@ -333,16 +393,26 @@ export function appendTemporalReceipt(
     order: world.nextId,
     ...(input.origin ? { origin: cloneValue(input.origin) } : {}),
     subject: input.subject,
+    ...(input.subjectIdentity ? { subjectIdentity: cloneValue(input.subjectIdentity) } : {}),
     change: input.change,
     required: input.required === true,
     sourceIds: [...new Set(input.sourceIds ?? [])],
     facets: input.facets.map(({ value, sharedSourceId, ...metadata }, ordinal) => {
-      const retained = retainValue(world, temporal, temporalValue(value), policy.chunkBytes, sharedSourceId);
+      const retained = retainValue(
+        world,
+        temporal,
+        temporalValue(value),
+        policy.chunkBytes,
+        sharedSourceId,
+      );
       addedSourceBytes += retained.addedBytes;
       return { ...cloneValue(metadata), ...retained.reference, ordinal };
     }),
   };
-  const sourceBytes = input.facets.reduce((sum, facet) => sum + byteLength(temporalValue(facet.value)), 0);
+  const sourceBytes = input.facets.reduce(
+    (sum, facet) => sum + byteLength(temporalValue(facet.value)),
+    0,
+  );
   // Logical accounting charges each observer's full support even when storage shares it.
   const bytes = byteLength(receipt) + sourceBytes;
   const atBoundary = boundary(world);
@@ -364,6 +434,7 @@ export function appendTemporalReceipt(
       throughAt: receipt.at,
       subjects: [],
       sourceIds: [],
+      individualIds: [],
       sourceRefs: [],
       bytes: 0,
       count: 0,
@@ -381,11 +452,16 @@ export function appendTemporalReceipt(
   chunk.throughAt = receipt.at;
   chunk.throughOrdinal = receipt.ordinal;
   if (!chunk.subjects.includes(receipt.subject)) chunk.subjects.push(receipt.subject);
-  for (const id of receipt.sourceIds)
+  for (const id of receipt.sourceIds) if (!chunk.sourceIds.includes(id)) chunk.sourceIds.push(id);
+  for (const id of temporalReceiptIndividualIds(receipt, temporal.sources))
+    if (!chunk.individualIds.includes(id)) chunk.individualIds.push(id);
+  for (const id of temporalReceiptAliases(receipt, temporal.sources, world))
     if (!chunk.sourceIds.includes(id)) chunk.sourceIds.push(id);
   for (const facet of receipt.facets)
     if (!chunk.sourceRefs.includes(facet.blockId)) chunk.sourceRefs.push(facet.blockId);
-  const headerChange = adjustHeaderBytes(chunk, previousHeader, () => byteLength({ ...chunk, receipts: [] }));
+  const headerChange = adjustHeaderBytes(chunk, previousHeader, () =>
+    byteLength({ ...chunk, receipts: [] }),
+  );
   actor.bytes += bytes + (chunk.receipts.length > 1 ? 1 : 0) + headerChange;
   actor.count++;
   const due = chunk.fromAt + policy.maxAgeSeconds;
@@ -394,11 +470,22 @@ export function appendTemporalReceipt(
     actor.bytes > policy.maxBytes ||
     actor.count > policy.maxChanges ||
     (actor.nextDue !== null && actor.nextDue <= world.simTime);
-  chargeWork({ effects: 1, tests: input.facets.length, outputBytes: byteLength(receipt) + addedSourceBytes });
-  return { actorId, physicalLife: receipt.physicalLife, epoch: receipt.epoch, ordinal: receipt.ordinal };
+  chargeWork({
+    effects: 1,
+    tests: input.facets.length,
+    outputBytes: byteLength(receipt) + addedSourceBytes,
+  });
+  return {
+    actorId,
+    physicalLife: receipt.physicalLife,
+    epoch: receipt.epoch,
+    ordinal: receipt.ordinal,
+  };
 }
 
-export function temporalFacetInput(lease: LiveFacetSupport): TemporalCaptureInput['facets'][number] {
+export function temporalFacetInput(
+  lease: LiveFacetSupport,
+): TemporalCaptureInput['facets'][number] {
   return {
     value: readOnlyDraftView(lease.value),
     role: lease.original.facets[lease.originalOrdinal]?.role ?? 'direct',
@@ -434,35 +521,81 @@ export function captureTemporalCurrent(
   policy: TemporalRetentionPolicy,
   endingSelection: ReadonlySet<string> = new Set(),
   contactSubjects: ReadonlySet<string> = new Set(),
+  changedSubjects?: ReadonlySet<string>,
 ): Array<{ subjectId: string; receipt: TemporalReceipt; body?: LiveFacetSupport }> {
   const owned = actorHistory(world, actorId);
   if (!owned) return [];
-  const captured: Array<{ subjectId: string; receipt: TemporalReceipt; body?: LiveFacetSupport }> = [];
+  const captured: Array<{ subjectId: string; receipt: TemporalReceipt; body?: LiveFacetSupport }> =
+    [];
   const keep = new Set<string>();
   const grouped = new Map<string, LiveFacetSupport[]>();
   for (const lease of leases) {
     keep.add(lease.id);
+    if (
+      changedSubjects &&
+      !changedSubjects.has(lease.subjectId) &&
+      !newlySelected.has(lease.subjectId) &&
+      !endingSelection.has(lease.subjectId) &&
+      !(lease.value.kind === 'body' && contactSubjects.has(lease.subjectId))
+    )
+      continue;
     const reference = owned.actor.captures[lease.id];
-    const previous = reference && owned.state.sources[reference.blockId]?.values[reference.valueOrdinal];
-    if (!newlySelected.has(lease.subjectId) && !endingSelection.has(lease.subjectId) && !(lease.value.kind === 'body' && contactSubjects.has(lease.subjectId)) && previous && equalValue(previous, temporalValue(readOnlyDraftView(lease.value))))
+    const previous =
+      reference && owned.state.sources[reference.blockId]?.values[reference.valueOrdinal];
+    if (
+      !newlySelected.has(lease.subjectId) &&
+      !endingSelection.has(lease.subjectId) &&
+      !(lease.value.kind === 'body' && contactSubjects.has(lease.subjectId)) &&
+      previous &&
+      equalValue(previous, temporalValue(readOnlyDraftView(lease.value)))
+    )
       continue;
     const group = grouped.get(lease.subjectId) ?? [];
     group.push(lease);
     grouped.set(lease.subjectId, group);
   }
   for (const group of grouped.values()) {
-    appendTemporalReceipt(world, actorId, {
-      subject: group[0]!.exposure.episodeId,
-      change: endingSelection.has(group[0]!.subjectId) ? 'attention-exit' : newlySelected.has(group[0]!.subjectId) ? 'baseline' : 'change',
-      sourceIds: [...new Set(group.map((lease) => lease.original.id))],
-      facets: group.map(temporalFacetInput),
-    }, policy);
+    const supported = leases.find(
+      (lease) =>
+        lease.subjectId === group[0]!.subjectId &&
+        lease.value.kind === 'association' &&
+        lease.value.strength === 'supported',
+    )?.value;
+    const identity =
+      supported?.kind === 'association'
+        ? supported.subject
+        : leases.find(
+            (lease) => lease.subjectId === group[0]!.subjectId && lease.value.kind === 'body',
+          )?.localSubject;
+    appendTemporalReceipt(
+      world,
+      actorId,
+      {
+        subject: group[0]!.exposure.episodeId,
+        ...(identity ? { subjectIdentity: identity } : {}),
+        change: endingSelection.has(group[0]!.subjectId)
+          ? 'attention-exit'
+          : newlySelected.has(group[0]!.subjectId)
+            ? 'baseline'
+            : 'change',
+        sourceIds: [...new Set(group.map((lease) => lease.original.id))],
+        facets: group.map(temporalFacetInput),
+      },
+      policy,
+    );
     const receipt = owned.actor.chunks.at(-1)?.receipts.at(-1);
     if (receipt) {
-      captured.push({ subjectId: group[0]!.subjectId, receipt, body: group.find((lease) => lease.value.kind === 'body') });
+      captured.push({
+        subjectId: group[0]!.subjectId,
+        receipt,
+        body: group.find((lease) => lease.value.kind === 'body'),
+      });
       group.forEach((lease, index) => {
         const facet = receipt.facets[index]!;
-        owned.actor.captures[lease.id] = { blockId: facet.blockId, valueOrdinal: facet.valueOrdinal };
+        owned.actor.captures[lease.id] = {
+          blockId: facet.blockId,
+          valueOrdinal: facet.valueOrdinal,
+        };
       });
     }
   }
@@ -478,19 +611,38 @@ export function captureTemporalObservation(
   sourceIds: string[],
   required: boolean,
   policy: TemporalRetentionPolicy,
+  options: { subject?: string; ordinals?: ReadonlySet<number> } = {},
 ): TemporalReceiptLocator | undefined {
-  return appendTemporalReceipt(world, actorId, {
-    subject: observation.origin.kind === 'exposure' ? observation.origin.episodeId : observation.origin.eventId,
-    change: 'occurrence', required, sourceIds,
-    origin: cloneValue(observation.origin),
-    facets: observation.facets.map((facet) => ({
-      ...facet,
-      original: {
-        source: { family: 'native-exposure', id: observation.id, revision: observation.revision, observer: { ...observation.observer } },
-        ordinal: facet.ordinal,
-      },
-    })),
-  }, policy);
+  return appendTemporalReceipt(
+    world,
+    actorId,
+    {
+      subject:
+        options.subject ??
+        (observation.origin.kind === 'exposure'
+          ? observation.origin.episodeId
+          : observation.origin.eventId),
+      change: 'occurrence',
+      required,
+      sourceIds,
+      origin: cloneValue(observation.origin),
+      facets: observation.facets
+        .filter((facet) => !options.ordinals || options.ordinals.has(facet.ordinal))
+        .map((facet) => ({
+          ...facet,
+          original: {
+            source: {
+              family: 'native-exposure',
+              id: observation.id,
+              revision: observation.revision,
+              observer: { ...observation.observer },
+            },
+            ordinal: facet.ordinal,
+          },
+        })),
+    },
+    policy,
+  );
 }
 
 /** Server-selected cold retirement totals are applied by this same native semantic owner. */
@@ -517,70 +669,135 @@ export function retireTemporalChunks(
 export interface TemporalHistorySelection {
   entries: Array<{ receipt: TemporalReceipt; values: TemporalValue[] }>;
   incomplete: boolean;
+  hasMore?: boolean;
+}
+export interface TemporalHistoryQuery {
+  from?: number;
+  through?: number;
+  subject?: string;
+  subjects?: readonly string[];
+  physicalLife?: number;
+  epoch?: string;
+  before?: { epoch: string; ordinal: number; at: number };
+  limit?: number;
+  bytes?: number;
 }
 /** Cold callers supply only already actor-scoped selected chunks and their exact blocks. */
 export function selectTemporalHistory(
   temporal: TemporalEvidenceState | undefined,
   actorId: string,
-  query: { from?: number; through?: number; subject?: string; limit?: number; bytes?: number } = {},
+  query: TemporalHistoryQuery = {},
 ): TemporalHistorySelection {
   const actor = temporal?.actors[actorId];
-  if (!temporal || !actor) return { entries: [], incomplete: false };
-  const limit = query.limit ?? 128, maxBytes = query.bytes ?? 8192;
+  if (!temporal || !actor) return { entries: [], incomplete: true };
+  const limit = query.limit ?? 128,
+    maxBytes = query.bytes ?? 8192;
   const entries: TemporalHistorySelection['entries'] = [];
-  let bytes = 0, incomplete = actor.releasedThrough !== undefined &&
-    (query.from === undefined || query.from <= actor.releasedThrough);
-  const receipts = actor.chunks.flatMap((chunk) => chunk.actorId === actorId ? chunk.receipts : [])
-    .filter((receipt) => receipt.actorId === actorId &&
-      (query.from === undefined || receipt.at >= query.from) &&
-      (query.through === undefined || receipt.at <= query.through) &&
-      (query.subject === undefined || receipt.subject === query.subject));
+  let bytes = 0,
+    hasMore = false,
+    incomplete =
+      actor.releasedThrough !== undefined &&
+      (query.from === undefined || query.from <= actor.releasedThrough);
+  const subjects = query.subjects ?? (query.subject ? [query.subject] : []);
+  const receipts = actor.chunks
+    .flatMap((chunk) => (chunk.actorId === actorId ? chunk.receipts : []))
+    .filter(
+      (receipt) =>
+        receipt.actorId === actorId &&
+        (query.from === undefined || receipt.at >= query.from) &&
+        (query.through === undefined || receipt.at <= query.through) &&
+        (!subjects.length || subjects.includes(receipt.subject)) &&
+        (query.physicalLife === undefined || query.physicalLife === receipt.physicalLife) &&
+        (query.epoch === undefined || query.epoch === receipt.epoch) &&
+        (!query.before ||
+          receipt.at < query.before.at ||
+          (receipt.at === query.before.at &&
+            (receipt.epoch < query.before.epoch ||
+              (receipt.epoch === query.before.epoch && receipt.ordinal < query.before.ordinal)))),
+    )
+    .sort(
+      (left, right) =>
+        right.at - left.at || right.epoch.localeCompare(left.epoch) || right.ordinal - left.ordinal,
+    );
   for (const receipt of receipts) {
     const values: TemporalValue[] = [];
     for (const reference of receipt.facets) {
       const value = temporal.sources[reference.blockId]?.values[reference.valueOrdinal];
-      if (!value) { incomplete = true; continue; }
+      if (!value) {
+        incomplete = true;
+        continue;
+      }
       values.push(value);
     }
     const size = byteLength({ receipt, values });
-    if (entries.length >= limit || bytes + size > maxBytes) { incomplete = true; break; }
+    if (entries.length >= limit || bytes + size > maxBytes) {
+      incomplete = true;
+      hasMore = true;
+      break;
+    }
     if (values.length !== receipt.facets.length) continue;
     if (receipt.change === 'loss' || receipt.change === 'attention-exit') incomplete = true;
     bytes += size;
     entries.push({ receipt: cloneValue(receipt), values: cloneValue(values) });
   }
-  return { entries, incomplete };
+  return { entries: entries.reverse(), incomplete: incomplete || entries.length === 0, hasMore };
 }
 
 /** Revocation removes this actor's access; a shared body may remain owned by other witnesses. */
-export function invalidateTemporalEvidence(world: WorldState, actorId: string, sourceIds: ReadonlySet<string>): void {
+export function invalidateTemporalEvidence(
+  world: WorldState,
+  actorId: string,
+  sourceIds: ReadonlySet<string>,
+): void {
   const actor = world.experience?.temporal?.actors[actorId];
   if (!actor) return;
   for (const [id, support] of Object.entries(actor.supports ?? {}))
     if (sourceIds.has(id) || support.receipt.sourceIds.some((source) => sourceIds.has(source)))
       releaseTemporalSupport(world, actorId, id);
   for (const chunk of actor.chunks) {
-    const removed = chunk.receipts.filter((receipt) => receipt.sourceIds.some((id) => sourceIds.has(id)) ||
-      receipt.facets.some((facet) => facet.original && sourceIds.has(facet.original.source.id)));
+    const removed = chunk.receipts.filter(
+      (receipt) =>
+        receipt.sourceIds.some((id) => sourceIds.has(id)) ||
+        receipt.facets.some((facet) => facet.original && sourceIds.has(facet.original.source.id)),
+    );
     if (!removed.length) continue;
-    actor.releasedThrough = Math.max(actor.releasedThrough ?? 0, ...removed.map((receipt) => receipt.at));
+    actor.releasedThrough = Math.max(
+      actor.releasedThrough ?? 0,
+      ...removed.map((receipt) => receipt.at),
+    );
     const deleted = new Set(removed.map((receipt) => receipt.ordinal));
     chunk.receipts = chunk.receipts.filter((receipt) => !deleted.has(receipt.ordinal));
     actor.count -= removed.length;
     chunk.count = chunk.receipts.length;
     // Exact stored byte totals are recomputed only for touched resident chunks; cold rows use repository retirement.
     const previousBytes = chunk.bytes;
-    refreshChunk(chunk, world.experience!.temporal!);
+    refreshChunk(chunk, world.experience!.temporal!, world);
     actor.bytes -= previousBytes - chunk.bytes;
   }
   actor.chunks = actor.chunks.filter((chunk) => chunk.count > 0);
   actor.captures = {};
 }
 
-function refreshChunk(chunk: TemporalChunk, temporal: TemporalEvidenceState): void {
+function refreshChunk(
+  chunk: TemporalChunk,
+  temporal: TemporalEvidenceState,
+  world: WorldState,
+): void {
   chunk.subjects = [...new Set(chunk.receipts.map((receipt) => receipt.subject))];
   chunk.sourceIds = [...new Set(chunk.receipts.flatMap((receipt) => receipt.sourceIds))];
-  chunk.sourceRefs = [...new Set(chunk.receipts.flatMap((receipt) => receipt.facets.map((facet) => facet.blockId)))];
+  chunk.sourceIds = [
+    ...new Set(
+      chunk.receipts.flatMap((receipt) => temporalReceiptAliases(receipt, temporal.sources, world)),
+    ),
+  ];
+  chunk.individualIds = [
+    ...new Set(
+      chunk.receipts.flatMap((receipt) => temporalReceiptIndividualIds(receipt, temporal.sources)),
+    ),
+  ];
+  chunk.sourceRefs = [
+    ...new Set(chunk.receipts.flatMap((receipt) => receipt.facets.map((facet) => facet.blockId))),
+  ];
   chunk.count = chunk.receipts.length;
   if (chunk.receipts.length) {
     chunk.fromOrdinal = chunk.receipts[0]!.ordinal;
@@ -588,11 +805,16 @@ function refreshChunk(chunk: TemporalChunk, temporal: TemporalEvidenceState): vo
     chunk.fromAt = chunk.receipts[0]!.at;
     chunk.throughAt = chunk.receipts.at(-1)!.at;
   }
-  const supportBytes = chunk.receipts.reduce((sum, receipt) => sum + receipt.facets.reduce((n, reference) => {
-    const value = temporal.sources[reference.blockId]?.values[reference.valueOrdinal];
-    if (!value) throw new Error('Temporal retirement requires its selected source blocks.');
-    return n + byteLength(value);
-  }, 0), 0);
+  const supportBytes = chunk.receipts.reduce(
+    (sum, receipt) =>
+      sum +
+      receipt.facets.reduce((n, reference) => {
+        const value = temporal.sources[reference.blockId]?.values[reference.valueOrdinal];
+        if (!value) throw new Error('Temporal retirement requires its selected source blocks.');
+        return n + byteLength(value);
+      }, 0),
+    0,
+  );
   for (let attempt = 0; attempt < 4; attempt++) {
     const bytes = byteLength(chunk) + supportBytes;
     if (bytes === chunk.bytes) break;
@@ -610,7 +832,8 @@ export function invalidateTemporalFacets(
   const actor = temporal?.actors[actorId];
   if (!temporal || !actor) return;
   for (const chunk of actor.chunks) {
-    const previousBytes = chunk.bytes, previousCount = chunk.count;
+    const previousBytes = chunk.bytes,
+      previousCount = chunk.count;
     let changed = false;
     for (const receipt of chunk.receipts) {
       const facets = receipt.facets.filter((reference) => {
@@ -626,7 +849,7 @@ export function invalidateTemporalFacets(
     }
     if (!changed) continue;
     chunk.receipts = chunk.receipts.filter((receipt) => receipt.facets.length > 0);
-    refreshChunk(chunk, temporal);
+    refreshChunk(chunk, temporal, world);
     actor.bytes -= previousBytes - chunk.bytes;
     actor.count -= previousCount - chunk.count;
   }
@@ -635,7 +858,159 @@ export function invalidateTemporalFacets(
 }
 
 export function temporalSourceIds(receipt: TemporalReceipt): EvidenceSource[] {
-  return receipt.facets.flatMap((facet) => facet.original ? [facet.original.source] : []);
+  return receipt.facets.flatMap((facet) => (facet.original ? [facet.original.source] : []));
+}
+
+export function temporalReceiptAliases(
+  receipt: TemporalReceipt,
+  sources: TemporalEvidenceState['sources'],
+  world: WorldState,
+): string[] {
+  const aliases = new Set([...receipt.sourceIds, receipt.id]);
+  const fact = (key: ObservationFactKey) => {
+    aliases.add(key.source.id);
+    aliases.add(personalFactAlias(key.source.id, key.ordinal));
+  };
+  for (const reference of receipt.facets) {
+    aliases.add(personalFactAlias(receipt.id, reference.ordinal));
+    if (reference.original) fact(reference.original);
+    if (reference.receivedFrom) aliases.add(reference.receivedFrom.id);
+    const value = sources[reference.blockId]?.values[reference.valueOrdinal];
+    if (value?.kind === 'association')
+      for (const id of selectedRecognitionSupportSourceIds(world, value.learningSupport ?? []))
+        aliases.add(id);
+    if (value?.kind === 'claim') {
+      for (const key of value.support) fact(key);
+      for (const alias of value.supportAliases ?? []) aliases.add(alias.id);
+    }
+    if (value?.kind === 'received-motion')
+      for (const sample of [value.earlier, value.later]) {
+        fact(sample.original);
+        aliases.add(sample.confirmation.id);
+      }
+    if (value?.kind === 'physical-boundary') {
+      for (const key of [value.boundary.nearSurface?.support, value.boundary.farSurface?.support])
+        if (key) fact(key);
+    }
+  }
+  return [...aliases];
+}
+
+export function temporalReceiptIndividualIds(
+  receipt: TemporalReceipt,
+  sources: TemporalEvidenceState['sources'],
+): string[] {
+  const ids = new Set<string>();
+  if (receipt.subjectIdentity?.kind === 'individual') ids.add(receipt.subjectIdentity.individualId);
+  for (const reference of receipt.facets) {
+    const value = sources[reference.blockId]?.values[reference.valueOrdinal];
+    if (value?.kind === 'association' && value.subject.kind === 'individual')
+      ids.add(value.subject.individualId);
+  }
+  return [...ids];
+}
+
+export function temporalReceiptForSource(
+  world: WorldState,
+  actorId: string,
+  sourceId: string,
+): TemporalReceiptLocator | undefined {
+  const chunks = world.experience?.temporal?.actors[actorId]?.chunks ?? [];
+  for (let index = chunks.length - 1; index >= 0; index--)
+    for (const receipt of chunks[index]!.receipts)
+      if (receipt.sourceIds.includes(sourceId))
+        return {
+          actorId,
+          physicalLife: receipt.physicalLife,
+          epoch: receipt.epoch,
+          ordinal: receipt.ordinal,
+        };
+  return undefined;
+}
+
+/** The same source overlay fences hot and cold exact facts after correction. */
+export function temporalFacetEligible(
+  world: WorldState,
+  actorId: string,
+  reference: TemporalFacetReference,
+  value: TemporalValue,
+): boolean {
+  const forgotten = world.experience?.forgotten[actorId] ?? [];
+  const corrections = world.experience?.corrections?.[actorId] ?? {};
+  const allowed = (id: string) => !forgotten.includes(id) && !Object.hasOwn(corrections, id);
+  const factAllowed = (fact: ObservationFactKey) =>
+    fact.source.observer.actorId === actorId &&
+    allowed(fact.source.id) &&
+    allowed(personalFactAlias(fact.source.id, fact.ordinal));
+  if (
+    (reference.original && !factAllowed(reference.original)) ||
+    (reference.receivedFrom &&
+      (reference.receivedFrom.observer.actorId !== actorId || !allowed(reference.receivedFrom.id)))
+  )
+    return false;
+  if (value.kind === 'association')
+    return selectedRecognitionSupportSourceIds(world, value.learningSupport ?? []).every(allowed);
+  if (value.kind === 'claim')
+    return (
+      value.support.every(factAllowed) &&
+      (value.supportAliases ?? []).every((alias) => allowed(alias.id))
+    );
+  if (value.kind === 'received-motion')
+    return [value.earlier, value.later].every(
+      (sample) =>
+        factAllowed(sample.original) &&
+        sample.confirmation.observer.actorId === actorId &&
+        allowed(sample.confirmation.id),
+    );
+  if (value.kind === 'confirmation') {
+    const snapshot = value.snapshot;
+    return temporalFacetEligible(
+      world,
+      actorId,
+      {
+        ...reference,
+        original: {
+          source: {
+            family: 'native-exposure',
+            observer: snapshot.observer,
+            id: snapshot.original.id,
+            revision: snapshot.original.revision,
+          },
+          ordinal: snapshot.originalOrdinal,
+        },
+        receivedFrom: snapshot.confirmation,
+      },
+      temporalValue(snapshot.value),
+    );
+  }
+  return true;
+}
+
+/** Resolve an already owned receipt. Cold callers supply their separately scoped
+ * captured body at the server admission boundary instead of expanding all history. */
+export function retainedTemporalReceipt(
+  world: WorldState,
+  locator: TemporalReceiptLocator,
+): { receipt: TemporalReceipt; values: TemporalValue[] } | undefined {
+  const temporal = world.experience?.temporal;
+  const actor = temporal?.actors[locator.actorId];
+  if (!temporal || !actor) return;
+  const matches = (receipt: TemporalReceipt) =>
+    receipt.actorId === locator.actorId &&
+    receipt.physicalLife === locator.physicalLife &&
+    receipt.epoch === locator.epoch &&
+    receipt.ordinal === locator.ordinal;
+  const support = actor.supports?.[`temporal-receipt-${locator.epoch}-${locator.ordinal}`];
+  const receipt = actor.chunks.flatMap((chunk) => chunk.receipts).find(matches);
+  if (!receipt)
+    return support && matches(support.receipt)
+      ? { receipt: cloneValue(support.receipt), values: cloneValue(support.values) }
+      : undefined;
+  const values = receipt.facets.map(
+    (reference) => temporal.sources[reference.blockId]?.values[reference.valueOrdinal],
+  );
+  if (values.some((value) => !value)) return;
+  return { receipt: cloneValue(receipt), values: cloneValue(values as TemporalValue[]) };
 }
 
 export function temporalReceiptSource(receipt: TemporalReceipt): EvidenceSource {
@@ -646,23 +1021,65 @@ export function temporalReceiptSource(receipt: TemporalReceipt): EvidenceSource 
     observer: { actorId: receipt.actorId, physicalLife: receipt.physicalLife },
   };
 }
+export function isTemporalReceiptSource(source: EvidenceSource): boolean {
+  return (
+    source.family === 'native-exposure' &&
+    source.revision === 1 &&
+    /^temporal-receipt-.+-receipt-epoch-\d+-\d+$/u.test(source.id)
+  );
+}
 
 export function retainTemporalSupport(
   world: WorldState,
   locator: TemporalReceiptLocator,
-  options: { facetOrdinals?: readonly number[]; required?: boolean; maxBytes: number; maxRecords: number },
+  options: {
+    facetOrdinals?: readonly number[];
+    required?: boolean;
+    maxBytes: number;
+    maxRecords: number;
+  },
 ): TemporalSupportCapsule | undefined {
   const temporal = world.experience?.temporal;
   const actor = temporal?.actors[locator.actorId];
   if (!temporal || !actor) return;
   const id = `temporal-receipt-${locator.epoch}-${locator.ordinal}`;
   const prior = actor.supports?.[id];
-  if (prior) return prior;
-  const receipt = actor.chunks.flatMap((chunk) => chunk.receipts).find((candidate) =>
-    candidate.actorId === locator.actorId && candidate.physicalLife === locator.physicalLife &&
-    candidate.epoch === locator.epoch && candidate.ordinal === locator.ordinal);
+  if (
+    prior &&
+    options.facetOrdinals?.every((ordinal) =>
+      prior.receipt.facets.some((facet) => facet.ordinal === ordinal),
+    )
+  ) {
+    if (
+      options.required &&
+      !prior.required &&
+      !setTemporalSupportRequired(world, locator.actorId, id, true, options)
+    )
+      return;
+    return actor.supports![id];
+  }
+  const receipt = actor.chunks
+    .flatMap((chunk) => chunk.receipts)
+    .find(
+      (candidate) =>
+        candidate.actorId === locator.actorId &&
+        candidate.physicalLife === locator.physicalLife &&
+        candidate.epoch === locator.epoch &&
+        candidate.ordinal === locator.ordinal,
+    );
   if (!receipt) return;
-  const selected = options.facetOrdinals && new Set(options.facetOrdinals);
+  const selected =
+    options.facetOrdinals &&
+    new Set([
+      ...options.facetOrdinals,
+      ...(prior?.receipt.facets.map((facet) => facet.ordinal) ?? []),
+    ]);
+  if (
+    options.facetOrdinals?.some(
+      (ordinal) => !receipt.facets.some((facet) => facet.ordinal === ordinal),
+    )
+  )
+    return;
   const facets = receipt.facets.filter((facet) => !selected || selected.has(facet.ordinal));
   if (!facets.length) return;
   const values: TemporalValue[] = [];
@@ -673,29 +1090,64 @@ export function retainTemporalSupport(
   }
   const capsule: TemporalSupportCapsule = {
     receipt: {
-      ...cloneValue(receipt), facets: cloneValue(facets),
-      sourceIds: [...new Set(facets.flatMap((facet) => facet.original ? [facet.original.source.id] : []))],
+      ...cloneValue(receipt),
+      facets: cloneValue(facets),
+      sourceIds: [
+        ...new Set([
+          ...receipt.sourceIds.filter(
+            (id) => !receipt.facets.some((facet) => facet.original?.source.id === id),
+          ),
+          ...facets.flatMap((facet) => [
+            personalFactAlias(receipt.id, facet.ordinal),
+            ...(facet.original
+              ? [
+                  facet.original.source.id,
+                  personalFactAlias(facet.original.source.id, facet.original.ordinal),
+                ]
+              : []),
+          ]),
+        ]),
+      ],
     },
-    values, bytes: 0, required: options.required === true,
+    values,
+    bytes: 0,
+    required: prior?.required === true || options.required === true,
   };
   initialBytes(capsule);
   ensureExperienceAccounting(world, locator.actorId);
   const account = actor.accounts?.[capsule.required ? 'required' : 'optional'];
-  if (!account || account.count >= options.maxRecords || account.bytes + capsule.bytes > options.maxBytes) return;
+  const previousAccount = prior && actor.accounts?.[prior.required ? 'required' : 'optional'];
+  const oldBytes = previousAccount === account ? (prior?.bytes ?? 0) : 0;
+  const oldCount = previousAccount === account && prior ? 1 : 0;
+  if (
+    !account ||
+    account.count + 1 - oldCount > options.maxRecords ||
+    account.bytes + capsule.bytes - oldBytes > options.maxBytes
+  )
+    return;
+  if (prior && previousAccount) {
+    previousAccount.bytes -= prior.bytes;
+    previousAccount.count--;
+  }
   (actor.supports ??= {})[id] = capsule;
   account.bytes += capsule.bytes;
   account.count++;
-  chargeWork({ effects: 1, outputBytes: capsule.bytes });
+  chargeWork({ effects: 1, outputBytes: Math.max(0, capsule.bytes - (prior?.bytes ?? 0)) });
   return capsule;
 }
 
-export function releaseTemporalSupport(world: WorldState, actorId: string, receiptId: string): void {
+export function releaseTemporalSupport(
+  world: WorldState,
+  actorId: string,
+  receiptId: string,
+): void {
   const actor = world.experience?.temporal?.actors[actorId];
   const capsule = actor?.supports?.[receiptId];
   if (!actor || !capsule) return;
   ensureExperienceAccounting(world, actorId);
   const account = actor.accounts![capsule.required ? 'required' : 'optional'];
-  if (account.bytes < capsule.bytes || account.count < 1) throw new Error('Temporal support counters underflowed.');
+  if (account.bytes < capsule.bytes || account.count < 1)
+    throw new Error('Temporal support counters underflowed.');
   account.bytes -= capsule.bytes;
   account.count--;
   delete actor.supports![receiptId];
@@ -717,10 +1169,14 @@ export function setTemporalSupportRequired(
   const after = actor.accounts![required ? 'required' : 'optional'];
   const replacement = { ...readOnlyDraftView(capsule), required };
   initialBytes(replacement);
-  if (after.count >= limits.maxRecords || after.bytes + replacement.bytes > limits.maxBytes) return false;
-  if (before.bytes < capsule.bytes || before.count < 1) throw new Error('Temporal support counters underflowed.');
-  before.bytes -= capsule.bytes; before.count--;
-  after.bytes += replacement.bytes; after.count++;
+  if (after.count >= limits.maxRecords || after.bytes + replacement.bytes > limits.maxBytes)
+    return false;
+  if (before.bytes < capsule.bytes || before.count < 1)
+    throw new Error('Temporal support counters underflowed.');
+  before.bytes -= capsule.bytes;
+  before.count--;
+  after.bytes += replacement.bytes;
+  after.count++;
   actor.supports![receiptId] = replacement;
   return true;
 }
@@ -730,7 +1186,14 @@ export function retainedTemporalSupport(
   actorId: string,
   source: EvidenceSource,
 ): TemporalSupportCapsule | undefined {
-  if (source.observer.actorId !== actorId || source.family !== 'native-exposure' || source.revision !== 1) return;
+  if (
+    source.observer.actorId !== actorId ||
+    source.family !== 'native-exposure' ||
+    source.revision !== 1
+  )
+    return;
   const capsule = temporal?.actors[actorId]?.supports?.[source.id];
-  return capsule && capsule.receipt.physicalLife === source.observer.physicalLife ? capsule : undefined;
+  return capsule && capsule.receipt.physicalLife === source.observer.physicalLife
+    ? capsule
+    : undefined;
 }

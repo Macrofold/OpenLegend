@@ -120,6 +120,8 @@ export async function applyRecordSources(
   prepared?: PreparedMemorySources,
   state?: SavedWorld,
 ): Promise<void> {
+  if (state) memories.configureWorld(state.world);
+  else if (prepared) memories.configureAllowance(prepared.allowance);
   const affected = await memories.project(worldId, revision, changes, archive, writes);
   await records.write(worldId, revision, changes, writes);
   await memories.writeSources(worldId, changes, affected, prepared);

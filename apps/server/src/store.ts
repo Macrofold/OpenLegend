@@ -147,6 +147,8 @@ export interface SavedWorld {
 }
 
 export interface JobRecord extends AiJobView {
+  /** Bounded trusted native-cue cut, resolved only with the accepted actor choice. */
+  semanticCauses?: import('@open-legend/domain').SituationProposalBinding['semanticCauses'];
   decision?: DecisionState;
   authority?: RequestScope;
   responseReady?: boolean;
@@ -755,6 +757,7 @@ export class SqlGameRepository implements GameRepository {
   ): PreparedCommit {
     if (this.acceptedRevision !== expectedRevision)
       throw new Error('Save conflict: the committed baseline changed before preparation.');
+    this.memories.configureWorld(state.world);
     const baseline = this.acceptedState;
     return {
       baseline,
@@ -827,6 +830,8 @@ export class SqlGameRepository implements GameRepository {
       // synchronous validation needs no SQL and must not occupy its reader lane.
       assertAssetBinding(state.presentationRelease, state.presentationReleaseRevision);
       validateCurrentWorldState(state.world);
+      this.memories.configureWorld(state.world);
+      await this.memories.enforceDerivedWorld(state.world.id);
       if (historyCount !== (state.world.archivedEventCount ?? 0) + state.world.events.length)
         throw new Error(
           'Archived history coverage disagrees with the records; restore the complete database.',
@@ -892,6 +897,7 @@ export class SqlGameRepository implements GameRepository {
       ? ((await this.records.load())?.state ?? null)
       : undefined;
     if (historyProjection?.restore) this.acceptedState = restoreBaseline ?? null;
+    this.memories.configureWorld(state.world);
     const prepared = historyProjection?.prepared;
     // A prepared change set is valid only against the exact baseline it was diffed from.
     if (

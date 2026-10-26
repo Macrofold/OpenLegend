@@ -42,7 +42,14 @@ export class LexicalProjection {
   private pendingKnown = true;
   private required = false;
   private backgroundAllowed = () => true;
+  private derivedAdmission: (worldId: string, actors: Iterable<string>) => Promise<void> =
+    async () => {};
   constructor(private readonly db: SqlDatabase) {}
+  setDerivedAdmission(
+    callback: (worldId: string, actors: Iterable<string>) => Promise<void>,
+  ): void {
+    this.derivedAdmission = callback;
+  }
 
   setBackgroundAdmission(allowed: () => boolean): void {
     this.backgroundAllowed = allowed;
@@ -374,6 +381,7 @@ export class LexicalProjection {
     // Data-modifying CTEs share the statement's original snapshot. Coverage must
     // explicitly subtract the exact completed keys, not rescan as if DELETE were visible.
     if (!completed) throw new Error('Search preparation lost its current progress owner.');
+    await this.derivedAdmission(world, new Set(selected.map((row) => String(row['actor_id']))));
     this.pendingKnown = completed['ready'] !== true;
     return this.pendingKnown;
   }

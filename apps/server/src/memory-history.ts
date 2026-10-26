@@ -1,3 +1,4 @@
+import { recentHistory } from './recent-history.js';
 import { entityGet } from '@open-legend/domain';
 import type { MemoryEntryView, MemoryHistoryPage } from '@open-legend/protocol';
 import type { RetrievedMemory } from './memory-repository.js';
@@ -40,8 +41,9 @@ export async function memoryHistory(
   service: WorldService,
   actorId: string,
   scope: RequestScope,
-  request: { cursor?: string; query?: string; thoughts?: boolean },
+  request: { cursor?: string; query?: string; thoughts?: boolean; recent?: boolean },
 ): Promise<MemoryHistoryPage> {
+  if (request.recent) return recentHistory(service,actorId,scope,request);
   const permitted = () =>
     service.mayInspectPrivate(actorId, scope) &&
     !!entityGet(service.world.entities, actorId)?.actor;

@@ -758,10 +758,14 @@ export async function prepareDecision(
       );
     if (capturedSituation && !capturedSituation.valid(service.world))
       throw new Error('Received situation evidence changed during this decision.');
-    if (evidenceScope && service.store.memories && capturedSituation &&
-      !(await service.store.memories.temporalReceiptsCurrent(evidenceScope,
-        capturedSituation.history.entries.map(({ receipt }) => receipt))))
-      throw new Error('Recent personal evidence expired during this decision.');
+    if(evidenceScope && service.store.memories && capturedSituation) {
+      const locators=Object.values(capturedSituation.retentionReferences);
+      for(let offset=0;offset<locators.length;offset+=128)
+        if(!(await service.store.memories.temporalReceiptsCurrent(evidenceScope,locators.slice(offset,offset+128))))
+          throw new Error('Recent personal evidence expired during this decision.');
+    }
+    if(generation!==service.generation || (capturedSituation && !capturedSituation.valid(service.world)))
+      throw new Error('Personal evidence changed during context validation.');
   };
   await validatePrepared(false);
   const currentWorld = service.world;

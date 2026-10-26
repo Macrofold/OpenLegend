@@ -3,7 +3,12 @@ import {
   validatePerceptionEvidenceState,
 } from './perception-evidence.js';
 import { validateExperienceManifest, validPersonalSourceRef } from './experience-manifest.js';
-import { validateRememberedImpression, impressionFits } from './remembered-impressions.js';
+import {
+  validateRememberedImpression,
+  impressionFits,
+  validateExperienceRetention,
+  validatePersonalReceiptLocator,
+} from './remembered-impressions.js';
 import { validateTemporalEvidenceState } from './temporal-validation.js';
 import { validateAttentionState } from './attention.js';
 import { validateNativeResponse } from './native-response.js';
@@ -1096,6 +1101,8 @@ export function validateWorldModules(world: WorldState): void {
     for (const entry of entries) {
       validateEventEvidence(entry);
       validatePersonalOriginals(entry, actorId);
+      if (entry.retention) validateExperienceRetention(entry.retention, actorId);
+      if (entry.sourceReceipt) validatePersonalReceiptLocator(entry.sourceReceipt, actorId);
     }
   if (
     !world.timePolicy ||
@@ -1105,22 +1112,40 @@ export function validateWorldModules(world: WorldState): void {
     throw new Error('Invalid selected normal-time rate.');
   validatePerceptionEvidenceState(world, originalObservations);
   validateTemporalEvidenceState(world, originalObservations);
+  for (const [actorId, revision] of Object.entries(world.experience?.privacyRevisions ?? {}))
+    if (!isSafeRecordId(actorId) || !Number.isSafeInteger(revision) || revision < 0)
+      throw new Error('Invalid personal evidence revision.');
   for (const entity of entityValues(world.entities))
-    if (entity.actor?.attentionCapacity !== undefined &&
-      (!Number.isSafeInteger(entity.actor.attentionCapacity) || entity.actor.attentionCapacity < 1 || entity.actor.attentionCapacity > selectedAttentionPolicy(world).maximumCapacity))
+    if (
+      entity.actor?.attentionCapacity !== undefined &&
+      (!Number.isSafeInteger(entity.actor.attentionCapacity) ||
+        entity.actor.attentionCapacity < 1 ||
+        entity.actor.attentionCapacity > selectedAttentionPolicy(world).maximumCapacity)
+    )
       throw new Error('Invalid actor attention capacity.');
   for (const owner of Object.values(world.perceptionEvidence ?? {}))
     if (owner.attention !== undefined) validateAttentionState(owner.attention);
   for (const [actorId, entries] of Object.entries(world.memories))
     for (const memory of entries) {
+      if (memory.retention) validateExperienceRetention(memory.retention, actorId);
+      if (memory.sourceReceipt) validatePersonalReceiptLocator(memory.sourceReceipt, actorId);
       if (memory.actorId !== actorId) throw new Error('Foreign personal memory owner.');
-      if (!['episode', 'belief', 'commitment', 'reflection', 'impression'].includes(memory.kind) ||
-        (memory.kind === 'impression') !== (memory.impression !== undefined))
+      if (
+        !['episode', 'belief', 'commitment', 'reflection', 'impression'].includes(memory.kind) ||
+        (memory.kind === 'impression') !== (memory.impression !== undefined)
+      )
         throw new Error('Invalid personal memory kind.');
       if (memory.impression) {
         validateRememberedImpression(memory.impression, actorId, world.simTime);
-        if (!impressionFits(memory, selectedTemporalPolicy(world).impression)) throw new Error('Remembered impression exceeds installed limits.');
-        if (memory.evidence || memory.observation || memory.observations || memory.manifest || memory.obligation)
+        if (!impressionFits(memory, selectedTemporalPolicy(world).impression))
+          throw new Error('Remembered impression exceeds installed limits.');
+        if (
+          memory.evidence ||
+          memory.observation ||
+          memory.observations ||
+          memory.manifest ||
+          memory.obligation
+        )
           throw new Error('A remembered impression cannot masquerade as exact evidence.');
       }
       if (memory.evidence) {
@@ -1148,6 +1173,7 @@ export function validateWorldModules(world: WorldState): void {
     }
   for (const [actorId, entries] of Object.entries(world.experience?.summaries ?? {}))
     for (const summary of entries) {
+      if (summary.retention) validateExperienceRetention(summary.retention, actorId);
       if (
         !Array.isArray(summary.sources) ||
         summary.sources.some((source) => !validPersonalSourceRef(source))
@@ -1242,7 +1268,8 @@ export function validateWorldModules(world: WorldState): void {
   }
   validateAgency(world);
   for (const entity of entityValues(world.entities))
-    if (entity.actor?.agency.semantic !== undefined) validateSemanticContinuation(entity.actor.agency.semantic);
+    if (entity.actor?.agency.semantic !== undefined)
+      validateSemanticContinuation(entity.actor.agency.semantic);
   validateOutings(world);
   validateActionExperience(world);
   validatePractice(world);

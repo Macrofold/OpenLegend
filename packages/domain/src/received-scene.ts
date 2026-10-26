@@ -96,7 +96,9 @@ export function receivedSeparation(first: ReceivedSceneBody, second: ReceivedSce
   const a = measuredPoint(first, at), b = measuredPoint(second, at);
   if (!a || !b) return { status: 'unavailable' };
   const distance = bodySurfaceDistance(a.point, first.body, b.point, second.body), error = a.error + b.error;
-  const earlierTimes = [...new Set([first.motion?.earlier.valueMeasuredThrough, second.motion?.earlier.valueMeasuredThrough])]
+  const constantFrom = Math.max(first.sample.valueMeasuredFrom, second.sample.valueMeasuredFrom);
+  const earlierTimes = [...new Set([first.motion?.earlier.valueMeasuredThrough, second.motion?.earlier.valueMeasuredThrough,
+    ...(constantFrom < at ? [constantFrom] : [])])]
     .filter((time): time is number => time !== undefined && time < at).sort((x, y) => y - x);
   let decreaseLower: number | undefined;
   for (const time of earlierTimes) {

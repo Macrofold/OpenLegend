@@ -21,7 +21,8 @@ export const FOCUS: AttributeDefinition = {
   disclosure: 'owner',
   presentation: { icon: 'ui.inview', color: 'accent' },
   schema: { kind: 'number', min: 0, max: 100, initial: 50, unit: '' },
-  meaning: 'Focus supports sustaining detail about received surroundings. It does not change what the senses receive or guarantee understanding, safety or memory.',
+  meaning:
+    'Focus supports sustaining detail about received surroundings. It does not change what the senses receive or guarantee understanding, safety or memory.',
 };
 
 export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [

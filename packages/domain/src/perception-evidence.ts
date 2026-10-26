@@ -16,15 +16,17 @@ import { outwardStates } from './perception-frame.js';
 import { equippedItems } from './equipment.js';
 import { itemsForOwner } from './objects.js';
 import { retainObservationConfirmation } from './experience.js';
-import { currentDetailedAttention, updateAttention } from './attention.js';
+import { currentDetailedAttention, currentAttentionCues, updateAttention } from './attention.js';
 import { validateReceivedSurfacePatch, validateReceivedBoundary, validateReceivedGeometryState } from './received-geometry.js';
-import { appendTemporalReceipt, captureTemporalCurrent, temporalFacetInput, temporalReceiptSource, retainTemporalSupport, releaseTemporalSupport } from './temporal-evidence.js';
+import { appendTemporalReceipt, captureTemporalCurrent, captureTemporalObservation, temporalFacetInput, temporalReceiptSource, retainTemporalSupport, releaseTemporalSupport } from './temporal-evidence.js';
+import { refreshReceivedGeometry, evaluateAttentionRelations, currentReceivedGeometry } from './received-geometry.js';
 import { hasMemory } from './living.js';
 import { knownPlaceEvidence } from './known-place-evidence.js';
 import { validEncounterExposure, type EncounterExposure } from './places.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
 import {
   selectedBodyIndividual,
+  selectedPruneObserverIndividuals,
   selectedOrdinaryWarning,
   selectedOutwardBodyName,
   selectedRecognitionSupportSourceIds,
@@ -33,6 +35,7 @@ import {
   selectedTemporalPolicy,
   selectedAttentionContactDue,
   selectedCreditAttentionContact,
+  selectedAssociateBodyFamiliarity,
 } from './world-composition.js';
 import { freeze } from 'immer';
 import {
@@ -262,6 +265,7 @@ export interface PerceptionEvidenceOwner {
 }
 export type PerceptionEvidenceState = Record<string, PerceptionEvidenceOwner>;
 export interface EvidenceCut {
+  privacyRevision: number;
   observer: ObserverLife;
   at: number;
   lastIncludedOrder: number;
@@ -395,6 +399,7 @@ export function captureEvidenceCut(
   for (const contribution of [
     ...retained,
     ...(state?.life === life.physicalLife ? state.received : []),
+    ...currentReceivedGeometry(world, observerId).observations,
     ...current.map((facet) => facet.original),
   ]) {
     if (
@@ -413,6 +418,7 @@ export function captureEvidenceCut(
   return freeze(
     {
       observer: life,
+      privacyRevision: world.experience?.privacyRevisions?.[observerId] ?? 0,
       at: world.simTime,
       lastIncludedOrder,
       acquired: [...acquired.values()],
@@ -425,6 +431,8 @@ export function captureEvidenceCut(
  * current source revocation/correction or replacement of its receiving life fences it. */
 export function evidenceCutEligible(world: WorldState, cut: EvidenceCut): boolean {
   const observer = entityGet(world.entities, cut.observer.actorId);
+  if ((world.experience?.privacyRevisions?.[cut.observer.actorId] ?? 0) !== cut.privacyRevision)
+    return false;
   if (!observer?.actor || (observer.actor.physicalLife ?? 0) !== cut.observer.physicalLife)
     return false;
   const forgotten = new Set(world.experience?.forgotten[cut.observer.actorId] ?? []);
@@ -714,7 +722,8 @@ function finalizeLease(world: WorldState, observer: Entity, lease: LiveFacetSupp
   // Memoryless native policies already own their retained response capsule. A
   // dropped live facet does not create an unused autobiographical confirmation.
   if (!hasMemory(observer)) return;
-  if (currentDetailedAttention(world, observer.id).some((entry) => entry.sourceId === lease.subjectId))
+  if (currentDetailedAttention(world, observer.id).some((entry) => entry.sourceId === lease.subjectId &&
+    entry.exposure.episodeId === lease.exposure.episodeId))
     appendTemporalReceipt(world, observer.id, {
       subject: lease.exposure.episodeId,
       change: 'loss',
@@ -812,6 +821,8 @@ export function reconcileVisualEvidence(
 ): void {
   const state = owner(world, observer);
   const beforeAttention = new Set(currentDetailedAttention(world, observer.id).map((entry) => entry.sourceId));
+  const attentionChanges = new Set<string>();
+  const lostIndividuals = new Set<string>();
   for (const [id, gap] of Object.entries(state.gaps))
     if (gap.through < world.simTime) delete state.gaps[id];
   const eligible = new Set(subjects.map((entity) => entity.id));
@@ -823,6 +834,9 @@ export function reconcileVisualEvidence(
           (entityGet(world.entities, lease.subjectId)?.actor?.physicalLife ??
             (entityGet(world.entities, lease.subjectId)?.actor ? 0 : null)))
     ) {
+      attentionChanges.add(lease.subjectId);
+      if (lease.value.kind === 'body' && lease.localSubject?.kind === 'individual')
+        lostIndividuals.add(lease.localSubject.individualId);
       retainVisualGap(world, state, lease, episodeGraceSeconds);
       finalizeLease(world, observer, lease);
       delete state.current[key];
@@ -869,6 +883,7 @@ export function reconcileVisualEvidence(
           frame.positionAtObservation.z !== position.z ||
           frame.forwardAtObservation !== heading;
         if (location.confirmedThrough !== world.simTime || moved) {
+          if (moved) attentionChanges.add(subject.id);
           location.revision++;
           location.confirmedThrough = world.simTime;
           location.valueMeasuredFrom = world.simTime;
@@ -884,6 +899,7 @@ export function reconcileVisualEvidence(
       const motionKey = `${subject.id}:observed-motion`,
         motion = state.current[motionKey];
       if (motion && location && location.valueMeasuredThrough > motion.valueMeasuredThrough) {
+        attentionChanges.add(subject.id);
         finalizeLease(world, observer, motion);
         delete state.current[motionKey];
       }
@@ -990,6 +1006,7 @@ export function reconcileVisualEvidence(
       const previous = prior && readOnlyDraftView(prior),
         previousValue = previous && readOnlyDraftView(previous.value);
       const changed = !previousValue || JSON.stringify(previousValue) !== JSON.stringify(facet);
+      if (changed) attentionChanges.add(subject.id);
       if (
         prior &&
         previous &&
@@ -1143,6 +1160,7 @@ export function reconcileVisualEvidence(
           locationLease.valueMeasuredThrough > priorMotion.valueMeasuredThrough ||
           priorMotion.motionContinuityRevision !== locationLease?.motionContinuityRevision)
       ) {
+        attentionChanges.add(subject.id);
         finalizeLease(world, observer, priorMotion);
         delete state.current[motionKey];
       }
@@ -1197,6 +1215,7 @@ export function reconcileVisualEvidence(
     for (const kind of ['pile-contents', 'public-attributes'] as const) {
       const key = `${subject.id}:${kind}`;
       if (state.current[key] && !kinds.has(kind)) {
+        attentionChanges.add(subject.id);
         finalizeLease(world, observer, state.current[key]!);
         delete state.current[key];
       }
@@ -1208,7 +1227,38 @@ export function reconcileVisualEvidence(
         token,
       });
   }
-  reconcileAttendedTemporalEvidence(world, observer.id, beforeAttention);
+  pruneLostBodyIndividuals(world, observer.id, lostIndividuals);
+  refreshReceivedGeometry(world, observer.id);
+  const priorCues = new Set(currentAttentionCues(world, observer.id).map((cue) => cue.id));
+  reconcileAttendedTemporalEvidence(world, observer.id, beforeAttention, [], [...attentionChanges]);
+  evaluateAttentionRelations(world, observer.id);
+  const geometry = currentReceivedGeometry(world, observer.id).observations;
+  for (const cue of currentAttentionCues(world, observer.id)) {
+    if (priorCues.has(cue.id)) continue;
+    const anchor = currentDetailedAttention(world, observer.id).find((entry) => entry.key === cue.anchorKey);
+    if (!anchor) continue;
+    for (const observation of geometry) {
+      const facts = cue.proof.filter((fact) => fact.source.id === observation.id && fact.source.revision === observation.revision);
+      if (!facts.length) continue;
+      captureTemporalObservation(world, observer.id, observation, [observation.id, cue.id], false,
+        selectedTemporalPolicy(world).recent, { subject: anchor.exposure.episodeId, ordinals: new Set(facts.map((fact) => fact.ordinal)) });
+    }
+  }
+}
+
+function pruneLostBodyIndividuals(world: WorldState, observerId: string, candidates: ReadonlySet<string>): void {
+  if (!candidates.size) return;
+  const temporal = world.experience?.temporal?.actors[observerId];
+  const retained = new Set(temporal?.chunks.flatMap((chunk) => chunk.individualIds) ?? []);
+  for (const capsule of Object.values(temporal?.supports ?? {})) {
+    const subject = capsule.receipt.subjectIdentity;
+    if (subject?.kind === 'individual') retained.add(subject.individualId);
+    for (const value of capsule.values)
+      if (value.kind === 'association' && value.subject.kind === 'individual') retained.add(value.subject.individualId);
+  }
+  selectedPruneObserverIndividuals(world, observerId, {
+    releasedSourceIds: [], retainedIndividualIds: retained, candidates: [...candidates],
+  });
 }
 
 /** Selection follows the complete received phase. The transition retains both
@@ -1218,24 +1268,33 @@ export function reconcileAttendedTemporalEvidence(
   observerId: string,
   before = new Set(currentDetailedAttention(world, observerId).map((entry) => entry.sourceId)),
   directSubjects: readonly string[] = [],
+  changedSourceIds?: readonly string[],
+  creditContacts = true,
 ): void {
   const observer = entityGet(world.entities, observerId);
   if (!observer || !hasMemory(observer)) return;
-  const result = updateAttention(world, observerId, { directSubjects });
+  const result = updateAttention(world, observerId, { directSubjects, changedSourceIds });
   const after = new Set(result.after);
   const selected = new Set([...before, ...after]);
-  const leases = Object.values(world.perceptionEvidence?.[observerId]?.current ?? {})
-    .filter((lease) => selected.has(lease.subjectId));
+  const current = world.perceptionEvidence?.[observerId]?.current;
+  const selectedExposures = new Map([...selected].flatMap((id) => {
+    const body = current?.[`${id}:body`];
+    return body ? [[id, body.exposure.episodeId] as const] : [];
+  }));
+  const leases = Object.values(current ? readOnlyDraftView(current) : {})
+    .map((lease) => readOnlyDraftView(lease)).filter((lease) => selectedExposures.get(lease.subjectId) === lease.exposure.episodeId);
   const contacts = new Map<string, ObserverSubject>();
   for (const lease of leases) {
-    if (lease.value.kind !== 'body' || lease.confirmedThrough !== world.simTime) continue;
+    if (!creditContacts || lease.value.kind !== 'body' || lease.confirmedThrough !== world.simTime) continue;
     const subject = currentBodyAssociation(world, observerId, lease.subjectId) ?? lease.localSubject;
     if (subject && selectedAttentionContactDue(world, observerId, subject, lease.confirmedThrough))
       contacts.set(lease.subjectId, subject);
   }
   const captured = captureTemporalCurrent(world, observerId, leases,
     new Set([...after].filter((id) => !before.has(id))), selectedTemporalPolicy(world).recent,
-    new Set([...before].filter((id) => !after.has(id))), new Set(contacts.keys()));
+    new Set([...before].filter((id) => !after.has(id))), new Set(contacts.keys()),
+    changedSourceIds ? new Set(changedSourceIds) : undefined);
+  const creditedSources: string[] = [];
   for (const entry of captured) {
     const subject = contacts.get(entry.subjectId);
     if (!subject || !entry.body || entry.body.confirmedThrough !== world.simTime) continue;
@@ -1251,6 +1310,26 @@ export function reconcileAttendedTemporalEvidence(
       support: [JSON.stringify({ source: temporalReceiptSource(entry.receipt), ordinal })],
     });
     if (!credited) releaseTemporalSupport(world, observerId, entry.receipt.id);
+    else creditedSources.push(entry.subjectId);
+  }
+  if (creditedSources.length) {
+    const rescored = updateAttention(world, observerId, { changedSourceIds: creditedSources });
+    const final = new Set(rescored.after);
+    const entering = new Set([...final].filter((id) => !after.has(id)));
+    const exiting = new Set([...after].filter((id) => !final.has(id)));
+    if (entering.size || exiting.size) {
+      const affected = new Set([...entering, ...exiting]);
+      const exposures = new Map([...affected].flatMap((id) => {
+        const body = current?.[`${id}:body`];
+        return body ? [[id, body.exposure.episodeId] as const] : [];
+      }));
+      const changed = Object.values(current ? readOnlyDraftView(current) : {}).map((lease) => readOnlyDraftView(lease))
+        .filter((lease) => exposures.get(lease.subjectId) === lease.exposure.episodeId);
+      // Credit may change prominence. Retain the newly selected current baseline before
+      // publication, without recursively awarding contacts for an attention-only change.
+      captureTemporalCurrent(world, observerId, changed, entering,
+        selectedTemporalPolicy(world).recent, exiting, undefined, affected);
+    }
   }
 }
 
@@ -1264,13 +1343,16 @@ export function endCurrentEvidence(
   const state = world.perceptionEvidence?.[observerId];
   if (!state) return;
   const observer = entityGet(world.entities, observerId);
+  const lostIndividuals = new Set<string>();
   for (const [key, lease] of Object.entries(state.current))
     if (!modality || lease.modality === modality) {
+      if (lease.value.kind === 'body' && lease.localSubject?.kind === 'individual') lostIndividuals.add(lease.localSubject.individualId);
       retainVisualGap(world, state, lease, episodeGraceSeconds);
       if (observer?.actor && state.life === (observer.actor.physicalLife ?? 0))
         finalizeLease(world, observer, lease);
       delete state.current[key];
     }
+  pruneLostBodyIndividuals(world, observerId, lostIndividuals);
   reconcileAttendedTemporalEvidence(world, observerId);
 }
 
@@ -1507,7 +1589,7 @@ export function acquireAwarenessObservation(
         facet.value.strength === 'supported' &&
         JSON.stringify(facet.value.subject) === JSON.stringify(recognition.subject),
     );
-    if (ordinal >= 0)
+    if (ordinal >= 0) {
       owner(world, observer).current[`${binding!.entityId}:association`] = {
         id: nextId(world, 'perception-lease'),
         revision: 1,
@@ -1526,6 +1608,9 @@ export function acquireAwarenessObservation(
         confirmedFrom: event.at,
         confirmedThrough: event.at,
       };
+      selectedAssociateBodyFamiliarity(world, observer.id, binding!.entityId);
+      reconcileAttendedTemporalEvidence(world, observer.id, undefined, [binding!.entityId], [binding!.entityId]);
+    }
   }
   return contribution;
 }
@@ -1876,6 +1961,8 @@ export function validateObservationContribution(
         facet.acquiredAt > observation.acquiredAt ||
         !facet.value ||
         ![
+          'surface-patch',
+          'physical-boundary',
           'detected',
           'location',
           'body',

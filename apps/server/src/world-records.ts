@@ -115,12 +115,28 @@ function recordIndexName(table: string, columns: string[], unique = false): stri
 
 export class WorldRecords {
   constructor(readonly db: SqlDatabase) {}
-  private readonly retirements = new WeakMap<SavedWorld, Map<string, string[]>>();
-  stageRetirements(state: SavedWorld, rows: Map<string, string[]>): void {
+  private readonly retirements = new WeakMap<
+    SavedWorld,
+    { rows: Map<string, string[]>; positions: Map<string, Map<string, number>> }
+  >();
+  stageRetirements(
+    state: SavedWorld,
+    rows: Map<string, string[]>,
+    positions = new Map<string, Map<string, number>>(),
+  ): void {
     for (const table of rows.keys())
-      if (!['mind_awareness', 'mind_memories', 'mind_summaries', 'mind_temporal_chunks', 'mind_temporal_sources', 'mind_temporal_supports'].includes(table))
+      if (
+        ![
+          'mind_awareness',
+          'mind_memories',
+          'mind_summaries',
+          'mind_temporal_chunks',
+          'mind_temporal_sources',
+          'mind_temporal_supports',
+        ].includes(table)
+      )
         throw new Error('Unsupported personal-history retirement.');
-    this.retirements.set(state, rows);
+    this.retirements.set(state, { rows, positions });
   }
   needsHotPrune = false;
   private currentContributionsPredicate(alias = ''): string {
@@ -553,10 +569,33 @@ export class WorldRecords {
       }
     };
     visit(WORLD_RECORD_SCHEMA, before, after, [], '', '', 0);
-    const retired = this.retirements.get(after);
+    const retirement = this.retirements.get(after),
+      retired = retirement?.rows;
     if (retired?.size) {
       changes.expired = retired;
       for (const [table, ids] of retired) {
+        // A bounded cold-retention read already proved these exact rows exist.
+        // Their replacement cannot be treated as a newly allocated identity.
+        for (const row of changes.writes.get(table) ?? []) {
+          const position = retirement!.positions.get(table)?.get(row.id);
+          if (position === undefined) continue;
+          row.create = false;
+          row.position = position;
+          const path = JSON.parse(row.id) as string[];
+          const values =
+            table === 'mind_memories'
+              ? after.world.memories[path[2]!]
+              : table === 'mind_awareness'
+                ? after.world.experience?.awareness[path[3]!]
+                : table === 'mind_summaries'
+                  ? after.world.experience?.summaries[path[3]!]
+                  : undefined;
+          const placement = values && historyPositions.get(values);
+          if (placement) {
+            placement.positions.set(path.at(-1)!, position);
+            placement.next = Math.max(placement.next, position + 1);
+          }
+        }
         const written = new Set((changes.writes.get(table) ?? []).map((row) => row.id));
         const deletes = new Set(changes.deletes.get(table) ?? []);
         for (const id of ids) if (!written.has(id)) deletes.add(id);
@@ -672,7 +711,10 @@ export class WorldRecords {
     // Startup recovery loads the simulation working set. Ordinary feature reads use
     // scoped repositories below, not this complete reconstruction path.
     for (const table of RECORD_NODES.keys()) {
-      if (active && ['mind_temporal_chunks', 'mind_temporal_sources', 'mind_temporal_supports'].includes(table)) {
+      if (
+        active &&
+        ['mind_temporal_chunks', 'mind_temporal_sources', 'mind_temporal_supports'].includes(table)
+      ) {
         groups.set(table, new Map());
         continue;
       }
@@ -779,29 +821,40 @@ export class WorldRecords {
       const temporal = state.world.experience.temporal;
       const maximum = selectedTemporalPolicy(state.world).recent.residentChunks;
       const references = new Set<string>();
-      const chunks = await this.db.prepare(`SELECT c.id,c.actor_id,c.position,c.payload
+      const chunks = await this.db
+        .prepare(
+          `SELECT c.id,c.actor_id,c.position,c.payload
         FROM mind_temporal_actors a CROSS JOIN LATERAL (
           SELECT id,actor_id,position,payload FROM mind_temporal_chunks
           WHERE world_id=a.world_id AND actor_id=a.actor_id ORDER BY position DESC LIMIT ?
-        ) c WHERE a.world_id=? ORDER BY c.actor_id,c.position`).all(maximum, head.worldId);
+        ) c WHERE a.world_id=? ORDER BY c.actor_id,c.position`,
+        )
+        .all(maximum, head.worldId);
       const byActor = new Map<string, typeof chunks>();
       for (const row of chunks) {
         const actorId = String(row['actor_id']);
-        const selected = byActor.get(actorId) ?? []; selected.push(row); byActor.set(actorId,selected);
+        const selected = byActor.get(actorId) ?? [];
+        selected.push(row);
+        byActor.set(actorId, selected);
       }
       for (const [actorId, actor] of Object.entries(temporal.actors)) {
         const selected = byActor.get(actorId) ?? [];
         actor.chunks = selected.map((row) => JSON.parse(String(row['payload'])) as TemporalChunk);
         const parent = JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId]);
         historyPositions.set(actor.chunks, {
-          positions: new Map(actor.chunks.map((chunk, index) => [chunk.id, Number(selected[index]!['position'])])),
+          positions: new Map(
+            actor.chunks.map((chunk, index) => [chunk.id, Number(selected[index]!['position'])]),
+          ),
           next: nextPositions.get(`mind_temporal_chunks:${parent}`) ?? actor.chunks.length,
         });
         for (const chunk of actor.chunks) for (const id of chunk.sourceRefs) references.add(id);
         for (const reference of Object.values(actor.captures)) references.add(reference.blockId);
       }
       for (let offset = 0, ids = [...references]; offset < ids.length; offset += 800)
-        for (const row of await this.db.prepare('SELECT payload FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])')
+        for (const row of await this.db
+          .prepare(
+            'SELECT payload FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
+          )
           .all(head.worldId, ids.slice(offset, offset + 800))) {
           const source = JSON.parse(String(row['payload'])) as TemporalSourceBlock;
           temporal.sources[source.id] = source;

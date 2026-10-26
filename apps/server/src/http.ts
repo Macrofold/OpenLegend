@@ -3066,6 +3066,7 @@ async function initializeGameServer(
                   cursor: z.string().max(2048).optional(),
                   query: z.string().max(200).optional(),
                   thoughts: z.boolean().optional(),
+                  recent: z.boolean().optional(),
                 })
                 .strict()
                 .parse(body);

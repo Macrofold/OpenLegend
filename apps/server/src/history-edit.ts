@@ -1,4 +1,10 @@
-import type { WorldEvent, Appraisal } from '@open-legend/domain';
+import type {
+  WorldEvent,
+  Appraisal,
+  TemporalChunk,
+  TemporalSourceBlock,
+  TemporalReceiptLocator,
+} from '@open-legend/domain';
 import { digest } from './content-digest.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import { historyKey, historyPositions, historyMapPositions } from './history-residency.js';
@@ -6,6 +12,7 @@ import { MEMORY_SOURCE_TABLES } from './memory-repository.js';
 
 export interface HistoryEditSelection {
   eventIds?: string[];
+  receipts?: readonly TemporalReceiptLocator[];
   sources?: { actorId: string; sourceId: string }[];
 }
 export interface PreparedHistoryEdit {
@@ -75,6 +82,24 @@ export async function prepareHistoryEdit(
         ...rows.map((r) => ({
           actor_id: String(r['actor_id']),
           source_id: String(r['source_id']),
+        })),
+      );
+    }
+    if (selection.receipts?.length) {
+      if (selection.receipts.length > 8192)
+        throw new Error('Receipt correction exceeds bounded preparation.');
+      const impressions = await db
+        .prepare(
+          `SELECT DISTINCT s.actor_id,s.owner_id AS source_id FROM mind_impression_spans s
+        JOIN jsonb_to_recordset(?::jsonb) q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint)
+          ON s.actor_id=q."actorId" AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch
+            AND s.first_ordinal<=q.ordinal AND s.last_ordinal>=q.ordinal WHERE s.world_id=?`,
+        )
+        .all(JSON.stringify(selection.receipts), worldId);
+      roots.push(
+        ...impressions.map((row) => ({
+          actor_id: String(row['actor_id']),
+          source_id: String(row['source_id']),
         })),
       );
     }
@@ -192,6 +217,79 @@ export async function prepareHistoryEdit(
         else
           world.experience.summaries[actorId] = next as (typeof world.experience.summaries)[string];
       }
+    }
+    // A creator correction must reach cold personal receipts too. Select the actor's
+    // indexed source aliases before loading packed chunks; shared blocks grant no access.
+    if (world.experience.temporal) {
+      const selected = await db
+        .prepare(
+          `SELECT t.actor_id,t.payload,t.position,octet_length(t.payload) AS bytes
+        FROM mind_temporal_chunks t WHERE t.world_id=? AND EXISTS (
+          SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text)
+          WHERE a.actor_id=t.actor_id AND t.source_ids @> ARRAY[a.source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
+        )
+        .all(worldId, scope);
+      if (
+        selected.length > 8192 ||
+        selected.reduce((sum, row) => sum + Number(row['bytes']), 0) > 4 * 1024 * 1024
+      )
+        throw new Error('Complete personal receipt correction exceeds bounded preparation.');
+      const temporal = {
+        ...world.experience.temporal,
+        actors: { ...world.experience.temporal.actors },
+        sources: { ...world.experience.temporal.sources },
+      };
+      const sources = new Set<string>(),
+        owners = new Map<string, typeof selected>();
+      for (const row of selected) {
+        const actorId = String(row['actor_id']),
+          rows = owners.get(actorId) ?? [];
+        rows.push(row);
+        owners.set(actorId, rows);
+      }
+      for (const [actorId, rows] of owners) {
+        const actor = temporal.actors[actorId];
+        if (!actor) throw new Error('Cold personal receipt owner is unavailable.');
+        const placement = historyPositions.get(actor.chunks),
+          positions = new Map(
+            placement?.positions ?? actor.chunks.map((chunk, index) => [chunk.id, index]),
+          );
+        const chunks = new Map(actor.chunks.map((chunk) => [chunk.id, chunk]));
+        for (const row of rows) {
+          const chunk = JSON.parse(String(row['payload'])) as TemporalChunk;
+          chunks.set(chunk.id, chunk);
+          positions.set(chunk.id, Number(row['position']));
+          for (const id of chunk.sourceRefs) sources.add(id);
+        }
+        const merged = [...chunks.values()].sort(
+          (a, b) => positions.get(a.id)! - positions.get(b.id)!,
+        );
+        historyPositions.set(merged, {
+          positions,
+          next: placement?.next ?? Math.max(...rows.map((row) => Number(row['position']) + 1)),
+          complete: placement?.complete,
+        });
+        temporal.actors[actorId] = { ...actor, chunks: merged };
+      }
+      const missing = [...sources].filter((id) => !temporal.sources[id]);
+      if (missing.length) {
+        const size = await db
+          .prepare(
+            'SELECT SUM(octet_length(payload)) AS bytes FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
+          )
+          .get(worldId, missing);
+        if (Number(size?.['bytes'] ?? 0) > 4 * 1024 * 1024)
+          throw new Error('Complete personal source correction exceeds bounded preparation.');
+        for (const row of await db
+          .prepare(
+            'SELECT payload FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
+          )
+          .all(worldId, missing)) {
+          const source = JSON.parse(String(row['payload'])) as TemporalSourceBlock;
+          temporal.sources[source.id] = source;
+        }
+      }
+      world.experience.temporal = temporal;
     }
     // Experience correction intentionally clears all appraisals for affected actors,
     // including terminal records. Their old private attribution must not survive in SQL.

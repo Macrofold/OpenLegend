@@ -4,6 +4,7 @@ import { recordSemanticChange } from './dependencies.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { nextId } from './data.js';
 import { outcome } from './events.js';
+import { adjustRetainedKnowledgeAccounting } from './remembered-impressions.js';
 import type { KnowledgeRecord } from './types.js';
 
 export type ObserverSubject =
@@ -166,7 +167,7 @@ export function editKnowledge(
     return outcome(true, 'knowledge-unchanged', 'Knowledge is already current.');
   const documents = ((world.actorKnowledge ??= {})[actorId] ??= {});
   // Keep empty documents as revisioned tombstones: an old create cannot undo a later deletion.
-  documents[knowledgeKey(edit.subjectId)] = {
+  const next: KnowledgeDocument = {
     origin: 'actor-edit',
     subjectId: edit.subjectId,
     text: edit.text,
@@ -176,6 +177,9 @@ export function editKnowledge(
       ? [...new Set(evidenceIds.length ? evidenceIds : (current?.evidenceIds ?? []))]
       : [],
   };
+  if (!adjustRetainedKnowledgeAccounting(world, actorId, current?.origin==='actor-edit'?current:undefined, next))
+    return outcome(false, 'knowledge-capacity', 'Personal knowledge is full; the previous document was retained.');
+  documents[knowledgeKey(edit.subjectId)] = next;
   advanceKnowledgeRevision(world, actorId);
   return outcome(true, 'knowledge-edited', 'Knowledge updated.');
 }

@@ -429,7 +429,31 @@ function sealNativeEvidence(world: WorldState): void {
   if (!isDraft(world) || !world.perceptionEvidence) return;
   const value = world.perceptionEvidence;
   if (Object.isFrozen(readOnlyDraftView(value))) return;
-  world.perceptionEvidence = frozenRecord(isDraft(value) ? current(value) : value);
+  world.perceptionEvidence = immutableDraftSnapshot(value);
+}
+
+/** Resolve a JSON DAG once, rather than Immer.current's repeated copying of a shared
+ * observation through every lease/motion/support path. The latest draft view avoids
+ * creating unread child proxies; frozen originals are already immutable authority.
+ * Keep this at the existing publication boundary, never as a second writable store. */
+function immutableDraftSnapshot<T>(value: T, memo = new WeakMap<object, object>()): T {
+  if (!value || typeof value !== 'object') return value;
+  const draft = isDraft(value);
+  const latest = draft ? readOnlyDraftView(value) : value;
+  if (Object.isFrozen(latest)) return latest;
+  const known = memo.get(latest);
+  if (known) return known as T;
+  const prototype = Object.getPrototypeOf(latest);
+  if (prototype !== Object.prototype && prototype !== null && !Array.isArray(latest))
+    return frozenRecord(isDraft(value) ? current(value) : value);
+  const result = Array.isArray(latest) ? new Array(latest.length) : Object.create(prototype);
+  memo.set(latest, result);
+  for (const key of Object.keys(latest)) {
+    const child = immutableDraftSnapshot((latest as Record<string, unknown>)[key], memo);
+    if (key === '__proto__') Object.defineProperty(result,key,{value:child,enumerable:true,writable:true,configurable:true});
+    else result[key] = child;
+  }
+  return Object.freeze(result) as T;
 }
 export function draftWorld(
   world: WorldState,

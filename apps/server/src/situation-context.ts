@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import {
   captureEvidenceCut, evidenceCutEligible, currentDetailedAttention, captureAttentionPresentation,
-  currentObservedFacets, currentReceivedGeometry, receivedScene, receivedNear, receivedSeparation, selectedAttentionPolicy,
+  currentObservedFacets, currentReceivedGeometry, receivedScene, receivedNear, receivedSeparation, receivedBoundarySeparation, selectedAttentionPolicy,
   type WorldState, type TemporalHistorySelection, type TemporalValue, type TemporalReceiptLocator,
 } from '@open-legend/domain';
-import { entityHandle, permittedSourceHandle, projectEntityMarkers } from './entity-references.js';
+import { entityHandle, evidenceSourceHandle, permittedSourceHandle, projectEntityMarkers } from './entity-references.js';
 import { currentFacetForModel, facetValueForModel, observationForModel } from './experience-context.js';
 import type { BoundsQueryCursor } from '@open-legend/spatial';
 
@@ -55,19 +55,21 @@ export function captureSituation(world: WorldState, actorId: string, jobId: stri
   const references = new Map([...scene.bodies.keys()].map((id) => [entityHandle(world, actorId, id), id]));
   let cover = scene.index.cover(policy.maxRows - policy.staticRows - policy.discoveryRows, policy.nodeVisits);
   const regions = new Map(cover.rows.map((row) => [permittedSourceHandle(world, actorId, ['region', jobId, row.key]), row.key]));
+  const frames:unknown[]=[];const frameIds=new Map<string,number>();
+  const frameReference=(frame:unknown)=>{const key=JSON.stringify(frame);let id=frameIds.get(key);if(id===undefined){id=frames.length;frameIds.set(key,id);frames.push(frame);}return id;};
   const detailIds = new Set(entries.map((entry) => entry.sourceId));
   const bodyFacts = (id: string) => {
     const facets = currentObservedFacets(world, actorId, id);
     const rendered = facets.filter(facet => facet.value.kind !== 'perceived-feature').map((facet) => {
-      const projected = currentFacetForModel(world, actorId, facet);
+
       // Current motion carries exact received endpoints, not two recursively repeated accounts.
       const value = facet.value.kind === 'observed-motion' ? {
         kind: facet.value.kind, correspondence: facet.value.correspondence,
-        earlier: { location: facet.value.earlier.value.location, frame: facet.value.earlier.value.frame,
+        earlier: { location: facet.value.earlier.value.location, frame: frameReference(facet.value.earlier.value.frame),
           measuredFrom: facet.value.earlier.valueMeasuredFrom, measuredThrough: facet.value.earlier.valueMeasuredThrough },
-        later: { location: facet.value.later.value.location, frame: facet.value.later.value.frame,
+        later: { location: facet.value.later.value.location, frame: frameReference(facet.value.later.value.frame),
           measuredFrom: facet.value.later.valueMeasuredFrom, measuredThrough: facet.value.later.valueMeasuredThrough },
-      } : projected.value;
+      } : facet.value.kind==='location' ? {...facet.value,frame:frameReference(facet.value.frame)} : facetValueForModel(world,actorId,facet.value,facet.original.id);
       return { reference: permittedSourceHandle(world, actorId, ['current-fact', facet.original.id, facet.originalOrdinal]),
         value, measuredFrom: facet.valueMeasuredFrom, measuredThrough: facet.valueMeasuredThrough,
         acquiredAt: facet.valueAcquiredAt, confirmedThrough: facet.confirmedThrough, modality: facet.modality };
@@ -97,6 +99,7 @@ export function captureSituation(world: WorldState, actorId: string, jobId: stri
     discoveryBytes += bytes; discovery.push(row); presentedKeys.push(key);
   }
   const staticRows: unknown[] = [];
+  const observationReferences:Record<string,import('@open-legend/domain').ObservationContribution>={};
   let staticBytes = 0;
   // Boundaries go first; their support references remain evidence, not disclosed world IDs.
   const staticObservations = [...geometry.observations].sort((a, b) =>
@@ -106,38 +109,57 @@ export function captureSituation(world: WorldState, actorId: string, jobId: stri
     const row = observationForModel(world, actorId, observation), size = Buffer.byteLength(JSON.stringify(row));
     if (staticBytes + size > policy.staticBytes) continue;
     staticRows.push(row); staticBytes += size;
+    observationReferences[row.source]=observation;
   }
-  const attentionReferences = Object.fromEntries(Object.entries(world.perceptionEvidence?.[actorId]?.attention?.candidates ?? {})
+  const allAttentionReferences = Object.fromEntries(Object.entries(world.perceptionEvidence?.[actorId]?.attention?.candidates ?? {})
     .filter(([, candidate]) => references.has(entityHandle(world, actorId, candidate.sourceId)))
     .map(([key, candidate]) => [entityHandle(world, actorId, candidate.sourceId), key]));
+  const attentionReferences=Object.fromEntries([...detailed,...discovery].map(row=>[row.reference,allAttentionReferences[row.reference]!]).filter(([,key])=>key!==undefined));
   const retentionReferences: Record<string, TemporalReceiptLocator> = {};
+  const receiptDetails:Record<string,TemporalHistorySelection['entries'][number]>={};
   const bindHistory = (selection: TemporalHistorySelection) => {
-    for (const {receipt} of selection.entries) retentionReferences[permittedSourceHandle(world, actorId, ['receipt', receipt.physicalLife, receipt.epoch, receipt.ordinal])] =
-      { actorId, physicalLife: receipt.physicalLife, epoch: receipt.epoch, ordinal: receipt.ordinal };
+    for (const entry of selection.entries) {
+      const receipt=entry.receipt, handle=permittedSourceHandle(world,actorId,['receipt',receipt.physicalLife,receipt.epoch,receipt.ordinal]);
+      retentionReferences[handle]={actorId,physicalLife:receipt.physicalLife,epoch:receipt.epoch,ordinal:receipt.ordinal};
+      receiptDetails[handle]=entry;
+    }
   };
   bindHistory(history);
+  const boundaries=geometry.observations.flatMap(observation=>observation.facets.flatMap(facet=>facet.value.kind==='physical-boundary' ? [{observation,boundary:facet.value.boundary}] : []));
+  let initialVisits=0;
+  const relations=entries.flatMap((entry,index)=>{
+    const anchor=scene.bodies.get(entry.sourceId);if(!anchor)return [];
+    const allowance=Math.min(policy.perAnchorVisits,Math.floor((policy.initialVisits-initialVisits)/(entries.length-index)));
+    const nearby=receivedNear(scene,anchor,selectedAttentionPolicy(world).relation.body.clear,Math.floor(allowance/2));
+    initialVisits+=nearby.visited;
+    const bodies=nearby.values.map(body=>({reference:entityHandle(world,actorId,body.sourceId),...receivedSeparation(anchor,body)}))
+      .sort((a,b)=>(a.lower??Infinity)-(b.lower??Infinity)).slice(0,2);
+    const remaining=Math.max(0,allowance-nearby.visited), candidates=boundaries.slice(0,remaining);
+    initialVisits+=candidates.length;
+    const edges=candidates.map(({observation,boundary})=>({reference:evidenceSourceHandle(world,actorId,{family:'native-exposure',observer:observation.observer,id:observation.id,revision:observation.revision}),
+      ...receivedBoundarySeparation(anchor,boundary,{from:observation.acquiredAt,through:geometry.supportedThrough})}))
+      .sort((a,b)=>(a.lower??Infinity)-(b.lower??Infinity)).slice(0,2);
+    return [{anchor:entityHandle(world,actorId,entry.sourceId),bodies,boundaries:edges,
+      coverage:nearby.status==='complete' && candidates.length===boundaries.length && geometry.complete ? 'complete-received' : 'partial'}];
+  });
   const packet = {
-    measuredAt: world.simTime, units: { space: 'metres', time: 'simulation-seconds', frame: 'received-world-Y-up' },
+    measuredAt: world.simTime, frames, frameEncoding:'Location/motion frame is an index into frames; coordinates remain received world positions.', units: { space: 'metres', time: 'simulation-seconds', frame: 'received-world-Y-up' },
     broad: cover.rows.map((row) => ({ reference: permittedSourceHandle(world, actorId, ['region', jobId, row.key]), count: row.count, bounds: row.bounds, detail: 'unexpanded' })),
     nonlocalized: { count: scene.nonlocalized, detail: 'not-spatially-localized' },
     static: { facts: staticRows, coverage: geometry.complete && staticRows.length === geometry.observations.length ? 'complete-received' : 'partial' },
-    detailed, discovery, recent: temporalHistoryForModel(world, actorId, history),
-    coverage: { bodies: scene.bodies.size, broadRows: cover.rows.length, hierarchyVisits: cover.visited,
-      unconsideredDescriptions: Math.max(0, waiting.length - presentedKeys.length), omittedOptionalFacets:0, discoveryRows:discovery.length },
+    detailed, relations, discovery, recent: temporalHistoryForModel(world, actorId, history),
+    coverage: { bodies: scene.bodies.size, broadRows: cover.rows.length, hierarchyVisits: cover.visited,relationVisits:initialVisits,
+      unconsideredDescriptions: Math.max(0, waiting.length - presentedKeys.length), omittedOptionalFacets:0,omittedDetailedSubjects:0,relationRows:relations.length, discoveryRows:discovery.length },
   };
   const currentBytes = () => Buffer.byteLength(JSON.stringify({ ...packet, recent: undefined }));
   // Presence stays complete while optional expansion is narrowed. A larger authored
   // description cannot make an ordinary crowded scene impossible to consider.
-  while (currentBytes() > policy.maxBytes && packet.discovery.length) {
-    const removed=packet.discovery.pop()!;
-    const key=attentionReferences[removed.reference];
-    const index=key ? presentedKeys.indexOf(key) : -1;
-    if(index>=0) presentedKeys.splice(index,1);
-  }
   for(let rows=Math.floor(packet.broad.length/2);currentBytes()>policy.maxBytes && rows>=1;rows=Math.floor(rows/2)) {
     cover=scene.index.cover(rows,policy.nodeVisits);
     packet.broad=cover.rows.map(row=>({reference:permittedSourceHandle(world,actorId,['region',jobId,row.key]),count:row.count,bounds:row.bounds,detail:'unexpanded'}));
   }
+  while(currentBytes()>policy.maxBytes && packet.relations.length)packet.relations.pop();
+  let omittedDetailedSubjects=0;
   let omittedFacets=0;
   for(const row of [...packet.detailed].reverse()) {
     for(let i=row.facts.facts.length-1;currentBytes()>policy.maxBytes && i>=0;i--) {
@@ -149,13 +171,24 @@ export function captureSituation(world: WorldState, actorId: string, jobId: stri
       if(at>=0) presentedKeys.splice(at,1);
     }
   }
-  Object.assign(packet.coverage,{omittedOptionalFacets:omittedFacets,discoveryRows:packet.discovery.length});
-  if(currentBytes()>policy.maxBytes) throw new Error('Received authored descriptions exceed the scene allowance.');
+  while(currentBytes()>policy.maxBytes && packet.detailed.length) {
+    // Keep the discovery lane; unfamiliar quiet content must not lose its reserved turn.
+    let index=packet.detailed.length-1;
+    while(index>=0 && entries.find(entry=>entry.sourceId===references.get(packet.detailed[index]!.reference))?.basis==='discovery')index--;
+    const [removed]=packet.detailed.splice(index<0?packet.detailed.length-1:index,1);
+    const key=removed&&attentionReferences[removed.reference];
+    if(removed)delete attentionReferences[removed.reference];
+    const at=key?presentedKeys.indexOf(key):-1;if(at>=0)presentedKeys.splice(at,1);
+    omittedDetailedSubjects++;
+  }
+  Object.assign(packet.coverage,{omittedOptionalFacets:omittedFacets,omittedDetailedSubjects,relationRows:packet.relations.length,discoveryRows:packet.discovery.length});
+  if(currentBytes()>policy.maxBytes) throw new Error('Reserved received context exceeds the scene allowance.');
   regions.clear();
   for(const row of cover.rows) regions.set(permittedSourceHandle(world,actorId,['region',jobId,row.key]),row.key);
   packet.coverage.broadRows=cover.rows.length;
   packet.coverage.hierarchyVisits=cover.visited;
   const presented = captureAttentionPresentation(world, actorId, presentedKeys);
+  const expansionCursors = new Map<string, { signature:string; offset?:number; before?:{epoch:string;ordinal:number;at:number;order:number} }>();
   const cursors = new Map<string, { signature: string; cursor: BoundsQueryCursor }>();
   let cursorSequence = 0;
   const queryBodies = (input: Extract<SituationQuery, { kind: 'near' | 'separation' | 'expand' }>, visits: number) => {
@@ -176,7 +209,7 @@ export function captureSituation(world: WorldState, actorId: string, jobId: stri
     return { result: { status: found.status, ...(cursor ? {cursor} : {}), bodies: found.values.map((body) => ({ reference: entityHandle(world, actorId, body.sourceId),
       ...(anchor ? { separation: receivedSeparation(anchor, body) } : {}), facts: bodyFacts(body.sourceId) })) }, visited: found.visited };
   };
-  return { world, actorId, jobId, packet, history, cut, scene, geometry, policy, references, regions, presented, attentionReferences, retentionReferences, bindHistory, bodyFacts, queryBodies,
+  return { world, actorId, jobId, packet, history, cut, frames, privacyRevision:world.experience?.privacyRevisions?.[actorId]??0, scene, geometry, policy, references, regions, presented, attentionReferences, retentionReferences, receiptDetails, observationReferences, bindHistory, bodyFacts, queryBodies, expansionCursors, allAttentionReferences,
     valid: (current: WorldState) => evidenceCutEligible(current, cut) };
 }
 export type CapturedSituation = ReturnType<typeof captureSituation>;
@@ -191,6 +224,7 @@ export async function expandSituation(
   const { policy, world, actorId } = captured;
   if (queries.length > policy.maximumQueries) throw new Error('Too many situation queries.');
   const results: unknown[] = [], expandedIds = new Set<string>();
+  const originalRetention=new Set(Object.keys(captured.retentionReferences)), originalObservations=new Set(Object.keys(captured.observationReferences));
   let visits = policy.queryVisits, bytes = policy.expansionBytes;
   const subjects = new Map<string, string>();
   for (const [handle, id] of captured.references) {
@@ -202,56 +236,80 @@ export async function expandSituation(
     subjects.set(permittedSourceHandle(world, actorId, ['received-subject', receipt.subject]), receipt.subject);
   for (const query of queries) {
     let result: unknown;
+    const signature=JSON.stringify({...query,cursor:undefined});
+    const continuation='cursor' in query && query.cursor ? captured.expansionCursors.get(query.cursor) : undefined;
+    const nextCursor=(value:{offset?:number;before?:{epoch:string;ordinal:number;at:number;order:number}})=>{
+      const token=permittedSourceHandle(world,actorId,['expansion',captured.jobId,captured.expansionCursors.size]);
+      captured.expansionCursors.set(token,{signature,...value}); return token;
+    };
     if (query.kind === 'history') {
       const subject = query.subject ? subjects.get(query.subject) : undefined;
-      if (query.cursor || (query.subject && !subject) || query.from > query.through) result = {status:'unavailable'};
+      if ((query.cursor && continuation?.signature!==signature) || (query.subject && !subject) || query.from > query.through) result = {status:'unavailable'};
       else {
         const history = await readHistory({ ...(subject ? {subject} : {}), from: query.from,
-          through: Math.min(world.simTime, query.through), bytes, limit: policy.expansionReceipts });
+          through: Math.min(world.simTime, query.through), bytes, limit: policy.expansionReceipts, ...(continuation?.before ? {before:continuation.before} : {}) });
         captured.bindHistory(history);
         // Historical receipts stay historical; expansion never invents a current entity lease.
-        result = temporalHistoryForModel(world, actorId, history);
+        const oldest=history.entries[0]?.receipt;
+        const cursor=history.hasMore && oldest ? nextCursor({before:{epoch:oldest.epoch,ordinal:oldest.ordinal,at:oldest.at,order:oldest.order}}) : undefined;
+        result = {...temporalHistoryForModel(world, actorId, history),...(cursor ? {cursor} : {})};
       }
     } else if (query.kind === 'boundaries') {
       const id = captured.references.get(query.anchor), body = id ? captured.scene.bodies.get(id) : undefined;
-      if (!body || query.cursor) result = {status:'unavailable'};
+      if (!body || (query.cursor && continuation?.signature!==signature)) result = {status:'unavailable'};
       else {
         const facts: unknown[] = [];
         let seen = 0;
-        for (const observation of captured.geometry.observations) {
+        const boundaries=captured.geometry.observations.filter(observation=>observation.facets.some(f=>f.value.kind==='physical-boundary'));
+        const start=continuation?.offset??0;
+        for (const observation of boundaries.slice(start)) {
           if (seen >= visits) break;
           seen++;
           const facet = observation.facets.find(facet => facet.value.kind === 'physical-boundary');
           if (!facet || facet.value.kind !== 'physical-boundary') continue;
-          const boundary = facet.value.boundary, p = body.body.position;
-          const dx = boundary.b.x-boundary.a.x, dy=boundary.b.y-boundary.a.y, dz=boundary.b.z-boundary.a.z;
-          const length = dx*dx+dy*dy+dz*dz;
-          const t = length ? Math.max(0, Math.min(1, ((p.x-boundary.a.x)*dx+(p.y-boundary.a.y)*dy+(p.z-boundary.a.z)*dz)/length)) : 0;
-          const distance = Math.hypot(p.x-boundary.a.x-t*dx,p.y-boundary.a.y-t*dy,p.z-boundary.a.z-t*dz);
+          const boundary = facet.value.boundary;
+          captured.observationReferences[evidenceSourceHandle(world,actorId,{family:'native-exposure',observer:observation.observer,id:observation.id,revision:observation.revision})]=observation;
           facts.push({ observation: observationForModel(world, actorId, observation),
-            clearanceLower: Math.max(0,distance-body.body.radius-boundary.errorRadius),
-            clearanceUpper: distance+boundary.errorRadius });
+            ...receivedBoundarySeparation(body,boundary,{from:observation.acquiredAt,through:captured.geometry.supportedThrough}) });
         }
         visits -= seen;
-        result = {status: captured.geometry.complete && seen === captured.geometry.observations.length ? 'complete' : 'partial', facts};
+        const cursor=start+seen<boundaries.length ? nextCursor({offset:start+seen}) : undefined;
+        result = {status: captured.geometry.complete && !cursor ? 'complete' : 'partial',facts,...(cursor ? {cursor} : {})};
       }
     } else {
       const found = captured.queryBodies(query, visits);
       visits -= found.visited; result = found.result;
-      if ('bodies' in found.result && Array.isArray(found.result.bodies))
-        for (const row of found.result.bodies) {
-          const id = captured.references.get(row.reference);
-          if (id) expandedIds.add(id);
-        }
+
     }
-    const encoded = Buffer.byteLength(JSON.stringify(result));
-    if (encoded > bytes) {
-      results.push({query, result:{status:'partial', reason:'response-byte-allowance'}});
-      bytes = 0;
-      break;
+    let encoded = Buffer.byteLength(JSON.stringify({query,result}));
+    if(encoded>bytes && result && typeof result==='object') {
+      const record=result as Record<string,unknown>;
+      const rows=record['bodies']??record['facts']??record['entries'];
+      if(Array.isArray(rows)) {
+        record['status']='partial'; record['coverage']='partial';
+        while(rows.length && encoded>bytes) {rows.pop();encoded=Buffer.byteLength(JSON.stringify({query,result}));}
+      }
     }
-    bytes -= encoded; results.push({query,result});
+    if(encoded>bytes) break;
+    bytes-=encoded;results.push({query,result});
+    const bodyRows=(result as {bodies?:Array<{reference:string}>})?.bodies??[];
+    for(const row of bodyRows) {
+      const id=captured.references.get(row.reference);
+      if(id)expandedIds.add(id);
+      const key=captured.allAttentionReferences[row.reference];
+      if(key)captured.attentionReferences[row.reference]=key;
+    }
   }
-  return {results, expandedIds, visited:policy.queryVisits-visits,
+  const disclosed=new Set<string>();
+  const visit=(value:unknown):void=>{
+    if(typeof value==='string')disclosed.add(value);
+    else if(Array.isArray(value))value.forEach(visit);
+    else if(value&&typeof value==='object')Object.values(value).forEach(visit);
+  };visit(results);
+  for(const key of Object.keys(captured.retentionReferences))if(!originalRetention.has(key)&&!disclosed.has(key)) {
+    delete captured.retentionReferences[key];delete captured.receiptDetails[key];
+  }
+  for(const key of Object.keys(captured.observationReferences))if(!originalObservations.has(key)&&!disclosed.has(key))delete captured.observationReferences[key];
+  return {results, frames:captured.frames, expandedIds, visited:policy.queryVisits-visits,
     coverage:results.length === queries.length ? 'requested-batch' : 'partial'};
 }

@@ -1,7 +1,7 @@
 import { entityHandle } from './entity-references.js';
 import { expandSituation, situationQuerySchema } from './situation-context.js';
 import { entityGet, currentBodyObservation } from '@open-legend/domain';
-import { discoveryInterval, reserveDiscovery, settleDiscovery, selectedAttentionPolicy } from '@open-legend/domain';
+import { discoveryInterval, reserveDiscovery, settleDiscovery, selectedAttentionPolicy, currentAttentionCues, semanticCauseResolved } from '@open-legend/domain';
 import { resolveContactTarget } from './public-contact-references.js';
 import { undispatchedReceipt } from './decision-state.js';
 import { playerActionIdentity } from './action-request-recovery.js';
@@ -282,6 +282,7 @@ export class AiDirector {
   private readonly thoughtInputs = new ThoughtIntakeInputs();
   private thoughtInputWorld?: WorldState;
   private thoughtInputScope?: string;
+  private discoveryRecovery?: { world:WorldState; generation:string };
   private readonly unsubscribe: () => void;
   private stopped = false;
   readonly client: AiClient;
@@ -1629,6 +1630,8 @@ export class AiDirector {
     } catch (error) {
       this.activeRuns.delete(run);
       this.releaseImmediate(run);
+      if(run.discovery) await this.service.publishAttention(run.discovery.actorId,run.generation,
+        (world)=>settleDiscovery(world,run.discovery!.actorId,run.discovery!.reservation,false));
       throw error;
     }
     this.service.notify();
@@ -2392,6 +2395,7 @@ export class AiDirector {
             undefined,
             choice.prepared.binding.identityReferences,
             choice.prepared.binding.entityLeases,
+            {privacyRevision:world.experience?.privacyRevisions?.[actorId]??0,attentionReferences:{},retentionReferences:{},semanticCauses:run.job.semanticCauses},
           );
         },
         undefined,
@@ -3218,7 +3222,7 @@ export class AiDirector {
           triggerEvidenceId,
         )
       : undefined;
-    const baseSchema = boundResponseSchema(
+    const buildResponseSchema = () => boundResponseSchema(
       Object.keys(prepared.entityReferences),
       Object.keys(prepared.binding.actions),
       {
@@ -3231,8 +3235,10 @@ export class AiDirector {
       appraisals?.schema,
       Object.keys(prepared.binding.identityReferences ?? {}),
       Object.keys(prepared.binding.physicalEntityReferences ?? {}),
+      {attention:Object.keys(prepared.situation.attentionReferences),retention:[...Object.keys(prepared.situation.retentionReferences),...Object.keys(prepared.situation.observationReferences)]},
     );
-    const schema = actorInvention.enabled
+    let baseSchema=buildResponseSchema();
+    let schema = actorInvention.enabled
       ? baseSchema.extend({ invention: actorInvention.schema })
       : baseSchema;
     const instructions = `${RESPONSE_INSTRUCTIONS} ${actorInvention.instructions}`;
@@ -3250,8 +3256,7 @@ export class AiDirector {
     const controller = run.controller;
     // Only the measured direct-inference route gets a disclosure grant. Other
     // generation callers and full harnesses keep their existing completed values.
-    const preview =
-      !prepared.situation &&
+    const startPreview = () =>
       !run.job.decision &&
       !requestedActivity &&
       executedRoute !== 'level1' &&
@@ -3270,7 +3275,7 @@ export class AiDirector {
               1_000_000,
               levelLimit.visibleOutputBytes + (actorInvention.enabled ? 80_000 : 0),
             ),
-            rootKeys: Object.keys(schema.shape),
+            rootKeys: [...Object.keys(schema.shape),'queries'],
             current: () =>
               this.immediateRuns.get(run.job.id) === run &&
               run.controller === controller &&
@@ -3293,6 +3298,7 @@ export class AiDirector {
             },
           })
         : undefined;
+    let preview=startPreview();
     const querySchema = schema.extend({
       queries: z.array(situationQuerySchema).max(prepared.situation.policy.maximumQueries).nullable().optional(),
     });
@@ -3352,14 +3358,20 @@ export class AiDirector {
             const episode = prepared.situation.world.perceptionEpisodes?.[actorId]?.[id];
             if (episode) (prepared.binding.entityEpisodes ??= {})[id] = episode;
           }
+          baseSchema=buildResponseSchema();
+          schema=actorInvention.enabled?baseSchema.extend({invention:actorInvention.schema}):baseSchema;
+          preview?.finish();
+          preview=startPreview();
           context += '\nRequested received evidence: ' + JSON.stringify(expansion);
           if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
             throw new ContextBudgetError('The bounded situation expansion exceeds the decision input allowance.');
+          const finalSchema=z.toJSONSchema(schema,{target:'draft-7'});
+          if(textBytes(finalSchema)>levelLimit.schemaBytes)throw new ContextBudgetError('The expanded response schema exceeds its allowance.');
           value = await this.generate<unknown>(run, {
             task: 'npc_response', actorScope: actorId, execution: level === 2 ? 'fast' : 'complex',
             model: c.macrofoldKey ? (level === 2 ? c.macrofoldMiniModel : c.macrofoldComplexModel) : (level === 2 ? c.miniModel : c.complexModel),
             reasoningEffort: limits.effort, maxOutputTokens: actorInvention.enabled ? Math.max(1800, limits.outputTokens) : limits.outputTokens,
-            instructions, context, schema: z.toJSONSchema(schema, {target:'draft-7'}),
+            instructions, context, schema: finalSchema,...(preview?{onProgress:preview.progress}:{}),
           }, `attempt:${attempt}:query-final`, {category:'level',level});
         } else {
           const {queries: _queries, ...response} = queried;
@@ -3548,6 +3560,7 @@ export class AiDirector {
             appraisals?.bindings,
             prepared.binding.identityReferences,
             prepared.binding.entityLeases,
+            {...prepared.situation,semanticCauses:run.job.semanticCauses},
           );
         },
         undefined,
@@ -3762,6 +3775,7 @@ export class AiDirector {
         (!this.service.config.macrofoldKey && !this.service.config.jevKey)
       )
         return;
+      await this.reconcileDiscoveryReservations();
       if (this.service.config.macrofoldKey || this.service.config.jevKey)
         void this.maintenance.tick(this.immediateRuns.size > 0).catch(() => {
           this.service.storageError =
@@ -3912,12 +3926,19 @@ export class AiDirector {
           (entry) => unseenIds.has(entry.eventId),
         );
         const preparedResult = preparedResponseResult(world, entity.id, [...unseenIds]);
+        const nativeCauses = currentAttentionCues(world,entity.id).flatMap((cue)=>{
+          const candidate=world.perceptionEvidence?.[entity.id]?.attention?.candidates[cue.anchorKey];
+          if(!candidate)return [];
+          const key=JSON.stringify([cue.anchorKey,cue.family]),qualitativeRevision=JSON.stringify([candidate.descriptionRevision,cue.generation]),
+            severity=selectedAttentionPolicy(world).urgentCue;
+          return semanticCauseResolved(world,entity.id,key,qualitativeRevision,severity)?[]:[{key,qualitativeRevision,severity,generation:cue.generation}];
+        });
         const urgent =
           (this.thoughtWork.pending(entity.id)?.urgency ?? 0) >= INTAKE_LIMITS.urgent ||
           preparedResult ||
           // First enrollment has no previous change sample. Personally retained,
           // unread danger still qualifies; never infer it from another body's state.
-          interruptions.length > 0;
+          interruptions.length > 0 || nativeCauses.some((cause)=>cause.severity>=INTAKE_LIMITS.urgent);
         // Capacity refusal leaves this character's coalesced ticket and evidence
         // untouched. Ordinary aging still orders eligible work in the same queue.
         if (!this.canAdmit(entity.id, urgent)) continue;
@@ -3992,12 +4013,12 @@ export class AiDirector {
         });
         const meaningfulChange = !!last?.semanticRevision && last.semanticRevision !== semanticRevision;
         const newReview = !!review.key && review.key !== last?.reviewKey && !!review.due.length;
-        const discovery = !latest.length && !meaningfulChange && !newReview &&
+        const discovery = !latest.length && !nativeCauses.length && !meaningfulChange && !newReview &&
           selectedAttentionPolicy(world).semantic.discovery &&
           Object.values(world.perceptionEvidence?.[entity.id]?.attention?.candidates ?? {}).some((candidate) => candidate.presentedDescription !== candidate.descriptionRevision)
             ? discoveryInterval(world, entity.id) : undefined;
-        const opportunity = digest({ semanticRevision, evidence: latest.map((memory) => memory.id), review: newReview ? review.key : null, discovery });
-        if ((!latest.length && !meaningfulChange && !newReview && discovery === undefined) || last?.attemptedOpportunity === opportunity) {
+        const opportunity = digest({ semanticRevision, evidence: latest.map((memory) => memory.id), nativeCauses, review: newReview ? review.key : null, discovery });
+        if ((!latest.length && !nativeCauses.length && !meaningfulChange && !newReview && discovery === undefined) || last?.attemptedOpportunity === opportunity) {
           this.thoughtWork.recordOutcome('unchanged', all.length);
           if (last?.semanticRevision !== semanticRevision)
             await this.writeSchedule(key, { ...last, fingerprint, semanticRevision, at: this.now() }, generation);
@@ -4019,6 +4040,8 @@ export class AiDirector {
                 latest[0]!.eventId ?? latest[0]!.id,
                 latest[0]!.summary,
               )
+            : nativeCauses.length
+              ? 'I notice a newly supported change in nearby physical relations.'
             : newReview
               ? `I am still aware of ${observerDescription(world, entity.id, review.due[0]!, 'definite')}.`
               : discovery !== undefined
@@ -4030,6 +4053,8 @@ export class AiDirector {
           ? `Cognition skipped · ${urgentNeed}`
           : latest.length
             ? 'Autonomous cognition · New experience'
+            : nativeCauses.length
+              ? 'Autonomous cognition · Received physical relation'
             : newReview
               ? 'Autonomous cognition · Review'
               : discovery !== undefined
@@ -4079,6 +4104,9 @@ export class AiDirector {
           continue;
         }
         this.thoughtWork.recordOutcome('admitted', all.length);
+        // Discovery is one saved permission. A refused reservation cannot consume
+        // the opportunity, and a later write/preparation failure releases it.
+        if (discovery !== undefined && !(await this.service.publishAttention(entity.id, generation, (current) => reserveDiscovery(current, entity.id, discovery, id)))) continue;
         // Attempted, not consumed: the cursor advances only when the decision completes. A
         // failed decision is not a debt to replay; the same opportunity is not retried and
         // new changes create fresh opportunities that still include unread evidence.
@@ -4095,8 +4123,10 @@ export class AiDirector {
             },
             generation,
           ))
-        )
+        ) {
+          if(discovery!==undefined) await this.service.publishAttention(entity.id,generation,(current)=>settleDiscovery(current,entity.id,id,false));
           continue;
+        }
         const significant = latest.some(
           (m) =>
             m.id === m.eventId &&
@@ -4105,8 +4135,10 @@ export class AiDirector {
             ),
         );
         if (significant) await this.maintenance.enqueue(entity.id, id, sentence, generation);
-        if (generation !== this.service.generation || this.stopped || this.service.paused) return;
-        if (discovery !== undefined && !(await this.service.publishAttention(entity.id, generation, (current) => reserveDiscovery(current, entity.id, discovery, id)))) continue;
+        if (generation !== this.service.generation || this.stopped || this.service.paused) {
+          if(discovery!==undefined) await this.service.publishAttention(entity.id,generation,(current)=>settleDiscovery(current,entity.id,id,false));
+          return;
+        }
         await this.begin(
           {
             id,
@@ -4118,6 +4150,7 @@ export class AiDirector {
             diagnosticTriggerType,
             triggerEvidenceId: latest[0]?.eventId ?? latest[0]?.id,
             stimulusEvidenceIds: latest.map((m) => m.eventId ?? m.id),
+            ...(nativeCauses.length?{semanticCauses:nativeCauses}:{}),
             request: { text: diagnosticTrigger, npcId: entity.id },
             createdAt: this.now(),
           },
@@ -4180,6 +4213,21 @@ export class AiDirector {
         return;
       }
     });
+  }
+  /** Restart may preserve the saved reservation after its local workflow vanished.
+   * Durable dispatch proof, never elapsed time, decides whether permission was spent. */
+  private async reconcileDiscoveryReservations():Promise<void>{
+    const world=this.service.world,generation=this.service.generation;
+    if(this.discoveryRecovery?.world===world&&this.discoveryRecovery.generation===generation)return;
+    this.discoveryRecovery={world,generation};
+    for(const actorId of Object.keys(world.minds??{})){
+      const state=entityGet(world.entities,actorId)?.actor?.agency.semantic;
+      if(state?.discovery!=='reserved'||!state.reservation||[...this.activeRuns].some((run)=>run.discovery?.reservation===state.reservation))continue;
+      const reservation=state.reservation;
+      const attempts=await this.service.store.decisionAttempts(reservation);
+      const dispatched=attempts.some((attempt)=>attempt.receipt?.dispatched!==false||attempt.receipt.completionUncertain);
+      await this.service.publishAttention(actorId,generation,(current)=>settleDiscovery(current,actorId,reservation,dispatched));
+    }
   }
   private async readSchedule(key: string): Promise<ThoughtSchedule | undefined> {
     // The repository owns bounded committed reuse and invalidates it on restore.

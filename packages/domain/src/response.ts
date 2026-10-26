@@ -1,4 +1,22 @@
-import { currentBodyObservation } from './perception-evidence.js';
+import {
+  currentBodyObservation,
+  evidenceCutEligible,
+  type ObservationContribution,
+} from './perception-evidence.js';
+import {
+  acknowledgeAttention,
+  setAttentionFocus,
+  type AttentionPresentation,
+} from './attention.js';
+import { rememberInterpretation, reinforceExperience } from './experience.js';
+import {
+  captureTemporalObservation,
+  retainedTemporalReceipt,
+  type TemporalReceiptLocator,
+  type TemporalReceipt,
+  type TemporalValue,
+} from './temporal-evidence.js';
+import { selectedTemporalPolicy } from './world-composition.js';
 import { entityGet, entityHas, entityOwn } from './entity-collection.js';
 import { changeAppraisal, type AppraisalChange, type AppraisalBindings } from './appraisals.js';
 import { accessiblePossession } from './object-access.js';
@@ -64,8 +82,23 @@ import { distance, hasLineOfSight } from './spatial.js';
 import type { Command, Outcome, Transition, WorldState } from './types.js';
 import type { ActivityNode, ActivityPredicate } from './action-experience.js';
 import { reconcileOutings } from './outings.js';
+import { resolveSemanticCause } from './semantic-opportunities.js';
+
+export interface SituationProposalBinding {
+  /** Trusted server-captured native conditions, never supplied by model output. */
+  semanticCauses?: readonly { key:string; qualitativeRevision:string; severity:number; generation:number }[];
+  privacyRevision: number;
+  attentionReferences: Record<string, string>;
+  retentionReferences: Record<string, TemporalReceiptLocator>;
+  /** Exact already selected cold bodies; the server fences membership after awaits. */
+  receiptDetails?: Record<string, { receipt: TemporalReceipt; values: TemporalValue[] }>;
+  observationReferences?: Record<string, ObservationContribution>;
+  presented?: readonly AttentionPresentation[];
+}
 
 export interface ResponseOperation {
+  observe?: { subjects: string[] } | null;
+  remember?: { sources: string[]; text: string } | null;
   appraise?: AppraisalChange | null;
   note?: (Omit<KnowledgeEdit, 'subjectId'> & { subjectId: string | null }) | null;
   name?: GivenNameEdit | null;
@@ -139,7 +172,18 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
     return false;
   if (new TextEncoder().encode(JSON.stringify(value)).length > RESPONSE_LIMITS.bytes) return false;
   const ids = new Set<string>();
-  const fields = ['talk', 'act', 'think', 'goal', 'plan', 'note', 'name', 'appraise'] as const;
+  const fields = [
+    'talk',
+    'act',
+    'think',
+    'goal',
+    'plan',
+    'note',
+    'name',
+    'appraise',
+    'observe',
+    'remember',
+  ] as const;
   for (const op of value.operations) {
     if (
       !op ||
@@ -154,7 +198,8 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
       op.requiresAccepted.some((id) => !ids.has(id)) ||
       fields.some(
         (field) =>
-          (!['note', 'name', 'appraise'].includes(field) && !(field in op)) ||
+          (!['note', 'name', 'appraise', 'observe', 'remember'].includes(field) &&
+            !(field in op)) ||
           (op[field] != null && (typeof op[field] !== 'object' || Array.isArray(op[field]))),
       ) ||
       fields.filter((field) => op[field] != null).length !== 1
@@ -263,6 +308,26 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
         !text(op.name.subjectId) ||
         !text(op.name.givenName) ||
         !Number.isSafeInteger(op.name.expectedRevision))
+    )
+      return false;
+    if (
+      op.observe &&
+      (!record(op.observe, ['subjects']) ||
+        !strings(op.observe.subjects) ||
+        op.observe.subjects.length > 32 ||
+        new Set(op.observe.subjects).size !== op.observe.subjects.length)
+    )
+      return false;
+    if (
+      op.remember &&
+      (!record(op.remember, ['sources', 'text']) ||
+        !strings(op.remember.sources) ||
+        !op.remember.sources.length ||
+        op.remember.sources.length > 8 ||
+        new Set(op.remember.sources).size !== op.remember.sources.length ||
+        !text(op.remember.text) ||
+        !op.remember.text.trim() ||
+        op.remember.text.length > 1200)
     )
       return false;
     ids.add(op.localId);
@@ -375,6 +440,7 @@ export function commitActorResponse(
   appraisalBindings?: AppraisalBindings,
   identityReferences: Record<string, ObserverSubject> = {},
   entityLeases: Record<string, string> = {},
+  situationBinding?: SituationProposalBinding,
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -400,6 +466,22 @@ export function commitActorResponse(
     knowledgeReferences,
     identityReferences,
     entityLeases,
+    ...(situationBinding
+      ? {
+          situationBinding: {
+            privacyRevision: situationBinding.privacyRevision,
+            attentionReferences: situationBinding.attentionReferences,
+            retentionReferences: situationBinding.retentionReferences,
+            observationReferences: Object.fromEntries(
+              Object.entries(situationBinding.observationReferences ?? {}).map(
+                ([key, observation]) => [key, [observation.id, observation.revision]],
+              ),
+            ),
+            presented: situationBinding.presented,
+            semanticCauses:situationBinding.semanticCauses,
+          },
+        }
+      : {}),
     ...(appraisalBindings ? { appraisalBindings } : {}),
   });
   const prior = getOwn(input.responseReceipts ?? {}, id);
@@ -490,6 +572,114 @@ export function commitActorResponse(
         'dependency-rejected',
         'An admission dependency was rejected.',
       );
+      continue;
+    }
+    if (op.observe || op.remember) {
+      const binding = situationBinding;
+      if (
+        !binding ||
+        binding.privacyRevision !== (world.experience?.privacyRevisions?.[actorId] ?? 0)
+      ) {
+        components[localId] = outcome(
+          false,
+          'situation-expired',
+          'The supplied observation is no longer available.',
+        );
+        continue;
+      }
+      if (op.observe) {
+        const keys = op.observe.subjects.map((reference) =>
+          getOwn(binding.attentionReferences, reference),
+        );
+        const accepted =
+          keys.every((key): key is string => key !== undefined) &&
+          setAttentionFocus(world, actorId, keys);
+        components[localId] = accepted
+          ? outcome(
+              true,
+              'attention-selected',
+              'Attention selected from the supplied observations.',
+            )
+          : outcome(
+              false,
+              'attention-unavailable',
+              'Those observations are no longer available for attention.',
+            );
+      } else if (op.remember) {
+        const received: Array<{ receipt: TemporalReceipt; values: TemporalValue[] }> = [];
+        let available = true;
+        for (const reference of op.remember.sources) {
+          const locator = getOwn(binding.retentionReferences, reference);
+          if (locator) {
+            const captured =
+              retainedTemporalReceipt(world, locator) ??
+              getOwn(binding.receiptDetails ?? {}, reference);
+            if (
+              !captured ||
+              locator.actorId !== actorId ||
+              captured.receipt.actorId !== actorId ||
+              locator.physicalLife !== captured.receipt.physicalLife ||
+              locator.epoch !== captured.receipt.epoch ||
+              locator.ordinal !== captured.receipt.ordinal
+            ) {
+              available = false;
+              break;
+            }
+            received.push(captured);
+            continue;
+          }
+          const observation = getOwn(binding.observationReferences ?? {}, reference);
+          if (
+            !observation ||
+            !evidenceCutEligible(world, {
+              observer: observation.observer,
+              at: world.simTime,
+              privacyRevision: binding.privacyRevision,
+              lastIncludedOrder: 0,
+              acquired: [observation],
+              current: [],
+            }) ||
+            observation.observer.actorId !== actorId
+          ) {
+            available = false;
+            break;
+          }
+          const issued = captureTemporalObservation(
+            world,
+            actorId,
+            observation,
+            [observation.id],
+            false,
+            selectedTemporalPolicy(world).recent,
+          );
+          const captured = issued && retainedTemporalReceipt(world, issued);
+          if (!captured) {
+            available = false;
+            break;
+          }
+          received.push(captured);
+        }
+        const accepted =
+          available &&
+          rememberInterpretation(
+            world,
+            actorId,
+            'remember-' + contentLabel(canonicalJson([id, localId])),
+            op.remember.text,
+            received,
+          );
+        components[localId] = accepted
+          ? outcome(
+              true,
+              'interpretation-remembered',
+              'An interpretation was remembered with its supplied sources.',
+            )
+          : outcome(
+              false,
+              'remember-unavailable',
+              'The supplied sources or memory allowance are unavailable.',
+            );
+      }
       continue;
     }
     if (op.appraise) {
@@ -1198,6 +1388,22 @@ export function commitActorResponse(
               .map(([part, result]) => `${part}: ${result.message}`)
               .join(' ')}`,
           );
+  if (
+    overall.ok &&
+    situationBinding &&
+    situationBinding.privacyRevision === (world.experience?.privacyRevisions?.[actorId] ?? 0)
+  ) {
+    acknowledgeAttention(world, actorId, situationBinding.presented ?? []);
+    for(const cause of situationBinding.semanticCauses??[]){
+      const attention=world.perceptionEvidence?.[actorId]?.attention;
+      const latch=attention?.latches[cause.key];
+      const candidate=latch&&attention?.candidates[latch.anchorKey];
+      if(latch?.active&&latch.generation===cause.generation&&candidate&&
+        cause.qualitativeRevision===JSON.stringify([candidate.descriptionRevision,latch.generation]))
+        resolveSemanticCause(world,actorId,cause.key,cause.qualitativeRevision,cause.severity);
+    }
+    reinforceExperience(world, actorId, evidenceIds);
+  }
   const receipts = (world.responseReceipts ??= {});
   receipts[id] = { digest, components, outcome: overall };
   // This is only the recent in-state idempotency/debug window. Actor memories,

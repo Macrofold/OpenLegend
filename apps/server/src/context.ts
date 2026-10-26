@@ -1,3 +1,5 @@
+import { captureSituation } from './situation-context.js';
+import { selectTemporalHistory } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import { nativeCommandKind } from './native-command-kind.js';
 import { nativeCommandSupported, rangedTargetAllowed, rangedPolicy } from '@open-legend/domain';
@@ -201,7 +203,7 @@ export function buildContext(
   query: string,
   retained?: ReturnType<typeof queryMemories>,
 ) {
-  const observed = service.observe(actorId, { includeMemories: false });
+  const observed = decisionObservation(service.world,actorId);
   if (!observed) throw new Error('Actor unavailable');
   const words = [
     ...new Set(
@@ -235,6 +237,7 @@ export function buildContext(
   const materials = inventionMaterials(service.world, observed);
   const inspected = inspectedContainer(service.world, actorId);
   const context = {
+    receivedSituation:captureSituation(service.world,actorId,`context:${service.world.sequence}`,selectTemporalHistory(service.world.experience?.temporal,actorId)).packet,
     world: { id: observed.worldId, profile: service.world.profile, simulationSeconds: observed.at },
     contacts: observed.contacts,
     self: { ...observed.actor, name: excerpt(observed.actor.name, 40) },

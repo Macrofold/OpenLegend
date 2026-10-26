@@ -86,7 +86,7 @@ export function facetValueForModel(
     case 'body':
       return { kind: value.kind, body: { label: value.body.label, position: value.body.position,
         heading: value.body.heading, radius: value.body.radius, height: value.body.height,
-        outward: value.body.outward } };
+        outward: value.body.outward,description:value.body.description,quantity:value.body.quantity,heatLit:value.body.heatLit,remainsPhase:value.body.remainsPhase,storage:value.body.storage ? {present:true}:undefined } };
     case 'public-attributes':
       return { kind: value.kind, attributes: value.attributes.map(({id,name,value,status,min,max,unit,critical}) =>
         ({id,name,value,status,min,max,unit,critical})) };

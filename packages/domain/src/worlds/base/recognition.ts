@@ -1,4 +1,4 @@
-import { cloneValue } from '../../draft.js';
+import { cloneValue, readOnlyDraftView } from '../../draft.js';
 import { entityGet, entityValues } from '../../entity-collection.js';
 import {
   advanceKnowledgeRevision,
@@ -8,7 +8,10 @@ import {
 } from '../../knowledge.js';
 import { readAttribute, definitionPin } from '../../world-modules.js';
 import type { WorldEvent, WorldState } from '../../types.js';
-import type { ObserverIdentity } from './knowledge.js';
+import { commitObserverIdentity, type ObserverIdentity } from './knowledge.js';
+import { isTemporalReceiptSource, setTemporalSupportRequired, releaseTemporalSupport, temporalReceiptForSource, captureTemporalObservation, retainTemporalSupport, temporalReceiptSource } from '../../temporal-evidence.js';
+import { adjustRetainedKnowledgeAccounting } from '../../remembered-impressions.js';
+import { BASE_ATTENTION_POLICY } from './attention.js';
 import { normalSpeedSeconds } from '../../simulation-time.js';
 import { isSafeRecordId } from '../../records.js';
 import { validateEvidenceSource } from '../../perception-values.js';
@@ -77,19 +80,49 @@ export const BASE_PERCEPTION_POLICY = {
   familiarityMatureSeconds: 1800,
 } as const;
 
-const rootOrder = (a: FamiliarityRoot, b: FamiliarityRoot) => b.at - a.at || b.order - a.order || a.key.localeCompare(b.key);
+const rootOrder = (a: FamiliarityRoot, b: FamiliarityRoot) =>
+  b.at - a.at || b.order - a.order || a.key.localeCompare(b.key);
 export function individualFamiliarity(identity: ObserverIdentity): number {
-  return Math.min(100, Math.max(identity.familiarity?.authored?.value ?? 0, identity.familiarity?.roots.filter((root) => root.credited).length ?? 0));
+  return Math.min(
+    100,
+    Math.max(
+      identity.familiarity?.authored?.value ?? 0,
+      identity.familiarity?.roots.filter((root) => root.credited).length ?? 0,
+    ),
+  );
 }
-export function subjectFamiliarity(world: WorldState, observerId: string, subject: ObserverSubject): number {
+export function subjectFamiliarity(
+  world: WorldState,
+  observerId: string,
+  subject: ObserverSubject,
+): number {
   const records = world.observerIdentities?.[observerId] ?? {};
-  const identity = subject.kind === 'individual' ? records[subject.individualId] : Object.values(records).find((record) => !record.seedOnly && record.canonicalId === subject.entityId);
+  const identity =
+    subject.kind === 'individual'
+      ? records[subject.individualId]
+      : Object.values(records).find(
+          (record) => !record.seedOnly && record.canonicalId === subject.entityId,
+        );
   return identity && !identity.seedOnly ? individualFamiliarity(identity) : 0;
 }
-export function subjectFamiliarityContactDue(world: WorldState, observerId: string, subject: ObserverSubject, at: number): boolean {
+export function subjectFamiliarityContactDue(
+  world: WorldState,
+  observerId: string,
+  subject: ObserverSubject,
+  at: number,
+): boolean {
   const records = world.observerIdentities?.[observerId] ?? {};
-  const identity = subject.kind === 'individual' ? records[subject.individualId] : Object.values(records).find((record) => !record.seedOnly && record.canonicalId === subject.entityId);
-  return !!identity && !identity.seedOnly && (identity.familiarity?.nextCreditAt === undefined || at >= identity.familiarity.nextCreditAt);
+  const identity =
+    subject.kind === 'individual'
+      ? records[subject.individualId]
+      : Object.values(records).find(
+          (record) => !record.seedOnly && record.canonicalId === subject.entityId,
+        );
+  return (
+    !!identity &&
+    !identity.seedOnly &&
+    (identity.familiarity?.nextCreditAt === undefined || at >= identity.familiarity.nextCreditAt)
+  );
 }
 function retainFamiliarity(roots: FamiliarityRoot[]): FamiliarityRoot[] {
   const required = roots.filter((root) => root.required).sort(rootOrder);
@@ -104,30 +137,97 @@ export function creditSubjectFamiliarity(
   input: { key: string; sourceKey: string; at: number; order: number; support: readonly string[] },
 ): boolean {
   const records = world.observerIdentities?.[observerId] ?? {};
-  const identity = subject.kind === 'individual' ? records[subject.individualId] : Object.values(records).find((record) => !record.seedOnly && record.canonicalId === subject.entityId);
-  if (!identity || identity.seedOnly) return false;
+  const previous =
+    subject.kind === 'individual'
+      ? records[subject.individualId]
+      : Object.values(records).find(
+          (record) => !record.seedOnly && record.canonicalId === subject.entityId,
+        );
+  if (!previous?.individualId || previous.seedOnly) return false;
+  if (
+    !validRecognitionSupportKey(input.sourceKey) ||
+    !recognitionSupportSources([input.sourceKey]).length ||
+    input.support.some((key) => !validRecognitionSupportKey(key)) ||
+    !Number.isFinite(input.at) ||
+    input.at < 0 ||
+    input.at > world.simTime ||
+    !Number.isSafeInteger(input.order) ||
+    input.order < 0 ||
+    input.key !== JSON.stringify(['contact', input.sourceKey, input.at])
+  )
+    throw new Error('Invalid received familiarity contact.');
+  if (
+    (previous.familiarity?.nextCreditAt !== undefined && input.at < previous.familiarity.nextCreditAt) ||
+    previous.familiarity?.roots.some((root) => root.key === input.key)
+  )
+    return false;
+  const identity = cloneValue(previous);
   const state: FamiliarityState = (identity.familiarity ??= { roots: [], fastCredits: 0 });
-  if (!validRecognitionSupportKey(input.sourceKey) || !recognitionSupportSources([input.sourceKey]).length || input.support.some((key) => !validRecognitionSupportKey(key)) || !Number.isFinite(input.at) || input.at < 0 || input.at > world.simTime || !Number.isSafeInteger(input.order) || input.order < 0 || input.key !== JSON.stringify(['contact', input.sourceKey, input.at])) throw new Error('Invalid received familiarity contact.');
-  if (state.roots.some((root) => root.key === input.key) || (state.nextCreditAt !== undefined && input.at < state.nextCreditAt) || state.roots.filter((root) => root.required).length >= BASE_PERCEPTION_POLICY.familiarityRoots) return false;
-  const root: FamiliarityRoot = { key: input.key, sourceKey: input.sourceKey, at: input.at, order: input.order, support: [...new Set([input.sourceKey, ...input.support])], required: false, credited: true };
+  const root: FamiliarityRoot = {
+    key: input.key,
+    sourceKey: input.sourceKey,
+    at: input.at,
+    order: input.order,
+    support: [...new Set([input.sourceKey, ...input.support])],
+    required: false,
+    credited: true,
+  };
   state.roots = retainFamiliarity([...state.roots, root]);
   state.fastCredits = Math.min(6, state.fastCredits + 1);
   state.lastCreditAt = input.at;
-  state.nextCreditAt = input.at + (state.fastCredits < 6 ? normalSpeedSeconds(world, BASE_PERCEPTION_POLICY.creditSeconds) : BASE_PERCEPTION_POLICY.familiarityMatureSeconds);
-  return true;
+  state.nextCreditAt =
+    input.at +
+    (state.fastCredits < 6
+      ? normalSpeedSeconds(world, BASE_PERCEPTION_POLICY.creditSeconds)
+      : BASE_PERCEPTION_POLICY.familiarityMatureSeconds);
+  return commitObserverIdentity(world, observerId, previous.individualId, identity);
 }
-function familiaritySupport(identity: ObserverIdentity): string[] {
-  const state = identity.familiarity;
+function familiaritySupport(world: WorldState, observerId: string, identity: ObserverIdentity): string[] | undefined {
+  const candidate = cloneValue(identity), state = candidate.familiarity;
   if (!state) return [];
-  if ((state.authored?.value ?? 0) >= Math.min(6, individualFamiliarity(identity))) return state.authored ? [state.authored.source] : [];
-  const selected = [...state.roots].filter((root) => root.credited).sort((a, b) => Number(b.required) - Number(a.required) || a.at - b.at || a.order - b.order || a.key.localeCompare(b.key)).slice(0, Math.min(6, state.roots.length));
+  if ((state.authored?.value ?? 0) >= Math.min(6, individualFamiliarity(identity)))
+    return state.authored ? [state.authored.source] : [];
+  const selected = [...state.roots]
+    .filter((root) => root.credited)
+    .sort(
+      (a, b) =>
+        Number(b.required) - Number(a.required) ||
+        a.at - b.at ||
+        a.order - b.order ||
+        a.key.localeCompare(b.key),
+    )
+    .slice(0, Math.min(6, state.roots.length));
+  const promoted: string[] = [];
+  for (const source of recognitionSupportSources(selected.flatMap((root) => root.support))) {
+    const supports=world.experience?.temporal?.actors[observerId]?.supports??{};
+    const capsule='family'in source&&isTemporalReceiptSource(source)?supports[source.id]:
+      !('family'in source)?Object.values(supports).find((value)=>value.receipt.sourceIds.includes(source.id)):undefined;
+    if(!capsule)continue;
+    const id=capsule.receipt.id;
+    if(promoted.includes(id))continue;
+    if (capsule?.required) continue;
+    if (!setTemporalSupportRequired(world, observerId, id, true, BASE_ATTENTION_POLICY.retention.required)) {
+      for (const id of promoted) setTemporalSupportRequired(world, observerId, id, false, BASE_ATTENTION_POLICY.retention.optional);
+      return undefined;
+    }
+    promoted.push(id);
+  }
   for (const root of selected) root.required = true;
+  if (candidate.individualId && !commitObserverIdentity(world, observerId, candidate.individualId, candidate)) {
+    for (const id of promoted) setTemporalSupportRequired(world, observerId, id, false, BASE_ATTENTION_POLICY.retention.optional);
+    return undefined;
+  }
   return [...new Set(selected.flatMap((root) => root.support))];
 }
 /** A received body/voice association can reconcile two previously separate local
  * accounts. Every transferred point keeps that exact association as revocable
  * support. Simultaneous modalities never manufacture extra contact credit. */
-export function associateIndividualFamiliarity(world: WorldState, from: ObserverIdentity, to: ObserverIdentity, associationSupport: string): void {
+export function associateIndividualFamiliarity(
+  world: WorldState,
+  from: ObserverIdentity,
+  to: ObserverIdentity,
+  associationSupport: string,
+): void {
   if (from === to || !from.familiarity || !validRecognitionSupportKey(associationSupport)) return;
   const target = (to.familiarity ??= { roots: [], fastCredits: 0 });
   const pool = new Map(target.roots.map((root) => [root.key, root]));
@@ -137,25 +237,71 @@ export function associateIndividualFamiliarity(world: WorldState, from: Observer
     if (support.length > 10) continue; // Optional proof cannot exceed its admitted bounded capsule.
     pool.set(root.key, { ...cloneValue(root), support, required: false });
   }
-  const chronological = [...pool.values()].sort((a, b) => a.at - b.at || Number(b.required) - Number(a.required) || a.order - b.order || a.key.localeCompare(b.key));
-  let count = 0, last: number | undefined;
+  const chronological = [...pool.values()].sort(
+    (a, b) =>
+      a.at - b.at ||
+      Number(b.required) - Number(a.required) ||
+      a.order - b.order ||
+      a.key.localeCompare(b.key),
+  );
+  let count = 0,
+    last: number | undefined;
   for (const root of chronological) {
-    const quantum = count < 6 ? normalSpeedSeconds(world, BASE_PERCEPTION_POLICY.creditSeconds) : BASE_PERCEPTION_POLICY.familiarityMatureSeconds;
+    const quantum =
+      count < 6
+        ? normalSpeedSeconds(world, BASE_PERCEPTION_POLICY.creditSeconds)
+        : BASE_PERCEPTION_POLICY.familiarityMatureSeconds;
     root.credited = last === undefined || root.at >= last + quantum;
-    if (root.credited) { last = root.at; count++; }
+    if (root.credited) {
+      last = root.at;
+      count++;
+    }
   }
   target.roots = retainFamiliarity(chronological);
-  target.fastCredits = Math.max(target.fastCredits, from.familiarity.fastCredits, Math.min(6, count));
-  const lastCredit = Math.max(target.lastCreditAt ?? -Infinity, from.familiarity.lastCreditAt ?? -Infinity, last ?? -Infinity);
+  target.fastCredits = Math.max(
+    target.fastCredits,
+    from.familiarity.fastCredits,
+    Math.min(6, count),
+  );
+  const lastCredit = Math.max(
+    target.lastCreditAt ?? -Infinity,
+    from.familiarity.lastCreditAt ?? -Infinity,
+    last ?? -Infinity,
+  );
   if (Number.isFinite(lastCredit)) target.lastCreditAt = lastCredit;
-  const nextCredit = Math.max(target.nextCreditAt ?? -Infinity, from.familiarity.nextCreditAt ?? -Infinity, last === undefined ? -Infinity : last + (target.fastCredits < 6 ? normalSpeedSeconds(world, BASE_PERCEPTION_POLICY.creditSeconds) : BASE_PERCEPTION_POLICY.familiarityMatureSeconds));
+  const nextCredit = Math.max(
+    target.nextCreditAt ?? -Infinity,
+    from.familiarity.nextCreditAt ?? -Infinity,
+    last === undefined
+      ? -Infinity
+      : last +
+          (target.fastCredits < 6
+            ? normalSpeedSeconds(world, BASE_PERCEPTION_POLICY.creditSeconds)
+            : BASE_PERCEPTION_POLICY.familiarityMatureSeconds),
+  );
   if (Number.isFinite(nextCredit)) target.nextCreditAt = nextCredit;
 }
-function creditContactSample(world: WorldState, observerId: string, identity: ObserverIdentity, sample: RecognitionSample): void {
+function creditContactSample(
+  world: WorldState,
+  observerId: string,
+  identity: ObserverIdentity,
+  sample: RecognitionSample,
+): void {
   if (!identity.individualId || !sample.contactEligible) return;
   // The immutable personal acquisition already owns its recognition dependencies.
   // Do not recursively flatten the entire predecessor graph into each contact.
-  creditSubjectFamiliarity(world, observerId, { kind: 'individual', individualId: identity.individualId }, { key: JSON.stringify(['contact', sample.sourceKey, sample.at]), sourceKey: sample.sourceKey, at: sample.at, order: sample.order, support: [sample.sourceKey] });
+  creditSubjectFamiliarity(
+    world,
+    observerId,
+    { kind: 'individual', individualId: identity.individualId },
+    {
+      key: JSON.stringify(['contact', sample.sourceKey, sample.at]),
+      sourceKey: sample.sourceKey,
+      at: sample.at,
+      order: sample.order,
+      support: [sample.sourceKey],
+    },
+  );
 }
 const usable = (features: RecognitionFeatures) =>
   Object.keys(features).filter((dimension) => {
@@ -375,7 +521,14 @@ function perceiveIndividual(
       ...(modality === 'voice' ? [`awareness:${event.id}`] : []),
       ...(bodySupport ? [JSON.stringify(bodySupport)] : []),
     ],
-    contactEligible: event.targetId === observerId || !!(visibleSourceId && world.perceptionEvidence?.[observerId]?.attention?.entries.some((entry) => entry.sourceId === visibleSourceId)),
+    contactEligible:
+      event.targetId === observerId ||
+      !!(
+        visibleSourceId &&
+        world.perceptionEvidence?.[observerId]?.attention?.entries.some(
+          (entry) => entry.sourceId === visibleSourceId,
+        )
+      ),
   };
   result.perception = perception;
   result.policy = sample.policy;
@@ -441,12 +594,15 @@ function perceiveIndividual(
       (entry) => entry.identity === winner.identity || entry.distance - winner.distance >= 0.08,
     )
   ) {
-    result.recognized = true;
-    result.subject = localSubject(winner.identity);
-    result.priorExemplarKey = winner.exemplarKey;
-    result.familiarity = individualFamiliarity(winner.identity);
-    result.learningSupport = [...new Set([winner.sourceKey, ...(bodySupport ? [JSON.stringify(bodySupport)] : []), ...familiaritySupport(winner.identity)])];
-    sample.support.push(...result.learningSupport);
+    const proof = familiaritySupport(world, observerId, winner.identity);
+    if (proof !== undefined || (winner.quality >= 0.7 - 0.2 * p && winner.distance <= 0.08 + 0.04 * p)) {
+      result.recognized = true;
+      result.subject = localSubject(winner.identity);
+      result.priorExemplarKey = winner.exemplarKey;
+      result.familiarity = proof === undefined ? 0 : individualFamiliarity(winner.identity);
+      result.learningSupport = [...new Set([winner.sourceKey, ...(bodySupport ? [JSON.stringify(bodySupport)] : []), ...(proof ?? [])])];
+      sample.support.push(...result.learningSupport);
+    }
   }
   // Only real, qualifying original samples can change familiarity. Prior evidence
   // remains available through the existing personal-history source owner.
@@ -479,9 +635,11 @@ function perceiveIndividual(
     }
   }
   if (associated) {
-    const voice = (associated[modality] ??= { samples: [] });
+    const candidate = cloneValue(associated);
+    const voice = (candidate[modality] ??= { samples: [] });
     if (addCredit(world, voice, sample)) {
-      associated.revision++;
+      candidate.revision++;
+      if (candidate.individualId && !commitObserverIdentity(world, observerId, candidate.individualId, candidate)) return result;
     }
     creditContactSample(world, observerId, associated, sample);
     // A visible body legitimately supports this voice sample; one sample alone
@@ -534,7 +692,7 @@ function perceiveIndividual(
     const individualId =
       seed.identity.individualId ?? allocateObserverIndividual(world, observerId);
     const identity: ObserverIdentity = seed.identity.individualId
-      ? seed.identity
+      ? cloneValue(seed.identity)
       : {
           individualId,
           givenName: seed.identity.givenName,
@@ -546,24 +704,27 @@ function perceiveIndividual(
         };
     if (!identity.voice!.samples.length) addCredit(world, identity.voice!, seed.prior);
     addCredit(world, identity.voice!, sample);
-    records[individualId] = identity;
+    if (!commitObserverIdentity(world, observerId, individualId, identity)) return result;
     creditContactSample(world, observerId, identity, seed.prior);
     creditContactSample(world, observerId, identity, sample);
     if (seed.identity.seedOnly)
       for (const [key, prior] of Object.entries(records))
-        if (prior === seed.identity) delete records[key];
+        if (prior === seed.identity) {
+          if(prior.retained&&!prior.authored)adjustRetainedKnowledgeAccounting(world,observerId,prior,undefined);
+          delete records[key];
+        }
     result.learnedSubject = localSubject(identity);
     advanceKnowledgeRevision(world, observerId);
   } else if (!unique) {
     // Never fuse seed groups merely because hidden producers happen to be equal.
-    records[`voice-seed-${event.id}`] = {
+    commitObserverIdentity(world,observerId,`voice-seed-${event.id}`,{
       givenName: '',
       revision: 0,
       encounterId: null,
       authored: false,
       seedOnly: true,
       voice: { samples: [sample] },
-    };
+    });
   }
   // Expired seed history is not resurrected by a subsequent memory query.
   for (const [key, identity] of Object.entries(records))
@@ -574,8 +735,40 @@ function perceiveIndividual(
           prior.at < sample.at - normalSpeedSeconds(world, BASE_PERCEPTION_POLICY.seedSeconds),
       )
     )
-      delete records[key];
+      { retireRecognitionIdentity(world,observerId,key,identity); }
   return result;
+}
+export function retireRecognitionIdentity(world:WorldState,observerId:string,key:string,identity:ObserverIdentity):void {
+  if(identity.retained&&!identity.authored)adjustRetainedKnowledgeAccounting(world,observerId,identity,undefined);
+  delete world.observerIdentities![observerId]![key];
+  for(const source of recognitionSupportSources(identity.nameEvidenceIds??[]))
+    if('family'in source&&isTemporalReceiptSource(source))releaseTemporalSupport(world,observerId,source.id);
+}
+/** Source accounting follows actual delivery: provisional matching may happen
+ * before the common speech receipt exists, but lasting profiles keep only the
+ * received features and association proof from that same observation. */
+export function retainRecognitionEvidence(world:WorldState,evidence:import('../../experience.js').Awareness):void {
+  if(!evidence.observation||!evidence.recognition)return;
+  const observerId=evidence.actorId, records=world.observerIdentities?.[observerId];
+  if(!records)return;
+  const subjects=[evidence.recognition.subject,evidence.recognition.learnedSubject];
+  const ids=new Set(subjects.flatMap((subject)=>subject?.kind==='individual'?[subject.individualId]:[]));
+  const seedKey=`voice-seed-${evidence.eventId}`;
+  if(records[seedKey])ids.add(seedKey);
+  for(const key of ids){
+    const prior=records[key];if(!prior)continue;
+    const modalities=(['voice','sight'] as const).filter((modality)=>prior[modality]?.samples.some((sample)=>sample.sourceKey===`awareness:${evidence.eventId}`));
+    if(!modalities.length)continue;
+    let receipt=temporalReceiptForSource(world,observerId,evidence.eventId);
+    if(!receipt)receipt=captureTemporalObservation(world,observerId,evidence.observation,[evidence.eventId],false,BASE_ATTENTION_POLICY.retention.recent);
+    const ordinals=evidence.observation.facets.filter((facet)=>facet.value.kind==='perceived-feature'||facet.value.kind==='association').map((facet)=>facet.ordinal);
+    const held=receipt&&retainTemporalSupport(world,receipt,{facetOrdinals:ordinals,...BASE_ATTENTION_POLICY.retention.optional});
+    if(held)continue;
+    const candidate=cloneValue(prior);
+    for(const modality of modalities)candidate[modality]!.samples=candidate[modality]!.samples.filter((sample)=>sample.sourceKey!==`awareness:${evidence.eventId}`);
+    if(candidate.individualId)commitObserverIdentity(world,observerId,key,candidate);
+    else retireRecognitionIdentity(world,observerId,key,prior);
+  }
 }
 /** Current direct-path voice adapter; physical hearing supplies the actual margin. */
 export function perceiveVoice(
@@ -671,7 +864,11 @@ export function installAuthoredVoice(
       exemplars: [{ features: receivedVoiceFeatures(profile), quality: 1, ordinal: 0 }],
     },
   };
-  identity.familiarity = { roots: [], fastCredits: 0, authored: { source: identity.voice.authored!.source, value: 100 } };
+  identity.familiarity = {
+    roots: [],
+    fastCredits: 0,
+    authored: { source: identity.voice.authored!.source, value: 100 },
+  };
 }
 /** Current persisted roots must identify a supported real source or the selected
  * authored installation; arbitrary strings cannot silently evade revocation. */
@@ -737,7 +934,10 @@ export function revokeRecognitionEvidence(
   actorId: string,
   affected: Set<string>,
 ): void {
-  const records = Object.values(world.observerIdentities?.[actorId] ?? {});
+  const recordMap = world.observerIdentities?.[actorId];
+  const entries = Object.entries(recordMap ? readOnlyDraftView(recordMap) : {}).map(([key, identity]) => [key, readOnlyDraftView(identity)] as const);
+  const keyByIdentity = new Map(entries.map(([key, identity]) => [identity, key]));
+  const records = entries.map(([, identity]) => identity);
   const revoked = (keys: readonly string[]) =>
     keys.some((key) => affected.has(key)) ||
     recognitionSupportSourceIds(keys).some(
@@ -769,7 +969,13 @@ export function revokeRecognitionEvidence(
           }
   }
   let changed = false;
-  for (const identity of records) {
+  for (const original of records) {
+    const hasAffected = original.familiarity?.roots.some((root) => revoked(root.support)) ||
+      (original.familiarity?.authored && revoked([original.familiarity.authored.source])) ||
+      (original.nameEvidenceIds && revoked(original.nameEvidenceIds)) ||
+      (['voice', 'sight'] as const).some((modality) => original[modality]?.samples.some((sample) => revoked(sample.support)) || (original[modality]?.authored && affected.has(original[modality]!.authored!.source)));
+    if (!hasAffected) continue;
+    const identity = cloneValue(original);
     let identityChanged = false;
     if (identity.familiarity) {
       const remaining = identity.familiarity.roots.filter((root) => !revoked(root.support));
@@ -793,7 +999,7 @@ export function revokeRecognitionEvidence(
       // An invalidated sample never resets its admitted last-credit/deadline.
       identityChanged = true;
     }
-    if (identity.nameEvidenceIds?.some((key) => affected.has(key))) {
+    if (identity.nameEvidenceIds && revoked(identity.nameEvidenceIds)) {
       identity.givenName = '';
       identity.nameEvidenceIds = [];
       identityChanged = true;
@@ -804,6 +1010,9 @@ export function revokeRecognitionEvidence(
       identity.canonicalId = undefined;
     }
     identity.revision++;
+    const key = identity.individualId ?? keyByIdentity.get(original);
+    if (key && identity.retained && !commitObserverIdentity(world, actorId, key, identity)) throw new Error('Revoked recognition did not fit its prior personal allocation.');
+    else if (key && !identity.retained) recordMap![key] = identity;
     changed = true;
   }
   if (changed) advanceKnowledgeRevision(world, actorId);
@@ -949,7 +1158,10 @@ export function validateIndividualRecognition(
       (!Array.isArray(result.learningSupport) ||
         result.learningSupport.length > 62 ||
         result.learningSupport.some((key) => !validRecognitionSupportKey(key)))) ||
-    (result.familiarity !== undefined && (!Number.isInteger(result.familiarity) || result.familiarity < 0 || result.familiarity > 100)) ||
+    (result.familiarity !== undefined &&
+      (!Number.isInteger(result.familiarity) ||
+        result.familiarity < 0 ||
+        result.familiarity > 100)) ||
     (result.seedCorrelation !== undefined &&
       (!result.seedCorrelation ||
         typeof result.seedCorrelation.sampleKey !== 'string' ||
@@ -960,8 +1172,46 @@ export function validateIndividualRecognition(
 }
 
 export function validateFamiliarityState(value: unknown): asserts value is FamiliarityState {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid subject familiarity.');
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Invalid subject familiarity.');
   const state = value as FamiliarityState;
-  if (!Array.isArray(state.roots) || state.roots.length > BASE_PERCEPTION_POLICY.familiarityRoots || new Set(state.roots.map((root) => root.key)).size !== state.roots.length || state.roots.filter((root) => root.required).length > 6 || !Number.isSafeInteger(state.fastCredits) || state.fastCredits < 0 || state.fastCredits > 6 || (state.lastCreditAt !== undefined && (!Number.isFinite(state.lastCreditAt) || state.lastCreditAt < 0)) || (state.nextCreditAt !== undefined && (!Number.isFinite(state.nextCreditAt) || state.lastCreditAt === undefined || state.nextCreditAt < state.lastCreditAt)) || (state.authored !== undefined && (!validRecognitionSupportKey(state.authored.source) || !Number.isInteger(state.authored.value) || state.authored.value < 0 || state.authored.value > 100))) throw new Error('Invalid subject familiarity.');
-  for (const root of state.roots) if (!root || !validRecognitionSupportKey(root.sourceKey) || !recognitionSupportSources([root.sourceKey]).length || !Number.isFinite(root.at) || root.at < 0 || root.key !== JSON.stringify(['contact', root.sourceKey, root.at]) || !Number.isSafeInteger(root.order) || root.order < 0 || typeof root.required !== 'boolean' || typeof root.credited !== 'boolean' || !Array.isArray(root.support) || !root.support.includes(root.sourceKey) || root.support.length > 10 || root.support.some((key) => !validRecognitionSupportKey(key))) throw new Error('Invalid subject familiarity contact.');
+  if (
+    !Array.isArray(state.roots) ||
+    state.roots.length > BASE_PERCEPTION_POLICY.familiarityRoots ||
+    new Set(state.roots.map((root) => root.key)).size !== state.roots.length ||
+    state.roots.filter((root) => root.required).length > 6 ||
+    !Number.isSafeInteger(state.fastCredits) ||
+    state.fastCredits < 0 ||
+    state.fastCredits > 6 ||
+    (state.lastCreditAt !== undefined &&
+      (!Number.isFinite(state.lastCreditAt) || state.lastCreditAt < 0)) ||
+    (state.nextCreditAt !== undefined &&
+      (!Number.isFinite(state.nextCreditAt) ||
+        state.lastCreditAt === undefined ||
+        state.nextCreditAt < state.lastCreditAt)) ||
+    (state.authored !== undefined &&
+      (!validRecognitionSupportKey(state.authored.source) ||
+        !Number.isInteger(state.authored.value) ||
+        state.authored.value < 0 ||
+        state.authored.value > 100))
+  )
+    throw new Error('Invalid subject familiarity.');
+  for (const root of state.roots)
+    if (
+      !root ||
+      !validRecognitionSupportKey(root.sourceKey) ||
+      !recognitionSupportSources([root.sourceKey]).length ||
+      !Number.isFinite(root.at) ||
+      root.at < 0 ||
+      root.key !== JSON.stringify(['contact', root.sourceKey, root.at]) ||
+      !Number.isSafeInteger(root.order) ||
+      root.order < 0 ||
+      typeof root.required !== 'boolean' ||
+      typeof root.credited !== 'boolean' ||
+      !Array.isArray(root.support) ||
+      !root.support.includes(root.sourceKey) ||
+      root.support.length > 10 ||
+      root.support.some((key) => !validRecognitionSupportKey(key))
+    )
+      throw new Error('Invalid subject familiarity contact.');
 }

@@ -241,8 +241,12 @@ export function compactTemporalHistory(world: WorldState): WorldState {
       const old = historyPositions.get(chunks);
       const tail = chunks.slice(-maximum);
       historyPositions.set(tail, {
-        positions: new Map(tail.map((chunk, index) => [chunk.id,
-          old?.positions.get(chunk.id) ?? chunks.length - tail.length + index])),
+        positions: new Map(
+          tail.map((chunk, index) => [
+            chunk.id,
+            old?.positions.get(chunk.id) ?? chunks.length - tail.length + index,
+          ]),
+        ),
         next: old?.next ?? chunks.length,
       });
       actors[actorId] = { ...actor, chunks: tail };

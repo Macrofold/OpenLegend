@@ -600,7 +600,7 @@ export interface OwnPromisePage {
 export interface MemoryEntryView {
   fidelity: 'exact' | 'impression';
   id: string;
-  sourceKind: 'awareness' | 'memory' | 'summary';
+  sourceKind: 'awareness' | 'memory' | 'summary' | 'observation';
   text: string;
   time: number;
 }

@@ -59,3 +59,27 @@ describe('independent domain data copies', () => {
     expect(source.records[0]!.amount).toBe(2);
   });
 });
+
+import { createWorld,PLAYER_ID,NPC_ID } from './data.js';
+import { entityGet } from './entity-collection.js';
+import { freezeWorld,updateWorld,draftWorld,finishWorld } from './draft.js';
+import { initializePerception } from './kernel.js';
+it('seals shared received evidence once while preserving earlier immutable snapshots',()=>{
+  const initial=createWorld(73);initializePerception(initial,[]);freezeWorld(initial);
+  const before=JSON.stringify(initial.perceptionEvidence);
+  const changed=updateWorld(initial,world=>{
+    const owner=world.perceptionEvidence![PLAYER_ID]!;
+    const lease=Object.values(owner.current).find(value=>value.subjectId===NPC_ID)!;
+    lease.confirmedThrough+=1;
+  });
+  expect(JSON.stringify(initial.perceptionEvidence)).toBe(before);
+  expect(changed.perceptionEvidence).not.toBe(initial.perceptionEvidence);
+  const owner=changed.perceptionEvidence![PLAYER_ID]!;
+  expect(Object.isFrozen(owner)).toBe(true);
+  const leases=Object.values(owner.current).filter(value=>value.subjectId===NPC_ID);
+  expect(leases.length).toBeGreaterThan(1);
+  expect(leases[0]!.original).toBe(leases[1]!.original);
+  const nested=draftWorld(changed);
+  entityGet(nested.entities,PLAYER_ID)!.actor!.agency.revision++;
+  expect(finishWorld(nested).perceptionEvidence).toBe(changed.perceptionEvidence);
+});

@@ -1,6 +1,17 @@
+import {
+  trimMemoryDerivatives,
+  derivedMemoryUsage,
+  type DerivedMemoryAllowance,
+} from './memory-derivatives.js';
 import { prepareAccountRetention } from './account-retention.js';
 import { tableRows } from './record-pages.js';
-import { readTemporalHistory, prepareTemporalRetention, type TemporalHistoryQuery, type PreparedMemoryRetention } from './temporal-storage.js';
+import {
+  readTemporalHistory,
+  prepareTemporalRetention,
+  type TemporalHistoryPage,
+  type TemporalHistoryQuery,
+  type PreparedMemoryRetention,
+} from './temporal-storage.js';
 import { insertRows, sqlRecordBatches, type SqlWriteBatch } from './sql-rows.js';
 import { LexicalProjection } from './lexical-projection.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
@@ -52,6 +63,9 @@ import {
   type WorldState,
   type TemporalHistorySelection,
   type TemporalReceiptLocator,
+  type TemporalSupportCapsule,
+  temporalKnownPlaceCapsules,
+  selectedAttentionPolicy,
 } from '@open-legend/domain';
 import { z } from 'zod';
 import type { SqlDatabase, SavedWorld } from './store.js';
@@ -103,6 +117,7 @@ export interface PreparedMemorySources {
   readonly worldId: string;
   readonly changes: RecordChanges;
   readonly groups: ReadonlyMap<SourceKind, readonly PreparedSource[]>;
+  readonly allowance: DerivedMemoryAllowance;
 }
 // Bound parameters are parsed as full-text values, never as SQL or locale-dependent text.
 const quotedLexeme = (word: string) => `'${word.replace(/['\\]/g, '\\$&')}'`;
@@ -203,7 +218,9 @@ export interface CurrentMemorySource {
   sourceKind: SourceKind;
   revision: string;
 }
-export interface KnownPlaceSource extends RetrievedMemory {
+export interface KnownPlaceSource {
+  memory: MemoryRecord;
+  revision: string;
   place: {
     exposure: Extract<EncounterExposure, { kind: 'place' }>;
     capsule: KnownPlaceCapsule;
@@ -225,6 +242,64 @@ export interface MemoryModel {
  * interpretation remains with domain/AI owners; this repository invents no semantics.
  */
 export class MemoryRepository {
+  private derivedAllowance?: DerivedMemoryAllowance;
+  private derivedPolicyDirty = false;
+  configureWorld(world: WorldState): void {
+    const policy = selectedAttentionPolicy(world);
+    this.configureAllowance({
+      worldId: world.id,
+      policyId: policy.id,
+      policyVersion: policy.version,
+      maxBytes: policy.retention.derivedMaxBytes,
+    });
+  }
+  configureAllowance(allowance: DerivedMemoryAllowance): void {
+    if (
+      !allowance.worldId ||
+      !allowance.policyId ||
+      !Number.isSafeInteger(allowance.policyVersion) ||
+      allowance.policyVersion < 1 ||
+      !Number.isSafeInteger(allowance.maxBytes) ||
+      allowance.maxBytes < 0
+    )
+      throw new Error('Invalid selected memory cache allowance.');
+    if (JSON.stringify(this.derivedAllowance) !== JSON.stringify(allowance)) {
+      this.derivedAllowance = { ...allowance };
+      this.derivedPolicyDirty = true;
+      this.textSelection.clear();
+    }
+  }
+  async enforceDerivedWorld(worldId: string): Promise<void> {
+    if (
+      !this.derivedAllowance ||
+      this.derivedAllowance.worldId !== worldId ||
+      !this.derivedPolicyDirty
+    )
+      return;
+    await this.db.transaction(async () => {
+      const actors = await this.db
+        .prepare(
+          `SELECT DISTINCT actor_id FROM (
+        SELECT actor_id FROM recall_sources WHERE world_id=? UNION SELECT actor_id FROM memory_vector_cache WHERE world_id=?
+        UNION SELECT actor_id FROM memory_vectors WHERE world_id=? UNION SELECT actor_id FROM memory_lexical_pending WHERE world_id=?
+      ) owners`,
+        )
+        .all(worldId, worldId, worldId, worldId);
+      await this.trimDerived(
+        worldId,
+        actors.map((row) => String(row['actor_id'])),
+      );
+    });
+    this.derivedPolicyDirty = false;
+  }
+  async derivedUsage(scope: Pick<MemoryScope, 'worldId' | 'actorId'>): Promise<number> {
+    return derivedMemoryUsage(this.db, scope.worldId, scope.actorId);
+  }
+  private async trimDerived(worldId: string, actors: Iterable<string>): Promise<void> {
+    const allowance = this.derivedAllowance;
+    if (!allowance || allowance.worldId !== worldId) return;
+    for (const actorId of new Set(actors)) await trimMemoryDerivatives(this.db, allowance, actorId);
+  }
   publicationRevision = 0;
   private coverageCache = new Map<
     string,
@@ -252,6 +327,7 @@ export class MemoryRepository {
   private readonly lexical: LexicalProjection;
   constructor(private readonly db: SqlDatabase) {
     this.lexical = new LexicalProjection(db);
+    this.lexical.setDerivedAdmission((worldId, actors) => this.trimDerived(worldId, actors));
   }
   setBackgroundSearchAdmission(allowed: () => boolean): void {
     this.lexical.setBackgroundAdmission(allowed);
@@ -328,7 +404,7 @@ export class MemoryRepository {
     const mark = (id: string) => {
       const path = JSON.parse(id) as string[];
       if (path[1] === 'experience' && path[2] === 'temporal' && path[3] === 'sources') return;
-      const actor = path[path[1] === 'experience' ? path[2] === 'temporal' ? 4 : 3 : 2];
+      const actor = path[path[1] === 'experience' ? (path[2] === 'temporal' ? 4 : 3) : 2];
       if (actor) actors.add(actor);
       else unknownScope = true;
     };
@@ -407,9 +483,17 @@ export class MemoryRepository {
       CREATE TABLE IF NOT EXISTS recall_place_capsules (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,owner_id TEXT NOT NULL,owner_kind TEXT NOT NULL,owner_revision TEXT NOT NULL,
         place_id TEXT NOT NULL,observed_at DOUBLE PRECISION NOT NULL,observed_order BIGINT NOT NULL,
-        source_event_id TEXT,native_source_id TEXT NOT NULL,fact_alias TEXT NOT NULL,capsule_key TEXT NOT NULL,capsule TEXT NOT NULL,
+        source_event_id TEXT,native_source_id TEXT NOT NULL,fact_alias TEXT NOT NULL,capsule_key TEXT NOT NULL,capsule TEXT NOT NULL,account_owner_kind TEXT,support_record_id TEXT,
         PRIMARY KEY(world_id,actor_id,owner_id,owner_kind,capsule_key),
+        FOREIGN KEY(world_id,actor_id,owner_id,account_owner_kind) REFERENCES recall_sources(world_id,actor_id,id,source_kind) ON DELETE CASCADE,
+        FOREIGN KEY(world_id,support_record_id) REFERENCES mind_temporal_supports(world_id,id) ON DELETE CASCADE,
+        CHECK ((owner_kind='support' AND account_owner_kind IS NULL AND support_record_id IS NOT NULL) OR (owner_kind<>'support' AND account_owner_kind=owner_kind AND support_record_id IS NULL)));
+      CREATE TABLE IF NOT EXISTS mind_impression_spans (
+        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,owner_id TEXT NOT NULL,owner_kind TEXT NOT NULL CHECK(owner_kind='memory'),
+        physical_life BIGINT NOT NULL,receipt_epoch TEXT NOT NULL,first_ordinal BIGINT NOT NULL,last_ordinal BIGINT NOT NULL,
+        PRIMARY KEY(world_id,actor_id,owner_id,physical_life,receipt_epoch,first_ordinal,last_ordinal),
         FOREIGN KEY(world_id,actor_id,owner_id,owner_kind) REFERENCES recall_sources(world_id,actor_id,id,source_kind) ON DELETE CASCADE);
+      CREATE INDEX IF NOT EXISTS impression_receipt_range ON mind_impression_spans(world_id,actor_id,physical_life,receipt_epoch,first_ordinal,last_ordinal);
       CREATE INDEX IF NOT EXISTS recall_place_lookup ON recall_place_capsules(world_id,actor_id,place_id,observed_at DESC,observed_order DESC,owner_id DESC,owner_kind DESC);
       CREATE INDEX IF NOT EXISTS recall_commitments ON recall_sources(world_id,actor_id,at,id) WHERE source_kind='memory' AND memory_kind='commitment' AND eligible=1;
       CREATE INDEX IF NOT EXISTS recall_world_event ON recall_sources(world_id,event_id,actor_id);
@@ -462,27 +546,44 @@ export class MemoryRepository {
       CREATE INDEX IF NOT EXISTS memory_vector_scope ON memory_vectors(world_id,actor_id,generation,model,dimensions,source_id,source_revision);
     `);
     await this.lexical.initialize();
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS temporal_chunk_subjects ON mind_temporal_chunks USING GIN(subjects);
+    await this.db
+      .exec(`CREATE INDEX IF NOT EXISTS temporal_chunk_subjects ON mind_temporal_chunks USING GIN(subjects);
       CREATE INDEX IF NOT EXISTS temporal_chunk_sources ON mind_temporal_chunks USING GIN(source_refs);
-      CREATE INDEX IF NOT EXISTS temporal_chunk_aliases ON mind_temporal_chunks USING GIN(source_ids);`);
+      CREATE INDEX IF NOT EXISTS temporal_chunk_aliases ON mind_temporal_chunks USING GIN(source_ids);
+      CREATE INDEX IF NOT EXISTS temporal_chunk_individuals ON mind_temporal_chunks USING GIN(individual_ids);`);
   }
-  temporalHistory(scope: MemoryScope, query: TemporalHistoryQuery, world: WorldState): Promise<TemporalHistorySelection> {
+  temporalHistory(
+    scope: MemoryScope,
+    query: TemporalHistoryQuery,
+    world: WorldState,
+  ): Promise<TemporalHistoryPage> {
     return this.snapshot(() => readTemporalHistory(this.db, scope, world, query));
   }
-  prepareRetention(state: SavedWorld): Promise<PreparedMemoryRetention> {
+  prepareRetention(state: SavedWorld, complete = false): Promise<PreparedMemoryRetention> {
     return this.snapshot(async () => {
-      const accounts = await prepareAccountRetention(this.db,state);
-      const recent = await prepareTemporalRetention(this.db,accounts.state);
-      const rows=new Map(accounts.rows);
-      for(const [table,ids] of recent.rows) rows.set(table,[...(rows.get(table)??[]),...ids]);
-      return {state:recent.state,rows};
+      const accounts = await prepareAccountRetention(this.db, state, complete);
+      const recent = await prepareTemporalRetention(this.db, accounts.state, complete);
+      const rows = new Map(accounts.rows);
+      for (const [table, ids] of recent.rows) rows.set(table, [...(rows.get(table) ?? []), ...ids]);
+      return { state: recent.state, rows, positions: accounts.positions };
     });
   }
-  async temporalReceiptsCurrent(scope: MemoryScope, locators: readonly TemporalReceiptLocator[]): Promise<boolean> {
+  async temporalReceiptsCurrent(
+    scope: MemoryScope,
+    locators: readonly TemporalReceiptLocator[],
+  ): Promise<boolean> {
     if (!locators.length) return true;
-    if (locators.length > RETRIEVAL_ROWS || locators.some((locator) => locator.actorId !== scope.actorId)) return false;
-    const unique = [...new Map(locators.map((locator) => [JSON.stringify(locator), locator])).values()];
-    const row = await this.db.prepare(`SELECT COUNT(*) AS count FROM jsonb_to_recordset(?::jsonb)
+    if (
+      locators.length > RETRIEVAL_ROWS ||
+      locators.some((locator) => locator.actorId !== scope.actorId)
+    )
+      return false;
+    const unique = [
+      ...new Map(locators.map((locator) => [JSON.stringify(locator), locator])).values(),
+    ];
+    const row = await this.db
+      .prepare(
+        `SELECT COUNT(*) AS count FROM jsonb_to_recordset(?::jsonb)
       q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint)
       WHERE EXISTS (SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
         EXISTS (SELECT 1 FROM LATERAL (
@@ -492,7 +593,8 @@ export class MemoryRepository {
           ORDER BY c.first_ordinal DESC LIMIT 1
         ) current WHERE current.last_ordinal>=q.ordinal AND current.receipt_ordinals @> ARRAY[q.ordinal])
         OR EXISTS (SELECT 1 FROM mind_temporal_supports s WHERE s.world_id=? AND s.actor_id=q."actorId"
-          AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal))`)
+          AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal))`,
+      )
       .get(JSON.stringify(unique), scope.worldId, scope.generation, scope.worldId, scope.worldId);
     return Number(row?.['count'] ?? 0) === unique.length;
   }
@@ -508,6 +610,34 @@ export class MemoryRepository {
   ): Promise<MemoryChanges> {
     const affected: MemoryChanges = new Map();
     affected.newSources = new Map();
+    const erased = (changes.writes.get('mind_forgotten') ?? []).map((row) => ({
+      actor_id: (JSON.parse(row.id) as string[])[3]!,
+      source_id: JSON.parse(row.payload) as string,
+    }));
+    const erasedKeys = new Set(erased.map((row) => JSON.stringify([row.actor_id, row.source_id])));
+    if (erased.length) {
+      await sharedWrites?.flush();
+      const keys = JSON.stringify(erased);
+      for (const table of [
+        'mind_source_versions',
+        'mind_source_annotations',
+        'memory_index_queue',
+        'memory_vector_cache',
+        'memory_vectors',
+      ])
+        await this.db
+          .prepare(
+            `DELETE FROM ${table} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+          WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id`,
+          )
+          .run(keys, worldId);
+      await this.db
+        .prepare(
+          `DELETE FROM history_perspectives t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+        WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.event_id=q.source_id`,
+        )
+        .run(keys, worldId);
+    }
     const invalidateConversations = new Set<string>();
     const touch = (actor: string, id: string) => {
       if (affected.get(actor) === null) return;
@@ -554,6 +684,9 @@ export class MemoryRepository {
             `SELECT id,actor_id,source_id,payload FROM ${table} WHERE world_id=? AND id IN (${placeholders})`,
           )
           .all(worldId, ...batch);
+        for (const row of old)
+          if (erasedKeys.has(JSON.stringify([row['actor_id'], row['source_id']])))
+            expired.add(String(row['id']));
         for (const row of old) {
           touch(String(row['actor_id']), String(row['source_id']));
           if (kind === 'awareness') invalidateConversations.add(String(row['actor_id']));
@@ -562,7 +695,10 @@ export class MemoryRepository {
           this.db,
           'mind_source_versions',
           (archive ? old : [])
-            .filter((row) => !expired.has(String(row['id'])) && row['payload'] !== next.get(String(row['id'])))
+            .filter(
+              (row) =>
+                !expired.has(String(row['id'])) && row['payload'] !== next.get(String(row['id'])),
+            )
             .map((row) => [
               worldId,
               row['actor_id'],
@@ -576,19 +712,40 @@ export class MemoryRepository {
         );
         const released = old.filter((row) => expired.has(String(row['id'])));
         if (released.length) {
-          const keys = JSON.stringify(released.map((row) => ({actor_id:String(row['actor_id']),source_id:String(row['source_id'])})));
-          for (const dependent of ['mind_source_versions','mind_source_annotations'])
-            await this.db.prepare(`DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
-              WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id AND (t.source_kind=? OR (?='awareness' AND t.source_kind='perspective'))`).run(keys,worldId,kind,kind);
-          for (const dependent of ['memory_index_queue','memory_index_attempts','memory_vectors','memory_vector_cache'])
-            await this.db.prepare(`DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
-              WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id`).run(keys,worldId);
-          await this.db.prepare(`DELETE FROM mind_source_dependencies t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+          const keys = JSON.stringify(
+            released.map((row) => ({
+              actor_id: String(row['actor_id']),
+              source_id: String(row['source_id']),
+            })),
+          );
+          for (const dependent of ['mind_source_versions', 'mind_source_annotations'])
+            await this.db
+              .prepare(
+                `DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+              WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id AND (t.source_kind=? OR (?='awareness' AND t.source_kind='perspective'))`,
+              )
+              .run(keys, worldId, kind, kind);
+          for (const dependent of ['memory_index_queue', 'memory_vectors', 'memory_vector_cache'])
+            await this.db
+              .prepare(
+                `DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+              WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id`,
+              )
+              .run(keys, worldId);
+          await this.db
+            .prepare(
+              `DELETE FROM mind_source_dependencies t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
             WHERE t.world_id=? AND t.actor_id=q.actor_id AND
-              ((t.derived_kind=? AND t.derived_id=q.source_id) OR (t.source_kind=? AND t.source_id=q.source_id))`).run(keys,worldId,kind,kind);
+              t.derived_kind=? AND t.derived_id=q.source_id`,
+            )
+            .run(keys, worldId, kind);
           if (kind === 'awareness')
-            await this.db.prepare(`DELETE FROM history_perspectives t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
-              WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.event_id=q.source_id`).run(keys,worldId);
+            await this.db
+              .prepare(
+                `DELETE FROM history_perspectives t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+              WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.event_id=q.source_id`,
+              )
+              .run(keys, worldId);
         }
         {
           await this.db
@@ -639,7 +796,9 @@ export class MemoryRepository {
     const groups = new Map<SourceKind, readonly PreparedSource[]>();
     for (const kind of Object.keys(sourceTables) as SourceKind[])
       groups.set(kind, [...this.sourceRows(worldId, kind, changes)]);
-    return { worldId, changes, groups };
+    if (!this.derivedAllowance || this.derivedAllowance.worldId !== worldId)
+      throw new Error('Selected memory retention policy is unavailable.');
+    return { worldId, changes, groups, allowance: this.derivedAllowance };
   }
   private *sourceRows(
     worldId: string,
@@ -822,6 +981,44 @@ export class MemoryRepository {
           'ON CONFLICT DO NOTHING',
         );
       }
+      if (kind === 'memory') {
+        const links: unknown[][] = [];
+        for (const entry of writes()) {
+          const memory = JSON.parse(entry.row.payload) as MemoryRecord;
+          for (const dependency of memory.impression?.dependencies ?? []) {
+            if ('kind' in dependency)
+              links.push([
+                worldId,
+                entry.actorId,
+                kind,
+                entry.id,
+                dependency.kind,
+                dependency.id,
+                dependency.revision,
+                digest('impression-origin'),
+                -1,
+                -1,
+                '',
+              ]);
+            else
+              for (const alias of dependency.aliases.length ? dependency.aliases : [''])
+                links.push([
+                  worldId,
+                  entry.actorId,
+                  kind,
+                  entry.id,
+                  dependency.source.family,
+                  dependency.source.id,
+                  JSON.stringify(dependency.source.revision),
+                  digest('impression-origin'),
+                  dependency.source.observer.physicalLife,
+                  dependency.ordinal ?? -1,
+                  alias,
+                ]);
+          }
+        }
+        await insertRows(this.db, 'mind_source_dependencies', links, 'ON CONFLICT DO NOTHING');
+      }
       // Immediate learned-identity edges use the same source dependency owner. A
       // bounded exact lookup binds personal aliases; native roots already own revisions.
       let dependencyBatch: PreparedSource[] = [];
@@ -978,10 +1175,61 @@ export class MemoryRepository {
               personalFactAlias(capsule.source.id, capsule.facetOrdinal),
               canonicalJson([capsule.source, capsule.facetOrdinal]),
               JSON.stringify(capsule),
+              kind,
+              null,
             ];
           }
       }
       await insertRows(this.db, 'recall_place_capsules', placeRows());
+      if (kind === 'memory') {
+        const spans: unknown[][] = [];
+        for (const entry of writes())
+          for (const span of (JSON.parse(entry.row.payload) as MemoryRecord).impression
+            ?.provenance ?? [])
+            spans.push([
+              worldId,
+              entry.actorId,
+              entry.id,
+              'memory',
+              span.physicalLife,
+              span.epoch,
+              span.from,
+              span.through,
+            ]);
+        await insertRows(this.db, 'mind_impression_spans', spans, 'ON CONFLICT DO NOTHING');
+      }
+    }
+    const supportWrites = changes.writes.get('mind_temporal_supports') ?? [];
+    if (supportWrites.length) {
+      const ids = supportWrites.map((row) => row.id);
+      await this.db
+        .prepare(
+          'DELETE FROM recall_place_capsules WHERE world_id=? AND support_record_id=ANY(?::text[])',
+        )
+        .run(worldId, ids);
+      const rows: unknown[][] = [];
+      for (const row of supportWrites) {
+        const support = JSON.parse(row.payload) as TemporalSupportCapsule;
+        for (const capsule of temporalKnownPlaceCapsules(support.receipt.actorId, support))
+          rows.push([
+            worldId,
+            support.receipt.actorId,
+            support.receipt.id,
+            'support',
+            personalAccountRevision(row.payload),
+            capsule.placeId,
+            capsule.observedAt,
+            capsule.observedOrder,
+            capsule.sourceEventId ?? null,
+            capsule.source.id,
+            personalFactAlias(capsule.source.id, capsule.facetOrdinal),
+            canonicalJson([capsule.source, capsule.facetOrdinal]),
+            JSON.stringify(capsule),
+            null,
+            row.id,
+          ]);
+      }
+      await insertRows(this.db, 'recall_place_capsules', rows);
     }
   }
 
@@ -1104,6 +1352,7 @@ export class MemoryRepository {
         )
         .run(...params, worldId, worldId);
     }
+    await this.trimDerived(worldId, changes.keys());
   }
 
   /** Seek the next eligible place through the source-owned capsule index. Each place
@@ -1117,10 +1366,12 @@ export class MemoryRepository {
     const selection = (
       afterPrevious = false,
     ) => `SELECT p.world_id,p.actor_id,p.owner_id,p.owner_kind,p.owner_revision,
-      p.place_id AS learned_place_id,p.capsule::jsonb AS capsule,${afterPrevious ? 'previous.place_step+1' : '1'} AS place_step
+      p.observed_at,p.observed_order,p.support_record_id,p.place_id AS learned_place_id,p.capsule::jsonb AS capsule,${afterPrevious ? 'previous.place_step+1' : '1'} AS place_step
       FROM recall_place_capsules p CROSS JOIN LATERAL (
         SELECT r.revision,r.eligible FROM recall_sources r WHERE r.world_id=p.world_id AND r.actor_id=p.actor_id
-          AND r.id=p.owner_id AND r.source_kind=p.owner_kind LIMIT 1
+          AND r.id=p.owner_id AND r.source_kind=p.owner_kind
+        UNION ALL SELECT s.account_revision AS revision,1::bigint AS eligible FROM mind_temporal_supports s
+          WHERE p.owner_kind='support' AND s.world_id=p.world_id AND s.id=p.support_record_id LIMIT 1
       ) admitted
       WHERE admitted.revision=p.owner_revision AND admitted.eligible=1
         AND p.world_id=? AND p.actor_id=? AND (SELECT generation FROM world_head WHERE id=1)=?${range?.after ? ' AND p.place_id>?' : ''}${range?.placeId ? ' AND p.place_id=?' : ''}
@@ -1180,10 +1431,11 @@ export class MemoryRepository {
         if (typeof row['place_capsule'] !== 'string') throw new MemoryPreparationError();
         const capsule = JSON.parse(row['place_capsule']) as KnownPlaceCapsule;
         if (
-          !capsule.personalSource ||
-          capsule.personalSource.kind !== row['source_kind'] ||
-          capsule.personalSource.id !== row['id'] ||
-          capsule.personalSource.revision !== row['revision']
+          row['source_kind'] !== 'support' &&
+          (!capsule.personalSource ||
+            capsule.personalSource.kind !== row['source_kind'] ||
+            capsule.personalSource.id !== row['id'] ||
+            capsule.personalSource.revision !== row['revision'])
         )
           throw new MemoryPreparationError();
         return capsule;
@@ -1213,8 +1465,12 @@ export class MemoryRepository {
           `${this.retainedPlaces(false, range)} SELECT ${sourceColumns},r.search_text,
             p.capsule::text AS selected_place_capsule,p.learned_place_id AS selected_place_id
           FROM retained_places p CROSS JOIN LATERAL (
-            SELECT ${sourceColumns},r.search_text FROM recall_sources r WHERE r.world_id=p.world_id AND r.actor_id=p.actor_id
-              AND r.id=p.owner_id AND r.source_kind=p.owner_kind LIMIT 1
+            SELECT ${sourceColumns},${this.sourceTextSql()} AS search_text FROM recall_sources r WHERE r.world_id=p.world_id AND r.actor_id=p.actor_id
+              AND r.id=p.owner_id AND r.source_kind=p.owner_kind
+            UNION ALL SELECT s.world_id,s.actor_id,p.owner_id AS id,'support' AS source_kind,s.id AS record_id,s.account_revision AS revision,
+              NULL::text AS event_id,'belief' AS memory_kind,'observed' AS acquisition,NULL::text AS event_type,
+              p.observed_at AS at,0::double precision AS importance,0::bigint AS required,1::bigint AS eligible,0::bigint AS sequence,COALESCE((SELECT v->'exposure'->>'description' FROM jsonb_array_elements(s.payload::jsonb->'values') v WHERE v->>'kind'='encounter-exposure' AND v->'exposure'->>'id'=p.learned_place_id LIMIT 1),'') AS search_text
+              FROM mind_temporal_supports s WHERE p.owner_kind='support' AND s.world_id=p.world_id AND s.id=p.support_record_id LIMIT 1
           ) r WHERE r.revision=p.owner_revision ORDER BY p.learned_place_id LIMIT ?`,
         )
         .all(...this.placeParams(scope, range), count);
@@ -1222,10 +1478,11 @@ export class MemoryRepository {
         if (typeof row['selected_place_capsule'] !== 'string') throw new MemoryPreparationError();
         const capsule = JSON.parse(row['selected_place_capsule']) as KnownPlaceCapsule;
         if (
-          !capsule.personalSource ||
-          capsule.personalSource.kind !== row['source_kind'] ||
-          capsule.personalSource.id !== row['id'] ||
-          capsule.personalSource.revision !== row['revision']
+          row['source_kind'] !== 'support' &&
+          (!capsule.personalSource ||
+            capsule.personalSource.kind !== row['source_kind'] ||
+            capsule.personalSource.id !== row['id'] ||
+            capsule.personalSource.revision !== row['revision'])
         )
           throw new MemoryPreparationError();
         return {
@@ -1286,7 +1543,9 @@ export class MemoryRepository {
       const page = result.matched.slice(0, options.limit);
       const hydrated = await this.hydrate([
         ...new Map(
-          page.map((row) => [sourceKey(String(row['source_kind']), String(row['id'])), row]),
+          page
+            .filter((row) => row['source_kind'] !== 'support')
+            .map((row) => [sourceKey(String(row['source_kind']), String(row['id'])), row]),
         ).values(),
       ]);
       const correctionRows = new Map<string, Record<string, unknown>>();
@@ -1330,7 +1589,61 @@ export class MemoryRepository {
           ];
         }),
       );
+      const supports = new Map<string, TemporalSupportCapsule>();
+      const supportIds = page
+        .filter((row) => row['source_kind'] === 'support')
+        .map((row) => String(row['record_id']));
+      if (supportIds.length)
+        for (const row of await this.db
+          .prepare(
+            'SELECT source_id,payload FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
+          )
+          .all(scope.worldId, scope.actorId, supportIds))
+          supports.set(
+            String(row['source_id']),
+            JSON.parse(String(row['payload'])) as TemporalSupportCapsule,
+          );
       const entries: KnownPlaceSource[] = page.map((row) => {
+        if (row['source_kind'] === 'support') {
+          const support = supports.get(String(row['id']));
+          if (!support) throw new MemoryPreparationError();
+          const capsule = temporalKnownPlaceCapsules(scope.actorId, support).find(
+            (candidate) => canonicalJson(candidate) === canonicalJson(row.capsule),
+          );
+          const exposure = support.values.find(
+            (value) =>
+              value.kind === 'encounter-exposure' &&
+              value.exposure.kind === 'place' &&
+              value.exposure.id === capsule?.placeId,
+          );
+          if (
+            !capsule ||
+            exposure?.kind !== 'encounter-exposure' ||
+            exposure.exposure.kind !== 'place'
+          )
+            throw new MemoryPreparationError();
+          return {
+            revision: String(row['revision']),
+            memory: {
+              id: support.receipt.id,
+              actorId: scope.actorId,
+              kind: 'belief',
+              source: 'observed',
+              summary: exposure.exposure.description,
+              at: capsule.observedAt,
+              entityIds: [],
+              importance: 0,
+            },
+            place: { capsule, exposure: exposure.exposure },
+            ...(row.correction_id
+              ? {
+                  correctionId: row.correction_id,
+                  correction: correctionBodies.find((body) => body.memory.id === row.correction_id)
+                    ?.memory.summary,
+                }
+              : {}),
+          };
+        }
         const retained = retainedBySource.get(
           sourceKey(String(row['source_kind']), String(row['id'])),
         );
@@ -1389,7 +1702,7 @@ export class MemoryRepository {
       if (!ids) break;
     }
   }
-  private readonly registeredModels = new Set<string>();
+  private readonly registeredModels = new Map<string, string>();
   private snapshot<T>(operation: () => Promise<T>): Promise<T> {
     return this.db.readTransaction
       ? this.db.readTransaction(operation)
@@ -1653,6 +1966,7 @@ export class MemoryRepository {
         expectedRevision,
       );
     if (!row) throw new Error('Source or annotation changed; refresh before editing.');
+    await this.trimDerived(scope.worldId, [scope.actorId]);
     return Number(row['revision']);
   }
   async annotations(
@@ -1709,6 +2023,12 @@ export class MemoryRepository {
         : { entries };
     });
   }
+  private sourceTextSql(alias = 'r'): string {
+    return `COALESCE(NULLIF(${alias}.search_text,''),CASE ${alias}.source_kind
+      WHEN 'memory' THEN (SELECT m.payload::jsonb->>'summary' FROM mind_memories m WHERE m.world_id=${alias}.world_id AND m.actor_id=${alias}.actor_id AND m.id=${alias}.record_id)
+      WHEN 'summary' THEN (SELECT m.payload::jsonb->>'text' FROM mind_summaries m WHERE m.world_id=${alias}.world_id AND m.actor_id=${alias}.actor_id AND m.id=${alias}.record_id)
+      WHEN 'awareness' THEN (SELECT m.payload::jsonb->>'text' FROM mind_awareness m WHERE m.world_id=${alias}.world_id AND m.actor_id=${alias}.actor_id AND m.id=${alias}.record_id) END,'')`;
+  }
   /** Read-only owner/inspector browse, newest first by (time, id, source kind). A search or
    * the private-thoughts filter examines at most `scan` eligible rows and matches only
    * `search_text`, the text the viewer is shown; `resume` then continues after the last row
@@ -1740,7 +2060,7 @@ export class MemoryRepository {
     ) =>
       this.db
         .prepare(
-          `SELECT ${sourceColumns}${terms ? ',r.search_text' : ''} FROM recall_sources r
+          `SELECT ${sourceColumns}${terms ? ',' + this.sourceTextSql() + ' AS search_text' : ''} FROM recall_sources r
           WHERE ${this.eligible}${before ? ' AND (r.at,r.id,r.source_kind)<(?,?,?)' : ''}
           ORDER BY r.at DESC,r.id DESC,r.source_kind DESC LIMIT ?`,
         )
@@ -2390,23 +2710,36 @@ export class MemoryRepository {
   async pending(scope: MemoryScope, model: MemoryModel, limit = 32): Promise<RetrievedMemory[]> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
       throw new Error('Invalid indexing batch size.');
+    if (!this.derivedAllowance || this.derivedAllowance.worldId !== scope.worldId) return [];
     const registration = JSON.stringify([
       scope.worldId,
       scope.actorId,
       model.model,
       model.dimensions,
     ]);
-    if (!this.registeredModels.has(registration)) {
+    const actorRegistration = JSON.stringify([scope.worldId, scope.actorId]);
+    if (this.registeredModels.get(actorRegistration) !== registration) {
       await this.db.transaction(async () => {
+        await this.db
+          .prepare(
+            'DELETE FROM memory_index_queue WHERE world_id=? AND actor_id=? AND (model<>? OR dimensions<>?)',
+          )
+          .run(scope.worldId, scope.actorId, model.model, model.dimensions);
+        await this.db
+          .prepare(
+            'DELETE FROM memory_index_models WHERE world_id=? AND actor_id=? AND (model<>? OR dimensions<>?)',
+          )
+          .run(scope.worldId, scope.actorId, model.model, model.dimensions);
         const added = await this.db
           .prepare(
             'INSERT INTO memory_index_models VALUES (?,?,?,?) ON CONFLICT DO NOTHING RETURNING model',
           )
           .get(scope.worldId, scope.actorId, model.model, model.dimensions);
         if (added) await this.refreshQueue(scope.worldId, scope.actorId, null);
+        await this.trimDerived(scope.worldId, [scope.actorId]);
       });
-      this.registeredModels.add(registration);
-      this.db.afterRollback?.(() => this.registeredModels.delete(registration));
+      this.registeredModels.set(actorRegistration, registration);
+      this.db.afterRollback?.(() => this.registeredModels.delete(actorRegistration));
     }
     const rows = await this.db
       .prepare(
@@ -2471,7 +2804,11 @@ export class MemoryRepository {
     });
   }
   async putVectors(scope: MemoryScope, model: MemoryModel, values: MemoryVector[]) {
-    return this.db.transaction(() => this.publishVectors(scope, model, values));
+    if (!this.derivedAllowance || this.derivedAllowance.worldId !== scope.worldId) return;
+    return this.db.transaction(async () => {
+      await this.publishVectors(scope, model, values);
+      await this.trimDerived(scope.worldId, [scope.actorId]);
+    });
   }
   private async publishVectors(scope: MemoryScope, model: MemoryModel, values: MemoryVector[]) {
     this.vectorPublication(scope, model);
@@ -2550,6 +2887,16 @@ export class MemoryRepository {
       WHERE v.world_id=q.world_id AND v.actor_id=q.actor_id AND v.source_id=q.source_id AND v.source_revision=q.source_revision AND v.model=q.model AND v.dimensions=q.dimensions)`,
       )
       .run(worldId);
+    if (changed) await this.trimDerived(worldId, changed.keys());
+    else {
+      const owners = await this.db
+        .prepare('SELECT DISTINCT actor_id FROM memory_vectors WHERE world_id=?')
+        .all(worldId);
+      await this.trimDerived(
+        worldId,
+        owners.map((row) => String(row['actor_id'])),
+      );
+    }
   }
   private validateVector(model: MemoryModel, vector: number[]) {
     if (

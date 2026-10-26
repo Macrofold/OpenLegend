@@ -14,6 +14,7 @@ import {
   worldPosition,
   hasMemory,
   entityChangesBetween,
+  currentAttentionCues,
 } from '@open-legend/domain';
 import type { WorldState } from '@open-legend/domain';
 import type { IntakeInputs, IntakeReason } from './actor-work.js';
@@ -40,6 +41,8 @@ const THOUGHT_INPUT_REASONS: readonly IntakeReason[] = [
   'evidence', // summaries
   'state', // accepted mind
   'state', // cognition policy
+  'evidence', // newly supported native physical relation generation
+  'state', // actual saved free interval, never a recurring thought timer
 ];
 interface ThoughtExposure {
   people: unknown;
@@ -68,6 +71,7 @@ const personalThoughtRoots = [
   'knowledgeRevisions',
   'visiblePeople',
   'visibleObjects',
+  'perceptionEvidence',
 ] as const;
 const personalExperienceRoots = [
   'awareness',
@@ -454,6 +458,8 @@ export class ThoughtIntakeInputs {
         world.experience?.summaries[id],
         world.innerWorlds?.[id],
         world.cognitionPolicy,
+        JSON.stringify(currentAttentionCues(world,id).map((cue)=>[cue.id,world.perceptionEvidence?.[id]?.attention?.candidates[cue.anchorKey]?.descriptionRevision])),
+        JSON.stringify([actor.agency.semantic?.interval,actor.agency.semantic?.discovery,actor.agency.semantic?.occupiedPurpose]),
       ],
       reasons: THOUGHT_INPUT_REASONS,
       urgency,

@@ -14,6 +14,8 @@ import {
   prepareKnownPlaceEvidence,
   knownPlaceCapsule,
   retainedPlaceObservations,
+  temporalKnownPlaceCapsules,
+  beginTemporalReceiptEpoch,
   personalFactAlias,
   KnownPlacePreparationError,
 } from '@open-legend/domain';
@@ -1198,9 +1200,13 @@ export class WorldService {
       if (generation !== this.generation || !entityGet(this.world.entities, actorId)?.actor)
         return false;
       let accepted = false;
-      const next = updateWorld(this.world, (world) => { accepted = operation(world); });
+      const next = updateWorld(this.world, (world) => {
+        accepted = operation(world);
+      });
       if (!accepted) return false;
-      return next === this.world || this.commit({ ...this.saved, world: next }, undefined, 'unchanged');
+      return (
+        next === this.world || this.commit({ ...this.saved, world: next }, undefined, 'unchanged')
+      );
     });
   }
   async setPreferences(
@@ -1546,9 +1552,9 @@ export class WorldService {
         throw new Error(
           'A transition declared unchanged events but replaced the event collection.',
         );
-      const retention = await this.prepareRetention(saved);
+      const retention = await this.prepareRetention(saved, !!restore);
       const prepared = this.prepareSnapshot(retention.state);
-      this.store.records?.stageRetirements(prepared.snapshot, retention.rows);
+      this.store.records?.stageRetirements(prepared.snapshot, retention.rows, retention.positions);
       const { historyWorld, appendEventCount, currentAppendCount } = prepared;
       saved = prepared.snapshot;
       const revision = await timed('world.commit', () =>
@@ -1765,7 +1771,7 @@ export class WorldService {
       allocation = this.hostWork.reserve(saved.world);
       const retention = await this.prepareRetention(saved);
       const prepared = this.prepareSnapshot(retention.state);
-      store.records?.stageRetirements(prepared.snapshot, retention.rows);
+      store.records?.stageRetirements(prepared.snapshot, retention.rows, retention.positions);
       // Preparation assigns canonical record positions; release reuses them.
       const changes = store.prepareCommit(this.persistedRevision, prepared.snapshot, {
         after: prepared.historyWorld,
@@ -1922,11 +1928,11 @@ export class WorldService {
     return false;
   }
 
-  private async prepareRetention(saved:SavedWorld) {
+  private async prepareRetention(saved: SavedWorld, complete = false) {
     if (!this.store.memories || !retentionNeedsPreparation(saved.world))
-      return {state:saved,rows:new Map<string,string[]>()};
+      return { state: saved, rows: new Map<string, string[]>(), positions: undefined };
     await this.backgroundSave?.done;
-    return this.store.memories.prepareRetention(saved);
+    return this.store.memories.prepareRetention(saved, complete);
   }
 
   private async acceptProgress(saved: SavedWorld): Promise<boolean> {
@@ -2099,6 +2105,10 @@ export class WorldService {
                     retain(capsule);
                 }
               }
+              for (const support of Object.values(
+                candidate.experience?.temporal?.actors[actorId]?.supports ?? {},
+              ))
+                for (const capsule of temporalKnownPlaceCapsules(actorId, support)) retain(capsule);
               const result = prepareKnownPlaceEvidence([...latest.values()]);
               return result;
             })();
@@ -2777,6 +2787,7 @@ export class WorldService {
           token: randomUUID(),
         };
         const timeline = randomUUID();
+        beginTemporalReceiptEpoch(restored.world, timeline);
         // Preserve the current world before any database write, pinned to the revision this load
         // replaces. If it cannot be written (full disk, capture limits), the load is refused and
         // the current world stays active, without a storage latch. No bypass (SB13, SL09-A).
