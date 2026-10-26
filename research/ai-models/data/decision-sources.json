@@ -7,7 +7,9 @@
     "published_or_updated": "2026-10-14",
     "retrieved_at": "2026-10-23",
     "supported_claims": "Jev 1.14 release, direct API limits and price",
-    "targeted_rechecked_at": "2026-10-24"
+    "targeted_rechecked_at": "2026-10-24",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "Jev 1.14 direct64k request/32k question; 262k opt-in; no verified public weights."
   },
   {
     "id": "D002",
@@ -44,7 +46,9 @@
     "published_or_updated": null,
     "retrieved_at": "2026-10-23",
     "supported_claims": "Mammoth and Elephant relationship, 16384 length, CUDA runtime, free promotion and vendor benchmarks",
-    "targeted_rechecked_at": "2026-10-24"
+    "targeted_rechecked_at": "2026-10-24",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "27B Qwen3.5 decision head; 16,384 trained limit; bidirectional questions; overlong input rejected."
   },
   {
     "id": "D006",
@@ -90,7 +94,9 @@
     "type": "official model card",
     "published_or_updated": null,
     "retrieved_at": "2026-10-23",
-    "supported_claims": "Specifications, deployment, capabilities and license"
+    "supported_claims": "Specifications, deployment, capabilities and license",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "35B/3B active; BF16/Q8 serving; 16k default and128k opt-in; Nace-specific runtime."
   },
   {
     "id": "D011",
@@ -109,7 +115,9 @@
     "type": "official model card",
     "published_or_updated": null,
     "retrieved_at": "2026-10-23",
-    "supported_claims": "Specifications, deployment, capabilities and license"
+    "supported_claims": "Specifications, deployment, capabilities and license",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "9B joint schema model; exact reference dependencies and H200 observation."
   },
   {
     "id": "D013",
@@ -145,7 +153,9 @@
     "type": "official model card",
     "published_or_updated": null,
     "retrieved_at": "2026-10-23",
-    "supported_claims": "Specifications, deployment, capabilities and license"
+    "supported_claims": "Specifications, deployment, capabilities and license",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "587M multimodal decision model; 16,384 combined positions,896 text tokens with images,30s audio; FP16 CUDA required."
   },
   {
     "id": "D017",
@@ -163,7 +173,8 @@
     "type": "official announcement",
     "published_or_updated": "2026-10-15",
     "retrieved_at": "2026-10-23",
-    "supported_claims": "October 15 API release, vendor comparison, price and applications"
+    "supported_claims": "October 15 API release, vendor comparison, price and applications",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D019",
@@ -182,7 +193,9 @@
     "published_or_updated": null,
     "retrieved_at": "2026-10-23",
     "supported_claims": "Specifications, deployment, capabilities and license",
-    "targeted_rechecked_at": "2026-10-24"
+    "targeted_rechecked_at": "2026-10-24",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "Restricted checkpoint access; native inline readout protocol,262k position limit; reference/fast243k GB200 memory measurements."
   },
   {
     "id": "D021",
@@ -191,7 +204,9 @@
     "type": "official model card",
     "published_or_updated": null,
     "retrieved_at": "2026-10-23",
-    "supported_claims": "Specifications, deployment, capabilities and license"
+    "supported_claims": "Specifications, deployment, capabilities and license",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "Restricted checkpoint access; native inline readout protocol,262k position limit; reference/fast243k GB200 memory measurements."
   },
   {
     "id": "D022",
@@ -200,7 +215,9 @@
     "type": "official model card",
     "published_or_updated": null,
     "retrieved_at": "2026-10-23",
-    "supported_claims": "26.09B, video/images, 262k configured versus 32k serving recommendation, actual response, ROCm verification"
+    "supported_claims": "26.09B, video/images, 262k configured versus 32k serving recommendation, actual response, ROCm verification",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "Exact26.09B checkpoint, readout runtime,32k serving recommendation; published MI325X61.8–65.4 GiB observations and long-prefill restrictions."
   },
   {
     "id": "D023",
@@ -227,7 +244,8 @@
     "type": "official announcement",
     "published_or_updated": "2026-10-09",
     "retrieved_at": "2026-10-23",
-    "supported_claims": "Qwen 3.5-9B-derived, Foundry availability, task scope"
+    "supported_claims": "Qwen 3.5-9B-derived, Foundry availability, task scope",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D026",
@@ -254,7 +272,8 @@
     "type": "official catalog",
     "published_or_updated": null,
     "retrieved_at": "2026-10-23",
-    "supported_claims": "Mercury Decide and Mercury 3 product position"
+    "supported_claims": "Mercury Decide and Mercury 3 product position",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D029",
@@ -272,7 +291,8 @@
     "type": "official documentation",
     "published_or_updated": null,
     "retrieved_at": "2026-10-23",
-    "supported_claims": "400 questions, typed refusals, sample outputs, $0.10 per million input tokens, cache/region/length modifiers"
+    "supported_claims": "400 questions, typed refusals, sample outputs, $0.10 per million input tokens, cache/region/length modifiers",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D031",
@@ -317,7 +337,9 @@
     "type": "official model card",
     "published_or_updated": "2026-04-22",
     "retrieved_at": "2026-10-23",
-    "supported_claims": "35B/3B, context, multimodal, Apache 2.0, serving"
+    "supported_claims": "35B/3B, context, multimodal, Apache 2.0, serving",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "Native 262144 context withYaRN extension1010000; hybrid GDN architecture and native serving instructions."
   },
   {
     "id": "D036",
@@ -326,7 +348,9 @@
     "type": "official model card",
     "published_or_updated": null,
     "retrieved_at": "2026-10-23",
-    "supported_claims": "Specifications, deployment, capabilities and license"
+    "supported_claims": "Specifications, deployment, capabilities and license",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "Native 262144 context withYaRN extension1010000; hybrid GDN architecture and native serving instructions."
   },
   {
     "id": "D037",
@@ -558,7 +582,9 @@
     "type": "official model card",
     "published_or_updated": "2026-10-15",
     "retrieved_at": "2026-10-23",
-    "supported_claims": "October 15 release; 120B total / 12B active, 1M context and vendor BF16 deployment on four H100 or two GB200 GPUs."
+    "supported_claims": "October 15 release; 120B total / 12B active, 1M context and vendor BF16 deployment on four H100 or two GB200 GPUs.",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "Current OpenMDW1.1license; vLLM.32or pinnednightly, hybridMamba2MoEvision,1Mcontext andmultimodallimits."
   },
   {
     "id": "D062",
@@ -567,7 +593,9 @@
     "type": "official model card",
     "published_or_updated": "2026-08-25",
     "retrieved_at": "2026-10-23",
-    "supported_claims": "August 25, 128k/512k, thinking and tools, Apache 2.0"
+    "supported_claims": "August 25, 128k/512k, thinking and tools, Apache 2.0",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "128knative/512kextension; vLLM.20orSGLang.5.18; thinkingparserplugin."
   },
   {
     "id": "D063",
@@ -649,7 +677,8 @@
     "published_or_updated": "2026-10-19",
     "retrieved_at": "2026-10-23",
     "supported_claims": "October 19, 1M, diffusion, vendor 1,068 tokens/s, promotional $0.10/$0.35 versus standard $0.20/$0.70",
-    "targeted_rechecked_at": "2026-10-24"
+    "targeted_rechecked_at": "2026-10-24",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D072",
@@ -757,7 +786,8 @@
     "type": "official documentation",
     "published_or_updated": "Current at targeted review",
     "retrieved_at": "2026-10-24",
-    "supported_claims": "Exact ID, 500k context, modalities, reasoning, tools and base token prices"
+    "supported_claims": "Exact ID, 500k context, modalities, reasoning, tools and base token prices",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D084",
@@ -784,7 +814,8 @@
     "type": "official documentation",
     "published_or_updated": "Current at targeted review",
     "retrieved_at": "2026-10-24",
-    "supported_claims": "Model ID, limits, availability, adaptive reasoning, strict tools and restricted Mythos counterpart"
+    "supported_claims": "Model ID, limits, availability, adaptive reasoning, strict tools and restricted Mythos counterpart",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D087",
@@ -793,7 +824,8 @@
     "type": "official documentation",
     "published_or_updated": "Current at targeted review",
     "retrieved_at": "2026-10-24",
-    "supported_claims": "Model ID, limits, hosted availability and reasoning/tool-use constraints"
+    "supported_claims": "Model ID, limits, hosted availability and reasoning/tool-use constraints",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D088",
@@ -838,7 +870,8 @@
     "type": "official documentation",
     "published_or_updated": "Updated 2026-10-14",
     "retrieved_at": "2026-10-24",
-    "supported_claims": "Exact model code, unified context, long decode, modalities, tools and implicit-only caching"
+    "supported_claims": "Exact model code, unified context, long decode, modalities, tools and implicit-only caching",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D093",
@@ -874,7 +907,8 @@
     "type": "official documentation and pricing",
     "published_or_updated": "Current at targeted review",
     "retrieved_at": "2026-10-24",
-    "supported_claims": "Exact ID, limits, text/image modalities, tool endpoint, reasoning efforts, token prices and modifiers"
+    "supported_claims": "Exact ID, limits, text/image modalities, tool endpoint, reasoning efforts, token prices and modifiers",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D097",
@@ -883,7 +917,8 @@
     "type": "official documentation and pricing",
     "published_or_updated": "Current at targeted review",
     "retrieved_at": "2026-10-24",
-    "supported_claims": "Exact ID, limits, modalities, tools, token prices and modifiers"
+    "supported_claims": "Exact ID, limits, modalities, tools, token prices and modifiers",
+    "hosting_rechecked_at": "2026-10-26"
   },
   {
     "id": "D098",
@@ -929,5 +964,848 @@
     "published_or_updated": "Effective 2026-03-23",
     "retrieved_at": "2026-10-24",
     "supported_claims": "Gemini Developer API users must be adults; API clients cannot be directed at or likely accessed by under-18s. These terms do not govern direct Google Cloud Platform service use."
+  },
+  {
+    "id": "D103",
+    "url": "https://docs.typesafe.ai/api/system-one",
+    "title": "TypeSafe System One API",
+    "type": "official model/runtime documentation",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Request schema and danger-zone image support requiring a vision-capable model; no byte ceiling established."
+  },
+  {
+    "id": "D104",
+    "url": "https://nace.ai/drex",
+    "title": "Nace Drex family and demonstrations",
+    "type": "official model/runtime documentation",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Drex Max multimodal hosted offering versus explicitly downloadable Drex 2.0; published game demos and deployment distinctions."
+  },
+  {
+    "id": "D105",
+    "url": "https://docs.vllm.ai/en/latest/models/structured_decisions_models/",
+    "title": "vLLM structured decisions implementations",
+    "type": "official model/runtime documentation",
+    "published_or_updated": "2026-10-23",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Native Clef/D3/Liquid strategies differ from generic first-token label reads; protocol limits, truncation and caching behavior."
+  },
+  {
+    "id": "D106",
+    "url": "https://huggingface.co/blog/ggml-org/decision-models-in-llamacpp",
+    "title": "Decision models in llama.cpp",
+    "type": "official model/runtime documentation",
+    "published_or_updated": "2026-10-02/03",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Native SystemOne support for named decision conversions; not blanket compatibility for every model."
+  },
+  {
+    "id": "D107",
+    "url": "https://huggingface.co/baselabs/mammoth-1/blob/main/setup.sh",
+    "title": "Mammoth1 serving setup",
+    "type": "official model/runtime documentation",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "PyTorch2.8 CUDA12.8 base, pinned OneJev and model patch; custom decision runtime."
+  },
+  {
+    "id": "D108",
+    "url": "https://huggingface.co/nace-ai/drex-v2.0-Q4_K_M",
+    "title": "nace-ai/drex-v2.0-Q4_K_M publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact21,170,954,464-byte Q4 file; F32 decision head; requires Nace forks or Kapitsa, not stock llama.cpp/Ollama."
+  },
+  {
+    "id": "D109",
+    "url": "https://huggingface.co/Cloudflare/clef/raw/main/README.md",
+    "title": "Cloudflare/clef publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Joint head; exact torch2.11/Transformers5.10.2 reference and16,384-token encoder."
+  },
+  {
+    "id": "D110",
+    "url": "https://huggingface.co/Cloudflare/clef/tree/main",
+    "title": "Cloudflare/clef file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D111",
+    "url": "https://huggingface.co/ggml-org/Clef-GGUF/raw/main/README.md",
+    "title": "ggml-org/Clef-GGUF publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Native llama.cpp conversion from Cloudflare/clef; requires PR29831."
+  },
+  {
+    "id": "D112",
+    "url": "https://huggingface.co/ggml-org/Clef-GGUF/tree/main",
+    "title": "ggml-org/Clef-GGUF file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D113",
+    "url": "https://huggingface.co/Cloudflare/clef-flash/tree/main",
+    "title": "Cloudflare/clef-flash file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded.",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D114",
+    "url": "https://huggingface.co/LiquidAI/d1-3B/raw/main/README.md",
+    "title": "LiquidAI/d1-3B publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "3.12B multimodal decision model; 32,768; Transformers>=5.14; BF16 CUDA/FP32 CPU."
+  },
+  {
+    "id": "D115",
+    "url": "https://huggingface.co/LiquidAI/d1-3B-GGUF/raw/main/README.md",
+    "title": "LiquidAI/d1-3B-GGUF publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Official native llama.cpp decision route and conversion."
+  },
+  {
+    "id": "D116",
+    "url": "https://huggingface.co/LiquidAI/d1-3B/tree/main",
+    "title": "LiquidAI/d1-3B file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D117",
+    "url": "https://huggingface.co/LiquidAI/d1-3B-GGUF/tree/main",
+    "title": "LiquidAI/d1-3B-GGUF file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D118",
+    "url": "https://huggingface.co/LiquidAI/d1-omni-600M-GGUF/raw/main/README.md",
+    "title": "LiquidAI/d1-omni-600M-GGUF publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Official Q8 native server; single-batch requirement and multimodal limits."
+  },
+  {
+    "id": "D119",
+    "url": "https://huggingface.co/LiquidAI/d1-omni-600M/tree/main",
+    "title": "LiquidAI/d1-omni-600M file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D120",
+    "url": "https://huggingface.co/LiquidAI/d1-omni-600M-GGUF/tree/main",
+    "title": "LiquidAI/d1-omni-600M-GGUF file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D121",
+    "url": "https://huggingface.co/vllm-sr/d3/tree/main",
+    "title": "vllm-sr/d3 file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D122",
+    "url": "https://huggingface.co/ibm-granite/granite-switch-4.1-8b/raw/main/README.md",
+    "title": "ibm-granite/granite-switch-4.1-8b publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "aLoRA decision/guardian composition,128k backbone, exact version bounds,128-logprob-ID ceiling."
+  },
+  {
+    "id": "D123",
+    "url": "https://huggingface.co/ibm-granite/granite-switch-4.1-8b/tree/main",
+    "title": "ibm-granite/granite-switch-4.1-8b file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D124",
+    "url": "https://huggingface.co/ibm-granite/granite-switch-4.1-30b/tree/main",
+    "title": "ibm-granite/granite-switch-4.1-30b file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D125",
+    "url": "https://recipes.vllm.ai/Qwen/Qwen3.8-27B",
+    "title": "Qwen/Qwen3.8-27B vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "vLLM>=0.17, Transformers>=5.8; Qwen parsers; quantized5090 observations do not establish BF16 minimum."
+  },
+  {
+    "id": "D126",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-27B/blob/main/config.json",
+    "title": "Qwen/Qwen3.8-27B configuration",
+    "type": "official model configuration",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact checkpoint architecture, dtype and positional configuration. Serialization version is not a minimum serving version."
+  },
+  {
+    "id": "D127",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-27B/tree/main",
+    "title": "Qwen/Qwen3.8-27B file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D128",
+    "url": "https://recipes.vllm.ai/Qwen/Qwen3.8-Flash-Next",
+    "title": "Qwen/Qwen3.8-Flash-Next vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "BF16335.28 GiB/FP8172.78 GiB; GB300 and8× Hopper configurations; Engram offload and TP/TEP constraints."
+  },
+  {
+    "id": "D129",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/blob/main/config.json",
+    "title": "Qwen/Qwen3.8-Flash-Next configuration",
+    "type": "official model configuration",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact checkpoint architecture, dtype and positional configuration. Serialization version is not a minimum serving version."
+  },
+  {
+    "id": "D130",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/tree/main",
+    "title": "Qwen/Qwen3.8-Flash-Next file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D131",
+    "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/tree/main",
+    "title": "Qwen/Qwen3.6-35B-A3B file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D132",
+    "url": "https://huggingface.co/Qwen/Qwen3.5-9B/tree/main",
+    "title": "Qwen/Qwen3.5-9B file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D133",
+    "url": "https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4.1-Flash",
+    "title": "deepseek-ai/DeepSeek-V4.1-Flash vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "0909 validated hardware; 1017 same architecture/tokenizer/footprint not rerun; native64k, YaRN1M; mixed precision andEngram/DSpark requirements."
+  },
+  {
+    "id": "D134",
+    "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/tree/main",
+    "title": "deepseek-ai/DeepSeek-V4.1-Flash-1017 file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D135",
+    "url": "https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4-Pro",
+    "title": "deepseek-ai/DeepSeek-V4-Pro vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Preview versus0813 footprints, parsers andDSpark version; 8× H200 validated 800k rather than full1M."
+  },
+  {
+    "id": "D136",
+    "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813/tree/main",
+    "title": "deepseek-ai/DeepSeek-V4-Pro-0813 file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D137",
+    "url": "https://recipes.vllm.ai/zai-org/GLM-5.3-Flash",
+    "title": "zai-org/GLM-5.3-Flash vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "NativeFP8,306 GiB weights, Blackwell/Hopper recipes; Hopper needsBF16 KV; glm47 parsers."
+  },
+  {
+    "id": "D138",
+    "url": "https://huggingface.co/zai-org/GLM-5.3-Flash/tree/main",
+    "title": "zai-org/GLM-5.3-Flash file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D139",
+    "url": "https://recipes.vllm.ai/zai-org/GLM-5.3",
+    "title": "zai-org/GLM-5.3 vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Approximately743B total/39B active, defaultFP8; vLLM.28/Transformers5.15; 8× H200/H20 and8× B200 routes."
+  },
+  {
+    "id": "D140",
+    "url": "https://huggingface.co/zai-org/GLM-5.3/tree/main",
+    "title": "zai-org/GLM-5.3 file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D141",
+    "url": "https://recipes.vllm.ai/MiniMaxAI/MiniMax-M3",
+    "title": "MiniMaxAI/MiniMax-M3 vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "BF16854 GB; 8× Hopper capacity, MSA cache,1M config versus512k nativeROCm note; minimax_m3 parsers."
+  },
+  {
+    "id": "D142",
+    "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3/blob/main/config.json",
+    "title": "MiniMaxAI/MiniMax-M3 configuration",
+    "type": "official model configuration",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact checkpoint architecture, dtype and positional configuration. Serialization version is not a minimum serving version."
+  },
+  {
+    "id": "D143",
+    "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3/tree/main",
+    "title": "MiniMaxAI/MiniMax-M3 file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D144",
+    "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3.1-Flash/blob/54e4e69dfc452b1e94a426c24a4fdeeaa8e3ad5e/README.md",
+    "title": "MiniMax M3.1 Flash pinned official card",
+    "type": "official model card",
+    "published_or_updated": "2026-10-23",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "428B/23B active; public mixed precision weights; runtime integrations and1M context."
+  },
+  {
+    "id": "D145",
+    "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3.1-Flash/blob/main/LICENSE",
+    "title": "MiniMax M3.1 Flash license",
+    "type": "official model license",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Attribution/notification and prior authorization beyond$20M annual product revenue; custom restrictions."
+  },
+  {
+    "id": "D146",
+    "url": "https://recipes.vllm.ai/MiniMaxAI/MiniMax-M3.1-Flash",
+    "title": "MiniMaxAI/MiniMax-M3.1-Flash vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "vLLM>=.33; BlackwellTP4native NVFP4, HopperTP8Marlin262k/noDSpark; block128 andhybridKVmanagerdisabled."
+  },
+  {
+    "id": "D147",
+    "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3.1-Flash/blob/main/config.json",
+    "title": "MiniMaxAI/MiniMax-M3.1-Flash configuration",
+    "type": "official model configuration",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact checkpoint architecture, dtype and positional configuration. Serialization version is not a minimum serving version."
+  },
+  {
+    "id": "D148",
+    "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3.1-Flash/tree/main",
+    "title": "MiniMaxAI/MiniMax-M3.1-Flash file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D149",
+    "url": "https://recipes.vllm.ai/moonshotai/Kimi-K3",
+    "title": "moonshotai/Kimi-K3 vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "2.8T total; MXFP4, CUDA13/r580+, K3-specificbuild; minimum8× GB300 andKimi parsers/topology."
+  },
+  {
+    "id": "D150",
+    "url": "https://huggingface.co/moonshotai/Kimi-K3/tree/main",
+    "title": "moonshotai/Kimi-K3 file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D151",
+    "url": "https://huggingface.co/mistralai/Mistral-Large-4-1T-A52B",
+    "title": "mistralai/Mistral-Large-4-1T-A52B publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Upcoming weights expected2026-10-31; 1T total,49B active excludingembedding/output or52B including. No downloadable checkpoint established."
+  },
+  {
+    "id": "D152",
+    "url": "https://recipes.vllm.ai/mistralai/Mistral-Small-4-119B-2603",
+    "title": "mistralai/Mistral-Small-4-119B-2603 vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "FP8 selectedweights~121 GB; vLLM>=.20, mistral_common>=1.11,2× H200/B200; config 1Mversusrecommended256k."
+  },
+  {
+    "id": "D153",
+    "url": "https://huggingface.co/mistralai/Mistral-Small-4-119B-2603/tree/main",
+    "title": "mistralai/Mistral-Small-4-119B-2603 file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D154",
+    "url": "https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512/tree/main",
+    "title": "mistralai/Ministral-3-8B-Instruct-2512 file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D155",
+    "url": "https://recipes.vllm.ai/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16",
+    "title": "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16 vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "vLLM>=.11.2,.28recommended; externalnano_v3parser andqwen3_codertools; publishedHopper/Blackwellhardware."
+  },
+  {
+    "id": "D156",
+    "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16/tree/main",
+    "title": "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16 file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D157",
+    "url": "https://recipes.vllm.ai/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4",
+    "title": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4 vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "BF16248.91 GB/NVFP475.01 GB; hardware/context-specificprofiles; 20%allowancesnotmeasuredVRAM."
+  },
+  {
+    "id": "D158",
+    "url": "https://huggingface.co/ibm-granite/granite-4.2-8b/tree/main",
+    "title": "ibm-granite/granite-4.2-8b file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D159",
+    "url": "https://docs.liquid.ai/deployment/gpu-inference/vllm",
+    "title": "Liquid vLLM deployment",
+    "type": "official model/runtime documentation",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "vLLM>=.23native dense/MoE/VL; lfm2toolparser andqwen3reasoning; no remote-codepatchneeded."
+  },
+  {
+    "id": "D160",
+    "url": "https://docs.vllm.ai/en/latest/api/vllm/tool_parsers/lfm2_tool_parser/",
+    "title": "vLLM LFM2 tool parser",
+    "type": "official model/runtime documentation",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Pythonic bracketedtools inspecialmarkers; --tool-call-parserlfm2."
+  },
+  {
+    "id": "D161",
+    "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/tree/main",
+    "title": "LiquidAI/LFM2.5-24B-A2B file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D162",
+    "url": "https://recipes.vllm.ai/Google/gemma-4-26B-A4B-it",
+    "title": "Google/gemma-4-26B-A4B-it vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact runtime/image, tokenizer/parser and hardware examples; distinguish current config from stale recipe context fields."
+  },
+  {
+    "id": "D163",
+    "url": "https://huggingface.co/google/gemma-4-26B-A4B-it/blob/main/config.json",
+    "title": "google/gemma-4-26B-A4B-it configuration",
+    "type": "official model configuration",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact checkpoint architecture, dtype and positional configuration. Serialization version is not a minimum serving version."
+  },
+  {
+    "id": "D164",
+    "url": "https://huggingface.co/google/gemma-4-26B-A4B-it/tree/main",
+    "title": "google/gemma-4-26B-A4B-it file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D165",
+    "url": "https://recipes.vllm.ai/Google/gemma-4-31B-it",
+    "title": "Google/gemma-4-31B-it vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact runtime/image, tokenizer/parser and hardware examples; distinguish current config from stale recipe context fields."
+  },
+  {
+    "id": "D166",
+    "url": "https://huggingface.co/google/gemma-4-31B-it/blob/main/config.json",
+    "title": "google/gemma-4-31B-it configuration",
+    "type": "official model configuration",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact checkpoint architecture, dtype and positional configuration. Serialization version is not a minimum serving version."
+  },
+  {
+    "id": "D167",
+    "url": "https://huggingface.co/google/gemma-4-31B-it/tree/main",
+    "title": "google/gemma-4-31B-it file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D168",
+    "url": "https://recipes.vllm.ai/Google/gemma-4-E4B-it",
+    "title": "Google/gemma-4-E4B-it vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact runtime/image, tokenizer/parser and hardware examples; distinguish current config from stale recipe context fields."
+  },
+  {
+    "id": "D169",
+    "url": "https://huggingface.co/google/gemma-4-E4B-it/blob/main/config.json",
+    "title": "google/gemma-4-E4B-it configuration",
+    "type": "official model configuration",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact checkpoint architecture, dtype and positional configuration. Serialization version is not a minimum serving version."
+  },
+  {
+    "id": "D170",
+    "url": "https://huggingface.co/google/gemma-4-E4B-it/tree/main",
+    "title": "google/gemma-4-E4B-it file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D171",
+    "url": "https://recipes.vllm.ai/Google/gemma-4-12B-it",
+    "title": "Google/gemma-4-12B-it vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact runtime/image, tokenizer/parser and hardware examples; distinguish current config from stale recipe context fields."
+  },
+  {
+    "id": "D172",
+    "url": "https://huggingface.co/google/gemma-4-12B-it/blob/main/config.json",
+    "title": "google/gemma-4-12B-it configuration",
+    "type": "official model configuration",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact checkpoint architecture, dtype and positional configuration. Serialization version is not a minimum serving version."
+  },
+  {
+    "id": "D173",
+    "url": "https://huggingface.co/google/gemma-4-12B-it/tree/main",
+    "title": "google/gemma-4-12B-it file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D174",
+    "url": "https://huggingface.co/google/functiongemma-270m-it/tree/main",
+    "title": "google/functiongemma-270m-it file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D175",
+    "url": "https://huggingface.co/HuggingFaceTB/SmolLM3-3B/blob/main/config.json",
+    "title": "HuggingFaceTB/SmolLM3-3B configuration",
+    "type": "official model configuration",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact checkpoint architecture, dtype and positional configuration. Serialization version is not a minimum serving version."
+  },
+  {
+    "id": "D176",
+    "url": "https://huggingface.co/HuggingFaceTB/SmolLM3-3B/tree/main",
+    "title": "HuggingFaceTB/SmolLM3-3B file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D177",
+    "url": "https://recipes.vllm.ai/openai/gpt-oss-120b",
+    "title": "openai/gpt-oss-120b vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "MXFP4, Harmony and tiktoken dependencies; vLLM>=.10.1, hardware-dependent kernels and tool parser."
+  },
+  {
+    "id": "D178",
+    "url": "https://huggingface.co/openai/gpt-oss-20b/tree/main",
+    "title": "openai/gpt-oss-20b file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D179",
+    "url": "https://huggingface.co/openai/gpt-oss-120b/tree/main",
+    "title": "openai/gpt-oss-120b file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D180",
+    "url": "https://recipes.vllm.ai/meta-llama/Llama-4-Scout-17B-16E-Instruct",
+    "title": "meta-llama/Llama-4-Scout-17B-16E-Instruct vLLM recipe",
+    "type": "runtime-project deployment recipe; published observations are not our tests",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "vLLM>=.12, driver575+, gated access and BF16 multi-GPU route; quantizedsingleGPU does not establish10Mcontext."
+  },
+  {
+    "id": "D181",
+    "url": "https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct/tree/main",
+    "title": "meta-llama/Llama-4-Scout-17B-16E-Instruct file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D182",
+    "url": "https://huggingface.co/meta-llama/Llama-4-Maverick-17B-128E-Instruct/tree/main",
+    "title": "meta-llama/Llama-4-Maverick-17B-128E-Instruct file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D183",
+    "url": "https://github.com/jaredpalmer/kev",
+    "title": "Canonical Kev repository",
+    "type": "official project repository",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Kev 1.0 revisions, serving protocol, calibrated pointer heads, dependencies, trained/validated state lengths and version distinctions."
+  },
+  {
+    "id": "D184",
+    "url": "https://raw.githubusercontent.com/jaredpalmer/kev/main/README.md",
+    "title": "Canonical Kev README",
+    "type": "official project documentation",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Artifact/base pins and native server instructions; do not pip-install unrelated PyPIkev package."
+  },
+  {
+    "id": "D185",
+    "url": "https://github.com/jaredpalmer/kev/blob/main/pyproject.toml",
+    "title": "Kev runtime dependency manifest",
+    "type": "official project manifest",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Python>=3.12, <3.14; torch>=2.6, <2.9; Transformers>=5.17, <6; PEFT>=.21; accelerate>=1.15; serve extras."
+  },
+  {
+    "id": "D186",
+    "url": "https://huggingface.co/jaredpalmer/kev-4b",
+    "title": "jaredpalmer/kev-4b publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Qwen3.5-4B-Base adapter+pointer head; revision and free-GPU-memory claims."
+  },
+  {
+    "id": "D187",
+    "url": "https://huggingface.co/jaredpalmer/kev-9b",
+    "title": "jaredpalmer/kev-9b publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "9Bv2 adapter+pointerhead, base pin and24 GB-class hardware."
+  },
+  {
+    "id": "D188",
+    "url": "https://huggingface.co/jaredpalmer/kev-27b",
+    "title": "jaredpalmer/kev-27b publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Full25.6B backbone+head; 51.3 GB checkpoint,65.5 GB resident; 32k/64k H200 peaks."
+  },
+  {
+    "id": "D189",
+    "url": "https://huggingface.co/ggml-org/Kev-4B-GGUF",
+    "title": "ggml-org/Kev-4B-GGUF publisher model card",
+    "type": "official model card",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Official llama.cpp conversion, requiresPR29818; nativeSystemOne endpoint."
+  },
+  {
+    "id": "D190",
+    "url": "https://github.com/Macrofold/OpenLegend/blob/3a2a025ed4addd0cde1f86a1966d576123c35271/docs/live-ai-setup.md",
+    "title": "Open Legend operator-selected Kev artifact and native server pins",
+    "type": "internal project operator documentation supplied by parent after connector retrieval",
+    "published_or_updated": "Exact main snapshot3a2a025ed4addd0cde1f86a1966d576123c35271",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "PinnedKev 4B6cfce5c2fa4b4bd64026336ab649c5ca78857d52; base1001bb4d826a52d1f399e183466143f4da7b741b; Macrofoldnativeimage digest. Upstream-qualified documentation is not evidence of current caller/service configuration."
+  },
+  {
+    "id": "D191",
+    "url": "https://huggingface.co/jaredpalmer/kev-4b/tree/main",
+    "title": "jaredpalmer/kev-4b file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded.",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D192",
+    "url": "https://huggingface.co/Qwen/Qwen3.5-4B-Base/tree/main",
+    "title": "Qwen/Qwen3.5-4B-Base file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded.",
+    "hosting_rechecked_at": "2026-10-26",
+    "hosting_supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D193",
+    "url": "https://huggingface.co/jaredpalmer/kev-9b/tree/main",
+    "title": "jaredpalmer/kev-9b file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D194",
+    "url": "https://huggingface.co/Qwen/Qwen3.5-9B-Base/tree/main",
+    "title": "Qwen/Qwen3.5-9B-Base file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D195",
+    "url": "https://huggingface.co/ggml-org/Kev-4B-GGUF/tree/main",
+    "title": "ggml-org/Kev-4B-GGUF file inventory",
+    "type": "official artifact metadata",
+    "published_or_updated": "Page current when retrieved; publication date not established",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
   }
 ]

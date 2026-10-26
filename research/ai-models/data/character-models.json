@@ -104,8 +104,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 72.3,
-            "basis": "HF tree shows approximately 72.3 GB for the current full checkpoint repository (rounded decimal listing). This is an acquisition floor, not a complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 72.3 GB for the current full checkpoint repository (rounded decimal listing). This is an acquisition floor, not a complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 72.3
           },
           "requirements": [
             "Use repository chat_template.jinja with Llama-3 role headers (not a generic ChatML substitution). thinking and keep_cots are publisher template options.",
@@ -254,8 +255,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 141.107412992,
-            "basis": "At least141107412992 tensor-payload bytes from index, plus safetensors headers, tokenizer/config files, container and working space. Full selected-bundle byte sum not measured."
+            "disk_gb": null,
+            "basis": "At least141107412992 tensor-payload bytes from index, plus safetensors headers, tokenizer/config files, container and working space. Full selected-bundle byte sum not measured.",
+            "artifact_size_gb": 141.107412992
           },
           "requirements": [
             "Use exact Hermes4 Llama-3-format chat template; optional thinking and Hermes tool parser.",
@@ -511,8 +513,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 12.3,
-            "basis": "HF tree shows approximately 12.3 GB for the current full checkpoint repository (rounded decimal listing). This is an acquisition floor, not a complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 12.3 GB for the current full checkpoint repository (rounded decimal listing). This is an acquisition floor, not a complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 12.3
           },
           "requirements": [
             "Use publisher ChatML template and supplied tokenizer.",
@@ -648,8 +651,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 16.1,
-            "basis": "HF tree shows approximately 16.1 GB for the current full checkpoint repository (rounded decimal listing). This is an acquisition floor, not a complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 16.1 GB for the current full checkpoint repository (rounded decimal listing). This is an acquisition floor, not a complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 16.1
           },
           "requirements": [
             "Use the default Llama-3 chat template retained by the publisher.",
@@ -784,8 +788,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 17.4,
-            "basis": "Selected APEX-Compact.gguf17.4 GB; other variants and whole177 GB repository are not required together. Add compatible vision projector only if needed, plus container/cache/working space; projector size not verified here."
+            "disk_gb": null,
+            "basis": "Selected APEX-Compact.gguf17.4 GB; other variants and whole177 GB repository are not required together. Add compatible vision projector only if needed, plus container/cache/working space; projector size not verified here.",
+            "artifact_size_gb": 17.4
           },
           "requirements": [
             "Use repository chat_template.jinja and Jinja handling; preserve its tool protocol.",
@@ -920,8 +925,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 55.6,
-            "basis": "HF tree shows approximately 55.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 55.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 55.6
           },
           "requirements": [
             "Use exact Huihui tokenizer/chat_template.jinja; Qwen3_5 internal architecture name does not mean this is a different requested checkpoint.",
@@ -1072,8 +1078,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 111.4109,
-            "basis": "Four named Qwen3.8-Flash-Next-UD-Q4_K_XL-00001..00004-of-00004.gguf files≈111.41 GB; optional0.908 GB matched mmproj extra. Directory113 GB also contains 1.16 GB imatrix and 22.1 MB calibration; whole repo1.06TB includes alternative quants. Do not download all variants."
+            "disk_gb": null,
+            "basis": "Four named Qwen3.8-Flash-Next-UD-Q4_K_XL-00001..00004-of-00004.gguf files≈111.41 GB; optional0.908 GB matched mmproj extra. Directory113 GB also contains 1.16 GB imatrix and 22.1 MB calibration; whole repo1.06TB includes alternative quants. Do not download all variants.",
+            "artifact_size_gb": 111.4109
           },
           "requirements": [
             "Select the V2 folder explicitly; original UD-Q4_K_XL and Swift packs are different artifacts.",
@@ -1213,8 +1220,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 15.8,
-            "basis": "Selected15.8 GB GGUF; optional matched mmproj-BF16 adds 0.931 GB. Whole68.4 GB repo holds other quant files. Container/runtime/cache/working disk additional."
+            "disk_gb": null,
+            "basis": "Selected15.8 GB GGUF; optional matched mmproj-BF16 adds 0.931 GB. Whole68.4 GB repo holds other quant files. Container/runtime/cache/working disk additional.",
+            "artifact_size_gb": 15.8
           },
           "requirements": [
             "Use publisher chat_template.jinja with Jinja handling; select exact NVFP4 file.",
@@ -1359,8 +1367,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 55.59,
-            "basis": "Publisher model size55.59 GB; add config/tokenizer, container/cache and working space; exact selected-bundle bytes not summed."
+            "disk_gb": null,
+            "basis": "Publisher model size55.59 GB; add config/tokenizer, container/cache and working space; exact selected-bundle bytes not summed.",
+            "artifact_size_gb": 55.59
           },
           "requirements": [
             "Use variant tokenizer/chat template; thinking enabled by default. enable_thinking: false is a per-request option.",
@@ -1412,8 +1421,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 20.62,
-            "basis": "Publisher selected artifact20.62 GB; exact repository bytes and working space extra."
+            "disk_gb": null,
+            "basis": "Publisher selected artifact20.62 GB; exact repository bytes and working space extra.",
+            "artifact_size_gb": 20.62
           },
           "requirements": [
             "Use variant tokenizer/chat template; thinking enabled by default. enable_thinking: false is a per-request option.",
@@ -1466,8 +1476,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 30.89,
-            "basis": "Publisher selected artifact30.89 GB; exact repository bytes and working space extra."
+            "disk_gb": null,
+            "basis": "Publisher selected artifact30.89 GB; exact repository bytes and working space extra.",
+            "artifact_size_gb": 30.89
           },
           "requirements": [
             "Use variant tokenizer/chat template; thinking enabled by default. enable_thinking: false is a per-request option.",
@@ -1520,8 +1531,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 15.1,
-            "basis": "15.10 GB selected GGUF; optional mmproj/mmproj-BF16.gguf0.93 GB extra. Standalone4.67 GB LoRA is not required for this merged file."
+            "disk_gb": null,
+            "basis": "15.10 GB selected GGUF; optional mmproj/mmproj-BF16.gguf0.93 GB extra. Standalone4.67 GB LoRA is not required for this merged file.",
+            "artifact_size_gb": 15.1
           },
           "requirements": [
             "Use variant tokenizer/chat template; thinking enabled by default. enable_thinking: false is a per-request option.",
@@ -1664,8 +1676,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 47.2,
-            "basis": "HF tree shows approximately 47.2 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 47.2 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 47.2
           },
           "requirements": [
             "Template: Mistral v7 Tekken; optional publisher reasoning format.",
@@ -1803,8 +1816,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 47.2,
-            "basis": "HF tree shows approximately 47.2 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 47.2 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 47.2
           },
           "requirements": [
             "Template: Mistral v7 Tekken; optional publisher reasoning format.",
@@ -1955,8 +1969,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 47.1448064,
-            "basis": "Tensor payload floor47144806400 bytes from exact index; add safetensors headers, tokenizer/config, container, caches and working space."
+            "disk_gb": null,
+            "basis": "Tensor payload floor47144806400 bytes from exact index; add safetensors headers, tokenizer/config, container, caches and working space.",
+            "artifact_size_gb": 47.1448064
           },
           "requirements": [
             "Template: Preserve inherited Cydonia Mistral v7 Tekken formatting.",
@@ -2102,8 +2117,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 24.4955648,
-            "basis": "Tensor payload floor24495564800 bytes from exact index; add safetensors headers, tokenizer/config, container, caches and working space."
+            "disk_gb": null,
+            "basis": "Tensor payload floor24495564800 bytes from exact index; add safetensors headers, tokenizer/config, container, caches and working space.",
+            "artifact_size_gb": 24.4955648
           },
           "requirements": [
             "Template: Publisher Mistral v3 Tekken or Metharme; not Mistral v7.",
@@ -2248,8 +2264,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 32.1,
-            "basis": "HF tree shows approximately 32.1 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 32.1 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 32.1
           },
           "requirements": [
             "Template: Mistral v3 Tekken; publisher explicitly says not v7 and no [SYSTEM_PROMPT] token.",
@@ -2390,8 +2407,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 62.7,
-            "basis": "HF tree shows approximately 62.7 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 62.7 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 62.7
           },
           "requirements": [
             "Template: Mistral v7 Tekken.",
@@ -2527,8 +2545,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 141,
-            "basis": "HF tree shows approximately 141 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 141 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 141
           },
           "requirements": [
             "Template: Exact repository Llama-3-format tokenizer/chat template.",
@@ -2665,8 +2684,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 16.06053888,
-            "basis": "Tensor payload floor16060538880 bytes from exact index; add safetensors headers, tokenizer/config, container, caches and working space."
+            "disk_gb": null,
+            "basis": "Tensor payload floor16060538880 bytes from exact index; add safetensors headers, tokenizer/config, container, caches and working space.",
+            "artifact_size_gb": 16.06053888
           },
           "requirements": [
             "Template: Exact repository Llama-3-format tokenizer/chat template.",
@@ -2803,8 +2823,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 250,
-            "basis": "HF tree shows approximately 250 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 250 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 250
           },
           "requirements": [
             "Template: Exact repository chat_template.jinja/Mistral v7 family; 128B v3 is distinct from 123B v2.2.",
@@ -2941,8 +2962,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 55.6,
-            "basis": "HF tree shows approximately 55.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 55.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 55.6
           },
           "requirements": [
             "Use Pantheon's tokenizer/chat template and reasoning markers, not a generic Qwen template copied from another derivative.",
@@ -3085,8 +3107,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 62.6,
-            "basis": "HF tree shows approximately 62.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 62.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 62.6
           },
           "requirements": [
             "Preserve repository reasoning-mode template and author sampling guidance.",
@@ -3229,8 +3252,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 51.6,
-            "basis": "HF tree shows approximately 51.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 51.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 51.6
           },
           "requirements": [
             "Preserve repository Gemma4 template; 26B total/4B active is MoE, not a4B storage requirement.",
@@ -3372,8 +3396,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 62.6,
-            "basis": "HF tree shows approximately 62.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 62.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 62.6
           },
           "requirements": [
             "Use Musica's exact template; 8K training examples do not change the published262144 config ceiling or prove long-session quality.",
@@ -3513,8 +3538,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 250,
-            "basis": "HF tree shows approximately 250 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 250 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 250
           },
           "requirements": [
             "Preserve ArliAI tokenizer/chat template and parent-format tool/reasoning protocol.",
@@ -3664,8 +3690,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 19.3,
-            "basis": "HF tree shows approximately 19.3 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 19.3 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 19.3
           },
           "requirements": [
             "Use exact ArliAI tokenizer/template; disabling thinking must follow supported template semantics.",
@@ -3810,8 +3837,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 510,
-            "basis": "HF source repo≈510 GB. Reference conversion produces another TP4 checkpoint; allow source + converted + temporary files simultaneously. Converted size and total working disk are not published, so510 GB alone is insufficient."
+            "disk_gb": null,
+            "basis": "HF source repo≈510 GB. Reference conversion produces another TP4 checkpoint; allow source + converted + temporary files simultaneously. Converted size and total working disk are not published, so510 GB alone is insufficient.",
+            "artifact_size_gb": 510
           },
           "requirements": [
             "Manual HF access approval/terms acceptance required before weights can be acquired; research did not request access.",
@@ -3867,8 +3895,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 510,
-            "basis": "HF checkpoint≈510 GB. No TP4 conversion requirement is asserted for this SGLang HF route; container, kernels, caches and any managed weight copy add disk."
+            "disk_gb": null,
+            "basis": "HF checkpoint≈510 GB. No TP4 conversion requirement is asserted for this SGLang HF route; container, kernels, caches and any managed weight copy add disk.",
+            "artifact_size_gb": 510
           },
           "requirements": [
             "Manual HF access approval/terms acceptance required before weights can be acquired; research did not request access.",
@@ -4011,8 +4040,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 195,
-            "basis": "HF tree shows approximately 195 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 195 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 195
           },
           "requirements": [
             "Use corrected publisher weights and matching chat_template.jinja/generation config; pin exact revision rather than relying on a mutable main.",
@@ -4149,8 +4179,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 99.73,
-            "basis": "Publisher pack99.73 GB plus small hook files; includes/links MTP sidecars (mtp_eh_proj.st64 MB, draft2s.st). Check actual revision contents before sizing; runtime/toolchain/cache/working space extra."
+            "disk_gb": null,
+            "basis": "Publisher pack99.73 GB plus small hook files; includes/links MTP sidecars (mtp_eh_proj.st64 MB, draft2s.st). Check actual revision contents before sizing; runtime/toolchain/cache/working space extra.",
+            "artifact_size_gb": 99.73
           },
           "requirements": [
             "Both uncensor_spec.json and uncensor_direction.st must be present and Kyojin must log the hook as active. Stock ExLlamaV3/TabbyAPI andolder Kyojin builds ignore the edit.",
@@ -4285,8 +4316,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 18.5,
-            "basis": "Selected18.5 GB GGUF; optionalmmproj-BF16.gguf0.931 GB (or F16/F32 alternatives) separate. Whole465 GB repository contains alternatives and is not selected-model storage."
+            "disk_gb": null,
+            "basis": "Selected18.5 GB GGUF; optionalmmproj-BF16.gguf0.931 GB (or F16/F32 alternatives) separate. Whole465 GB repository contains alternatives and is not selected-model storage.",
+            "artifact_size_gb": 18.5
           },
           "requirements": [
             "Select fullfilename; repository containsNEO/NEO-LOW/AMD and MTP/non-MTP variants with different sizes.",
@@ -4424,7 +4456,8 @@
           "storage": {
             "artifact_bytes": null,
             "disk_gb": null,
-            "basis": "Adapterrepo75.1 MB includes 55.1MBweights; exactbase mustalso be acquired. No completeadapter + base byte sum established; conversion/merge would addworking disk."
+            "basis": "Adapterrepo75.1 MB includes 55.1MBweights; exactbase mustalso be acquired. No completeadapter + base byte sum established; conversion/merge would addworking disk.",
+            "artifact_size_gb": null
           },
           "requirements": [
             "Exactadapter_config base_model_name_or_path=togethercomputer/Qwen3.6-35B-A3B_bnb_4bit_t, revision null. Do not silently substituteQwen/Qwen3.6-35B-A3B because prose uses that family name.",
@@ -4785,8 +4818,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 62.6,
-            "basis": "HF tree shows approximately 62.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 62.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 62.6
           },
           "requirements": [
             "Use included Glistening-Gem-v2-ST-Import.json as author UI guidance only; publisher discourages thinking for this merge.",
@@ -4938,8 +4972,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 51.6,
-            "basis": "HF tree shows approximately 51.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space."
+            "disk_gb": null,
+            "basis": "HF tree shows approximately 51.6 GB for the current full checkpoint repository (rounded decimal listing). Acquisition floor, not complete Pod-volume requirement; add image/cache/temporary and any conversion space.",
+            "artifact_size_gb": 51.6
           },
           "requirements": [
             "Use this exact Heretic derivative's tokenizer/template; same parent family does not establish identical quality or capacity.",
@@ -5092,8 +5127,9 @@
           },
           "storage": {
             "artifact_bytes": null,
-            "disk_gb": 8.06,
-            "basis": "Pinned repository rounded 8.06 GB; two weight shards plus tokenizer/config/template. Add container/runtime/HF cache/working disk; no quantization selected."
+            "disk_gb": null,
+            "basis": "Pinned repository rounded 8.06 GB; two weight shards plus tokenizer/config/template. Add container/runtime/HF cache/working disk; no quantization selected.",
+            "artifact_size_gb": 8.06
           },
           "requirements": [
             "Use artifact revision a494c65b10bf8fdc56c0ff11d36987c1d018f162 for all weights/tokenizer/config/template files.",

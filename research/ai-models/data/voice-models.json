@@ -67,12 +67,13 @@
           "runtime_version": "0.1.1",
           "api_protocol": "Publisher Python; custom service/Runpod handler required",
           "context": {
-            "native_tokens": 32768,
+            "native_tokens": null,
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "exact artifact",
-            "notes": "1.7B Base talker configuration: 32768 positions; code predictor has its own 65536-position axis, not an extra text budget."
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. 1.7B Base talker configuration: 32768 positions; code predictor has its own 65536-position axis, not an extra text budget.",
+            "config_max_position_embeddings_tokens": 32768
           },
           "request_limits": {
             "input_characters": null,
@@ -95,6 +96,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "HF repository listing is approximately 4.54 GB including tokenizer assets; selected exact bytes and working/cache/container space unverified."
           },
@@ -123,8 +125,9 @@
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
-            "scope": "unknown",
-            "notes": "Exact variant native text/token ceiling not independently verified; do not transfer 1.7B Base limits."
+            "scope": "exact artifact",
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact variant config independently verified: talker 32768 positions; code predictor 65536 is a separate axis. This is not a raw-character or unlimited audio-duration guarantee.",
+            "config_max_position_embeddings_tokens": 32768
           },
           "request_limits": {
             "input_characters": null,
@@ -147,6 +150,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "HF repository listing is approximately 4.52 GB including tokenizer assets; selected exact bytes and working/cache/container space unverified."
           },
@@ -157,7 +161,8 @@
           ],
           "source_ids": [
             "VOICE-S176",
-            "VOICE-S181"
+            "VOICE-S181",
+            "VOICE-S318"
           ]
         },
         {
@@ -174,8 +179,9 @@
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
-            "scope": "unknown",
-            "notes": "Exact variant native text/token ceiling not independently verified; do not transfer 1.7B Base limits."
+            "scope": "exact artifact",
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact variant config independently verified: talker 32768 positions; code predictor 65536 is a separate axis. This is not a raw-character or unlimited audio-duration guarantee.",
+            "config_max_position_embeddings_tokens": 32768
           },
           "request_limits": {
             "input_characters": null,
@@ -198,6 +204,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "HF repository listing is approximately 4.52 GB including tokenizer assets; selected exact bytes and working/cache/container space unverified."
           },
@@ -208,7 +215,8 @@
           ],
           "source_ids": [
             "VOICE-S176",
-            "VOICE-S182"
+            "VOICE-S182",
+            "VOICE-S319"
           ]
         },
         {
@@ -225,8 +233,9 @@
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
-            "scope": "unknown",
-            "notes": "Exact variant native text/token ceiling not independently verified; do not transfer 1.7B Base limits."
+            "scope": "exact artifact",
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact variant config independently verified: talker 32768 positions; code predictor 65536 is a separate axis. This is not a raw-character or unlimited audio-duration guarantee.",
+            "config_max_position_embeddings_tokens": 32768
           },
           "request_limits": {
             "input_characters": null,
@@ -249,6 +258,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "HF repository listing is approximately 2.52 GB including tokenizer assets; selected exact bytes and working/cache/container space unverified."
           },
@@ -259,7 +269,8 @@
           ],
           "source_ids": [
             "VOICE-S176",
-            "VOICE-S183"
+            "VOICE-S183",
+            "VOICE-S320"
           ]
         },
         {
@@ -276,8 +287,9 @@
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
-            "scope": "unknown",
-            "notes": "Exact variant native text/token ceiling not independently verified; do not transfer 1.7B Base limits."
+            "scope": "exact artifact",
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact variant config independently verified: talker 32768 positions; code predictor 65536 is a separate axis. This is not a raw-character or unlimited audio-duration guarantee.",
+            "config_max_position_embeddings_tokens": 32768
           },
           "request_limits": {
             "input_characters": null,
@@ -300,6 +312,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "HF repository listing is approximately 2.50 GB including tokenizer assets; selected exact bytes and working/cache/container space unverified."
           },
@@ -310,7 +323,8 @@
           ],
           "source_ids": [
             "VOICE-S176",
-            "VOICE-S184"
+            "VOICE-S184",
+            "VOICE-S321"
           ]
         },
         {
@@ -351,6 +365,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -374,7 +389,7 @@
         "request_fit": "unknown"
       },
       "blocking_unknowns": [
-        "Exact context limits for four sibling checkpoints, total pipeline VRAM/host RAM and actual Runpod serving concurrency remain unverified."
+        "Total pipeline VRAM/host RAM/disk, effective runtime admission limits and usable Runpod serving concurrency remain unverified."
       ],
       "source_ids": [
         "VOICE-S176",
@@ -385,7 +400,11 @@
         "VOICE-S182",
         "VOICE-S183",
         "VOICE-S184",
-        "VOICE-S179"
+        "VOICE-S179",
+        "VOICE-S318",
+        "VOICE-S319",
+        "VOICE-S320",
+        "VOICE-S321"
       ]
     }
   },
@@ -481,6 +500,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "HF total listing about 41.5 GB including codec.pth; exact selected bytes, container and cache workspace not summed."
           },
@@ -531,6 +551,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -624,12 +645,13 @@
           "runtime_version": "vLLM >=0.19.0",
           "api_protocol": "OpenAI-compatible speech API; 44.1 kHz streaming audio",
           "context": {
-            "native_tokens": 32768,
+            "native_tokens": null,
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "exact artifact",
-            "notes": "Exact text transformer max_seq_len=32768; audio decoder has a separate 11-step/codebook dimension. Neither is a verified input-character maximum."
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact text transformer max_seq_len=32768; audio decoder has a separate 11-step/codebook dimension. Neither is a verified input-character maximum.",
+            "config_max_position_embeddings_tokens": 32768
           },
           "request_limits": {
             "input_characters": null,
@@ -652,6 +674,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "HF repository about 11 GB; exact selected bytes and runtime/cache space unknown. The much larger reference VRAM is not a weight-download size."
           },
@@ -871,6 +894,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Turbo repository about 4.04 GB or Nano about 3 GB; multiple S3Gen alternatives are listed. Selected files, caches and complete runtime disk not summed."
           },
@@ -924,6 +948,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Turbo repository about 4.04 GB or Nano about 3 GB; multiple S3Gen alternatives are listed. Selected files, caches and complete runtime disk not summed."
           },
@@ -977,6 +1002,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Multilingual v3 selected manifest not established; do not reuse Turbo/Nano file totals."
           },
@@ -1100,6 +1126,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "HF repository about 9.75 GB includes alternative llm/RL and ONNX/PyTorch assets. Select matching LLM, flow, HiFT, campplus and speech tokenizer; no exact summed serving manifest."
           },
@@ -1145,7 +1172,7 @@
     "release_update_provenance": "Report 2026-01-07; current 2.5 model card and demo verified (report date is not asserted as weight-release date).",
     "properties": "~0.8B GPT backbone; Chinese, English, Japanese, Spanish, Arabic; 22.05 kHz. Separates timbre from emotion; eight-dimensional emotion controls include anger, fear and disgust; speed and Pinyin/CMU/Kana controls.",
     "deployment": "Own Python inference stack; auxiliary codec, vocoder and embedding weights downloaded separately in normal setup.",
-    "hardware_evidence": "Publisher model card specifies NVIDIA GPU and roughly 6 GB VRAM for inference, Python 3.10–3.11; not a concurrent-session capacity guarantee.",
+    "hardware_evidence": "IndexTTS 2.5 / publisher runtime: Publisher gives approximately 6 GB inference VRAM; no concurrency or long-request qualification supplied. No deployment or benchmark was performed by this research.",
     "license_and_commercial_terms": "Custom bilibili Model Use License, not Apache. Separate permission is required above 100 million monthly users or RMB 1 billion prior-year revenue (affiliates included). Downstream, other-model-training and jurisdictional content clauses apply; the weight file still names indextts2, so retain the exact 2.5 artifact license.",
     "cost_semantics": "No per-character/token license fee advertised for self-hosting under the stated license; compute, memory, storage and engineering remain costs. Hosted-provider prices, if any, are separate.",
     "open_legend_use_cases": "Especially relevant for flawed, frightened, angry or threatening fictional performances and explicit pronunciation control.",
@@ -1165,7 +1192,10 @@
       "VOICE-S021",
       "VOICE-S022",
       "VOICE-S023",
-      "VOICE-S148"
+      "VOICE-S148",
+      "VOICE-S199",
+      "VOICE-S200",
+      "VOICE-S201"
     ],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
@@ -1174,7 +1204,9 @@
       "https://huggingface.co/IndexTeam/IndexTTS-2.5",
       "https://huggingface.co/IndexTeam/IndexTTS-2.5/blob/main/LICENSE",
       "https://arxiv.org/abs/2601.03888",
-      "https://huggingface.co/IndexTeam/IndexTTS-2.5/raw/main/LICENSE"
+      "https://huggingface.co/IndexTeam/IndexTTS-2.5/raw/main/LICENSE",
+      "https://github.com/index-tts/index-tts/blob/main/pyproject.toml",
+      "https://huggingface.co/IndexTeam/IndexTTS-2.5/tree/main"
     ],
     "hosting": {
       "reviewed_on": "2026-10-25",
@@ -1219,6 +1251,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Repository listing about 5.49 GB; selected artifacts, external caches and container space unverified."
           },
@@ -1251,7 +1284,14 @@
         "VOICE-S199",
         "VOICE-S200",
         "VOICE-S201"
-      ]
+      ],
+      "prior_inventory_fields": {
+        "hardware_evidence": {
+          "value": "Publisher model card specifies NVIDIA GPU and roughly 6 GB VRAM for inference, Python 3.10–3.11; not a concurrent-session capacity guarantee.",
+          "verified_on": "2026-10-24"
+        }
+      },
+      "inventory_reconciliation": "Current hardware summary updated from the hosting primary sources; previous placeholder retained for provenance."
     }
   },
   {
@@ -1267,7 +1307,7 @@
     "release_update_provenance": "Repository news dates release April 2026; technical report June 2026. Current code and weights Apache-2.0.",
     "properties": "2B tokenizer-free diffusion-autoregressive TTS; 30 languages plus Chinese dialects, 48 kHz; description-driven voice design, controlled voice cloning, streaming.",
     "deployment": "VoxCPM runtime, Nano-vLLM production route, on-device llama.cpp-omni documented. Confirm support for this architecture rather than assuming generic causal-LM support.",
-    "hardware_evidence": "Publisher table: VoxCPM2 ~8 GB VRAM and RTF ~0.13 with Nano-vLLM on RTX4090. This is one implementation/hardware result, not our measurement.",
+    "hardware_evidence": "VoxCPM2 / native Python: Publisher native inference estimate approximately 8 GB; no production concurrency demonstrated here. VoxCPM2 / vLLM-Omni: RTX4090 24 GB: approximately 4.9 GiB weights +15.2 GiB KV +2 GiB other buffers (~22 GiB total) at gpu_memory_utilization=0.9, max_num_seqs=4, eager. No deployment or benchmark was performed by this research.",
     "license_and_commercial_terms": "Publisher explicitly releases model weights and code under Apache-2.0.",
     "cost_semantics": "No per-character/token license fee advertised for self-hosting under the stated license; compute, memory, storage and engineering remain costs. Hosted-provider prices, if any, are separate.",
     "open_legend_use_cases": "High-priority original character-voice design, expressive cloning and high-fidelity asset generation.",
@@ -1291,14 +1331,17 @@
       "VOICE-S024",
       "VOICE-S025",
       "VOICE-S143",
-      "VOICE-S144"
+      "VOICE-S144",
+      "VOICE-S202",
+      "VOICE-S203"
     ],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/openbmb/VoxCPM2",
       "https://github.com/OpenBMB/VoxCPM",
       "https://www.reddit.com/r/speechtech/comments/1ulsm98/datasetbacked_voice_cloning_benchmark_omnivoice/",
-      "https://www.reddit.com/r/LocalLLaMA/comments/1sg89kl/new_tts_model_voxcpm2/"
+      "https://www.reddit.com/r/LocalLLaMA/comments/1sg89kl/new_tts_model_voxcpm2/",
+      "https://recipes.vllm.ai/openbmb/VoxCPM2"
     ],
     "reviewed_on": "2026-10-24",
     "review_scope": "Narrow source-attribution correction for existing community sentiment; other fields not refreshed.",
@@ -1345,11 +1388,12 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "Python >=3.10,<3.13, CUDA >=12; load AudioVAE V2 with the model.",
+            "Python >=3.10, <3.13, CUDA >=12; load AudioVAE V2 with the model.",
             "Denoiser is an optional additional model; disabling its loading is a documented route, not an assumed default."
           ],
           "source_ids": [
@@ -1394,6 +1438,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -1421,7 +1466,14 @@
       "source_ids": [
         "VOICE-S202",
         "VOICE-S203"
-      ]
+      ],
+      "prior_inventory_fields": {
+        "hardware_evidence": {
+          "value": "Publisher table: VoxCPM2 ~8 GB VRAM and RTF ~0.13 with Nano-vLLM on RTX4090. This is one implementation/hardware result, not our measurement.",
+          "verified_on": "2026-10-24"
+        }
+      },
+      "inventory_reconciliation": "Current hardware summary updated from the hosting primary sources; previous placeholder retained for provenance."
     }
   },
   {
@@ -1508,6 +1560,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Whole repository approximately 20.8 GB includes both Base and Instruct plus auxiliary assets; selected single-variant manifest and runtime disk unknown."
           },
@@ -1560,6 +1613,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Whole repository approximately 20.8 GB includes both Base and Instruct plus auxiliary assets; selected single-variant manifest and runtime disk unknown."
           },
@@ -1688,6 +1742,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -1710,12 +1765,13 @@
           "runtime_version": "Python 3.12 / recommended Transformers 5.0 / Torch 2.9.1 cu128 setup",
           "api_protocol": "Publisher Python; custom service/Runpod handler required",
           "context": {
-            "native_tokens": 40960,
+            "native_tokens": null,
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "exact artifact",
-            "notes": "Exact Qwen3-8B-derived language configuration has 40960 positions; reference/audio rows consume context too. Example max_new_tokens=4096 is a generation setting, not native maximum."
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact Qwen3-8B-derived language configuration has 40960 positions; reference/audio rows consume context too. Example max_new_tokens=4096 is a generation setting, not native maximum.",
+            "config_max_position_embeddings_tokens": 40960
           },
           "request_limits": {
             "input_characters": null,
@@ -1738,6 +1794,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -1824,12 +1881,13 @@
           "runtime_version": null,
           "api_protocol": "Publisher Python; custom service/Runpod handler required",
           "context": {
-            "native_tokens": 40960,
+            "native_tokens": null,
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "exact artifact",
-            "notes": "40960 language positions in exact configuration. Example max_new_tokens=2000 counts audio generation steps; approximately 12.5 steps/s is not a blanket maximum output duration."
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. 40960 language positions in exact configuration. Example max_new_tokens=2000 counts audio generation steps; approximately 12.5 steps/s is not a blanket maximum output duration.",
+            "config_max_position_embeddings_tokens": 40960
           },
           "request_limits": {
             "input_characters": null,
@@ -1852,6 +1910,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -1969,6 +2028,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -2011,7 +2071,7 @@
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current successor to original Dia1.6B; public by December 2025, exact release day not established.",
     "properties": "1B and 2B; English; streaming dialogue with contextual prefix audio and speaker conditioning; up to about two minutes per generation in published guidance.",
-    "deployment": "Own GPU runtime; prefix transcription may use Whisper and add setup time.",
+    "deployment": "Publisher GPU runtime with contextual prefix audio; Whisper prefix transcription adds an ASR dependency. Incremental generation architecture is documented, while the production realtime TTS server is still listed as upcoming in the inspected repository.",
     "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
     "license_and_commercial_terms": "Apache-2.0 repository; Mimi and other third-party component licenses remain separate.",
     "cost_semantics": "No per-character/token license fee advertised for self-hosting under the stated license; compute, memory, storage and engineering remain costs. Hosted-provider prices, if any, are separate.",
@@ -2033,12 +2093,19 @@
     "caveats": "Prefix handling can affect latency/echoing. Do not confuse streaming output with proven full-duplex interaction.",
     "evidence_source_ids": [
       "VOICE-S035",
-      "VOICE-S036"
+      "VOICE-S036",
+      "VOICE-S214",
+      "VOICE-S215",
+      "VOICE-S216",
+      "VOICE-S217"
     ],
     "tested_by_us": false,
     "evidence_urls": [
       "https://github.com/nari-labs/dia2",
-      "https://www.reddit.com/r/speechtech/comments/1pjc901/does_anyone_know_how_to_stream_dia2/"
+      "https://www.reddit.com/r/speechtech/comments/1pjc901/does_anyone_know_how_to_stream_dia2/",
+      "https://github.com/nari-labs/dia2/blob/main/pyproject.toml",
+      "https://huggingface.co/nari-labs/Dia2-1B",
+      "https://huggingface.co/nari-labs/Dia2-2B"
     ],
     "hosting": {
       "reviewed_on": "2026-10-25",
@@ -2083,6 +2150,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -2135,6 +2203,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -2167,7 +2236,14 @@
         "VOICE-S215",
         "VOICE-S216",
         "VOICE-S217"
-      ]
+      ],
+      "prior_inventory_fields": {
+        "deployment": {
+          "value": "Own GPU runtime; prefix transcription may use Whisper and add setup time.",
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Distinguished streaming architecture from availability of a production streaming server."
     }
   },
   {
@@ -2256,6 +2332,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": 9.31,
             "disk_gb": null,
             "basis": "HF main repository ~9.32 GB, main model ~9.31 GB; codec, container/cache and compile workspace remain additional/unquantified."
           },
@@ -2372,6 +2449,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -2416,7 +2494,7 @@
     "release_update_provenance": "Initial Nov 2025; Jan 23 2026 weight update adds paralinguistic tags and vLLM/training support.",
     "properties": "3B; speech generation and iterative editing of emotion, speaking style and paralinguistics; Japanese/Korean added Nov 28 alongside earlier languages; exact complete language count not verified.",
     "deployment": "Official runtime and vLLM support; auxiliary Step-Audio-Tokenizer.",
-    "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
+    "hardware_evidence": "Step-Audio-EditX 3B / publisher runtime: Publisher calls ~12 GB critical minimum, recommends 16 GB or more; L40S reference. Standard guide reports roughly 12–15 GB depending on settings. No deployment or benchmark was performed by this research.",
     "license_and_commercial_terms": "Repository explicitly says Apache-2.0 code; separate complete weight terms were not resolved in this pass. Treat commercial weights as unresolved rather than inferring from code.",
     "cost_semantics": "No per-character/token license fee advertised for self-hosting under the stated license; compute, memory, storage and engineering remain costs. Hosted-provider prices, if any, are separate.",
     "open_legend_use_cases": "Voice direction and revision of expressive performances; changing delivery while retaining character identity.",
@@ -2434,7 +2512,8 @@
     "caveats": "Model-updated-in-place risk: pin checkpoint revision for reproducible later evaluation. Commercial weight interpretation unresolved.",
     "evidence_source_ids": [
       "VOICE-S042",
-      "VOICE-S043"
+      "VOICE-S043",
+      "VOICE-S223"
     ],
     "tested_by_us": false,
     "evidence_urls": [
@@ -2484,6 +2563,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -2511,7 +2591,14 @@
       ],
       "source_ids": [
         "VOICE-S223"
-      ]
+      ],
+      "prior_inventory_fields": {
+        "hardware_evidence": {
+          "value": "No minimum hardware verified; parameter count is not a VRAM requirement.",
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Current hardware summary updated from the hosting primary sources; previous placeholder retained for provenance."
     }
   },
   {
@@ -2570,12 +2657,13 @@
           "runtime_version": null,
           "api_protocol": "Publisher Python; custom service/Runpod handler required",
           "context": {
-            "native_tokens": 131072,
+            "native_tokens": null,
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "exact artifact",
-            "notes": "Exact config max_position_embeddings=131072; RoPE original context 8192 is a separate setting, and acoustic context_window=8 is not eight text tokens. No published maximum generated audio length established."
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact config max_position_embeddings=131072; RoPE original context 8192 is a separate setting, and acoustic context_window=8 is not eight text tokens. No published maximum generated audio length established.",
+            "config_max_position_embeddings_tokens": 131072
           },
           "request_limits": {
             "input_characters": null,
@@ -2598,6 +2686,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -2620,12 +2709,13 @@
           "runtime_version": null,
           "api_protocol": "Publisher Python; custom service/Runpod handler required",
           "context": {
-            "native_tokens": 131072,
+            "native_tokens": null,
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "exact artifact",
-            "notes": "Exact config max_position_embeddings=131072; RoPE original context 8192 is a separate setting, and acoustic context_window=8 is not eight text tokens. No published maximum generated audio length established."
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact config max_position_embeddings=131072; RoPE original context 8192 is a separate setting, and acoustic context_window=8 is not eight text tokens. No published maximum generated audio length established.",
+            "config_max_position_embeddings_tokens": 131072
           },
           "request_limits": {
             "input_characters": null,
@@ -2648,6 +2738,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -2777,6 +2868,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -2827,6 +2919,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -2877,6 +2970,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -2927,6 +3021,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -3041,8 +3136,9 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": 0.0645,
             "disk_gb": null,
-            "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
+            "basis": "Rounded publisher GGUF artifact size only: 0.0645 GB. Codec/voice files, runtime, cache, container and temporary audio are additional; complete disk requirement unknown."
           },
           "requirements": [
             "Mimi audio tokenizer/decoder and matching voices/tokenizer must accompany language weights.",
@@ -3091,8 +3187,9 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": 0.0746,
             "disk_gb": null,
-            "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
+            "basis": "Rounded publisher GGUF artifact size only: 0.0746 GB. Codec/voice files, runtime, cache, container and temporary audio are additional; complete disk requirement unknown."
           },
           "requirements": [
             "Mimi audio tokenizer/decoder and matching voices/tokenizer must accompany language weights.",
@@ -3170,11 +3267,11 @@
       "reason": "Local checkpoints and GGUF routes are available under the custom gated NeuTTS license.",
       "profiles": [
         {
-          "label": "NeuTTS Nano GGUF",
-          "artifact_id": "neuphonic/neutts-nano",
+          "label": "NeuTTS Nano Q4_0 GGUF",
+          "artifact_id": "neuphonic/neutts-nano-q4-gguf",
           "artifact_revision": null,
           "format": "Official GGUF Q4/Q8 language model plus NeuCodec; PyTorch alternative separate",
-          "precision": "Official Q4 or Q8 GGUF",
+          "precision": "Q4_0 GGUF",
           "runtime": "NeuTTS publisher runtime; llama.cpp GGUF backend",
           "runtime_version": null,
           "api_protocol": "Publisher streaming Python; custom service required",
@@ -3191,7 +3288,7 @@
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Nano reference cloning; 120M active excludes embeddings from total229M; exact character/reference caps unknown."
+            "other": "Nano reference cloning; 120M active excludes embeddings from total 229M; exact character/reference caps unknown."
           },
           "memory": {
             "parameters_total_b": 0.229,
@@ -3207,6 +3304,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -3216,15 +3314,16 @@
             "Custom NeuTTS Open License 1.0 access/commercial terms; do not substitute older Air Apache rights."
           ],
           "source_ids": [
-            "VOICE-S231"
+            "VOICE-S231",
+            "VOICE-S322"
           ]
         },
         {
-          "label": "NeuTTS 2E GGUF",
-          "artifact_id": "neuphonic/neutts-2e",
+          "label": "NeuTTS Nano Q8_0 GGUF",
+          "artifact_id": "neuphonic/neutts-nano-q8-gguf",
           "artifact_revision": null,
           "format": "Official GGUF Q4/Q8 language model plus NeuCodec; PyTorch alternative separate",
-          "precision": "Official Q4 or Q8 GGUF",
+          "precision": "Q8_0 GGUF",
           "runtime": "NeuTTS publisher runtime; llama.cpp GGUF backend",
           "runtime_version": null,
           "api_protocol": "Publisher streaming Python; custom service required",
@@ -3241,7 +3340,59 @@
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "2E has four fixed speakers and six emotions plus neutral; not general reference cloning.125M active versus236M total."
+            "other": "Nano reference cloning; 120M active excludes embeddings from total 229M; exact character/reference caps unknown."
+          },
+          "memory": {
+            "parameters_total_b": 0.229,
+            "raw_weights_gb": null,
+            "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
+            "published_vram_gb": null,
+            "published_hardware": "CPU/mobile examples and a 4090 LLM-only throughput example; no full-pipeline VRAM/RAM minimum established.",
+            "gpu_candidate": null,
+            "gpu_candidate_basis": "CPU-first GGUF route; a GPU choice requires measuring both language inference and the separate codec.",
+            "host_ram_gb": null,
+            "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
+            "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
+          },
+          "storage": {
+            "artifact_bytes": null,
+            "artifact_size_gb": null,
+            "disk_gb": null,
+            "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
+          },
+          "requirements": [
+            "GGUF backend is required for documented streaming; PyTorch route is nonstreaming.",
+            "NeuCodec or distilled NeuCodec: PyTorch encode/decode versus ONNX decoder-only/int8 routes have different components.",
+            "Custom NeuTTS Open License 1.0 access/commercial terms; do not substitute older Air Apache rights."
+          ],
+          "source_ids": [
+            "VOICE-S231",
+            "VOICE-S323"
+          ]
+        },
+        {
+          "label": "NeuTTS 2E Q4_0 GGUF",
+          "artifact_id": "neuphonic/neutts-2e-q4-gguf",
+          "artifact_revision": null,
+          "format": "Official GGUF Q4/Q8 language model plus NeuCodec; PyTorch alternative separate",
+          "precision": "Q4_0 GGUF",
+          "runtime": "NeuTTS publisher runtime; llama.cpp GGUF backend",
+          "runtime_version": null,
+          "api_protocol": "Publisher streaming Python; custom service required",
+          "context": {
+            "native_tokens": null,
+            "runtime_default_tokens": null,
+            "extended_tokens": null,
+            "max_output_tokens": null,
+            "scope": "unknown",
+            "notes": "Repository gives family context 2048 tokens / approximately 30 s including prompt; exact 2E artifact parity not independently checked, so not recorded as a universal native ceiling."
+          },
+          "request_limits": {
+            "input_characters": null,
+            "input_audio_seconds": null,
+            "output_audio_seconds": null,
+            "reference_audio_seconds": null,
+            "other": "2E has four fixed speakers and six emotions plus neutral; not general reference cloning. 125M active versus 236M total."
           },
           "memory": {
             "parameters_total_b": 0.236,
@@ -3257,6 +3408,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -3266,7 +3418,60 @@
             "Custom NeuTTS Open License 1.0 access/commercial terms; do not substitute older Air Apache rights."
           ],
           "source_ids": [
-            "VOICE-S231"
+            "VOICE-S231",
+            "VOICE-S324"
+          ]
+        },
+        {
+          "label": "NeuTTS 2E Q8_0 GGUF",
+          "artifact_id": "neuphonic/neutts-2e-q8-gguf",
+          "artifact_revision": null,
+          "format": "Official GGUF Q4/Q8 language model plus NeuCodec; PyTorch alternative separate",
+          "precision": "Q8_0 GGUF",
+          "runtime": "NeuTTS publisher runtime; llama.cpp GGUF backend",
+          "runtime_version": null,
+          "api_protocol": "Publisher streaming Python; custom service required",
+          "context": {
+            "native_tokens": null,
+            "runtime_default_tokens": null,
+            "extended_tokens": null,
+            "max_output_tokens": null,
+            "scope": "unknown",
+            "notes": "Repository gives family context 2048 tokens / approximately 30 s including prompt; exact 2E artifact parity not independently checked, so not recorded as a universal native ceiling."
+          },
+          "request_limits": {
+            "input_characters": null,
+            "input_audio_seconds": null,
+            "output_audio_seconds": null,
+            "reference_audio_seconds": null,
+            "other": "2E has four fixed speakers and six emotions plus neutral; not general reference cloning. 125M active versus 236M total."
+          },
+          "memory": {
+            "parameters_total_b": 0.236,
+            "raw_weights_gb": null,
+            "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
+            "published_vram_gb": null,
+            "published_hardware": "CPU/mobile examples and a 4090 LLM-only throughput example; no full-pipeline VRAM/RAM minimum established.",
+            "gpu_candidate": null,
+            "gpu_candidate_basis": "CPU-first GGUF route; a GPU choice requires measuring both language inference and the separate codec.",
+            "host_ram_gb": null,
+            "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
+            "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
+          },
+          "storage": {
+            "artifact_bytes": null,
+            "artifact_size_gb": null,
+            "disk_gb": null,
+            "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
+          },
+          "requirements": [
+            "GGUF backend is required for documented streaming; PyTorch route is nonstreaming.",
+            "NeuCodec or distilled NeuCodec: PyTorch encode/decode versus ONNX decoder-only/int8 routes have different components.",
+            "Custom NeuTTS Open License 1.0 access/commercial terms; do not substitute older Air Apache rights."
+          ],
+          "source_ids": [
+            "VOICE-S231",
+            "VOICE-S325"
           ]
         }
       ],
@@ -3280,10 +3485,14 @@
         "request_fit": "unknown"
       },
       "blocking_unknowns": [
-        "Need exact GGUF artifact filenames/revisions, per-variant context verification, codec route and commercial-license eligibility."
+        "Exact artifact commit/file sizes, per-variant context verification, codec selection, runtime RAM and commercial-license eligibility remain unresolved."
       ],
       "source_ids": [
-        "VOICE-S231"
+        "VOICE-S231",
+        "VOICE-S322",
+        "VOICE-S323",
+        "VOICE-S324",
+        "VOICE-S325"
       ]
     }
   },
@@ -3380,11 +3589,12 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "Optional FlashInfer 0.6.15.post1 matching CUDA 12.8 wheel; CUDA graph path recommends batch1; SDPA fallback available.",
+            "Optional FlashInfer 0.6.15.post1 matching CUDA 12.8 wheel; CUDA graph path recommends batch 1; SDPA fallback available.",
             "Matching audio codec and tokenizer; pretrained CC-BY-NC terms separate from Apache code."
           ],
           "source_ids": [
@@ -3478,7 +3688,7 @@
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": 60,
-            "other": "Reference recommendation5–60 s, serving upper reference limit60 s; long-form uses bounded context. Exact text/output budget unknown."
+            "other": "Reference recommendation 5–60 s, serving upper reference limit 60 s; long-form uses bounded context. Exact text/output budget unknown."
           },
           "memory": {
             "parameters_total_b": 2.873962498,
@@ -3494,11 +3704,12 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "Linux, NVIDIA CUDA and Python3.12; frozen uv dependency lock because auxiliary codec protobuf dependencies can conflict.",
+            "Linux, NVIDIA CUDA and Python 3.12; frozen uv dependency lock because auxiliary codec protobuf dependencies can conflict.",
             "Not drop-in AutoModel: requires custom CB0–3 layout and vLLM adapter.",
             "DualCodec, W2V-BERT and VibeVoice acoustic encoder/decoder are separate pinned upstream downloads; optional English verbalizer.",
             "Custom Tontaube Community Model License and third-party component rights."
@@ -3539,7 +3750,7 @@
     "verified_on": "2026-10-23",
     "release_update_provenance": "Latest card version v2607 released July 21 2026, following v2602/v2512.",
     "properties": "364M parameter count in current card despite 357m repository name; 12 languages, predefined voices, autoregressive codec-based speech; enterprise streaming deployment.",
-    "deployment": "NeMo Speech, NVIDIA NIM/self-hosted enterprise paths; published demo.",
+    "deployment": "Exact v2607 NeMo Speech route and documented NeMo-Speech.cpp GGUF route; NVIDIA enterprise services are separate. Standard output mode is capped at 20 seconds, with a distinct sliding-window longform mode. Zero-shot cloning was removed in v2607.",
     "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
     "license_and_commercial_terms": "NVIDIA Open Model License for weights; NIM/enterprise hosting has separate service terms.",
     "cost_semantics": "No per-character/token license fee advertised for self-hosting under the stated license; compute, memory, storage and engineering remain costs. Hosted-provider prices, if any, are separate.",
@@ -3558,7 +3769,8 @@
     "caveats": "Less direct evidence for rich free-form character acting than dedicated expressive models. Do not use repository name as exact parameter count.",
     "evidence_source_ids": [
       "VOICE-S064",
-      "VOICE-S065"
+      "VOICE-S065",
+      "VOICE-S236"
     ],
     "tested_by_us": false,
     "evidence_urls": [
@@ -3592,7 +3804,7 @@
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Standard mode has20 s output maximum; longform sliding-window mode is not restricted to20 s total.22.05 kHz mono16-bit PCM. v2607 removes zero-shot cloning; do not inherit earlier release features."
+            "other": "Standard mode has20 s output maximum; longform sliding-window mode is not restricted to20 s total.22.05 kHz mono 16-bit PCM. v2607 removes zero-shot cloning; do not inherit earlier release features."
           },
           "memory": {
             "parameters_total_b": 0.364,
@@ -3608,6 +3820,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -3635,7 +3848,14 @@
       ],
       "source_ids": [
         "VOICE-S236"
-      ]
+      ],
+      "prior_inventory_fields": {
+        "deployment": {
+          "value": "NeMo Speech, NVIDIA NIM/self-hosted enterprise paths; published demo.",
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Pinned v2607 feature and runtime boundaries instead of inheriting earlier Magpie cloning support."
     }
   },
   {
@@ -3686,7 +3906,7 @@
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "external_api_only",
-      "reason": "No matching public3.1 Plus/Flash weights established; Qwen3-TTS local family is a separate product.",
+      "reason": "No matching public 3.1 Plus/Flash weights established; Qwen3-TTS local family is a separate product.",
       "profiles": [],
       "deployment_evidence": {
         "status": "not_deployed_or_tested_by_this_research",
@@ -3715,7 +3935,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "Exact model page leaves context/max input/max output unspecified.180RPM listed for Beijing and Singapore; account authorization/region still matters.",
+          "notes": "Exact model page leaves context/max input/max output unspecified. 180RPM listed for Beijing and Singapore; account authorization/region still matters.",
           "source_ids": [
             "VOICE-S282"
           ]
@@ -3730,7 +3950,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "Exact model page leaves context/max input/max output unspecified.180RPM listed for Beijing and Singapore; account authorization/region still matters.",
+          "notes": "Exact model page leaves context/max input/max output unspecified. 180RPM listed for Beijing and Singapore; account authorization/region still matters.",
           "source_ids": [
             "VOICE-S283"
           ]
@@ -3811,7 +4031,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "10000-character request cap; table approximately10-minute audio is an estimate, not a guaranteed maximum duration. Plan/voice terms apply.",
+          "notes": "10000-character request cap; table approximately 10-minute audio is an estimate, not a guaranteed maximum duration. Plan/voice terms apply.",
           "source_ids": [
             "VOICE-S284"
           ]
@@ -3884,7 +4104,7 @@
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
-      "reason": "Sonic enterprise private/on-prem is advertised, but no exact3.6 image, license entitlement or portable Runpod runtime verified.",
+      "reason": "Sonic enterprise private/on-prem is advertised, but no exact 3.6 image, license entitlement or portable Runpod runtime verified.",
       "profiles": [],
       "deployment_evidence": {
         "status": "not_deployed_or_tested_by_this_research",
@@ -3896,7 +4116,7 @@
         "request_fit": "unknown"
       },
       "blocking_unknowns": [
-        "Need vendor confirmation of exact3.6 private artifact, supported cloud/hardware, metering, memory and license; no self-host recipe fabricated."
+        "Need vendor confirmation of exact 3.6 private artifact, supported cloud/hardware, metering, memory and license; no self-host recipe fabricated."
       ],
       "source_ids": [
         "VOICE-S286",
@@ -3934,7 +4154,7 @@
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current successor pair in September/October 2026 documentation.",
     "properties": "Docs say 200+ languages/locales for both; newer product page says about 500 languages/dialects via 623codes for TTS-2 and fewer for Flash: coverage discrepancy unresolved. Instant cloning, nonverbals; TTS-2 adds natural-language steering, phonetic timestamps and visemes. P90 server TTFB 100/20 ms excludes network.",
-    "deployment": "Managed streaming API; customer-hosted deployment possible where contracted. Viseme output is especially useful for game dialogue animation.",
+    "deployment": "Managed TTS-2/Flash streaming API. Terms describe customer-hosted model deployment where permitted, but exact TTS-2/Flash private artifact, entitlement and Runpod compatibility are unverified. Viseme output supports game dialogue animation.",
     "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
     "license_and_commercial_terms": "Proprietary terms; standard license included in on-demand pricing. Customer-hosted use still has contractual conditions.",
     "cost_semantics": "On-demand TTS-2 $25/M characters; Flash $15/M characters. Paid commitments reduce rates: Creator $25/month →20/10; Developer $300 →15/8; Growth $1,500 →12.50/7. Enterprise low headline rates require contracts.",
@@ -3957,7 +4177,9 @@
       "VOICE-S079",
       "VOICE-S080",
       "VOICE-S081",
-      "VOICE-S082"
+      "VOICE-S082",
+      "VOICE-S288",
+      "VOICE-S289"
     ],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
@@ -3968,12 +4190,13 @@
       "https://inworld.ai/terms",
       "https://inworld.ai/aup/",
       "https://inworld.ai/realtime-tts-2",
-      "https://inworld.ai/tts"
+      "https://inworld.ai/tts",
+      "https://docs.inworld.ai/api-reference/ttsAPI/texttospeech/synthesize-speech"
     ],
     "hosting": {
       "reviewed_on": "2026-10-25",
-      "runpod_disposition": "conditional_self_host",
-      "reason": "Customer-hosted arrangements are advertised; exact TTS2/Flash weights/container and Runpod support are not publicly established.",
+      "runpod_disposition": "unverified",
+      "reason": "Terms describe customer-hosted deployment where permitted; exact TTS2/Flash private availability, artifact entitlement and Runpod support remain unverified.",
       "profiles": [],
       "deployment_evidence": {
         "status": "not_deployed_or_tested_by_this_research",
@@ -4002,7 +4225,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "Numeric input is UTF-16 code units (JavaScript text.length), not Unicode code points. Returns complete audio. Context at most5 previous requests/2000 combined characters; voice-design description7–1024 characters.",
+          "notes": "Numeric input is UTF-16 code units (JavaScript text.length), not Unicode code points. Returns complete audio. Context at most 5 previous requests/2000 combined characters; voice-design description 7–1024 characters.",
           "source_ids": [
             "VOICE-S288"
           ]
@@ -4017,12 +4240,19 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "4000 UTF-16 code units per request; streamed PCM/LINEAR16/WAV header rules differ. Native samplerate differs from requested8–48 kHz output resampling.",
+          "notes": "4000 UTF-16 code units per request; streamed PCM/LINEAR16/WAV header rules differ. Native samplerate differs from requested 8–48 kHz output resampling.",
           "source_ids": [
             "VOICE-S288"
           ]
         }
-      ]
+      ],
+      "prior_inventory_fields": {
+        "deployment": {
+          "value": "Managed streaming API; customer-hosted deployment possible where contracted. Viseme output is especially useful for game dialogue animation.",
+          "verified_on": "2026-10-24"
+        }
+      },
+      "inventory_reconciliation": "Customer-hosted terms are conditional permission, not proof the exact TTS-2 artifact is currently offered."
     }
   },
   {
@@ -4067,7 +4297,7 @@
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "external_api_only",
-      "reason": "No public exact2.8 HD/Turbo weights or local runtime verified.",
+      "reason": "No public exact 2.8 HD/Turbo weights or local runtime verified.",
       "profiles": [],
       "deployment_evidence": {
         "status": "not_deployed_or_tested_by_this_research",
@@ -4096,13 +4326,13 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "Text must be strictly less than10000 characters; streaming output recommended over3000. Entire input text is submitted at once; this alone is not incremental-text streaming.",
+          "notes": "Text must be strictly less than 10000 characters; streaming output recommended over 3000. Entire input text is submitted at once; this alone is not incremental-text streaming.",
           "source_ids": [
             "VOICE-S290"
           ]
         },
         {
-          "label": "Speech2.8 async text-file task",
+          "label": "Speech 2.8 async text-file task",
           "scope": "hosted route only; not a Runpod deployment profile",
           "api_protocol": "Async generation job + file retrieval",
           "context_tokens": null,
@@ -4131,9 +4361,9 @@
     ],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Flux TTS is the current conversation-aware offering in October 2026; Aura2 remains a separately priced established option.",
-    "properties": "Flux uses conversational context for delivery/continuity and realtime interruption-aware applications; current page demonstrates English voices. Aura2 broader voice/language inventory must be checked separately.",
+    "properties": "Flux uses conversational context for delivery/continuity and realtime interruption-aware applications; current page demonstrates English voices. Aura-2 broader voice/language inventory must be checked separately.",
     "deployment": "Streaming API, Flux /v2/speak; enterprise self-hosted TTS deployments available through Deepgram terms.",
-    "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
+    "hardware_evidence": "Aura-2 / licensed private Engine: NVIDIA GPU with CUDA 13 support; guide provides GPU assignments, not a minimum per-model VRAM. Publisher 32–48 GiB host RAM per language deployment; 4+ CPU cores per language. Range retained rather than converted to a single requirement. Flux TTS / licensed dedicated Engine: AWS g6.4xlarge example: one L4 GPU and 64 GB host RAM; this source does not publish minimum GPU VRAM. Publisher minimum 64 GB system RAM; model load can allocate 60 GB before lower steady-state use. Explicitly not GPU memory. No deployment or benchmark was performed by this research.",
     "license_and_commercial_terms": "Proprietary model/service; Flux includes Deepmark audio watermark; enterprise licensing separate.",
     "cost_semantics": "Paygo Flux TTS $45/M characters; Aura2 $30/M characters. Growth $40.50/$27. Full voice-agent service from $0.075/min is a pipeline charge, not the TTS model rate.",
     "open_legend_use_cases": "Conversational continuity, fast NPC replies and comparison with text-only-per-line synthesis.",
@@ -4153,22 +4383,25 @@
       "VOICE-S085",
       "VOICE-S086",
       "VOICE-S087",
-      "VOICE-S088"
+      "VOICE-S088",
+      "VOICE-S292",
+      "VOICE-S293"
     ],
     "tested_by_us": false,
     "evidence_urls": [
       "https://deepgram.com/product/text-to-speech/flux",
       "https://deepgram.com/pricing",
       "https://developers.deepgram.com/docs/flux-tts/voices",
-      "https://developers.deepgram.com/docs/deploy-tts-services"
+      "https://developers.deepgram.com/docs/deploy-tts-services",
+      "https://developers.deepgram.com/docs/deploy-flux-tts"
     ],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
-      "reason": "Deepgram publishes specific contract-gated Aura2 and Flux TTS local-container routes; credentials and model packages still required.",
+      "reason": "Deepgram publishes specific contract-gated Aura-2 and Flux TTS local-container routes; credentials and model packages still required.",
       "profiles": [
         {
-          "label": "Aura2 / licensed private Engine",
+          "label": "Aura-2 / licensed private Engine",
           "artifact_id": "Deepgram Aura2 language-specific licensed model package",
           "artifact_revision": null,
           "format": "Proprietary supplied model files + Docker/Podman images",
@@ -4196,20 +4429,21 @@
             "raw_weights_gb": null,
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": null,
-            "published_hardware": "NVIDIA GPU with CUDA13 support; guide provides GPU assignments, not a minimum per-model VRAM.",
+            "published_hardware": "NVIDIA GPU with CUDA 13 support; guide provides GPU assignments, not a minimum per-model VRAM.",
             "gpu_candidate": "NVIDIA L4/L40S class subject to vendor language/concurrency sizing",
             "gpu_candidate_basis": "Conditional candidate only; no publisher numeric VRAM minimum located.",
             "host_ram_gb": null,
-            "host_ram_basis": "Publisher32–48 GiB host RAM per language deployment;4+ CPU cores per language. Range retained rather than converted to a single requirement.",
+            "host_ram_basis": "Publisher 32–48 GiB host RAM per language deployment; 4+ CPU cores per language. Range retained rather than converted to a single requirement.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "CUDA13-compatible GPU, driver>=580 with open kernel modules, NVIDIA container runtime; verify current image compatibility.",
+            "CUDA 13-compatible GPU, driver>=580 with open kernel modules, NVIDIA container runtime; verify current image compatibility.",
             "Licensed language-specific T2C/C2A models, API/Engine TOML and vendor credentials.",
             "Use separate engine/node from Flux and preferably from STT; no free/perpetual public weights."
           ],
@@ -4246,21 +4480,22 @@
             "raw_weights_gb": null,
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": null,
-            "published_hardware": "AWS g6.4xlarge example: one L4 GPU and64GB host RAM; this source does not publish minimum GPU VRAM.",
-            "gpu_candidate": "NVIDIA L4 24GB class with >=64GB host RAM to investigate",
+            "published_hardware": "AWS g6.4xlarge example: one L4 GPU and 64 GB host RAM; this source does not publish minimum GPU VRAM.",
+            "gpu_candidate": "NVIDIA L4 24 GB class with >=64 GB host RAM to investigate",
             "gpu_candidate_basis": "Matches vendor example GPU/RAM class, conditional on compatible host driver and vendor batch guidance.",
             "host_ram_gb": 64,
-            "host_ram_basis": "Publisher minimum64GB system RAM; model load can allocate60GB before lower steady-state use. Explicitly not GPU memory.",
+            "host_ram_basis": "Publisher minimum 64 GB system RAM; model load can allocate 60 GB before lower steady-state use. Explicitly not GPU memory.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Dedicated Engine cannot share with Aura; both Flux and watermarker files mandatory.",
-            "max_batch_size has no safe default; must obtain GPU-specific value from Deepgram, not copy placeholder0.",
+            "max_batch_size has no safe default; must obtain GPU-specific value from Deepgram, not copy placeholder 0.",
             "Contract, image/model access and metering/licensing requirements remain."
           ],
           "source_ids": [
@@ -4302,7 +4537,7 @@
           ]
         },
         {
-          "label": "Aura2 cloud",
+          "label": "Aura-2 cloud",
           "scope": "hosted route only; not a Runpod deployment profile",
           "api_protocol": "Managed TTS streaming/file API",
           "context_tokens": null,
@@ -4316,7 +4551,14 @@
             "VOICE-S292"
           ]
         }
-      ]
+      ],
+      "prior_inventory_fields": {
+        "hardware_evidence": {
+          "value": "No minimum hardware verified; parameter count is not a VRAM requirement.",
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Current hardware summary updated from the hosting primary sources; previous placeholder retained for provenance."
     }
   },
   {
@@ -4333,7 +4575,7 @@
     "release_update_provenance": "Current docs recommend Coda for new work; Coda May 2026, Mist v3 March/April 2026 sources differ. Pricing page now labels Coda v2; exact API snapshot/revision should be confirmed.",
     "properties": "Coda:10 cloud languages, 313 voices, word timestamps, conversational prosody. Mist v3:4 languages, 78 voices, English pronunciation overrides and custom pauses. Most individual voices are monolingual.",
     "deployment": "Cloud HTTP/WebSocket streaming and on-prem contracts. Explicit IDs coda and mistv3; omitted/unrecognized model defaults to Mist v3, never Coda.",
-    "hardware_evidence": "Publisher Coda sub100 ms GPU model latency on-prem plus typical25–50 ms US network; Mist ~37 ms P50 in Rime benchmark. Not cross-provider comparable without full methodology.",
+    "hardware_evidence": "Rime Mistv3 licensed engine: Publisher supports NVIDIA T4, L4, A10 or newer. Publisher 32 GiB host RAM, converted to decimal GB; 8 vCPUs. Not GPU VRAM. Rime Coda licensed engine: Publisher says confirm Coda GPU requirements with Rime before provisioning. Publisher 32 GiB host RAM, converted to decimal GB; 8 vCPUs. Not GPU VRAM. No deployment or benchmark was performed by this research.",
     "license_and_commercial_terms": "Proprietary API/on-prem terms; no public weight license verified.",
     "cost_semantics": "Current paygo page bills generated audio minutes: Coda v2 $0.05/min, Mist v3 $0.03/min. Do not apply old Arcana character rates. Concurrency examples 10Coda/15Mist.",
     "open_legend_use_cases": "Natural conversational background characters; Mist for fast simple barks and pronunciation-controlled names.",
@@ -4352,13 +4594,18 @@
     "evidence_source_ids": [
       "VOICE-S089",
       "VOICE-S090",
-      "VOICE-S091"
+      "VOICE-S091",
+      "VOICE-S294",
+      "VOICE-S295",
+      "VOICE-S296"
     ],
     "tested_by_us": false,
     "evidence_urls": [
       "https://docs.rime.ai/docs/models",
       "https://www.rime.ai/pricing",
-      "https://www.rime.ai/resources/introducing-mist-v3-enterprise-tts"
+      "https://www.rime.ai/resources/introducing-mist-v3-enterprise-tts",
+      "https://docs.rime.ai/docs/on-prem/quickstart",
+      "https://docs.rime.ai/docs/on-prem/performance"
     ],
     "hosting": {
       "reviewed_on": "2026-10-25",
@@ -4394,20 +4641,21 @@
             "raw_weights_gb": null,
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": null,
-            "published_hardware": "Publisher supports NVIDIA T4,L4,A10 or newer.",
-            "gpu_candidate": "NVIDIA L4 24GB class to investigate",
+            "published_hardware": "Publisher supports NVIDIA T4, L4, A10 or newer.",
+            "gpu_candidate": "NVIDIA L4 24 GB class to investigate",
             "gpu_candidate_basis": "L4 is explicitly listed; exact voice/language/concurrency memory needs remain vendor-specific.",
             "host_ram_gb": 34.359738368,
-            "host_ram_basis": "Publisher32GiB host RAM, converted to decimalGB;8vCPUs. Not GPU VRAM.",
+            "host_ram_basis": "Publisher 32 GiB host RAM, converted to decimal GB; 8 vCPUs. Not GPU VRAM.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": 50,
-            "basis": "Publisher50GB storage requirement; exact model/image bytes not disclosed."
+            "basis": "Publisher 50 GB storage requirement; exact model/image bytes not disclosed."
           },
           "requirements": [
-            "NVIDIA host + Docker/Container Toolkit. Native CUDA mode minimum driver580.65.06; recommended595.71.05+. Older535/570 requires eligible forward-compat mode.",
+            "NVIDIA host + Docker/Container Toolkit. Native CUDA mode minimum driver 580.65.06; recommended 595.71.05+. Older 535/570 requires eligible forward-compat mode.",
             "Vendor registry access and license matching selected image; metering API key/outbound aggregate usage reporting.",
             "Standalone engine lacks caller authentication; application gateway must provide access control and TLS."
           ],
@@ -4431,7 +4679,7 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Coda default admission capacity128 sizes its KV cache; generator batch64. These are defaults, not proven request concurrency or text context."
+            "notes": "Coda default admission capacity 128 sizes its KV cache; generator batch 64. These are defaults, not proven request concurrency or text context."
           },
           "request_limits": {
             "input_characters": null,
@@ -4449,16 +4697,17 @@
             "gpu_candidate": null,
             "gpu_candidate_basis": "Cannot choose a Coda GPU from Mist requirements; vendor specification needed.",
             "host_ram_gb": 34.359738368,
-            "host_ram_basis": "Publisher32GiB host RAM, converted to decimalGB;8vCPUs. Not GPU VRAM.",
+            "host_ram_basis": "Publisher 32 GiB host RAM, converted to decimal GB; 8 vCPUs. Not GPU VRAM.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": 50,
-            "basis": "Publisher50GB storage requirement; exact model/image bytes not disclosed."
+            "basis": "Publisher 50 GB storage requirement; exact model/image bytes not disclosed."
           },
           "requirements": [
-            "NVIDIA host + Docker/Container Toolkit. Native CUDA mode minimum driver580.65.06; recommended595.71.05+. Older535/570 requires eligible forward-compat mode.",
+            "NVIDIA host + Docker/Container Toolkit. Native CUDA mode minimum driver 580.65.06; recommended 595.71.05+. Older 535/570 requires eligible forward-compat mode.",
             "Vendor registry access and license matching selected image; metering API key/outbound aggregate usage reporting.",
             "Standalone engine lacks caller authentication; application gateway must provide access control and TLS."
           ],
@@ -4496,12 +4745,19 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "Model must be explicit; omitted/unrecognized model defaults toMistv3. Exact per-request text caps not established here.",
+          "notes": "Model must be explicit; omitted/unrecognized model defaults to Mistv3. Exact per-request text caps not established here.",
           "source_ids": [
             "VOICE-S296"
           ]
         }
-      ]
+      ],
+      "prior_inventory_fields": {
+        "hardware_evidence": {
+          "value": "Publisher Coda sub100 ms GPU model latency on-prem plus typical25–50 ms US network; Mist ~37 ms P50 in Rime benchmark. Not cross-provider comparable without full methodology.",
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Current hardware summary updated from the hosting primary sources; previous placeholder retained for provenance."
     }
   },
   {
@@ -4706,7 +4962,7 @@
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
-      "reason": "Launch advertises self-deployment, but exact3.0 portable artifact/runtime/license/hardware specification was not found publicly.",
+      "reason": "Launch advertises self-deployment, but exact 3.0 portable artifact/runtime/license/hardware specification was not found publicly.",
       "profiles": [],
       "deployment_evidence": {
         "status": "not_deployed_or_tested_by_this_research",
@@ -4718,7 +4974,7 @@
         "request_fit": "unknown"
       },
       "blocking_unknowns": [
-        "Need licensed exact offline/realtime3.0 image, model files and operational requirements; do not use open2602 ASR as a substitute recipe."
+        "Need licensed exact offline/realtime 3.0 image, model files and operational requirements; do not use open 2602 ASR as a substitute recipe."
       ],
       "source_ids": [
         "VOICE-S299",
@@ -4771,7 +5027,7 @@
     ],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Released December 3 2025; experimental additional voices December 16. Current main repository retains realtime release.",
-    "properties": "0.5B streaming text-to-speech, approximately 300 ms first audible speech author claim; roughly 10 min long-form guidance; English-focused verified examples.",
+    "properties": "0.5B Qwen2.5 backbone plus approximately 340M acoustic decoder and 40M diffusion head; streaming text-to-speech. Publisher reports approximately 300 ms first audible speech and roughly 10-minute generation guidance, with 8192 training-context envelope; these are not measured game performance. English-focused verified examples.",
     "deployment": "Microsoft realtime inference code; GPU-serving/reference demo. Distinct from original 1.5B multi-speaker long-form model.",
     "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
     "license_and_commercial_terms": "MIT repository; verify exact checkpoint license and bundled voices before distribution.",
@@ -4791,7 +5047,8 @@
     "caveats": "Original VibeVoice TTS code was removed September 5 2025; current realtime code is separate. Do not recommend an abandoned original path from stale tutorials.",
     "evidence_source_ids": [
       "VOICE-S101",
-      "VOICE-S102"
+      "VOICE-S102",
+      "VOICE-S237"
     ],
     "tested_by_us": false,
     "evidence_urls": [
@@ -4804,7 +5061,7 @@
       "reason": "Published local streaming checkpoint; 0.5B is the backbone label rather than total pipeline storage.",
       "profiles": [
         {
-          "label": "VibeVoice Realtime0.5B / publisher runtime",
+          "label": "VibeVoice Realtime 0.5B / publisher runtime",
           "artifact_id": "microsoft/VibeVoice-Realtime-0.5B",
           "artifact_revision": null,
           "format": "publisher checkpoint; exact selected file manifest not pinned",
@@ -4818,14 +5075,14 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Publisher training context8192; this is an advertised trained envelope, not independently verified runtime admission limit."
+            "notes": "Publisher training context 8192; this is an advertised trained envelope, not independently verified runtime admission limit."
           },
           "request_limits": {
             "input_characters": null,
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Streaming text input and24 kHz audio output; advertised generation around10 minutes. Hard per-request cap not established. Audio acoustic rate7.5 Hz is distinct from sample rate."
+            "other": "Streaming text input and 24 kHz audio output; advertised generation around 10 minutes. Hard per-request cap not established. Audio acoustic rate 7.5 Hz is distinct from sample rate."
           },
           "memory": {
             "parameters_total_b": null,
@@ -4841,11 +5098,12 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "0.5B Qwen2.5 backbone plus approximately340M acoustic decoder and40M diffusion head; semantic encoder removed in this realtime variant.",
+            "0.5B Qwen2.5 backbone plus approximately 340M acoustic decoder and 40M diffusion head; semantic encoder removed in this realtime variant.",
             "Matching acoustic tokenizer/decoder and bundled voice presets; exact lockfile, total memory and input limits require verification."
           ],
           "source_ids": [
@@ -4867,7 +5125,14 @@
       ],
       "source_ids": [
         "VOICE-S237"
-      ]
+      ],
+      "prior_inventory_fields": {
+        "properties": {
+          "value": "0.5B streaming text-to-speech, approximately 300 ms first audible speech author claim; roughly 10 min long-form guidance; English-focused verified examples.",
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Clarified backbone versus total speech-pipeline size and publisher latency/context scope."
     }
   },
   {
@@ -4924,7 +5189,7 @@
         "request_fit": "unknown"
       },
       "blocking_unknowns": [
-        "API access ends2026-11-13 00:01EST; no supported long-term Runpod path for Octave2/EVI established."
+        "API access ends 2026-11-13 00:01EST; no supported long-term Runpod path for Octave 2/EVI established."
       ],
       "source_ids": [
         "VOICE-S302"
@@ -4940,7 +5205,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "5000 characters per utterance,1000-character description, up to5 generations/request; exact Octave2 versus generic route differences require confirmation.",
+          "notes": "5000 characters per utterance, 1000-character description, up to 5 generations/request; exact Octave 2 versus generic route differences require confirmation.",
           "source_ids": [
             "VOICE-S302"
           ]
@@ -5009,7 +5274,7 @@
       "reason": "Local full-duplex pipeline is available under gated NVIDIA/model-component license conditions.",
       "profiles": [
         {
-          "label": "PersonaPlex7B-v1 / Moshi server",
+          "label": "PersonaPlex 7B-v1 / Moshi server",
           "artifact_id": "nvidia/personaplex-7b-v1",
           "artifact_revision": null,
           "format": "publisher checkpoint; exact selected file manifest not pinned",
@@ -5023,7 +5288,7 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Loader sets LM context3000 acoustic timeline steps, codec context250 and depth transformer8; these are not ordinary text-token context windows."
+            "notes": "Loader sets LM context 3000 acoustic timeline steps, codec context 250 and depth transformer 8; these are not ordinary text-token context windows."
           },
           "request_limits": {
             "input_characters": null,
@@ -5037,8 +5302,8 @@
             "raw_weights_gb": null,
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": null,
-            "published_hardware": "Publisher A10080 GB benchmark reference, not a stated minimum.",
-            "gpu_candidate": "NVIDIA A100 / H10080 GB reference class; smaller GPU+CPU-offload route unverified",
+            "published_hardware": "Publisher A100 80 GB benchmark reference, not a stated minimum.",
+            "gpu_candidate": "NVIDIA A100 / H100 80 GB reference class; smaller GPU+CPU-offload route unverified",
             "gpu_candidate_basis": "Reference-aligned choice; no measured local capacity. CPU offload changes both RAM need and latency.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
@@ -5046,6 +5311,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -5126,21 +5392,22 @@
       "reason": "Apache full multimodal speech checkpoint with local routes; active-parameter count is not stored-weight size.",
       "profiles": [
         {
-          "label": "Qwen3-Omni30B-A3B-Instruct / full speech output",
+          "label": "Qwen3-Omni 30B-A3B-Instruct / full speech output",
           "artifact_id": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
           "artifact_revision": null,
           "format": "publisher checkpoint; exact selected file manifest not pinned",
-          "precision": "BF16 with FlashAttention2 where supported",
+          "precision": "BF16 with FlashAttention 2 where supported",
           "runtime": "Qwen Transformers / vLLM multimodal runtime",
           "runtime_version": null,
           "api_protocol": "Publisher Python; custom service/Runpod handler required",
           "context": {
-            "native_tokens": 65536,
+            "native_tokens": null,
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "exact artifact",
-            "notes": "Exact Thinker text and Talker configs each65536 positions; codec8000 and code-predictor32768 are separate axes. Repo example32K context /16384 output tokens is an example configuration."
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact Thinker text and Talker configs each 65536 positions; codec 8000 and code-predictor 32768 are separate axes. Repo example 32K context /16384 output tokens is an example configuration.",
+            "config_max_position_embeddings_tokens": 65536
           },
           "request_limits": {
             "input_characters": null,
@@ -5154,20 +5421,21 @@
             "raw_weights_gb": null,
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": null,
-            "published_hardware": "Publisher BF16/FA2 video-input table:15 s video78.85 GB,30 s88.52 GB,60 s107.74 GB,120 s144.81 GB. These are not audio-only minimums.",
-            "gpu_candidate": "H200141 GB or multi-GPU H10080 GB class to investigate",
+            "published_hardware": "Publisher BF16/FA2 video-input table:15 s video 78.85 GB, 30 s88.52 GB, 60 s107.74 GB, 120 s144.81 GB. These are not audio-only minimums.",
+            "gpu_candidate": "H200 141 GB or multi-GPU H100 80 GB class to investigate",
             "gpu_candidate_basis": "Conservative full-pipeline planning from publisher memory references; exact audio-only memory, tensor parallel support for chosen runtime and concurrency remain unverified.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
-            "kv_cache_notes": "Thinker/Talker MoE and audio-codec caches must be sized separately;3B active compute does not mean3B weight storage."
+            "kv_cache_notes": "Thinker/Talker MoE and audio-codec caches must be sized separately; 3B active compute does not mean 3B weight storage."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "Full Thinker+Talker+speech codec assets. Disabling Talker saves about10 GB but is no longer the voiced profile.",
+            "Full Thinker+Talker+speech codec assets. Disabling Talker saves about 10 GB but is no longer the voiced profile.",
             "Pin compatible Transformers/Qwen processor or vLLM multimodal implementation; exact package version not established in this pass."
           ],
           "source_ids": [
@@ -5243,7 +5511,7 @@
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "external_api_only",
-      "reason": "Managed Grok Voice3.0 only; public weights/container not verified.",
+      "reason": "Managed Grok Voice 3.0 only; public weights/container not verified.",
       "profiles": [],
       "deployment_evidence": {
         "status": "not_deployed_or_tested_by_this_research",
@@ -5460,13 +5728,14 @@
             "published_vram_gb": null,
             "published_hardware": "Native publisher memory buckets for SOAR/MF respectively: <10.24 s5.65/5.30 GB; <20.48 s6.53/5.47; <40.96 s7.86/5.74; <81.92 s10.51/6.29. Duration includes prompt+generated audio; these are benchmark observations, not every variant minimum.",
             "gpu_candidate": "NVIDIA L4 / RTX 4090 class, 24 GB; investigate only",
-            "gpu_candidate_basis": "Candidate for batch1 and short generation based on published native memory buckets; no transfer of concurrency or exact benchmark hardware performance.",
+            "gpu_candidate_basis": "Candidate for batch 1 and short generation based on published native memory buckets; no transfer of concurrency or exact benchmark hardware performance.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -5511,13 +5780,14 @@
             "published_vram_gb": null,
             "published_hardware": "Native publisher memory buckets for SOAR/MF respectively: <10.24 s5.65/5.30 GB; <20.48 s6.53/5.47; <40.96 s7.86/5.74; <81.92 s10.51/6.29. Duration includes prompt+generated audio; these are benchmark observations, not every variant minimum.",
             "gpu_candidate": "NVIDIA L4 / RTX 4090 class, 24 GB; investigate only",
-            "gpu_candidate_basis": "Candidate for batch1 and short generation based on published native memory buckets; no transfer of concurrency or exact benchmark hardware performance.",
+            "gpu_candidate_basis": "Candidate for batch 1 and short generation based on published native memory buckets; no transfer of concurrency or exact benchmark hardware performance.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -5562,13 +5832,14 @@
             "published_vram_gb": null,
             "published_hardware": "No per-variant minimum established; do not automatically inherit SOAR/MF benchmark values.",
             "gpu_candidate": "NVIDIA L4 / RTX 4090 class, 24 GB; investigate only",
-            "gpu_candidate_basis": "Candidate for batch1 and short generation based on published native memory buckets; no transfer of concurrency or exact benchmark hardware performance.",
+            "gpu_candidate_basis": "Candidate for batch 1 and short generation based on published native memory buckets; no transfer of concurrency or exact benchmark hardware performance.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -5613,13 +5884,14 @@
             "published_vram_gb": null,
             "published_hardware": "No per-variant minimum established; do not automatically inherit SOAR/MF benchmark values.",
             "gpu_candidate": "NVIDIA L4 / RTX 4090 class, 24 GB; investigate only",
-            "gpu_candidate_basis": "Candidate for batch1 and short generation based on published native memory buckets; no transfer of concurrency or exact benchmark hardware performance.",
+            "gpu_candidate_basis": "Candidate for batch 1 and short generation based on published native memory buckets; no transfer of concurrency or exact benchmark hardware performance.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -5664,13 +5936,14 @@
             "published_vram_gb": null,
             "published_hardware": "No per-variant minimum established; do not automatically inherit SOAR/MF benchmark values.",
             "gpu_candidate": "NVIDIA L4 / RTX 4090 class, 24 GB; investigate only",
-            "gpu_candidate_basis": "Candidate for batch1 and short generation based on published native memory buckets; no transfer of concurrency or exact benchmark hardware performance.",
+            "gpu_candidate_basis": "Candidate for batch 1 and short generation based on published native memory buckets; no transfer of concurrency or exact benchmark hardware performance.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -5770,7 +6043,7 @@
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Whole audio editing; recommended NFE10–32 with default10, CFG1.2. No exact duration/context caps established."
+            "other": "Whole audio editing; recommended NFE10–32 with default 10, CFG1.2. No exact duration/context caps established."
           },
           "memory": {
             "parameters_total_b": null,
@@ -5786,6 +6059,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -5867,17 +6141,18 @@
           "artifact_id": "Qwen/Qwen3-ASR-1.7B",
           "artifact_revision": null,
           "format": "publisher checkpoint; exact selected file manifest not pinned",
-          "precision": "BF16 / FP16 with FlashAttention2",
+          "precision": "BF16 / FP16 with FlashAttention 2",
           "runtime": "qwen-asr Transformers; qwen-asr[vllm] streaming alternative",
           "runtime_version": "Python3.12 recommended; exact runtime lock not pinned",
           "api_protocol": "Publisher Python; custom service/Runpod handler required",
           "context": {
-            "native_tokens": 65536,
+            "native_tokens": null,
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "exact artifact",
-            "notes": "Exact language config65536 positions. Audio encoder1500 source positions are not a whole-file duration cap. Example256/4096 max_new_tokens settings differ by backend; neither is a native maximum."
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact language config 65536 positions. Audio encoder 1500 source positions are not a whole-file duration cap. Example 256/4096 max_new_tokens settings differ by backend; neither is a native maximum.",
+            "config_max_position_embeddings_tokens": 65536
           },
           "request_limits": {
             "input_characters": null,
@@ -5900,12 +6175,13 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Model tokenizer, audio frontend and backend-specific package dependencies.",
-            "ForcedAligner0.6B is optional extra model/RAM for timestamps; not included merely by choosing ASR0.6B."
+            "ForcedAligner 0.6B is optional extra model/RAM for timestamps; not included merely by choosing ASR0.6B."
           ],
           "source_ids": [
             "VOICE-S247",
@@ -5917,17 +6193,18 @@
           "artifact_id": "Qwen/Qwen3-ASR-0.6B",
           "artifact_revision": null,
           "format": "publisher checkpoint; exact selected file manifest not pinned",
-          "precision": "BF16 / FP16 with FlashAttention2",
+          "precision": "BF16 / FP16 with FlashAttention 2",
           "runtime": "qwen-asr Transformers; qwen-asr[vllm] streaming alternative",
           "runtime_version": "Python3.12 recommended; exact runtime lock not pinned",
           "api_protocol": "Publisher Python; custom service/Runpod handler required",
           "context": {
-            "native_tokens": 65536,
+            "native_tokens": null,
             "runtime_default_tokens": null,
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "exact artifact",
-            "notes": "Exact language config65536 positions. Audio encoder1500 source positions are not a whole-file duration cap. Example256/4096 max_new_tokens settings differ by backend; neither is a native maximum."
+            "notes": "Configuration position ceiling only; no independently established supported user-text context. Exact language config 65536 positions. Audio encoder 1500 source positions are not a whole-file duration cap. Example 256/4096 max_new_tokens settings differ by backend; neither is a native maximum.",
+            "config_max_position_embeddings_tokens": 65536
           },
           "request_limits": {
             "input_characters": null,
@@ -5950,12 +6227,13 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Model tokenizer, audio frontend and backend-specific package dependencies.",
-            "ForcedAligner0.6B is optional extra model/RAM for timestamps; not included merely by choosing ASR0.6B."
+            "ForcedAligner 0.6B is optional extra model/RAM for timestamps; not included merely by choosing ASR0.6B."
           ],
           "source_ids": [
             "VOICE-S247",
@@ -5963,7 +6241,7 @@
           ]
         },
         {
-          "label": "Qwen3 ForcedAligner0.6B",
+          "label": "Qwen3 ForcedAligner 0.6B",
           "artifact_id": "Qwen/Qwen3-ForcedAligner-0.6B",
           "artifact_revision": null,
           "format": "publisher checkpoint; exact selected file manifest not pinned",
@@ -5981,10 +6259,10 @@
           },
           "request_limits": {
             "input_characters": null,
-            "input_audio_seconds": null,
+            "input_audio_seconds": 300,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Audio plus known transcript produce aligned timestamps; this is not a free transcription or speech-generation model."
+            "other": "Publisher supports up to 5 minutes of speech in 11 languages, with audio plus known transcript producing timestamps. This is a separate alignment task, not free transcription or speech generation."
           },
           "memory": {
             "parameters_total_b": null,
@@ -6000,12 +6278,13 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Separate weights/processor and language support; memory is additional when co-loaded with ASR.",
-            "Exact aligner context/duration and whole-pipeline memory not established."
+            "Exact aligner native token context and full-pipeline memory remain unverified; published audio input envelope is 5 minutes."
           ],
           "source_ids": [
             "VOICE-S247",
@@ -6089,7 +6368,7 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Cache-aware left context70×80 ms=5.6 s; chunk sizes80,160,560,1120 ms with right contexts0,1,6,13 frames. These are receptive fields/streaming settings, not total session limits."
+            "notes": "Cache-aware left context 70×80 ms=5.6 s; chunk sizes 80, 160, 560, 1120 ms with right contexts 0, 1, 6, 13 frames. These are receptive fields/streaming settings, not total session limits."
           },
           "request_limits": {
             "input_characters": null,
@@ -6112,6 +6391,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -6186,7 +6466,7 @@
       "reason": "Two distinct local recognizers with separate attention/runtime and license conditions.",
       "profiles": [
         {
-          "label": "Parakeet TDT0.6B-v3",
+          "label": "Parakeet TDT 0.6B-v3",
           "artifact_id": "nvidia/parakeet-tdt-0.6b-v3",
           "artifact_revision": null,
           "format": "publisher checkpoint; exact selected file manifest not pinned",
@@ -6200,7 +6480,7 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Full versus local attention materially changes memory; local attention [256,256]. Buffered streaming example2 s chunks,2 s right and10 s left is not native cache-aware streaming."
+            "notes": "Full versus local attention materially changes memory; local attention [256, 256]. Buffered streaming example 2 s chunks, 2 s right and 10 s left is not native cache-aware streaming."
           },
           "request_limits": {
             "input_characters": null,
@@ -6214,15 +6494,16 @@
             "raw_weights_gb": null,
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": null,
-            "published_hardware": "Card full-attention example handles up to24-minute audio on A10080 GB; local-attention route advertises up to3 hours. This does not size short requests.",
+            "published_hardware": "Card full-attention example handles up to24-minute audio on A100 80 GB; local-attention route advertises up to3 hours. This does not size short requests.",
             "gpu_candidate": "NVIDIA L4 / RTX 4090 class, 24 GB; investigate only",
-            "gpu_candidate_basis": "Estimate for one short16 kHz utterance, not the24-minute full-attention or3-hour long-form claim.",
+            "gpu_candidate_basis": "Estimate for one short 16 kHz utterance, not the24-minute full-attention or 3-hour long-form claim.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -6249,7 +6530,7 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Buffered, not cache-aware streaming.5.6 s left context; example chunk/right0.08/0.08 through1.04/1.04 s imply0.16–2.08 s algorithmic windows, not service latency."
+            "notes": "Buffered, not cache-aware streaming.5.6 s left context; example chunk/right 0.08/0.08 through 1.04/1.04 s imply 0.16–2.08 s algorithmic windows, not service latency."
           },
           "request_limits": {
             "input_characters": null,
@@ -6272,6 +6553,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -6358,7 +6640,7 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Maximum training sequence1024 includes prompt, audio and response; training audio40 s. Longer inference may be possible with degraded accuracy; not recorded as hard native/runtime maxima."
+            "notes": "Maximum training sequence 1024 includes prompt, audio and response; training audio 40 s. Longer inference may be possible with degraded accuracy; not recorded as hard native/runtime maxima."
           },
           "request_limits": {
             "input_characters": null,
@@ -6381,6 +6663,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -6472,14 +6755,14 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Advertised60-minute single pass within64K total-token envelope; native configuration/runtime allocation not independently equated to that marketing shorthand."
+            "notes": "Advertised 60-minute single pass within 64K total-token envelope; native configuration/runtime allocation not independently equated to that marketing shorthand."
           },
           "request_limits": {
             "input_characters": null,
             "input_audio_seconds": 3600,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Published up-to60-minute input envelope,50+ languages, speaker/timestamp output and hotwords. Actual length admitted by selected runtime may be lower."
+            "other": "Published up-to60-minute input envelope, 50+ languages, speaker/timestamp output and hotwords. Actual length admitted by selected runtime may be lower."
           },
           "memory": {
             "parameters_total_b": null,
@@ -6487,14 +6770,15 @@
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": null,
             "published_hardware": "No numeric whole-pipeline minimum located in inspected primary sources.",
-            "gpu_candidate": "NVIDIA L40S/A600048 GB short-file candidate;80 GB class for long-context investigation",
-            "gpu_candidate_basis": "Conservative estimate for total audio+language pipeline, batch1; no published VRAM minimum or60-minute fit on either class established.",
+            "gpu_candidate": "NVIDIA L40S/A6000 48 GB short-file candidate; 80 GB class for long-context investigation",
+            "gpu_candidate_basis": "Conservative estimate for total audio+language pipeline, batch 1; no published VRAM minimum or 60-minute fit on either class established.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -6516,7 +6800,7 @@
           "format": "publisher checkpoint; exact selected file manifest not pinned",
           "precision": "Publisher BF16 route",
           "runtime": "Transformers VibeVoiceAsrForConditionalGeneration",
-          "runtime_version": null,
+          "runtime_version": "Transformers >=5.3.0",
           "api_protocol": "Publisher Transformers Python; custom API required",
           "context": {
             "native_tokens": null,
@@ -6524,14 +6808,14 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Advertised60-minute single pass within64K total-token envelope; native configuration/runtime allocation not independently equated to that marketing shorthand."
+            "notes": "Advertised 60-minute single pass within 64K total-token envelope; native configuration/runtime allocation not independently equated to that marketing shorthand."
           },
           "request_limits": {
             "input_characters": null,
             "input_audio_seconds": 3600,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Published up-to60-minute input envelope,50+ languages, speaker/timestamp output and hotwords. Actual length admitted by selected runtime may be lower."
+            "other": "Published up-to60-minute input envelope, 50+ languages, speaker/timestamp output and hotwords. Actual length admitted by selected runtime may be lower."
           },
           "memory": {
             "parameters_total_b": null,
@@ -6539,14 +6823,15 @@
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": null,
             "published_hardware": "No numeric whole-pipeline minimum located in inspected primary sources.",
-            "gpu_candidate": "NVIDIA L40S/A600048 GB short-file candidate;80 GB class for long-context investigation",
-            "gpu_candidate_basis": "Conservative estimate for total audio+language pipeline, batch1; no published VRAM minimum or60-minute fit on either class established.",
+            "gpu_candidate": "NVIDIA L40S/A6000 48 GB short-file candidate; 80 GB class for long-context investigation",
+            "gpu_candidate_basis": "Conservative estimate for total audio+language pipeline, batch 1; no published VRAM minimum or 60-minute fit on either class established.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -6627,7 +6912,7 @@
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
-      "reason": "Self-deployment advertised, but exact3.0 artifacts/license/runtime requirements not publicly verified.",
+      "reason": "Self-deployment advertised, but exact 3.0 artifacts/license/runtime requirements not publicly verified.",
       "profiles": [],
       "deployment_evidence": {
         "status": "not_deployed_or_tested_by_this_research",
@@ -6639,7 +6924,7 @@
         "request_fit": "unknown"
       },
       "blocking_unknowns": [
-        "Need licensed3.0 image/weights and model-specific memory/runtime; open2602 profile is separate."
+        "Need licensed 3.0 image/weights and model-specific memory/runtime; open 2602 profile is separate."
       ],
       "source_ids": [
         "VOICE-S301",
@@ -6658,7 +6943,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "80–2400ms configurable latency is not input/session limit. Exact context field is unspecified.",
+          "notes": "80–2400 ms configurable latency is not input/session limit. Exact context field is unspecified.",
           "source_ids": [
             "VOICE-S304"
           ]
@@ -6673,7 +6958,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "Model card labels context32K; exact numeric expansion and output/audio caps not specified, so no invented32768 value.",
+          "notes": "Model card labels context 32K; exact numeric expansion and output/audio caps not specified, so no invented 32768 value.",
           "source_ids": [
             "VOICE-S305"
           ]
@@ -6688,7 +6973,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "Model card labels context32K; exact numeric expansion/output/audio caps unverified.",
+          "notes": "Model card labels context 32K; exact numeric expansion/output/audio caps unverified.",
           "source_ids": [
             "VOICE-S306"
           ]
@@ -6709,7 +6994,7 @@
     "release_update_provenance": "February 2026 open release; separate from October 3.0 Premier service.",
     "properties": "4B streaming speech recognizer; configurable latency/quality tradeoff; 13 languages listed in the current card. The card gives conflicting minimum-latency figures in different sections, so no single minimum is promoted here.",
     "deployment": "Self-hosted reference inference and supported serving stacks; also SageMaker JumpStart.",
-    "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
+    "hardware_evidence": "Voxtral Mini 4B Realtime2602: Publisher recommends a single GPU with at least 16 GB for BF16. No deployment or benchmark was performed by this research.",
     "license_and_commercial_terms": "Apache-2.0 checkpoint metadata; AWS service charges separate.",
     "cost_semantics": "No per-character/token license fee advertised for self-hosting under the stated license; compute, memory, storage and engineering remain costs. Hosted-provider prices, if any, are separate.",
     "open_legend_use_cases": "Self-hosted streaming ASR alternative where public weights matter more than newest hosted 3.0.",
@@ -6727,7 +7012,8 @@
     "caveats": "Do not infer 3.0 API features/benchmark scores from this 2.0-family checkpoint or vice versa.",
     "evidence_source_ids": [
       "VOICE-S129",
-      "VOICE-S130"
+      "VOICE-S130",
+      "VOICE-S259"
     ],
     "tested_by_us": false,
     "evidence_urls": [
@@ -6737,10 +7023,10 @@
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
-      "reason": "Apache2602 weights have local vLLM and current Transformers routes; not the newer proprietary Voxtral3 model.",
+      "reason": "Apache-licensed 2602 weights have local vLLM and current Transformers routes; not the newer proprietary Voxtral 3 model.",
       "profiles": [
         {
-          "label": "Voxtral Mini4B Realtime2602",
+          "label": "Voxtral Mini 4B Realtime2602",
           "artifact_id": "mistralai/Voxtral-Mini-4B-Realtime-2602",
           "artifact_revision": null,
           "format": "publisher checkpoint; exact selected file manifest not pinned",
@@ -6754,7 +7040,7 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Publisher vLLM max_model_len defaults131072 (>3 h equivalent in its encoding); lower settings reduce RoPE precomputation memory. Native config ceiling not independently verified."
+            "notes": "Publisher vLLM max_model_len defaults 131072 (>3 h equivalent in its encoding); lower settings reduce RoPE precomputation memory. Native config ceiling not independently verified."
           },
           "request_limits": {
             "input_characters": null,
@@ -6768,21 +7054,22 @@
             "raw_weights_gb": null,
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": 16,
-            "published_hardware": "Publisher recommends a single GPU with at least16 GB for BF16.",
+            "published_hardware": "Publisher recommends a single GPU with at least 16 GB for BF16.",
             "gpu_candidate": "NVIDIA L4 / RTX 4090 class, 24 GB; investigate only",
-            "gpu_candidate_basis": "24 GB class exceeds the documented16 GB recommendation; long sessions/concurrency still depend on configured cache and runtime.",
+            "gpu_candidate_basis": "24 GB class exceeds the documented 16 GB recommendation; long sessions/concurrency still depend on configured cache and runtime.",
             "host_ram_gb": null,
             "host_ram_basis": "No host-RAM minimum located; includes loading/preprocessing/runtime needs, not just weights.",
             "kv_cache_notes": "Speech encoder/decoder/vocoder working memory and any autoregressive cache are runtime-dependent; no generic text-LLM KV formula applied."
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Mistral tokenizer/audio processor and matching runtime; current card includes Transformers support despite older vLLM-only wording.",
-            "Apache2.0; do not attach the Voxtral3 API license or limits to2602."
+            "Apache-2.0; do not attach the Voxtral 3 API license or limits to2602."
           ],
           "source_ids": [
             "VOICE-S259"
@@ -6803,7 +7090,14 @@
       ],
       "source_ids": [
         "VOICE-S259"
-      ]
+      ],
+      "prior_inventory_fields": {
+        "hardware_evidence": {
+          "value": "No minimum hardware verified; parameter count is not a VRAM requirement.",
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Current hardware summary updated from the hosting primary sources; previous placeholder retained for provenance."
     }
   },
   {
@@ -6862,14 +7156,14 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Exact decoder max_target_positions448; encoder1500 source positions correspond to30 s processing windows. Neither is a30-second total-file limit."
+            "notes": "Exact decoder max_target_positions448; encoder 1500 source positions correspond to30 s processing windows. Neither is a30-second total-file limit."
           },
           "request_limits": {
             "input_characters": null,
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Long recordings use sequential sliding windows or overlapped chunks. Output decoding must respect per-window448 positions; no whole-file output cap assumed."
+            "other": "Long recordings use sequential sliding windows or overlapped chunks. Output decoding must respect per-window 448 positions; no whole-file output cap assumed."
           },
           "memory": {
             "parameters_total_b": 0.809,
@@ -6885,12 +7179,13 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Whisper feature extractor/tokenizer; actual sample rate conversion and longform mode must be chosen.",
-            "torch.compile is incompatible with the card’s chunked longform/FlashAttention2 combination; do not combine all optimization flags blindly."
+            "torch.compile is incompatible with the card’s chunked longform/FlashAttention 2 combination; do not combine all optimization flags blindly."
           ],
           "source_ids": [
             "VOICE-S260",
@@ -6935,11 +7230,12 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "Current CUDA route needs CUDA12 cuBLAS and cuDNN9; older CUDA/cuDNN requires explicitly compatible CTranslate2 versions.",
+            "Current CUDA route needs CUDA 12 cuBLAS and cuDNN 9; older CUDA/cuDNN requires explicitly compatible CTranslate2 versions.",
             "PyAV provides decoding libraries; choose exact converted Turbo artifact and precision before disk/memory sizing."
           ],
           "source_ids": [
@@ -6979,9 +7275,9 @@
     ],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current October 2026 pricing; some displayed rates explicitly promotional.",
-    "properties": "Flux conversational recognition/end-of-turn handling; Nova3 general streaming/pre-recorded transcription. Languages/features depend on route.",
+    "properties": "Flux conversational recognition/end-of-turn handling; Nova-3 general streaming/pre-recorded transcription. Languages/features depend on route.",
     "deployment": "Cloud API and enterprise arrangements; full voice-agent service is separately billed.",
-    "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
+    "hardware_evidence": "Flux general-en / licensed Engine: Requires NVIDIA Ampere or newer; T4 unsupported. L4/L40S/A100/H100/Blackwell examples listed. Nova-3 / licensed Engine: No numeric whole-pipeline minimum located in inspected primary sources. No deployment or benchmark was performed by this research.",
     "license_and_commercial_terms": "Proprietary model/API.",
     "cost_semantics": "Flux English streaming $0.0065/min promo (regular $0.0077); multilingual $0.0078/min. Nova3 streaming English $0.0048/min promo; pre-recorded English $0.0043/min. Add-ons, region and commitment alter totals.",
     "open_legend_use_cases": "Low-latency player input and natural end-of-turn handling; transcription price reference.",
@@ -6999,12 +7295,16 @@
     "caveats": "Flux STT and Flux TTS are different models and meters. Promotional rates are not permanent commitments.",
     "evidence_source_ids": [
       "VOICE-S086",
-      "VOICE-S132"
+      "VOICE-S132",
+      "VOICE-S307",
+      "VOICE-S308"
     ],
     "tested_by_us": false,
     "evidence_urls": [
       "https://deepgram.com/pricing",
-      "https://developers.deepgram.com/docs/flux/quickstart"
+      "https://developers.deepgram.com/docs/flux/quickstart",
+      "https://developers.deepgram.com/docs/deploy-stt-services",
+      "https://developers.deepgram.com/docs/flux-self-hosted"
     ],
     "hosting": {
       "reviewed_on": "2026-10-25",
@@ -7049,12 +7349,13 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "Dedicated Engine and explicitly enabled /v2/listen; vendor max_streams recommendation perGPU.",
-            "release-261020 cannot use older.dg Flux files; obtain matching.dgv2 package before upgrade.",
+            "Dedicated Engine and explicitly enabled /v2/listen; vendor max_streams recommendation per GPU.",
+            "release-261020 cannot use older .dg Flux files; obtain matching .dgv2 package before upgrade.",
             "Licensed image credentials/model key and external license service or contracted proxy."
           ],
           "source_ids": [
@@ -7063,7 +7364,7 @@
           ]
         },
         {
-          "label": "Nova3 / licensed Engine",
+          "label": "Nova-3 / licensed Engine",
           "artifact_id": "Deepgram Nova3 licensed language/model package",
           "artifact_revision": null,
           "format": "Encrypted licensed models + containers",
@@ -7100,11 +7401,12 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "Exact Nova3 language/model files supplied by Deepgram; optional diarization/other add-ons add separate models.",
+            "Exact Nova-3 language/model files supplied by Deepgram; optional diarization/other add-ons add separate models.",
             "Do not deploy in a Flux Engine; obtain vendor hardware/concurrency sizing and compatible image.",
             "License-server or authorized proxy requirements are part of private hosting."
           ],
@@ -7124,7 +7426,7 @@
         "request_fit": "unknown"
       },
       "blocking_unknowns": [
-        "Exact licensed Nova3 package, image versions, GPU/RAM/disk and vendor concurrency recommendations remain unverified."
+        "Exact licensed Nova-3 package, image versions, GPU/RAM/disk and vendor concurrency recommendations remain unverified."
       ],
       "source_ids": [
         "VOICE-S307",
@@ -7161,7 +7463,14 @@
             "VOICE-S307"
           ]
         }
-      ]
+      ],
+      "prior_inventory_fields": {
+        "hardware_evidence": {
+          "value": "No minimum hardware verified; parameter count is not a VRAM requirement.",
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Current hardware summary updated from the hosting primary sources; previous placeholder retained for provenance."
     }
   },
   {
@@ -7177,7 +7486,7 @@
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current model catalogue October 2026; Scribe v2 Medical is a specialized variant with little obvious game-specific need.",
     "properties": "90+ languages; keyterm prompting and timestamps; batch diarization and realtime variants. Provider realtime~150 ms claim is setup-dependent.",
-    "deployment": "Managed speech-to-text API; no public weights.",
+    "deployment": "Managed transcription API, plus an explicitly documented Scribe V2 private deployment offer on AWS/GCP. No public weights or portable Runpod recipe established; private support for v2 Realtime is unverified.",
     "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
     "license_and_commercial_terms": "Proprietary API and platform terms.",
     "cost_semantics": "Published rates batch $0.22/audio hour; realtime $0.39/hour. Keyterm prompting and transcript editing can add $0.05/$0.07 per hour respectively on shown batch tiers; check selected plan.",
@@ -7196,17 +7505,22 @@
     "caveats": "Do not treat vendor 98% accuracy as a guarantee for accents, noise or fictional names.",
     "evidence_source_ids": [
       "VOICE-S070",
-      "VOICE-S071"
+      "VOICE-S071",
+      "VOICE-S309",
+      "VOICE-S285",
+      "VOICE-S284"
     ],
     "tested_by_us": false,
     "evidence_urls": [
       "https://elevenlabs.io/docs/overview/models",
-      "https://elevenlabs.io/pricing/api"
+      "https://elevenlabs.io/pricing/api",
+      "https://elevenlabs.io/docs/overview/capabilities/speech-to-text",
+      "https://elevenlabs.io/docs/overview/capabilities/private-deployment"
     ],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
-      "reason": "ScribeV2 private AWS/GCP offering is explicit; portable Runpod image and Realtime-private parity not established.",
+      "reason": "Scribe V2 private AWS/GCP offering is explicit; portable Runpod image and Realtime-private parity not established.",
       "profiles": [],
       "deployment_evidence": {
         "status": "not_deployed_or_tested_by_this_research",
@@ -7236,7 +7550,7 @@
           "input_audio_seconds": 36000,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "Up to3GB file and10hours standard mode. Multichannel docs conflict: FAQ says combined channels <10hours, summary says1hour; leave unresolved. Up to5channels.",
+          "notes": "Up to3GB file and 10 hours standard mode. Multichannel docs conflict: FAQ says combined channels <10 hours, summary says 1 hour; leave unresolved. Up to5channels.",
           "source_ids": [
             "VOICE-S309"
           ]
@@ -7251,12 +7565,19 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "Do not inherit standard file3GB/10hour limits; exact realtime session limit not established here.",
+          "notes": "Do not inherit standard file 3 GB/10 hour limits; exact realtime session limit not established here.",
           "source_ids": [
             "VOICE-S284"
           ]
         }
-      ]
+      ],
+      "prior_inventory_fields": {
+        "deployment": {
+          "value": "Managed speech-to-text API; no public weights.",
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Updated deployment summary to include the exact Scribe V2 private offer without inferring Realtime parity."
     }
   },
   {
@@ -7340,6 +7661,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -7436,7 +7758,7 @@
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Reference1–30 s is advertised support, not a verified upload hard cap. Output follows source content with optional length/style change; exact total duration unknown."
+            "other": "Reference 1–30 s is advertised support, not a verified upload hard cap. Output follows source content with optional length/style change; exact total duration unknown."
           },
           "memory": {
             "parameters_total_b": null,
@@ -7452,13 +7774,14 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Separate CFM and AR checkpoints; speaker encoder and selected speech encoder/vocoder assets.",
             "AR controls accent/emotion conversion; disabling style conversion changes the pipeline.",
-            "GPL3 repository archived2025-11-21; review exact pretrained/auxiliary licenses."
+            "GPL-3.0 repository archived 2025-11-21; review exact pretrained/auxiliary licenses."
           ],
           "source_ids": [
             "VOICE-S265"
@@ -7493,7 +7816,7 @@
             "raw_weights_gb": null,
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": null,
-            "published_hardware": "Publisher RTX3060 Laptop example:10 diffusion steps,3 s prompt,0.18 s blocks,2.5 s left/0.02 s right context;430 ms latency example is workload-specific.",
+            "published_hardware": "Publisher RTX3060 Laptop example:10 diffusion steps, 3 s prompt, 0.18 s blocks, 2.5 s left/0.02 s right context; 430 ms latency example is workload-specific.",
             "gpu_candidate": "NVIDIA L4 / RTX 4090 class, 24 GB; investigate only",
             "gpu_candidate_basis": "24 GB class is a conservative investigation choice beyond the demonstrated laptop GPU; no cloud realtime guarantee.",
             "host_ram_gb": null,
@@ -7502,6 +7825,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -7581,7 +7905,7 @@
       "reason": "Apache lightweight CPU/GPU baseline with concrete frontend and chunking behavior.",
       "profiles": [
         {
-          "label": "Kokoro82M v1.0 / publisher pipeline",
+          "label": "Kokoro 82M v1.0 / publisher pipeline",
           "artifact_id": "hexgrad/Kokoro-82M",
           "artifact_revision": null,
           "format": "publisher checkpoint; exact selected file manifest not pinned",
@@ -7595,14 +7919,14 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Internal limit510 phoneme characters per model chunk, including language/frontend implications. This is not510 raw input characters or LLM tokens."
+            "notes": "Internal limit 510 phoneme characters per model chunk, including language/frontend implications. This is not510 raw input characters or LLM tokens."
           },
           "request_limits": {
             "input_characters": null,
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "24 kHz audio in chunks; KPipeline splits text. Raw phoneme strings longer than510 are rejected and some unexpected frontend overflows truncate."
+            "other": "24 kHz audio in chunks; KPipeline splits text. Raw phoneme strings longer than 510 are rejected and some unexpected frontend overflows truncate."
           },
           "memory": {
             "parameters_total_b": 0.082,
@@ -7618,6 +7942,7 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
@@ -7657,7 +7982,7 @@
     "model_url": "https://huggingface.co/SWivid/F5-TTS",
     "model_ids": [
       "SWivid/F5-TTS/F5TTS_v1_Base",
-      "SWivid/F5-TTS/E2TTS_Base"
+      "SWivid/E2-TTS/E2TTS_Base"
     ],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2024/2025 research lineage; current repository lists F5TTS_v1_Base and original F5/E2 paths.",
@@ -7681,12 +8006,19 @@
     "caveats": "Do not repeat common claim that MIT code makes all generated commercial assets cleared. E2 is not a separate current flagship.",
     "evidence_source_ids": [
       "VOICE-S137",
-      "VOICE-S138"
+      "VOICE-S138",
+      "VOICE-S268",
+      "VOICE-S269",
+      "VOICE-S271",
+      "VOICE-S270"
     ],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/SWivid/F5-TTS",
-      "https://github.com/SWivid/F5-TTS"
+      "https://github.com/SWivid/F5-TTS",
+      "https://github.com/SWivid/F5-TTS/blob/main/src/f5_tts/infer/utils_infer.py",
+      "https://huggingface.co/SWivid/E2-TTS",
+      "https://huggingface.co/SWivid/F5-TTS/tree/main"
     ],
     "hosting": {
       "reviewed_on": "2026-10-25",
@@ -7715,7 +8047,7 @@
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Reference preprocessing clips to12 s (with silence handling). Text batching uses UTF8 byte rate and an approximately22 s combined reference+generation heuristic, not a hard whole-output duration cap.24 kHz output."
+            "other": "Reference preprocessing clips to12 s (with silence handling). Text batching uses UTF8 byte rate and an approximately 22 s combined reference+generation heuristic, not a hard whole-output duration cap.24 kHz output."
           },
           "memory": {
             "parameters_total_b": null,
@@ -7731,13 +8063,14 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Selected F5 or E2 architecture/checkpoint plus vocabulary, Vocos vocoder (or explicitly matched optional BigVGAN).",
             "FFmpeg; optional reference ASR adds its own model. Torch/CUDA versions must match the selected device image.",
-            "MIT code versus CC-BY-NC4.0 official pretrained weights."
+            "MIT code versus CC-BY-NC-4.0 official pretrained weights."
           ],
           "source_ids": [
             "VOICE-S268",
@@ -7767,7 +8100,7 @@
             "input_audio_seconds": null,
             "output_audio_seconds": null,
             "reference_audio_seconds": null,
-            "other": "Reference preprocessing clips to12 s (with silence handling). Text batching uses UTF8 byte rate and an approximately22 s combined reference+generation heuristic, not a hard whole-output duration cap.24 kHz output."
+            "other": "Reference preprocessing clips to12 s (with silence handling). Text batching uses UTF8 byte rate and an approximately 22 s combined reference+generation heuristic, not a hard whole-output duration cap.24 kHz output."
           },
           "memory": {
             "parameters_total_b": null,
@@ -7783,13 +8116,14 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Selected F5 or E2 architecture/checkpoint plus vocabulary, Vocos vocoder (or explicitly matched optional BigVGAN).",
             "FFmpeg; optional reference ASR adds its own model. Torch/CUDA versions must match the selected device image.",
-            "MIT code versus CC-BY-NC4.0 official pretrained weights."
+            "MIT code versus CC-BY-NC-4.0 official pretrained weights."
           ],
           "source_ids": [
             "VOICE-S268",
@@ -7815,7 +8149,17 @@
         "VOICE-S269",
         "VOICE-S271",
         "VOICE-S270"
-      ]
+      ],
+      "prior_inventory_fields": {
+        "model_ids": {
+          "value": [
+            "SWivid/F5-TTS/F5TTS_v1_Base",
+            "SWivid/F5-TTS/E2TTS_Base"
+          ],
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Corrected E2 exact repository path using the official E2 card; stable inventory record ID retained."
     }
   },
   {
@@ -7874,7 +8218,7 @@
             "extended_tokens": null,
             "max_output_tokens": null,
             "scope": "unknown",
-            "notes": "Original generator2048 timeline positions shared by contextual text/audio and generated frames. Default generation reservation90 s /80 ms=1125 frames leaves fewer than923 prompt positions; changing it changes the fit check."
+            "notes": "Original generator 2048 timeline positions shared by contextual text/audio and generated frames. Default generation reservation 90 s /80 ms=1125 frames leaves fewer than 923 prompt positions; changing it changes the fit check."
           },
           "request_limits": {
             "input_characters": null,
@@ -7897,13 +8241,14 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "Python3.10 recommended; CUDA12.4/12.6 tested, FFmpeg for audio operations.",
-            "Access to CSM1B and Llama3.2-1B tokenizer/base resources; Mimi codec plus SilentCipher watermark module.",
-            "Native Transformers integration has a different dependency set; do not mix old Torch2.4/Transformers4.49 pins with it blindly."
+            "Python 3.10 recommended; CUDA 12.4/12.6 tested, FFmpeg for audio operations.",
+            "Access to CSM1B and Llama 3.2-1B tokenizer/base resources; Mimi codec plus SilentCipher watermark module.",
+            "Native Transformers integration has a different dependency set; do not mix old Torch 2.4/Transformers 4.49 pins with it blindly."
           ],
           "source_ids": [
             "VOICE-S272",
@@ -7948,7 +8293,7 @@
     "release_update_provenance": "2024-era public speech-text framework; retained as architectural/behavior reference behind later systems.",
     "properties": "Full-duplex speech-text interaction using Mimi codec; distinct Moshiko/Moshika voices and multilingual/experimental derivatives require exact selection.",
     "deployment": "PyTorch research, MLX on iPhone/Mac, Rust production implementation.",
-    "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
+    "hardware_evidence": "Moshiko / PyTorch BF16: Publisher explicitly advises 24 GB GPU for unquantized PyTorch; no workload-specific concurrency established. Moshika / PyTorch BF16: Same publisher PyTorch 24 GB guidance; exact Moshika concurrency unverified. No deployment or benchmark was performed by this research.",
     "license_and_commercial_terms": "Python/web MIT, Rust Apache-2.0, model weights CC-BY-4.0.",
     "cost_semantics": "No per-character/token license fee advertised for self-hosting under the stated license; compute, memory, storage and engineering remain costs. Hosted-provider prices, if any, are separate.",
     "open_legend_use_cases": "Interruption/backchannel research, local realtime speech interactions and comparison against PersonaPlex.",
@@ -7965,7 +8310,8 @@
     },
     "caveats": "Older conversation quality/reasoning; voice demonstrations do not establish deep game-state decision skill or unrestricted content handling.",
     "evidence_source_ids": [
-      "VOICE-S140"
+      "VOICE-S140",
+      "VOICE-S276"
     ],
     "tested_by_us": false,
     "evidence_urls": [
@@ -8005,7 +8351,7 @@
             "raw_weights_gb": null,
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": 24,
-            "published_hardware": "Publisher explicitly advises24 GB GPU for unquantized PyTorch; no workload-specific concurrency established.",
+            "published_hardware": "Publisher explicitly advises 24 GB GPU for unquantized PyTorch; no workload-specific concurrency established.",
             "gpu_candidate": "NVIDIA L4 / RTX 4090 class, 24 GB; investigate only",
             "gpu_candidate_basis": "24 GB matches publisher PyTorch guidance; actual session length/concurrency and other model co-residency unmeasured.",
             "host_ram_gb": null,
@@ -8014,12 +8360,13 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Mimi audio tokenizer/decoder, matching text tokenizer and voice-specific model.",
-            "Python/web MIT, Rust Apache2.0, weights CC-BY4.0. Rust GPU compilation requires CUDA/nvcc.",
+            "Python/web MIT, Rust Apache-2.0, weights CC-BY-4.0. Rust GPU compilation requires CUDA/nvcc.",
             "Apple MLX Q4/Q8 models are not a Runpod CUDA quantization recipe."
           ],
           "source_ids": [
@@ -8055,7 +8402,7 @@
             "raw_weights_gb": null,
             "raw_weight_basis": "Selected weight-file bytes and exact stored parameter count were not established; no whole-pipeline memory inferred.",
             "published_vram_gb": 24,
-            "published_hardware": "Same publisher PyTorch24 GB guidance; exact Moshika concurrency unverified.",
+            "published_hardware": "Same publisher PyTorch 24 GB guidance; exact Moshika concurrency unverified.",
             "gpu_candidate": "NVIDIA L4 / RTX 4090 class, 24 GB; investigate only",
             "gpu_candidate_basis": "Reference guidance, not independently measured fit.",
             "host_ram_gb": null,
@@ -8064,12 +8411,13 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Matching Moshika weights, tokenizer and Mimi; voice is checkpoint-specific.",
-            "Use publisher server with explicit --hf-repo; CC-BY4.0 weights; no MLX quantization transfer."
+            "Use publisher server with explicit --hf-repo; CC-BY-4.0 weights; no MLX quantization transfer."
           ],
           "source_ids": [
             "VOICE-S276"
@@ -8090,7 +8438,14 @@
       ],
       "source_ids": [
         "VOICE-S276"
-      ]
+      ],
+      "prior_inventory_fields": {
+        "hardware_evidence": {
+          "value": "No minimum hardware verified; parameter count is not a VRAM requirement.",
+          "verified_on": "2026-10-23"
+        }
+      },
+      "inventory_reconciliation": "Current hardware summary updated from the hosting primary sources; previous placeholder retained for provenance."
     }
   },
   {
@@ -8172,11 +8527,12 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
-            "Choose exact language/speaker/quality voice and its model card; engine GPL3 does not assign a voice license.",
+            "Choose exact language/speaker/quality voice and its model card; engine GPL-3.0 does not assign a voice license.",
             "eSpeak-NG phonemizer and matching ONNX config; custom authenticated production wrapper around the simple HTTP server."
           ],
           "source_ids": [
@@ -8282,12 +8638,13 @@
           },
           "storage": {
             "artifact_bytes": null,
+            "artifact_size_gb": null,
             "disk_gb": null,
             "basis": "Exact selected model/auxiliary file manifest and container/cache/temporary-audio disk requirement not established. No weights downloaded."
           },
           "requirements": [
             "Matching text tokenizer/encoder and parler-tts/dac_44khZ_8kbps audio codec; install publisher Parler-TTS package.",
-            "Apache2.0 exact checkpoint; memory includes both text encoder and audio decoder/codec."
+            "Apache-2.0 exact checkpoint; memory includes both text encoder and audio decoder/codec."
           ],
           "source_ids": [
             "VOICE-S279",
@@ -8437,7 +8794,7 @@
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "external_api_only",
-      "reason": "Managed3.1-Next audio generation; no matching public checkpoint established.",
+      "reason": "Managed 3.1-Next audio generation; no matching public checkpoint established.",
       "profiles": [],
       "deployment_evidence": {
         "status": "not_deployed_or_tested_by_this_research",
@@ -8465,7 +8822,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": 120,
           "reference_audio_seconds": 30,
-          "notes": "Up to3 reference clips, each≤30s and10MB; WAV/MP3/OGGOpus references, no rawPCM. OutputWAV/MP3/PCM.",
+          "notes": "Up to3 reference clips, each≤30s and 10 MB; WAV/MP3/OGGOpus references, no rawPCM. OutputWAV/MP3/PCM.",
           "source_ids": [
             "VOICE-S311"
           ]
@@ -8480,7 +8837,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": 240,
           "reference_audio_seconds": 30,
-          "notes": "Podcast output exception240s; same3×30s/10MB reference limits. Do not apply to Plus/Flash.",
+          "notes": "Podcast output exception 240s; same 3×30s/10 MB reference limits. Do not apply to Plus/Flash.",
           "source_ids": [
             "VOICE-S311"
           ]
@@ -8529,7 +8886,7 @@
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "external_api_only",
-      "reason": "Hosted3.1-Realtime-Plus; open Qwen3-Omni checkpoint is a different model.",
+      "reason": "Hosted 3.1-Realtime-Plus; open Qwen3-Omni checkpoint is a different model.",
       "profiles": [],
       "deployment_evidence": {
         "status": "not_deployed_or_tested_by_this_research",
@@ -8557,7 +8914,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "Retains at most50 audio turns or300s cumulative audio; default20turns, older history evicted. This is not a300s connection limit.16kHz PCM input,24kHz PCM output.",
+          "notes": "Retains at most 50 audio turns or 300s cumulative audio; default 20 turns, older history evicted. This is not a300s connection limit.16 kHz PCM input, 24 kHz PCM output.",
           "source_ids": [
             "VOICE-S312"
           ]
@@ -8640,7 +8997,7 @@
         "request_fit": "unknown"
       },
       "blocking_unknowns": [
-        "No native weight/runtime/GPU requirements for client access; Live1 context and actual app session capacity remain unverified."
+        "No native weight/runtime/GPU requirements for client access; Live 1 context and actual app session capacity remain unverified."
       ],
       "source_ids": [
         "VOICE-S313",
@@ -8781,7 +9138,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "131072 input-token and65536 output-token limits; not a combined196608 context claim. Text/image/audio input and text/audio output.",
+          "notes": "131072 input-token and 65536 output-token limits; not a combined 196608 context claim. Text/image/audio input and text/audio output.",
           "source_ids": [
             "VOICE-S316"
           ]
@@ -8796,7 +9153,7 @@
           "input_audio_seconds": null,
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
-          "notes": "131072 is an input-token limit;65536 is output-token limit, not a combined196608 context claim. Text/image/audio input and text/audio output. Extended Thinking requires asynchronous tools.",
+          "notes": "131072 is an input-token limit; 65536 is output-token limit, not a combined 196608 context claim. Text/image/audio input and text/audio output. Extended Thinking requires asynchronous tools.",
           "source_ids": [
             "VOICE-S317"
           ]
