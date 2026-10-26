@@ -1,6 +1,6 @@
 # G145 — Enshrouded
 
-**Full-pass research dossier; evidence cutoff: October 25, 2026.** The original September 27 pass is preserved and reconciled with the shipped 1.0 game. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [October refresh ledger](../research-progress-enshrouded-2026-10-25.md) · [Earlier research history](../research-progress.md). Research and explicitly labeled OpenLegend ideas, not runtime or design contracts.
+**Full-pass research dossier; original refresh cutoff: October 25, 2026. Focused NPC, hosting and Dragonwilds-comparison follow-up: October 26 UTC.** The original September 27 pass is preserved and reconciled with the shipped 1.0 game. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [October refresh ledger](../research-progress-enshrouded-2026-10-25.md) · [Earlier research history](../research-progress.md). Research and explicitly labeled OpenLegend ideas, not runtime or design contracts.
 
 Enshrouded is most useful as a study of **making a handcrafted RPG world physically editable without giving up authored geography**. Its terrain is voxel-based enough to dig, cut, build and terraform, yet the continent still has deliberate cities, towers, dungeons, quest routes and environmental storytelling. The strongest design seam is between **authored adventure** and **player-authored place**: explore to rescue people and find recipes/resources, then bring that capability home and physically reshape a sanctuary.
 
@@ -8,12 +8,14 @@ Enshrouded is most useful as a study of **making a handcrafted RPG world physica
 
 This dossier remains the complete game-level entry point. The supplements own the deeper evidence rather than duplicating it here.
 
-| Question                                                                                             | Detailed owner                                                                            |
-| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| How do building, terrain, water, lore and native creation fit together? What can unofficial mods do? | [Building and creation](enshrouded/01-building-and-creation.md)                           |
-| How did the game develop, and what do its audience and commercial figures establish?                 | [Development and commercial history](enshrouded/02-development-and-commercial-history.md) |
-| What do current and historical players enjoy, dislike, return for or leave over?                     | [Player reception](enshrouded/03-player-reception.md)                                     |
-| What do rented servers, access permissions and world rules actually provide?                         | [Hosting and world governance](enshrouded/04-hosting-and-world-governance.md)             |
+| Question                                                                                                               | Detailed owner                                                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| How do building, terrain, water, lore and native creation fit together? What can unofficial mods do?                   | [Building and creation](enshrouded/01-building-and-creation.md)                                                                                   |
+| How did the game develop, and what do its audience and commercial figures establish?                                   | [Development and commercial history](enshrouded/02-development-and-commercial-history.md)                                                         |
+| What do current and historical players enjoy, dislike, return for or leave over?                                       | [Player reception](enshrouded/03-player-reception.md)                                                                                             |
+| What do rented servers, access permissions and world rules actually provide?                                           | [Hosting and world governance](enshrouded/04-hosting-and-world-governance.md)                                                                     |
+| How do NPC recruitment and settlement services work, and what does the supplied Fort Armco account actually establish? | [Recruitment, residence and creator account](enshrouded/01-building-and-creation.md#9-npcs-make-a-base-inhabited-with-a-clear-simulation-ceiling) |
+| Why do Enshrouded and Dragonwilds receive different reactions to gathering, progression, building and short sessions?  | [Focused Dragonwilds comparison](enshrouded/05-comparison-with-dragonwilds.md)                                                                    |
 
 ## R01 — identity, current version boundary and player promise
 
@@ -159,7 +161,7 @@ This creates a strong loop:
 
 The NPC is simultaneously a character, progression key and reason the base feels repopulated.
 
-Later updates made this much more concrete than the initial dossier implied. Current survivors are divided into **Craftspeople, Assistants and Villagers**. They can roam a player-defined base radius, inspect points of interest, talk, take breaks, and follow a day/night cycle that includes sleeping in assigned sheltered beds; updates have repeatedly fixed their pathfinding and bed use. They still are **not autonomous colony workers** who mine, harvest or build the settlement for the player—their primary mechanical roles are crafting/services, quests, ambience and happiness/Flame requirements. [Survivors](https://enshrouded.wiki.gg/wiki/NPCs) · [Souls of the Frozen Frontier](https://enshrouded.wiki.gg/wiki/Souls_Of_The_Frozen_Frontier_Update).
+Later updates made this much more concrete than the initial dossier implied. Current survivors are divided into **Craftspeople, Assistants and Villagers**. They can roam a player-defined base radius, inspect points of interest, talk, take breaks, and follow a day/night cycle that includes sleeping in assigned sheltered beds; updates have repeatedly fixed their pathfinding and bed use. The documented roles are crafting/services, quests and residential behavior; an autonomous system for mining, harvesting or constructing the settlement is not established. The [recruitment and residence study](enshrouded/01-building-and-creation.md#9-npcs-make-a-base-inhabited-with-a-clear-simulation-ceiling) explains rescue, the Summoning Staff, conditional sheltered-bed requirements, assistants and player-operated farming. It also qualifies the earlier happiness/Flame wording: extracted tutorial text alone does not establish a working human feeding system. [Survivors](https://enshrouded.wiki.gg/wiki/NPCs) · [Souls of the Frozen Frontier](https://enshrouded.wiki.gg/wiki/Souls_Of_The_Frozen_Frontier_Update).
 
 ### Crafting stations and distributed recipes
 
@@ -599,6 +601,10 @@ The recurring attraction is exploration that supplies a visible, personal home. 
 The October 25 Steam storefront displayed **87% positive among 51,628 English reviews** and **81% among 4,209 recent reviews**, both Very Positive. The recent window covers the previous 30 days and straddles the release, so these figures are not clean before/after 1.0 cohorts. [Dated storefront](https://store.steampowered.com/app/1203620/Enshrouded/).
 
 Direct testimony comprises **12 purposively selected reviews**, seven dated October 18–25 and five historical helpful reviews. Available routes were weekly helpful and all-time helpful positive/negative surfaces; explicit Most Recent and API routes were unavailable. Thus **recently dated helpful reviews** is the correct description, not a chronological newest-review sample. The supplement records authors, dates, playtime distinctions, links and access limits. None of these samples measures complaint prevalence or player retention.
+
+### Focused follow-up: Dragonwilds comparison and supplied creator accounts
+
+The [comparative chapter](enshrouded/05-comparison-with-dragonwilds.md) adds the supplied critical review, Reddit discussion and positive early-play video alongside contrasting release-era critics and newly checked Steam aggregates. It separates a creator's approximately ten-hour experience from later-progression criticism, corrects outdated feature claims, and explains how gathering and preparation can be satisfying or burdensome for different players. The [Fort Armco case](enshrouded/01-building-and-creation.md#fort-armco-a-supplied-creator-account-of-turning-services-into-a-town) uses the other supplied transcript for specialist homes and player-authored meaning; its paid-hosting account is owned by the [hosting chapter](enshrouded/04-hosting-and-world-governance.md#a-players-reported-rental-motive-asynchronous-building). Transcripts were read; footage was not inspected.
 
 ### Five independent written Early Access reviews preserved from September
 

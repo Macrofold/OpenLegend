@@ -2,6 +2,8 @@
 
 Research cutoff: **October 25, 2026**. Part of the [G145 dossier](../enshrouded.md); research, not an approved OpenLegend design. No game installation, playtest, hardware benchmark or population survey was performed. The listed substantive review bodies were retrieved and read. Findings concern the versions identified below.
 
+The [October 26 UTC comparison with Dragonwilds](05-comparison-with-dragonwilds.md) owns the subsequent supplied reviews/transcript, version and feature corrections, and paired Steam snapshots. The evidence and sample below retain their October 25 capture rather than being silently replaced.
+
 ## Reception conclusion
 
 The strongest recurring attraction is the combination of **a place worth exploring and a place worth making your own**. Construction appeals both to committed architects and to people who want to repair an existing house, furnish it and settle down with friends. The substantial disagreement concerns what must surround that activity: some players find a relaxed adventure with strong tools sufficient; others want deeper combat, distinctive rewards, a responsive society, or threats that make their settlement consequential. This is a qualitative interpretation across the review evidence below, not a measured ranking of players' preferences.
