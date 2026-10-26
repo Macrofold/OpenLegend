@@ -1,6 +1,6 @@
 import { readFile, readdir, realpath } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { join } from 'node:path';
+import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 
 interface WorkspacePackage {
   path: string;
@@ -9,7 +9,7 @@ interface WorkspacePackage {
   devDependencies?: Record<string, string>;
 }
 /** Source hashes do not prove which linked workspace modules actually execute.
- * Resolve declared local imports before starting a disposable profiling server. */
+ * Resolve declared local imports before starting disposable profiling. */
 export async function workspaceBindings(root: string) {
   const packages: WorkspacePackage[] = [];
   for (const group of ['apps', 'packages']) {
@@ -36,6 +36,18 @@ export async function workspaceBindings(root: string) {
       if (!target)
         throw new Error(`Workspace package ${name} is absent from this profiler checkout.`);
       const expected = await realpath(createRequire(target.path).resolve(name));
+      const packageDirectory = await realpath(dirname(target.path));
+      const entryWithinPackage = relative(packageDirectory, expected);
+      // TypeScript path mappings can redirect self-resolution and consumer imports
+      // together. Equal entries alone do not prove either belongs to this checkout.
+      if (
+        isAbsolute(entryWithinPackage) ||
+        entryWithinPackage === '..' ||
+        entryWithinPackage.startsWith(`..${sep}`)
+      )
+        throw new Error(
+          `Profiler package ${name} resolves outside ${packageDirectory}: ${expected}.`,
+        );
       const actual = await realpath(require.resolve(name));
       if (actual !== expected)
         throw new Error(

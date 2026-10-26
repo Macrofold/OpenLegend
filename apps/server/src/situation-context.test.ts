@@ -186,6 +186,14 @@ describe('bounded received situation', () => {
         ),
     ).toBe(true);
     expect(captured.packet.coverage.omittedOptionalFacets).toBeGreaterThan(0);
+    const suppliedDescriptions = new Set(captured.presented.map((entry) => entry.key));
+    expect(captured.packet.coverage.unconsideredDescriptions).toBe(
+      Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates).filter(
+        ([key, candidate]) =>
+          candidate.presentedDescription !== candidate.descriptionRevision &&
+          !suppliedDescriptions.has(key),
+      ).length,
+    );
     expect(captured.packet.broad.reduce((sum, row) => sum + row.count, 0)).toBe(16);
     expect(
       Buffer.byteLength(JSON.stringify({ ...captured.packet, recent: undefined })),

@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld, NPC_ID, PLAYER_ID } from './worlds/base/world.js';
-import { entityGet, entitySet, emptyEntities } from './entity-collection.js';
+import {
+  entityDelete,
+  entityGet,
+  entitySet,
+  entityValues,
+  emptyEntities,
+} from './entity-collection.js';
 import {
   acquireObservation,
   observationFactKey,
   perceptionEvidenceOwner,
+  currentBodyObservation,
   type LiveFacetSupport,
   type SensoryFacet,
 } from './perception-evidence.js';
@@ -41,9 +48,11 @@ import {
 } from './worlds/base/knowledge.js';
 import { createReservoirDemo } from './world-presets.js';
 import { selectedAttentionPolicy } from './world-composition.js';
-import { executeCommand, initializePerception } from './kernel.js';
+import { executeCommand, initializePerception, quantityOf } from './kernel.js';
 import { worldPlacement } from './spatial-state.js';
 import { commitHealthChange } from './living.js';
+import { updateWorld } from './draft.js';
+import { advanceWithNavigation } from '../../../tests/fixtures/navigation.js';
 
 function scene(count: number, capacity = 10) {
   const world = createWorld();
@@ -295,6 +304,116 @@ describe('received detailed attention', () => {
     expect(encountered.size).toBe(18);
     expect(owner.attention!.entries).toHaveLength(3);
     validateAttentionState(owner.attention, selectedAttentionPolicy(world).maximumCapacity);
+  });
+
+  it('offers older quiet received people before continuing arrivals and acknowledges only supplied descriptions', () => {
+    const world = createWorld(131),
+      observer = entityGet(world.entities, PLAYER_ID)!,
+      prototype = structuredClone(entityGet(world.entities, NPC_ID)!);
+    world.entities = emptyEntities();
+    observer.actor!.attentionCapacity = 3;
+    observer.placement = worldPlacement({ x: 1, y: 0, z: 2 }, null);
+    entitySet(world.entities, PLAYER_ID, observer);
+    let ordinal = 0;
+    const arrive = () => {
+      const person = structuredClone(prototype);
+      person.id = `quiet-arrival-${ordinal++}`;
+      person.name = 'Private unknown identity';
+      person.placement = worldPlacement({ x: 3 + ordinal / 20, y: 0, z: 2 }, null);
+      person.actor!.capabilities!.memory = false;
+      person.actor!.capabilities!.cognition = false;
+      entitySet(world.entities, person.id, person);
+      return person.id;
+    };
+    const older = Array.from({ length: 8 }, arrive);
+    initializePerception(world, []);
+    const owner = world.perceptionEvidence![PLAYER_ID]!;
+    const supplied = new Set<string>();
+    const discovered = new Set<string>();
+    for (let turn = 0; turn < older.length; turn++) {
+      const arrivals = [arrive(), arrive()];
+      initializePerception(world, []);
+      expect(arrivals.every((id) => currentBodyObservation(world, PLAYER_ID, id))).toBe(true);
+      const discovery = currentDetailedAttention(world, PLAYER_ID).find(
+        (entry) => entry.basis === 'discovery',
+      )!;
+      expect(older).toContain(discovery.sourceId);
+      expect(discovered.has(discovery.sourceId)).toBe(false);
+      // Broad presence/counts provide no individual description to acknowledge.
+      acknowledgeAttention(world, PLAYER_ID, []);
+      expect(owner.attention!.candidates[discovery.key]!.presentedDescription).toBeUndefined();
+      const presentation = captureAttentionPresentation(world, PLAYER_ID, [discovery.key]);
+      supplied.add(discovery.key);
+      discovered.add(discovery.sourceId);
+      acknowledgeAttention(world, PLAYER_ID, presentation);
+      for (const [key, candidate] of Object.entries(owner.attention!.candidates))
+        if (!supplied.has(key)) expect(candidate.presentedDescription).toBeUndefined();
+      expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(3);
+    }
+    expect(discovered).toEqual(new Set(older));
+    expect(Object.keys(owner.attention!.candidates)).toHaveLength(24);
+    expect(JSON.stringify(owner.attention)).not.toContain('Private unknown identity');
+  });
+
+  it('changes detail capacity during admitted gathering without hiding bodies or losing work and its required result', () => {
+    let world = createWorld(131);
+    const prototype = structuredClone(entityGet(world.entities, NPC_ID)!);
+    for (const entity of entityValues(world.entities))
+      if (entity.id !== PLAYER_ID && (entity.actor || entity.animal))
+        entityDelete(world.entities, entity.id);
+    const observer = entityGet(world.entities, PLAYER_ID)!;
+    observer.actor!.attentionCapacity = 10;
+    observer.placement = worldPlacement({ x: 1, y: 0, z: 2 }, 'terrain');
+    entityGet(world.entities, 'branches')!.placement = worldPlacement(
+      { x: 1.8, y: 0, z: 2 },
+      'terrain',
+    );
+    const people = Array.from({ length: 15 }, (_, index) => {
+      const person = structuredClone(prototype);
+      person.id = `capacity-person-${index}`;
+      person.name = 'Private unknown identity';
+      person.placement = worldPlacement({ x: 4 + index / 4, y: 0, z: 2 }, 'terrain');
+      person.actor!.capabilities!.memory = false;
+      person.actor!.capabilities!.cognition = false;
+      entitySet(world.entities, person.id, person);
+      return person.id;
+    });
+    initializePerception(world, []);
+    const initialWood = quantityOf(world, PLAYER_ID, 'wood');
+    const admitted = executeCommand(world, {
+      id: 'attention-capacity-gather',
+      actorId: PLAYER_ID,
+      type: 'gather',
+      targetId: 'branches',
+    });
+    expect(admitted.outcome.ok, admitted.outcome.message).toBe(true);
+    world = admitted.world;
+    const action = entityGet(world.entities, PLAYER_ID)!.actor!.action!;
+    expect(action.stage).toBe('working');
+    for (const capacity of [3, 15, 2]) {
+      world = updateWorld(world, (draft) => {
+        entityGet(draft.entities, PLAYER_ID)!.actor!.attentionCapacity = capacity;
+        initializePerception(draft, []);
+      });
+      expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(capacity);
+      expect(people.every((id) => currentBodyObservation(world, PLAYER_ID, id))).toBe(true);
+      expect(entityGet(world.entities, PLAYER_ID)!.actor!.action!.id).toBe(action.id);
+      expect(entityGet(world.entities, PLAYER_ID)!.actor!.action!.remainingSeconds).toBe(
+        action.remainingSeconds,
+      );
+    }
+    const completed = advanceWithNavigation(world, action.remainingSeconds + 1);
+    expect(completed.outcome.ok, completed.outcome.message).toBe(true);
+    world = completed.world;
+    expect(entityGet(world.entities, PLAYER_ID)!.actor!.action).toBeNull();
+    expect(quantityOf(world, PLAYER_ID, 'wood')).toBeGreaterThan(initialWood);
+    const gathered = completed.events.find((event) => event.type === 'gathered')!;
+    expect(gathered).toBeDefined();
+    expect(
+      world.experience!.awareness[PLAYER_ID]!.some((entry) => entry.eventId === gathered.id),
+    ).toBe(true);
+    expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(2);
+    expect(people.every((id) => currentBodyObservation(world, PLAYER_ID, id))).toBe(true);
   });
 
   it('keeps a stable current choice but allows a strong actual cue to interrupt it', () => {

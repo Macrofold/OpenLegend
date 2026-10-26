@@ -81,7 +81,7 @@ export interface AttentionPolicy {
     maxFragments: number;
     preparationPatches: number;
   };
-  semantic: { discovery: boolean; coalesceMs: number };
+  semantic: { discovery: boolean };
   scene: {
     maxBytes: number;
     maxRows: number;

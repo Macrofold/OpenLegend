@@ -585,6 +585,7 @@ export function captureSituation(
     omitDetailed(index < 0 ? packet.detailed.length - 1 : index);
   }
   Object.assign(packet.coverage, {
+    unconsideredDescriptions: waiting.filter(([key]) => !presentedKeys.includes(key)).length,
     omittedOptionalFacets: omittedFacets,
     omittedDetailedSubjects,
     relationRows: packet.relations.length,
