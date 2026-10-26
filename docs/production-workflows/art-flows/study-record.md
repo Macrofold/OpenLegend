@@ -27,8 +27,12 @@ consideration; a new revision retains its lineage.
 
 ### Construction and sources
 
-Record the actual source formats, exported files, dimensions/scale and required construction
-information. For a UI style, include surfaces, fixed corners, repeated edges, joins, accents,
+Record available sources, actual formats, exports, dimensions/scale and assembly/playback
+information, including editing limits. For production, identify the named consumer and
+applicable [export contract](production.md#1-define-the-package-before-finishing), linking
+existing catalog/manifests for exact inventory and dependencies.
+
+For a UI style, include surfaces, fixed corners, repeated edges, joins, accents,
 text-safe regions and demonstrated state treatment. Record promises such as seamless tiling
 or clean alpha only after checking actual exported bytes.
 
@@ -40,6 +44,7 @@ An export with reconstructed layers must not be described as an original layered
 ### Review and remaining gaps
 
 State observed strengths, defects, fit with the brief, and specific checks performed.
+For production checks, identify the export revision, inspection tool/recipe and conditions.
 Distinguish visual judgment, export checks and runtime evidence. Record measured cost/time
 and Mike's manual involvement when available and label unknowns. Preserve current feedback and decisions without narrating
 every editing pass.
