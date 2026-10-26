@@ -316,9 +316,9 @@ export function createRememberedImpression(
     dependencies,
     reason: record.retention.reason,
     createdAt: now,
-    reinforcedAt: now,
-    weakenAt: now + limits.weakenAfterSeconds,
-    expiresAt: now + limits.expireAfterSeconds,
+    reinforcedAt: record.at,
+    weakenAt: record.at + limits.weakenAfterSeconds,
+    expiresAt: record.at + limits.expireAfterSeconds,
     weakened: false,
   };
   const result: MemoryRecord = {
@@ -332,8 +332,10 @@ export function createRememberedImpression(
     importance: record.importance,
     impression,
   };
+  if (impression.expiresAt <= now) return;
   validateRememberedImpression(impression, record.actorId, now);
-  return impressionFits(result, limits) ? result : undefined;
+  const current = weakenImpression(result, now);
+  return current && impressionFits(current, limits) ? current : undefined;
 }
 const finite = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
@@ -393,7 +395,8 @@ export function validateRememberedImpression(
     !finite(impression.weakenAt) ||
     !finite(impression.expiresAt) ||
     impression.createdAt < impression.through ||
-    impression.createdAt > impression.reinforcedAt ||
+    impression.createdAt > now ||
+    impression.reinforcedAt < impression.through ||
     impression.reinforcedAt > now ||
     impression.weakenAt < impression.reinforcedAt ||
     impression.expiresAt < impression.weakenAt ||

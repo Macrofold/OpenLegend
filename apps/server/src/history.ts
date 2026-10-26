@@ -31,6 +31,7 @@ import type {
   WorldEvent,
   ConversationTransition,
   Awareness,
+  TemporalReceipt,
 } from '@open-legend/domain';
 import { beginTiming, endTiming } from './performance.js';
 import { prepareHistory } from './history-preparation.js';
@@ -73,6 +74,11 @@ export function validateHistoryEvidence(
   versions: readonly Record<string, unknown>[],
 ) {
   const accounts = new Map<string, string>();
+  const temporal = world.experience?.temporal;
+  const receipts = new Map<string, TemporalReceipt>();
+  for (const actor of Object.values(temporal?.actors ?? {}))
+    for (const chunk of actor.chunks)
+      for (const receipt of chunk.receipts) receipts.set(receipt.id, receipt);
   for (const [actor, entries] of Object.entries(world.experience?.awareness ?? {}))
     for (const entry of entries) {
       const payload = JSON.stringify(entry);
@@ -108,6 +114,7 @@ export function validateHistoryEvidence(
       world.id,
       String(row['actor_id']),
       accounts,
+      { receipts, sources: temporal?.sources ?? {} },
     );
     if (
       row['world_id'] !== world.id ||
@@ -232,18 +239,15 @@ export class HistoryRepository {
       : this.principals;
     const policy = world.storyPolicy ?? defaultStoryPolicy();
     for (const event of inputs.changed) {
-      for (const actorId of event.audience)
-        if (!inputs.forgotten(actorId).has(event.id) && !inputs.perspective(actorId, event.id))
-          return false;
       for (const principal of principals) {
         if (
           inputs.forgotten(principal.actorId).has(event.id) ||
           !event.audience.includes(principal.actorId)
         )
           continue;
-        const awareness = inputs.perspective(principal.actorId, event.id);
-        if (!awareness) return false;
-        const evidence = eventEvidence(awareness);
+        const account = inputs.perspective(principal.actorId, event.id);
+        if (!account) continue;
+        const evidence = account.evidence;
         if (
           this.storySelection(
             world,
@@ -365,8 +369,11 @@ export class HistoryRepository {
       CREATE TABLE IF NOT EXISTS history_perspectives (
         world_id TEXT NOT NULL,event_id TEXT NOT NULL,actor_id TEXT NOT NULL,payload TEXT NOT NULL,
         position BIGINT NOT NULL,event_type TEXT NOT NULL,source_id TEXT,target_id TEXT,
-        speech_peer_id TEXT,response_action BOOLEAN NOT NULL,
-        PRIMARY KEY(world_id,event_id,actor_id));
+        speech_peer_id TEXT,response_action BOOLEAN NOT NULL,temporal_chunk_id TEXT,
+        PRIMARY KEY(world_id,event_id,actor_id),
+        FOREIGN KEY(world_id,temporal_chunk_id) REFERENCES mind_temporal_chunks(world_id,id)
+          ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED);
+      CREATE INDEX IF NOT EXISTS history_perspective_temporal_chunk ON history_perspectives(world_id,temporal_chunk_id) WHERE temporal_chunk_id IS NOT NULL;
       CREATE TABLE IF NOT EXISTS story_context_sources (
         world_id TEXT NOT NULL,narration_id TEXT NOT NULL,owner_id TEXT NOT NULL,event_id TEXT NOT NULL,
         PRIMARY KEY(world_id,narration_id,owner_id,event_id));
@@ -535,8 +542,9 @@ export class HistoryRepository {
       if (eventFlush) await eventFlush;
       for (const actorId of new Set(event.audience)) {
         if (forgotten(actorId).has(event.id)) continue;
-        const awareness = perspective(actorId, event.id);
-        let evidence = awareness ? eventEvidence(awareness) : undefined;
+        const account = perspective(actorId, event.id);
+        const awareness = account?.awareness;
+        let evidence = account?.evidence;
         const retained = retainedPerspectives.get(actorId);
         if (!evidence && retained) {
           // Consolidation removes hot recall, not durable authorization. Reuse that perspective;
@@ -561,6 +569,7 @@ export class HistoryRepository {
           awareness,
           position,
           eventRevision,
+          account?.temporal,
         );
         perspectives.set(actorId, source);
         if (!fastAppend) {
@@ -595,6 +604,34 @@ export class HistoryRepository {
         )
         .run(world.id);
     await batch.flush({ worldId: world.id, removedEvents }, sharedWrites);
+    // A partial correction may remove a receipt while its shared chunk remains.
+    // Retire only those derived rows, before any reader can resolve a stale grant.
+    const changedChunks = (sourceChanges?.writes.get('mind_temporal_chunks') ?? [])
+      .filter((row) => !row.create)
+      .map((row) => ({
+        id: row.id,
+        ordinals: (
+          JSON.parse(row.payload) as import('@open-legend/domain').TemporalChunk
+        ).receipts.map((receipt) => receipt.ordinal),
+      }));
+    if (changedChunks.length) {
+      await sharedWrites?.flush();
+      const retired = await this.db
+        .prepare(
+          `WITH retired AS (
+        DELETE FROM history_perspectives p USING jsonb_to_recordset(?::jsonb) q(id text,ordinals integer[])
+        WHERE p.world_id=? AND p.temporal_chunk_id=q.id
+          AND (p.payload::jsonb#>>'{account,receipt,ordinal}')::int<>ALL(q.ordinals)
+        RETURNING p.actor_id,p.event_id)
+        SELECT actor_id,event_id FROM retired`,
+        )
+        .all(JSON.stringify(changedChunks), world.id);
+      for (const row of retired)
+        for (const principal of this.principals.filter(
+          (value) => value.actorId === row['actor_id'],
+        ))
+          await this.revokeStories(world.id, String(row['event_id']), principal.ownerId);
+    }
     endTiming('history.sourceBuild', buildStarted, batch.writeMilliseconds);
     candidates.sort(
       (a, b) =>
@@ -682,7 +719,7 @@ export class HistoryRepository {
           const account = encodeStoryAccount(source, entry);
           await this.db
             .prepare(
-              'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=? WHERE world_id=? AND event_id=? AND actor_id=?',
+              'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=?,temporal_chunk_id=NULL WHERE world_id=? AND event_id=? AND actor_id=?',
             )
             .run(
               account.payload,

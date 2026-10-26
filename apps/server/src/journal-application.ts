@@ -157,14 +157,15 @@ export class JournalTableWriter {
       const eventRevision = createHash('sha256').update(encoded).digest('hex');
       const { position, pending } = history.event(input.event, encoded);
       if (pending) await pending;
-      for (const [actor, awareness] of input.accounts) {
+      for (const [actor, account] of input.accounts) {
         const result = history.perspective(
           input.event,
           actor,
-          personalEventEvidence(awareness),
-          awareness,
+          account.evidence,
+          account.awareness,
           position,
           eventRevision,
+          account.temporal,
         );
         if (result.pending) await result.pending;
       }

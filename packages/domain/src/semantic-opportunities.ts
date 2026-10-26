@@ -18,12 +18,38 @@ export const openingSemanticInterval = (): SemanticContinuation => ({
 
 function occupiedPurpose(entity: Entity): string | null {
   const actor = entity.actor;
-  if (!actor) return null;
+  if (!actor || actor.capabilities?.cognition === false) return null;
   const plan = actor.agency.plan;
   if (plan && (plan.status === 'active' || plan.status === 'blocked'))
     return JSON.stringify(['plan', plan.id]);
-  // Utterances are instantaneous operations, not occupied native work.
-  return actor.action ? JSON.stringify(['action', actor.action.id]) : null;
+  // Only command admission marks chosen work. An automatic status effect or
+  // animal movement must not manufacture another opportunity to buy thought.
+  const action = actor.action && JSON.stringify(['action', actor.action.id]);
+  return action && actor.agency.semantic?.occupiedPurpose === action ? action : null;
+}
+
+function openInterval(continuation: SemanticContinuation): void {
+  if (!Number.isSafeInteger(continuation.interval + 1)) throw new Error('Semantic interval exhausted.');
+  continuation.interval++;
+  continuation.discovery = 'available';
+  delete continuation.reservation;
+  continuation.resolved = {};
+}
+
+/** Trusted successful command admission; physical automatic work never calls it. */
+export function beginSemanticWork(world: WorldState, actorId: string, actionId: string): void {
+  const actor = entityGet(world.entities, actorId)?.actor;
+  if (!actor || actor.capabilities?.cognition === false || actor.action?.id !== actionId || !actor.agency.semantic) return;
+  actor.agency.semantic.occupiedPurpose = actor.agency.plan && ['active','blocked'].includes(actor.agency.plan.status)
+    ? JSON.stringify(['plan',actor.agency.plan.id]) : JSON.stringify(['action',actionId]);
+}
+
+/** Completion is recorded where it happens, including start/end within one advance. */
+export function finishSemanticWork(world: WorldState, actorId: string, actionId: string): void {
+  const actor = entityGet(world.entities, actorId)?.actor, continuation = actor?.agency.semantic;
+  if (!actor || !continuation || continuation.occupiedPurpose !== JSON.stringify(['action',actionId])) return;
+  openInterval(continuation);
+  continuation.occupiedPurpose = null;
 }
 
 /** Called only for changed characters at native publication. Component plan steps
@@ -35,10 +61,7 @@ export function reconcileSemanticInterval(world: WorldState, actorId: string): v
   const occupied = occupiedPurpose(entity);
   if (occupied === continuation.occupiedPurpose) return;
   if (occupied === null && continuation.occupiedPurpose !== null) {
-    continuation.interval++;
-    continuation.discovery = 'available';
-    delete continuation.reservation;
-    continuation.resolved = {};
+    openInterval(continuation);
   }
   continuation.occupiedPurpose = occupied;
 }

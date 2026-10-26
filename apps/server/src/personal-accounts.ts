@@ -1,6 +1,15 @@
 import { createHash } from 'node:crypto';
-import type { Awareness, EventEvidence } from '@open-legend/domain';
+import {
+  receivedEventEvidence,
+  temporalReceiptId,
+  type Awareness,
+  type EventEvidence,
+  type TemporalReceipt,
+  type TemporalReceiptLocator,
+  type TemporalValue,
+} from '@open-legend/domain';
 import type { StorySource } from './history.js';
+import { temporalChunkRecordId } from './temporal-storage.js';
 
 export const personalAccountRevision = (payload: string) =>
   createHash('sha256').update(payload).digest('hex');
@@ -52,10 +61,16 @@ export function personalEventEvidence(awareness: EventEvidence): EventEvidence {
   };
 }
 
-interface AccountReference {
+interface PersonalAccountReference {
   kind: 'awareness' | 'perspective';
   revision: string;
 }
+interface TemporalAccountReference {
+  kind: 'temporal';
+  revision: string;
+  receipt: TemporalReceiptLocator;
+}
+type AccountReference = PersonalAccountReference | TemporalAccountReference;
 type StoredStorySource = Pick<StorySource, 'id' | 'revision' | 'time' | 'order' | 'type'> & {
   account: AccountReference;
 };
@@ -82,6 +97,31 @@ export function encodeStoryAccount(source: StorySource, awareness?: Awareness) {
   return { payload: JSON.stringify(stored), account, body: canonical ? undefined : body };
 }
 
+export function encodeTemporalStoryAccount(
+  source: StorySource,
+  temporal: { chunkId: string; receipt: TemporalReceiptLocator },
+) {
+  const account: TemporalAccountReference = {
+    kind: 'temporal',
+    revision: personalAccountRevision(JSON.stringify(source.evidence)),
+    receipt: temporal.receipt,
+  };
+  const stored: StoredStorySource = {
+    id: source.id,
+    revision: source.revision,
+    time: source.time,
+    order: source.order,
+    type: source.type,
+    account,
+  };
+  return {
+    payload: JSON.stringify(stored),
+    account,
+    body: undefined,
+    chunkRecordId: temporalChunkRecordId(temporal.receipt.actorId, temporal.chunkId),
+  };
+}
+
 /** One correlated indexed body lookup per already-selected perspective. Exact actor,
  * source family and revision prevent two witnesses or record kinds sharing a body.
  * New/current rows and archived versions are disjointly addressed by the same hash. */
@@ -96,11 +136,53 @@ export function storyAccountSql(alias = 'p'): string {
     SELECT v.payload FROM mind_source_versions v WHERE v.world_id=${alias}.world_id
       AND v.actor_id=${alias}.actor_id AND v.source_kind=${kind}
       AND v.source_id=${alias}.event_id AND v.revision=${revision}
+    UNION ALL
+    SELECT jsonb_build_object('receipt',r.receipt,'values',(
+      SELECT jsonb_agg(s.payload::jsonb->'values'->(f.value->>'valueOrdinal')::int ORDER BY f.ordinal)
+      FROM jsonb_array_elements(r.receipt->'facets') WITH ORDINALITY f(value,ordinal)
+      JOIN mind_temporal_sources s ON s.world_id=${alias}.world_id AND s.source_id=f.value->>'blockId'
+    ))::text FROM mind_temporal_chunks c
+      CROSS JOIN LATERAL jsonb_array_elements(c.payload::jsonb->'receipts') r(receipt)
+      WHERE ${kind}='temporal' AND c.world_id=${alias}.world_id AND c.id=${alias}.temporal_chunk_id
+      AND c.actor_id=${alias}.actor_id
+      AND c.physical_life=(${alias}.payload::jsonb#>>'{account,receipt,physicalLife}')::int
+      AND c.receipt_epoch=${alias}.payload::jsonb#>>'{account,receipt,epoch}'
+      AND r.receipt->>'actorId'=${alias}.actor_id
+      AND (r.receipt->>'ordinal')::int=(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::int
   ) account LIMIT 1)`;
 }
 
 export function decodeStoryAccount(payload: string, body: unknown): StorySource {
   const stored = JSON.parse(payload) as StoredStorySource;
+  if (stored.account?.kind === 'temporal') {
+    if (typeof body !== 'string') throw new Error('Recent personal receipt is unavailable.');
+    const selected = JSON.parse(body) as { receipt: TemporalReceipt; values: TemporalValue[] };
+    const receipt = selected.receipt,
+      locator = stored.account.receipt;
+    if (
+      !receipt ||
+      receipt.actorId !== locator.actorId ||
+      receipt.physicalLife !== locator.physicalLife ||
+      receipt.epoch !== locator.epoch ||
+      receipt.ordinal !== locator.ordinal ||
+      receipt.origin?.kind !== 'occurrence' ||
+      receipt.origin.eventId !== stored.id
+    )
+      throw new Error('Recent personal receipt has a different owner or occurrence.');
+    const evidence = receivedEventEvidence(locator.actorId, selected.values);
+    if (!evidence || personalAccountRevision(JSON.stringify(evidence)) !== stored.account.revision)
+      throw new Error('Recent personal event disagrees with its retained receipt.');
+    return {
+      id: stored.id,
+      revision: stored.revision,
+      time: stored.time,
+      order: stored.order,
+      type: stored.type,
+      text: evidence.text,
+      evidence,
+      ...(evidence.content !== undefined ? { content: evidence.content } : {}),
+    };
+  }
   if (
     !stored.account ||
     !['awareness', 'perspective'].includes(stored.account.kind) ||
@@ -140,9 +222,28 @@ export function storedStoryAccount(
   world: string,
   actor: string,
   accounts: ReadonlyMap<string, string>,
+  temporal?: {
+    receipts: ReadonlyMap<string, TemporalReceipt>;
+    sources: Readonly<Record<string, import('@open-legend/domain').TemporalSourceBlock>>;
+  },
 ) {
   const source = JSON.parse(payload) as StoredStorySource;
   const account = source.account;
+  if (account?.kind === 'temporal') {
+    const locator = account.receipt;
+    const receipt = temporal?.receipts.get(temporalReceiptId(locator));
+    return decodeStoryAccount(
+      payload,
+      receipt
+        ? JSON.stringify({
+            receipt,
+            values: receipt.facets.map(
+              (ref) => temporal!.sources[ref.blockId]?.values[ref.valueOrdinal],
+            ),
+          })
+        : undefined,
+    );
+  }
   return decodeStoryAccount(
     payload,
     account &&

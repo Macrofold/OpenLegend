@@ -154,13 +154,23 @@ function answers(
   return result;
 }
 /** The permitted handle of the person whose speech triggered the decision. */
-function speaker(context: string): string {
-  const handle = context.match(/"speaker":"[^"]*\(ID:([0-9a-f]+)\)"/)?.[1];
-  if (!handle) throw new Error('Fixture context has no permitted speaker reference.');
-  return handle;
+function speaker(context: string): string | null {
+  const section = /(?:^|\n)## References\n([\s\S]*?)(?=\n## |$)/.exec(context)?.[1];
+  const references = (section ?? '')
+    .split('\n')
+    .filter((line) => line.startsWith('- {'))
+    .map(
+      (line) =>
+        JSON.parse(line.slice(2)) as { entityId: string; triggerRoles?: Array<{ role: string }> },
+    );
+  return (
+    references.find((entry) => entry.triggerRoles?.some((role) => role.role === 'source'))
+      ?.entityId ?? null
+  );
 }
 function talk(context: string, text: string) {
   return {
+    queries: null,
     operations: [
       {
         localId: 'reply',
@@ -520,8 +530,8 @@ describe(
         properties: Record<string, unknown>;
         required: string[];
       };
-      expect(Object.keys(schema.properties)).toEqual(['operations']);
-      expect(schema.required).toEqual(['operations']);
+      expect(Object.keys(schema.properties)).toEqual(['operations', 'queries']);
+      expect(schema.required).toEqual(['operations', 'queries']);
       expect(schema.properties['operations']).not.toHaveProperty('minItems');
       expect(
         [...propertyNames(schema)].filter((name) =>

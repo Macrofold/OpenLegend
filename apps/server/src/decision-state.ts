@@ -271,6 +271,22 @@ export function endDecision(state: DecisionState, reason: DecisionEnd, at: numbe
 
 const integer = z.number().int().nonnegative().safe();
 const identity = z.string().min(1).max(256);
+/** The producer and durable cursor share one current format. Evidence may not yet
+ * have been considered when a character first receives an opportunity. */
+export const actorThoughtScheduleSchema = z
+  .object({
+    fingerprint: identity,
+    at: integer,
+    semanticRevision: identity.optional(),
+    watermark: integer.optional(),
+    attemptedOpportunity: z.string().max(2000).optional(),
+    attemptedJobId: identity.optional(),
+    skippedOpportunity: z.string().max(2000).optional(),
+    reviewKey: z.string().max(2000).optional(),
+  })
+  .strict();
+export type ActorThoughtSchedule = z.infer<typeof actorThoughtScheduleSchema>;
+
 const end = z.enum([
   'expired',
   'stale',
@@ -325,16 +341,7 @@ const stateSchema = z
     cursor: z
       .object({
         key: identity,
-        value: z
-          .object({
-            fingerprint: identity,
-            at: integer,
-            watermark: integer,
-            attemptedOpportunity: z.string().max(2000).optional(),
-            skippedOpportunity: z.string().max(2000).optional(),
-            reviewKey: z.string().max(2000).optional(),
-          })
-          .strict(),
+        value: actorThoughtScheduleSchema,
       })
       .strict()
       .optional(),

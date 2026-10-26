@@ -230,20 +230,33 @@ export function pruneObserverIndividuals(
   if (!identities) return 0;
   if (input.releasedSourceIds.length)
     revokeRecognitionEvidence(world, actorId, new Set(input.releasedSourceIds));
-  const pinned = new Set(input.retainedIndividualIds);
+  const retainedPins = new Set(input.retainedIndividualIds);
+  for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
+    if (document.subjectId?.kind === 'individual' && document.text.trim())
+      retainedPins.add(document.subjectId.individualId);
+  for(const record of world.minds?.[actorId]?.records??[])
+    if(record.subjectId?.kind==='individual')retainedPins.add(record.subjectId.individualId);
+  const pinned = new Set(retainedPins);
   for (const lease of Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})) {
     if (lease.localSubject?.kind === 'individual') pinned.add(lease.localSubject.individualId);
     if (lease.value.kind === 'association' && lease.value.subject.kind === 'individual')
       pinned.add(lease.value.subject.individualId);
   }
-  for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
-    if (document.subjectId?.kind === 'individual' && document.text.trim())
-      pinned.add(document.subjectId.individualId);
-  for(const record of world.minds?.[actorId]?.records??[])
-    if(record.subjectId?.kind==='individual')pinned.add(record.subjectId.individualId);
   let removed = 0;
   for (const key of input.candidates ?? Object.keys(identities)) {
     const identity = identities[key];
+    const learned = identity && (identity.authored || identity.givenName || identity.voice?.authored ||
+      identity.sight?.authored || identity.familiarity?.authored || identity.voice?.samples.length ||
+      identity.sight?.samples.length || identity.familiarity?.roots.length);
+    // A complete retirement batch can leave an otherwise empty identity alive
+    // solely for its current body. Return it to current-only ownership so later
+    // body loss does not mistake the obsolete retained flag for personal memory.
+    if (!input.candidates && identity?.retained && !learned && !retainedPins.has(key) && pinned.has(key)) {
+      if (!adjustRetainedKnowledgeAccounting(world, actorId, identity, undefined))
+        throw new Error('Retired identity accounting was not released.');
+      const currentOnly=cloneValue(identity);delete currentOnly.retained;identities[key]=currentOnly;
+      continue;
+    }
     if (
       !identity ||
       identity.authored ||

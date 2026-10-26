@@ -1,17 +1,18 @@
 import { entityGet } from '@open-legend/domain';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { it, expect } from 'vitest';
-import { createWorld, observeActor } from '@open-legend/domain';
+import { createWorld, observeActor, initializePerception } from '@open-legend/domain';
 import { describeEntity } from './entity-description.js';
 import { commandFacts } from './action-descriptions.js';
 it('native fixture: look-closer prose and berry facts describe actual resource mechanics', () => {
   const world = createWorld();
   // Exercise a stocked resource independently of the bundled starting scarcity.
   entityGet(world.entities, 'berries-west')!.resource!.quantity = 36;
+  initializePerception(world, []);
   const observation = observeActor(world, PLAYER_ID)!;
   expect(commandFacts({ type: 'gather', targetId: 'berries-west' }, observation)).toEqual([
     ['Yields', '2 Wild berries'],
-    ['Time', '5 minutes of game time, plus travel'],
+    ['Time', '10 minutes of game time, plus travel'],
   ]);
   expect(
     describeEntity(

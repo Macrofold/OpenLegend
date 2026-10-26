@@ -988,6 +988,7 @@ export function experiences(
   if (!entityHas(world.entities, actorId) || !entityGet(world.entities, actorId)?.actor) return [];
   const state = world.experience;
   const forgotten = new Set(state?.forgotten[actorId] ?? []);
+  const invalidated = new Set([...forgotten, ...Object.keys(state?.corrections?.[actorId] ?? {})]);
   const aware = state?.awareness[actorId] ?? [];
   const eventIds = new Set(aware.map((a) => a.eventId));
   const personal = (world.memories[actorId] ?? []).filter(
@@ -995,7 +996,9 @@ export function experiences(
       !forgotten.has(m.id) &&
       !forgotten.has(m.eventId ?? '') &&
       !(m.eventId && eventIds.has(m.eventId) && m.kind === 'episode') &&
-      (m.kind === 'commitment' || (m.kind === 'episode' && m.source !== 'inferred')),
+      (m.kind === 'commitment' ||
+        (m.kind === 'episode' && m.source !== 'inferred') ||
+        (m.kind === 'impression' && !!m.impression && !experienceDependsOn(m, invalidated))),
   );
   const events: MemoryRecord[] = aware
     .filter((a) => !forgotten.has(a.eventId))
@@ -1035,7 +1038,9 @@ function experienceDependsOn(
   return (
     affected.has(entry.id) ||
     ('eventId' in entry && !!entry.eventId && affected.has(entry.eventId)) ||
-    ('sourceReceipt' in entry && !!entry.sourceReceipt && affected.has(temporalReceiptId(entry.sourceReceipt))) ||
+    ('sourceReceipt' in entry &&
+      !!entry.sourceReceipt &&
+      affected.has(temporalReceiptId(entry.sourceReceipt))) ||
     ('observation' in entry && !!entry.observation && affected.has(entry.observation.id)) ||
     ('sources' in entry && entry.sources.some((source) => affected.has(source.id))) ||
     (!!entry.manifest && manifestDependsOn(entry.manifest, affected)) ||
@@ -1063,8 +1068,14 @@ export function retainedExperienceSource(
     )
   )
     return true;
-  if (world.experience?.temporal?.actors[actorId]?.chunks.some((chunk) => chunk.receipts.some((receipt) =>
-    receipt.id === sourceId || receipt.sourceIds.includes(sourceId)))) return true;
+  if (
+    world.experience?.temporal?.actors[actorId]?.chunks.some((chunk) =>
+      chunk.receipts.some(
+        (receipt) => receipt.id === sourceId || receipt.sourceIds.includes(sourceId),
+      ),
+    )
+  )
+    return true;
   const retained = experiences(world, actorId, true);
   if (retained.some((entry) => experienceDependsOn(entry, affected))) return true;
   // Memory projections carry original coverage. Read immediate typed summary sources

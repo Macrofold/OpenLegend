@@ -26,6 +26,7 @@ import {
   decisionRoot,
   endDecision,
   type DecisionState,
+  type ActorThoughtSchedule,
   type DecisionReason,
 } from './decision-state.js';
 import {
@@ -245,19 +246,7 @@ const choice = (answer: JudgmentAnswer | undefined) =>
   answer && 'choice' in answer && typeof answer.confidence === 'number' && answer.confidence >= 0.55
     ? answer.choice
     : null;
-interface ThoughtSchedule {
-  semanticRevision?: string;
-  fingerprint: string;
-  at: number;
-  /** Highest evidence sequence a completed decision considered (consumed, not attempted). */
-  watermark?: number;
-  attemptedOpportunity?: string;
-  attemptedJobId?: string;
-  /** Last opportunity natively deferred (for example while asleep); never consumes evidence. */
-  skippedOpportunity?: string;
-  /** Due stimulus reviews already offered (EPR06), so only a new due review is named. */
-  reviewKey?: string;
-}
+type ThoughtSchedule = ActorThoughtSchedule;
 
 /** Bounded actor-owned workflows; provider completions never bypass authoritative rules. */
 export class AiDirector {

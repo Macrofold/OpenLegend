@@ -1,4 +1,4 @@
-import { openingSemanticInterval } from './semantic-opportunities.js';
+import { openingSemanticInterval, finishSemanticWork } from './semantic-opportunities.js';
 import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { validResponsePurpose } from './action-capabilities.js';
 import {
@@ -888,6 +888,7 @@ export function finishPlanAction(
   actionId: string,
   result: Outcome,
 ): void {
+  finishSemanticWork(world, actorId, actionId);
   const resultMemoryId = endActivity(world, actorId, actionId, result);
   releaseInvocationResources(world, actionId);
   const actor = entityGet(world.entities, actorId)!.actor!;

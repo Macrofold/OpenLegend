@@ -62,8 +62,29 @@ describe('independent domain data copies', () => {
 
 import { createWorld,PLAYER_ID,NPC_ID } from './data.js';
 import { entityGet } from './entity-collection.js';
-import { freezeWorld,updateWorld,draftWorld,finishWorld } from './draft.js';
+import { freezeWorld,updateWorld,draftWorld,finishWorld,readOnlyDraftView } from './draft.js';
 import { initializePerception } from './kernel.js';
+import { setSpatialPosition,worldSupport } from './spatial-state.js';
+it('seals recent observations before nested native preparation and isolates both continuations',()=>{
+  const initial=createWorld(74);initializePerception(initial,[]);freezeWorld(initial);
+  const before=JSON.stringify(initial.experience!.temporal);
+  const outer=draftWorld(initial);
+  outer.simTime=1;
+  const npc=entityGet(outer.entities,NPC_ID)!;
+  setSpatialPosition(outer,npc,{x:14,y:0,z:15},worldSupport(npc),'physical');
+  initializePerception(outer,[]);
+  const nested=draftWorld(outer);
+  const sealed=readOnlyDraftView(outer.experience!.temporal!);
+  expect(Object.isFrozen(sealed)).toBe(true);
+  const captured=JSON.stringify(sealed);
+  nested.simTime=2;
+  setSpatialPosition(nested,entityGet(nested.entities,NPC_ID)!,{x:15,y:0,z:15},worldSupport(npc),'physical');
+  initializePerception(nested,[]);
+  finishWorld(nested);
+  expect(JSON.stringify(sealed)).toBe(captured);
+  expect(JSON.stringify(initial.experience!.temporal)).toBe(before);
+  expect(JSON.stringify(finishWorld(outer).experience!.temporal)).toBe(captured);
+});
 it('seals shared received evidence once while preserving earlier immutable snapshots',()=>{
   const initial=createWorld(73);initializePerception(initial,[]);freezeWorld(initial);
   const before=JSON.stringify(initial.perceptionEvidence);

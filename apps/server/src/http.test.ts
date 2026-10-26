@@ -174,23 +174,23 @@ describe('local HTTP boundary', () => {
   });
 
   it('exposes a read-only target catalogue and persists only validated preferences for the local principal', async () => {
-    const { post, game } = await start();
+    const { post, game, initial } = await start();
     await post('/api/control', { paused: false, clientId: 'catalogue-test' });
     const original = JSON.stringify(game.service.world);
-    const response = await post('/api/actions', { targetId: 'campfire' });
-    expect(response.status).toBe(200);
+    const campfire=initial.entities.find(entity=>entity.name===entityGet(game.service.world.entities,'campfire')!.name)!;
+    const response = await post('/api/actions', { targetId: campfire.id });
     const report = await response.json();
-    const wood = allItems(game.service.world).find(
-      (item) => item.ownerId === PLAYER_ID && item.definitionId === 'wood',
-    )!;
+    expect(response.status,JSON.stringify(report)).toBe(200);
+
     // Evasive destinations belong to ground/self, not a selected campfire.
-    expect(report.catalogue.actions.map((action: { id: string }) => action.id)).toEqual([
-      'move',
-      'fire-extinguish:campfire',
-      `fire-fuel:${wood.id}:campfire`,
-      'cook-base:cook-meat',
-      'cook-base:cook-river-fish',
+    expect(report.catalogue.actions.map((action: { label: string }) => action.label)).toEqual([
+      'Walk here',
+      'Put out Banked campfire',
+      'Add Supple branch to Banked campfire',
+      'Cook meat at Banked campfire',
+      'Cook river fish at Banked campfire',
     ]);
+    expect(report.catalogue.actions.every((action: {id:string}) => action.id.startsWith('action-'))).toBe(true);
     expect(JSON.stringify(game.service.world)).toBe(original);
     expect(await game.service.store.recentJobs()).toEqual([]);
     expect((await post('/api/actions', { actorId: NPC_ID })).status).toBe(400);

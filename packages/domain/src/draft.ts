@@ -426,10 +426,16 @@ function freezeData(value: unknown): void {
  * Immer to copy the same thousands of latest facets for every candidate command.
  * This changes representation only; the next actual evidence edit drafts it again. */
 function sealNativeEvidence(world: WorldState): void {
-  if (!isDraft(world) || !world.perceptionEvidence) return;
+  if (!isDraft(world)) return;
   const value = world.perceptionEvidence;
-  if (Object.isFrozen(readOnlyDraftView(value))) return;
-  world.perceptionEvidence = immutableDraftSnapshot(value);
+  if (value && !Object.isFrozen(readOnlyDraftView(value)))
+    world.perceptionEvidence = immutableDraftSnapshot(value);
+  // Automatic movement can prepare a nested command after recent observations
+  // were appended. Seal that same owned history once: otherwise current(world)
+  // recursively copies every earlier receipt for each moving animal.
+  const temporal = world.experience?.temporal;
+  if (temporal && !Object.isFrozen(readOnlyDraftView(temporal)))
+    world.experience!.temporal = immutableDraftSnapshot(temporal);
 }
 
 /** Resolve a JSON DAG once, rather than Immer.current's repeated copying of a shared

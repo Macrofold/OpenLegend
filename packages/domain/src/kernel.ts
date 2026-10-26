@@ -10,6 +10,7 @@ import {
   type AnimalWanderPreparation,
 } from './worlds/base/animal-wander-queue.js';
 import { entityGet, entityOwn } from './entity-collection.js';
+import { beginSemanticWork } from './semantic-opportunities.js';
 import {
   reconcileVisualEvidence,
   endCurrentEvidence,
@@ -3378,6 +3379,9 @@ function executeCommandNative(
       );
   }
   if (options.preview) return { world: original, events: [], outcome: result };
+  if (result.ok && component.action && !options.nativeController &&
+      component.action.id !== entityGet(original.entities, actor.id)?.actor?.action?.id)
+    beginSemanticWork(world, actor.id, component.action.id);
   if (!action && experience) endActivity(world, actor.id, command.id, result);
   if (!options.nativeController)
     orderedRecordSet(world.commandReceipts, command.id, { digest, outcome: result });

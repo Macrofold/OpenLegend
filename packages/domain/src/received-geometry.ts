@@ -34,7 +34,7 @@ import {
 import { receivedScene, receivedSeparation, type ReceivedSceneBody } from './received-scene.js';
 import { selectedAttentionPolicy } from './world-composition.js';
 import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
-import { cloneValue } from './draft.js';
+import { cloneValue, readOnlyDraftView } from './draft.js';
 import { personalFactAlias } from './experience-source.js';
 import type { Position, WorldState } from './types.js';
 
@@ -371,9 +371,13 @@ export function refreshReceivedGeometry(
   state.nextAt = world.simTime + policy.intervalSeconds;
   let indexVisits = 0,
     patchVisits = 0;
+  // The preparation list is bounded, and its rectangles are immutable values.
+  // Work on an owned array rather than making every nearest-first comparison
+  // create/read Immer proxies for the same hundreds of rectangles.
+  const pending = readOnlyDraftView(state.pending).map(readOnlyDraftView);
   const enqueue = (patches: PendingPatch[]) => {
     for (const patch of patches) {
-      if (state.pending.length < policy.preparationPatches) state.pending.push(patch);
+      if (pending.length < policy.preparationPatches) pending.push(patch);
       else state.unrepresented = true;
     }
   };
@@ -394,14 +398,14 @@ export function refreshReceivedGeometry(
   }
   while (
     patchVisits < policy.patchVisits &&
-    state.pending.length &&
+    pending.length &&
     state.fragments.length + state.boundaries.length < policy.maxFragments
   ) {
     let nearest = 0;
-    for (let index = 1; index < state.pending.length; index++)
-      if (priority(state.pending[index]!, input.eye) < priority(state.pending[nearest]!, input.eye))
+    for (let index = 1; index < pending.length; index++)
+      if (priority(pending[index]!, input.eye) < priority(pending[nearest]!, input.eye))
         nearest = index;
-    const [rectangle] = state.pending.splice(nearest, 1);
+    const [rectangle] = pending.splice(nearest, 1);
     const surface = surfaceById(input.map, rectangle!.surfaceId);
     patchVisits++;
     if (!surface) {
@@ -447,7 +451,8 @@ export function refreshReceivedGeometry(
   }
   // Pair only received adjacent patches. A clipped/occluded edge never invents a
   // drop; an unseen far side remains unknown even if the physical map knows it.
-  const ordered = [...state.fragments].sort((a, b) => a.key.localeCompare(b.key));
+  state.pending = pending;
+  const ordered = readOnlyDraftView(state.fragments).map(readOnlyDraftView).sort((a, b) => a.key.localeCompare(b.key));
   const edges = ordered.flatMap((fragment) => {
     const surface = surfaceById(input.map, fragment.surfaceId);
     return surface ? actualEdges(fragment, surface).map((edge) => ({ fragment, edge })) : [];

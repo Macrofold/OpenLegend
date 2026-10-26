@@ -391,6 +391,31 @@ export type EventEvidence = Pick<
   | 'urgency'
   | 'exposure'
 >;
+
+/** A retained received event already contains its permitted wording, quantities
+ * and participants. Reading it never joins the objective event's private data. */
+export function receivedEventEvidence(
+  actorId: string,
+  values: readonly import('./temporal-evidence.js').TemporalValue[],
+): EventEvidence | undefined {
+  const fact = values.find((value) => value.kind === 'event');
+  if (!fact || fact.kind !== 'event') return;
+  const sourceId = fact.references.find((reference) => reference.role === 'actor')?.id;
+  const targetId = fact.references.find((reference) => reference.role === 'target')?.id;
+  return {
+    actorId,
+    eventType: fact.eventType,
+    text: fact.text,
+    modality: fact.modality,
+    importance: fact.importance,
+    ...(fact.urgency !== undefined ? { urgency: fact.urgency } : {}),
+    ...(fact.content !== undefined ? { content: fact.content } : {}),
+    ...(sourceId ? { sourceId } : {}),
+    ...(targetId ? { targetId } : {}),
+    eventData: fact.data,
+    references: fact.references,
+  };
+}
 /** Current persisted observation format; absent payload is never permission to consult truth. */
 export function validateEventEvidence(value: unknown): asserts value is EventEvidence {
   if (!value || typeof value !== 'object' || Array.isArray(value))

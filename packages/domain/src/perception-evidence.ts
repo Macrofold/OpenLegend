@@ -171,6 +171,10 @@ export type SensoryFacet =
       kind: 'event';
       eventType: string;
       text: string;
+      modality: Awareness['modality'];
+      importance: number;
+      urgency?: number;
+      content?: string;
       data: NonNullable<WorldEvent['data']>;
       references: NonNullable<Awareness['references']>;
     }
@@ -300,36 +304,85 @@ const evidenceEncoder = new TextEncoder();
 /** Prepared native source identity is a dependency token, never saved authority. */
 const measuredSources = new WeakMap<ObservationContribution, { leaseId: string; token: string }>();
 interface VisualSourceValues {
-  location:Extract<ObservedLocation,{kind:'point'}>;
-  facets:readonly SensoryFacet[];
+  location: Extract<ObservedLocation, { kind: 'point' }>;
+  facets: readonly SensoryFacet[];
 }
 /** The native frame owns this finite cache. Its complete source token covers only
  * common outward values; each admitted receiver still supplies its own frame,
  * detector, time, exposure, association and evidence envelope. */
-const visualSourceValues=new WeakMap<(id:string)=>string|undefined,Map<string,{token:string;values:VisualSourceValues}>>();
-function prepareVisualSourceValues(world:WorldState,subject:Entity,sourceToken:((id:string)=>string|undefined)|undefined,
-  token:string|undefined,publicAttributes:readonly AttributeView[]):VisualSourceValues {
-  let prepared=sourceToken&&visualSourceValues.get(sourceToken);
-  const prior=prepared?.get(subject.id);
-  if(token&&prior?.token===token)return prior.values;
-  const profile=bodyProfile(subject),placement=subject.placement!;
-  const body:ObservedBody={kind:subject.kind,position:{...readOnlyDraftView(worldPosition(subject))},heading:subject.spatial.heading,
-    appearance:subject.appearance??'sprite',radius:profile.radius,height:profile.height,supportSurfaceId:worldSupport(subject),
-    outward:outwardStates(subject),label:selectedOutwardBodyName(world,subject),
-    ...(!subject.actor&&subject.description?{description:subject.description}:{}),
-    ...(subject.resource?{quantity:subject.resource.quantity}:{}),...(subject.heat?{heatLit:subject.heat.lit}:{}),
-    ...(subject.remains?{remainsPhase:subject.remains.phase}:{}),
-    ...(subject.container||subject.kind==='item-pile'||subject.remains?{storage:{placementRevision:placement.revision}}:{})};
-  const facets:SensoryFacet[]=[{kind:'detected',detected:subject.actor?'body':'surface',limits:[]},{kind:'body',body},
-    {kind:'carried',items:equippedItems(world,subject.id).flatMap((item)=>{
-      const definition=world.itemDefinitions[item.definitionId];return definition?[{itemKindAsObserved:definition.name}]:[];
-    })}];
-  if(subject.kind==='item-pile'||subject.remains)facets.push({kind:'pile-contents',items:itemsForOwner(world,subject.id).flatMap((item)=>{
-    const definition=world.itemDefinitions[item.definitionId];return definition?[{id:item.id,definitionId:item.definitionId,name:definition.name,quantity:item.quantity,portable:definition.portable===true}]:[];
-  })});
-  if(publicAttributes.length)facets.push({kind:'public-attributes',attributes:[...cloneValue(publicAttributes)]});
-  const values=freeze({location:{kind:'point' as const,point:body.position,errorRadius:0},facets},true);
-  if(sourceToken&&token){if(!prepared)visualSourceValues.set(sourceToken,(prepared=new Map()));prepared.set(subject.id,{token,values});}
+const visualSourceValues = new WeakMap<
+  (id: string) => string | undefined,
+  Map<string, { token: string; values: VisualSourceValues }>
+>();
+function prepareVisualSourceValues(
+  world: WorldState,
+  subject: Entity,
+  sourceToken: ((id: string) => string | undefined) | undefined,
+  token: string | undefined,
+  publicAttributes: readonly AttributeView[],
+): VisualSourceValues {
+  let prepared = sourceToken && visualSourceValues.get(sourceToken);
+  const prior = prepared?.get(subject.id);
+  if (token && prior?.token === token) return prior.values;
+  const profile = bodyProfile(subject),
+    placement = subject.placement!;
+  const body: ObservedBody = {
+    kind: subject.kind,
+    position: { ...readOnlyDraftView(worldPosition(subject)) },
+    heading: subject.spatial.heading,
+    appearance: subject.appearance ?? 'sprite',
+    radius: profile.radius,
+    height: profile.height,
+    supportSurfaceId: worldSupport(subject),
+    outward: outwardStates(subject),
+    label: selectedOutwardBodyName(world, subject),
+    ...(!subject.actor && subject.description ? { description: subject.description } : {}),
+    ...(subject.resource ? { quantity: subject.resource.quantity } : {}),
+    ...(subject.heat ? { heatLit: subject.heat.lit } : {}),
+    ...(subject.remains ? { remainsPhase: subject.remains.phase } : {}),
+    ...(subject.container || subject.kind === 'item-pile' || subject.remains
+      ? { storage: { placementRevision: placement.revision } }
+      : {}),
+  };
+  const facets: SensoryFacet[] = [
+    { kind: 'detected', detected: subject.actor ? 'body' : 'surface', limits: [] },
+    { kind: 'body', body },
+    {
+      kind: 'carried',
+      items: equippedItems(world, subject.id).flatMap((item) => {
+        const definition = world.itemDefinitions[item.definitionId];
+        return definition ? [{ itemKindAsObserved: definition.name }] : [];
+      }),
+    },
+  ];
+  if (subject.kind === 'item-pile' || subject.remains)
+    facets.push({
+      kind: 'pile-contents',
+      items: itemsForOwner(world, subject.id).flatMap((item) => {
+        const definition = world.itemDefinitions[item.definitionId];
+        return definition
+          ? [
+              {
+                id: item.id,
+                definitionId: item.definitionId,
+                name: definition.name,
+                quantity: item.quantity,
+                portable: definition.portable === true,
+              },
+            ]
+          : [];
+      }),
+    });
+  if (publicAttributes.length)
+    facets.push({ kind: 'public-attributes', attributes: [...cloneValue(publicAttributes)] });
+  const values = freeze(
+    { location: { kind: 'point' as const, point: body.position, errorRadius: 0 }, facets },
+    true,
+  );
+  if (sourceToken && token) {
+    if (!prepared) visualSourceValues.set(sourceToken, (prepared = new Map()));
+    prepared.set(subject.id, { token, values });
+  }
   return values;
 }
 const acquisitionKey = (
@@ -538,7 +591,7 @@ function immutableSnapshot(value: CapturedCurrentFacet): CapturedCurrentFacet {
 }
 function copyFacetValue(value: SensoryFacet): SensoryFacet {
   const source = readOnlyDraftView(value);
-  if(isImmutableData(source))return source;
+  if (isImmutableData(source)) return source;
   if (source.kind === 'confirmation')
     return { kind: 'confirmation', snapshot: immutableSnapshot(source.snapshot) };
   if (source.kind === 'observed-motion')
@@ -612,7 +665,7 @@ export function effectiveCurrentFacetSupport(
       ? {}
       : value.value.kind === 'location'
         ? { valueMeasuredFrom: through, valueMeasuredThrough: through, valueAcquiredAt: through }
-        : { valueMeasuredThrough: through }),
+        : { valueMeasuredThrough: through, valueAcquiredAt: through }),
   };
 }
 
@@ -1028,10 +1081,22 @@ export function reconcileVisualEvidence(
       }
       continue;
     }
-    const prepared=prepareVisualSourceValues(world,subject,sourceToken,token,
-      sourcePublicAttributes?.(subject.id)??projectAttributes(world,subject,'public'));
-    const frame:ObservationFrame={positionAtObservation:{...readOnlyDraftView(worldPosition(observer))},forwardAtObservation:observer.spatial.heading};
-    const values:SensoryFacet[]=[prepared.facets[0]!,{kind:'location',location:prepared.location,frame},...prepared.facets.slice(1)];
+    const prepared = prepareVisualSourceValues(
+      world,
+      subject,
+      sourceToken,
+      token,
+      sourcePublicAttributes?.(subject.id) ?? projectAttributes(world, subject, 'public'),
+    );
+    const frame: ObservationFrame = {
+      positionAtObservation: { ...readOnlyDraftView(worldPosition(observer)) },
+      forwardAtObservation: observer.spatial.heading,
+    };
+    const values: SensoryFacet[] = [
+      prepared.facets[0]!,
+      { kind: 'location', location: prepared.location, frame },
+      ...prepared.facets.slice(1),
+    ];
     const detected = state.current[`${subject.id}:detected`];
     let original = detected && readOnlyDraftView(detected).original;
     if (!original)
@@ -1601,6 +1666,10 @@ export function acquireAwarenessObservation(
       kind: 'event',
       eventType: awareness.eventType ?? event.type,
       text: awareness.text,
+      modality: awareness.modality,
+      importance: awareness.importance,
+      ...(awareness.urgency !== undefined ? { urgency: awareness.urgency } : {}),
+      ...(awareness.content !== undefined ? { content: awareness.content } : {}),
       data: cloneValue(awareness.eventData ?? {}),
       references: cloneValue(awareness.references ?? []),
     });
@@ -2341,6 +2410,13 @@ export function validateSensoryFacet(
       if (
         typeof value.eventType !== 'string' ||
         typeof value.text !== 'string' ||
+        !['observed', 'heard', 'felt', 'internal'].includes(value.modality) ||
+        !Number.isFinite(value.importance) ||
+        value.importance < 0 ||
+        value.importance > 10 ||
+        (value.urgency !== undefined &&
+          (!Number.isFinite(value.urgency) || value.urgency < 0 || value.urgency > 10)) ||
+        (value.content !== undefined && typeof value.content !== 'string') ||
         !value.data ||
         typeof value.data !== 'object' ||
         Array.isArray(value.data) ||

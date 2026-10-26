@@ -8,6 +8,7 @@ import {
   type WorldEvent,
 } from '@open-legend/domain';
 import { timedSync } from './performance.js';
+import { receivedEventAccounts, type ReceivedEventAccount } from './received-event-accounts.js';
 
 /** Derived indexes for one exact immutable candidate, not another history store.
  * Prepare before acquiring the database when readiness is already committed.
@@ -74,21 +75,10 @@ function historyInputs(
       if (!ids) wanted.set(actorId, (ids = new Set()));
       ids.add(event.id);
     }
-  const awarenessIndexes = new Map<string, Map<string, Awareness>>();
+  const awarenessIndexes = new Map<string, Map<string, ReceivedEventAccount>>();
   const forgottenIndexes = new Map<string, Set<string>>();
   for (const [actorId, ids] of wanted) {
-    const values = new Map<string, Awareness>();
-    const entries = world.experience?.awareness[actorId] ?? [];
-    const prior = previous?.experience?.awareness[actorId] ?? [];
-    const count = fastAppend ? appendedRecordCount(prior, entries) : undefined;
-    // Preserve append-proven preparation and resolve only the changed events' evidence.
-    // Edits search from recent awareness; cold evidence remains owned by stored perspectives.
-    // docs/hearing-and-speech.md#performance-and-invalidation
-    const start = count === undefined ? 0 : prior.length;
-    for (let i = entries.length - 1; i >= start && ids.size; i--) {
-      const entry = entries[i]!;
-      if (ids.delete(entry.eventId)) values.set(entry.eventId, entry);
-    }
+    const values = receivedEventAccounts(world, actorId, ids, { previous, append: fastAppend });
     awarenessIndexes.set(actorId, values);
     forgottenIndexes.set(actorId, new Set(world.experience?.forgotten[actorId] ?? []));
   }
@@ -120,14 +110,11 @@ export function prepareHistoryAppend(inputs: ReturnType<typeof prepareHistory>) 
     throw new Error('Journal history requires an exact append.');
   return inputs.changed.map((event) => ({
     event,
-    accounts: [...new Set(event.audience)].flatMap((actor): [string, Awareness][] => {
+    accounts: [...new Set(event.audience)].flatMap((actor): [string, ReceivedEventAccount][] => {
       if (inputs.forgotten(actor).has(event.id)) return [];
-      const awareness = inputs.perspective(actor, event.id);
-      if (!awareness) {
-        if (!hasMemory(entityGet(inputs.world.entities, actor))) return [];
-        throw new Error('Committed event audience is missing its perspective.');
-      }
-      return [[actor, awareness]];
+      const account = inputs.perspective(actor, event.id);
+      // Current broad reception need not create retained chronology.
+      return account ? [[actor, account]] : [];
     }),
   }));
 }

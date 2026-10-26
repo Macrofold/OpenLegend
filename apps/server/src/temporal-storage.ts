@@ -17,7 +17,7 @@ import type { SourceVersionPlan } from './source-version-retention.js';
 
 const maximumPreparation = 4 * 1024 * 1024;
 const maximumRows = 8192;
-const rowId = (actorId: string, id: string) =>
+export const temporalChunkRecordId = (actorId: string, id: string) =>
   JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'chunks', id]);
 export interface PreparedMemoryRetention {
   state: SavedWorld;
@@ -317,7 +317,7 @@ export async function prepareTemporalRetention(
       });
     for (const chunk of actor.chunks)
       metadata.set(chunk.id, {
-        id: rowId(actorId, chunk.id),
+        id: temporalChunkRecordId(actorId, chunk.id),
         sourceId: chunk.id,
         at: chunk.fromAt,
         through: chunk.throughAt,

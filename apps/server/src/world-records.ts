@@ -900,6 +900,14 @@ export class WorldRecords {
   private async auditRetentionTotals(state: SavedWorld): Promise<void> {
     const actors = state.world.experience?.temporal?.actors;
     if (!actors || !Object.keys(actors).length) return;
+    if (
+      await this.db
+        .prepare(
+          "SELECT 1 AS invalid FROM mind_source_versions WHERE world_id=? AND (source_kind NOT IN ('awareness','memory','summary','perspective') OR (source_kind='perspective' AND retention_class<>'external-story') OR logical_bytes<>octet_length(payload)) LIMIT 1",
+        )
+        .get(state.world.id)
+    )
+      throw new Error('Invalid retained source family or body charge.');
     const totals = await this.db
       .prepare(
         `SELECT actor_id,category,SUM(bytes) AS bytes,SUM(count) AS count FROM (

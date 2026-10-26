@@ -2,12 +2,13 @@ import { createHash } from 'node:crypto';
 import type { Awareness, EventEvidence, WorldEvent } from '@open-legend/domain';
 import type { StorySource } from './history.js';
 import { HistoryBatch } from './history-batch.js';
-import { encodeStoryAccount } from './personal-accounts.js';
+import { encodeStoryAccount, encodeTemporalStoryAccount } from './personal-accounts.js';
+import type { ReceivedEventAccount } from './received-event-accounts.js';
 import type { SqlDatabase } from './store.js';
 
 export interface AppendHistoryInput {
   event: WorldEvent;
-  accounts: [actorId: string, awareness: Awareness][];
+  accounts: [actorId: string, account: ReceivedEventAccount][];
 }
 
 /** Only observer-permitted identities enter participant indexes. */
@@ -61,6 +62,7 @@ export class HistoryAppendWriter extends HistoryBatch {
     awareness: Awareness | undefined,
     position: number,
     eventRevision: string,
+    temporal?: ReceivedEventAccount['temporal'],
   ) {
     const source: StorySource = {
       id: event.id,
@@ -74,7 +76,9 @@ export class HistoryAppendWriter extends HistoryBatch {
       type: evidence.eventType!,
       ...(evidence.content !== undefined ? { content: evidence.content } : {}),
     };
-    const account = encodeStoryAccount(source, awareness);
+    const account = temporal
+      ? encodeTemporalStoryAccount(source, temporal)
+      : encodeStoryAccount(source, awareness);
     const append = () =>
       this.add('history_perspectives', [
         this.worldId,
@@ -83,8 +87,9 @@ export class HistoryAppendWriter extends HistoryBatch {
         account.payload,
         ...perspectiveColumns(source, actorId),
         event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
+        'chunkRecordId' in account ? account.chunkRecordId : null,
       ]);
-    const body=account.body;
+    const body = account.body;
     const pending =
       body === undefined
         ? append()

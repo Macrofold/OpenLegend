@@ -3,9 +3,32 @@ import { createWorld, NPC_ID } from './data.js';
 import { entityGet } from './entity-collection.js';
 import { executeCommand } from './kernel.js';
 import { updateWorld } from './draft.js';
-import { discoveryInterval, reserveDiscovery, settleDiscovery, validateSemanticContinuation,resolveSemanticCause,semanticCauseResolved } from './semantic-opportunities.js';
+import { discoveryInterval, reserveDiscovery, settleDiscovery, validateSemanticContinuation,resolveSemanticCause,semanticCauseResolved,finishSemanticWork } from './semantic-opportunities.js';
 
 describe('one discovery opportunity per genuine free interval',()=>{
+  it('records chosen completion once even when it ends before another publication',()=>{
+    const started=executeCommand(createWorld(),{id:'one-publication-work',actorId:NPC_ID,type:'move',destination:{x:14,y:0,z:15,surfaceId:'terrain'}});
+    expect(started.outcome.ok).toBe(true);
+    const action=entityGet(started.world.entities,NPC_ID)!.actor!.action!.id;
+    const completed=updateWorld(started.world,world=>{
+      finishSemanticWork(world,NPC_ID,action);
+      entityGet(world.entities,NPC_ID)!.actor!.action=null;
+    });
+    expect(discoveryInterval(completed,NPC_ID)).toBe(1);
+    const restored=JSON.parse(JSON.stringify(completed));
+    const continued=updateWorld(restored,world=>{entityGet(world.entities,NPC_ID)!.actor!.agency.revision++;});
+    expect(discoveryInterval(continued,NPC_ID)).toBe(1);
+  });
+  it('does not treat an unchosen physical action as another free interval',()=>{
+    const started=executeCommand(createWorld(),{id:'physical-action-fixture',actorId:NPC_ID,type:'move',destination:{x:14,y:0,z:15,surfaceId:'terrain'}});
+    const automatic=updateWorld(started.world,world=>{
+      const state=entityGet(world.entities,NPC_ID)!.actor!.agency.semantic!;
+      state.occupiedPurpose=null;state.discovery='spent';
+    });
+    const ended=updateWorld(automatic,world=>{entityGet(world.entities,NPC_ID)!.actor!.action=null;});
+    expect(entityGet(ended.entities,NPC_ID)!.actor!.agency.semantic!.interval).toBe(0);
+    expect(discoveryInterval(ended,NPC_ID)).toBeUndefined();
+  });
   it('reuses an equivalent quiet choice across cue generations but not a genuinely changed chosen purpose',()=>{
     let world=createWorld();
     const anchor='current-local-exposure',family='closing-body',key=JSON.stringify([anchor,family]);
