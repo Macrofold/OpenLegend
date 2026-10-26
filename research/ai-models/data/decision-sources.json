@@ -911,5 +911,23 @@
     "published_or_updated": "Effective 2026-11-20",
     "retrieved_at": "2026-10-24",
     "supported_claims": "Latest landing page displayed a future effective date at the October 24 review; previous version recorded separately"
+  },
+  {
+    "id": "D101",
+    "url": "https://openrouter.ai/nace-ai/drex-v2.0",
+    "title": "Drex v2.0 exact hosted route",
+    "type": "provider catalog/pricing",
+    "published_or_updated": "2026-10-12 hosted-listing release",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Exact nace-ai/drex-v2.0 route; 131,072-token context; $0.06/M input and $0 output; DeepInfra provider. Listing date is not independent weight-release provenance; displayed latency is not a guarantee."
+  },
+  {
+    "id": "D102",
+    "url": "https://ai.google.dev/gemini-api/terms",
+    "title": "Gemini API Additional Terms of Service",
+    "type": "official service terms",
+    "published_or_updated": "Effective 2026-03-23",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Gemini Developer API users must be adults; API clients cannot be directed at or likely accessed by under-18s. These terms do not govern direct Google Cloud Platform service use."
   }
 ]

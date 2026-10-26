@@ -39,9 +39,10 @@
     "accessed_on": "2026-10-23",
     "supports": [
       "A developer comparing models on his own voice preferred Qwen3-TTS quality; Chatterbox was simpler but shifted his accent. This is one voice and setup, not a representative ranking.",
-      "A first-person ONNX streaming report describes clicks/pops at chunk joins; the author notes non-ONNX behavior differs. A separate own-voice comparison found Chatterbox convenient but accent fidelity weaker than Qwen. Neither measures latest game workloads.",
-      "Developer considered MeloTTS+OpenVoice for own-voice local workflow"
-    ]
+      "Developer considered MeloTTS+OpenVoice for an own-voice local workflow."
+    ],
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Source-specific attribution and displayed dates only."
   },
   {
     "source_id": "VOICE-S006",
@@ -147,11 +148,13 @@
     "source_id": "VOICE-S017",
     "url": "https://huggingface.co/ResembleAI/chatterbox-turbo/discussions/18",
     "source_type": "community_first_person",
-    "source_date": "2025-12-27 and 2026-10-04",
+    "source_date": "2025-12-27; follow-ups displayed as Jan 9/Jan 15 without year",
     "accessed_on": "2026-10-23",
     "supports": [
-      "A first-person ONNX streaming report describes clicks/pops at chunk joins; the author notes non-ONNX behavior differs. A separate own-voice comparison found Chatterbox convenient but accent fidelity weaker than Qwen. Neither measures latest game workloads."
-    ]
+      "The original ONNX streaming reporter later attributed his issue to playback starvation and said sufficient audio buffering made it work. A different user reported non-ONNX multilingual symptoms; that report has no separate resolution in the inspected thread."
+    ],
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Source-specific attribution and displayed dates only."
   },
   {
     "source_id": "VOICE-S018",
@@ -984,9 +987,10 @@
     "accessed_on": "2026-10-23",
     "supports": [
       "One developer's blinded own-voice comparison chose fine-tuned SOAR over MOSS v1.5; useful reproducible clips, but one speaker and selected takes.",
-      "Own-voice finetuning comparison ranked MOSS v1.5 close behind SOAR. Community reports describe large speed differences between reference Python and native serving; comments are not an exact Local 4B benchmark.",
       "A developer reports successfully shipping a finetuned 0.5B voice before switching to newer candidates; a single-speaker workflow, not broad ranking."
-    ]
+    ],
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Removed the Reddit-only speed claim from this article entry; article claims otherwise unchanged."
   },
   {
     "source_id": "VOICE-S116",
@@ -1214,33 +1218,42 @@
     "source_id": "VOICE-S143",
     "url": "https://www.reddit.com/r/speechtech/comments/1ulsm98/datasetbacked_voice_cloning_benchmark_omnivoice/",
     "source_type": "community_first_person",
-    "source_date": "approximately April–July2026 (relative dates)",
+    "source_date": null,
     "accessed_on": "2026-10-23",
     "supports": [
-      "Reports are mixed: a five-language regression experiment found strong Arabic speaker similarity, while individual users reported language drift or weak French cloning. Emotional control draws interest; setup and reference choice matter.",
-      "Cloning similarity receives strong praise, including Polish, but one user found repeated/flat intonation. A small five-language regression favored it; comments challenge the tiny sample and non-perceptual metrics. Commercial restrictions remain independent of quality."
-    ]
+      "Five-language local regression comparison using FLEURS clips, speaker embeddings and ASR-derived WER/CER: author reports the strongest all-around rows for OmniVoice and strong Arabic speaker matching for VoxCPM2.",
+      "Author describes an engineering regression study rather than a preference/MOS study. Commenters question the single-sentence sample and reliance on automatic metrics."
+    ],
+    "date_evidence": "Reddit displayed relative dates (4mo ago) when inspected; exact publication date not established.",
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Source-specific attribution and displayed dates only."
   },
   {
     "source_id": "VOICE-S144",
     "url": "https://www.reddit.com/r/LocalLLaMA/comments/1sg89kl/new_tts_model_voxcpm2/",
     "source_type": "community_first_person",
-    "source_date": "approximately April–July2026 (relative dates)",
+    "source_date": null,
     "accessed_on": "2026-10-23",
     "supports": [
-      "Reports are mixed: a five-language regression experiment found strong Arabic speaker similarity, while individual users reported language drift or weak French cloning. Emotional control draws interest; setup and reference choice matter.",
-      "Cloning similarity receives strong praise, including Polish, but one user found repeated/flat intonation. A small five-language regression favored it; comments challenge the tiny sample and non-perceptual metrics. Commercial restrictions remain independent of quality."
-    ]
+      "Individual users report VoxCPM2 language drift, weak French cloning and voice variation; other comments show interest in voice design. These are anecdotes from a model discussion, not the separate five-language regression experiment.",
+      "One commenter praises OmniVoice cloning and Polish handling but finds repeated or flat reference intonation; another praises its own-reference cloning. The thread contains divergent user judgments."
+    ],
+    "date_evidence": "Reddit displayed relative dates (6mo ago) when inspected; exact publication date not established.",
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Source-specific attribution and displayed dates only."
   },
   {
     "source_id": "VOICE-S145",
     "url": "https://www.reddit.com/r/LocalLLaMA/comments/1toah65/openmossteammossttsv15_hugging_face/",
     "source_type": "community_first_person",
-    "source_date": "2026-08-24 and approximately June2026",
+    "source_date": null,
     "accessed_on": "2026-10-23",
     "supports": [
-      "Own-voice finetuning comparison ranked MOSS v1.5 close behind SOAR. Community reports describe large speed differences between reference Python and native serving; comments are not an exact Local 4B benchmark."
-    ]
+      "Community discussion reports different MOSS v1.5 inference speeds with reference Python and GGML/native serving, including hardware-specific difficulties. These comments are not a controlled Local 4B benchmark."
+    ],
+    "date_evidence": "Reddit displayed relative dates (4mo ago) when inspected; exact publication date not established.",
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Source-specific attribution and displayed dates only."
   },
   {
     "source_id": "VOICE-S146",

@@ -206,31 +206,31 @@
       "official_url": "https://huggingface.co/nace-ai/drex-v2.0",
       "checked_at": "2026-10-23",
       "release_date": null,
-      "version_status": "Downloadable predecessor; Max is newer as a hosted offering.",
+      "version_status": "Downloadable predecessor with an exact OpenRouter route listed as released October 12, 2026; Max is the newer hosted successor. The listing date does not establish the weight-release date.",
       "parameters": "35B total/3B active; Qwen 3.6-35B-A3B with the vision tower removed.",
-      "context": "16,384 default; 131,072 with extension.",
+      "context": "Self-host default 16,384; 131,072 with extension. The exact OpenRouter route advertises 131,072.",
       "modalities": "Text/JSON",
       "decision_and_tool_capabilities": "Pointer decision head; SystemOne choice, Noul and Score.",
       "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
-      "deployment": "Python runtime; specialized Drex branches of llama.cpp and Ollama.",
+      "deployment": "Python runtime; specialized Drex branches of llama.cpp and Ollama. Hosted as nace-ai/drex-v2.0 on OpenRouter, with DeepInfra listed at review.",
       "hardware_evidence": "Publisher approximately 70 GB BF16 or 37 GB Q8 weights; runtime and KV cache add memory.",
       "license_and_aup": "Nace.AI Open RAIL-M custom use restrictions; not Apache 2.0",
       "pricing": {
         "currency": "USD",
         "unit": "per million tokens unless stated",
-        "semantics": "$0.06 input; $0 output on listed route; self-host compute payable",
-        "checked_at": "2026-10-23"
+        "semantics": "$0.06 input; $0 output, verified on the exact OpenRouter Drex v2.0 page; self-host compute payable.",
+        "checked_at": "2026-10-24"
       },
       "openlegend_fit": "Self-hostable medium MoE selector with existing schema",
       "research_priority": "high",
-      "caveats": "Requires fork support rather than arbitrary stock llama.cpp. Vendor eight-game arena is not Open Legend validation.",
+      "caveats": "Requires fork support rather than arbitrary stock llama.cpp. Vendor eight-game arena is not Open Legend validation. The hosted listing does not guarantee latency or game-workload capacity.",
       "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
       "published_example": {
         "kind": "vendor game arena/reference",
         "url": "https://huggingface.co/nace-ai/drex-v2.0",
         "description": "Card links game-arena evaluation and usage examples; vendor-produced, not independently replicated."
       },
-      "source_ids": ["D010", "D009"],
+      "source_ids": ["D010", "D009", "D101"],
       "tested_by_us": false,
       "sources": [
         {
@@ -240,8 +240,14 @@
         {
           "id": "D009",
           "url": "https://openrouter.ai/nace-ai/drex-max"
+        },
+        {
+          "id": "D101",
+          "url": "https://openrouter.ai/nace-ai/drex-v2.0"
         }
-      ]
+      ],
+      "reviewed_on": "2026-10-24",
+      "review_scope": "Exact OpenRouter route identity, hosted-listing date, context, provider and price; original weight-release date remains unestablished."
     },
     {
       "id": "decision-clef",
@@ -2145,7 +2151,7 @@
       "low_refusal_evidence": "Google documentation explicitly uses game dialogue to explain adjustable content thresholds. Mandatory core protections remain; no Argon-specific dark-fiction refusal audit found.",
       "deployment": "Hosted Gemini API/Google AI Studio; no free tier for Argon. Implicit caching only.",
       "hardware_evidence": "Closed hosted models; no downloadable weights or self-host hardware requirement verified.",
-      "license_and_aup": "Proprietary hosted service. Documented adjustable filters coexist with non-adjustable core protections; service terms still apply.",
+      "license_and_aup": "Proprietary hosted service. Adjustable filters coexist with non-adjustable core protections. Gemini Developer API users must be 18+; clients cannot target or be likely to be accessed by under-18s. For Open Legend's selected adult audience, this is a service-eligibility condition. Other enterprise routes require separate terms review.",
       "pricing": {
         "currency": "USD",
         "unit": "per million tokens unless stated",
@@ -2161,7 +2167,7 @@
         "url": null,
         "description": "No representative published dark-NPC output sample collected; model documentation and safety guidance are specifications, not output demonstrations."
       },
-      "source_ids": ["D092", "D093", "D094", "D095"],
+      "source_ids": ["D092", "D093", "D094", "D095", "D102"],
       "tested_by_us": false,
       "sources": [
         {
@@ -2179,6 +2185,10 @@
         {
           "id": "D095",
           "url": "https://ai.google.dev/gemini-api/docs/safety-settings"
+        },
+        {
+          "id": "D102",
+          "url": "https://ai.google.dev/gemini-api/terms"
         }
       ]
     },

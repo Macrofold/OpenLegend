@@ -184,9 +184,9 @@
     "open_legend_use_cases": "Compact self-hosted character acting, barks, laughter and emotion-controlled voice comparisons.",
     "content_and_refusal_evidence": "No refusal benchmark or mature-fiction acceptance test was found for this exact checkpoint. Self-hosting avoids an external provider's request filter; it does not prove unrestricted behavior or remove license conditions.",
     "sentiment": {
-      "summary": "A first-person ONNX streaming report describes clicks/pops at chunk joins; the author notes non-ONNX behavior differs. A separate own-voice comparison found Chatterbox convenient but accent fidelity weaker than Qwen. Neither measures latest game workloads.",
+      "summary": "In HF discussion 18, the original ONNX reporter later attributed his issue to playback starvation and said it worked with enough audio buffered. Another user reported similar non-ONNX multilingual symptoms without a separate resolution. Pardel's October 4 own-voice comparison preferred Qwen3-TTS and found Chatterbox simpler but less faithful to his accent. These are separate, setup-specific anecdotes.",
       "confidence": "anecdotal, implementation-specific",
-      "date": "2025-12-27 and 2026-10-04",
+      "date": "HF opened 2025-12-27; follow-ups displayed as Jan 9/Jan 15 without year; Pardel 2026-10-04",
       "urls": [
         "https://huggingface.co/ResembleAI/chatterbox-turbo/discussions/18",
         "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine"
@@ -197,7 +197,7 @@
       "description": "Publisher speech and expressiveness examples; verify the Turbo/Multilingual label when comparing samples.",
       "inspection": "Linked samples identified; audio not auditioned."
     },
-    "caveats": "A hosted sub-200 ms claim is not a local runtime guarantee. Community ONNX streaming can create chunk-boundary artifacts.",
+    "caveats": "A hosted sub-200 ms claim is not a local runtime guarantee. The cited original streaming issue was resolved through playback buffering; the thread does not establish an intrinsic Turbo defect or resolve the separate multilingual report.",
     "evidence_source_ids": ["VOICE-S015", "VOICE-S016", "VOICE-S017", "VOICE-S005"],
     "tested_by_us": false,
     "evidence_urls": [
@@ -205,7 +205,9 @@
       "https://huggingface.co/ResembleAI/chatterbox-turbo",
       "https://github.com/resemble-ai/chatterbox",
       "https://huggingface.co/ResembleAI/chatterbox-turbo/discussions/18"
-    ]
+    ],
+    "reviewed_on": "2026-10-24",
+    "review_scope": "Narrow correction of HF discussion 18 follow-up and separation from the Pardel comparison."
   },
   {
     "id": "voice-cosy3",
@@ -301,12 +303,12 @@
     "open_legend_use_cases": "High-priority original character-voice design, expressive cloning and high-fidelity asset generation.",
     "content_and_refusal_evidence": "No refusal benchmark or mature-fiction acceptance test was found for this exact checkpoint. Self-hosting avoids an external provider's request filter; it does not prove unrestricted behavior or remove license conditions.",
     "sentiment": {
-      "summary": "Reports are mixed: a five-language regression experiment found strong Arabic speaker similarity, while individual users reported language drift or weak French cloning. Emotional control draws interest; setup and reference choice matter.",
+      "summary": "The separate five-language regression thread reports a strong Arabic speaker-match result. In the VoxCPM2 release discussion, individual users report language drift, weak French cloning or voice variation, while others show interest in voice design. These sources supply different kinds of evidence, not a single controlled quality ranking.",
       "urls": [
         "https://www.reddit.com/r/speechtech/comments/1ulsm98/datasetbacked_voice_cloning_benchmark_omnivoice/",
         "https://www.reddit.com/r/LocalLLaMA/comments/1sg89kl/new_tts_model_voxcpm2/"
       ],
-      "date": "approximately April–July 2026 (relative dates)",
+      "date": "Reddit relative dates only; exact publication dates not established",
       "confidence": "anecdotal"
     },
     "published_examples": {
@@ -322,7 +324,9 @@
       "https://github.com/OpenBMB/VoxCPM",
       "https://www.reddit.com/r/speechtech/comments/1ulsm98/datasetbacked_voice_cloning_benchmark_omnivoice/",
       "https://www.reddit.com/r/LocalLLaMA/comments/1sg89kl/new_tts_model_voxcpm2/"
-    ]
+    ],
+    "reviewed_on": "2026-10-24",
+    "review_scope": "Narrow source-attribution correction for existing community sentiment; other fields not refreshed."
   },
   {
     "id": "voice-firered3",
@@ -379,12 +383,12 @@
     "open_legend_use_cases": "Multilingual NPCs, narration with stable timbre, timing-sensitive dialogue and proper-noun pronunciation.",
     "content_and_refusal_evidence": "No refusal benchmark or mature-fiction acceptance test was found for this exact checkpoint. Self-hosting avoids an external provider's request filter; it does not prove unrestricted behavior or remove license conditions.",
     "sentiment": {
-      "summary": "Own-voice finetuning comparison ranked MOSS v1.5 close behind SOAR. Community reports describe large speed differences between reference Python and native serving; comments are not an exact Local 4B benchmark.",
+      "summary": "The August 24 NexusTrade own-voice comparison ranked MOSS v1.5 close behind SOAR. Separately, the Reddit MOSS thread reports large speed differences between reference Python and GGML/native serving. Those comments are not a controlled Local 4B benchmark.",
       "urls": [
         "https://nexustrade.io/blog/best-ai-voice-cloning-2026-how-to-clone-your-voice-with-ai-20260824",
         "https://www.reddit.com/r/LocalLLaMA/comments/1toah65/openmossteammossttsv15_hugging_face/"
       ],
-      "date": "2026-08-24 and approximately June 2026",
+      "date": "NexusTrade 2026-08-24; Reddit relative dates only, exact publication date not established",
       "confidence": "anecdotal"
     },
     "published_examples": {
@@ -401,7 +405,9 @@
       "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5",
       "https://nexustrade.io/blog/best-ai-voice-cloning-2026-how-to-clone-your-voice-with-ai-20260824",
       "https://www.reddit.com/r/LocalLLaMA/comments/1toah65/openmossteammossttsv15_hugging_face/"
-    ]
+    ],
+    "reviewed_on": "2026-10-24",
+    "review_scope": "Narrow source-attribution correction for existing community sentiment; other fields not refreshed."
   },
   {
     "id": "voice-moss-ttsd",
@@ -790,12 +796,12 @@
     "open_legend_use_cases": "Low-resource localization research, voice design and broad language coverage comparisons.",
     "content_and_refusal_evidence": "No refusal benchmark or mature-fiction acceptance test was found for this exact checkpoint. Self-hosting avoids an external provider's request filter; it does not prove unrestricted behavior or remove license conditions.",
     "sentiment": {
-      "summary": "Cloning similarity receives strong praise, including Polish, but one user found repeated/flat intonation. A small five-language regression favored it; comments challenge the tiny sample and non-perceptual metrics. Commercial restrictions remain independent of quality.",
+      "summary": "In the VoxCPM2 discussion, users praise OmniVoice cloning, including Polish, while one criticizes repeated or flat intonation. A separate five-language regression favors its all-around rows, with comments questioning the small sample and automatic metrics. Commercial weight restrictions remain separate from these quality anecdotes.",
       "urls": [
         "https://www.reddit.com/r/LocalLLaMA/comments/1sg89kl/new_tts_model_voxcpm2/",
         "https://www.reddit.com/r/speechtech/comments/1ulsm98/datasetbacked_voice_cloning_benchmark_omnivoice/"
       ],
-      "date": "approximately April–July 2026 (relative dates)",
+      "date": "Reddit relative dates only; exact publication dates not established",
       "confidence": "anecdotal"
     },
     "published_examples": {
@@ -812,7 +818,9 @@
       "https://arxiv.org/abs/2604.00688",
       "https://www.reddit.com/r/speechtech/comments/1ulsm98/datasetbacked_voice_cloning_benchmark_omnivoice/",
       "https://www.reddit.com/r/LocalLLaMA/comments/1sg89kl/new_tts_model_voxcpm2/"
-    ]
+    ],
+    "reviewed_on": "2026-10-24",
+    "review_scope": "Narrow source-attribution correction for existing community sentiment; other fields not refreshed."
   },
   {
     "id": "voice-tontaube",
