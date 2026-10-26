@@ -429,6 +429,19 @@ columns(
   { actor_id: actorColumn, subject_id: textColumn('subjectId') },
   [['actor_id', 'subject_id']],
 );
+/** Conservative search bounds over the actually retained facet support, independent
+ * of when the receipt containing that confirmation was issued. */
+function temporalSupportBound(value: JsonRecord, first: boolean): number {
+  let bound = first ? Infinity : -Infinity;
+  for (const receipt of value['receipts'] as JsonRecord[])
+    for (const facet of receipt['facets'] as JsonRecord[]) {
+      const at = (
+        first ? facet['measuredFrom'] : (facet['confirmedThrough'] ?? facet['measuredThrough'])
+      ) as number;
+      bound = first ? Math.min(bound, at) : Math.max(bound, at);
+    }
+  return bound;
+}
 columns(
   'mind_temporal_chunks',
   {
@@ -448,6 +461,14 @@ columns(
     },
     first_at: { ...numberColumn('fromAt'), sql: 'DOUBLE PRECISION NOT NULL' },
     last_at: { ...numberColumn('throughAt'), sql: 'DOUBLE PRECISION NOT NULL' },
+    first_measured_at: {
+      sql: 'DOUBLE PRECISION NOT NULL',
+      value: (value) => temporalSupportBound(value, true),
+    },
+    last_supported_at: {
+      sql: 'DOUBLE PRECISION NOT NULL',
+      value: (value) => temporalSupportBound(value, false),
+    },
     logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
     receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
     subjects: { sql: 'TEXT[] NOT NULL', value: (value) => value['subjects'] },
@@ -465,6 +486,7 @@ columns(
     ['actor_id', 'source_id'],
     ['actor_id', 'physical_life', 'receipt_epoch', 'first_ordinal'],
     ['actor_id', 'last_at', 'last_order', 'receipt_epoch', 'last_ordinal'],
+    ['actor_id', 'last_supported_at', 'last_order', 'receipt_epoch', 'last_ordinal'],
   ],
 );
 columns(

@@ -1,4 +1,4 @@
-import { entityGet, entityValues } from '@open-legend/domain';
+import { entityGet, entityValues, selectedTemporalPolicy } from '@open-legend/domain';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NPC_ID, PLAYER_ID } from '@open-legend/domain';
 import { appendMemory, emit } from '../../../packages/domain/src/events.js';
@@ -6,6 +6,7 @@ import { readConfig, testRepository } from '../../../tests/fixtures/database.js'
 import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { memoryRef } from './evidence-relationships.js';
 import { WorldService } from './world-service.js';
+import { memoryHistory } from './memory-history.js';
 import { WorldToolService } from './world-tools.js';
 
 function barrier() {
@@ -198,4 +199,70 @@ describe('private history disclosure after storage waits', () => {
     }
     expect(await reading).toMatchObject({ status: 'ok' });
   });
+});
+
+it('refuses forbidden character memory edits before selecting their private dependency history', async () => {
+  const h = await setup();
+  const prior = entityValues(h.service.world.entities).find(
+    (entity) => entity.actor && entity.id !== NPC_ID && entity.id !== PLAYER_ID,
+  )!;
+  await h.store.authority.provision(h.service.world.id, {
+    issuer: 'https://fixture.invalid',
+    subject: 'private-edit-other',
+    accountId: 'private-edit-other',
+    actorId: prior.id,
+    capabilities: ['play'],
+  });
+  expect(
+    (
+      await h.service.rebindAccount(h.scope, {
+        id: 'fixture-private-edit-rebind',
+        accountId: 'private-edit-other',
+        actorId: NPC_ID,
+        expectedRevision: 1,
+      })
+    ).ok,
+  ).toBe(true);
+  expect(h.service.mayInspectPrivate(NPC_ID, h.scope)).toBe(false);
+  const prepare = h.store.records.db.prepare.bind(h.store.records.db);
+  vi.spyOn(h.store.records.db, 'prepare').mockImplementation((sql) => {
+    if (sql.includes('WITH RECURSIVE affected'))
+      throw new Error('Forbidden private history was selected before its scope check.');
+    return prepare(sql);
+  });
+  expect(await h.service.forgetMemory(NPC_ID, h.id, h.scope)).toMatchObject({
+    ok: false,
+    code: 'forbidden',
+  });
+  expect(
+    await h.service.correctMemory(NPC_ID, h.id, 'fixture-private-correction', h.scope),
+  ).toMatchObject({ ok: false, code: 'forbidden' });
+});
+
+it('does not publish an old lasting-memory page after ordinary physical expiry during its SQL read', async () => {
+  const h = await setup();
+  const acquired = barrier(),
+    release = barrier();
+  const browse = h.store.memories.browse.bind(h.store.memories);
+  vi.spyOn(h.store.memories, 'browse').mockImplementationOnce(async (...args) => {
+    const result = await browse(...args);
+    acquired.resolve();
+    await release.promise;
+    return result;
+  });
+  const reading = memoryHistory(h.service, NPC_ID, h.scope, {});
+  await acquired.promise;
+  try {
+    await editWorld(h.service, (world) => {
+      world.simTime += selectedTemporalPolicy(world).impression.expireAfterSeconds + 1;
+    });
+    expect(
+      await h.store.db
+        .prepare('SELECT id FROM mind_memories WHERE world_id=? AND actor_id=? AND source_id=?')
+        .get(h.service.world.id, NPC_ID, h.id),
+    ).toBeUndefined();
+  } finally {
+    release.resolve();
+  }
+  await expect(reading).rejects.toThrow('Memories changed');
 });

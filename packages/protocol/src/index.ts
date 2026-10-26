@@ -366,6 +366,8 @@ export interface StatusEffectView {
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
 }
 export interface EntityView extends Named {
+  /** Explicit preference; presence offers prospective attention to this received subject. */
+  attentionPreference?: boolean;
   observation:
     | { kind: 'self' }
     | {

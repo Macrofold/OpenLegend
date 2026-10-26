@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## October 26, 2026 — Received surroundings, bounded attention and selective personal memory
+
+The [core implementation](verification/attention-and-memory-core.md) connects existing senses to broad surroundings, configurable detailed attention, exact recent chronology, shared familiarity and separately selective lasting memories. Current detail, recognition, names, remembered places and source-backed interpretations retain distinct authority. Immutable common values share storage while each observer keeps exact permitted receipts; expiry, correction and forgetting remove their dependent sources/search data, and current-format restoration preserves ages and privacy. Player Character history and ordinary NPC decisions consume those same records.
+
+The [selected world defaults](worlds/base/attention.md) remain unchanged. Native relation cues and one optional discovery attempt per genuine free interval replace motion/familiarity polling as reasons to buy cognition. One read-only query batch can precede one separately funded final answer; unusable AI pagination promises were removed, while real player history remains paged. The short autonomous noticing deadline no longer cuts off interactive conversations; separately funded escalation keeps its existing lifetime. Models, output ceilings and automatic-retry policy are unchanged. Browser and native/SQL fixtures plus one useful live unknown-person answer are demonstrated; complete latency/population/long-history qualification and broader [PS04](maintainers/product-scalability.md#ps04-a--core-attention-and-recording), future sensing and PP07/SAI-A remain explicitly open.
+
+Existing mandatory performance, evidence, memory and save guidance already routes these paths to their canonical contracts. No duplicate AGENTS policy or new instruction layer was added.
+
 ## October 25, 2026, 23:24 EDT — Complete perception-to-memory design reconciliation
 
 The [paired design](projects/attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) now specifies common immutable source fragments with exact personal receipts, ordinary automatic temporal capture, one valence-neutral familiarity score, broad/static/discovery context, bounded native relation latches, justified cognition and finite selective retention. It replaces the earlier copied background sampler and potentially recurring three-second AI opportunity. Valid quiet continuations handle recurring ordinary proximity; few-second latency begins only with a justified unresolved cause. Literal daughter/cliff/crowd, movement-only, deer-loss, portrait and ten-year cases include actual data, actions, limitations and expiry.

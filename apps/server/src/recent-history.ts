@@ -1,4 +1,11 @@
-import { entityGet, type TemporalValue } from '@open-legend/domain';
+import {
+  entityGet,
+  speechDescription,
+  soundDescription,
+  type TemporalValue,
+  type ObservedLocation,
+  type SensoryFacet,
+} from '@open-legend/domain';
 import type { MemoryHistoryPage } from '@open-legend/protocol';
 import { z } from 'zod';
 import { AuthorityError, scopeKey, type RequestScope } from './authority.js';
@@ -18,21 +25,68 @@ const cursorSchema = z
   })
   .strict();
 const point = (p: { x: number; y: number; z: number }) => `(${p.x}, ${p.y}, ${p.z})`;
-function receivedText(values: readonly TemporalValue[]): string {
+function receivedLocation(location: ObservedLocation): string {
+  if (location.kind === 'point')
+    return `position ${point(location.point)}${location.errorRadius ? `, within ${location.errorRadius}` : ''}`;
+  if (location.kind === 'region') return `within ${location.radius} of ${point(location.center)}`;
+  return location.elevation === 'level'
+    ? 'a direction around my level'
+    : `a direction ${location.elevation} me`;
+}
+function receivedText(values: readonly (TemporalValue | SensoryFacet)[]): string {
   const parts: string[] = [];
   for (const value of values) {
     if (value.kind === 'personal-account') parts.push(historicalAccountText(value.text));
+    else if (value.kind === 'speech') parts.push(speechDescription(value.speech));
+    else if (value.kind === 'sound') parts.push(soundDescription(value.sound));
+    else if (value.kind === 'location') parts.push(receivedLocation(value.location));
     else if (value.kind === 'body')
       parts.push(`${value.body.label?.name ?? 'something'} at ${point(value.body.position)}`);
     else if (value.kind === 'event')
       parts.push(value.eventType === 'speech' ? value.text : historicalAccountText(value.text));
     else if (value.kind === 'claim') parts.push(value.wordsAsHeard);
-    else if (value.kind === 'received-motion') {
-      const a = value.earlier.location,
-        b = value.later.location;
-      if (a.kind === 'point' && b.kind === 'point')
-        parts.push(`position ${point(a.point)} → ${point(b.point)}`);
-    }
+    else if (value.kind === 'received-motion')
+      parts.push(
+        `${receivedLocation(value.earlier.location)} → ${receivedLocation(value.later.location)}`,
+      );
+    else if (value.kind === 'observed-motion')
+      parts.push(
+        `${receivedLocation(value.earlier.value.location)} → ${receivedLocation(value.later.value.location)}`,
+      );
+    else if (value.kind === 'surface-patch')
+      parts.push(
+        `Visible part of a surface through ${value.patch.vertices.map(point).join(', ')}${value.patch.errorRadius ? `; uncertainty ${value.patch.errorRadius}` : ''}`,
+      );
+    else if (value.kind === 'physical-boundary')
+      parts.push(
+        `Edge from ${point(value.boundary.a)} to ${point(value.boundary.b)}${value.boundary.dropLower > 0 ? `; drop at least ${value.boundary.dropLower}` : ''}`,
+      );
+    else if (value.kind === 'public-attributes')
+      parts.push(
+        ...value.attributes.map(
+          (attribute) =>
+            `${attribute.name}: ${attribute.status === 'known' && attribute.value !== null ? `${attribute.value}${attribute.unit ? ` ${attribute.unit}` : ''}` : 'unknown'}`,
+        ),
+      );
+    else if (value.kind === 'carried')
+      parts.push(
+        `Carried: ${value.items.map((item) => item.itemKindAsObserved).join(', ') || 'nothing observed'}`,
+      );
+    else if (value.kind === 'pile-contents')
+      parts.push(
+        `Contents: ${value.items.map((item) => `${item.quantity} ${item.name}`).join(', ') || 'nothing observed'}`,
+      );
+    else if (value.kind === 'encounter-exposure') {
+      const exposure = value.exposure;
+      parts.push(`${exposure.label}: ${exposure.description}`);
+      if (exposure.kind === 'inventory-item') {
+        if (exposure.inscription) parts.push(`Inscription: ${exposure.inscription}`);
+        if (exposure.observedLocation) parts.push(exposure.observedLocation.label);
+      }
+    } else if (value.kind === 'confirmation') parts.push(receivedText([value.snapshot.value]));
+    else if (value.kind === 'contact')
+      parts.push(value.detail === 'moving' ? 'Movement noticed.' : 'Presence noticed.');
+    else if (value.kind === 'detected') parts.push(`${value.detected} detected.`);
   }
   return [...new Set(parts)].join('; ') || 'A received detail changed.';
 }
@@ -98,9 +152,7 @@ export async function recentHistory(
   let before: { at: number; epoch: string; ordinal: number; order: number } | undefined;
   if (request.cursor) {
     try {
-      const cursor = cursorSchema.parse(
-        JSON.parse(Buffer.from(request.cursor, 'base64url').toString()),
-      );
+      const cursor = cursorSchema.parse(openCursor(request.cursor));
       if (cursor.fence !== fence) throw Error();
       before = cursor;
     } catch {
@@ -166,15 +218,13 @@ export async function recentHistory(
     })),
     next:
       more && oldest
-        ? Buffer.from(
-            JSON.stringify({
-              fence,
-              at: oldest.at,
-              epoch: oldest.epoch,
-              ordinal: oldest.ordinal,
-              order: oldest.order,
-            }),
-          ).toString('base64url')
+        ? sealCursor({
+            fence,
+            at: oldest.at,
+            epoch: oldest.epoch,
+            ordinal: oldest.ordinal,
+            order: oldest.order,
+          })
         : null,
     scanLimited: selected.incomplete,
   };

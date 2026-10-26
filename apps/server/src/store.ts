@@ -100,7 +100,7 @@ function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: s
 }
 import { digest } from './content-digest.js';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '22';
+export const DATABASE_SCHEMA = '23';
 
 export interface AttemptBudget {
   id: string;

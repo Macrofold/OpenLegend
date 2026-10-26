@@ -36,11 +36,14 @@ import {
   temporalReceiptSource,
   retainTemporalSupport,
   releaseTemporalSupport,
+  finalizeTemporalGeometrySupport,
+  reconcileTemporalGeometryCaptures,
 } from './temporal-evidence.js';
 import {
   refreshReceivedGeometry,
   evaluateAttentionRelations,
   currentReceivedGeometry,
+  endReceivedGeometry,
 } from './received-geometry.js';
 import { hasMemory } from './living.js';
 import { knownPlaceEvidence } from './known-place-evidence.js';
@@ -440,6 +443,21 @@ export function perceptionEvidenceOwner(
     state.receivedAtSequence = world.sequence;
   }
   return state;
+}
+/** Transient reception lasts through its actual receiving phase. A later native
+ * phase cannot turn an old sound into permanent awareness for a memoryless actor. */
+export function beginPerceptionPhase(world: WorldState, observerId: string): void {
+  const state = world.perceptionEvidence?.[observerId];
+  if (
+    !state?.received.length ||
+    state.received.every((observation) => observation.acquiredAt >= world.simTime)
+  )
+    return;
+  state.received = state.received.filter((observation) => observation.acquiredAt >= world.simTime);
+  state.receipts = Object.fromEntries(
+    state.received.map((observation, index) => [acquisitionKey(observation), index]),
+  );
+  state.receivedAtSequence = world.sequence;
 }
 const owner = perceptionEvidenceOwner;
 export const observationFactKey = (
@@ -1449,8 +1467,18 @@ function captureAttendedGeometryContext(
     .map((entry) => entry.exposure.episodeId)
     .filter((id) => !oldContexts.has(id));
   const active = new Set([...oldContexts, ...entries.map((entry) => entry.exposure.episodeId)]);
-  if (!active.size || (!acquired.length && !newContexts.length)) return;
-  const available = currentReceivedGeometry(world, observerId).observations;
+  const changedScope = oldContexts.size !== entries.length || newContexts.length > 0;
+  if (!active.size || (!acquired.length && !changedScope)) return;
+  const geometry = currentReceivedGeometry(world, observerId);
+  const available = geometry.observations;
+  if (changedScope)
+    finalizeTemporalGeometrySupport(
+      world,
+      observerId,
+      available,
+      geometry.supportedThrough,
+      selectedTemporalPolicy(world).recent,
+    );
   const byId = new Map(available.map((observation) => [observation.id, observation]));
   const fresh = new Set(acquired.map((observation) => observation.id));
   const scopes = new Map<string, { observation: ObservationContribution; subjects: Set<string> }>();
@@ -1488,10 +1516,17 @@ function captureAttendedGeometryContext(
       {
         contextSubjects: [...scope.subjects],
         change: fresh.has(observation.id) ? 'change' : 'baseline',
+        confirmedThrough: geometry.supportedThrough,
       },
     );
     if (receipt) captured.add(observation.id);
   }
+  reconcileTemporalGeometryCaptures(
+    world,
+    observerId,
+    new Set(available.map((observation) => observation.id)),
+    entries.map((entry) => entry.exposure.episodeId),
+  );
   return captured;
 }
 
@@ -1639,6 +1674,7 @@ export function endCurrentEvidence(
   const state = world.perceptionEvidence?.[observerId];
   if (!state) return;
   const observer = entityGet(world.entities, observerId);
+  if (!modality || modality === 'sight') endReceivedGeometry(world, observerId);
   const lostIndividuals = new Set<string>();
   for (const [key, lease] of Object.entries(readOnlyDraftView(state.current)))
     if (!modality || lease.modality === modality) {

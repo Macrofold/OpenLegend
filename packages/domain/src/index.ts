@@ -363,3 +363,5 @@ export * from './attention.js';
 export * from './semantic-opportunities.js';
 export * from './received-scene.js';
 export * from './received-geometry.js';
+
+export * from './received-history-scene.js';

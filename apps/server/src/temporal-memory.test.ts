@@ -60,7 +60,7 @@ describe('bounded personal temporal storage', () => {
         "SELECT COUNT(*) AS count FROM information_schema.tables WHERE table_schema='open_legend'",
       )
       .get();
-    await first.db.prepare("UPDATE meta SET value='21' WHERE key='schema'").run();
+    await first.db.prepare("UPDATE meta SET value='22' WHERE key='schema'").run();
     await first.close();
     const refused = await testRepository(directory);
     cleanup.push(async () => {
@@ -70,7 +70,7 @@ describe('bounded personal temporal storage', () => {
     await expect(refused.ready).rejects.toThrow('Unsupported database schema');
     expect(
       (await refused.db.prepare("SELECT value FROM meta WHERE key='schema'").get())!['value'],
-    ).toBe('21');
+    ).toBe('22');
     expect(
       (await refused.db
         .prepare(
@@ -399,7 +399,7 @@ describe('bounded personal temporal storage', () => {
     expect(() =>
       store.saves.validatePayload({
         ...saved,
-        format: 'development-2026-10-25-personal-evidence-closure',
+        format: 'development-2026-10-26-receipt-backed-knowledge',
       }),
     ).toThrow('Unsupported save format');
     const oldNamespace = service.world.experience!.temporal!.namespace;

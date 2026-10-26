@@ -40,6 +40,12 @@ test('the player can read and search actual recent observations on desktop and a
       setSpatialPosition(world, other, { x: 4, y: 0, z: 2 }, worldSupport(other), 'physical');
       initializePerception(world, []);
     });
+    await page.getByRole('button', { name: 'In view', exact: true }).click();
+    await page.locator('[data-entity]').first().getByRole('button').click();
+    await page.getByRole('button', { name: 'Focus here', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Stop focusing here', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Stop focusing here', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Focus here', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Character', exact: true }).click();
     await page.getByRole('tab', { name: 'Record', exact: true }).click();
     const reader = page.locator('.ol-memory-history:visible');

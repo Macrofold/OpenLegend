@@ -12,6 +12,7 @@ import {
   receivedNear,
   receivedSeparation,
   receivedBoundarySeparation,
+  historicalSpatialMeasurements,
   selectedAttentionPolicy,
   type WorldState,
   type TemporalHistorySelection,
@@ -42,6 +43,16 @@ export const situationQuerySchema = z.union([
     })
     .strict(),
   z.object({ kind: z.literal('separation'), first: reference, second: reference }).strict(),
+  z
+    .object({
+      kind: z.literal('historical-spatial'),
+      anchor: reference,
+      other: reference.nullable(),
+      from: z.number().finite().nonnegative(),
+      through: z.number().finite().nonnegative(),
+      radius: z.number().finite().min(0).max(100),
+    })
+    .strict(),
   z.object({ kind: z.literal('boundaries'), anchor: reference }).strict(),
   z
     .object({
@@ -683,7 +694,72 @@ export async function expandSituation(
     const frameStart = captured.frames.length;
     let result: unknown;
     let keepNewest = false;
-    if (query.kind === 'history') {
+    if (query.kind === 'historical-spatial') {
+      const anchor = subjects.get(query.anchor),
+        other = query.other ? subjects.get(query.other) : undefined;
+      if (!anchor || (query.other && !other) || query.from > query.through)
+        result = { status: 'unavailable' };
+      else {
+        const history = await readHistory({
+          subjects: [...new Set([anchor, ...(other ? [other] : [])])],
+          measurements: { from: query.from, through: Math.min(world.simTime, query.through) },
+          through: world.simTime,
+          cut: captured.receiptPrefix,
+          bytes: Math.max(0, policy.expansionBytes - encodedBytes()),
+          limit: policy.expansionReceipts,
+        });
+        captured.bindHistory(history);
+        const native = historicalSpatialMeasurements(
+          history,
+          {
+            anchor,
+            ...(other ? { other } : {}),
+            from: query.from,
+            through: Math.min(world.simTime, query.through),
+            radius: query.radius,
+          },
+          visits,
+        );
+        visits -= native.visited;
+        const support = (fact: import('@open-legend/domain').HistoricalSpatialFact) => {
+          const entry = history.entries[fact.entry]!,
+            reference = entry.receipt.facets[fact.facet]!;
+          return {
+            reference: permittedSourceHandle(world, actorId, [
+              'receipt',
+              entry.receipt.physicalLife,
+              entry.receipt.epoch,
+              entry.receipt.ordinal,
+            ]),
+            facet: reference.ordinal,
+            asOf: reference.asOf,
+            measuredFrom: reference.measuredFrom,
+            measuredThrough: reference.measuredThrough,
+            acquiredAt: reference.acquiredAt,
+            ...(reference.confirmedThrough !== undefined
+              ? { confirmedThrough: reference.confirmedThrough }
+              : {}),
+          };
+        };
+        result = {
+          status: native.status,
+          coverage: native.coverage,
+          timeUnit: 'simulation-seconds',
+          distanceUnit: 'metres',
+          scope: 'selected-retained-evidence',
+          preparedFacts: native.preparedFacts,
+          samples: native.samples.map((sample) => ({
+            ...sample,
+            support: sample.support.map(support),
+            boundaries: sample.boundaries.map((edge) => ({
+              ...edge,
+              support: support(edge.support),
+            })),
+          })),
+        };
+        keepNewest = true;
+      }
+    } else if (query.kind === 'history') {
       const subject = query.subject ? subjects.get(query.subject) : undefined;
       if ((query.subject && !subject) || query.from > query.through)
         result = { status: 'unavailable' };
@@ -755,7 +831,7 @@ export async function expandSituation(
     captured.compactFrames(result, frameStart);
     if (encodedBytes() > policy.expansionBytes && result && typeof result === 'object') {
       const record = result as Record<string, unknown>;
-      const rows = record['bodies'] ?? record['facts'] ?? record['entries'];
+      const rows = record['bodies'] ?? record['facts'] ?? record['entries'] ?? record['samples'];
       if (Array.isArray(rows)) {
         record['status'] = 'partial';
         record['coverage'] = 'partial';

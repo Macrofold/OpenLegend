@@ -6,7 +6,6 @@ import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
 import { ensureExperienceAccounting } from './remembered-impressions.js';
 import { personalFactAlias } from './experience-source.js';
-import { isImmutableData } from './records.js';
 import { selectedRecognitionSupportSourceIds } from './world-composition.js';
 import type { WorldState } from './types.js';
 import type { ObserverSubject } from './knowledge.js';
@@ -81,6 +80,8 @@ export interface TemporalFacetReference extends TemporalValueReference {
   measuredFrom: number;
   measuredThrough: number;
   acquiredAt: number;
+  /** An actual held-view confirmation, without changing the original measurement. */
+  confirmedThrough?: number;
   original?: ObservationFactKey;
   /** Exact live measurement revision; original is its acquired provenance root. */
   receivedFrom?: EvidenceSource;
@@ -132,7 +133,13 @@ export interface TemporalActorHistory {
   /** Conservative unavailable-prefix coverage, not a ledger of fictional sensory losses. */
   releasedThrough?: number;
   /** Bounded live-capture watermarks; values remain in their immutable source owner. */
-  captures: Record<string, TemporalValueReference>;
+  captures: Record<
+    string,
+    TemporalValueReference & {
+      confirmedThrough?: number;
+      contextSubjects?: string[];
+    }
+  >;
   /** Sparse exact qualifying contact support, not an autobiographical archive. */
   supports?: Record<string, TemporalSupportCapsule>;
   accounts?: {
@@ -180,10 +187,11 @@ export interface TemporalCaptureInput {
     measuredFrom: number;
     measuredThrough: number;
     acquiredAt: number;
+    confirmedThrough?: number;
     original?: ObservationFactKey;
     receivedFrom?: EvidenceSource;
-    /** Private producer cache key; excluded from the retained received record. */
-    sharedSourceId?: string;
+    /** A saved producer watermark; reuse still verifies the received value. */
+    retainedValue?: TemporalValueReference;
   }>;
 }
 
@@ -194,7 +202,6 @@ const blockIndexes = new WeakMap<
   object,
   { id: string; length: number; index: Map<string, number> }
 >();
-const sourceValues = new WeakMap<object, Map<string, TemporalValueReference>>();
 const motionValues = new WeakMap<object, TemporalMotionValue>();
 const equalValue = (left: unknown, right: unknown) =>
   JSON.stringify(left) === JSON.stringify(right);
@@ -320,20 +327,17 @@ function retainValue(
   temporal: TemporalEvidenceState,
   value: TemporalValue,
   maxBytes: number,
-  sharedSourceId?: string,
+  retainedValue?: TemporalValueReference,
 ) {
-  const immutable = readOnlyDraftView(value),
-    heldValue = isImmutableData(immutable);
-  const entity = !heldValue && sharedSourceId && entityGet(world.entities, sharedSourceId);
-  // Source-only geometry has no entity to invent. Its immutable received value
-  // uses the same verified payload reuse as a body, including later entry baselines.
-  const source = heldValue ? immutable : entity && readOnlyDraftView(entity);
-  const previous = source && sourceValues.get(source)?.get(value.kind);
+  const previous = retainedValue;
   const existing = previous && temporal.sources[previous.blockId]?.values[previous.valueOrdinal];
   // Reuse never reads a hidden value into evidence: the actual receiver supplied
   // the complete value first, and equality is checked against that received body.
   if (previous && existing && equalValue(existing, value))
-    return { reference: previous, addedBytes: 0 };
+    return {
+      reference: { blockId: previous.blockId, valueOrdinal: previous.valueOrdinal },
+      addedBytes: 0,
+    };
   const atBoundary = boundary(world);
   let block = temporal.activeSource && temporal.sources[temporal.activeSource];
   let addedBytes = 0;
@@ -383,11 +387,6 @@ function retainValue(
     prepared.length = block.values.length;
   }
   const reference = { blockId: block.id, valueOrdinal: ordinal };
-  if (source) {
-    let values = sourceValues.get(source);
-    if (!values) sourceValues.set(source, (values = new Map()));
-    values.set(value.kind, reference);
-  }
   return { reference, addedBytes };
 }
 
@@ -421,13 +420,13 @@ export function appendTemporalReceipt(
     change: input.change,
     required: input.required === true,
     sourceIds: [...new Set(input.sourceIds ?? [])],
-    facets: input.facets.map(({ value, sharedSourceId, ...metadata }, ordinal) => {
+    facets: input.facets.map(({ value, retainedValue, ...metadata }, ordinal) => {
       const retained = retainValue(
         world,
         temporal,
         temporalValue(value),
         policy.chunkBytes,
-        sharedSourceId,
+        retainedValue,
       );
       addedSourceBytes += retained.addedBytes;
       return { ...cloneValue(metadata), ...retained.reference, ordinal };
@@ -533,7 +532,6 @@ export function temporalFacetInput(
       revision: lease.revision,
       observer: { ...lease.observer },
     },
-    sharedSourceId: lease.subjectId,
   };
 }
 
@@ -647,7 +645,10 @@ export function captureTemporalCurrent(
             ? 'baseline'
             : 'change',
         sourceIds: [...new Set(group.map((lease) => lease.original.id))],
-        facets: group.map(temporalFacetInput),
+        facets: group.map((lease) => ({
+          ...temporalFacetInput(lease),
+          retainedValue: owned.actor.captures[lease.id],
+        })),
       },
       policy,
     );
@@ -668,7 +669,7 @@ export function captureTemporalCurrent(
     }
   }
   for (const id of Object.keys(owned.actor.captures))
-    if (!keep.has(id)) delete owned.actor.captures[id];
+    if (id.startsWith('perception-lease-') && !keep.has(id)) delete owned.actor.captures[id];
   return captured;
 }
 
@@ -684,9 +685,15 @@ export function captureTemporalObservation(
     ordinals?: ReadonlySet<number>;
     contextSubjects?: readonly string[];
     change?: TemporalReceipt['change'];
+    confirmedThrough?: number;
   } = {},
 ): TemporalReceiptLocator | undefined {
-  return appendTemporalReceipt(
+  const history = world.experience?.temporal?.actors[actorId];
+  const previous =
+    options.contextSubjects && observation.facets.length === 1
+      ? history?.captures[observation.id]
+      : undefined;
+  const locator = appendTemporalReceipt(
     world,
     actorId,
     {
@@ -704,6 +711,10 @@ export function captureTemporalObservation(
         .filter((facet) => !options.ordinals || options.ordinals.has(facet.ordinal))
         .map((facet) => ({
           ...facet,
+          ...(options.confirmedThrough === undefined
+            ? {}
+            : { confirmedThrough: options.confirmedThrough }),
+          ...(previous ? { retainedValue: previous } : {}),
           original: {
             source: {
               family: 'native-exposure',
@@ -717,6 +728,64 @@ export function captureTemporalObservation(
     },
     policy,
   );
+  if (locator && options.contextSubjects?.length && observation.facets.length === 1) {
+    const actor = world.experience!.temporal!.actors[actorId]!;
+    const facet = actor.chunks.at(-1)!.receipts.at(-1)!.facets[0]!;
+    actor.captures[observation.id] = {
+      blockId: facet.blockId,
+      valueOrdinal: facet.valueOrdinal,
+      confirmedThrough: Math.max(
+        previous?.confirmedThrough ?? 0,
+        options.confirmedThrough ?? observation.facets[0]!.measuredThrough,
+      ),
+      contextSubjects: [
+        ...new Set([...(previous?.contextSubjects ?? []), ...options.contextSubjects]),
+      ],
+    };
+  }
+  return locator;
+}
+
+/** Only a native receiver's held interval may extend an original geometry fact.
+ * Compact boundary receipts keep that proof when the live view is replaced. */
+export function finalizeTemporalGeometrySupport(
+  world: WorldState,
+  actorId: string,
+  observations: readonly ObservationContribution[],
+  through: number,
+  policy: TemporalRetentionPolicy,
+): void {
+  const actor = world.experience?.temporal?.actors[actorId];
+  if (!actor) return;
+  for (const observation of observations) {
+    const held = actor.captures[observation.id];
+    if (
+      !held?.contextSubjects?.length ||
+      through <= (held.confirmedThrough ?? observation.acquiredAt)
+    )
+      continue;
+    captureTemporalObservation(world, actorId, observation, [observation.id], false, policy, {
+      contextSubjects: held.contextSubjects,
+      change: 'change',
+      confirmedThrough: through,
+    });
+  }
+}
+
+/** Watermarks follow the bounded current geometry. They grant no source retention. */
+export function reconcileTemporalGeometryCaptures(
+  world: WorldState,
+  actorId: string,
+  active: ReadonlySet<string>,
+  subjects: readonly string[],
+): void {
+  const actor = world.experience?.temporal?.actors[actorId];
+  if (!actor) return;
+  for (const [id, capture] of Object.entries(actor.captures)) {
+    if (!id.startsWith('perception-observation-')) continue;
+    if (!active.has(id)) delete actor.captures[id];
+    else capture.contextSubjects = [...subjects];
+  }
 }
 
 /** A deduplication watermark grants no retention of a mixed shared source block.
@@ -766,6 +835,8 @@ export interface TemporalHistoryQuery {
   epoch?: string;
   before?: { epoch: string; ordinal: number; at: number; order: number };
   cut?: TemporalReceiptPrefix;
+  /** Support time differs from the later receipt that confirms a held interval. */
+  measurements?: { from: number; through: number };
   limit?: number;
   bytes?: number;
 }
@@ -826,6 +897,12 @@ export function selectTemporalHistory(
       (receipt) =>
         receipt.actorId === actorId &&
         (!query.cut || temporalReceiptWithinPrefix(receipt, query.cut)) &&
+        (!query.measurements ||
+          receipt.facets.some(
+            (facet) =>
+              facet.measuredFrom <= query.measurements!.through &&
+              (facet.confirmedThrough ?? facet.measuredThrough) >= query.measurements!.from,
+          )) &&
         (query.from === undefined || receipt.at >= query.from) &&
         (query.through === undefined || receipt.at <= query.through) &&
         (!subjects.length ||
@@ -852,6 +929,12 @@ export function selectTemporalHistory(
   for (const receipt of receipts) {
     const values: TemporalValue[] = [];
     for (const reference of receipt.facets) {
+      if (
+        query.measurements &&
+        (reference.measuredFrom > query.measurements.through ||
+          (reference.confirmedThrough ?? reference.measuredThrough) < query.measurements.from)
+      )
+        continue;
       const value = temporal.sources[reference.blockId]?.values[reference.valueOrdinal];
       if (!value) {
         incomplete = true;

@@ -48,6 +48,7 @@ export interface TemporalHistoryQuery {
   limit?: number;
   bytes?: number;
   cut?: TemporalReceiptPrefix;
+  measurements?: { from: number; through: number };
 }
 
 export function retentionNeedsPreparation(world: WorldState): boolean {
@@ -114,11 +115,12 @@ export async function readTemporalHistory(
       octet_length(payload) AS encoded_bytes FROM mind_temporal_chunks
     WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=?
       ${subjects.length ? 'AND subjects && ?::text[]' : ''}
+      ${query.measurements ? 'AND last_supported_at>=? AND first_measured_at<=?' : ''}
       ${query.physicalLife === undefined ? '' : 'AND physical_life=?'}
       ${query.epoch === undefined ? '' : 'AND receipt_epoch=?'}
       ${query.cut ? 'AND first_order<=? AND (physical_life<>? OR receipt_epoch<>? OR first_ordinal<=?)' : ''}
       ${query.before ? 'AND (first_at<? OR (first_at=? AND (first_order<? OR (first_order=? AND (receipt_epoch<? OR (receipt_epoch=? AND first_ordinal<?))))))' : ''}
-    ORDER BY last_at DESC,last_order DESC,receipt_epoch DESC,last_ordinal DESC LIMIT ?`,
+    ORDER BY ${query.measurements ? 'last_supported_at' : 'last_at'} DESC,last_order DESC,receipt_epoch DESC,last_ordinal DESC LIMIT ?`,
     )
     .all(
       scope.worldId,
@@ -126,6 +128,7 @@ export async function readTemporalHistory(
       from,
       through,
       ...(subjects.length ? [subjects] : []),
+      ...(query.measurements ? [query.measurements.from, query.measurements.through] : []),
       ...(query.physicalLife === undefined ? [] : [query.physicalLife]),
       ...(query.epoch === undefined ? [] : [query.epoch]),
       ...(query.cut
@@ -211,6 +214,12 @@ export async function readTemporalHistory(
       (receipt) =>
         receipt.actorId === scope.actorId &&
         (!query.cut || temporalReceiptWithinPrefix(receipt, query.cut)) &&
+        (!query.measurements ||
+          receipt.facets.some(
+            (facet) =>
+              facet.measuredFrom <= query.measurements!.through &&
+              (facet.confirmedThrough ?? facet.measuredThrough) >= query.measurements!.from,
+          )) &&
         receipt.at >= from &&
         receipt.at <= through &&
         (!subjects.length ||
@@ -294,7 +303,12 @@ export async function readTemporalHistory(
     const kept = receipt.facets
       .map((facet, index) => ({ facet, value: values[index] }))
       .filter(
-        ({ facet, value }) => !!value && temporalFacetEligible(world, scope.actorId, facet, value),
+        ({ facet, value }) =>
+          !!value &&
+          (!query.measurements ||
+            (facet.measuredFrom <= query.measurements.through &&
+              (facet.confirmedThrough ?? facet.measuredThrough) >= query.measurements.from)) &&
+          temporalFacetEligible(world, scope.actorId, facet, value),
       );
     if (!kept.length) {
       incomplete = true;

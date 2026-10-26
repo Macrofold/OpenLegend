@@ -9,7 +9,9 @@ import {
   experienceEntry,
   observeActor,
   initializePerception,
+  advanceWorld,
 } from './index.js';
+import { captureEvidenceCut } from './perception-evidence.js';
 
 it('sees distant objects without extending speech exposure', () => {
   const world = createWorld();
@@ -81,4 +83,55 @@ it('keeps an authoritative outer sight boundary even though the renderer can rem
   expect(
     observeActor(world, PLAYER_ID)!.visibleEntities.some((entity) => entity.id === NPC_ID),
   ).toBe(false);
+});
+
+it("ends a memoryless listener's transient sound at the next later native perception phase", () => {
+  const world = createWorld();
+  const player = entityGet(world.entities, PLAYER_ID)!,
+    npc = entityGet(world.entities, NPC_ID)!;
+  player.actor!.capabilities = {
+    cognition: true,
+    innerWorld: true,
+    speech: true,
+    memory: false,
+    comprehendsSpeech: true,
+  };
+  setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, worldSupport(player));
+  setSpatialPosition(world, npc, { x: 2, y: 0, z: 2 }, worldSupport(npc));
+  initializePerception(world, []);
+  expect(captureEvidenceCut(world, PLAYER_ID).current).toHaveLength(0);
+  const spoken = executeCommand(world, {
+    id: 'transient-sound',
+    actorId: NPC_ID,
+    type: 'say',
+    targetId: PLAYER_ID,
+    text: 'Actually spoken words.',
+  });
+  expect(spoken.outcome.ok).toBe(true);
+  const heard = captureEvidenceCut(spoken.world, PLAYER_ID).acquired;
+  expect(
+    heard.some((observation) => observation.facets.some((facet) => facet.value.kind === 'sound')),
+  ).toBe(true);
+  expect(
+    heard.some((observation) => observation.facets.some((facet) => facet.value.kind === 'speech')),
+  ).toBe(false);
+  const later = advanceWorld(spoken.world, 0.01).world;
+  expect(
+    captureEvidenceCut(later, PLAYER_ID).acquired.some((observation) =>
+      observation.facets.some((facet) => facet.value.kind === 'sound'),
+    ),
+  ).toBe(false);
+  const again = executeCommand(later, {
+    id: 'new-transient-sound',
+    actorId: NPC_ID,
+    type: 'say',
+    targetId: PLAYER_ID,
+    text: 'A new actual sound.',
+  });
+  expect(again.outcome.ok).toBe(true);
+  expect(
+    captureEvidenceCut(again.world, PLAYER_ID).acquired.some((observation) =>
+      observation.facets.some((facet) => facet.value.kind === 'sound'),
+    ),
+  ).toBe(true);
 });

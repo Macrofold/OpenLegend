@@ -335,7 +335,12 @@ describe('native received relation producers', () => {
       ([, candidate]) => candidate.sourceId === other.id,
     )![0];
     world.simTime = 1;
+    const restored = JSON.parse(JSON.stringify(world)) as WorldState;
     expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
+    expect(setAttentionFocus(restored, PLAYER_ID, [key])).toBe(true);
+    expect(JSON.parse(JSON.stringify(world.experience!.temporal))).toEqual(
+      restored.experience!.temporal,
+    );
     const baseline = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
       subject: exposure,
       bytes: 1024 * 1024,
@@ -354,6 +359,60 @@ describe('native received relation producers', () => {
     }).entries.find((entry) => entry.values.some((value) => value.kind === 'surface-patch'))!;
     expect(terrain.receipt.facets[0]!.blockId).toBe(earlier.receipt.facets[0]!.blockId);
     expect(terrain.receipt.facets[0]!.valueOrdinal).toBe(earlier.receipt.facets[0]!.valueOrdinal);
+    validateTemporalEvidenceState(world);
+  });
+  it('closes an actual held terrain interval when a later view replaces it, without resampling each body movement', () => {
+    const value = map([surface('high', -5, 20, 2), surface('low', 20, 40, 0)]);
+    value.width = 42;
+    value.tiles = Array.from({ length: 5 }, () => Array(42).fill('grass'));
+    const { world, people } = nativeScene(1, value, { x: 25, y: 2, z: 2 });
+    const person = people[0]!;
+    const subject = currentBodyObservation(world, PLAYER_ID, person.id)!.exposure.episodeId;
+    const original = currentReceivedGeometry(world, PLAYER_ID).observations.find((observation) =>
+      observation.facets.some((facet) => facet.value.kind === 'physical-boundary'),
+    )!;
+    expect(original).toBeDefined();
+    const before = world.experience!.temporal!.actors[PLAYER_ID]!.count;
+    world.simTime = 2;
+    setSpatialPosition(world, person, { x: 6, y: 2, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    expect(currentReceivedGeometry(world, PLAYER_ID).supportedThrough).toBe(2);
+    const atMovement = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+      subject,
+      bytes: 1024 * 1024,
+      limit: 1000,
+    });
+    expect(
+      atMovement.entries.filter((entry) =>
+        entry.values.some((value) => value.kind === 'physical-boundary'),
+      ),
+    ).toHaveLength(1);
+    expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBeGreaterThan(before);
+    world.simTime = 3;
+    world.map.spatial.revision++;
+    initializePerception(world, []);
+    const historical = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+      subject,
+      bytes: 1024 * 1024,
+      limit: 1000,
+    });
+    const edges = historical.entries.filter((entry) =>
+      entry.receipt.facets.some((facet) => facet.original?.source.id === original.id),
+    );
+    expect(edges).toHaveLength(2);
+    const closed = edges.find((entry) => entry.receipt.at === 3)!;
+    const first = edges.find((entry) => entry.receipt.at === 0)!;
+    expect(closed.receipt.at).toBe(3);
+    expect(closed.receipt.facets[0]).toMatchObject({
+      measuredFrom: 0,
+      measuredThrough: 0,
+      acquiredAt: 0,
+      confirmedThrough: 2,
+      blockId: first.receipt.facets[0]!.blockId,
+      valueOrdinal: first.receipt.facets[0]!.valueOrdinal,
+    });
+    expect(currentAttentionCues(world, PLAYER_ID)).toHaveLength(0);
+    expect(currentReceivedGeometry(world, PLAYER_ID).observations).toHaveLength(0);
     validateTemporalEvidenceState(world);
   });
   it('keeps fifteen unfamiliar people present while an attended person approaches an actually received drop', () => {

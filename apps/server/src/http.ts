@@ -1,3 +1,4 @@
+import { setPlayerAttention } from './attention-intent.js';
 import { resolveRecentObservationReference } from './recent-history.js';
 import { KnownPlacePreparationError } from '@open-legend/domain';
 import { MemoryPreparationError } from './memory-repository.js';
@@ -1644,6 +1645,7 @@ async function initializeGameServer(
           '/api/god/construction-shower',
           '/api/construction/preview',
           '/api/command',
+          '/api/attention',
           '/api/knowledge',
           '/api/control',
           '/api/conversation',
@@ -1947,6 +1949,10 @@ async function initializeGameServer(
                 loadingSave = false;
                 publish();
               }
+            }
+            case '/api/attention': {
+              const value = z.object({ targetId: requestIdSchema.nullable() }).strict().parse(body);
+              return send(response, 200, await setPlayerAttention(service, scope, value.targetId));
             }
             case '/api/actions': {
               const context = resolveCommandContactReferences(

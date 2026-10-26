@@ -1,3 +1,4 @@
+import { AttentionFocus } from './attention-focus';
 import { LoadingIndicator, LoadingScope } from '../design-system/loading';
 import { WorldIntentIcon, type WorldIntent } from './world-composer';
 import { namePhrase } from '@open-legend/language';
@@ -566,6 +567,9 @@ export function ActionPicker({
               <WorldIntentIcon mode="speak" />
               <span>Speak</span>
             </AriaButton>
+          )}
+          {!full && subject && !lostTarget && (!query || 'focus attention listen'.includes(query.toLowerCase())) && (
+            <AttentionFocus key={JSON.stringify([view.worldId,view.saveTimeline,view.access?.scope,subject.id])} subject={subject} view={view} connected={available} />
           )}
           {showAct && (
             <AriaButton data-picker-row className="ol-item" onPress={() => compose('act')}>

@@ -43,7 +43,7 @@ export async function memoryHistory(
   scope: RequestScope,
   request: { cursor?: string; query?: string; thoughts?: boolean; recent?: boolean },
 ): Promise<MemoryHistoryPage> {
-  if (request.recent) return recentHistory(service,actorId,scope,request);
+  if (request.recent) return recentHistory(service, actorId, scope, request);
   const permitted = () =>
     service.mayInspectPrivate(actorId, scope) &&
     !!entityGet(service.world.entities, actorId)?.actor;
@@ -77,19 +77,59 @@ export async function memoryHistory(
       throw new HistoryCursorError('Memories changed. Browse or search again.');
     before = { at: cursor.at, id: cursor.id, kind: cursor.kind };
   }
-  const result = await memories.browse(
-    { worldId: world.id, actorId, generation: head.generation },
-    { before, terms, thoughts: !!request.thoughts, limit: MEMORY_PAGE, scan: SEARCH_SCAN_ROWS },
-  );
-  // Forgetting, correction, restore or lost access during the read invalidates the page.
+  const sourceOwners = (snapshot: typeof world) => [
+    snapshot.memories[actorId],
+    snapshot.experience?.awareness[actorId],
+    snapshot.experience?.summaries[actorId],
+    snapshot.experience?.temporal?.actors[actorId]?.accounts,
+  ];
+  const capturedOwners = sourceOwners(world),
+    sourceRevision = memories.actorRevision(actorId);
+  const memoryScope = { worldId: world.id, actorId, generation: head.generation };
+  const assertPermitted = () => {
+    if (
+      !permitted() ||
+      generation !== service.generation ||
+      historyEpoch !== service.historyEpoch ||
+      world.experience?.forgotten[actorId] !== service.world.experience?.forgotten[actorId] ||
+      world.experience?.corrections?.[actorId] !== service.world.experience?.corrections?.[actorId]
+    )
+      throw new HistoryCursorError('Memories changed. Browse or search again.');
+  };
+  const result = await memories.browse(memoryScope, {
+    before,
+    terms,
+    thoughts: !!request.thoughts,
+    limit: MEMORY_PAGE,
+    scan: SEARCH_SCAN_ROWS,
+  });
+  assertPermitted();
+  // Ordinary expiry can remove a cold row without a creator edit. Revalidate only
+  // this actor's bounded selected page when its owning sources changed during SQL.
   if (
-    !permitted() ||
-    generation !== service.generation ||
-    historyEpoch !== service.historyEpoch ||
-    world.experience?.forgotten[actorId] !== service.world.experience?.forgotten[actorId] ||
-    world.experience?.corrections?.[actorId] !== service.world.experience?.corrections?.[actorId]
-  )
-    throw new HistoryCursorError('Memories changed. Browse or search again.');
+    result.entries.length &&
+    (sourceRevision !== memories.actorRevision(actorId) ||
+      sourceOwners(service.world).some((owner, index) => owner !== capturedOwners[index]))
+  ) {
+    const checkingOwners = sourceOwners(service.world),
+      checkingRevision = memories.actorRevision(actorId);
+    const current = await memories.current(
+      memoryScope,
+      result.entries.map((entry) => ({
+        id: entry.memory.id,
+        sourceKind: entry.sourceKind,
+        revision: entry.revision,
+        ...(entry.receipt ? { receipt: entry.receipt } : {}),
+      })),
+    );
+    if (
+      !current ||
+      checkingRevision !== memories.actorRevision(actorId) ||
+      sourceOwners(service.world).some((owner, index) => owner !== checkingOwners[index])
+    )
+      throw new HistoryCursorError('Memories changed. Browse or search again.');
+  }
+  assertPermitted();
   return {
     ok: true,
     worldId: world.id,

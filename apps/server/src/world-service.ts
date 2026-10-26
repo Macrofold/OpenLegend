@@ -4894,6 +4894,13 @@ export class WorldService {
     expected: { manifestRevision: number; bodyPolicyPin: DefinitionPin | null; generation: string },
     scope = this.localScope,
   ): Promise<ApiResult & { revision?: number }> {
+    await this.ready;
+    if (!this.mayInspectPrivate(actorId, scope))
+      return {
+        ok: false,
+        code: 'forbidden',
+        message: 'Human-private character content is unavailable to this principal.',
+      };
     return this.withHistoryEdit(
       {
         sources: memoryChanges.map((change) => ({
@@ -6055,6 +6062,13 @@ export class WorldService {
     scope = this.localScope,
     receipt?: TemporalReceiptLocator,
   ): Promise<ApiResult> {
+    await this.ready;
+    if (!this.mayInspectPrivate(actorId, scope))
+      return {
+        ok: false,
+        code: 'forbidden',
+        message: 'Human-private character content is unavailable to this principal.',
+      };
     return this.withHistoryEdit(
       {
         ...(receipt ? { receipts: [receipt] } : {}),
@@ -6094,6 +6108,13 @@ export class WorldService {
     scope = this.localScope,
     receipt?: TemporalReceiptLocator,
   ): Promise<ApiResult> {
+    await this.ready;
+    if (!this.mayInspectPrivate(actorId, scope))
+      return {
+        ok: false,
+        code: 'forbidden',
+        message: 'Human-private character content is unavailable to this principal.',
+      };
     return this.withHistoryEdit(
       { sources: [{ actorId, sourceId }], ...(receipt ? { receipts: [receipt] } : {}) },
       async () => {

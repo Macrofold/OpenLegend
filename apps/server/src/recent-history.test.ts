@@ -8,6 +8,8 @@ import {
   worldSupport,
   worldPosition,
   executeCommand,
+  appendTemporalReceipt,
+  selectedTemporalPolicy,
 } from '@open-legend/domain';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
 import { editWorld, enterLocalWorld, useNearCampSight } from '../../../tests/fixtures/service.js';
@@ -202,4 +204,121 @@ it('keeps older observations reachable when a whole newest utterance exceeds the
     found = page.entries.some((entry) => entry.text.includes('An earlier small sentence.'));
   }
   expect(found).toBe(true);
+});
+
+it('renders exact speech, measured location and geometry without a redundant prose event or private routing', async () => {
+  const store = await testRepository(),
+    service = new WorldService(store, readConfig({ OPEN_LEGEND_GOD_MODE: 'true' }));
+  cleanup.push(async () => {
+    service.releaseHostWork();
+    await store.close();
+  });
+  await enterLocalWorld(service);
+  await service.setPresence('literal-recent-reader', true);
+  const at = await editWorld(service, (world) => {
+    world.simTime++;
+    const at = world.simTime;
+    appendTemporalReceipt(
+      world,
+      PLAYER_ID,
+      {
+        subject: 'fixture-literal-detail',
+        change: 'occurrence',
+        facets: [
+          {
+            role: 'direct',
+            asOf: at,
+            measuredFrom: at,
+            measuredThrough: at,
+            acquiredAt: at,
+            value: {
+              kind: 'speech',
+              speech: {
+                perception: 'heard',
+                intelligibility: 'partial',
+                segments: [
+                  { kind: 'heard', text: 'Mind the edge' },
+                  { kind: 'unintelligible' },
+                  { kind: 'heard', text: 'please' },
+                ],
+                speaker: null,
+                addressee: null,
+                addressing: 'ambient',
+                delivery: 'normal',
+                direction: null,
+                listenerPosition: { x: 1, y: 0, z: 2 },
+              },
+            },
+          },
+          {
+            role: 'direct',
+            asOf: at,
+            measuredFrom: at,
+            measuredThrough: at,
+            acquiredAt: at,
+            value: {
+              kind: 'location',
+              location: { kind: 'region', center: { x: 2, y: 0, z: 3 }, radius: 1 },
+              frame: { positionAtObservation: { x: 1, y: 0, z: 2 } },
+            },
+          },
+          {
+            role: 'direct',
+            asOf: at,
+            measuredFrom: at,
+            measuredThrough: at,
+            acquiredAt: at,
+            value: {
+              kind: 'surface-patch',
+              patch: {
+                vertices: [
+                  { x: 1, y: 0, z: 1 },
+                  { x: 2, y: 0, z: 1 },
+                  { x: 2, y: 0, z: 2 },
+                  { x: 1, y: 0, z: 2 },
+                ],
+                normal: { x: 0, y: 1, z: 0 },
+                errorRadius: 0.1,
+                edges: ['coverage-limit', 'coverage-limit', 'coverage-limit', 'coverage-limit'],
+                frame: { positionAtObservation: { x: 1, y: 0, z: 2 } },
+              },
+            },
+          },
+          {
+            role: 'direct',
+            asOf: at,
+            measuredFrom: at,
+            measuredThrough: at,
+            acquiredAt: at,
+            value: {
+              kind: 'encounter-exposure',
+              exposure: {
+                kind: 'inventory-item',
+                id: 'private-native-item',
+                definition: { id: 'private-native-definition', version: 1 },
+                label: 'Folded note',
+                description: 'A small folded note.',
+                introductionKey: 'private-native-introduction',
+                inscription: 'Wait by the water.',
+              },
+            },
+          },
+        ],
+      },
+      selectedTemporalPolicy(world).recent,
+    );
+    return at;
+  });
+  const page = await memoryHistory(service, PLAYER_ID, service.localScope, { recent: true });
+  const entry = page.entries.find((entry) => entry.time === at)!;
+  expect(entry.text).toContain('Mind the edge […] please');
+  expect(entry.text).toContain('(partly heard)');
+  expect(entry.text).toContain('within 1 of (2, 0, 3)');
+  expect(entry.text).toContain('Visible part of a surface');
+  expect(entry.text).toContain('uncertainty 0.1');
+  expect(entry.text).toContain('Inscription: Wait by the water.');
+  expect(JSON.stringify(page)).not.toContain('private-native-');
+  expect(() =>
+    resolveRecentObservationReference(service, PLAYER_ID, service.localScope, 'malformed-token'),
+  ).toThrow();
 });

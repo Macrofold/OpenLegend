@@ -303,10 +303,11 @@ it('shares equal received values without granting another observer the earlier h
         values.flatMap((value, index) => (value.kind === 'body' ? [receipt.facets[index]!] : [])),
       )
       .at(-1)!;
-  expect(bodyReference(promoted.entries)).toMatchObject({
-    blockId: bodyReference(playerHistory.entries).blockId,
-    valueOrdinal: bodyReference(playerHistory.entries).valueOrdinal,
-  });
+  const bodyValue = (reference: ReturnType<typeof bodyReference>) =>
+    world.experience!.temporal!.sources[reference.blockId]!.values[reference.valueOrdinal];
+  expect(bodyValue(bodyReference(promoted.entries))).toEqual(
+    bodyValue(bodyReference(playerHistory.entries)),
+  );
   const encoded = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
   for (const block of Object.values(world.experience!.temporal!.sources))
     expect(block.bytes).toBe(encoded(block));

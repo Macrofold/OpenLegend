@@ -31,8 +31,17 @@ import {
   type AttentionRelationEvaluation,
   type AttentionRelationWitness,
 } from './attention.js';
-import { receivedScene, receivedSeparation, type ReceivedSceneBody } from './received-scene.js';
-import { selectedAttentionPolicy } from './world-composition.js';
+import {
+  receivedScene,
+  receivedSeparation,
+  type ReceivedSceneBody,
+  type ReceivedBodyGeometry,
+} from './received-scene.js';
+import { selectedAttentionPolicy, selectedTemporalPolicy } from './world-composition.js';
+import {
+  finalizeTemporalGeometrySupport,
+  reconcileTemporalGeometryCaptures,
+} from './temporal-evidence.js';
 import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
 import { cloneValue, readOnlyDraftView } from './draft.js';
 import { personalFactAlias } from './experience-source.js';
@@ -327,8 +336,7 @@ export function refreshReceivedGeometry(
     owner = world.perceptionEvidence?.[observerId];
   if (!input || !owner) {
     if (owner?.geometry) {
-      delete owner.geometry;
-      markAttentionRelationsDirty(world, observerId);
+      endReceivedGeometry(world, observerId);
       return { acquired: [], changed: true };
     }
     return { acquired: [], changed: false };
@@ -338,6 +346,7 @@ export function refreshReceivedGeometry(
   let state = owner.geometry,
     changed = false;
   if (!state || state.basis !== input.basis) {
+    if (state) finalizeGeometry(world, observerId, state);
     const nextAt = state?.nextAt ?? 0;
     state = owner.geometry = {
       basis: input.basis,
@@ -561,6 +570,30 @@ export function refreshReceivedGeometry(
   return { acquired, changed };
 }
 
+function finalizeGeometry(
+  world: WorldState,
+  observerId: string,
+  state: ReceivedGeometryState,
+): void {
+  finalizeTemporalGeometrySupport(
+    world,
+    observerId,
+    [...state.fragments.map((fragment) => fragment.observation), ...state.boundaries],
+    state.supportedThrough,
+    selectedTemporalPolicy(world).recent,
+  );
+}
+
+/** Losing a view closes only the interval the native receiver actually certified. */
+export function endReceivedGeometry(world: WorldState, observerId: string): void {
+  const owner = world.perceptionEvidence?.[observerId];
+  if (!owner?.geometry) return;
+  finalizeGeometry(world, observerId, owner.geometry);
+  delete owner.geometry;
+  reconcileTemporalGeometryCaptures(world, observerId, new Set(), []);
+  markAttentionRelationsDirty(world, observerId);
+}
+
 /** Pure current read: changed eye/range/geometry immediately removes stale grants
  * even before the bounded physical source gets its next native opportunity. */
 export function currentReceivedGeometry(
@@ -659,7 +692,7 @@ function bodyProof(body: ReceivedSceneBody): ObservationFactKey[] {
   ];
 }
 export function receivedBoundarySeparation(
-  anchor: ReceivedSceneBody,
+  anchor: ReceivedBodyGeometry,
   boundary: ObservedBoundary,
   measurement: { from: number; through: number },
 ): {

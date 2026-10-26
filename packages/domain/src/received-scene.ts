@@ -15,7 +15,16 @@ import {
 import { cloneValue } from './draft.js';
 import type { Position, WorldState } from './types.js';
 
-export interface ReceivedSceneBody {
+export interface ReceivedBodyGeometry {
+  body: ObservedBody;
+  sample: Pick<CapturedCurrentFacet, 'valueMeasuredFrom' | 'valueMeasuredThrough'>;
+  location?: Pick<CapturedLocationSample, 'value' | 'valueMeasuredFrom' | 'valueMeasuredThrough'>;
+  motion?: {
+    earlier: Pick<CapturedLocationSample, 'value' | 'valueMeasuredFrom' | 'valueMeasuredThrough'>;
+    later: Pick<CapturedLocationSample, 'value' | 'valueMeasuredFrom' | 'valueMeasuredThrough'>;
+  };
+}
+export interface ReceivedSceneBody extends ReceivedBodyGeometry {
   /** Private routing; ordinary context replaces this with a decision-scoped reference. */
   sourceId: string;
   exposure: string;
@@ -49,8 +58,7 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
     if (lease.value.kind !== 'body' || lease.subjectId === observerId) continue;
     const admitted = currentBodyObservation(world, observerId, lease.subjectId);
     if (!admitted) continue;
-    const body = cloneValue(admitted.value.body),
-      point = body.position;
+    const body = cloneValue(admitted.value.body);
     const location = key?.[`${lease.subjectId}:location`];
     const error =
       location?.value.kind === 'location' && location.value.location.kind === 'point'
@@ -70,18 +78,7 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
           }
         : {}),
       ...(motion?.kind === 'observed-motion' ? { motion: cloneValue(motion) } : {}),
-      bounds: {
-        min: {
-          x: point.x - body.radius - error,
-          y: point.y - error,
-          z: point.z - body.radius - error,
-        },
-        max: {
-          x: point.x + body.radius + error,
-          y: point.y + body.height + error,
-          z: point.z + body.radius + error,
-        },
-      },
+      bounds: receivedBodyBounds(body, error),
     });
   }
   for (const contribution of owner?.received ?? [])
@@ -103,6 +100,19 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
     byActor.set(observerId, scene);
   }
   return scene;
+}
+
+/** Full received body extent, expanded only by the supplied measurement error. */
+export function receivedBodyBounds(body: ObservedBody, error = 0): Bounds3 {
+  const point = body.position;
+  return {
+    min: { x: point.x - body.radius - error, y: point.y - error, z: point.z - body.radius - error },
+    max: {
+      x: point.x + body.radius + error,
+      y: point.y + body.height + error,
+      z: point.z + body.radius + error,
+    },
+  };
 }
 
 export const receivedBoundsIntersect = (a: Bounds3, b: Bounds3) =>
@@ -140,7 +150,7 @@ export function receivedNear(
 }
 
 function measuredPoint(
-  body: ReceivedSceneBody,
+  body: ReceivedBodyGeometry,
   at: number,
 ): { point: Position; error: number } | undefined {
   const location = body.location;
@@ -168,8 +178,8 @@ function measuredPoint(
 }
 
 export function receivedSeparation(
-  first: ReceivedSceneBody,
-  second: ReceivedSceneBody,
+  first: ReceivedBodyGeometry,
+  second: ReceivedBodyGeometry,
 ): {
   status: 'complete' | 'unavailable';
   at?: number;

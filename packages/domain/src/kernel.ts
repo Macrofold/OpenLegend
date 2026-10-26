@@ -16,6 +16,7 @@ import {
   endCurrentEvidence,
   currentBodyObservation,
   recentExposureEpisode,
+  beginPerceptionPhase,
 } from './perception-evidence.js';
 import { nextDetectionSupportBoundary, settleDetectionSupport } from './perception-support.js';
 import {
@@ -6058,6 +6059,7 @@ function* updateEncounters(
   // Loss of sensory/memory participation cannot retain a recognition grant.
   for (const id of actorIds) {
     const observer = entityGet(world.entities, id);
+    beginPerceptionPhase(world, id);
     if (
       observer?.actor?.encounters &&
       (observer.actor.encounters.life !== (observer.actor.physicalLife ?? 0) ||
@@ -6068,7 +6070,13 @@ function* updateEncounters(
     )
       expireCombatEncounters(world, observer);
     if (observer?.actor?.alive && hasMemory(observer) && activelyParticipates(observer)) continue;
-    if (!observer?.actor?.alive || !activelyParticipates(observer)) endCurrentEvidence(world, id);
+    if (
+      !observer?.actor?.alive ||
+      !activelyParticipates(observer) ||
+      (!hasMemory(observer) &&
+        !(observer.actor.controller === 'native' && observer.animal?.episode))
+    )
+      endCurrentEvidence(world, id);
     if (world.visiblePeople?.[id]?.length) world.visiblePeople[id] = [];
     if (world.visibleObjects?.[id]?.length) world.visibleObjects[id] = [];
     if (Object.keys(world.visiblePlaces?.[id] ?? {}).length) world.visiblePlaces![id] = {};

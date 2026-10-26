@@ -171,8 +171,10 @@ function describeTargets(
     const target = id ? entityGet(service.world.entities, id) : undefined;
     if (target && !health.has(target.id)) {
       health.set(target.id, observedBodyHealth(service.world, actorId, target.id));
-      const point = target.id === actorId ? effectivePosition(service.world, target.id)
-        : currentBodyObservation(service.world, actorId, target.id)?.value.body.position;
+      const point =
+        target.id === actorId
+          ? effectivePosition(service.world, target.id)
+          : currentBodyObservation(service.world, actorId, target.id)?.value.body.position;
       if (point) positions.set(target.id, point);
     }
     const position = target && positions.get(target.id);

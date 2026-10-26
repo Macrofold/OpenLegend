@@ -163,7 +163,19 @@ export function validateTemporalEvidenceState(
       )
         throw new Error('Unavailable retained temporal fragment.');
     };
-    for (const reference of Object.values(actor.captures)) validateReference(reference);
+    for (const reference of Object.values(actor.captures)) {
+      validateReference(reference);
+      if (
+        (reference.confirmedThrough !== undefined &&
+          (!finite(reference.confirmedThrough) ||
+            reference.confirmedThrough < 0 ||
+            reference.confirmedThrough > world.simTime)) ||
+        (reference.contextSubjects !== undefined &&
+          (!strings(reference.contextSubjects) ||
+            reference.contextSubjects.length > maximumContextSubjects))
+      )
+        throw new Error('Invalid temporal capture coverage.');
+    }
     if (
       actor.releasedThrough !== undefined &&
       (!finite(actor.releasedThrough) ||
@@ -290,6 +302,19 @@ export function validateTemporalEvidenceState(
           facet.asOf > receipt.at
         )
           throw new Error('Invalid temporal measurement interval.');
+        if (facet.confirmedThrough !== undefined) {
+          const value = values
+            ? values[index]
+            : temporal.sources[facet.blockId]?.values[facet.valueOrdinal];
+          if (
+            !finite(facet.confirmedThrough) ||
+            facet.confirmedThrough < facet.measuredThrough ||
+            facet.confirmedThrough > receipt.at ||
+            !facet.original ||
+            (value?.kind !== 'surface-patch' && value?.kind !== 'physical-boundary')
+          )
+            throw new Error('Invalid held geometry confirmation.');
+        }
         for (const source of [facet.original?.source, facet.receivedFrom])
           if (source) {
             validateEvidenceSource(source);
