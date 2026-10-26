@@ -1,44 +1,158 @@
 # New World / New World: Aeternum
 
-**Research date: October 26, 2026. Scope:** the 2021 PC game, its 2024 Aeternum overhaul and console release, and subsequent updates through the announced service wind-down. [Scoped ledger](../research-progress-mmos-2026-10-26.md). **Research checkpoint:** mechanics, lore and version boundaries are substantive below; reception, commercial analysis, worked situations, presentation, production, creator screening and final coverage review remain in progress.
+**Research date: October 26, 2026. Scope:** the 2021 PC game, its 2024 Aeternum overhaul and console release, and subsequent updates through the announced service wind-down. [Scoped ledger](../research-progress-mmos-2026-10-26.md).
 
 ## Identity and current boundary
 
 New World is an action MMORPG about a shipwrecked adventurer on Aeternum: fight with interchangeable weapons, gather and make useful goods, explore an immortal island, and participate in a faction, company and settlement economy. Aeternum launched October 15, 2024 on PC, PlayStation 5 and Xbox Series X|S, combining the base game and Rise of the Angry Earth with revised storytelling, cross-platform play and new activities. It is an overhaul of New World, not a separately researched sequel. [N01]
 
-**The game has not yet reached its announced shutdown.** Amazon's January 15, 2026 notice says all platforms will go offline January 31, 2027. The title was delisted, existing purchasers may continue until shutdown, and Nighthaven lasts through that period. The FAQ rules out further server merges and new content, while retaining monitoring and selected events. This is a service in wind-down, not proof that every previous player experience or the original launch was commercially unsuccessful. No live login was tested. [N02]
+**The game has not yet reached its announced shutdown.** Amazon's January 15, 2026 notice says all platforms will go offline January 31, 2027. The title was delisted, existing purchasers may continue until shutdown, and Nighthaven lasts through that period. The FAQ rules out further server merges and new content, while retaining monitoring and selected events. This is a service in wind-down, not proof that every previous player experience or the original launch was commercially unsuccessful. In-game purchasing ended July 20, 2026. No live login was tested. [N02]
 
-It is a persistent shared open world with lasting characters, homes, markets and territorial control, alongside separate activities such as Expeditions and raids. Those boundaries matter: instanced encounters do not make the overworld nonpersistent, and an online world's persistence does not guarantee permanent service. Housing uses personal interiors at shared addresses rather than unrestricted construction across the landscape. [N01][N03]
+**Persistent open world, with qualifications.** Durable characters, homes and territories coexist with instanced activities. Housing supplies personal interiors at shared addresses. [N03][N07] June 2024 introduced duplicated segments of starter areas, with seamless traversal but separate proximity interactions: friends must share a shard to trade, perform music or duel. [N20] Persistence, uninterrupted travel and everybody occupying the same simulation are different properties.
+
+World merges demonstrate another boundary: the 2025 plan preserved characters, companies and homes, but changed territorial ownership and lost some history. Feedback about latency led Amazon to retain regional worlds initially marked for removal. [N21] More people nearby can improve play while disrupting a particular community's continuity.
 
 ## Player systems and useful composition
 
 | System | Actions and consequences | Version boundary |
 | --- | --- | --- |
 | Character identity | The Aeternum starting archetype supplies initial weapons and trade-skill boosts. It does not permanently lock a class: a player can switch among swords, bows, firearms, staves, gauntlets and other weapon families. | Fifteen weapons in the June 2024 description; do not project that count back to launch. [N01] |
+| Action combat | Aim, attack, block, dodge, position and switch weapons. Aeternum added target locking, controller assistance and more forceful hit reactions; line-of-sight breaks and slower tracking constrained PvP target lock. | Player action and target assistance coexist; the 2024 patch also removed ammunition. [N11][N19] |
 | Character versus weapon progression | Character attributes, trade skills and weapon mastery progress separately. Weapon use earns mastery choices among active skills and passive improvements. Respecialization permits experimentation. | The original progression account establishes the structure; exact old caps/costs are superseded by later updates. [N04] |
 | Build compatibility | Weapons favor different attributes. The official 2022 guide contrasts Strength-based Great Axe with Dexterity-based Bow: freely equipping both does not mean they share an efficient build. Armor weight also affects the chosen style. | Historical explanation of tradeoffs, not a current optimal-build recommendation. [N05] |
+| Consumables and inventory | Food/potions support recovery and preparation. Carrying limits, storage and trade make material goals logistical; excess equipment can be salvaged. | Historical food/trophy requirements and firsthand inventory friction should not be confused with current exact capacities. [N05][N29] |
 | Gathering and making | Mine ore, cut trees, skin animals or collect fibers; refine into ingots, lumber, leather or cloth; craft equipment, food, magical supplies or furnishings. Skills unlock further materials and recipes. | Original system description; production is a chain of roles and inputs, not freeform invention. [N04] |
+| PvE encounters | Party roles combine damage, healing and protection. A Spriggan can drain block stamina and regenerate behind roots: read attacks, conserve dodges and break its healing shield. | Original developer encounter account; illustrates interaction rather than current optimal tactics. [N43] |
 | Gear and endgame | Nighthaven raised the level cap to 70 and gear-score ceiling to 800. Perk Charms fit typed sockets; set bonuses encourage combinations, and eligible gear can be upgraded using the new Umbral currency. | October 2025 overhaul, materially different from launch gearing. [N06] |
+| Market exchange | Trading Posts became linked in November 2021; buying/selling through orders and paying fees creates a different economy from transporting everything between isolated town markets. | The original regional-market rules should not be presented as the later game. [N13] |
 | Settlement life | Companies govern territories; town projects develop services, while taxes/upkeep and contested control connect civic and economic activity. | Historical developer design; rates and later balancing must be verified for their specific patch. [N07] |
 | Housing | Buy a home, acquire/craft furnishings, arrange them and invite guests. Storage, trophies and recall give the home utility as well as personal expression. | Original primary explanation; exact eligibility and maintenance values are not treated as current. [N03] |
 | Voluntary risk activity | The Cursed Mists removes normal group/faction protections, exposes carried cursed treasure to loss, and requires escape with the spoils. | October 2024 introduction. Its extraction rules are not universal ordinary-death rules. [N08] |
+| Travel and side activities | Inns, discovered shrines and housing recalls reduce return travel; mounts and Riding arrived with the 2023 expansion. Music adds collectable songs, performances, tips and buffs. | Mounts were absent at launch; music arrived in 2022. [N05][N36][N37] |
 | Seasonal worlds | Season 7 offered special PvP rules, death-droppable special items and eventual character transfer to permanent worlds. | A particular temporary ruleset, not proof that all regular worlds seasonally wipe. [N09] |
 
-New World's interesting progression is not simply a higher number: a different weapon pairing changes available actions, a furnishing can make a home more useful, and a producer can supply something another player wants. The accompanying danger is that every attractive destination becomes subordinate to a repetitive gear or material requirement. The reception comparison must distinguish those outcomes by version and play stage.
+The opening teaches a weapon pair and routes the player through story, gathering and equipment rewards. Established play broadens into crafting, house projects, companies and encounters. Endgame includes Expeditions with harder mutations, raids, solo trials, open-world events, arenas, Outpost Rush and territorial conflict. [N01][N05] The design question is whether another upgrade changes a wanted activity or merely requires repeating mastered labor.
+
+**Loss and reset:** ordinary defeat uses revival/respawn rather than deleting the character. [N07][N42] Distinguish that recovery from deliberately risky modes and server changes. Historical durability/repair costs are outdated: January 2025 notes confirm durability was removed. [N09] Cursed Mists treasure loss and seasonal death-droppable items are specific rules, not universal full-loot death. A fresh character renews discovery and the shared starting economy but repeats progression; regular character advancement is not automatically wiped with every season. [N08][N09] No measured time to regain satisfying choices or cohort retention was found.
+
+## Seven worked interactions
+
+These are **constructed illustrations from documented rules**, not personally played sessions.
+
+1. **Heal where the fight will happen.** A party wants to survive an Expedition encounter. A Life Staff user can attach Beacon to an ally or place it in the environment, producing different healing positions. A stationary safe area works until the fight moves; then the next decision is repositioning or choosing another target. The 2021 developer explanation makes aiming and placement part of a support role. [N15]
+2. **Make a wanted sword.** A player wants usable equipment rather than another unidentified drop. The inspected Iron Longsword recipe combines seven tier-two metal units, two refined wood and one leather at a tier-two forge. Gather/refine or buy the missing inputs, craft, then equip or sell. The bottleneck may be a component or market price; production is a supported recipe, not unconstrained invention. [N12]
+3. **Turn decoration into a home.** Buy an eligible house, acquire furnishings, arrange them and invite friends to that personal interior. Add storage or a relevant trophy to support the next outing. Multiple owners can use the same address, so personal expression does not require excluding everyone else from that building. This is native layout creation, with authored objects and effects. [N03]
+4. **Improve a shared service.** A governor starts a forge-upgrade project; residents complete contribution missions so crafters can make better equipment locally. [N07] The reward connects civic work to another activity. The counterquestion is whether contribution remains voluntary and useful when someone else controls priorities; political ownership and being a resident are different interests.
+5. **Leave treasure before greed wins.** Enter the Cursed Mists seeking doubloons, gather spoils and choose when to escape. Usual faction/group ties provide no protection, and crowded allies can hurt one another. [N08] A profitable exit can be more satisfying than a fight; extending the trip exposes the existing haul to loss. Limited loot and collusion also mean nominal free-for-all rules cannot guarantee isolated fair duels.
+6. **Bank a dungeon run.** Up to three players enter Nighthaven Catacombs, gain temporary powers and collect cursed resources. After a boss, choose greater difficulty/reward or extraction before the timer. One safe exit preserves the group's haul; failure loses most treasure. [N06] The next run varies layout and encounters, but the repeated choice only stays interesting while another room changes the risk or plan.
+7. **Give someone a reason to stop in town.** Collect song pages, obtain an instrument and perform alone or in a small group. Performance quality affects rewards; spectators can tip and receive a buff. [N36] A musician becomes a useful social encounter. This is a rhythm/performance activity with authored songs, not a native composition or audio-upload editor. The social reward should not require every visitor to optimize a buff.
+
+## People, factions and exploration
+
+The **Marauders** emphasize strength and military independence, the **Syndicate** secret knowledge, and the **Covenant** religious purification. Choosing one opens faction missions and themed rewards. [N42] Companies organize players within that affiliation; friends need compatible faction membership to join the same company, while the campaign can be completed without joining either. [N05] Parties coordinate tanking, healing and damage, and companies pursue territorial influence and War participation. The reviews below show why contributing to a faction does not guarantee access to its decisive battle.
+
+Exploration can reveal materials, shrines for later travel, lore, encounters and gear opportunities. [N04][N05] Ancient arenas make that relationship explicit: ruins hold dangerous beings and desirable rewards. [N43] NPCs supply authored missions, services and opponents; no generalized autonomous careers, conversational memory or romance system was verified. Individual scripted motivations should not be mistaken for independently simulated inhabitants.
 
 ## Lore and its relationship to play
 
-**Setting and main-story spoilers.** Aeternum grants a terrible kind of immortality. The June 2024 framing emphasizes the loss of memory, purpose and self rather than ordinary death, while the Corrupted threaten to spread beyond the island. Finding an ancient order supplies a purpose beyond surviving the initial shipwreck. [N01]
+**Setting and main-story spoilers.** Azoth helps the island's dead return, but resurrection is unreliable: some lose soul/purpose and become **Lost**, others become **Corrupted**. Arrivals from different cultures and ages suggest an island whose location and powers are not fully understood. The developer explicitly described multiple cosmic forces rather than one complete explanation for all magic. [N15] Immortality therefore creates both the mechanical return and the narrative horror of losing oneself.
+
+The **Ancients** left structures that bound powerful beings through ritual; the **Angry Earth** includes manifestations of nature and Azoth such as the Spriggan. [N43] These histories explain encounters and architecture rather than functioning solely as collectible prose.
 
 The revised main story makes **Isabella** a villain who regards herself as humanity's savior, culminating in preparation for an attack on **Myrkgard** in Shattered Mountain. The narrative team worked backward from existing locations and assets, seeking a coherent climax rather than merely adding another itinerary of errands. [N10]
 
 The **Angry Earth** complicates a simple good-versus-evil map. Narrative designer Lula Lucent describes **Phaeris** struggling with individuality within its collective mind, and explains how **Adiana's** changing role and later godhood arc required changes to the older story. This is authored character conflict; it does not establish independent simulated NPC lives. [N10]
 
+Places give those histories a physical identity: Ancient ruins remain in Weaver's Fen, Empress **Zhou Taiying** rules Ebonscale Reach, and the **19th Roman Legion** persists in Brimstone Sands. [N38] These references offer historical mystery and distinct destinations; they are not evidence that every NPC has an autonomous daily life.
+
 Nighthaven continues after Elysian Wilds: **Morgaine**, entrusted with the **Tear of Gaea**, needs the Soulwarden's help after the artifact disappears. Its secluded court, ruins and threatening woods add a region whose history must be explored. These additions belong to the later game, not the 2021 launch story. [N06]
+
+## Presentation, production and evolving direction
+
+The visual contrast is concrete: pasture and woodland, autumnal Everfall, snowy Great Cleave, imperial Ebonscale and desert ruins distinguish destinations. [N38] Gathering also has sensory reward. The official audio account describes musket recordings at a reenactment, spatially recognizable gunshots/tree-cutting and music by **Ramin Djawadi and Brandon Campbell**. [N16] For Baalphazu, the team layered processed vocals while preserving intelligibility; piano sounds warn before a pulling attack. [N17] Sound can therefore communicate both atmosphere and an actionable threat.
+
+Aeternum revised dialogue cameras, cinematics, faces, hit reactions and controller targeting. [N19] The PvP patch explicitly reduced automatic target switching/tracking after feedback, illustrating a real tradeoff between comfortable control and competitive counterplay. [N11] Independent reactions to interface and combat appear below; this research did not measure accessibility or latency.
+
+Development changed its central risk model. In the prelaunch retrospective, Amazon describes repeated high-level predation in a full-loot alpha, unsuccessful incremental fixes and a move toward opted-in faction conflict. [N14] That documents a reason to change; it does not prove that retaining the original rules would have produced success.
+
+Production was distributed. Virtuos reports collaboration from 2019, expanding from character/outfit art into creatures, bosses, console optimization and the Isle of Night raid, built in Amazon's **Azoth engine**. These are contributor claims, not a measured staffing or performance model. [N18] The narrative team's 2024 account is a more portable process lesson: scope early, reuse meaningful locations, and vary quest activities while preserving character motivations. [N10]
+
+Promotion combined trailer-led preorders and the later console relaunch. Developers explicitly anticipated renewed shared starting activity when console newcomers joined PC players. These are documented positioning choices, not measured acquisition causes. [N14][N19]
+
+Iteration was substantial: linked markets in 2021, expanded music and expedition access in 2022, mounts and removal of Expertise/mandatory creature-specific perks in 2023, console/cinematic overhaul in 2024, and changed endgame gearing in 2025. [N13][N36][N37][N19][N06] Later improvements must remain visible when diagnosing the launch's weaknesses.
+
+## Commercial outcome and what went wrong
+
+| Observation | Scope and period | Meaning and limit |
+| --- | --- | --- |
+| More than one million entrants | Amazon's launch-day report, September 2021 | Reach, not simultaneous users, paid units or retention. The same notice acknowledges queues and expanding server capacity. [N22] |
+| Steam average concurrency about 410,171 → 13,615 → 67,759 | October 2021 → June 2022 → November 2022 | Large erosion followed by reactivation; these are simultaneous Steam-user averages, not monthly accounts. [N23] |
+| Steam peaks of 61,364 and 50,987 | October 2024 and October 2025 | Later surges; consoles are excluded, and a peak does not measure retained cohorts. [N23] |
+| Premium purchase, paid expansion, shop/pass spending | Product's historical model | Later monetization and audience reach do not reveal profitability. The 2023 expansion's announced US price was $29.99. [N37] |
+| Lifetime revenue, development/operating cost and profit | Whole title through this research date | **Not estimable from verified available evidence.** Publisher statements/financial releases and third-party estimates do not supply reconciled units, realized price, refunds, DLC/shop receipts or allocated costs. [N41] |
+
+The often-repeated “17 million copies” is not an official sales milestone: its traced source quotes a third party's estimated registered-player population. It must not be multiplied by list price to manufacture revenue. [N24] Nor can company-wide game spending stand in for this title's budget.
+
+The clearest operational failures concern trust and dependencies. November 2021 patch notes address item duplication and another gold-duplication route associated with disabled trading. [N26] Contemporary reporting also describes players unable to pay upkeep while transfers were frozen. [N40] **Inference:** emergency controls in an interconnected economy must account for legitimate obligations; otherwise a repair can cause a second injury.
+
+Population was another product constraint. A world needs enough people for grouping and trade, while mergers can alter latency, ownership and history. [N21] The commercial end is clearer than its exact causal decomposition: Amazon said further content was unsustainable, then scheduled closure; the broader company also reduced substantial first-party MMO development. [N25][N39] This supports failed continuation, not an audited lifetime loss or proof that one combat, PvP or monetization choice killed the game.
+
+## Reception, return and abandonment
+
+Five independent review bodies were read; different platforms and stages are preserved. Later patch changes supersede old rules without erasing what reviewers experienced.
+
+| Review and exposure | Specific appeal | Friction and reason to continue/stop |
+| --- | --- | --- |
+| **Fraser Brown, PC Gamer, October 20, 2021**; hundreds of launch-PC hours | Gathering/crafting improvements, town contributions and an underdog Syndicate supplied personal stakes. | Repeated enemies, errands and journeys exhausted discovery. Company-selected War rosters could exclude contributors; after extensive play, he no longer wanted to continue. Hours alone did not establish satisfaction. [N27] |
+| **Cameron Koch, GameSpot, November 12, 2021**; 140+ hours, endgame update, supplied copy | Faction identity and 50v50 Wars made territory worth contesting. | A disconnect and failed declaration spoiled prepared battles. Endgame repeated chest/enemy grinding; dungeon-entry items and low-population Outpost Rush queues blocked attractive play. These are launch-era conditions, not all still-current rules. [N28] |
+| **Elliot Gardner, PCGamesN, updated October 8, 2021**; early launch, exact hours unreported | Responsive weapons and gathering drew him back during breaks; a desired crafted hat gave material collection purpose. | Errands and backtracking displaced narrative interest. High crafting fees generated politics but also inconvenience; trying another weapon required developing its proficiency. [N29] |
+| **Joseph Bradford, MMORPG, November 8, 2024**; Xbox Series X, three weeks plus prior PC play | Revised quest routing, cinematics and characters made a fresh start worthwhile; he expected to continue. | His established character could not join the lively fresh-start world. Separate platform progression/cosmetics and scarce War access complicated return. Improvements served newcomers better than some incumbents. Supplied copy/currency and personal spending disclosed. [N30] |
+| **Khayl Adam, Push Square, October 22, 2024**; PS5, exact hours/endgame completion unreported | Weighty stamina combat, dual weapons, respecialization, controller mapping, landscape and sound. | Collection errands and character presentation weakened the campaign; groups still needed scarce tanks/healers. Busy cities reduced performance, though his sample had no notable bugs. Supplied review copy. [N31] |
+
+**Late improvement matters:** Tyler F. M. Edwards' October 29, 2025 Nighthaven account, after reaching the cap, praised easy Catacombs entry, unconventional builds, targeted purchases and customizable perks. Risk disagreement, backtracking, confusing perk transitions and reward imbalance remained. This is a positive early endgame assessment beside development retirement, not evidence that the game's whole history or economics had been repaired. [N33]
+
+The accessible helpful Steam surface was dominated by negative recommendations but contained substantial positive play testimony. **adam.redfern's** originally November 2021 review has later Brimstone Sands edits acknowledging better travel, storage and group finding while retaining balance complaints. **Belethor63**, October 28, 2025, reported enjoying recent play but withdrawing the recommendation because of the service's future. Current hours and edited text cannot be assigned to original publication. Positive-only retrieval failed; the sample is qualitative, not balanced or representative. [N32]
+
+The repeated attraction is an absorbing ordinary activity that leads to a wanted object, place or shared role. The repeated failure is losing that connection: more gathering for an uninteresting target, political labor without access to the battle, or a return that separates friends and prior investment. Later improvements demonstrate that these outcomes can change. They do not identify each mechanic's contribution to retention or commercial retirement.
+
+## Creator boundary and R15 screen
+
+Housing, furnishing, performances and companies let players arrange objects and social activity within authored rules. The placement example above is the concrete native workflow: obtain objects, arrange a personal space, invite others and use its benefits. No supported route for ordinary players to publish a new game, import arbitrary assets or script server rules was verified. “Gear modding” in Nighthaven means socketed item customization, not external game mods. [N03][N06][N36]
+
+**R15: uncertain, PC/console Aeternum, October 26, 2026.** A dated independent survey found a small visual-mod selection and established map overlays, but no official mod support. The Nexus game page retrieved only its shell, not a usable catalog/adoption record. [N34][N35] This does not establish a popular sustained content-modding ecosystem or console support. Third-party guides/maps are useful community work; their existence is not permission to modify the service.
+
+## OpenLegend transfer and actionable routes
+
+These interpretations refine existing design questions; they do not select an MMO scale, universal classes, mandatory PvP or a new infrastructure program.
+
+| Pattern and tradeoff | Route into actual design and evidence |
+| --- | --- |
+| **Make ordinary work enjoyable and useful.** Sound/feedback can make harvesting satisfying; a desired object or shared service gives it purpose. Repetition should change a decision or capability. | Under [gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md), trace a selected gathering → making → use journey and observe whether the player wants the next activity. Keep discovery and practical invention inside the existing first playable. |
+| **Reward contribution with accessible participation.** A communal objective can create belonging, but the decisive activity must not silently exclude most contributors. | Use [hosted-worlds and rule profiles](../../../../docs/game-ideas/hosted-worlds-and-rule-profiles.md) and its participation/shelter owners to examine a newcomer, a returning friend and a member without administrative power. Define a useful contribution and payoff for each selected journey. |
+| **Treat continuity as several promises.** Character retention, a home, purchases, nearby friends and political history can survive or fail independently. | Existing participants/world travel and [product scalability](../../../../docs/maintainers/product-scalability.md) owners should identify what survives the proposed move, return or service change. Population density alone is not acceptance evidence. |
+| **Keep repair controls consistent with obligations.** Temporarily restricting trade can stop abuse while stranding legitimate upkeep or promised exchanges. | For an actually selected economic feature, evaluate the interrupted transaction and dependent commitment through its existing authority owner; do not add a speculative universal economy framework. |
+| **Improve both entry and continuing purpose.** A strong new opening can revive interest while leaving established players with an unsatisfying next goal. | First-playable validation should include the initial journey and a reason to return after its immediate success. Later features earn their place through a concrete missing experience, not this game's update cadence. |
+
+New World's limits as a creator platform do not narrow OpenLegend's accepted paid-authoring direction. Housing layouts, authored recipes and musical performances are precedents for understandable creation and social discovery; they are not ceilings on what an authored-reality engine may support. Scale and commercial commitments remain with their existing design owners.
+
+## Coverage and reading routes
+
+| Requirements | Coverage |
+| --- | --- |
+| R01 | Edition/current boundary and persistence distinctions |
+| R02–R04 | Systems, composition, progression, economy and loss/reset account |
+| R05 | Seven varied worked interactions |
+| R06–R08 | People/factions, exploration, lore and presentation |
+| R09–R11 | Development/marketing chronology, participation metrics, commercial non-estimate and separate causal mechanisms |
+| R12 | Five firsthand reviews, later endgame counterpoint, Steam sampling and return/quit analysis |
+| R13 | Existing-owner transfer table |
+| R14–R15 | Dated annotated sources, access limits, native-creation boundary and conditional modding screen |
+
+No prior dedicated dossier was found at the pinned base. For the strongest reading route, compare launch reviews N27–N29 with Aeternum reviews N30–N31 and Nighthaven account N33; use N02 for current availability. No game session, video, benchmark or creation workflow was personally reproduced. Early developer articles establish historical design, while later patch notes identify consequential changes; numerical balance is not silently carried across editions.
 
 ## Source register
 
-All accessed October 26, 2026. Primary article bodies were read; the current-status article was read by the team's commercial researcher. This checkpoint does not represent unwatched video embeds as inspected footage.
+All accessed October 26, 2026. Substantive source bodies were read except the explicitly limited Nexus retrieval. Source facts are paraphrased; video embeds were not treated as watched footage. Financial/reception contributors inspected the bodies summarized here.
 
 | ID | Source | Evidence boundary |
 | --- | --- | --- |
@@ -52,3 +166,36 @@ All accessed October 26, 2026. Primary article bodies were read; the current-sta
 | N08 | [Cursed Mists deep dive](https://www.newworld.com/en-us/news/articles/the-cursed-mists-developer-deep-dive), October 7, 2024 | Primary design/playtesting account. |
 | N09 | [Season of Conquerors](https://www.newworld.com/en-gb/game/releases/season-of-conquerers), January 20/21, 2025 | Primary seasonal-world boundary. |
 | N10 | [Main-story revision interview](https://www.newworld.com/en-us/news/articles/main-story-quest-deep-dive), February 19, updated March 22, 2024 | Narrative designer account; revised release date April 2. |
+| N11 | [Season of Opportunity](https://www.newworld.com/en-us/game/releases/season-of-opportunity), October 14/15, 2024 | Primary patch; target lock, ammunition and new activities. |
+| N12 | [NWDB Iron Longsword recipe](https://nwdb.info/db/recipe/procedural_longswordt2), displayed LIVE November 4, 2025 | Community game-data reference; exact inspected recipe, not in-game reproduction. |
+| N13 | [Into the Void](https://www.newworld.com/en-us/game/releases/into-the-void), November 18, 2021 | Primary patch; linked markets and weapon additions. |
+| N14 | [Evolution of PvP](https://www.newworld.com/en-us/news/articles/the-evolution-of-new-worlds-pvp), prelaunch retrospective | Primary account; masthead/text chronology inconsistent, exact publication date not relied upon. |
+| N15 | [Ed Orr's Azoth/magic interview](https://www.mmorpg.com/interviews/interview-talking-azoth-and-magic-in-amazons-new-world-2000122337), June 21, 2021 | Original interview with Robert Chestney/David Verfaillie; historical lore/combat explanation. |
+| N16 | [Soundtrack introduction](https://www.newworld.com/en-us/news/articles/introducing-the-new-world-soundtrack), September 21, 2021 | Primary written account; embedded video unwatched. |
+| N17 | [Nightveil audio deep dive](https://www.newworld.com/en-us/news/articles/nightveil-hallow-audio-deep-dive), October 30, 2024 | Primary production account; action cues and vocal processing. |
+| N18 | [Virtuos production case](https://www.virtuosgames.com/success-stories/new-world/), 2019–2025 collaboration | Contributor self-report, not independent benchmark. |
+| N19 | [Aeternum producer/designer interview](https://www.amazongamestudios.com/en-ca/news/articles/aeternum-interview), June 7, 2024 | Primary interview; narrative/control redesign and audience intent. |
+| N20 | [Update 5.0.2](https://www.newworld.com/en-us/news/articles/new-world-update-5-0-2), June 3/4, 2024 | Primary; initial shard rollout and social boundaries. |
+| N21 | [World merges](https://www.newworld.com/en-us/news/articles/upcoming-world-merges-2025), July 22/23, 2025 | Primary revised plan and FAQ; preservation versus losses. |
+| N22 | [Launch-day update](https://www.newworld.com/en-us/news/articles/launch-day-update), September 28/30, 2021 | Primary audience observation and queue response. |
+| N23 | [SteamCharts monthly table](https://steamcharts.com/app/1063730), current capture | Third-party concurrency history; not sales, accounts or all-platform reach. |
+| N24 | [Forbes population discussion](https://www.forbes.com/sites/paultassi/2022/01/06/new-world-seems-to-have-hit-its-floor-but-is-it-good-enough-for-amazon/), January 6/7, 2022 | Body read through redirect; source of rejected sales inference. |
+| N25 | [Update on New World](https://www.newworld.com/en-us/news/articles/update-on-new-world), October 28, 2025 | Primary end-of-content rationale; January notice supersedes service FAQ. |
+| N26 | [Update 1.0.5](https://www.newworld.com/en-us/news/articles/new-world-update-1-0-5), November 3, 2021 | Primary duplication/control fixes. |
+| N27 | [Fraser Brown, PC Gamer](https://www.pcgamer.com/new-world-review/), October 20, 2021 | Firsthand launch review; extensive play and explicit stopping point. |
+| N28 | [Cameron Koch, GameSpot](https://www.gamespot.com/reviews/new-world-review-faction-war-never-changes/1900-6417769/), November 12, 2021; endgame note November 11 | Firsthand 140+ hours; supplied copy; later storefront tags do not change review edition. |
+| N29 | [Elliot Gardner, PCGamesN](https://www.pcgamesn.com/new-world/review-pc), updated October 8, 2021 | Firsthand launch; exact hours/endgame completion unestablished. |
+| N30 | [Joseph Bradford, MMORPG](https://www.mmorpg.com/reviews/new-world-aeternum-review-2000133364?amp=true), November 8, 2024 | Firsthand Xbox and prior-PC comparison; commercial disclosures retained. |
+| N31 | [Khayl Adam, Push Square](https://www.pushsquare.com/reviews/ps5/new-world-aeternum), October 22, 2024 | Firsthand PS5; supplied copy; exact hours unreported. Its questionable dungeon-size claim is excluded. |
+| N32 | [Steam helpful reviews](https://steamcommunity.com/app/1063730/reviews/?browsefilter=toprated&snr=1_5_100010_), current capture | Bodies read; edited, recommendation-biased sample; positive-filter retrieval failed. |
+| N33 | [Tyler F. M. Edwards, MassivelyOP](https://massivelyop.com/2025/10/29/vitae-aeternum-too-late-nighthavens-catacombs-and-perk-revamp-saved-new-worlds-endgame/), October 29, 2025 | Firsthand early revised-endgame column; not longitudinal outcome evidence. |
+| N34 | [Nexus New World](https://www.nexusmods.com/newworld), current retrieval | Shell only; catalog/adoption evidence unavailable. |
+| N35 | [MeinMMO mod survey](https://mein-mmo.de/wird-new-world-addons-unterstuetzen/), updated October 16, 2025 | Secondary body read; limited mods and overlays, not permission advice. |
+| N36 | [Summer Medleyfaire](https://www.newworld.com/en-us/game/releases/summer-medleyfaire-update), July 27, 2022, later corrections | Primary music systems and expedition changes; delayed features not assumed to launch on article date. |
+| N37 | [Rise of the Angry Earth](https://www.newworld.com/en-us/news/articles/rise-of-the-angry-earth), October 2/3, 2023 | Primary expansion pricing, mounts and progression overhaul. |
+| N38 | [Official world guide](https://www.newworld.com/en-us/game/world), current capture | Primary setting descriptions; no claim every detail existed at launch. |
+| N39 | [The Verge: Amazon MMO reductions](https://www.theverge.com/news/808332/amazon-gaming-layoffs-mmo-aaa-first-party-games), October 28, 2025 | Reporting and company-supplied memo; portfolio context. |
+| N40 | [Ars Technica: economy shutdown](https://arstechnica.com/gaming/2021/11/new-world-shuts-its-economy-again-amid-widespread-item-duplication-glitch/), November 16, 2021 | Reporting; upkeep effects attributed to players. |
+| N41 | [Amazon Q2 results](https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Second-Quarter-Results/default.aspx?mode=light), 2026 | Primary segment tables; no title-level financial result. |
+| N42 | [Factions](https://www.newworld.com/en-gb/news/articles/this-week-in-aeternum-factions), October 18, 2024 | Primary affiliations, missions and practical cooperation. |
+| N43 | [Ancient arenas and Spriggan](https://www.newworld.com/en-us/news/articles/arenas-of-the-ancient-guardians), May 14, 2020 | Primary historical lore/design interview; mechanics version qualified. |

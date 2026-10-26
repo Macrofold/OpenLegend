@@ -4,7 +4,7 @@
 
 ## Read success and failure precisely
 
-The sample combines commercial scale, sustained service and different ways of making a shared world worthwhile. It is not a current population league table. Subscriber counts, registered accounts, concurrent connections, copies sold, gross revenue and profit answer different questions. A publisher's franchise total cannot be assigned to one regional PC service. A Steam decline does not measure an entire game distributed through its own launcher and other platforms.
+The sample combines commercial scale, sustained service and different ways of making a shared world worthwhile. It is not a current population league table. Subscriber counts, registered accounts, concurrent connections, copies sold, gross revenue and profit answer different questions. A publisher's franchise total cannot be assigned to one regional PC service. A Steam decline does not measure an entire game distributed through its own launcher and other platforms. Concurrency trends are not cohort-retention rates.
 
 The regional comparisons matter. Nexon's investor page reports more than US$22 billion lifetime revenue for the Dungeon&Fighter **franchise** and more than US$5 billion for the MapleStory **franchise**, whose scope includes PC and mobile. Its undated milestone page does not establish current activity or standalone PC profit. NC separately reports KRW269.1 billion for **Lineage Classic's first 140 days through June 30, 2026**. These justify inclusion, not an apples-to-apples ranking. [C01–C02]
 
@@ -35,7 +35,7 @@ For OpenLegend, the accepted direction includes finite free inventions, larger p
 
 ## Route into OpenLegend
 
-The most promising product direction remains a place people care about, with useful capabilities, independent inhabitants and consequences they can understand and influence. The research should improve the quality of that experience before it increases map size, simultaneous population or obligation to return. The following routes use existing owners and acceptance work. They are observations to make in those tasks, not a second backlog or a claim that documentation has delivered the behavior.
+The most promising product direction remains a place people care about, with useful capabilities, independent inhabitants and consequences they can understand and influence. The research should improve the quality of that experience before it increases map size, simultaneous population or obligation to return. The following routes identify observations for existing tasks.
 
 | Lesson or design question                                      | Canonical design route                                                                                                                                                                        | Existing task and observable result                                                                                                                                                                                                                          |
 | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
