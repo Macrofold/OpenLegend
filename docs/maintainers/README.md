@@ -30,7 +30,7 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## General emotions, bodily reactions and adaptive review
 
-[Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) are complete; implementation/qualification remain open. [SA-D01](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) retains the controlled-player production, retained-appraisal applicability, disclosure, revocation and transfer choice.
+[Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) specify the general foundation and four-family authored player profile; implementation/qualification remain open. [SA-D01](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects authored native interpretation during direct control; EP retains exact profile rules, retained-appraisal integration and qualification.
 
 ## Combat and immediate threat responses
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                               | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design is complete; SUR01–SUR09 implementation, performance and gameplay qualification remain open. | 2026-10-24   |
+| In progress | Integrated design is complete; SUR01–SUR09 implementation, performance and gameplay qualification remain open. | 2026-10-25   |
 
 ## Authority and delivery boundary
 
@@ -739,7 +739,7 @@ These IDs specify future coverage, not running tests or a requirement for one se
 
 SUR09 must observe an uncoached player using a warning, finite entrance watch, defensive handoff/interception, failed ambush-to-escape and a native-animal hunt with an ordinary useful outcome. Compare preparation's actual attention cost with the ordinary route; a useful plan is allowed to succeed decisively. Record whether players understand “expected but unavoidable” and “readiness ended,” whether repeated waiting/retargeting is burdensome, and whether recovery permits a meaningful escape.
 
-Run **The toll tower at dawn**, **The companion who changes sides**, **The quarry that learns**, **The wolf at the school gate**, and **The household after the victory** from the repertoire as composing scenarios where their prerequisites exist. Include a refused or missed warning, an uncovered path, and an encounter that ends peacefully or by leaving with the objective. Mechanical correctness alone does not prove that 2× or the initial lead/retention is fun or fair. Tuning changes go through the authored policy/limits owner and rerun the affected boundary/scenario acceptance.
+Run **The toll tower at dawn**, **The companion who changes sides**, **The quarry that learns**, **The wolf at the school gate**, and **The household after the victory** from the repertoire as composing scenarios where their prerequisites exist. Include a refused or missed warning, an uncovered path, and an encounter that ends peacefully or by leaving with the objective. Compare the [selected timing and injury rationale](../limits/preparedness-and-surprise.md#sur-l01--damage-amplification-and-eligible-outcome) with actual close knife openings, the next attempt after registration, shield preparation, wounded victims and independent near-simultaneous attackers. Mechanical correctness alone does not prove that 2× or the initial lead/retention is fun or fair. Tuning changes go through the authored policy/limits owner and rerun the affected boundary/scenario acceptance.
 
 ## Cross-project integration requirements
 
@@ -784,9 +784,9 @@ Unknown words, an ambiguous/unlearned place, ungrounded “there”/“behind yo
 
 [SUR01–SUR09](../maintainers/preparedness-and-surprise.md) owns all task bodies, dependencies and exit criteria. Deliver one complete melee interaction, then the actual ranged/warning path, before wider qualification. Each includes acquisition, preparation, permission, contact, native startle, current-format save and permitted feedback. Complete installed inputs before enabling a path; stages do not waive scope.
 
-Apply D's [SA-D01 implementation gate](emotional-physiology-feature-spec.md#implementation-gate) before enabling a controlled-character path. Unresolved retained-appraisal/direct-control composition stays disabled at profile or feature enablement; F's transient incomplete-preparation hold cannot wait on that product decision. Existing physical combat and independently complete native-body paths remain available, with qualification restricted to the profiles and cases permitted by that gate.
+Apply D's [SA-D01 implementation gate](emotional-physiology-feature-spec.md#implementation-gate) before enabling a controlled-character path. The selected authored native policy and its compatible retained-appraisal applicability must be implemented and qualified before enabling the corresponding controlled-character profile; F's transient incomplete-preparation hold cannot wait indefinitely on missing profile rules or implementation. Existing physical combat and independently complete native-body paths remain available, with qualification restricted to the profiles and cases permitted by that gate.
 
-Recheck affected owners on the implementation base before coding. No unresolved F product choice remains. SA-D01 is D's separate controlled-character psychological choice. SA-D02/SA-D03 are resolved: source revisions retain their family-owned exact values, and E captures the actual current-method start. Their runtime adapters remain required implementation work. Tuning and enjoyment remain open qualification work.
+Recheck affected owners on the implementation base before coding. No unresolved F product choice remains. SA-D01 selects D's authored native controlled-character psychological policy; its exact profile rules and qualification remain D's responsibility. SA-D02/SA-D03 are resolved: source revisions retain their family-owned exact values, and E captures the actual current-method start. Their runtime adapters remain required implementation work. Tuning and enjoyment remain open qualification work.
 
 ## Maintained records
 
@@ -795,4 +795,4 @@ Recheck affected owners on the implementation base before coding. No unresolved 
 - Authored values and policy: [Base combat](../worlds/base/combat.md#preparedness-policy).
 - Limits and adjustment tradeoffs: [Preparedness inventory](../limits/preparedness-and-surprise.md).
 - Cross-project integration: [SA/SAD-F/SAI-F](../maintainers/stealth-awareness.md), [CTR](../maintainers/combat-and-threat-responses.md).
-- Open player decision and resolved technical decisions: [SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters), [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation), [SA-D03](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition).
+- Selected player policy and resolved technical decisions: [SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters), [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation), [SA-D03](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition).

@@ -114,14 +114,14 @@ Dependencies: ATI01–ATI07 and the required A/B/C/D/F/G slices; complete runtim
 - [ ] Measure candidate work before selection, physical evaluations, resident/hydrated bytes, notifications, pending age and cold restore under dense live observers and relevant dependency changes.
 - [ ] Preserve complete required evidence/victim work under load through native accounting; optional decisions follow existing spending/urgency admission.
 - [ ] Verify ordinary controls/disclosure and actual autonomous alternatives with the applicable fixture/native/database/browser/live-provider evidence, clearly separated.
-- [ ] Compare useful lookout/relief, workshop inquiry, quiet nature observation and companion search against the ordinary route under the real clock. Record uncoached usefulness/enjoyment and balance separately from scripted correctness.
+- [ ] Compare useful lookout/relief, workshop inquiry, quiet nature observation and companion search against the ordinary route under the real clock. Include a default watch over a minute of compatible work/travel with real turn gaps, an ordered maximum-focus scan that may finish early, and an excessive alternating scan that ends partial. Record uncoached usefulness/enjoyment and balance separately from scripted correctness.
 - [ ] Reconcile current architecture/implementation snapshots only when delivery is real; update inventories and remaining acceptance with measured evidence.
 
 **Exit:** no unverified acceptance is checked; implementation completion requires actual integration and ordinary-player evidence. This design-only branch supplies none of that runtime evidence.
 
 ## Bounded external gates
 
-[Technical §11](../projects/attention-and-investigation-tech-design.md#11-implementation-dependencies-and-open-player-choice) owns the required implementation dependencies. ATI01–ATI08 retains runtime and qualification work. SA-D02/SA-D03 are settled technical contracts; SA-D01 alone remains the separate controlled-player interpreted-emotion product choice.
+[Technical §11](../projects/attention-and-investigation-tech-design.md#11-implementation-dependencies-and-selected-player-policy) owns the required implementation dependencies. ATI01–ATI08 retains runtime and qualification work. SA-D02/SA-D03 are settled technical contracts. The selected [SA-D01](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) authored native controlled-player policy remains separate; emotional physiology owns its exact profile rules and qualification.
 
 ## Maintained records
 

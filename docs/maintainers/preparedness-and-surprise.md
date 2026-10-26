@@ -17,7 +17,7 @@ The technical design records the integrated A–E contracts and existing-owner e
 - [x] Specify once-only damage, native startle, ordering, permission, current-format continuation and complete required work.
 - [x] Review repertoire scopes/combinations and provide exact chronology, adversarial acceptance and permitted player semantics.
 - [x] Map implementation to existing owners and settle exact evidence-family revisions and actual physical-method starts through the shared A/E contracts.
-- [x] Close only the selected F design gap; preserve SA-D01 and all runtime, integration and gameplay gates.
+- [x] Close only the selected F design gap; preserve SA-D01's separate ownership and all runtime, integration and gameplay gates.
 
 **Exit:** selected behavior and shared technical choices are specified; the existing-owner implementation dependencies below remain open. This is not delivered or qualified gameplay.
 
@@ -73,7 +73,7 @@ The technical design records the integrated A–E contracts and existing-owner e
 - [ ] Preserve D's admitted/replayed/inapplicable/incomplete/conflict results, including the terminal no-effect receipt for a life ended by that contact.
 - [ ] Sample existing mechanics at their declared attempt/release/new-evasion boundaries. Prevent same-impact feedback and duplicate fear adjustment; D alone owns emotion strength/duration/composure, with no automatic running-speed penalty.
 
-**Exit:** supported bodies receive one coherent native consequence without AI, duplicate shock, lost terminal results or a second fear calculation. SA-D01 remains separate.
+**Exit:** supported bodies receive one coherent native consequence without AI, duplicate shock, lost terminal results or a second fear calculation. The selected authored native SA-D01 policy and its exact profile rules remain separately owned.
 
 ## SUR06 — Save, deadlines and deterministic continuation
 
@@ -113,7 +113,7 @@ The technical design records the integrated A–E contracts and existing-owner e
 **Not started.** Owners: CTR independent-character/player/browser acceptance and world-policy maintainers. Dependencies: useful integrated slices and actual composing content; final completion needs SUR08.
 
 - [ ] Observe uncoached use of spoken warning, finite entrance defense, voluntary handoff/interception and expected-but-unavoidable damage, without compulsory vigilance clicks.
-- [ ] Exercise betrayal, brief hiding versus genuine quiet return, failed ambush-to-escape and diversion's route-versus-warning tradeoff.
+- [ ] Exercise betrayal, brief hiding versus genuine quiet return, failed ambush-to-escape and diversion's route-versus-warning tradeoff. Include a close knife opening first noticed during its shorter-than-registration wind-up, the next ordinary attempt after registration, wounded victims and independent near-simultaneous attackers; distinguish nominal injury arithmetic from actual survival.
 - [ ] Qualify native memoryless-animal hunting through useful recovery/harvest/food, dangerous response and a legitimate decision to abandon pursuit.
 - [ ] Use the selected [repertoire combinations](../projects/preparedness-and-surprise-feature-spec.md#repertoire-integration) where supported, including peaceful resolution and preparation allowed to succeed decisively.
 - [ ] Qualify independent human choices, no-provider native behavior, PvP fairness and accessible server/client continuation under actual CTR gates. Record survival/counterplay, attention cost, reset readability and measured performance; tune only through authored policy/limits.
@@ -122,7 +122,7 @@ The technical design records the integrated A–E contracts and existing-owner e
 
 ## Explicit decisions and integration gates
 
-- **SA-D01 open:** controlled-character interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior; native warning/surprise/startle remains independent.
+- **SA-D01 selected:** authored native interpretation during direct control, with compatible retained appraisals continuing without lifetime renewal. Emotional physiology owns exact profile rules and qualification; native warning/surprise/startle remains independent.
 - **SA-D02 resolved:** [exact evidence-family revisions](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation); implement the owning family's exact numeric or string representation.
 - **SA-D03 resolved:** [actual method-start exposure](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition); implement the field across all applicable existing owners. Do not infer starts from action age or charge guard preparation twice.
 - **Required producers/integration:** B/A incoming flight, A/SPK ordinary current scoped warning, E complete methods, D complete mechanics/terminal receipts and local contact publication fencing.

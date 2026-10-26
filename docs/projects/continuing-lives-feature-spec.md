@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                             | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Continuing activity, compact reactions and shared stealth/emotion contracts are designed; broader life/service implementation and qualification remain open. | 2026-10-20   |
+| In progress | Continuing activity, compact reactions and shared stealth/emotion contracts are designed; broader life/service implementation and qualification remain open. | 2026-10-25   |
 
 **Status: detailed design, expanded October 15, 2026.** This specification expands the accepted continuing-world direction into reviewable product behavior, including the selected compact numerical-reaction contract in §16.6. It does not claim the behavior is implemented, approve paid execution, change the bundled world's human protection, or settle commercial prices. The requested [technical design](continuing-lives-tech-design.md) maps continuation, attention, evidence and personal-reaction refinements to existing owners; service adoption remains separate.
 
@@ -622,7 +622,7 @@ Acceptance requires one silent numerical reaction through ordinary cognition, a 
 
 An existing feeling can become eligible for bounded, possibly unspoken reconsideration without a fresh external event. Remembering it or receiving its own change notification cannot manufacture a new cause or renew its lifetime indefinitely. Reconsideration uses existing character opportunities, retains the original cause, and stops or becomes dormant under its declared allowance. Fear can affect accuracy and evasion while leaving running and fleeing speed intact; it does not choose flight, turn a reasoning person toward a sound, or replace the player’s controls.
 
-The choice covering directly controlled interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior remains [SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters). Native startle, NPC interpretation and the shared effect contracts do not depend on that choice. [Stealth-awareness tracking](../maintainers/stealth-awareness.md) separates completed shared design from specialist design and future implementation; this extension does not mark continuing lives or the joy pilot delivered.
+The selected [SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) target uses world-authored native interpretation during direct control and preserves compatible retained appraisals without lifetime renewal. Exact profile rules and qualification remain with the emotion owner. Native startle, NPC interpretation and the shared effect contracts retain their independent requirements. [Stealth-awareness tracking](../maintainers/stealth-awareness.md) separates completed shared design from specialist design and future implementation; this extension does not mark continuing lives or the joy pilot delivered.
 
 ## Maintained records
 

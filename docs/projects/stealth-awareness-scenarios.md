@@ -1,8 +1,8 @@
 # Stealth and awareness — complete gameplay scenarios
 
-| Status      | Current progress                                                                                                                             | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design traces reviewed; runtime, performance and player qualification remain open. SA-D01 remains an explicit product dependency. | 2026-10-24   |
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Integrated design traces reviewed; runtime, performance and player qualification remain open. SA-D01 selects authored player psychology. | 2026-10-25   |
 
 ## Authority and reading rules
 
@@ -12,7 +12,7 @@ A is evidence/recognition; B vision/gaze; C posture/acoustics; D bodily effects/
 
 Let τ denote elapsed **normal-speed seconds**, converted once to simulation time (60 simulation seconds per τ in the base world). B's canonical dynamic visual cells are 0.05 τ with fixed epoch; actual native changes split cells without rephasing. Capture/view requests introduce no extra sensing samples. A held value keeps its actual measurement and acquisition times; availability is separate. Every attack uses already acquired evidence, actual work and complete mechanics at its own immutable cut. Unknown, unsupported and incomplete are distinct; required incomplete work holds the coherent native prefix before an outcome.
 
-A fixture that states a cue was acquired must satisfy its installed physical policy; the scenario does not grant that result from prose. Check both the stated positive condition and its specified negative contrast. Ordinary player interpretation never selects an SA-D01 alternative by implication.
+A fixture that states a cue was acquired must satisfy its installed physical policy; the scenario does not grant that result from prose. Check both the stated positive condition and its specified negative contrast. Controlled-character psychology follows selected SA-D01 authored rules; ordinary player narration supplies no appraisal-writing authority.
 
 ## A — Quietly approaching a hare
 
@@ -235,7 +235,7 @@ A fixture that states a cue was acquired must satisfy its installed physical pol
 7. **Admission:** D samples supported physiology/Composure and commits its bodily contribution once. Existing admitted paths retain speed/duration; later actions consume current eligible modifiers.
 8. **Emotion/body:** The unmodified startle has a three-τ curve. A later supported fear appraisal can outlast it; effective mechanics use D's maximum applicable normalized contribution, not a duplicate-cause sum.
 9. **Combat:** Accuracy is sampled at the declared melee-attempt/ranged-release boundary and evasion reach at new admission. Fear adds no second surprise multiplier or automatic running penalty.
-10. **Player:** Show own bodily feedback without narrating the human's feelings. Persistent interpreted player mechanics/disclosure remain blocked by SA-D01; NPC interpretation has its selected policy.
+10. **Player:** Show own bodily feedback without narrating the human's feelings. Persistent player emotions follow selected SA-D01 authored rules and retained-appraisal applicability, with permitted own feedback; NPC interpretation retains its separate policy.
 11. **Persistence:** Retain cause/no-effect receipts, admitted curve and clock conversion, appraisal source/revision/lifetime and review allowance. Duplicate delivery or reload cannot restart them.
 12. **Play value:** Immediate shock and lasting interpretation produce different aftermaths. Composure can matter while the player retains action choice and understandable recovery.
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                          | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-20   |
+| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-25   |
 
 [Feature contract](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) · [CE implementation and acceptance](../maintainers/character-experience.md) · [Memory contract](../memory-architecture.md) · [Agency contract](../agent-agency.md).
 
@@ -82,7 +82,7 @@ Native reaction records and receipts follow [EP-C05](emotional-physiology-tech-d
 
 Body effects end with their physical life; appraisals retain their separately declared memory continuity. Delayed results recheck current control, life, source/privacy, policy and relevant semantic revisions. Review bookkeeping must not make an unchanged feeling stale to unrelated cognition. [EP-C09](emotional-physiology-tech-design.md#ep-c09--persistence-recovery-and-correction) owns correction, forgetting and durable recovery under the [common time/lifecycle contract](stealth-awareness-tech-design.md#time-and-lifecycle).
 
-[SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) remains open for directly controlled interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior. Native bodily reactions, autonomous-character appraisal and effective mechanics can proceed independently. [Emotion tracking](../maintainers/emotional-physiology.md) owns delivery and [stealth tracking](../maintainers/stealth-awareness.md) cross-module acceptance. Existing PG02 evidence does not qualify these new mechanisms.
+[SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects world-authored native interpretation from a directly controlled character's own admitted evidence, with compatible retained appraisals continuing without lifetime renewal. Its exact profile rules, disclosure and control-transfer qualification remain with the emotion owner; no AI interpretation or forced player action is authorized. Native bodily reactions, autonomous-character appraisal and effective mechanics can proceed independently. [Emotion tracking](../maintainers/emotional-physiology.md) owns delivery and [stealth tracking](../maintainers/stealth-awareness.md) cross-module acceptance. Existing PG02 evidence does not qualify these new mechanisms.
 
 ## Delivery stages, verification and limits
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Design complete and reviewed; VG01–VG08 implementation, runtime qualification and playtesting have not started. | 2026-10-24   |
+| In progress | Design complete and reviewed; VG01–VG08 implementation, runtime qualification and playtesting have not started. | 2026-10-25   |
 
 ## Purpose and ownership
 
@@ -124,7 +124,7 @@ Vision supports the existing priorities of survival, a defensible home, differen
 
 ## Decisions and handoff
 
-No new player-product decision is required to specify module B. The world's numeric defaults are authored provisional choices for implementation and later playtesting, not biological measurements or demonstrated balance. The technical design and tracker record the integrated source, Perception, movement/posture and temporal contracts. Runtime and play qualification remain open; SA-D01 is the separate controlled-player psychological policy decision.
+No new player-product decision is required to specify module B. The world's numeric defaults are authored provisional choices for implementation and later playtesting, not biological measurements or demonstrated balance. The technical design and tracker record the integrated source, Perception, movement/posture and temporal contracts. Runtime and play qualification remain open; the selected [SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) authored native controlled-player policy has its exact profile rules and qualification with emotional physiology.
 
 E receives physical goals, achieved/limited pose, current supported regions, action compatibility and exact ending/loss semantics, and chooses watch/investigation behavior. F receives A's acquired evidence and accepted orientation/work at its own cut, and owns eligibility. G receives safe physical/presentation facts through A, and owns inputs, camera/privacy and accessibility. Detailed matching, storage and freshness stay with A; actual posture and sound stay with C.
 

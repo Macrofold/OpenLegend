@@ -1,8 +1,8 @@
 # Stealth, awareness and surprise — shared technical design
 
-| Status      | Current progress                                                                                                                                        | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared and specialist designs are integrated; runtime delivery and qualification remain open. Controlled-character psychological policy remains SA-D01. | 2026-10-24   |
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared and specialist designs are integrated; runtime delivery and qualification remain open. SA-D01 selects authored player psychology. | 2026-10-25   |
 
 ## Authority and scope
 
@@ -305,7 +305,7 @@ The current decaying-appraisal reframe refuses changed values. The required nume
 
 At provider absence, insufficient funds, no change, cancellation or stale output: native startle/recovery and existing emotion lifetime continue; no fabricated fear/calm, new cause, chosen movement or paid retry appears. Optional interpretation never blocks physical sensing/combat. After any wait, recheck actor/life/controller/authority, policy, appraisal revision and complete eligible source support before publication. Charge an already admitted external attempt according to its real result even when its gameplay proposal becomes stale.
 
-Player psychological acquisition, retained-appraisal applicability during direct control, disclosure, revocation and control transfer remain [SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters). These shared input/effect/lifecycle contracts and NPC/native design can proceed without selecting that player policy. Controller identity alone grants no background AI permission over a human-controlled character. Until SA-D01 is selected, keep the new retained-appraisal/direct-control composition disabled before profile/feature admission. This product gate is not transient incomplete mechanics that can pause native combat indefinitely. Existing physical behavior and independently complete native-body paths remain available, but an inherited active appraisal cannot silently be treated as absent. [D's implementation gate](emotional-physiology-feature-spec.md#implementation-gate) owns the exact enablement boundary.
+[SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects authored native player interpretation and applicable retained appraisals. Explicit world event rules use only admitted personal evidence through the existing appraisal owner; no model creation/review runs during direct control. Control transfer preserves record meaning, lifetime and allowances, fences stale writers and rebuilds permitted own feedback. Enable this composition only after the complete authored rules, mechanics and transfer/restore path are implemented and qualified. Missing support is a feature-admission failure, never an indefinite native-combat hold or permission to treat inherited appraisals as absent. Shared NPC/native paths remain independently implementable. [D's implementation gate](emotional-physiology-feature-spec.md#implementation-gate) owns the exact enablement boundary.
 
 ## Attention, investigation and active preparation
 
@@ -458,11 +458,11 @@ The feature specification's J01–J11 and [A–U complete scenario traces](steal
 
 The [implementation dependency graph](../maintainers/stealth-awareness.md#future-implementation-dependency-graph) separates shared evidence/pose foundations, parallel physical and emotional work, preparation/combat consumers and complete player/lifecycle qualification. Detailed source areas, mutation rules, bounds and positive/negative cases remain in each focused pair and tracker. Current-format consumers change together; no compatibility adapter between development iterations is selected.
 
-## Open product choice
+## Selected player policy
 
-**SA-D01 remains open:** controlled-character psychological creation/review, applicability of retained appraisals during direct control, disclosure, revocation and control transfer. Recommend native-body-only initial player scope (alternative A), preserving appraisal records and lifetimes while masking their psychological mechanics during direct control. If persistent interpreted player fear is wanted, deterministic authored interpretation (B) is the preferred alternative; model interpretation (C) requires explicit bounded opt-in. No recommendation is adopted by this design.
+**SA-D01 selects B:** authored native rules assign controlled-character psychology from admitted evidence. Compatible retained appraisals remain applicable; lifetime, source, disclosure and current-controller authority are preserved. A and C are not selected. The emotion specification and EP06–EP09 own the selected profiles and remaining qualification.
 
-Only that dependent player policy and its acceptance are blocked. NPC emotion, native bodily startle, perception, chosen actions, preparedness/surprise mechanics and ordinary information disclosure have complete contracts. SA-D02's exact source revisions and SA-D03's physical method start are resolved in SC02 and SC10/SC11; neither remains a technical decision gate.
+The player policy is resolved; its implementation and acceptance remain open in EP06–EP09. NPC emotion, native bodily startle, perception, chosen actions, preparedness/surprise mechanics and ordinary information disclosure also have complete contracts awaiting runtime delivery and qualification. SA-D02's exact source revisions and SA-D03's physical method start are resolved in SC02 and SC10/SC11; neither remains a technical decision gate.
 
 ## Maintained records
 

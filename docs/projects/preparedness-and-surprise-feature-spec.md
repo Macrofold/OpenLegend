@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                               | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design is complete; SUR01–SUR09 implementation, performance and gameplay qualification remain open. | 2026-10-24   |
+| In progress | Integrated design is complete; SUR01–SUR09 implementation, performance and gameplay qualification remain open. | 2026-10-25   |
 
 ## Purpose and scope
 
@@ -41,7 +41,7 @@ A failed defense answers only the third question; it does not prove inadequate w
 
 The world gives a definite personally acquired threat cue a short native registration interval. After uninterrupted eligible registration, the character expects that threat even if unable to dodge. This creates no forced turn, shield raise, decision, thought or emotion. Warning receipt alone is not yet preparedness.
 
-Memoryless animals, autonomous people and controlled people use the same rule where their bodies support it. A busy model, action restriction or inability to move does not prevent an aware body from registering danger. Provider latency, browser rendering and player reading time never substitute for simulated reaction time. The [authored intervals](../worlds/base/combat.md#preparedness-policy) are gameplay hypotheses, not measured physiological constants.
+Memoryless animals, autonomous people and controlled people use the same rule where their bodies support it. A busy model, action restriction or inability to move does not prevent an aware body from registering danger. Provider latency, browser rendering and player reading time never substitute for simulated reaction time. The [authored intervals](../worlds/base/combat.md#preparedness-policy) are gameplay hypotheses, not measured physiological constants. A close knife strike can complete before newly noticed danger registers; a later ordinary knife attempt can occur after registration. The [tuning rationale](../limits/preparedness-and-surprise.md#sur-l02--native-registration-and-preparation-lead) compares those timings with slower attacks and deliberate shield preparation; visibility alone promises neither sufficient lead nor a successful response.
 
 ### Two ways to be prepared
 
@@ -141,7 +141,7 @@ The player-experience design consumes the [semantic disclosure contract](prepare
 
 A supplies exact acquired facts/correction; B/C actual physical cues/coverage; E complete current preparation; D native reactions and effective parameters. CTR retains encounters, contact, permissions and independent-character acceptance. Current readers/writers must agree before enabling the policy. Required B/A incoming-flight and A/SPK ordinary understood-warning producers need real end-to-end qualification.
 
-[SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) remains open for controlled-character interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior. Native surprise/startle is independent. [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation) preserves exact family-owned evidence revisions, and [SA-D03](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition) preserves actual physical-method starts. These technical choices are settled; their adapters, tuning and enjoyment remain unqualified implementation work.
+[SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects world-authored native interpretation during direct control, with compatible retained appraisals remaining applicable without lifetime renewal. Exact profile rules and control-transfer qualification remain with the emotion owner. Native surprise/startle is independent. [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation) preserves exact family-owned evidence revisions, and [SA-D03](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition) preserves actual physical-method starts. These technical choices are settled; their adapters, tuning and enjoyment remain unqualified implementation work.
 
 ## Maintained records
 
