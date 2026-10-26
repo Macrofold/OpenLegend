@@ -6,22 +6,26 @@
 
 <a id="current-snapshot--october-18-2026"></a>
 
-## Current snapshot — October 25, 2026
+<a id="current-snapshot--october-25-2026"></a>
+
+## Current snapshot — October 26, 2026
 
 The [coverage matrix](coverage.csv) records current per-source/per-topic status. Earlier intelligence and combat sources retain their cited revisions in [assessment evidence](assessment-records.md); the Sea of Stars evidence is anchored to the G178 dossier and art study at `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`. The [two Elden Ring assessments](assessment-records.md#elden-ring-focused-incorporation--october-25-2026) use the October 24 source cutoff and dossier chapters at `63a2dcf824f0431d5fe28cf7f4d34ef32de86b22`.
 
-| Measure                     | State |
-| --------------------------- | ----- |
-| Topic pages                 | 35: 27 unfilled synthesis shells; focused NPC, COMBAT, PRESENT and EXPLORE guides; and FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research. |
-| Game/case sources           | 187 stable keys: 178 roster subjects, the unnumbered EVE Online essay case and eight unnumbered topic-only subjects. |
-| Available game/case sources | 161 full dossier files and ten scoped sources: EVE Online plus nine topic-only dossiers. Availability is not full research certification. |
-| Queued game sources         | G150–G166 remain roster-only except G159's focused study; G168–G177 are available but unassessed in this synthesis. |
-| Game matrix                 | 187 × 35 = 6,545 cells: 39 I, 5308 U, 526 W, 672 X. |
-| NPC column                  | 30 scoped incorporations; wider coverage remains open. |
-| COMBAT column               | Six scoped incorporations, including G75 and G178; wider combat research remains open. |
-| PRESENT / EXPLORE           | PRESENT retains one scoped G178 incorporation; EXPLORE has two, G178 and G75. Broader comparison remains open. |
-| World matrix                | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X. |
-| Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent. |
+| Measure                     | State                                                                                                                                                                                                                |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Topic pages                 | 35: 27 unfilled synthesis shells; focused NPC, COMBAT, PRESENT and EXPLORE guides; and FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research.                                                            |
+| Game/case sources           | 202 stable keys after the scoped MMO additions: 194 numbered subjects and eight unnumbered topic-only sources. The older omission of G179–G184 is outside this inventory update.                                     |
+| Available game/case sources | 161 full dossier files and ten scoped sources: EVE Online plus nine topic-only dossiers. Availability is not full research certification.                                                                            |
+| Queued game sources         | G150–G166 remain roster-only except G159's focused study. Fifteen new MMO keys await source availability; G196 EVE retains its existing scoped evidence. Research authorization/status stays in the relevant ledger. |
+| Game matrix                 | 202 × 35 = 7,070 cells: 39 I, 5308 U, 1051 W, 672 X. Existing topic cells are unchanged; the fifteen new rows add 525 W cells.                                                                                       |
+| NPC column                  | 30 scoped incorporations; wider coverage remains open.                                                                                                                                                               |
+| COMBAT column               | Six scoped incorporations, including G75 and G178; wider combat research remains open.                                                                                                                               |
+| PRESENT / EXPLORE           | PRESENT retains one scoped G178 incorporation; EXPLORE has two, G178 and G75. Broader comparison remains open.                                                                                                       |
+| World matrix                | Unchanged: 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X.                                                                                                                                             |
+| Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent.                                                                                                                                   |
+
+The [October 26 MMO batch](../research-progress-mmos-2026-10-26.md) adds fifteen waiting source keys and assigns the existing `eve-online` key to G196 on `docs/mmo-research-20261026`. Pending rows do not certify a dossier or incorporation into any of the 35 topics. This scoped extension preserves earlier assessment evidence and does not reconcile the unrelated G179–G184 inventory omission; source availability will change only against an inspected published revision.
 
 The October 14 game matrix was byte-checked against a locally validated expected document before publication: blob `9c090e25e3fb106c48cd7679b4a3f3d5cd0e9f46`, published in commit `02966e0bae31482b1f5d06191a687506f82c2593`. The check preserved the baseline's exact bytes before applying only 22 existing NPC changes and eight new rows, then verified 176 unique keys, 35 unique topic columns, equal row widths and valid codes. This is a document-integrity check, not a runtime test.
 
@@ -76,7 +80,7 @@ Game keys are dossier basenames without `.md`; titles and G numbers are navigati
 | E                      | Available only on an explicitly inspected external branch/snapshot; record its exact route. No current row needs this code after Songs of Syx merged.                                                                                                                                                                                                                                |
 | C                      | Contextual candidate whose actual source is not yet available; record the gap. No current row needs this code after the Starfield/EVE sources became available.                                                                                                                                                                                                                      |
 
-**Current identities:** Songs of Syx remains G149; Starfield remains G167; Sea of Stars is G178; Shadows of Doubt retains G159; EVE Online remains unnumbered and scoped. The original 168 framework keys are preserved, G168–G178 follow the current roster, and the eight topic-only keys remain unnumbered rather than being assigned guessed roster numbers. Original Creatures is not substituted for Creatures 3 or Docking Station. The earlier duplicate G149 was resolved by the merged source work, not by inventing a new assignment during this review.
+**Current identities:** Songs of Syx remains G149; Starfield remains G167; Sea of Stars is G178; Shadows of Doubt retains G159. EVE Online now has G196 while preserving its existing `eve-online` source key, scoped evidence and topic cells. The original framework keys and G168–G178 remain intact; fifteen other G185–G200 keys are newly waiting. Eight topic-only keys remain unnumbered. Original Creatures is not substituted for Creatures 3 or Docking Station. The earlier duplicate G149 was resolved by the merged source work, not by inventing a new assignment during this review.
 
 For `world-coverage.csv`, `world_key` is the exact dossier basename under `../../worldbuilding/worlds/`. The original 28 keys came from the inspected [world index](../../worldbuilding/README.md); the baseline files are available, but no new per-world assessments are implied. The later D&D dossier uses `29-dungeons-and-dragons`; its 35 cells remain U until assessed. Supplementary D&D game studies remain discoverable from the game hub and source map without renumbering the original game snapshot. Record continuity and source revision in the evidence record. Add later worlds or tabletop sources only after inspecting their identity and scope; do not guess keys or assume an uninspected referenced addition was included.
 
