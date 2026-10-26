@@ -4,7 +4,7 @@
 
 ## Current progress
 
-Ashes of Creation and New World / Aeternum are researched and reviewed across R01–R15, each with five firsthand written assessments and explicit evidence limits. Their completed dossiers are committed with the corresponding ledger updates. Lost Ark is next. The comparative essay records the census, persistence definitions and existing design routes; its full game-by-game conclusions and the final integration gates remain open.
+Ashes of Creation and New World / Aeternum are researched and reviewed across R01–R15, each with five firsthand written assessments and explicit evidence limits. Their completed dossiers are committed with the corresponding ledger updates. Lost Ark is in progress, including verified Western service-transfer plans, current progression changes and native creation tools. The comparative essay records the census, persistence definitions and existing design routes; its full game-by-game conclusions and the final integration gates remain open.
 
 ## Scope and evidence rules
 
@@ -22,7 +22,7 @@ Ashes of Creation and New World / Aeternum are researched and reviewed across R0
 | -------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------- |
 | [Ashes of Creation](dossiers/ashes-of-creation.md) | Tested game, original promise, production collapse; no shipped 1.0     | Researched and reviewed; committed with this ledger |
 | [New World / Aeternum](dossiers/new-world.md)      | Original launch, later overhaul, current service                       | Researched and reviewed; committed with this ledger |
-| Lost Ark                                           | Korean and Western evidence separated; test the pay-to-win explanation | Pending                                             |
+| Lost Ark | Korean and Western evidence separated; test the pay-to-win explanation | In progress |
 | Guild Wars 2                                       | Released game and expansion changes                                    | Pending                                             |
 | Guild Wars 3                                       | Announced/development evidence only                                    | Pending                                             |
 | The Elder Scrolls Online                           | Current game versus launch; PC add-ons separated                       | Pending                                             |
