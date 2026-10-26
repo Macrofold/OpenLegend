@@ -111,7 +111,7 @@ Let satisfying outcomes remain settled. Victory, quiet company, a useful creatio
 
 ## 7. Play, judge and revise the right part
 
-Apply the [existing playability questions](../projects/five-product-feature-specs.md#playability-gates) to the selected situation. The following are applications of that owner, not new mandatory acceptance categories:
+Apply the [existing playability questions](../projects/five-product-feature-specs.md#playability-gates) to the selected situation. For an opening or cast, also use the [selected scene-mix review](../repertoires/selection-and-scale.md#review-the-selected-scene-mix). The following are applications of those owners:
 
 - What did the player choose to try, and what made that possibility attractive?
 - Did the invention or approach make a useful difference the player recognized?
@@ -141,7 +141,7 @@ Keep evidence proportional to the claim. A script can verify an action path; a f
 
 **A person with an ordinary afternoon.** The [compelling-character design](../projects/compelling-characters-feature-spec.md) already describes identity, social contact, enjoyment, meaningful repetition and chosen solitude. Use its relevant complete episode to connect the authored person to actual action and later conduct. The [character-experience tracker](../maintainers/character-experience.md) retains open integrated quality; do not reset delivered foundations or claim a whole life from one successful exchange.
 
-**A useful invented object with a personal consequence.** The [existing invention scenarios](../invention-scenarios.md) and [gameplay priorities](../repertoires/gameplay-priorities.md) provide the starting scope. A selected exercise can connect a accepted invention to practical use and a person's informed response. The ordinary method stays available, the resident keeps their own choice, and the specific object or reaction is not preordained by this guide.
+**A useful invented object with a personal consequence.** The [existing invention scenarios](../invention-scenarios.md) and [gameplay priorities](../repertoires/gameplay-priorities.md) provide the starting scope. A selected exercise can connect an accepted invention to practical use and a person's informed response. The ordinary method stays available, the resident keeps their own choice, and the specific object or reaction is not preordained by this guide.
 
 ## Research rationale and maintained ownership
 

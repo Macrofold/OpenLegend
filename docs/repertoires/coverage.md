@@ -89,7 +89,7 @@ The last column records deferral, not permission to violate protected engine con
 
 [Combinations](combinations.md) contains all 25 complete scenes with their current priority and selection boundary beside each description. They combine owned entries; they are not another inventory of required systems. A simpler adaptation can deliver an opening experience without adopting a scene's entire politics, psychology or physics.
 
-The reading order starts with the toll tower, quarry, championship, festival contract, ruined crown and homecoming, then develops companion allegiance and other discoveries before the longer run of selected domestic and service examples. It changes prominence, not the scenes' priorities, world badges or implementation scope. Pick a coherent small experience rather than implementing the list as a quest queue.
+Use the examples below to choose a coherent small experience, respecting each scene's world scope and capability gaps.
 
 | Experience to find                          | Representative situations and patterns                                                                                                                                                                                                                                          |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -99,7 +99,7 @@ The reading order starts with the toll tower, quarry, championship, festival con
 | Relationship change and ordinary friction   | [Companion allegiance](combinations.md#the-companion-who-changes-sides), [rival crossing](relationships.md#rivals-who-need-the-same-bridge), [wedding celebration](combinations.md#the-wedding-bridge), [deliberate betrayal](relationships.md#the-plan-sold-to-a-rival)        |
 | Enjoyment, recovery and chosen continuation | [Victory homecoming](combinations.md#the-household-after-the-victory), [completed work](combinations.md#a-good-job-becomes-smaller), [summit outing](combinations.md#soup-before-the-summit), [a holiday](arts-leisure.md#a-holiday-after-completion)                           |
 
-This is navigation across overlapping experiences, not another emotional taxonomy or acceptance report. The remaining practical and comic scenes retain their useful scope; quiet pleasure and accessibility do not need a hidden crisis to belong. Apply [the selected scene-mix review](selection-and-scale.md#review-the-selected-scene-mix) rather than tallying negative words or requiring every scene to contain every mood.
+These experiences overlap. Use [the selected scene-mix review](selection-and-scale.md#review-the-selected-scene-mix) to judge their variety across an opening and cast; individual scenes can remain focused, practical, quiet or comic.
 
 ## Optional world families
 

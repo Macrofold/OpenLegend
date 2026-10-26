@@ -430,7 +430,7 @@ The first eight entries are unusual tastes under stated premises. The final two 
 
 A scrupulously fair organizer controls a coveted funded apprenticeship. Their sibling wants it, while another candidate has a stronger demonstration of the relevant skill. In one selected version, the organizer has made an exception and must answer the excluded candidate, whose chance to leave precarious work was real. The contradiction emerges from loyalties and circumstances, not a random hypocrisy event. Players can defend, expose or contest the appointment, seek another place or help change the decision. A corrected award can be a genuine victory without making the lost time imaginary. Keep the person capable of change and ordinary goodness; a trait combination must not predetermine betrayal or a villain arc.
 
-When preparing the situation, preserve the accepted person, the actual family association and the competing concern rather than selecting whichever single trait predicts the desired act. The organizer can uphold the rule, bend it, ask someone else to judge or propose another arrangement. Compare the same choice for a stranger, a sibling and an openly changed circumstance without changing the biography to force a result. Particular tastes and humor deserve the same treatment: an elegant lover of trashy art (TR-177) remains more than whichever preference matched the latest scene.
+When preparing the situation, preserve the accepted person, the actual family association and the competing concern rather than selecting whichever single trait predicts the desired act. When the scene begins before the appointment, the organizer can uphold the rule, bend it, ask someone else to judge or propose another arrangement. Compare those possibilities for a stranger, a sibling and an openly changed circumstance without changing the biography to force a result. In the already-appointed version, later choices address the actual appointment and its consequences; they do not rewrite what happened. Particular tastes and humor deserve the same treatment: an elegant lover of trashy art (TR-177) remains more than whichever preference matched the latest scene.
 
 Related entries: [TR-203](#values-contradictions-and-unpleasant-choices).
 
@@ -440,9 +440,9 @@ Seeds and references: [Dragon Age II](source-atlas.md#g52), [Crusader Kings III]
 
 **ALL · Blend · Moderate/Extend.** Gap: domain-specific risk appraisals linked to experience.
 
-A courier calmly crosses exposed ridges but avoids borrowing money after a family business failure. In a selected expedition, a cautious route can preserve the party's supplies while losing a coveted first arrival; a fast crossing offers a real prize with actual exposure. The courier's judgment can protect someone or cost an opportunity without proving them universally brave or cowardly.
+A courier calmly crosses exposed ridges but avoids borrowing money after a family business failure. A selected ridge commission promises enough pay to equip a workshop, but its supply advance puts the courier's home at risk under the stated terms. They may welcome the climb yet refuse the debt, seek different terms or choose a smaller, already-funded job. Success can bring a useful gain; refusal can protect the home while losing a wanted opportunity.
 
-Players can scout, compare routes, divide burdens or turn back with useful knowledge. Evidence may revise a fear; an enticing reward need not overcome it. One “bravery” value would erase these distinctions. Limit modeled domains to those that affect play; do not infer real psychological diagnoses from fictional habits.
+Players can examine the offer, contribute supplies or compare jobs through the selected world's supported agreement and consequence rules; this example adds no lending system. Evidence may revise a fear, but an enticing reward need not overcome it. One “bravery” value would erase the difference between physical confidence and financial caution. Limit modeled domains to those that affect play; do not infer real psychological diagnoses from fictional habits.
 
 Related entries: [TR-143](#risk-courage-and-aggression).
 
