@@ -646,24 +646,17 @@ These were qualitative samples, not prevalence estimates. They show how the Sept
 
 These are research hypotheses and comparative lessons, not new implementation requirements or priorities. The linked studies own the detailed evidence and its limits.
 
+The [application map](enshrouded/05-comparison-with-dragonwilds.md#7-focused-openlegend-decisions-to-investigate) routes the useful lessons into [gameplay selection principles](../../../../docs/repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return), existing feature designs, player observations and the [design register](../../../../docs/maintainers/needs-design.md). Those documents own OpenLegend's selected scope and follow-through.
+
 ### 1. An authored world can still be physically editable
 
-Enshrouded's most important lesson is that **handcrafted narrative geography and voxel agency are not mutually exclusive**. Preserve authored POIs/topology at the world layer while letting player-owned areas accept deep edits.
-
-For OpenLegend:
-
-- distinguish canonical world state;
-- owned/persistent player modifications;
-- temporary/destructible local state;
-- reset/recovery semantics.
-
-Do not make every shovel action a permanent database obligation.
+Enshrouded demonstrates that **handcrafted narrative geography and voxel agency can coexist**. Its particular base/overworld persistence boundary is one implementation of that product promise, with the restrictions described in the [building study](enshrouded/01-building-and-creation.md). OpenLegend can investigate how authored places remain interesting to change without adopting the same reset boundary or choosing a voxel representation from this comparison alone.
 
 ### 2. Persistence boundaries should follow meaning
 
-Base terrain/water persists because it expresses player intent. Randomly mined overworld terrain can recover because it is primarily resource/interaction state.
+Enshrouded preserves base changes while allowing changes elsewhere to reset. The design tradeoff is bounded lasting authorship alongside renewable exploration; an edit outside that boundary can still matter to its maker. This is not evidence that all player intent lies inside a claim or that resetting shared geography is appropriate for OpenLegend.
 
-This is directly relevant to large agent worlds: persist **meaningful human/agent history**, not every incidental physics mutation forever.
+Keep **authoritative physical state**, historical evidence, personal memory and disposable computation distinct. OpenLegend's [save ownership contract](../../../../docs/save-and-load.md#state-ownership-and-save-scope) preserves the facts necessary to continue the world. Avoiding a permanent log of every intermediate operation does not authorize restoring mined resources, erasing construction or losing a committed consequence. Any selected regrowth, decay or reset must be an actual world rule; storage optimization cannot silently create it.
 
 ### 3. People make unlocks memorable
 
@@ -697,7 +690,7 @@ The [asynchronous building case](enshrouded/04-hosting-and-world-governance.md#a
 
 ### 7. User-created worlds are a natural extension of expressive systems
 
-Adventure Sharing is only possible because the game's build/terrain tools already produce meaningful artifacts. OpenLegend's extensibility should similarly aim for systems where player invention can become **content other people inhabit**, not only configuration files.
+Adventure Sharing lets players make their creations available for other people to visit. OpenLegend's extensibility can likewise aim for invention that becomes **content other people inhabit**, with actual usable places, activities and world-owned consequences.
 
 ### 8. Released-game continuity can preserve intent when systems change
 
