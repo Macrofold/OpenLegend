@@ -264,4 +264,3 @@ Mike requested full research into the five games suggested by the supplied RPG v
 ## October 26 Crimson Desert addition
 
 Mike requested a full dossier covering major mechanics, the detailed world and dragon riding, broad professional/player reception, development thinking, marketing and commercial results. G185 applies R01–R14, the economics/enjoyment/lore/creation amendment and the affirmative R15 modding screen. The [dossier](dossiers/crimson-desert.md) and [scoped record](research-progress-crimson-desert-2026-10-26.md) own the output and completion. This addition preserves all earlier identities and does not reopen queued G150–G166 or whole-library gates.
-

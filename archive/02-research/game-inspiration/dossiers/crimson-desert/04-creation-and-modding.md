@@ -10,11 +10,11 @@ Several individual Nexus pages returned dashes for download totals. Those fields
 
 ### Three different kinds of creation
 
-| Level | What is evidenced | Important boundary |
-|---|---|---|
-| Expressing oneself while playing | Decorating, changing appearance through supported services, equipment choices and camp development; see the [mechanics chapter](01-mechanics-world.md). | These operate within the game's existing vocabulary. |
-| Authoring assets and reusable content | Community tools expose equipment templates, model/texture editing, appearance variants and packaged modifications. [C04] [C05] | The tool's supported formats determine what can actually be exported and used. |
-| Changing behavior or a ruleset | Data changes, runtime plugins, survival systems, encounter spawners and stealth changes. [C06] [C08] [C09] [C10] | A modified client is not a native multiplayer world platform or a general-purpose game editor. |
+| Level                                 | What is evidenced                                                                                                                                       | Important boundary                                                                             |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Expressing oneself while playing      | Decorating, changing appearance through supported services, equipment choices and camp development; see the [mechanics chapter](01-mechanics-world.md). | These operate within the game's existing vocabulary.                                           |
+| Authoring assets and reusable content | Community tools expose equipment templates, model/texture editing, appearance variants and packaged modifications. [C04] [C05]                          | The tool's supported formats determine what can actually be exported and used.                 |
+| Changing behavior or a ruleset        | Data changes, runtime plugins, survival systems, encounter spawners and stealth changes. [C06] [C08] [C09] [C10]                                        | A modified client is not a native multiplayer world platform or a general-purpose game editor. |
 
 The interesting opportunity is that a world people already enjoy becomes material for further expression. The associated cost is a second layer of dependencies, documentation, installation and support. Successful creation requires both the creative act and a reliable path to another player's working game.
 
@@ -22,12 +22,12 @@ The interesting opportunity is that a world people already enjoy becomes materia
 
 These are capabilities described by their maintainers, not independently measured reliability claims. A manager, an authoring workbench and a runtime loader solve different problems; installing one does not supply all three.
 
-| Tool and maintainer | Documented purpose | Consumer still has to decide or supply |
-|---|---|---|
-| **CDUMM**, faisalkindi / kindiboy | Imports several mod formats, manages changes and load ordering, detects conflicts and supports restoration. Its public repository is MIT licensed. [C02] | Select compatible mods, understand the intended effect and verify that it occurs. |
-| **Definitive Mod Manager**, AerowynX | Manages byte patches, textures, replacements, plugins and archive overlays; its page documents backup and mount/unmount operations. [C03] | Follow the creation's actual dependencies and version requirements. A manager's availability is not universal compatibility. |
-| **Crimson Desert Mod Workbench**, Ratty123 | Browses assets and provides equipment, mesh, material, texture and placement workflows. Its repository is MIT licensed. [C04] | Make the artistic and mechanical choices, test the exported result and own the creation's behavior. |
-| **cdloader-VFS**, liuhVIP | Combines modification intents and presents resulting files through a virtual file view; `.cdmod` packages can declare resources, rules and dependencies. Its repository is Apache-2.0 licensed. [C06] | Provide changes that its decoders and writers actually support; resolve conflicting design intentions. |
+| Tool and maintainer                        | Documented purpose                                                                                                                                                                                    | Consumer still has to decide or supply                                                                                       |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **CDUMM**, faisalkindi / kindiboy          | Imports several mod formats, manages changes and load ordering, detects conflicts and supports restoration. Its public repository is MIT licensed. [C02]                                              | Select compatible mods, understand the intended effect and verify that it occurs.                                            |
+| **Definitive Mod Manager**, AerowynX       | Manages byte patches, textures, replacements, plugins and archive overlays; its page documents backup and mount/unmount operations. [C03]                                                             | Follow the creation's actual dependencies and version requirements. A manager's availability is not universal compatibility. |
+| **Crimson Desert Mod Workbench**, Ratty123 | Browses assets and provides equipment, mesh, material, texture and placement workflows. Its repository is MIT licensed. [C04]                                                                         | Make the artistic and mechanical choices, test the exported result and own the creation's behavior.                          |
+| **cdloader-VFS**, liuhVIP                  | Combines modification intents and presents resulting files through a virtual file view; `.cdmod` packages can declare resources, rules and dependencies. Its repository is Apache-2.0 licensed. [C06] | Provide changes that its decoders and writers actually support; resolve conflicting design intentions.                       |
 
 Tools reduce repeated mechanical effort. They do not decide whether an item is enjoyable, whether a model fits the character in motion, whether a new acquisition route is fair, or whether an encounter preserves the intended story. Nor do an open-source tool's license and a game's asset rights become interchangeable.
 
@@ -102,33 +102,33 @@ The practical positive lesson is to make supported creation pleasant: understand
 
 ## R15 coverage
 
-| Requirement | Evidence owner |
-|---|---|
-| Applicability and scope | Section 1: catalog plus maintained tools and creators; desktop boundary. |
-| Actual tools and capabilities | Section 2: managers, workbench and runtime composition. |
-| Creation-to-play workflow | Section 2: supported equipment example, explicitly constructed. |
-| Representative creations and authorship | Section 3: identity, encounters, survival, stealth and dragon access. |
+| Requirement                              | Evidence owner                                                                                            |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Applicability and scope                  | Section 1: catalog plus maintained tools and creators; desktop boundary.                                  |
+| Actual tools and capabilities            | Section 2: managers, workbench and runtime composition.                                                   |
+| Creation-to-play workflow                | Section 2: supported equipment example, explicitly constructed.                                           |
+| Representative creations and authorship  | Section 3: identity, encounters, survival, stealth and dragon access.                                     |
 | Composition, dependencies and durability | Section 4: field conflicts, executable coupling, a cached-merge defect and saved appearance dependencies. |
-| Discovery, permissions and incentives | Section 5: distribution routes, author terms and attributed motivations. |
-| Transfer and limits | Sections 2–5 and [Open Legend synthesis](05-openlegend-lessons.md); no implementation authorization. |
+| Discovery, permissions and incentives    | Section 5: distribution routes, author terms and attributed motivations.                                  |
+| Transfer and limits                      | Sections 2–5 and [Open Legend synthesis](05-openlegend-lessons.md); no implementation authorization.      |
 
 ## Sources and access limits
 
 All sources were read on 26 October 2026. Live tool documentation may change after this snapshot. Tool descriptions and author-reported fixes are not independent reproduction. No binary, mod, game asset or executable was downloaded or run for this chapter; no asset is licensed to Open Legend by its presence here.
 
-| ID | Source | Evidence inspected |
-|---|---|---|
-| [C01] | Nexus Crimson Desert landing page | Rounded live catalog/collection totals; displayed download fields elsewhere were unavailable. |
-| [C02] | faisalkindi, CDUMM repository | Maintainer README, October fixes and license designation; capabilities and concrete failure history. |
-| [C03] | AerowynX, DMM Nexus page | Description, October 25 version metadata and permissions. |
-| [C04] | Ratty123, Mod Workbench repository | README workflow, equipment export limitations and license designation. |
-| [C05] | Mod Workbench, Create New Item guide | Relevant authoring, output, supported-record and verification-boundary sections; no claim of executing its checks. |
-| [C06] | liuhVIP, cdloader-VFS repository | README composition, package semantics, compatibility limitations and license designation. |
-| [C07] | Khione95, Character Creator Nexus page | October 25 metadata, appearance workflow, dependencies, removal warning and credited fixes. |
-| [C08] | namintelvn, Random Boss Encounters Nexus page | July 30 update, installation, settings and failure corrections; current executable compatibility untested. |
-| [C09] | 4yr0n94, Be Hungry Nexus page | September 23 metadata, survival goals, upstream credit and documented compatibility limits. |
-| [C10] | Gaidenre, Crimson Stealth Overhaul Nexus page | October 16 update, changes, motivation and credit; balance untested. |
-| [C11] | pers0lus, firsthand Blackstar mod post | Creator's stated experience, duration, motivation and support offer. Relative date displayed; no exact post date inferred. |
+| ID    | Source                                        | Evidence inspected                                                                                                         |
+| ----- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| [C01] | Nexus Crimson Desert landing page             | Rounded live catalog/collection totals; displayed download fields elsewhere were unavailable.                              |
+| [C02] | faisalkindi, CDUMM repository                 | Maintainer README, October fixes and license designation; capabilities and concrete failure history.                       |
+| [C03] | AerowynX, DMM Nexus page                      | Description, October 25 version metadata and permissions.                                                                  |
+| [C04] | Ratty123, Mod Workbench repository            | README workflow, equipment export limitations and license designation.                                                     |
+| [C05] | Mod Workbench, Create New Item guide          | Relevant authoring, output, supported-record and verification-boundary sections; no claim of executing its checks.         |
+| [C06] | liuhVIP, cdloader-VFS repository              | README composition, package semantics, compatibility limitations and license designation.                                  |
+| [C07] | Khione95, Character Creator Nexus page        | October 25 metadata, appearance workflow, dependencies, removal warning and credited fixes.                                |
+| [C08] | namintelvn, Random Boss Encounters Nexus page | July 30 update, installation, settings and failure corrections; current executable compatibility untested.                 |
+| [C09] | 4yr0n94, Be Hungry Nexus page                 | September 23 metadata, survival goals, upstream credit and documented compatibility limits.                                |
+| [C10] | Gaidenre, Crimson Stealth Overhaul Nexus page | October 16 update, changes, motivation and credit; balance untested.                                                       |
+| [C11] | pers0lus, firsthand Blackstar mod post        | Creator's stated experience, duration, motivation and support offer. Relative date displayed; no exact post date inferred. |
 
 [C01]: https://www.nexusmods.com/games/crimsondesert
 [C02]: https://github.com/faisalkindi/CrimsonDesert-UltimateModsManager

@@ -12,14 +12,14 @@ The initial dramatic problem is concrete: Kliff's Greymanes have been devastated
 
 The free Enhanced upgrade arrived on 25 August with additional story scenes and expanded voice and text localization. It is not a paid sequel. [M05] Earlier reviews remain evidence of the launch experience, but several complaints concern systems that changed materially:
 
-| System | Shipped change relevant to this study |
-|---|---|
-| Alternate protagonists | April's 1.03 gave Damiane and Oongka additional puzzle capabilities; June's 1.12 enabled Blackstar riding and memory reading; July's 1.13 opened the Abyss to them. [M07] [M11] [M12] |
-| Difficulty and preparation | April's 1.04 added Easy, Normal and Hard, expanded storage and improved inventory organization. [M08] |
-| A cleared world | May's 1.05 added boss rematches and optional reblockades after players had exhausted encounters. [M09] |
-| Input and comfort | The official update history records controller remapping in 1.09, alongside earlier control and UI work. [M14] |
-| Trade | August's 1.16 substantially expanded overland trading and banking. [M13] |
-| Skill investment | August's 2.00 introduced Abyss Link, independent character resets and limited campaign-restart carryover. [M06] |
+| System                     | Shipped change relevant to this study                                                                                                                                                 |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Alternate protagonists     | April's 1.03 gave Damiane and Oongka additional puzzle capabilities; June's 1.12 enabled Blackstar riding and memory reading; July's 1.13 opened the Abyss to them. [M07] [M11] [M12] |
+| Difficulty and preparation | April's 1.04 added Easy, Normal and Hard, expanded storage and improved inventory organization. [M08]                                                                                 |
+| A cleared world            | May's 1.05 added boss rematches and optional reblockades after players had exhausted encounters. [M09]                                                                                |
+| Input and comfort          | The official update history records controller remapping in 1.09, alongside earlier control and UI work. [M14]                                                                        |
+| Trade                      | August's 1.16 substantially expanded overland trading and banking. [M13]                                                                                                              |
+| Skill investment           | August's 2.00 introduced Abyss Link, independent character resets and limited campaign-restart carryover. [M06]                                                                       |
 
 **Announced, not yet released at the cutoff:** Charting the Unknown is scheduled for 29 October. The official preview describes ship dispatch and maritime systems, breath-limited diving, romance and marriage, expanded construction, claimable castles, businesses and the Garden of Trials. These cannot explain the base game's already observed success, nor should a compilation of current website features accidentally count them as launch mechanics. [M15]
 
@@ -33,18 +33,18 @@ There is no native character creator established by this research. Appearance cu
 
 ### Action inventory and what each family contributes
 
-| Family | Documented player actions | Function in the experience |
-|---|---|---|
-| Embodied fighting | Armed strings, kicks, throws, grapples, ranged attacks, blocking, evasions, counters and elemental attacks. [M03] | Repeated encounters offer several expressions of competence rather than only higher damage. |
-| Movement | Ride, climb, glide, use aerial abilities, find fast-travel points; later access powerful special mounts and machinery. [M02] [M07] | The same landscape can change from obstacle to route to spectacle. |
-| Object manipulation | Pull, rotate and place compatible objects with Axiom Force; seat or strike mechanisms with Force Palm. [M19] [M20] | A physical vocabulary bridges traversal, puzzles and combat. |
-| Perception | Observe techniques, reveal environmental clues, discover and replay memories. [M18] [M21] [M35] | Looking carefully can grant capability or understanding, not only scenery. |
-| Provisioning | Gather, fish, hunt, cook, use alchemy, mine and craft. [M04] [M34] | Quiet outdoor activity feeds preparation and development. |
-| Equipment expression | Refine gear, install Abyss Gears, recover upgrade investment, dye clothing and make specialist Kuku devices. [M23] [M25] [M26] | Mechanical and visual identity can develop together. |
-| Social and unlawful action | Greet, give gifts, complete requests, recruit, steal and incur bounties. [M31] [M32] [M33] | Towns supply services and constraints, although this is not proof of open-ended social simulation. |
-| Home and organization | Rebuild camp, dispatch comrades, expand productive facilities and decorate. [M04] [M31] | The adventure has a recurring place of attachment and accumulated practical benefit. |
-| Commerce | Carry and sell trade goods, compare prices, protect transport and invest at banks. [M13] | Resources can matter outside the immediate combat-upgrade loop. |
-| Leisure and collection | Fish keeping, pets, growing special mounts, Pinball and Orb Roll appear in the post-launch record. [M10] [M14] | Low-pressure activities change pace and create personal preferences within a combat-led game. |
+| Family                     | Documented player actions                                                                                                          | Function in the experience                                                                         |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Embodied fighting          | Armed strings, kicks, throws, grapples, ranged attacks, blocking, evasions, counters and elemental attacks. [M03]                  | Repeated encounters offer several expressions of competence rather than only higher damage.        |
+| Movement                   | Ride, climb, glide, use aerial abilities, find fast-travel points; later access powerful special mounts and machinery. [M02] [M07] | The same landscape can change from obstacle to route to spectacle.                                 |
+| Object manipulation        | Pull, rotate and place compatible objects with Axiom Force; seat or strike mechanisms with Force Palm. [M19] [M20]                 | A physical vocabulary bridges traversal, puzzles and combat.                                       |
+| Perception                 | Observe techniques, reveal environmental clues, discover and replay memories. [M18] [M21] [M35]                                    | Looking carefully can grant capability or understanding, not only scenery.                         |
+| Provisioning               | Gather, fish, hunt, cook, use alchemy, mine and craft. [M04] [M34]                                                                 | Quiet outdoor activity feeds preparation and development.                                          |
+| Equipment expression       | Refine gear, install Abyss Gears, recover upgrade investment, dye clothing and make specialist Kuku devices. [M23] [M25] [M26]     | Mechanical and visual identity can develop together.                                               |
+| Social and unlawful action | Greet, give gifts, complete requests, recruit, steal and incur bounties. [M31] [M32] [M33]                                         | Towns supply services and constraints, although this is not proof of open-ended social simulation. |
+| Home and organization      | Rebuild camp, dispatch comrades, expand productive facilities and decorate. [M04] [M31]                                            | The adventure has a recurring place of attachment and accumulated practical benefit.               |
+| Commerce                   | Carry and sell trade goods, compare prices, protect transport and invest at banks. [M13]                                           | Resources can matter outside the immediate combat-upgrade loop.                                    |
+| Leisure and collection     | Fish keeping, pets, growing special mounts, Pinball and Orb Roll appear in the post-launch record. [M10] [M14]                     | Low-pressure activities change pace and create personal preferences within a combat-led game.      |
 
 This inventory should not be mistaken for equal depth across all systems. A minigame, a combat style, a scripted quest branch and a transport economy require different levels of decision-making. The useful question is whether an activity produces a consequence elsewhere and whether repeating it remains enjoyable.
 
@@ -68,11 +68,11 @@ There is no conventional numbered character-level ladder, but combat contributes
 
 Three similar names conceal different functions:
 
-| Term | What it does | What it should not be confused with |
-|---|---|---|
-| **Abyss Artifacts** | Support skill development; some techniques can instead be learned through observation. [M18] | An equipment socket modifier. |
-| **Abyss Gears** | Modify equipped items with statistics or special effects through an equipment-slot system. [M23] | The universal currency for learning every skill. |
-| **Abyss Link** | Since 2.00, spending Artifacts on one protagonist grants equivalent Links to the other two, allowing their development without the old duplicated investment burden. [M06] | A multiplayer connection or a second character following the player online. |
+| Term                | What it does                                                                                                                                                               | What it should not be confused with                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **Abyss Artifacts** | Support skill development; some techniques can instead be learned through observation. [M18]                                                                               | An equipment socket modifier.                                               |
+| **Abyss Gears**     | Modify equipped items with statistics or special effects through an equipment-slot system. [M23]                                                                           | The universal currency for learning every skill.                            |
+| **Abyss Link**      | Since 2.00, spending Artifacts on one protagonist grants equivalent Links to the other two, allowing their development without the old duplicated investment burden. [M06] | A multiplayer connection or a second character following the player online. |
 
 Observation gives exploration a direct relationship to competence. The original guide describes learning fishing from people in the prologue, noticing combat demonstrations, and acquiring knowledge of techniques through observation prompts. [M18] **Interpretation:** this makes another person an example rather than merely a quest dispenser. It is a particularly useful precedent for Open Legend's interest in learning from inhabitants. The evidence here establishes authored observation opportunities, not an AI teacher able to invent or demonstrate any technique.
 
@@ -132,14 +132,14 @@ Research adds an organizational progression layer. The guide identifies six inst
 
 ### Resource map
 
-| Input or asset | Conversion or sink | Result |
-|---|---|---|
-| Ingredients | Cooking or alchemy | Recovery, preparation and specialist consumables. [M04] [M34] |
-| Materials and recipes | Smiths, workshop crafting, refinement | Equipment and authored devices. [M03] [M26] |
-| Knowledge and Camp Funds | Research requirements and project time | Capabilities and infrastructure unlocks. [M27] |
-| Camp supplies and available comrades | Dispatch and upgrades | Resources, home services and regional activity. [M31] |
-| Silver, gold bars and trade goods | Purchase, transport, sales or investment | Monetary return with route and investment risk. [M13] [M34] |
-| Regional Contribution | Special services, hires and purchases | Access that is distinct from personal wealth. [M34] |
+| Input or asset                       | Conversion or sink                       | Result                                                        |
+| ------------------------------------ | ---------------------------------------- | ------------------------------------------------------------- |
+| Ingredients                          | Cooking or alchemy                       | Recovery, preparation and specialist consumables. [M04] [M34] |
+| Materials and recipes                | Smiths, workshop crafting, refinement    | Equipment and authored devices. [M03] [M26]                   |
+| Knowledge and Camp Funds             | Research requirements and project time   | Capabilities and infrastructure unlocks. [M27]                |
+| Camp supplies and available comrades | Dispatch and upgrades                    | Resources, home services and regional activity. [M31]         |
+| Silver, gold bars and trade goods    | Purchase, transport, sales or investment | Monetary return with route and investment risk. [M13] [M34]   |
+| Regional Contribution                | Special services, hires and purchases    | Access that is distinct from personal wealth. [M34]           |
 
 The August trade overhaul added 133 new trading posts, more goods and workshops, route information and purchase-price tracking. Repeated selling affects local prices; wagon transport and destruction introduce losses. Banking supports investments with potential gains and losses. [M13] This establishes a more consequential trade loop than a universal vendor selling everything at one fixed price. It does **not** prove that every NPC consumes simulated goods or that a background supply chain continuously manufactures the stock.
 
@@ -249,66 +249,66 @@ The exact current Blackstar timer was not resolved; current public guides confli
 
 All sources were accessed **26 October 2026**. “Text read” means the substantive written sections relevant to the claims were retrieved; it does not mean embedded video was watched, every linked page was read, or the game was played. Dates below are publication/update dates displayed by the source, where available. Primary announcements describe the developer's own product and intentions; guides are independent gameplay reporting; recovered game text is fan-hosted and explicitly distinguished from official publication. Paraphrases are short and distributed across sources; no extended quotations are used.
 
-| ID | Source, date and evidence scope |
-|---|---|
+| ID    | Source, date and evidence scope                                                                                                                                                                  |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [M01] | **Steam, Crimson Desert Enhanced storefront.** Current on access; publisher-supplied identity, release date and platform feature metadata read. User tags are not treated as verified mechanics. |
-| [M02] | **Pearl Abyss/TriplePoint, story-world feature overview.** 29 Jan 2026. Primary promotional text read; embedded feature video not audited. |
-| [M03] | **Pearl Abyss/TriplePoint, combat and progression overview.** 5 Feb 2026. Primary promotional text read. |
-| [M04] | **Pearl Abyss/TriplePoint, Life in Pywel overview.** 12 Feb 2026. Primary promotional text read. |
-| [M05] | **Pearl Abyss, Enhanced announcement.** 25 Aug 2026. Primary notice read; free upgrade identity. |
-| [M06] | **Pearl Abyss, patch 2.00.00.** 25 Aug 2026. Primary release notes read; explicitly labels Enhanced and marks platforms available. |
-| [M07] | **Pearl Abyss, patch 1.03.00.** 11 Apr 2026. Primary release notes read; abilities, puzzles, controls and traversal comfort. |
-| [M08] | **Pearl Abyss, patch 1.04.00.** 23 Apr, revised 27 Apr 2026. Primary notes read; difficulty, storage and interface. |
-| [M09] | **Pearl Abyss, patch 1.05.00.** 2 May 2026. Primary notes read; rematch and reblockade introduction and stated rationale. |
-| [M10] | **Pearl Abyss, patch 1.10.00.** 5 Jun 2026. Primary notes read; mounts, minigames and reblockade development. |
-| [M11] | **Pearl Abyss, patch 1.12.00.** 19 Jun 2026. Primary notes read; housing, alternate characters and retry behavior. |
-| [M12] | **Pearl Abyss, patch 1.13.00.** 3 Jul 2026. Primary notes read; alternate characters' Abyss access. |
-| [M13] | **Pearl Abyss, patch 1.16.00.** 1 Aug 2026. Primary notes read; trade and banking overhaul. |
-| [M14] | **Pearl Abyss, Update Highlights.** 12 Aug 2026. Primary retrospective read; timeline used rather than treating all additions as launch features. |
-| [M15] | **Pearl Abyss, Charting the Unknown preview.** 20 Oct 2026. Primary announcement read; explicitly future content at cutoff. |
-| [M16] | **KeenGamer, Rafly Wibowo, playable characters guide.** 29 Mar 2026. Original guide sections read; dated restrictions superseded by official patches. |
-| [M17] | **PC Gamer, Sean Martin, 100-hour tips.** 19 Mar 2026. Original gameplay article relevant sections read; stamina, food and revival. |
-| [M18] | **VULKK, RubyRose, observable skills.** Updated 21 May 2026. Original guide explanation read; observation opportunities, not exhaustive live testing. |
-| [M19] | **VULKK, Axiom Force guide.** 12 Apr 2026. Original walkthrough text read; compatibility and action families. |
-| [M20] | **VULKK, Force Palm guide.** 3 Apr, updated 24 Apr 2026. Original guide text read; exact costs omitted where terminology was inconsistent. |
-| [M21] | **VULKK, Blinding Flash guide.** 21 Mar 2026. Original guide text and described demonstrations read; multi-purpose light interactions. |
-| [M22] | **VULKK, Adrian, Nature's Snare guide.** 1 May 2026. Original guide text read, including interruptions and puzzle uses. |
-| [M23] | **VULKK, Abyss Gears guide.** 17 Apr 2026. Original guide relevant sections read; slots and effects. |
-| [M24] | **VULKK, armor and accessories guide.** 16 Apr 2026. Original guide relevant sections read; categories and refinement. |
-| [M25] | **VULKK, extraction guide.** 12 May 2026. Original guide text read; recovery restrictions. |
-| [M26] | **VULKK, Kuku crafting guide.** 12 Jun 2026. Original guide relevant device and recipe sections read. |
-| [M27] | **VULKK, research guide.** 26 Jun, updated 15 Aug 2026. Original guide text read, including funding change. |
-| [M28] | **VULKK, horse guide.** 3 Apr, updated 8 Apr 2026. Original guide text read; taming and progression. |
-| [M29] | **VULKK, dragon cooldown guide.** 7 May 2026. Original guide text read; horns and cooldown. Timer conflicts with M30. |
-| [M30] | **KeenGamer, Ali Amir, Blackstar guide.** 9 Apr 2026. Original guide text read; unlock sequence and conflicting timer retained as uncertainty. |
-| [M31] | **VULKK, Greymane camp guide.** 2 May, updated 4 Sep 2026. Original guide relevant sections read; services, production and progression. |
-| [M32] | **VULKK, NPC trust and gifts.** 25 Apr, updated 31 May 2026. Original guide text read; preference categories and contracts. |
-| [M33] | **VULKK, crime and bounties.** 26 Mar, updated 13 May 2026. Original guide text read; penalties and mechanical limitations. |
-| [M34] | **gaming.tools, recovered life tutorials.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted game text read; not an official manual. |
-| [M35] | **VULKK, RubyRose, Visione and memories.** Updated 23 Mar 2026. Original guide text read; memory discovery and interface sequence. |
-| [M36] | **gaming.tools, White Crow character text.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered lore read; numerical entity fields not interpreted. |
-| [M37] | **gaming.tools, Alustin character text.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered lore read. |
-| [M38] | **gaming.tools, Myurdin boss text.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered lore read. |
-| [M39] | **gaming.tools, National Delesyian Institute.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted faction description read. |
-| [M40] | **gaming.tools, Marni knowledge entry.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered lore read; later story spoiler. |
-| [M41] | **gaming.tools, Witches on the Ground.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted in-game message read. |
-| [M42] | **Pearl Abyss support, save data.** Cross-save information dates to 16 Jul 2026; current support text read. |
-| [M44] | **NME, character creation guide.** 22 Mar 2026. Search excerpt only; direct opening returned 403. Used narrowly, alongside authored-character sources. |
-| [M45] | **GameSpot, Levi Winslow, NPC work and schedules.** 1 Apr 2026. Full article read; separates author's merchant observation from attributed player footage. |
-| [M46] | **Pearl Abyss, audio production account.** 9 Sep 2026. Korean primary text read; embedded behind-the-scenes video not independently audited. |
-| [M47] | **PowerPyx, time and sleep guide.** 18 Mar 2026. Original short guide read; clock/dispatch connection. |
-| [M48] | **gaming.tools, recovered quest tutorials.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted text read; infiltration and bounty rules. |
-| [M49] | **gaming.tools, recovered adventure tutorials.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted text read; climate and preparation. |
-| [M50] | **VULKK, Endonae, maximizing stats.** 17 Jun 2026. Original guide threshold section read; its uncertain damage-formula speculation is not adopted. |
-| [M51] | **Pearl Abyss, current main product page.** Current on access. Promotional text read; biome/visual intent, not a performance benchmark. |
-| [M52] | **PlayStation LifeStyle, Nicholas Tan, Greymane story analysis.** 31 Mar 2026. Full original article read; launch narrative interpretation, not post-Enhanced review. |
-| [M53] | **gaming.tools, Stjar Clan.** Version 2.0.0, page updated 30 Sep 2026. Fan-hosted recovered faction text read. |
-| [M54] | **gaming.tools, Titan faction knowledge.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered religious/contextual text read. |
-| [M55] | **gaming.tools, Pororin Forest Guardians.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered faction text read. |
-| [M56] | **gaming.tools, Master Du.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered character text read. |
-| [M57] | **gaming.tools, Gabriel Caliburn knowledge.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered character text read; later-story spoiler. |
-| [M58] | **Pearl Abyss, patch 1.00.03.** March 2026. Primary update text read; automated initial Visione playback after Lantern discovery. |
-| [M59] | **Gamers Heroes, Blaine Smith, artifact meter guide.** 19 Mar 2026. Original guide body read; combat acquisition route, no verified current cap. |
+| [M02] | **Pearl Abyss/TriplePoint, story-world feature overview.** 29 Jan 2026. Primary promotional text read; embedded feature video not audited.                                                       |
+| [M03] | **Pearl Abyss/TriplePoint, combat and progression overview.** 5 Feb 2026. Primary promotional text read.                                                                                         |
+| [M04] | **Pearl Abyss/TriplePoint, Life in Pywel overview.** 12 Feb 2026. Primary promotional text read.                                                                                                 |
+| [M05] | **Pearl Abyss, Enhanced announcement.** 25 Aug 2026. Primary notice read; free upgrade identity.                                                                                                 |
+| [M06] | **Pearl Abyss, patch 2.00.00.** 25 Aug 2026. Primary release notes read; explicitly labels Enhanced and marks platforms available.                                                               |
+| [M07] | **Pearl Abyss, patch 1.03.00.** 11 Apr 2026. Primary release notes read; abilities, puzzles, controls and traversal comfort.                                                                     |
+| [M08] | **Pearl Abyss, patch 1.04.00.** 23 Apr, revised 27 Apr 2026. Primary notes read; difficulty, storage and interface.                                                                              |
+| [M09] | **Pearl Abyss, patch 1.05.00.** 2 May 2026. Primary notes read; rematch and reblockade introduction and stated rationale.                                                                        |
+| [M10] | **Pearl Abyss, patch 1.10.00.** 5 Jun 2026. Primary notes read; mounts, minigames and reblockade development.                                                                                    |
+| [M11] | **Pearl Abyss, patch 1.12.00.** 19 Jun 2026. Primary notes read; housing, alternate characters and retry behavior.                                                                               |
+| [M12] | **Pearl Abyss, patch 1.13.00.** 3 Jul 2026. Primary notes read; alternate characters' Abyss access.                                                                                              |
+| [M13] | **Pearl Abyss, patch 1.16.00.** 1 Aug 2026. Primary notes read; trade and banking overhaul.                                                                                                      |
+| [M14] | **Pearl Abyss, Update Highlights.** 12 Aug 2026. Primary retrospective read; timeline used rather than treating all additions as launch features.                                                |
+| [M15] | **Pearl Abyss, Charting the Unknown preview.** 20 Oct 2026. Primary announcement read; explicitly future content at cutoff.                                                                      |
+| [M16] | **KeenGamer, Rafly Wibowo, playable characters guide.** 29 Mar 2026. Original guide sections read; dated restrictions superseded by official patches.                                            |
+| [M17] | **PC Gamer, Sean Martin, 100-hour tips.** 19 Mar 2026. Original gameplay article relevant sections read; stamina, food and revival.                                                              |
+| [M18] | **VULKK, RubyRose, observable skills.** Updated 21 May 2026. Original guide explanation read; observation opportunities, not exhaustive live testing.                                            |
+| [M19] | **VULKK, Axiom Force guide.** 12 Apr 2026. Original walkthrough text read; compatibility and action families.                                                                                    |
+| [M20] | **VULKK, Force Palm guide.** 3 Apr, updated 24 Apr 2026. Original guide text read; exact costs omitted where terminology was inconsistent.                                                       |
+| [M21] | **VULKK, Blinding Flash guide.** 21 Mar 2026. Original guide text and described demonstrations read; multi-purpose light interactions.                                                           |
+| [M22] | **VULKK, Adrian, Nature's Snare guide.** 1 May 2026. Original guide text read, including interruptions and puzzle uses.                                                                          |
+| [M23] | **VULKK, Abyss Gears guide.** 17 Apr 2026. Original guide relevant sections read; slots and effects.                                                                                             |
+| [M24] | **VULKK, armor and accessories guide.** 16 Apr 2026. Original guide relevant sections read; categories and refinement.                                                                           |
+| [M25] | **VULKK, extraction guide.** 12 May 2026. Original guide text read; recovery restrictions.                                                                                                       |
+| [M26] | **VULKK, Kuku crafting guide.** 12 Jun 2026. Original guide relevant device and recipe sections read.                                                                                            |
+| [M27] | **VULKK, research guide.** 26 Jun, updated 15 Aug 2026. Original guide text read, including funding change.                                                                                      |
+| [M28] | **VULKK, horse guide.** 3 Apr, updated 8 Apr 2026. Original guide text read; taming and progression.                                                                                             |
+| [M29] | **VULKK, dragon cooldown guide.** 7 May 2026. Original guide text read; horns and cooldown. Timer conflicts with M30.                                                                            |
+| [M30] | **KeenGamer, Ali Amir, Blackstar guide.** 9 Apr 2026. Original guide text read; unlock sequence and conflicting timer retained as uncertainty.                                                   |
+| [M31] | **VULKK, Greymane camp guide.** 2 May, updated 4 Sep 2026. Original guide relevant sections read; services, production and progression.                                                          |
+| [M32] | **VULKK, NPC trust and gifts.** 25 Apr, updated 31 May 2026. Original guide text read; preference categories and contracts.                                                                      |
+| [M33] | **VULKK, crime and bounties.** 26 Mar, updated 13 May 2026. Original guide text read; penalties and mechanical limitations.                                                                      |
+| [M34] | **gaming.tools, recovered life tutorials.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted game text read; not an official manual.                                                               |
+| [M35] | **VULKK, RubyRose, Visione and memories.** Updated 23 Mar 2026. Original guide text read; memory discovery and interface sequence.                                                               |
+| [M36] | **gaming.tools, White Crow character text.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered lore read; numerical entity fields not interpreted.                                        |
+| [M37] | **gaming.tools, Alustin character text.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered lore read.                                                                                    |
+| [M38] | **gaming.tools, Myurdin boss text.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered lore read.                                                                                         |
+| [M39] | **gaming.tools, National Delesyian Institute.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted faction description read.                                                                         |
+| [M40] | **gaming.tools, Marni knowledge entry.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered lore read; later story spoiler.                                                                |
+| [M41] | **gaming.tools, Witches on the Ground.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted in-game message read.                                                                                    |
+| [M42] | **Pearl Abyss support, save data.** Cross-save information dates to 16 Jul 2026; current support text read.                                                                                      |
+| [M44] | **NME, character creation guide.** 22 Mar 2026. Search excerpt only; direct opening returned 403. Used narrowly, alongside authored-character sources.                                           |
+| [M45] | **GameSpot, Levi Winslow, NPC work and schedules.** 1 Apr 2026. Full article read; separates author's merchant observation from attributed player footage.                                       |
+| [M46] | **Pearl Abyss, audio production account.** 9 Sep 2026. Korean primary text read; embedded behind-the-scenes video not independently audited.                                                     |
+| [M47] | **PowerPyx, time and sleep guide.** 18 Mar 2026. Original short guide read; clock/dispatch connection.                                                                                           |
+| [M48] | **gaming.tools, recovered quest tutorials.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted text read; infiltration and bounty rules.                                                            |
+| [M49] | **gaming.tools, recovered adventure tutorials.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted text read; climate and preparation.                                                              |
+| [M50] | **VULKK, Endonae, maximizing stats.** 17 Jun 2026. Original guide threshold section read; its uncertain damage-formula speculation is not adopted.                                               |
+| [M51] | **Pearl Abyss, current main product page.** Current on access. Promotional text read; biome/visual intent, not a performance benchmark.                                                          |
+| [M52] | **PlayStation LifeStyle, Nicholas Tan, Greymane story analysis.** 31 Mar 2026. Full original article read; launch narrative interpretation, not post-Enhanced review.                            |
+| [M53] | **gaming.tools, Stjar Clan.** Version 2.0.0, page updated 30 Sep 2026. Fan-hosted recovered faction text read.                                                                                   |
+| [M54] | **gaming.tools, Titan faction knowledge.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered religious/contextual text read.                                                              |
+| [M55] | **gaming.tools, Pororin Forest Guardians.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered faction text read.                                                                          |
+| [M56] | **gaming.tools, Master Du.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered character text read.                                                                                       |
+| [M57] | **gaming.tools, Gabriel Caliburn knowledge.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered character text read; later-story spoiler.                                                 |
+| [M58] | **Pearl Abyss, patch 1.00.03.** March 2026. Primary update text read; automated initial Visione playback after Lantern discovery.                                                                |
+| [M59] | **Gamers Heroes, Blaine Smith, artifact meter guide.** 19 Mar 2026. Original guide body read; combat acquisition route, no verified current cap.                                                 |
 
 [M01]: https://store.steampowered.com/app/3321460/Crimson_Desert/
 [M02]: https://pressreleases.triplepointpr.com/2026/01/29/pearl-abyss-releases-new-crimson-desert-featurette-highlighting-story-world-and-gameplay/
@@ -366,7 +366,5 @@ All sources were accessed **26 October 2026**. “Text read” means the substan
 [M55]: https://crimsondesert.gaming.tools/knowledge/faction_pororinvillage
 [M56]: https://crimsondesert.gaming.tools/people/ngm_unique_goblin_master
 [M57]: https://crimsondesert.gaming.tools/knowledge/caliburn
-
-
 [M58]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=73
 [M59]: https://www.gamersheroes.com/game-guides/what-is-the-bar-in-the-bottom-left-for-in-crimson-desert/

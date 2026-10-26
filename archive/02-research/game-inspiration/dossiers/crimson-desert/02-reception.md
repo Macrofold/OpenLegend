@@ -22,16 +22,16 @@ No video was counted as watched, no review copy was played, and no inference abo
 
 A March review remains evidence about the launch experience. It cannot automatically establish the condition of the October build. Conversely, an announced fix establishes a developer change, not universal satisfaction with its result.
 
-| Evidence date | What changed or was assessed | How to use it |
-|---|---|---|
-| 18–19 March | Most professional reviews below assessed the release-period game. | Preserve the historical criticism and the reviewer's platform and playtime. |
-| 23–25 March, version 1.00.03 | Official notes added private storage and teleport points; improved interaction and jump responsiveness, puzzle alignment, and early Force Palm availability; adjusted selected early bosses, Kearush patterns, and parry stun. | “No storage,” identical early boss tuning, and identical puzzle execution cannot be carried forward as unchanged October facts. [P14] |
-| 4 April, version 1.02.00 | Storage expansion and further movement/control options appeared in official notes. | Distinguish inventory capacity from the separate question of whether collecting and sorting remain enjoyable. [P15] |
-| 23 April, version 1.04.00 | Easy, Normal, and Hard options; additional storage; control presets; inventory categories; visual improvements. Normal retained the existing difficulty baseline. | “There are no difficulty settings” is obsolete. Easy changes attack behavior and timing windows, not just a label. [P16] |
-| 22 May | Push Square re-reviewed the game on PS5 Pro. | This is direct post-patch criticism and praise, but predates Enhanced. [P09] |
-| 25 August | Enhanced released as a free upgrade for existing owners, adding story scenes and context and additional voice languages. | Treat this as a material narrative revision; do not assume either that the old story remains identical or that all narrative criticism is resolved. [P13] |
-| 11–12 September | Official version 2.02.00 fixes; a MeriStation return assessment after Enhanced. | Evidence of continuing maintenance and one favorable return assessment, not a comprehensive independent consensus on the current build. [P17] [P18] |
-| 26 October | Current Steam store and accessible review-listing snapshot. | A snapshot of recommendations and currently visible text, not a clean before/after experiment. [P19] [P20] [P21] [P22] [P23] [P24] |
+| Evidence date                | What changed or was assessed                                                                                                                                                                                                   | How to use it                                                                                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 18–19 March                  | Most professional reviews below assessed the release-period game.                                                                                                                                                              | Preserve the historical criticism and the reviewer's platform and playtime.                                                                               |
+| 23–25 March, version 1.00.03 | Official notes added private storage and teleport points; improved interaction and jump responsiveness, puzzle alignment, and early Force Palm availability; adjusted selected early bosses, Kearush patterns, and parry stun. | “No storage,” identical early boss tuning, and identical puzzle execution cannot be carried forward as unchanged October facts. [P14]                     |
+| 4 April, version 1.02.00     | Storage expansion and further movement/control options appeared in official notes.                                                                                                                                             | Distinguish inventory capacity from the separate question of whether collecting and sorting remain enjoyable. [P15]                                       |
+| 23 April, version 1.04.00    | Easy, Normal, and Hard options; additional storage; control presets; inventory categories; visual improvements. Normal retained the existing difficulty baseline.                                                              | “There are no difficulty settings” is obsolete. Easy changes attack behavior and timing windows, not just a label. [P16]                                  |
+| 22 May                       | Push Square re-reviewed the game on PS5 Pro.                                                                                                                                                                                   | This is direct post-patch criticism and praise, but predates Enhanced. [P09]                                                                              |
+| 25 August                    | Enhanced released as a free upgrade for existing owners, adding story scenes and context and additional voice languages.                                                                                                       | Treat this as a material narrative revision; do not assume either that the old story remains identical or that all narrative criticism is resolved. [P13] |
+| 11–12 September              | Official version 2.02.00 fixes; a MeriStation return assessment after Enhanced.                                                                                                                                                | Evidence of continuing maintenance and one favorable return assessment, not a comprehensive independent consensus on the current build. [P17] [P18]       |
+| 26 October                   | Current Steam store and accessible review-listing snapshot.                                                                                                                                                                    | A snapshot of recommendations and currently visible text, not a clean before/after experiment. [P19] [P20] [P21] [P22] [P23] [P24]                        |
 
 The forthcoming 29 October DLC is outside this cutoff's played reception. Its trailers and announcements should not be treated as evidence that its promised content has succeeded.
 
@@ -41,20 +41,20 @@ MeriStation's September return article reports improved explanations, interfaces
 
 Scores below are the outlet's recorded judgment, not a common measurement scale. “Not stated” means not established in the retrieved review; it does not mean the reviewer failed to play sufficiently. All rows were read beyond their verdict. Playtime is what the review explicitly reported or discussed, without converting daily schedules into invented totals.
 
-| ID / outlet / author | Date; platform; stated exposure | Judgment and strongest praise | Principal criticism and useful qualification |
-|---|---|---|---|
-| [P01] PC Gamer — Mollie Taylor | 18 Mar; PC; 75 hours; 80/100 | Expressive, physical combat and rewarding exploration; smaller companion errands sometimes create warmth absent from the main plot. Reported notably stable performance on the reviewer's PC. | Disconnected central narrative, troublesome camera and inventory, and harsh boss sequences. Forced use of less-developed alternate characters undermined investment in the main character. These are release-period observations. |
-| [P02] TechRadar — Isaiah Williams | 18 Mar; PC; 80 hours; numeric score not exposed in retrieved body | Expansive exploration, action, spectacle, animation, and music. More positive about the story than several peers; strong performance on the reviewer's high-end setup. | Aggressive bosses and repeated phases, inventory restrictions, review-build quest problems, and limited accessibility/control options. The absence of difficulty settings at review time was subsequently addressed. |
-| [P03] Tom's Guide — Tony Polanco | 18 Mar; nearly 30 hours; platform not firmly established in retrieved review; score not transcribed | Deep systems and a beautiful world offered considerable promise once understood. | Learning cost, weak narrative motivation, and demanding onboarding. The reviewer found the press/creator Discord valuable for progressing, a warning that external explanation may be carrying part of the experience. Short evening sessions were a poor fit for the required investment. |
-| [P04] GameSpot — Richard Wakeling | 18 Mar; PC; approximately 60 hours; 7/10 | Exploration and increasingly capable traversal make player-chosen journeys compelling; combat offers room for expression. | Weak connective storytelling, cumbersome item management, and resource gathering around combat. Interesting lore sometimes arrives after the emotional moment it should support. |
-| [P05] Shacknews — Will Borger | 18 Mar; PC, publisher code; total hours not stated; 5/10 | Appreciates the scale, scenery, and ordinary fighting. | Poor instruction, awkward controls, inventory friction, boss frustration, and thin social simulation. Activities and NPC routines did not consistently create a believable society; quantity often failed to produce purpose. This is the clearest negative counterweight to the sandbox enthusiasts. |
-| [P06] Destructoid — Andrej Barovic | 18 Mar, updated 20 Mar; PC; repeated daily sessions over two weeks, no exact total; 8.5/10 | Treats the world itself as a compelling character. Regional variety, camp rebuilding, exploration, and combat sustain enthusiasm; sees story and key characters improving beyond the fragmented opening. | Boss balance, lengthy liberation fights, opaque puzzles, inventory, and forced alternate-character sections remain serious weaknesses. Reported a late review-build performance regression rather than uniformly flawless performance. |
-| [P07] Game Informer — Hayes Madsen | 18 Mar; PC; 100 hours; 7/10 | Unexpected discoveries and new abilities create genuine delight; the Greymane camp contains a more convincing emotional center than much of the main campaign. | Repetition and unnecessary duration dilute those highs. Spectacle lacks sufficient character groundwork; food gathering and repeated encounters can turn progress into obligation. |
-| [P08] Press Start — Adam Mathew | 19 Mar; PC despite the site's PS5-category URL; hours unspecified; 8.5/10 | Fantasy mixed with machinery, continual new abilities and set pieces, and camp companionship provide a strong reason to see the next chapter. | Targeting, disproportionately useful basic attacks, fussy puzzle execution, boss exploits, and several crashes. The favorable score does not imply technical or mechanical smoothness. |
-| [P09] Push Square — Robert Ramsey | 22 May re-review; PS5 Pro, European version; over 100 hours and main-story completion; 8/10 | Finds an extraordinary world worth inhabiting. Better tutorials, menus, controls, difficulty options, and fixes make its strengths easier to enjoy. | Still stands by the original criticism. Poorly connected quests, tedious transitions after exciting battles, and remaining visual/performance issues persist. A direct example of improved usability without a wholesale reversal of every underlying judgment. |
-| [P10] PCGamesN — Paul Kelly | 18 Mar; PC; discusses roughly 50 hours, not a verified final total; 6/10 | Beautiful sights and sound, satisfying domination of ordinary enemies, and enjoyable Abyss puzzles. | Weak character motivation, difficult boss/input interactions, and advertised excitement arriving late. Reaching an impressive port did not make its content meaningfully available before story progress unlocked it. |
-| [P11] GamesRadar+ — Joel Franey | 18 Mar; PC, publisher code; over 80 hours; 4/5 | Physical combat, environmental interactions, animal detail, and surprising exploration repeatedly overcome frustration. | The protagonist and plot often fail to react convincingly to extraordinary events; controls, inventory, and bosses obstruct enjoyment. Dragon/mech-style advertised highlights arrived late in this reviewer's playthrough, not at a universally verified hour threshold. |
-| [P12] SteamDeckHQ — Noah Kupetsky | 18 Mar; PC primary play plus Steam Deck testing; over 70 hours; content 9/10, Deck 2/5 | Strong enthusiasm for learning moves, equipment effects, optional activities, and puzzles; more positive about the developing story than the harsher reviews. | Complex combinations made moves easy to forget; targeting problems remained. The sharply lower device score shows why enjoyment of the game and suitability for a particular machine must be evaluated separately. |
+| ID / outlet / author               | Date; platform; stated exposure                                                                     | Judgment and strongest praise                                                                                                                                                                            | Principal criticism and useful qualification                                                                                                                                                                                                                                                          |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [P01] PC Gamer — Mollie Taylor     | 18 Mar; PC; 75 hours; 80/100                                                                        | Expressive, physical combat and rewarding exploration; smaller companion errands sometimes create warmth absent from the main plot. Reported notably stable performance on the reviewer's PC.            | Disconnected central narrative, troublesome camera and inventory, and harsh boss sequences. Forced use of less-developed alternate characters undermined investment in the main character. These are release-period observations.                                                                     |
+| [P02] TechRadar — Isaiah Williams  | 18 Mar; PC; 80 hours; numeric score not exposed in retrieved body                                   | Expansive exploration, action, spectacle, animation, and music. More positive about the story than several peers; strong performance on the reviewer's high-end setup.                                   | Aggressive bosses and repeated phases, inventory restrictions, review-build quest problems, and limited accessibility/control options. The absence of difficulty settings at review time was subsequently addressed.                                                                                  |
+| [P03] Tom's Guide — Tony Polanco   | 18 Mar; nearly 30 hours; platform not firmly established in retrieved review; score not transcribed | Deep systems and a beautiful world offered considerable promise once understood.                                                                                                                         | Learning cost, weak narrative motivation, and demanding onboarding. The reviewer found the press/creator Discord valuable for progressing, a warning that external explanation may be carrying part of the experience. Short evening sessions were a poor fit for the required investment.            |
+| [P04] GameSpot — Richard Wakeling  | 18 Mar; PC; approximately 60 hours; 7/10                                                            | Exploration and increasingly capable traversal make player-chosen journeys compelling; combat offers room for expression.                                                                                | Weak connective storytelling, cumbersome item management, and resource gathering around combat. Interesting lore sometimes arrives after the emotional moment it should support.                                                                                                                      |
+| [P05] Shacknews — Will Borger      | 18 Mar; PC, publisher code; total hours not stated; 5/10                                            | Appreciates the scale, scenery, and ordinary fighting.                                                                                                                                                   | Poor instruction, awkward controls, inventory friction, boss frustration, and thin social simulation. Activities and NPC routines did not consistently create a believable society; quantity often failed to produce purpose. This is the clearest negative counterweight to the sandbox enthusiasts. |
+| [P06] Destructoid — Andrej Barovic | 18 Mar, updated 20 Mar; PC; repeated daily sessions over two weeks, no exact total; 8.5/10          | Treats the world itself as a compelling character. Regional variety, camp rebuilding, exploration, and combat sustain enthusiasm; sees story and key characters improving beyond the fragmented opening. | Boss balance, lengthy liberation fights, opaque puzzles, inventory, and forced alternate-character sections remain serious weaknesses. Reported a late review-build performance regression rather than uniformly flawless performance.                                                                |
+| [P07] Game Informer — Hayes Madsen | 18 Mar; PC; 100 hours; 7/10                                                                         | Unexpected discoveries and new abilities create genuine delight; the Greymane camp contains a more convincing emotional center than much of the main campaign.                                           | Repetition and unnecessary duration dilute those highs. Spectacle lacks sufficient character groundwork; food gathering and repeated encounters can turn progress into obligation.                                                                                                                    |
+| [P08] Press Start — Adam Mathew    | 19 Mar; PC despite the site's PS5-category URL; hours unspecified; 8.5/10                           | Fantasy mixed with machinery, continual new abilities and set pieces, and camp companionship provide a strong reason to see the next chapter.                                                            | Targeting, disproportionately useful basic attacks, fussy puzzle execution, boss exploits, and several crashes. The favorable score does not imply technical or mechanical smoothness.                                                                                                                |
+| [P09] Push Square — Robert Ramsey  | 22 May re-review; PS5 Pro, European version; over 100 hours and main-story completion; 8/10         | Finds an extraordinary world worth inhabiting. Better tutorials, menus, controls, difficulty options, and fixes make its strengths easier to enjoy.                                                      | Still stands by the original criticism. Poorly connected quests, tedious transitions after exciting battles, and remaining visual/performance issues persist. A direct example of improved usability without a wholesale reversal of every underlying judgment.                                       |
+| [P10] PCGamesN — Paul Kelly        | 18 Mar; PC; discusses roughly 50 hours, not a verified final total; 6/10                            | Beautiful sights and sound, satisfying domination of ordinary enemies, and enjoyable Abyss puzzles.                                                                                                      | Weak character motivation, difficult boss/input interactions, and advertised excitement arriving late. Reaching an impressive port did not make its content meaningfully available before story progress unlocked it.                                                                                 |
+| [P11] GamesRadar+ — Joel Franey    | 18 Mar; PC, publisher code; over 80 hours; 4/5                                                      | Physical combat, environmental interactions, animal detail, and surprising exploration repeatedly overcome frustration.                                                                                  | The protagonist and plot often fail to react convincingly to extraordinary events; controls, inventory, and bosses obstruct enjoyment. Dragon/mech-style advertised highlights arrived late in this reviewer's playthrough, not at a universally verified hour threshold.                             |
+| [P12] SteamDeckHQ — Noah Kupetsky  | 18 Mar; PC primary play plus Steam Deck testing; over 70 hours; content 9/10, Deck 2/5              | Strong enthusiasm for learning moves, equipment effects, optional activities, and puzzles; more positive about the developing story than the harsher reviews.                                            | Complex combinations made moves easy to forget; targeting problems remained. The sharply lower device score shows why enjoyment of the game and suitability for a particular machine must be evaluated separately.                                                                                    |
 
 Destructoid and SteamDeckHQ found narrative or puzzle rewards that did not compensate Shacknews and PCGamesN for other costs. For Open Legend, the useful question is which conditions make an activity meaningful, rather than simply how many activities exist. [P05] [P06] [P10] [P12]
 
@@ -68,14 +68,14 @@ The retrieved Steam store page reports **86% positive among 63,353 English-langu
 
 On 26 October, the public English review listings were inspected using the five URLs in the register. The working target was a larger helpful/recent sample. The public JSON endpoint and reliable recent-pagination retrieval were unavailable, so that design was **not** achieved. The actual design is reported here without relabeling helpful listings as recent samples.
 
-| Listing | Visible sort/filter | Entries inspected | New unique reviews |
-|---|---|---:|---:|
-| [P20] Main reviews | Most helpful, week; either recommendation | 10 | 10 |
-| [P21] Positive reviews | Most helpful, week; recommended | 10 | 6 |
-| [P22] Negative reviews | Most helpful, week; not recommended | 10 | 6 |
-| [P23] Main reviews with `browsefilter=toprated` | Most helpful, all time; either recommendation | 10, all recommended in the returned page | 10 |
-| [P24] Negative reviews with `browsefilter=toprated` | Most helpful, all time; not recommended | 10 | 10 |
-| **Total** | Five surfaces | **50 entries** | **42 distinct reviews** |
+| Listing                                             | Visible sort/filter                           |                        Entries inspected |      New unique reviews |
+| --------------------------------------------------- | --------------------------------------------- | ---------------------------------------: | ----------------------: |
+| [P20] Main reviews                                  | Most helpful, week; either recommendation     |                                       10 |                      10 |
+| [P21] Positive reviews                              | Most helpful, week; recommended               |                                       10 |                       6 |
+| [P22] Negative reviews                              | Most helpful, week; not recommended           |                                       10 |                       6 |
+| [P23] Main reviews with `browsefilter=toprated`     | Most helpful, all time; either recommendation | 10, all recommended in the returned page |                      10 |
+| [P24] Negative reviews with `browsefilter=toprated` | Most helpful, all time; not recommended       |                                       10 |                      10 |
+| **Total**                                           | Five surfaces                                 |                           **50 entries** | **42 distinct reviews** |
 
 The weekly positive and negative pages repeat eight entries from the main weekly page. Those duplicates are retained in the surface count but removed from the unique inventory. “Helpful this week” describes the listing's ranking window; it does not guarantee that every review was posted during the last seven days. Cached listing variants also returned slightly different recorded playtime for a few authors. The inventory prioritizes the main weekly page when the same review appeared there.
 
@@ -89,70 +89,70 @@ Brief paraphrases capture each review's most useful signal; they do not reproduc
 
 **Main weekly listing — ten unique entries.** [P20]
 
-| Handle | Vote | Posted | Hours now | Signal |
-|---|:---:|---|---:|---|
-| deadly_resurrection.601 | + | 19 Oct | 45.2 | Joke comparing several games; low information. |
-| Vupware | + | 23 Oct | 158.9 | Varied leisure despite narrative and technical awkwardness. |
-| Shmeeve | + | 23 Oct | 251.8 | Exploration and later movement sustain enjoyment. |
-| goetten | + | 20 Oct | 310.1 | Absorbed by exploration and side activities. |
-| EGA Viper Overwatch | − | 22 Oct | 32.2 | Spectacle interrupted by tedious tasks and unclear execution. |
-| SC0TY999 | − | 23 Oct | 140.5 | Bugs, bosses, and quest restrictions. |
-| emrez00 | − | 22 Oct | 55.2 | Filler and healing undermine mechanics; received free. |
-| SegerPlays | + | 25 Oct | 70.2 | Likes the lead and self-directed activity mix. |
-| stonybaloney707 | − | 21 Oct | 4.2 | Distracting foliage movement. |
-| KinDeRziEktE | + | 25 Oct | 208.2 | Still exploring Hernand; limited explanation. |
+| Handle                  | Vote | Posted | Hours now | Signal                                                        |
+| ----------------------- | :--: | ------ | --------: | ------------------------------------------------------------- |
+| deadly_resurrection.601 |  +   | 19 Oct |      45.2 | Joke comparing several games; low information.                |
+| Vupware                 |  +   | 23 Oct |     158.9 | Varied leisure despite narrative and technical awkwardness.   |
+| Shmeeve                 |  +   | 23 Oct |     251.8 | Exploration and later movement sustain enjoyment.             |
+| goetten                 |  +   | 20 Oct |     310.1 | Absorbed by exploration and side activities.                  |
+| EGA Viper Overwatch     |  −   | 22 Oct |      32.2 | Spectacle interrupted by tedious tasks and unclear execution. |
+| SC0TY999                |  −   | 23 Oct |     140.5 | Bugs, bosses, and quest restrictions.                         |
+| emrez00                 |  −   | 22 Oct |      55.2 | Filler and healing undermine mechanics; received free.        |
+| SegerPlays              |  +   | 25 Oct |      70.2 | Likes the lead and self-directed activity mix.                |
+| stonybaloney707         |  −   | 21 Oct |       4.2 | Distracting foliage movement.                                 |
+| KinDeRziEktE            |  +   | 25 Oct |     208.2 | Still exploring Hernand; limited explanation.                 |
 
 **Weekly positive listing — six additional entries.** Its other four entries duplicate the main weekly listing. [P21]
 
-| Handle | Vote | Posted | Hours now | Signal |
-|---|:---:|---|---:|---|
-| Pyromatic | + | 18 Oct | 65.3 | Discovery and unarmed fighting outweigh story/camera weaknesses. |
-| Garoji | + | 23 Oct | 78.1 | Strong accolade, little supporting detail. |
-| Al Parker | + | 22 Oct | 119.8 | Uninterpretable short text. |
-| sirpotlordxx | + | 21 Oct | 124.2 | Enthusiastic one-word verdict. |
-| anye.frimpong | + | 20 Oct | 154.8 | Annual-favorite claim, little detail. |
-| marcj0417 | + | 20 Oct | 250.2 | Extended exploration with little reported story advancement. |
+| Handle        | Vote | Posted | Hours now | Signal                                                           |
+| ------------- | :--: | ------ | --------: | ---------------------------------------------------------------- |
+| Pyromatic     |  +   | 18 Oct |      65.3 | Discovery and unarmed fighting outweigh story/camera weaknesses. |
+| Garoji        |  +   | 23 Oct |      78.1 | Strong accolade, little supporting detail.                       |
+| Al Parker     |  +   | 22 Oct |     119.8 | Uninterpretable short text.                                      |
+| sirpotlordxx  |  +   | 21 Oct |     124.2 | Enthusiastic one-word verdict.                                   |
+| anye.frimpong |  +   | 20 Oct |     154.8 | Annual-favorite claim, little detail.                            |
+| marcj0417     |  +   | 20 Oct |     250.2 | Extended exploration with little reported story advancement.     |
 
 **Weekly negative listing — six additional entries.** Its other four entries duplicate the main weekly listing. [P22]
 
-| Handle | Vote | Posted | Hours now | Signal |
-|---|:---:|---|---:|---|
-| StinkFiingers | − | 22 Oct | 24.1 | Missing narrative direction. |
-| Uncle Flexxx | − | 19 Oct | 18.3 | Likes game; dislikes laptop image reconstruction. |
-| Lind | − | 19 Oct | 31.8 | Overlapping inputs produce unwanted actions. |
-| mysticroze98 | − | 21 Oct | 13.0 | DRM objection rather than a mechanics judgment. |
-| Odium | − | 22 Oct | 16.2 | Rejects a very delayed-payoff justification. |
-| Riggles | − | 19 Oct | 12.1 | Reports a new loading freeze. |
+| Handle        | Vote | Posted | Hours now | Signal                                            |
+| ------------- | :--: | ------ | --------: | ------------------------------------------------- |
+| StinkFiingers |  −   | 22 Oct |      24.1 | Missing narrative direction.                      |
+| Uncle Flexxx  |  −   | 19 Oct |      18.3 | Likes game; dislikes laptop image reconstruction. |
+| Lind          |  −   | 19 Oct |      31.8 | Overlapping inputs produce unwanted actions.      |
+| mysticroze98  |  −   | 21 Oct |      13.0 | DRM objection rather than a mechanics judgment.   |
+| Odium         |  −   | 22 Oct |      16.2 | Rejects a very delayed-payoff justification.      |
+| Riggles       |  −   | 19 Oct |      12.1 | Reports a new loading freeze.                     |
 
 **All-time main listing — ten additional entries, all recommended.** [P23]
 
-| Handle | Vote | Posted | Hours now | Signal |
-|---|:---:|---|---:|---|
-| bmajor55 | + | 23 Mar | 1,403.4 | Enjoys learning and breadth. |
-| Silenderon | + | 23 Mar | 82.7 | Anticipates returning despite flaws. |
-| [BKA] Breezy | + | 7 Apr | 537.6 | Exploration, camp, and responsive updates. |
-| Inanimate | + | 25 Mar | 165.5 | Values connected combat, movement, and camp systems. |
-| King Spartacus | + | 23 Mar | 113.9 | A companion cat is especially memorable. |
-| Benjanz | + | 4 Apr | 131.2 | High fun verdict despite poor story rating. |
-| ؏. | + | 17 Apr | 308.2 | Positive but substantial controls/puzzle reservations; edited later. |
-| Hypnotic | + | 5 Aug | 54.4 | Views and hidden routes; awkward controls remain. |
-| MandoSando | + | 24 Mar | 48.3 | Dense opening, learnable controls. |
-| Morfius | + | 21 Mar | 126.8 | Playground beyond rough opening; bugs and grind. |
+| Handle         | Vote | Posted | Hours now | Signal                                                               |
+| -------------- | :--: | ------ | --------: | -------------------------------------------------------------------- |
+| bmajor55       |  +   | 23 Mar |   1,403.4 | Enjoys learning and breadth.                                         |
+| Silenderon     |  +   | 23 Mar |      82.7 | Anticipates returning despite flaws.                                 |
+| \[BKA\] Breezy |  +   | 7 Apr  |     537.6 | Exploration, camp, and responsive updates.                           |
+| Inanimate      |  +   | 25 Mar |     165.5 | Values connected combat, movement, and camp systems.                 |
+| King Spartacus |  +   | 23 Mar |     113.9 | A companion cat is especially memorable.                             |
+| Benjanz        |  +   | 4 Apr  |     131.2 | High fun verdict despite poor story rating.                          |
+| ؏.             |  +   | 17 Apr |     308.2 | Positive but substantial controls/puzzle reservations; edited later. |
+| Hypnotic       |  +   | 5 Aug  |      54.4 | Views and hidden routes; awkward controls remain.                    |
+| MandoSando     |  +   | 24 Mar |      48.3 | Dense opening, learnable controls.                                   |
+| Morfius        |  +   | 21 Mar |     126.8 | Playground beyond rough opening; bugs and grind.                     |
 
 **All-time negative listing — ten additional entries.** [P24]
 
-| Handle | Vote | Posted | Hours now | Signal |
-|---|:---:|---|---:|---|
-| g1zmo | − | 19 Mar | 3.4 | Blurry image and keyboard frustrations. |
-| Nitto | − | 3 Aug | 32.7 | Disconnected gimmicks and insufficient objective context. |
-| Fuse00 | − | 26 Apr | 195.3 | Beautiful movement; repetition and opaque interaction. |
-| Duh Vincy | − | 28 May | 117.6 | Enjoys combat/exploration; errands undermine limited leisure. |
-| Akamalipc | − | 14 Apr | 192.8 | Tedious progression and unsatisfying later rewards. |
-| Unbearable Taint | − | 28 May | 64.3 | Functional but emotionally empty. |
-| Zuriel | − | 8 Jul | 50.7 | Mixed value judgment; would prefer a middle rating. |
-| Aeyon | − | 7 Apr | 198.7 | Army-fighting spectacle; bosses, puzzles, and gates frustrate. |
-| Mr. Rumsfield | − | 26 Aug | 26.8 | Exploration feels repetitive and story-gated. |
-| pamagester | − | 24 Aug | 128.4 | Quit after sustained hope of a later payoff. |
+| Handle           | Vote | Posted | Hours now | Signal                                                         |
+| ---------------- | :--: | ------ | --------: | -------------------------------------------------------------- |
+| g1zmo            |  −   | 19 Mar |       3.4 | Blurry image and keyboard frustrations.                        |
+| Nitto            |  −   | 3 Aug  |      32.7 | Disconnected gimmicks and insufficient objective context.      |
+| Fuse00           |  −   | 26 Apr |     195.3 | Beautiful movement; repetition and opaque interaction.         |
+| Duh Vincy        |  −   | 28 May |     117.6 | Enjoys combat/exploration; errands undermine limited leisure.  |
+| Akamalipc        |  −   | 14 Apr |     192.8 | Tedious progression and unsatisfying later rewards.            |
+| Unbearable Taint |  −   | 28 May |      64.3 | Functional but emotionally empty.                              |
+| Zuriel           |  −   | 8 Jul  |      50.7 | Mixed value judgment; would prefer a middle rating.            |
+| Aeyon            |  −   | 7 Apr  |     198.7 | Army-fighting spectacle; bosses, puzzles, and gates frustrate. |
+| Mr. Rumsfield    |  −   | 26 Aug |      26.8 | Exploration feels repetitive and story-gated.                  |
+| pamagester       |  −   | 24 Aug |     128.4 | Quit after sustained hope of a later payoff.                   |
 
 ### Why review dates and playtime require care
 
@@ -230,14 +230,14 @@ TechRadar reported strong PC results; SteamDeckHQ found busy scenes particularly
 
 The following is an interpretive model for further research, not measured Crimson Desert funnel data.
 
-| Journey moment | Possible source of attachment | Possible cause of disengagement | Useful Open Legend question |
-|---|---|---|---|
-| First session | Beauty, physical feedback, one surprising possibility | Unclear goal, too many inputs, delayed premise | Does the player complete a meaningful action and understand why it mattered? |
-| Learning period | Increasing fluency; a new move changes an old problem | Repeated external-guide use; forgetting abilities | Can the player recover necessary knowledge inside the game without losing the pleasure of discovery? |
-| Established exploration | Personal routes and self-chosen projects | Repeated rewards, content gates, chores | Does curiosity usually lead to an interesting consequence rather than merely another marker? |
-| Major encounter | Mastery, spectacle, memorable tactical adaptation | Repeated phases, recovery labor, unclear failure | Does a failed attempt improve understanding, and can the player retry without unrelated work? |
-| Longer play | Attachment to place, companions, and a developing project | Quantity outlasting variety or purpose | Do later activities transform prior knowledge and relationships? |
-| Return after an update | Better usability; new reasons to revisit a familiar place | Uncertain save continuity, missing story context, waiting for further revision | Can a returning player understand what changed and choose how to resume? |
+| Journey moment          | Possible source of attachment                             | Possible cause of disengagement                                                | Useful Open Legend question                                                                          |
+| ----------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| First session           | Beauty, physical feedback, one surprising possibility     | Unclear goal, too many inputs, delayed premise                                 | Does the player complete a meaningful action and understand why it mattered?                         |
+| Learning period         | Increasing fluency; a new move changes an old problem     | Repeated external-guide use; forgetting abilities                              | Can the player recover necessary knowledge inside the game without losing the pleasure of discovery? |
+| Established exploration | Personal routes and self-chosen projects                  | Repeated rewards, content gates, chores                                        | Does curiosity usually lead to an interesting consequence rather than merely another marker?         |
+| Major encounter         | Mastery, spectacle, memorable tactical adaptation         | Repeated phases, recovery labor, unclear failure                               | Does a failed attempt improve understanding, and can the player retry without unrelated work?        |
+| Longer play             | Attachment to place, companions, and a developing project | Quantity outlasting variety or purpose                                         | Do later activities transform prior knowledge and relationships?                                     |
+| Return after an update  | Better usability; new reasons to revisit a familiar place | Uncertain save continuity, missing story context, waiting for further revision | Can a returning player understand what changed and choose how to resume?                             |
 
 This model deliberately separates session quality from total hours. A player can enjoy a long wandering journey, finish satisfied, stop satisfied, or continue while hoping the next chapter resolves persistent frustration. Store recommendations and recorded hours alone cannot distinguish those outcomes. A proper Open Legend study would combine observation, short interviews, voluntary telemetry, and follow-up questions rather than infer motivation from playtime.
 
@@ -275,35 +275,35 @@ The best next evidence would be a small, deliberately varied set of **current-bu
 
 All sources accessed 26 October 2026. “Review body” means substantive text was inspected, not merely an aggregate score. The Steam listings are dynamic and were not preserved as complete raw copyrighted copies. The chapter retains short paraphrases and reproducible locators. Dates shown here are publication or patch dates, not an assertion that every review reflects the latest build on that date.
 
-| ID | Source and date | Type / access note |
-|---|---|---|
-| [P01] | PC Gamer, Mollie Taylor, 18 Mar | Written PC review; substantive full body inspected. |
-| [P02] | TechRadar, Isaiah Williams, 18 Mar | Written PC review; substantive full body inspected. |
-| [P03] | Tom's Guide, Tony Polanco, 18 Mar | Written review; substantive full body inspected. |
-| [P04] | GameSpot, Richard Wakeling, 18 Mar | Written PC review; substantive review body inspected. |
-| [P05] | Shacknews, Will Borger, 18 Mar | Written PC review; substantive full body inspected. |
-| [P06] | Destructoid, Andrej Barovic, 18–20 Mar | Written PC review; substantive full body inspected. |
-| [P07] | Game Informer, Hayes Madsen, 18 Mar | Written PC review; substantive full body inspected. |
-| [P08] | Press Start, Adam Mathew, 19 Mar | Written PC review; substantive full body inspected; URL category is not the tested platform. |
-| [P09] | Push Square, Robert Ramsey, 22 May | PS5 Pro re-review; substantive body and conclusion inspected. |
-| [P10] | PCGamesN, Paul Kelly, 18 Mar | Written PC review; substantive full body inspected. |
-| [P11] | GamesRadar+, Joel Franey, 18 Mar | Written PC review; substantive full body inspected. |
-| [P12] | SteamDeckHQ, Noah Kupetsky, 18 Mar | Written gameplay and device assessment; substantive full body inspected. |
-| [P13] | Pearl Abyss, Enhanced announcement, 25 Aug | Primary announcement; confirms scope and free upgrade. |
-| [P14] | Pearl Abyss, 1.00.03, page dated 23 Mar and revised through 25 Mar | Primary patch notes; platform rollout dates differ. |
-| [P15] | Pearl Abyss, 1.02.00, 4 Apr | Primary patch notes. |
-| [P16] | Pearl Abyss, 1.04.00, 23 Apr, revised 27 Apr | Primary patch notes; difficulty, storage, controls, and more. |
-| [P17] | Pearl Abyss, 2.02.00, 11 Sep | Primary patch notes; continuing fixes, not an exhaustive current-quality assessment. |
-| [P18] | MeriStation, Alejandro Castillo, 12 Sep | Spanish return commentary after Enhanced; not counted among the twelve full reviews. |
-| [P19] | Steam store, 26 Oct snapshot | English aggregate and recent review figures; dynamic. |
-| [P20] | Steam main helpful-week listing, 26 Oct | Ten entries; mixed recommendation; no reliable individual IDs exposed. |
-| [P21] | Steam positive helpful-week listing, 26 Oct | Ten entries; six unique additions. |
-| [P22] | Steam negative helpful-week listing, 26 Oct | Ten entries; six unique additions. |
-| [P23] | Steam main helpful-all-time listing, 26 Oct | Ten entries; all positive on the returned page. |
-| [P24] | Steam negative helpful-all-time listing, 26 Oct | Ten entries. |
-| [P25] | Abdullrahman_HA Steam review, posted 17 Apr, updated 23 Sep | Individual review permalink inspected; shows edit-date limitation. |
-| [P26] | r/pcgaming, “I strongly recommend Crimson Desert” review discussion | Selected branches inspected; exact thread date not established in retrieved body. |
-| [P27] | r/CrimsonDesert, “Is the game worth getting now?” | Selected later discussion branches inspected; exact thread date not established in retrieved body. |
+| ID    | Source and date                                                     | Type / access note                                                                                 |
+| ----- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [P01] | PC Gamer, Mollie Taylor, 18 Mar                                     | Written PC review; substantive full body inspected.                                                |
+| [P02] | TechRadar, Isaiah Williams, 18 Mar                                  | Written PC review; substantive full body inspected.                                                |
+| [P03] | Tom's Guide, Tony Polanco, 18 Mar                                   | Written review; substantive full body inspected.                                                   |
+| [P04] | GameSpot, Richard Wakeling, 18 Mar                                  | Written PC review; substantive review body inspected.                                              |
+| [P05] | Shacknews, Will Borger, 18 Mar                                      | Written PC review; substantive full body inspected.                                                |
+| [P06] | Destructoid, Andrej Barovic, 18–20 Mar                              | Written PC review; substantive full body inspected.                                                |
+| [P07] | Game Informer, Hayes Madsen, 18 Mar                                 | Written PC review; substantive full body inspected.                                                |
+| [P08] | Press Start, Adam Mathew, 19 Mar                                    | Written PC review; substantive full body inspected; URL category is not the tested platform.       |
+| [P09] | Push Square, Robert Ramsey, 22 May                                  | PS5 Pro re-review; substantive body and conclusion inspected.                                      |
+| [P10] | PCGamesN, Paul Kelly, 18 Mar                                        | Written PC review; substantive full body inspected.                                                |
+| [P11] | GamesRadar+, Joel Franey, 18 Mar                                    | Written PC review; substantive full body inspected.                                                |
+| [P12] | SteamDeckHQ, Noah Kupetsky, 18 Mar                                  | Written gameplay and device assessment; substantive full body inspected.                           |
+| [P13] | Pearl Abyss, Enhanced announcement, 25 Aug                          | Primary announcement; confirms scope and free upgrade.                                             |
+| [P14] | Pearl Abyss, 1.00.03, page dated 23 Mar and revised through 25 Mar  | Primary patch notes; platform rollout dates differ.                                                |
+| [P15] | Pearl Abyss, 1.02.00, 4 Apr                                         | Primary patch notes.                                                                               |
+| [P16] | Pearl Abyss, 1.04.00, 23 Apr, revised 27 Apr                        | Primary patch notes; difficulty, storage, controls, and more.                                      |
+| [P17] | Pearl Abyss, 2.02.00, 11 Sep                                        | Primary patch notes; continuing fixes, not an exhaustive current-quality assessment.               |
+| [P18] | MeriStation, Alejandro Castillo, 12 Sep                             | Spanish return commentary after Enhanced; not counted among the twelve full reviews.               |
+| [P19] | Steam store, 26 Oct snapshot                                        | English aggregate and recent review figures; dynamic.                                              |
+| [P20] | Steam main helpful-week listing, 26 Oct                             | Ten entries; mixed recommendation; no reliable individual IDs exposed.                             |
+| [P21] | Steam positive helpful-week listing, 26 Oct                         | Ten entries; six unique additions.                                                                 |
+| [P22] | Steam negative helpful-week listing, 26 Oct                         | Ten entries; six unique additions.                                                                 |
+| [P23] | Steam main helpful-all-time listing, 26 Oct                         | Ten entries; all positive on the returned page.                                                    |
+| [P24] | Steam negative helpful-all-time listing, 26 Oct                     | Ten entries.                                                                                       |
+| [P25] | Abdullrahman_HA Steam review, posted 17 Apr, updated 23 Sep         | Individual review permalink inspected; shows edit-date limitation.                                 |
+| [P26] | r/pcgaming, “I strongly recommend Crimson Desert” review discussion | Selected branches inspected; exact thread date not established in retrieved body.                  |
+| [P27] | r/CrimsonDesert, “Is the game worth getting now?”                   | Selected later discussion branches inspected; exact thread date not established in retrieved body. |
 
 [P01]: https://www.pcgamer.com/games/action/crimson-desert-review/
 [P02]: https://www.techradar.com/gaming/crimson-desert-review

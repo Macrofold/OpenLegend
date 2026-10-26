@@ -10,13 +10,13 @@ For Open Legend, the promising direction is **connected capabilities, memorable 
 
 ## Read by question
 
-| Question | Detailed owner |
-|---|---|
-| What can the player actually do, and how do the systems connect? | [01 — Mechanics, world, people and presentation](crimson-desert/01-mechanics-world.md): combat, progression, powers, traversal, dragon limits, gear, economy, camp, crime, lore, failure and postgame; eight constructed interactions. |
-| What do critics and players love, dislike or keep returning for? | [02 — Reception, enjoyment and friction](crimson-desert/02-reception.md): twelve independent outlets, forty-two unique Steam reviews, selected community discussions, disagreements and version context. |
-| How was it made, positioned, sold and maintained? Is the revenue claim sound? | [03 — Production, technology, marketing and business](crimson-desert/03-production-business.md): developer testimony, BlackSpace evidence, authoring workflows, commercial ledger, marketing chronology and launch trust issues. |
-| What can players and community creators add or change? | [04 — Creation and modding](crimson-desert/04-creation-and-modding.md): actual tools, a creation-to-play example, representative authors, dependencies, distribution and incentives. |
-| What can Open Legend use from this? | [05 — Applications through existing owners](crimson-desert/05-openlegend-lessons.md): eleven proposals with tradeoffs, failure cases and observations; no new implementation backlog. |
+| Question                                                                      | Detailed owner                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What can the player actually do, and how do the systems connect?              | [01 — Mechanics, world, people and presentation](crimson-desert/01-mechanics-world.md): combat, progression, powers, traversal, dragon limits, gear, economy, camp, crime, lore, failure and postgame; eight constructed interactions. |
+| What do critics and players love, dislike or keep returning for?              | [02 — Reception, enjoyment and friction](crimson-desert/02-reception.md): twelve independent outlets, forty-two unique Steam reviews, selected community discussions, disagreements and version context.                               |
+| How was it made, positioned, sold and maintained? Is the revenue claim sound? | [03 — Production, technology, marketing and business](crimson-desert/03-production-business.md): developer testimony, BlackSpace evidence, authoring workflows, commercial ledger, marketing chronology and launch trust issues.       |
+| What can players and community creators add or change?                        | [04 — Creation and modding](crimson-desert/04-creation-and-modding.md): actual tools, a creation-to-play example, representative authors, dependencies, distribution and incentives.                                                   |
+| What can Open Legend use from this?                                           | [05 — Applications through existing owners](crimson-desert/05-openlegend-lessons.md): eleven proposals with tradeoffs, failure cases and observations; no new implementation backlog.                                                  |
 
 ## Findings to retain
 
@@ -58,32 +58,32 @@ Launch evidence, later patches, the May re-review and Enhanced-era testimony are
 
 These official notices link useful media, but their embedded footage was **not watched or timed during this research**. Written descriptions and notices were read; no invented scene observations or timestamps support the dossier.
 
-| Route | Why consult it |
-|---|---|
+| Route                                                                                                                   | Why consult it                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | [September 2024 early gameplay presentation](https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=29) | Compare the broader player rhythm with isolated boss showcases; the notice discloses edited, in-development segments. |
-| [January 2026 feature overview](https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=57) | Examine how the studio explained its world and protagonist before release. |
-| [BlackSpace developer archive](https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=40) | Inspect the studio's visual-technology demonstration, keeping demonstration claims separate from a benchmark. |
-| [October expansion overview](https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=137) | Understand the next advertised direction; upcoming content is not evidence of already achieved player satisfaction. |
+| [January 2026 feature overview](https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=57)              | Examine how the studio explained its world and protagonist before release.                                            |
+| [BlackSpace developer archive](https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=40)               | Inspect the studio's visual-technology demonstration, keeping demonstration claims separate from a benchmark.         |
+| [October expansion overview](https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=137)                | Understand the next advertised direction; upcoming content is not evidence of already achieved player satisfaction.   |
 
 ## Completion-standard map
 
-| Requirement | Substantive coverage |
-|---|---|
-| R01 — Identity, scope and player promise | Chapter 01 §§1–2; version boundaries and authored protagonists. |
-| R02 — Player actions and major mechanics | Chapter 01 §§2–9; action inventory and major system interactions. |
-| R03 — Items, entities and composition | Chapter 01 §§4–7; Artifacts, Gears, equipment, powers, food, inventions and resources. |
-| R04 — Progression, economy and time | Chapter 01 §§4, 7–9; acquisition, uses, sources/sinks, loss, carryover and postgame. |
-| R05 — Concrete situations | Eight explicitly constructed examples across chapter 01; conditions, actions, results and limitations. |
-| R06 — People, AI, social systems and multiplayer | Chapter 01 §§1–2, 8; chapter 02 §6.2; native single-player boundary and evidence limits. |
-| R07 — Art, audio, interface and feel | Chapter 01 §11; chapter 02 §§3, 6; chapter 03 §§5–6; production evidence and platform distinctions. |
-| R08 — Story, lore and connection to play | Chapter 01 §10; political history, Abyss, regional belief, technology and discovery; chapter 03 §4.3. |
-| R09 — Development and creation | Chapter 03 §§3–6, 9; chapter 04's native/community distinctions and workflow. |
-| R10 — Marketing, distribution and sharing | Chapter 03 §§7–9; chronology, demos, positioning, creators and claim limits. |
-| R11 — Commercial context | Chapter 03 §2; currency/period/scope ledger, actuals versus forecasts, cost and profit uncertainty. |
-| R12 — Reviews and player feedback | Chapter 02; twelve outlets, forty-two Steam reviews, contrasting testimony, return/abandonment and patch context. |
-| R13 — Transfer and limits | Chapter 05 plus chapter-specific interpretations; existing owners, alternatives and observations. |
-| R14 — Sources and navigation | Per-chapter linked registers, this hub, roster and scoped completion record. No prior Crimson Desert dossier was found in the inspected base. |
-| R15 — Modding ecosystem | Chapter 04: affirmative applicability finding and all seven investigation dimensions. |
+| Requirement                                      | Substantive coverage                                                                                                                          |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| R01 — Identity, scope and player promise         | Chapter 01 §§1–2; version boundaries and authored protagonists.                                                                               |
+| R02 — Player actions and major mechanics         | Chapter 01 §§2–9; action inventory and major system interactions.                                                                             |
+| R03 — Items, entities and composition            | Chapter 01 §§4–7; Artifacts, Gears, equipment, powers, food, inventions and resources.                                                        |
+| R04 — Progression, economy and time              | Chapter 01 §§4, 7–9; acquisition, uses, sources/sinks, loss, carryover and postgame.                                                          |
+| R05 — Concrete situations                        | Eight explicitly constructed examples across chapter 01; conditions, actions, results and limitations.                                        |
+| R06 — People, AI, social systems and multiplayer | Chapter 01 §§1–2, 8; chapter 02 §6.2; native single-player boundary and evidence limits.                                                      |
+| R07 — Art, audio, interface and feel             | Chapter 01 §11; chapter 02 §§3, 6; chapter 03 §§5–6; production evidence and platform distinctions.                                           |
+| R08 — Story, lore and connection to play         | Chapter 01 §10; political history, Abyss, regional belief, technology and discovery; chapter 03 §4.3.                                         |
+| R09 — Development and creation                   | Chapter 03 §§3–6, 9; chapter 04's native/community distinctions and workflow.                                                                 |
+| R10 — Marketing, distribution and sharing        | Chapter 03 §§7–9; chronology, demos, positioning, creators and claim limits.                                                                  |
+| R11 — Commercial context                         | Chapter 03 §2; currency/period/scope ledger, actuals versus forecasts, cost and profit uncertainty.                                           |
+| R12 — Reviews and player feedback                | Chapter 02; twelve outlets, forty-two Steam reviews, contrasting testimony, return/abandonment and patch context.                             |
+| R13 — Transfer and limits                        | Chapter 05 plus chapter-specific interpretations; existing owners, alternatives and observations.                                             |
+| R14 — Sources and navigation                     | Per-chapter linked registers, this hub, roster and scoped completion record. No prior Crimson Desert dossier was found in the inspected base. |
+| R15 — Modding ecosystem                          | Chapter 04: affirmative applicability finding and all seven investigation dimensions.                                                         |
 
 The economics/enjoyment/lore/creation amendment is addressed within those owners. Completion means the requested research has been documented, reviewed and committed; it does not imply that private information became public, every item statistic was transcribed, mods were executed, videos were watched, or causal commercial explanations were experimentally established.
 
