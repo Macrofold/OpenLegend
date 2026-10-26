@@ -18,7 +18,7 @@ The [emotional-state design](../projects/emotional-physiology-feature-spec.md) u
 
 [After success](#people-whose-success-changed-the-problem) · [Contestants and accomplices](#contestants-accomplices-and-useful-enemies) · [Witnesses and doubles](#witnesses-doubles-and-disputed-reputations) · [Collections and cherished methods](#lives-around-collections-experiments-and-cherished-methods) · [Company after the milestone](#chosen-company-and-pleasures-after-the-milestone) · [Strange work and ordinary afternoons](#strange-work-strange-wants-and-ordinary-afternoons)
 
-The twelve original domains retain 20 entries each; six further domains add 10 each. Within every domain, entries are ordered by Priority, then stable ID. **Synthesis** and **creative synthesis** mark original invention informed by a linked source's themes; the invented person and events are not asserted to appear in that source. Seed labels are recommended homes, not inspiration credits. **—** keeps a person whose premise belongs outside the four proposals. The ten original formation-pattern headings remain after the inventory.
+The twelve original domains retain 20 entries each; six further domains add 10 each. Within every domain, entries are ordered by Priority, then stable ID. **Synthesis** and **creative synthesis** mark original invention informed by a linked source's themes; the invented person and events are not asserted to appear in that source. Seed labels are recommended homes, not inspiration credits. **—** keeps a person whose premise belongs outside the four proposals. Eleven worked formation patterns follow the inventory: the ten retained lives and a developed bandit encounter. Start with [the competing understudy](#the-competent-understudy), [the disputed discovery](#the-maker-of-an-inconvenient-truth), [the changed homecoming](#a-return-to-a-changed-home) and [the profitable road post](#the-bandit-at-a-profitable-crossing).
 
 ### Casting an already inhabited world
 
@@ -436,6 +436,56 @@ These are wider-library premises, not additions to a seed world's initial supern
 | CB-299 | Dross and Dew, competing inheritors of one interrupted body | —           | Play | 5 Specialist | C     | Two independent people formed when a bounded restoration procedure resumed different recorded states of one adult. Dross wants the old workshop; Dew wants its tools for a different craft, and both can demonstrate genuine past expertise while only one set of possessions exists.                                         | Large · Compose; Technology or Magic owns restoration; Institutions owns disputed possession.         | Creative synthesis · [CU] [P2]  |
 | CB-300 | Lumen Tithe, custodian of a finite pocket night             | —           | Play | 5 Specialist | C     | Lumen preserved one small district's starlit night during a larger world's transformation and has kept it habitable for years. Residents now want access to morning elsewhere; Lumen loves the night and wants voluntary visitors, but must decide whether protecting a beloved place still requires keeping everyone inside. | Large · Compose; Unusual realities owns the pocket's limits; Settlements and Institutions own access. | Creative synthesis · [ME] [CF]  |
 
+## The competent understudy
+
+**ALL · Play · Small/Compose.** Gap: authored expertise, recognition and succession pressures.
+
+Rhea Stave (CB-031) has kept a touring company's journeys supplied and its difficult personalities working while its charismatic leader receives the applause. A coveted new tour needs a leader; an admired performer wants the same position, and Rhea wants her competence to count. The expedition version uses the same uncredited logistical expertise with an expedition command at stake. Present the vacancy and competition as selected circumstances, not permanent biography or an instruction that she must seek promotion.
+
+Players can examine a proposed route and costs, back either candidate, help demonstrate a workable journey or negotiate a role with real authority. Rhea may want public command, fairer conditions or a ruthless chance to surpass the old leader; the rival can be talented and vain without being secretly incompetent. A good appointment can open an exciting journey, pay properly and confer earned recognition. Rejection can leave disappointment or a continuing rival; praise alone does not settle who gets the position, and declining the role can remain a chosen outcome.
+
+Related entries: [CB-031](#makers-scholars-and-late-beginners).
+
+Seeds and references: [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60), [Final Fantasy VI](source-atlas.md#g83), [Mass Effect 2](source-atlas.md#g102).
+
+## The maker of an inconvenient truth
+
+**ALL · Play · Moderate/Extend.** Gap: evidence-bearing discoveries and social consequences.
+
+Sava Noll (CB-027) uncovers names beneath a celebrated mural and cannot yet tell whether they record an injustice, the makers or an old repair. She wants an accurate restoration and a public showing of work she is proud of. In a selected encounter, a nearby workshop's lease is being awarded and a claimant believes the names support a family claim. A patron wants the opening to proceed; a rival restorer wants the commission and doubts Sava's interpretation. Neither the claimant nor the rival must be lying.
+
+Players can inspect the admitted traces, compare records and testimony, protect the painting, present a qualified account or postpone a claim. Evidence may change who can use the workshop or which commission proceeds; an unresolved mark cannot grant ownership by itself. A careful discovery can secure a useful place, recognition and a beautiful restored work without requiring a hidden atrocity. If an injustice is established, admiration for the painting does not erase it. Follow the [discoverable-history method](../narrative/authoring-discoverable-history.md) while leaving incomplete evidence incomplete.
+
+Related entries: [CB-027](#makers-scholars-and-late-beginners).
+
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Macondo](source-atlas.md#w24).
+
+## A return to a changed home
+
+**ALL · Play · Moderate/Extend.** Gap: persistent places and independently changing relationships.
+
+Pel Marit (CB-152) returns with money and stories to find an old friend successfully running the enterprise they once imagined together. Pel can be proud of the achievement, jealous of having missed it and disappointed that the welcome is as a guest rather than a co-owner. The friend has current partners, plans and reasons to protect what they built; they are not a waiting reward for returning.
+
+A selected opening offers a new route or commission that Pel could help finance. Players can ask about the intervening years, propose a bounded partnership, join an expedition or leave again. A mutually chosen venture can earn trust and a future together; a rejected offer can leave genuine affection with separate lives. Keep both the useful opportunity and the right to refuse it. The world must not freeze absent characters or punish them for growing beyond the player's remembered version.
+
+Related entries: [CB-152](#travelers-migrants-and-returns).
+
+Seeds and references: [Dragon Age II](source-atlas.md#g52), [Final Fantasy VI](source-atlas.md#g83), [Narnia](source-atlas.md#w19).
+
+## The bandit at a profitable crossing
+
+**MD FA · Play · Moderate/Compose.** Gap: controlled site, actual force, available supplies and independently chosen aims; use the existing combat, custody and trade owners.
+
+Torren Ash (CB-112) holds a road post taken by force and enjoys the profit and command. In this proposed encounter, a convoy carries winter grain and valuable goods through his reach. A merchant wants paid passage, a miller wants flour moving before cold weather, and one hungry follower wants wages while another likes exercising power. The miller also hopes to secure a new millstone; the followers have possible futures beyond explaining Torren. A follower's desperation does not make Torren's taking harmless or require every robber to be a killer.
+
+Players can scout the post, bargain, contest the crossing, expose a false toll claim, take paid work or find another supported route. Winning passage can produce an actual reward, a safer road and trade worth returning for. Collusion or theft can enrich participants while households lose supplies; defeat need not make the bandit repent. Treat the result as an outcome of actual choices and capabilities. This is one cast option for [the toll tower](combinations.md#the-toll-tower-at-dawn), not a second mandatory opening.
+
+For a different selected conflict, CB-097 and CB-200 provide deliberate killing without remorse or automatic reform; CB-109 knows that her efficient accounts enable extortion. CB-258's beautiful orchids and profitable encouragement of a feud can remain equally true. CB-286's criminals can sincerely love each other while their victims still seek repayment or justice. These existing alternatives supply remorseless opposition, predatory enterprise and criminal affection without making every resident one of them.
+
+Related entries: [CB-112](#rivals-criminals-and-deliberate-adversaries), [CB-097](#knights-guards-soldiers-and-veterans), [CB-109](#rivals-criminals-and-deliberate-adversaries), [CB-200](#established-figures-with-deeds-resources-and-limits), [CB-258](#contestants-accomplices-and-useful-enemies), [CB-286](#chosen-company-and-pleasures-after-the-milestone).
+
+Seeds and references: original scene synthesis using [character formation](../../archive/02-research/worldbuilding/character-formation.md#8-role-conflict-makes-values-concrete-deliberate-wrongdoing-remains-possible) and the linked biographies; source themes do not prescribe these invented people or outcomes.
+
 ## The child of a successful compromise
 
 **ALL · Play · Small/Compose.** Gap: authored biography and present commitments.
@@ -447,46 +497,6 @@ A new conflict does not prove the earlier success was false.
 Related entries: [CB-043](#families-friends-and-chosen-households).
 
 Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Crusader Kings III](source-atlas.md#g126), [Austen’s social worlds](source-atlas.md#w23).
-
-## The late beginner
-
-**ALL · Play · Small/Compose.** Gap: authored career history and teachable goals.
-
-A retired warehouse clerk starts learning instrument making, bringing excellent inventory habits and terrible patience with mistakes. They may fund younger apprentices while struggling to ask them for help. Players can teach, collaborate or commission a flawed first instrument. Competence in one life should matter without granting instant mastery in another; age is not a uniform personality modifier.
-
-Related entries: [CB-024](#makers-scholars-and-late-beginners).
-
-Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [Kingdom Come: Deliverance II](source-atlas.md#g114).
-
-## The person who stayed
-
-**ALL · Play · Small/Compose.** Gap: remembered local changes and relationships.
-
-While friends left to seek fortune, one resident kept the clinic open, learned everyone's routes and quietly changed the neighborhood. They are proud, curious and sometimes resent being treated as provincial. Returning travelers need their knowledge. Avoid revealing that staying was merely failure; rootedness can be a chosen adventure with its own growth and influence.
-
-Related entries: [CB-206](#adaptation-loss-and-contested-pasts).
-
-Seeds and references: [Dragon Age II](source-atlas.md#g52), [Assassin's Creed III](source-atlas.md#g99), [The Wire](source-atlas.md#w21).
-
-## Two apprentices one accident
-
-**ALL · Play · Moderate/Extend.** Gap: distinct witnessed histories and enduring but revisable interpretations.
-
-A workshop accident taught one apprentice to document everything and the other to improvise before machinery fails. Neither conclusion is entirely wrong. Years later, a shared repair tests both approaches. Keep their lives larger than the accident: friends, jokes, ambitions and ordinary successes. The same event should produce different people rather than one standardized trauma trait.
-
-Related entries: [CB-052](#families-friends-and-chosen-households).
-
-Seeds and references: [Wildermyth](source-atlas.md#g25), [XCOM 2](source-atlas.md#g125), [The Broken Earth](source-atlas.md#w18).
-
-## Raised between calendars
-
-**ALL · Play · Small/Compose.** Gap: authored overlapping traditions and contextual expectations.
-
-A child of two trading communities learned different feast days, greetings and assumptions about punctuality. As an adult they translate practical expectations, sometimes enjoying their freedom and sometimes exhausting themselves as everyone's mediator. Let them choose when to explain. Mixed heritage must not automatically confer perfect diplomacy or make the character an encyclopedia for the player.
-
-Related entries: [CB-145](#travelers-migrants-and-returns).
-
-Seeds and references: [Fire Emblem: Path of Radiance](source-atlas.md#g61), [Octopath Traveler II](source-atlas.md#g108), [Avatar: The Last Airbender](source-atlas.md#w13).
 
 ## The former beneficiary
 
@@ -500,6 +510,36 @@ Related entries: [CB-139](#public-service-politics-and-faith).
 
 Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Fallout](source-atlas.md#w28).
 
+## The person who stayed
+
+**ALL · Play · Small/Compose.** Gap: remembered local changes and relationships.
+
+While friends left to seek fortune, one resident kept the clinic open, learned everyone's routes and quietly changed the neighborhood. They are proud, curious and sometimes resent being treated as provincial. Returning travelers need their knowledge. Avoid revealing that staying was merely failure; rootedness can be a chosen adventure with its own growth and influence.
+
+Related entries: [CB-206](#adaptation-loss-and-contested-pasts).
+
+Seeds and references: [Dragon Age II](source-atlas.md#g52), [Assassin's Creed III](source-atlas.md#g99), [The Wire](source-atlas.md#w21).
+
+## The late beginner
+
+**ALL · Play · Small/Compose.** Gap: authored career history and teachable goals.
+
+A retired warehouse clerk starts learning instrument making, bringing excellent inventory habits and terrible patience with mistakes. They may fund younger apprentices while struggling to ask them for help. Players can teach, collaborate or commission a flawed first instrument. Competence in one life should matter without granting instant mastery in another; age is not a uniform personality modifier.
+
+Related entries: [CB-024](#makers-scholars-and-late-beginners).
+
+Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+
+## Two apprentices one accident
+
+**ALL · Play · Moderate/Extend.** Gap: distinct witnessed histories and enduring but revisable interpretations.
+
+A workshop accident taught one apprentice to document everything and the other to improvise before machinery fails. Neither conclusion is entirely wrong. Years later, a shared repair tests both approaches. Keep their lives larger than the accident: friends, jokes, ambitions and ordinary successes. The same event should produce different people rather than one standardized trauma trait.
+
+Related entries: [CB-052](#families-friends-and-chosen-households).
+
+Seeds and references: [Wildermyth](source-atlas.md#g25), [XCOM 2](source-atlas.md#g125), [The Broken Earth](source-atlas.md#w18).
+
 ## An ordinary happy childhood
 
 **ALL · Play · Small/Compose.** Gap: authored sources of security and curiosity.
@@ -512,35 +552,15 @@ Related entries: [CB-001](#ordinary-livelihoods-and-local-company).
 
 Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Pokémon](source-atlas.md#w08).
 
-## The competent understudy
+## Raised between calendars
 
-**ALL · Play · Small/Compose.** Gap: authored expertise, recognition and succession pressures.
+**ALL · Play · Small/Compose.** Gap: authored overlapping traditions and contextual expectations.
 
-An assistant has quietly run the expedition's logistics for years while its charismatic leader receives credit. When leadership becomes vacant, they must decide whether they want the public role at all. Players can recognize expertise without forcing promotion. Their competence should have visible evidence; ambition may mean better working conditions, rightful command or a ruthless bid to surpass the old leader.
+A child of two trading communities learned different feast days, greetings and assumptions about punctuality. As an adult they translate practical expectations, sometimes enjoying their freedom and sometimes exhausting themselves as everyone's mediator. Let them choose when to explain. Mixed heritage must not automatically confer perfect diplomacy or make the character an encyclopedia for the player.
 
-Related entries: [CB-031](#makers-scholars-and-late-beginners).
+Related entries: [CB-145](#travelers-migrants-and-returns).
 
-Seeds and references: [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60), [Final Fantasy VI](source-atlas.md#g83), [Mass Effect 2](source-atlas.md#g102).
-
-## A return to a changed home
-
-**ALL · Play · Moderate/Extend.** Gap: persistent places and independently changing relationships.
-
-A traveler returns with money and stories to find their old friend has built the life they once planned together. They can become a guest, contribute to new work or leave again. Nostalgia becomes a negotiable relationship with the present. The world must not freeze absent characters or punish them for growing beyond the player's remembered version.
-
-Related entries: [CB-152](#travelers-migrants-and-returns).
-
-Seeds and references: [Dragon Age II](source-atlas.md#g52), [Final Fantasy VI](source-atlas.md#g83), [Narnia](source-atlas.md#w19).
-
-## The maker of an inconvenient truth
-
-**ALL · Play · Moderate/Extend.** Gap: evidence-bearing discoveries and social consequences.
-
-A young restorer uncovers names beneath a celebrated mural and cannot tell whether they record an injustice or an old repair. Their first goal is accuracy; public pressure demands a verdict. Players investigate, preserve, explain or postpone. Give the character reasons to care about the mural's beauty too, and let incomplete evidence remain incomplete.
-
-Related entries: [CB-027](#makers-scholars-and-late-beginners).
-
-Seeds and references: [Outer Wilds](source-atlas.md#g34), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Macondo](source-atlas.md#w24).
+Seeds and references: [Fire Emblem: Path of Radiance](source-atlas.md#g61), [Octopath Traveler II](source-atlas.md#g108), [Avatar: The Last Airbender](source-atlas.md#w13).
 
 ## Research coverage
 
@@ -591,3 +611,4 @@ Peaceful cooks, musicians, games, gardening, art and convivial venues remain wor
 Laundry standards (CB-009), instrument-repair biography (CB-021), the repair purist (CB-026), rotating-supper administration (CB-048), maintenance-focused specialists (CB-183/196), acoustic restoration (CB-277) and the paid last guest (CB-285) are Detail. Their simple authored version can remain Small; importance is not cost. A finished carpenter, useful store or healer can be selected without adding all their possible household and service administration.
 
 Specialist marks biographies that require a separate modern/industrial, unfamiliar embodiment, time/identity or focused adult-service setting. It does not ban magical enemies or judge the worth of people. The cast's existing independence, bounded knowledge, privacy, age-appropriate participation and authority constraints remain required whenever a person is used. Scores concern optional fictional casting priorities, not real-world political, psychological or moral rankings.
+

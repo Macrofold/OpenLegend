@@ -130,6 +130,14 @@ The library is for adults and includes R-rated subject matter within its range. 
 
 Include mature subjects where they belong in those lives and systems. Give pleasures, ordinary routines, aspiration, conflict and loss the space they need in the selected premise. A happy occasion can remain happy, a malicious actor can remain malicious, and an achieved victory can change life for the better. Neither innocence nor brutality is a universal requirement, and coverage does not require equal amounts of each subject in every world.
 
+Select a broad middle of human experience. Ordinary frustration, selfishness, fear, disappointment, rivalry and hard choices should be substantial recurring ingredients alongside affection, humor, curiosity, competence, pleasure and achievement. A loyal friend can be jealous, a capable defender vain, a helpful official cowardly and a generous host irritable. Their faults affect choices without making everyone a villain. Extreme malice and moments of perfect bliss should be unusual; ordinary happiness and decency can be common. These are qualitative content-selection principles, not measured population percentages, emotional quotas or laws imposed on every authored world.
+
+Foreground situations that change something people value: a relationship, allegiance, route, home, livelihood, reputation, capability or desired achievement. Give discovery, mastery, ambitious creation and genuine victories the same creative attention as danger and betrayal. Quiet life supplies enjoyment, preparation, attachment and aftermath; repeated scheduling, service repair or minor domestic disputes should not dominate the worked examples. A modest meal or repair can remain worthwhile without a hidden atrocity or conspiracy.
+
+Let the actual result persist. A criminal may keep a profit, an enemy remain unrepentant, a victim refuse forgiveness and a bereaved person enjoy an afternoon without recovering from the loss. A good plan can also succeed cleanly and leave a threat resolved. State established harm plainly while distinguishing fact, testimony and interpretation; understanding someone's motives grants neither innocence nor a required redemption arc. The [scene-selection review](selection-and-scale.md#review-the-selected-scene-mix) applies this direction to an opening, cast and sequence of examples rather than counting dark vocabulary across inventory rows.
+
+Fictional cruelty and the product's [adult, non-explicit presentation policy](../agent-content-and-companion-safety.md) are separate questions. Library subject coverage does not override real-player controls, privacy, valid consent requirements or the selected presentation boundary.
+
 ## What the research actually makes available
 
 These are source-grounded design interpretations, not representative measurements of what all humans want. Read the original dossier's concrete systems, situations and criticism alongside its recommendations, and judge which lessons serve the intended experience.
@@ -162,3 +170,4 @@ Use the [selection guide](selection-and-scale.md) to choose bounded experiences 
 Fictional authority and actual platform authority remain separate under [engine/world boundaries](../engine-and-world-boundaries.md#4-what-must-remain-protected). Fictional powers and actions, including coercion and hostile effects, operate within admitted world capabilities. They grant no access to actual accounts, ungranted private information, billing, executable code or another user's control of the application.
 
 These are proposals informed by stored research and critical interpretation. No playtest, new population study, current external-source audit or empirical validation of a psychological or social model is claimed. Implementation owners and acceptance criteria remain in [the maintainer index](../maintainers/README.md); this revision closes none of them.
+
