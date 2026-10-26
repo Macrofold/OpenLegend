@@ -4,7 +4,7 @@
 
 ## Current progress
 
-Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2, Guild Wars 3, The Elder Scrolls Online and The Lord of the Rings Online are researched and reviewed against the applicable R01–R15 requirements. The unreleased GW3 case uses five independent observer previews, with no claimed hands-on play or commercial outcome; the other six retain five substantive firsthand editorial assessments. Completed dossiers are committed with their ledger updates. Final Fantasy XIV's existing dossier is next. The comparative essay records the census, persistence definitions and existing design routes; its full game-by-game conclusions and final integration gates remain open.
+Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2, Guild Wars 3, The Elder Scrolls Online and The Lord of the Rings Online are researched and reviewed against the applicable R01–R15 requirements. The unreleased GW3 case uses five independent observer previews, with no claimed hands-on play or commercial outcome; the other six retain five substantive firsthand editorial assessments. Completed dossiers are committed with their ledger updates. Final Fantasy XIV's existing dossier is being refreshed in place. Its original evidence and eight worked cases are preserved; current economics, creator-workflow, lore and reception checks remain in progress. The comparative essay records the census, persistence definitions and existing design routes; its full game-by-game conclusions and final integration gates remain open.
 
 ## Scope and evidence rules
 
@@ -27,7 +27,7 @@ Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2, Guild Wars 3, T
 | [Guild Wars 3](dossiers/guild-wars-3.md)                             | Announced/development evidence and observed alpha, not released outcomes | Researched and reviewed; committed with this ledger |
 | [The Elder Scrolls Online](dossiers/elder-scrolls-online.md)         | Current game versus launch; PC and console add-on boundaries             | Researched and reviewed; committed with this ledger |
 | [The Lord of the Rings Online](dossiers/lord-of-the-rings-online.md) | Long-lived service, world/lore and player culture                        | Researched and reviewed; committed with this ledger |
-| Final Fantasy XIV                                                    | Refresh existing dossier; 1.0, ARR and later eras distinguished          | Pending                                             |
+| [Final Fantasy XIV](dossiers/final-fantasy-xiv.md)                   | Refresh existing dossier; 1.0, ARR and later eras distinguished          | In progress — baseline-preserving checkpoint        |
 | Black Desert Online                                                  | PC service; console/mobile boundaries                                    | Pending                                             |
 | MapleStory                                                           | Original PC game; regional and server-model differences                  | Pending                                             |
 | Star Wars: The Old Republic                                          | Class stories, service changes and current operations                    | Pending                                             |

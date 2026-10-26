@@ -1,6 +1,6 @@
 # G91 — Final Fantasy XIV
 
-**Research pass:** September 26, 2026. **Scope:** the original 2010 service, A Realm Reborn and its expansions, with shipped systems checked through 7.56; announced future content is separated. **Use:** gameplay and production reference, not accepted OpenLegend design or an implementation task list.
+**Research baseline:** September 26, 2026; **refresh:** October 26, 2026. **Scope:** the original 2010 service, A Realm Reborn and its expansions. The baseline systems check covers shipped rules through 7.56; dated refresh evidence below distinguishes subsequent status from announced content. **Use:** gameplay and production reference, not accepted OpenLegend design or an implementation task list.
 
 [Library](../README.md) · [Canonical roster](../research-roster.md) · [Completion requirements](../research-requirements.md) · [Progress and resume ledger](../research-progress.md) · [G88: Final Fantasy XI](final-fantasy-xi.md)
 
@@ -295,6 +295,17 @@ The actionable distinction is between **access failure**, **group-expectation mi
 
 **Do not transplant the whole MMO operating model.** XIV's authored-content volume, licensed platforms, regional service, continuous localization and community production are substantial obligations. Its recovery is evidence that rebuilding can work under particular circumstances, not a recommendation that OpenLegend promise comparable scale or cadence.
 
+### Routes into existing design and qualification
+
+These hypotheses inform existing work; they do not select additional MMO systems.
+
+| Reference question | Existing owner and concrete use |
+| --- | --- |
+| Can different people contribute without confusing compatible roles with compatible intentions? | [CP01–CP10](../../../../docs/maintainers/first-playable-cooperation.md) and [PS07.4/PS07.7](../../../../docs/maintainers/product-scalability.md): observe voluntary help, exact custody and worthwhile aftermath, including partial success. |
+| Does a place carry history into a later visit? | [ND01/DG34](../../../../docs/maintainers/needs-design.md#nd01--assemble-a-new-world-from-a-creators-premise) and [discoverable-history authoring](../../../../docs/narrative/authoring-discoverable-history.md): rehearse a place, object and encounter in different discovery orders; retain named motives and recognizable consequences. |
+| Is a home useful after the effort of obtaining and improving it? | [SH12/DG13](../../../../docs/maintainers/needs-design.md#dg13--editable-shelter-and-useful-places) and [FPV06–FPV08](../../../../docs/maintainers/first-playable-validation.md): assess construction, actual use, revision and return against the complete effort. Scarce plots are not a proposed OpenLegend requirement. |
+| Can an unusual capability or creative work travel with understandable limits? | [ND12/INV-8/EWF11](../../../../docs/maintainers/needs-design.md#nd12--cross-world-invention-libraries-and-usable-pack-publishing) and [ND23/PACK](../../../../docs/maintainers/published-packs-and-creator-revenue.md): test preview, dependencies, destination permissions and update/removal within selected scope. Preserve world-owned rules and accepted paid authoring. |
+
 ## 15. Reading routes, preservation, and completion map
 
 **To study interacting rules:** read the Red Mage and White Mage action/gauge sections, then Blue Mage's active-set rules, Beastmaster's restrictions, and the Palace and field-operation guides. Compare ordinary job identity with a supplemental or restricted power system. The worked situations above are constructed explanations, not substituted gameplay observations.
@@ -305,7 +316,7 @@ The actionable distinction is between **access failure**, **group-expectation mi
 
 **Viewing route:** the official ARR and current expansion sites contain trailers/media routes, and the Noisy Pixel review contains an embedded review video. They are pointers for subsequent viewing only. No playback, transcript review, timestamps or scene-specific observations are claimed here. Sources are linked, not redistributed.
 
-**Preservation:** this is a new dossier supplementing the existing library, not a replacement for the original game chapters, essays or evidence notebook. The [packet-provenance map](../references/packet-provenance.md) remains authoritative about the supplied seven-file packet. This pass does not claim the library-wide preservation gates are complete. Existing G81–G90 research and work on other branches remain independent.
+**Preservation:** the September 26 dossier is the evidence baseline for this refresh, including its eight worked situations and qualified historical systems. It supplements the original game chapters, essays and evidence notebook. The [packet-provenance map](../references/packet-provenance.md) remains authoritative about the supplied seven-file packet. This pass does not claim the library-wide preservation gates are complete. Existing G81–G90 research and work on other branches remain independent.
 
 | Requirement | Substantive coverage |
 | --- | --- |
@@ -326,7 +337,7 @@ The actionable distinction is between **access failure**, **group-expectation mi
 
 ### Annotated source register
 
-All accessed **September 26, 2026**. Official guides are mutable snapshots. Patch notes are dated historical rules unless explicitly identified as current. Community references are not first-party documentation or source-code audits. Critical opinions and player reports remain attributed.
+Sources S1–S59 were accessed **September 26, 2026**; additions below record the **October 26, 2026** refresh. Official guides are mutable snapshots. Patch notes are dated historical rules unless explicitly identified as current. Community references are not first-party documentation or source-code audits. Critical opinions and player reports remain attributed.
 
 <a id="s1"></a>**S1.** Kevin VanOrd, [GameSpot — ARR review](https://www.gamespot.com/reviews/final-fantasy-xiv-online-a-realm-reborn-review/1900-6414792/). Written firsthand criticism; early rules and displayed May 5, 2014 date.
 
