@@ -4,13 +4,13 @@
 
 ## Five different limits must remain separate
 
-| Limit | What it establishes | What to record |
-| --- | --- | --- |
-| Published model capability | The publisher's supported or evaluated sequence length, sometimes with a special extension recipe. | Exact artifact, native length, extension method and evidence scope. Parent-model evidence stays labeled as parent evidence. |
-| Artifact configuration | Values such as `max_position_embeddings` in a particular configuration file. | Exact source revision and field. A serialization value alone is not a quality result or a deployed allowance. |
-| Runtime configuration | What the selected engine and wrapper actually permit and allocate. | Image digest, engine version, tokenizer/template, configured total context, output cap, batch/concurrency and cache settings. |
-| Transport and application limits | What the endpoint and game admit: bytes, time, audio duration, output allowance or question count. | Every applicable cap and its units, protocol and enforcement point. |
-| Qualified operating capacity | What this exact deployment completed under a stated workload. | Full serialized request count, peak VRAM/RAM, concurrency, delay, failure/recovery outcomes and actual charges. |
+| Limit                            | What it establishes                                                                                | What to record                                                                                                                |
+| -------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Published model capability       | The publisher's supported or evaluated sequence length, sometimes with a special extension recipe. | Exact artifact, native length, extension method and evidence scope. Parent-model evidence stays labeled as parent evidence.   |
+| Artifact configuration           | Values such as `max_position_embeddings` in a particular configuration file.                       | Exact source revision and field. A serialization value alone is not a quality result or a deployed allowance.                 |
+| Runtime configuration            | What the selected engine and wrapper actually permit and allocate.                                 | Image digest, engine version, tokenizer/template, configured total context, output cap, batch/concurrency and cache settings. |
+| Transport and application limits | What the endpoint and game admit: bytes, time, audio duration, output allowance or question count. | Every applicable cap and its units, protocol and enforcement point.                                                           |
+| Qualified operating capacity     | What this exact deployment completed under a stated workload.                                      | Full serialized request count, peak VRAM/RAM, concurrency, delay, failure/recovery outcomes and actual charges.               |
 
 Increasing GPU memory can make a supported configuration practical. It does not automatically change a server flag, a model's supported positions, an API output cap, or the game caller's limits. Likewise, successfully loading weights says nothing yet about the largest usable request. vLLM explicitly defines its model length as prompt plus output and derives an unspecified value from model configuration; current releases also expose automatic memory-based sizing. Pin the version and explicit settings instead of depending on a moving default. [RPH027](https://docs.vllm.ai/en/latest/configuration/engine_args/)
 
@@ -20,10 +20,10 @@ The earlier conversation reports that full game requests failed a preflight fit 
 
 The [current operator guide](../../docs/live-ai-setup.md#discover-and-authorize-a-current-service) identifies two particular sources:
 
-| Intended route | Exact identity | How to interpret it |
-| --- | --- | --- |
+| Intended route   | Exact identity                                                                                                                       | How to interpret it                                                                                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Native judgments | `jaredpalmer/kev-4b@6cfce5c2fa4b4bd64026336ab649c5ca78857d52`, using `Qwen/Qwen3.5-4B-Base@1001bb4d826a52d1f399e183466143f4da7b741b` | A native supplied-question model, with its own head/base/runtime recipe and protocol. Ordinary chat context/output assumptions do not describe the whole interface. See the [Kev family record](decision-models.md#decision-kev-canonical). |
-| Chat replies | `huihui-ai/Huihui-Qwen3-4B-abliterated-v2@a494c65b10bf8fdc56c0ff11d36987c1d018f162` | This is the pinned 4B derivative, distinct from the catalogue's Huihui Qwen3.8 27B and Flash Next entries. See [RP35](character-models.md#rp35) for the distinction between its config value and parent context claims. |
+| Chat replies     | `huihui-ai/Huihui-Qwen3-4B-abliterated-v2@a494c65b10bf8fdc56c0ff11d36987c1d018f162`                                                  | This is the pinned 4B derivative, distinct from the catalogue's Huihui Qwen3.8 27B and Flash Next entries. See [RP35](character-models.md#rp35) for the distinction between its config value and parent context claims.                     |
 
 A model repository commit, container image digest and Macrofold serving-revision UUID identify different things. Preserve all three when available. Earlier upstream inference or a qualified native image does not establish current game-key access, a qualified managed chat image, the full scenario's fit, or useful character behavior.
 
@@ -59,12 +59,12 @@ Any context reduction must preserve identity, current task, relevant evidence, a
 The following are idealized arithmetic examples in **decimal GB**, using total parameter count. They exclude quantization scales, padding, higher-precision tensors, adapters, cache, runtime allocations and auxiliary models.
 
 | Total parameters | BF16/FP16, 2 bytes | 8-bit, 1 byte | 4-bit, 0.5 bytes |
-| --- | --- | --- | --- |
-| 4B | 8 GB | 4 GB | 2 GB |
-| 8B | 16 GB | 8 GB | 4 GB |
-| 27B | 54 GB | 27 GB | 13.5 GB |
-| 70B | 140 GB | 70 GB | 35 GB |
-| 120B | 240 GB | 120 GB | 60 GB |
+| ---------------- | ------------------ | ------------- | ---------------- |
+| 4B               | 8 GB               | 4 GB          | 2 GB             |
+| 8B               | 16 GB              | 8 GB          | 4 GB             |
+| 27B              | 54 GB              | 27 GB         | 13.5 GB          |
+| 70B              | 140 GB             | 70 GB         | 35 GB            |
+| 120B             | 240 GB             | 120 GB        | 60 GB            |
 
 One GiB is 1,073,741,824 bytes; one GB is 1,000,000,000 bytes. Preserve publisher units and normalize only with an explicit conversion. A nominal 24GB offering and a reported 24GiB process allocation are not interchangeable evidence. A mixed-precision or quantized artifact's actual selected files are better storage evidence than multiplying its model name by nominal bits.
 
@@ -93,13 +93,13 @@ CPU offload exchanges GPU residency for host memory and transfer work. It can pe
 
 ## Host RAM, CPU and disk must be sized independently
 
-| Resource | Include in the proposal | Common mistaken inference |
-| --- | --- | --- |
-| Host RAM | Loader peak, file mappings/resident pages, unsharded or conversion copies, CPU offload, tokenizer/audio processing, workers and runtime buffers. | “It fits in VRAM, so host RAM cannot be the problem.” |
-| CPU | Concurrent tokenization, audio resampling/encoding, data loading, server processes and any CPU inference. Record offered vCPUs and effective limits. | “A GPU model does no meaningful CPU work.” |
-| Persistent model disk | Selected weight shards, tokenizer/config, adapters, auxiliary weights and retained exact revisions. | “Download every file in the repository” or “the adapter size is the model size.” |
-| Temporary/container disk | Image layers, package/build caches, extraction/conversion peaks, temporary audio and logs. | “The persistent volume's free space covers container startup.” |
-| Network/storage I/O | Initial transfer, concurrent worker reads, model-to-GPU loading and output storage. | “Cached weights mean an instantly warm model.” |
+| Resource                 | Include in the proposal                                                                                                                              | Common mistaken inference                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Host RAM                 | Loader peak, file mappings/resident pages, unsharded or conversion copies, CPU offload, tokenizer/audio processing, workers and runtime buffers.     | “It fits in VRAM, so host RAM cannot be the problem.”                            |
+| CPU                      | Concurrent tokenization, audio resampling/encoding, data loading, server processes and any CPU inference. Record offered vCPUs and effective limits. | “A GPU model does no meaningful CPU work.”                                       |
+| Persistent model disk    | Selected weight shards, tokenizer/config, adapters, auxiliary weights and retained exact revisions.                                                  | “Download every file in the repository” or “the adapter size is the model size.” |
+| Temporary/container disk | Image layers, package/build caches, extraction/conversion peaks, temporary audio and logs.                                                           | “The persistent volume's free space covers container startup.”                   |
+| Network/storage I/O      | Initial transfer, concurrent worker reads, model-to-GPU loading and output storage.                                                                  | “Cached weights mean an instantly warm model.”                                   |
 
 There is no credible universal host-RAM-to-VRAM ratio. A loader can read more than its final GPU shard, and an in-place quantization/conversion job can need the full source weights plus a second representation. Use a publisher requirement or explicit loading plan; otherwise keep the minimum unverified. vLLM describes sharded loading as a way to avoid each worker reading a complete checkpoint. [RPH026](https://docs.vllm.ai/en/latest/configuration/conserving_memory/)
 

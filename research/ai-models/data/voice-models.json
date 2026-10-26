@@ -25,9 +25,7 @@
       "summary": "A developer comparing models on his own voice preferred Qwen3-TTS quality; Chatterbox was simpler but shifted his accent. This is one voice and setup, not a representative ranking.",
       "confidence": "anecdotal",
       "date": "2026-10-04",
-      "urls": [
-        "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine"
-      ]
+      "urls": ["https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine"]
     },
     "published_examples": {
       "url": "https://huggingface.co/spaces/Qwen/Qwen3-TTS",
@@ -35,13 +33,7 @@
       "inspection": "Linked demo identified; no audio generated or auditioned."
     },
     "caveats": "Design-then-Base is a documented continuity workflow, not proof of consistent acting or inheritance of CustomVoice instruction controls. Do not transfer hosted-model latency to local deployment. Base clone quality depends on the reference and transcript; hardware/latency are implementation-specific.",
-    "evidence_source_ids": [
-      "VOICE-S001",
-      "VOICE-S002",
-      "VOICE-S003",
-      "VOICE-S004",
-      "VOICE-S005"
-    ],
+    "evidence_source_ids": ["VOICE-S001", "VOICE-S002", "VOICE-S003", "VOICE-S004", "VOICE-S005"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
@@ -105,11 +97,7 @@
             "Load matching speech tokenizer and exact Base/CustomVoice/VoiceDesign checkpoint; features are not interchangeable.",
             "Apache-2.0 model/repository; reference voice permissions remain separate."
           ],
-          "source_ids": [
-            "VOICE-S176",
-            "VOICE-S180",
-            "VOICE-S177"
-          ]
+          "source_ids": ["VOICE-S176", "VOICE-S180", "VOICE-S177"]
         },
         {
           "label": "Qwen3-TTS-12Hz-1.7B-CustomVoice / publisher Python",
@@ -159,11 +147,7 @@
             "Load matching speech tokenizer and exact Base/CustomVoice/VoiceDesign checkpoint; features are not interchangeable.",
             "Apache-2.0 model/repository; reference voice permissions remain separate."
           ],
-          "source_ids": [
-            "VOICE-S176",
-            "VOICE-S181",
-            "VOICE-S318"
-          ]
+          "source_ids": ["VOICE-S176", "VOICE-S181", "VOICE-S318"]
         },
         {
           "label": "Qwen3-TTS-12Hz-1.7B-VoiceDesign / publisher Python",
@@ -213,11 +197,7 @@
             "Load matching speech tokenizer and exact Base/CustomVoice/VoiceDesign checkpoint; features are not interchangeable.",
             "Apache-2.0 model/repository; reference voice permissions remain separate."
           ],
-          "source_ids": [
-            "VOICE-S176",
-            "VOICE-S182",
-            "VOICE-S319"
-          ]
+          "source_ids": ["VOICE-S176", "VOICE-S182", "VOICE-S319"]
         },
         {
           "label": "Qwen3-TTS-12Hz-0.6B-Base / publisher Python",
@@ -267,11 +247,7 @@
             "Load matching speech tokenizer and exact Base/CustomVoice/VoiceDesign checkpoint; features are not interchangeable.",
             "Apache-2.0 model/repository; reference voice permissions remain separate."
           ],
-          "source_ids": [
-            "VOICE-S176",
-            "VOICE-S183",
-            "VOICE-S320"
-          ]
+          "source_ids": ["VOICE-S176", "VOICE-S183", "VOICE-S320"]
         },
         {
           "label": "Qwen3-TTS-12Hz-0.6B-CustomVoice / publisher Python",
@@ -321,11 +297,7 @@
             "Load matching speech tokenizer and exact Base/CustomVoice/VoiceDesign checkpoint; features are not interchangeable.",
             "Apache-2.0 model/repository; reference voice permissions remain separate."
           ],
-          "source_ids": [
-            "VOICE-S176",
-            "VOICE-S184",
-            "VOICE-S321"
-          ]
+          "source_ids": ["VOICE-S176", "VOICE-S184", "VOICE-S321"]
         },
         {
           "label": "1.7B CustomVoice / vLLM-Omni serving",
@@ -373,10 +345,7 @@
             "Two GPU stages, each with 0.3 memory-utilization allocation in the recipe; allocations are not measured minimum VRAM.",
             "Install the compatible vLLM-Omni audio dependencies; select one checkpoint per service and pin the recipe revision."
           ],
-          "source_ids": [
-            "VOICE-S178",
-            "VOICE-S179"
-          ]
+          "source_ids": ["VOICE-S178", "VOICE-S179"]
         }
       ],
       "deployment_evidence": {
@@ -414,10 +383,7 @@
     "category": "Self-hosted / hosted TTS",
     "priority": "P1-license",
     "model_url": "https://huggingface.co/fishaudio/drama-3",
-    "model_ids": [
-      "fishaudio/drama-3",
-      "drama-3"
-    ],
+    "model_ids": ["fishaudio/drama-3", "drama-3"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Technical report 2026-10-13; current publisher repository and pricing inspected 2026-10-23.",
     "properties": "35B total / 3B active MoE backbone; HF total differs when auxiliary components are counted. 83 languages listed in current model-card metadata. Multi-character dialogue, 16 speaker tags, inline direction, cloning, speech infilling and editing; streaming.",
@@ -508,10 +474,7 @@
             "Separate audio codec and preprocessing stage required; SGLang preprocessing default memory budget is 6 GiB.",
             "Fish Community License revenue/hosted-service conditions apply; embedded own-product character speech has the stated exception, not unconditional commercial permission."
           ],
-          "source_ids": [
-            "VOICE-S185",
-            "VOICE-S187"
-          ]
+          "source_ids": ["VOICE-S185", "VOICE-S187"]
         },
         {
           "label": "Drama 3 INT4 / SGLang-Omni",
@@ -559,9 +522,7 @@
             "Separate audio codec and preprocessing stage required; SGLang preprocessing default memory budget is 6 GiB.",
             "Fish Community License revenue/hosted-service conditions apply; embedded own-product character speech has the stated exception, not unconditional commercial permission."
           ],
-          "source_ids": [
-            "VOICE-S186"
-          ]
+          "source_ids": ["VOICE-S186"]
         }
       ],
       "deployment_evidence": {
@@ -576,11 +537,7 @@
       "blocking_unknowns": [
         "Pin FP8 or INT4 artifact/runtime revision and validate exact license eligibility; KV/cache, host-RAM and concurrent streaming capacity are unknown."
       ],
-      "source_ids": [
-        "VOICE-S185",
-        "VOICE-S186",
-        "VOICE-S187"
-      ]
+      "source_ids": ["VOICE-S185", "VOICE-S186", "VOICE-S187"]
     }
   },
   {
@@ -589,9 +546,7 @@
     "category": "Self-hosted TTS",
     "priority": "Research-license",
     "model_url": "https://huggingface.co/fishaudio/s2-pro",
-    "model_ids": [
-      "fishaudio/s2-pro"
-    ],
+    "model_ids": ["fishaudio/s2-pro"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Predecessor retained in current Fish repository; newer hosted S2.1-Pro is a separate model.",
     "properties": "4B; 83 languages; inline emotions and nonverbal directions, voice cloning, 44.1 kHz output.",
@@ -615,13 +570,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Not a default commercial shipping option under the research terms. Do not describe S2.1 API results as S2-Pro open-weight behavior.",
-    "evidence_source_ids": [
-      "VOICE-S010",
-      "VOICE-S011",
-      "VOICE-S008",
-      "VOICE-S004",
-      "VOICE-S012"
-    ],
+    "evidence_source_ids": ["VOICE-S010", "VOICE-S011", "VOICE-S008", "VOICE-S004", "VOICE-S012"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/speech_api/",
@@ -683,12 +632,7 @@
             "SGLang FP32 codec preprocessing budget defaults to 6 GiB; CPU offload is a separate route.",
             "Research-only weight terms: commercial game use requires resolution."
           ],
-          "source_ids": [
-            "VOICE-S188",
-            "VOICE-S189",
-            "VOICE-S190",
-            "VOICE-S191"
-          ]
+          "source_ids": ["VOICE-S188", "VOICE-S189", "VOICE-S190", "VOICE-S191"]
         }
       ],
       "deployment_evidence": {
@@ -703,12 +647,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S188",
-        "VOICE-S190",
-        "VOICE-S189",
-        "VOICE-S191"
-      ]
+      "source_ids": ["VOICE-S188", "VOICE-S190", "VOICE-S189", "VOICE-S191"]
     }
   },
   {
@@ -717,10 +656,7 @@
     "category": "Hosted TTS",
     "priority": "P2-hosted",
     "model_url": "https://fish.audio/blog/s2-1-pro-free-api/",
-    "model_ids": [
-      "s2.1-pro",
-      "s2.1-pro-free"
-    ],
+    "model_ids": ["s2.1-pro", "s2.1-pro-free"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Free API announced 2026-06-23; an October 24 recheck of the updated article records free access through November 30, 2026. This is the current extension, not the original June announcement deadline. Current pricing lists paid and free variants; Drama 3 is newer.",
     "properties": "83 languages; cloning and expressive character delivery; streaming API. Exact public parameter count not verified.",
@@ -741,11 +677,7 @@
       "inspection": "Demo descriptions read; audio not auditioned."
     },
     "caveats": "Free requests may be retained for model improvement. The updated article directs products above $1M ARR to contact Fish before free-tier use; it does not resolve all commercial entitlement under generic terms. Capacity, fair use and the November 30 free-window expiry remain constraints. No dark-fiction acceptance result.",
-    "evidence_source_ids": [
-      "VOICE-S013",
-      "VOICE-S008",
-      "VOICE-S014"
-    ],
+    "evidence_source_ids": ["VOICE-S013", "VOICE-S008", "VOICE-S014"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "Hosted terms and unresolved free-API commercial entitlement; October 24 targeted recheck of the updated free-window expiry, best-effort service and retention notices.",
@@ -771,9 +703,7 @@
       "blocking_unknowns": [
         "No exact S2.1 checkpoint/container, private runtime or hardware requirement verified; free-route commercial entitlement remains unresolved."
       ],
-      "source_ids": [
-        "VOICE-S281"
-      ],
+      "source_ids": ["VOICE-S281"],
       "hosted_route_limits": [
         {
           "label": "s2.1-pro / s2.1-pro-free",
@@ -786,9 +716,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Rate limits count in-flight requests by account tier, not fixed requests/minute. Exact hard text/ref/output caps not established here; no GPU/storage estimate for the hosted model.",
-          "source_ids": [
-            "VOICE-S281"
-          ]
+          "source_ids": ["VOICE-S281"]
         }
       ]
     }
@@ -903,12 +831,7 @@
             "Current metadata: Torch/Torchaudio 2.6 for Python <3.14, >=2.9 on 3.14; Transformers 5.2, Diffusers 0.29, S3Tokenizer.",
             "Load T3 + S3Gen + speaker encoder; retain PerTh watermark and exact variant MIT terms."
           ],
-          "source_ids": [
-            "VOICE-S192",
-            "VOICE-S193",
-            "VOICE-S194",
-            "VOICE-S195"
-          ]
+          "source_ids": ["VOICE-S192", "VOICE-S193", "VOICE-S194", "VOICE-S195"]
         },
         {
           "label": "Nano / Chatterbox Python",
@@ -957,12 +880,7 @@
             "Current metadata: Torch/Torchaudio 2.6 for Python <3.14, >=2.9 on 3.14; Transformers 5.2, Diffusers 0.29, S3Tokenizer.",
             "Load T3 + S3Gen + speaker encoder; retain PerTh watermark and exact variant MIT terms."
           ],
-          "source_ids": [
-            "VOICE-S192",
-            "VOICE-S193",
-            "VOICE-S194",
-            "VOICE-S196"
-          ]
+          "source_ids": ["VOICE-S192", "VOICE-S193", "VOICE-S194", "VOICE-S196"]
         },
         {
           "label": "Multilingual v3 / Chatterbox Python",
@@ -1011,10 +929,7 @@
             "Current metadata: Torch/Torchaudio 2.6 for Python <3.14, >=2.9 on 3.14; Transformers 5.2, Diffusers 0.29, S3Tokenizer.",
             "Load T3 + S3Gen + speaker encoder; retain PerTh watermark and exact variant MIT terms."
           ],
-          "source_ids": [
-            "VOICE-S192",
-            "VOICE-S193"
-          ]
+          "source_ids": ["VOICE-S192", "VOICE-S193"]
         }
       ],
       "deployment_evidence": {
@@ -1029,13 +944,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S192",
-        "VOICE-S193",
-        "VOICE-S194",
-        "VOICE-S195",
-        "VOICE-S196"
-      ]
+      "source_ids": ["VOICE-S192", "VOICE-S193", "VOICE-S194", "VOICE-S195", "VOICE-S196"]
     }
   },
   {
@@ -1044,9 +953,7 @@
     "category": "Self-hosted TTS",
     "priority": "P1",
     "model_url": "https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
-    "model_ids": [
-      "FunAudioLLM/Fun-CosyVoice3-0.5B-2512"
-    ],
+    "model_ids": ["FunAudioLLM/Fun-CosyVoice3-0.5B-2512"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "December 2025 released checkpoint; paper discussed 0.5B and 1.5B, which does not establish public 1.5B weights.",
     "properties": "0.5B; 9 languages, 18+ Chinese dialects; zero-shot/cross-language cloning, phoneme control, emotion/speed/volume instructions; text-in/audio-out streaming.",
@@ -1070,12 +977,7 @@
       "inspection": "Published sample page identified; audio not auditioned."
     },
     "caveats": "Advertised 150 ms latency lacks an equivalent Open Legend test condition; do not rank it directly against cloud network measurements.",
-    "evidence_source_ids": [
-      "VOICE-S018",
-      "VOICE-S019",
-      "VOICE-S020",
-      "VOICE-S115"
-    ],
+    "evidence_source_ids": ["VOICE-S018", "VOICE-S019", "VOICE-S020", "VOICE-S115"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
@@ -1135,10 +1037,7 @@
             "LLM alone is not the full pipeline: flow, HiFT vocoder, campplus and speech tokenizer also load.",
             "Optional ttsfrd frontend is separate; default wetext route avoids assuming proprietary frontend installation."
           ],
-          "source_ids": [
-            "VOICE-S197",
-            "VOICE-S198"
-          ]
+          "source_ids": ["VOICE-S197", "VOICE-S198"]
         }
       ],
       "deployment_evidence": {
@@ -1153,10 +1052,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S197",
-        "VOICE-S198"
-      ]
+      "source_ids": ["VOICE-S197", "VOICE-S198"]
     }
   },
   {
@@ -1165,9 +1061,7 @@
     "category": "Self-hosted TTS",
     "priority": "P1-license",
     "model_url": "https://huggingface.co/IndexTeam/IndexTTS-2.5",
-    "model_ids": [
-      "IndexTeam/IndexTTS-2.5"
-    ],
+    "model_ids": ["IndexTeam/IndexTTS-2.5"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Report 2026-01-07; current 2.5 model card and demo verified (report date is not asserted as weight-release date).",
     "properties": "~0.8B GPT backbone; Chinese, English, Japanese, Spanish, Arabic; 22.05 kHz. Separates timbre from emotion; eight-dimensional emotion controls include anger, fear and disgust; speed and Pinyin/CMU/Kana controls.",
@@ -1261,11 +1155,7 @@
             "Optional DeepSpeed 0.17.1 and FlashAttention 2.8.3.post1 must match the chosen image.",
             "Bilibili custom weight license thresholds and downstream conditions apply."
           ],
-          "source_ids": [
-            "VOICE-S199",
-            "VOICE-S200",
-            "VOICE-S201"
-          ]
+          "source_ids": ["VOICE-S199", "VOICE-S200", "VOICE-S201"]
         }
       ],
       "deployment_evidence": {
@@ -1280,11 +1170,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S199",
-        "VOICE-S200",
-        "VOICE-S201"
-      ],
+      "source_ids": ["VOICE-S199", "VOICE-S200", "VOICE-S201"],
       "prior_inventory_fields": {
         "hardware_evidence": {
           "value": "Publisher model card specifies NVIDIA GPU and roughly 6 GB VRAM for inference, Python 3.10–3.11; not a concurrent-session capacity guarantee.",
@@ -1300,9 +1186,7 @@
     "category": "Self-hosted TTS",
     "priority": "P1",
     "model_url": "https://huggingface.co/openbmb/VoxCPM2",
-    "model_ids": [
-      "openbmb/VoxCPM2"
-    ],
+    "model_ids": ["openbmb/VoxCPM2"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Repository news dates release April 2026; technical report June 2026. Current code and weights Apache-2.0.",
     "properties": "2B tokenizer-free diffusion-autoregressive TTS; 30 languages plus Chinese dialects, 48 kHz; description-driven voice design, controlled voice cloning, streaming.",
@@ -1396,9 +1280,7 @@
             "Python >=3.10, <3.13, CUDA >=12; load AudioVAE V2 with the model.",
             "Denoiser is an optional additional model; disabling its loading is a documented route, not an assumed default."
           ],
-          "source_ids": [
-            "VOICE-S202"
-          ]
+          "source_ids": ["VOICE-S202"]
         },
         {
           "label": "VoxCPM2 / vLLM-Omni",
@@ -1446,9 +1328,7 @@
             "Matching vLLM-Omni, VoxCPM >=2.0, ninja, soundfile and httpx; AudioVAE V2.",
             "Pin eager/graph mode and cache allocation before any capacity claim."
           ],
-          "source_ids": [
-            "VOICE-S203"
-          ]
+          "source_ids": ["VOICE-S203"]
         }
       ],
       "deployment_evidence": {
@@ -1463,10 +1343,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S202",
-        "VOICE-S203"
-      ],
+      "source_ids": ["VOICE-S202", "VOICE-S203"],
       "prior_inventory_fields": {
         "hardware_evidence": {
           "value": "Publisher table: VoxCPM2 ~8 GB VRAM and RTF ~0.13 with Nano-vLLM on RTX4090. This is one implementation/hardware result, not our measurement.",
@@ -1506,11 +1383,7 @@
       "inspection": "Page text inspected; videos/audio not auditioned."
     },
     "caveats": "Headline free-form editing description is broader than current acoustic-edit examples: fixed instruction templates are documented for some edits. No independently verified refusal or production latency evidence.",
-    "evidence_source_ids": [
-      "VOICE-S026",
-      "VOICE-S027",
-      "VOICE-S028"
-    ],
+    "evidence_source_ids": ["VOICE-S026", "VOICE-S027", "VOICE-S028"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/FireRedTeam/FireRedTTS3",
@@ -1569,11 +1442,7 @@
             "Matching RedAE, campplus, text tokenizer; optional FastText lid.176 and faster-whisper dependencies.",
             "Local wetext normalization exists; optional LLM normalization calls a separate OpenAI-compatible model endpoint and needs its own hosting/cost plan."
           ],
-          "source_ids": [
-            "VOICE-S204",
-            "VOICE-S205",
-            "VOICE-S206"
-          ]
+          "source_ids": ["VOICE-S204", "VOICE-S205", "VOICE-S206"]
         },
         {
           "label": "FireRedTTS3 Instruct / native Python",
@@ -1622,11 +1491,7 @@
             "Matching RedAE, campplus, text tokenizer; optional FastText lid.176 and faster-whisper dependencies.",
             "Local wetext normalization exists; optional LLM normalization calls a separate OpenAI-compatible model endpoint and needs its own hosting/cost plan."
           ],
-          "source_ids": [
-            "VOICE-S204",
-            "VOICE-S205",
-            "VOICE-S206"
-          ]
+          "source_ids": ["VOICE-S204", "VOICE-S205", "VOICE-S206"]
         }
       ],
       "deployment_evidence": {
@@ -1641,11 +1506,7 @@
       "blocking_unknowns": [
         "Exact per-variant stored parameters, selected files, VRAM/host RAM, native limits and stable streaming service need verification."
       ],
-      "source_ids": [
-        "VOICE-S204",
-        "VOICE-S205",
-        "VOICE-S206"
-      ]
+      "source_ids": ["VOICE-S204", "VOICE-S205", "VOICE-S206"]
     }
   },
   {
@@ -1654,10 +1515,7 @@
     "category": "Self-hosted TTS",
     "priority": "P1",
     "model_url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5",
-    "model_ids": [
-      "OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5",
-      "OpenMOSS-Team/MOSS-TTS-v1.5"
-    ],
+    "model_ids": ["OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5", "OpenMOSS-Team/MOSS-TTS-v1.5"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "8B v1.5 released May 26 2026; Local-Transformer 4B v1.5 June 18. MOSS 2.0 remains a roadmap announcement in the inspected repository.",
     "properties": "Local 4B and flagship 8B; 31 languages, voice cloning, long-form speech, code-switching, duration/pause and Pinyin/IPA control. Local v1.5 explicitly adds 48 kHz stereo; do not apply that output format to the separate 8B checkpoint.",
@@ -1682,13 +1540,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Do not substitute older 1.7B reviews for 4B/8B v1.5 quality. Stereo 48 kHz raises transport cost; concurrent memory/latency not verified.",
-    "evidence_source_ids": [
-      "VOICE-S029",
-      "VOICE-S030",
-      "VOICE-S031",
-      "VOICE-S115",
-      "VOICE-S145"
-    ],
+    "evidence_source_ids": ["VOICE-S029", "VOICE-S030", "VOICE-S031", "VOICE-S115", "VOICE-S145"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5",
@@ -1750,10 +1602,7 @@
             "MOSS-Audio-Tokenizer-v2 plus Qwen3-derived local backbone; trust_remote_code publisher modules.",
             "SGLang uses preprocessing/engine/vocoder processes; same-GPU default and CUDA MPS. Its 3 GB graph free-memory check is not the model VRAM requirement."
           ],
-          "source_ids": [
-            "VOICE-S207",
-            "VOICE-S210"
-          ]
+          "source_ids": ["VOICE-S207", "VOICE-S210"]
         },
         {
           "label": "MOSS-TTS v1.5 flagship / native",
@@ -1802,10 +1651,7 @@
             "Matching MOSS audio tokenizer and remote-code processor; use exact flagship model assets.",
             "Apache weights; full pipeline memory/manifest remains unknown."
           ],
-          "source_ids": [
-            "VOICE-S208",
-            "VOICE-S209"
-          ]
+          "source_ids": ["VOICE-S208", "VOICE-S209"]
         }
       ],
       "deployment_evidence": {
@@ -1820,12 +1666,7 @@
       "blocking_unknowns": [
         "Local context ceiling was not retrievable; SGLang channel-description inconsistency and exact runtime RAM/VRAM/disk need resolution."
       ],
-      "source_ids": [
-        "VOICE-S207",
-        "VOICE-S208",
-        "VOICE-S209",
-        "VOICE-S210"
-      ]
+      "source_ids": ["VOICE-S207", "VOICE-S208", "VOICE-S209", "VOICE-S210"]
     }
   },
   {
@@ -1834,9 +1675,7 @@
     "category": "Self-hosted dialogue TTS",
     "priority": "P2",
     "model_url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTSD-v1.0",
-    "model_ids": [
-      "OpenMOSS-Team/MOSS-TTSD-v1.0"
-    ],
+    "model_ids": ["OpenMOSS-Team/MOSS-TTSD-v1.0"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current released v1.0 in MOSS family; technical paper February 2026.",
     "properties": "8B dialogue model, 20-language card; multi-speaker long-form conversation, turn control and voice references.",
@@ -1857,10 +1696,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Full-dialogue synthesis is distinct from low-latency interactive turn synthesis; no validated minimum hardware or game latency.",
-    "evidence_source_ids": [
-      "VOICE-S032",
-      "VOICE-S030"
-    ],
+    "evidence_source_ids": ["VOICE-S032", "VOICE-S030"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://github.com/OpenMOSS/MOSS-TTS",
@@ -1918,10 +1754,7 @@
             "Load matching MOSS audio tokenizer, processor and remote-code classes, with speaker-tag mapping.",
             "Exact runtime package lock and full auxiliary model manifest remain unpinned."
           ],
-          "source_ids": [
-            "VOICE-S211",
-            "VOICE-S212"
-          ]
+          "source_ids": ["VOICE-S211", "VOICE-S212"]
         }
       ],
       "deployment_evidence": {
@@ -1936,10 +1769,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S211",
-        "VOICE-S212"
-      ]
+      "source_ids": ["VOICE-S211", "VOICE-S212"]
     }
   },
   {
@@ -1948,9 +1778,7 @@
     "category": "On-device TTS",
     "priority": "P2-edge",
     "model_url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M",
-    "model_ids": [
-      "OpenMOSS-Team/MOSS-TTS-Nano-100M"
-    ],
+    "model_ids": ["OpenMOSS-Team/MOSS-TTS-Nano-100M"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Released April 10 2026.",
     "properties": "100M; 20 languages; 48 kHz stereo; reference voice cloning and streaming; CPU-oriented.",
@@ -1974,11 +1802,7 @@
       "inspection": "Demo link identified; not executed."
     },
     "caveats": "Small size is not evidence of flagship acting quality; expressions and reference robustness still need later evaluation.",
-    "evidence_source_ids": [
-      "VOICE-S033",
-      "VOICE-S034",
-      "VOICE-S146"
-    ],
+    "evidence_source_ids": ["VOICE-S033", "VOICE-S034", "VOICE-S146"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M",
@@ -2036,9 +1860,7 @@
             "MOSS-Audio-Tokenizer-Nano is an additional model; 100M label does not replace a file manifest.",
             "Pin publisher package and checkpoint revision before deployment."
           ],
-          "source_ids": [
-            "VOICE-S213"
-          ]
+          "source_ids": ["VOICE-S213"]
         }
       ],
       "deployment_evidence": {
@@ -2053,9 +1875,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S213"
-      ]
+      "source_ids": ["VOICE-S213"]
     }
   },
   {
@@ -2064,10 +1884,7 @@
     "category": "Self-hosted dialogue TTS",
     "priority": "P2",
     "model_url": "https://github.com/nari-labs/dia2",
-    "model_ids": [
-      "nari-labs/Dia2-1B",
-      "nari-labs/Dia2-2B"
-    ],
+    "model_ids": ["nari-labs/Dia2-1B", "nari-labs/Dia2-2B"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current successor to original Dia1.6B; public by December 2025, exact release day not established.",
     "properties": "1B and 2B; English; streaming dialogue with contextual prefix audio and speaker conditioning; up to about two minutes per generation in published guidance.",
@@ -2159,11 +1976,7 @@
             "Mimi audio codec; optional Whisper timestamped transcription for speaker-prefix audio adds a separate model.",
             "Apache model/repository, with third-party codec/ASR licenses retained."
           ],
-          "source_ids": [
-            "VOICE-S214",
-            "VOICE-S215",
-            "VOICE-S216"
-          ]
+          "source_ids": ["VOICE-S214", "VOICE-S215", "VOICE-S216"]
         },
         {
           "label": "Dia2 2B / native CUDA",
@@ -2212,11 +2025,7 @@
             "Mimi audio codec; optional Whisper timestamped transcription for speaker-prefix audio adds a separate model.",
             "Apache model/repository, with third-party codec/ASR licenses retained."
           ],
-          "source_ids": [
-            "VOICE-S214",
-            "VOICE-S215",
-            "VOICE-S217"
-          ]
+          "source_ids": ["VOICE-S214", "VOICE-S215", "VOICE-S217"]
         }
       ],
       "deployment_evidence": {
@@ -2231,12 +2040,7 @@
       "blocking_unknowns": [
         "Exact whole-pipeline memory, host RAM/disk and production streaming service remain unverified; do not assume architecture equals deployed low-latency API."
       ],
-      "source_ids": [
-        "VOICE-S214",
-        "VOICE-S215",
-        "VOICE-S216",
-        "VOICE-S217"
-      ],
+      "source_ids": ["VOICE-S214", "VOICE-S215", "VOICE-S216", "VOICE-S217"],
       "prior_inventory_fields": {
         "deployment": {
           "value": "Own GPU runtime; prefix transcription may use Whisper and add setup time.",
@@ -2252,9 +2056,7 @@
     "category": "Self-hosted / licensed TTS",
     "priority": "Research-license",
     "model_url": "https://huggingface.co/bosonai/higgs-tts-3-4b",
-    "model_ids": [
-      "bosonai/higgs-tts-3-4b"
-    ],
+    "model_ids": ["bosonai/higgs-tts-3-4b"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current public 4B model; June 2026 release evidence, retrieved October 23.",
     "properties": "4B backbone plus speech components; 100+ languages; 24 kHz; zero-shot cloning, emotion/style/prosody/pause/sound controls and streaming.",
@@ -2278,11 +2080,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "High practical interest, but not a cleared commercial default. Provider subsecond claims depend on serving setup.",
-    "evidence_source_ids": [
-      "VOICE-S037",
-      "VOICE-S038",
-      "VOICE-S012"
-    ],
+    "evidence_source_ids": ["VOICE-S037", "VOICE-S038", "VOICE-S012"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.reddit.com/r/LocalLLaMA/comments/1v4w5cj/audiocpp_release_04_higgs_audio_v3_tts_4b_10x/",
@@ -2340,11 +2138,7 @@
             "Linux/Python 3.12 and CUDA 12.x; compatible vLLM-Omni commit/branch and remote-code support.",
             "Matching speech codec and processor; Creator Use Grant is not a grant to embed a game-serving API."
           ],
-          "source_ids": [
-            "VOICE-S218",
-            "VOICE-S219",
-            "VOICE-S220"
-          ]
+          "source_ids": ["VOICE-S218", "VOICE-S219", "VOICE-S220"]
         }
       ],
       "deployment_evidence": {
@@ -2359,11 +2153,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S218",
-        "VOICE-S219",
-        "VOICE-S220"
-      ]
+      "source_ids": ["VOICE-S218", "VOICE-S219", "VOICE-S220"]
     }
   },
   {
@@ -2372,9 +2162,7 @@
     "category": "Self-hosted TTS",
     "priority": "P2",
     "model_url": "https://huggingface.co/zai-org/GLM-TTS",
-    "model_ids": [
-      "zai-org/GLM-TTS"
-    ],
+    "model_ids": ["zai-org/GLM-TTS"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Report December 16 2025; current model card verified.",
     "properties": "Chinese/English; streaming speech-token generation plus flow-matching rendering; 3–10 second reference cloning; phoneme/text input and emotion-oriented training. Exact total size not verified.",
@@ -2395,11 +2183,7 @@
       "inspection": "Demo destination identified; not auditioned."
     },
     "caveats": "LoRA/training capability is not proof of off-the-shelf character performance. No current independent broad comparison verified.",
-    "evidence_source_ids": [
-      "VOICE-S039",
-      "VOICE-S040",
-      "VOICE-S041"
-    ],
+    "evidence_source_ids": ["VOICE-S039", "VOICE-S040", "VOICE-S041"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/zai-org/GLM-TTS",
@@ -2457,10 +2241,7 @@
             "Load tokenizer, LLM, flow, vocoder and frontend together; no single-model VRAM assumption.",
             "Pinned NumPy 1.26.4, onnxruntime-gpu 1.19 and compatible CUDA libraries; optional RL dependencies are not all mandatory inference dependencies."
           ],
-          "source_ids": [
-            "VOICE-S221",
-            "VOICE-S222"
-          ]
+          "source_ids": ["VOICE-S221", "VOICE-S222"]
         }
       ],
       "deployment_evidence": {
@@ -2475,10 +2256,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S221",
-        "VOICE-S222"
-      ]
+      "source_ids": ["VOICE-S221", "VOICE-S222"]
     }
   },
   {
@@ -2487,9 +2265,7 @@
     "category": "Self-hosted TTS / editing",
     "priority": "P2-license",
     "model_url": "https://huggingface.co/stepfun-ai/Step-Audio-EditX",
-    "model_ids": [
-      "stepfun-ai/Step-Audio-EditX"
-    ],
+    "model_ids": ["stepfun-ai/Step-Audio-EditX"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Initial Nov 2025; Jan 23 2026 weight update adds paralinguistic tags and vLLM/training support.",
     "properties": "3B; speech generation and iterative editing of emotion, speaking style and paralinguistics; Japanese/Korean added Nov 28 alongside earlier languages; exact complete language count not verified.",
@@ -2510,11 +2286,7 @@
       "inspection": "Text examples inspected; no audio audition."
     },
     "caveats": "Model-updated-in-place risk: pin checkpoint revision for reproducible later evaluation. Commercial weight interpretation unresolved.",
-    "evidence_source_ids": [
-      "VOICE-S042",
-      "VOICE-S043",
-      "VOICE-S223"
-    ],
+    "evidence_source_ids": ["VOICE-S042", "VOICE-S043", "VOICE-S223"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/stepfun-ai/Step-Audio-EditX",
@@ -2572,9 +2344,7 @@
             "Optional AWQ/GPTQ/FP8 support is documented, but no exact converted checkpoint was selected; do not apply its lower memory claims to BF16.",
             "Resolve complete pretrained-weight commercial terms before embedding."
           ],
-          "source_ids": [
-            "VOICE-S223"
-          ]
+          "source_ids": ["VOICE-S223"]
         }
       ],
       "deployment_evidence": {
@@ -2589,9 +2359,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S223"
-      ],
+      "source_ids": ["VOICE-S223"],
       "prior_inventory_fields": {
         "hardware_evidence": {
           "value": "No minimum hardware verified; parameter count is not a VRAM requirement.",
@@ -2607,10 +2375,7 @@
     "category": "Self-hosted TTS / continuation",
     "priority": "P2-license",
     "model_url": "https://huggingface.co/HumeAI/tada-1b",
-    "model_ids": [
-      "HumeAI/tada-1b",
-      "HumeAI/tada-3b-ml"
-    ],
+    "model_ids": ["HumeAI/tada-1b", "HumeAI/tada-3b-ml"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Report February 2026; open release blog March 2026; distinct from the retiring Octave/EVI APIs.",
     "properties": "Llama3.2-derived 1B and 3B backbone variants; jointly aligned text/acoustic stream, speech continuation and cloning; multilingual 3B variant. File parameter totals include extra speech components.",
@@ -2631,11 +2396,7 @@
       "inspection": "Demo link identified, not executed."
     },
     "caveats": "Author zero-hallucination benchmark is dataset-specific, not a guarantee. API sunset does not itself revoke downloadable model availability.",
-    "evidence_source_ids": [
-      "VOICE-S044",
-      "VOICE-S045",
-      "VOICE-S046"
-    ],
+    "evidence_source_ids": ["VOICE-S044", "VOICE-S045", "VOICE-S046"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/HumeAI/tada-1b",
@@ -2694,10 +2455,7 @@
             "Shared HumeAI/tada-codec and prompt audio encoder; cached prompts and separately loading the encoder change memory.",
             "Llama 3.2 Community License and any gated base access; Hume API sunset does not remove these local weights."
           ],
-          "source_ids": [
-            "VOICE-S224",
-            "VOICE-S225"
-          ]
+          "source_ids": ["VOICE-S224", "VOICE-S225"]
         },
         {
           "label": "TADA 3B multilingual",
@@ -2746,10 +2504,7 @@
             "Shared HumeAI/tada-codec and prompt audio encoder; cached prompts and separately loading the encoder change memory.",
             "Llama 3.2 Community License and any gated base access; Hume API sunset does not remove these local weights."
           ],
-          "source_ids": [
-            "VOICE-S224",
-            "VOICE-S226"
-          ]
+          "source_ids": ["VOICE-S224", "VOICE-S226"]
         }
       ],
       "deployment_evidence": {
@@ -2764,11 +2519,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S224",
-        "VOICE-S225",
-        "VOICE-S226"
-      ]
+      "source_ids": ["VOICE-S224", "VOICE-S225", "VOICE-S226"]
     }
   },
   {
@@ -2808,13 +2559,7 @@
       "inspection": "Demo identified; not executed."
     },
     "caveats": "Quality and speed vary widely by CPU/runtime, reference voice and language; tiny variants too recent for mature sentiment.",
-    "evidence_source_ids": [
-      "VOICE-S047",
-      "VOICE-S048",
-      "VOICE-S049",
-      "VOICE-S050",
-      "VOICE-S051"
-    ],
+    "evidence_source_ids": ["VOICE-S047", "VOICE-S048", "VOICE-S049", "VOICE-S050", "VOICE-S051"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "HF weight license and gated-access notices; source-specific community attribution and dated follow-ups, including English preprocessing improvement and remaining multilingual reports.",
@@ -2877,9 +2622,7 @@
             "Standalone Rust route avoids Python/PyTorch. Python CPU wheel route has separate dependency size; no disk minimum inferred.",
             "CC-BY-4.0 weights and gated-use notices, plus voice rights."
           ],
-          "source_ids": [
-            "VOICE-S227"
-          ]
+          "source_ids": ["VOICE-S227"]
         },
         {
           "label": "Pocket English 18.2M",
@@ -2928,9 +2671,7 @@
             "Standalone Rust route avoids Python/PyTorch. Python CPU wheel route has separate dependency size; no disk minimum inferred.",
             "CC-BY-4.0 weights and gated-use notices, plus voice rights."
           ],
-          "source_ids": [
-            "VOICE-S227"
-          ]
+          "source_ids": ["VOICE-S227"]
         },
         {
           "label": "Pocket English 6.9M",
@@ -2979,9 +2720,7 @@
             "Standalone Rust route avoids Python/PyTorch. Python CPU wheel route has separate dependency size; no disk minimum inferred.",
             "CC-BY-4.0 weights and gated-use notices, plus voice rights."
           ],
-          "source_ids": [
-            "VOICE-S227"
-          ]
+          "source_ids": ["VOICE-S227"]
         },
         {
           "label": "Pocket English 1.9M",
@@ -3030,9 +2769,7 @@
             "Standalone Rust route avoids Python/PyTorch. Python CPU wheel route has separate dependency size; no disk minimum inferred.",
             "CC-BY-4.0 weights and gated-use notices, plus voice rights."
           ],
-          "source_ids": [
-            "VOICE-S227"
-          ]
+          "source_ids": ["VOICE-S227"]
         }
       ],
       "deployment_evidence": {
@@ -3047,9 +2784,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S227"
-      ]
+      "source_ids": ["VOICE-S227"]
     }
   },
   {
@@ -3058,10 +2793,7 @@
     "category": "On-device TTS",
     "priority": "P1-edge",
     "model_url": "https://huggingface.co/gradium/phonon-31m-en",
-    "model_ids": [
-      "gradium/phonon-31m-en",
-      "gradium/phonon-40m-multilingual"
-    ],
+    "model_ids": ["gradium/phonon-31m-en", "gradium/phonon-40m-multilingual"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Launched 2026-10-21; very recent, no mature user consensus.",
     "properties": "31M backbone (excludes tokenizer),24 kHz mono, 64.5 MB Q8 weights; streaming. 40M monolingual and five-language variants share runtime; catalogue of about 100 voices.",
@@ -3082,11 +2814,7 @@
       "inspection": "Demo description inspected; not executed."
     },
     "caveats": "Publisher preference/accuracy comparisons are author benchmarks; release is two days old. Character acting range needs later evaluation.",
-    "evidence_source_ids": [
-      "VOICE-S052",
-      "VOICE-S053",
-      "VOICE-S054"
-    ],
+    "evidence_source_ids": ["VOICE-S052", "VOICE-S053", "VOICE-S054"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/gradium/phonon-31m-en",
@@ -3144,10 +2872,7 @@
             "Mimi audio tokenizer/decoder and matching voices/tokenizer must accompany language weights.",
             "31M English weights/tokenizer/voices are Apache-2.0."
           ],
-          "source_ids": [
-            "VOICE-S228",
-            "VOICE-S230"
-          ]
+          "source_ids": ["VOICE-S228", "VOICE-S230"]
         },
         {
           "label": "Phonon 40M multilingual",
@@ -3195,10 +2920,7 @@
             "Mimi audio tokenizer/decoder and matching voices/tokenizer must accompany language weights.",
             "40M multilingual weights CC-BY-NC-4.0; commercial game use needs separate agreement."
           ],
-          "source_ids": [
-            "VOICE-S229",
-            "VOICE-S230"
-          ]
+          "source_ids": ["VOICE-S229", "VOICE-S230"]
         }
       ],
       "deployment_evidence": {
@@ -3213,11 +2935,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S228",
-        "VOICE-S229",
-        "VOICE-S230"
-      ]
+      "source_ids": ["VOICE-S228", "VOICE-S229", "VOICE-S230"]
     }
   },
   {
@@ -3226,10 +2944,7 @@
     "category": "On-device TTS",
     "priority": "P2-license",
     "model_url": "https://github.com/neuphonic/neutts",
-    "model_ids": [
-      "neuphonic/neutts-nano",
-      "neuphonic/neutts-2e"
-    ],
+    "model_ids": ["neuphonic/neutts-nano", "neuphonic/neutts-2e"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Nano multilingual collection current July 2026; current 2E English emotion alpha verified October 23, exact 2E release day unknown.",
     "properties": "Nano ~120M active /229M with embeddings; separate EN/FR/DE/ES models with cloning. 2E ~125M active /236M total: four fixed speakers, six emotions plus neutral, including anger/disgust/fear; text input rather than Nano phonemes.",
@@ -3250,11 +2965,7 @@
       "inspection": "Descriptions inspected, audio not auditioned."
     },
     "caveats": "2E is early alpha and English-only; gated custom model terms are a production decision point.",
-    "evidence_source_ids": [
-      "VOICE-S055",
-      "VOICE-S056",
-      "VOICE-S057"
-    ],
+    "evidence_source_ids": ["VOICE-S055", "VOICE-S056", "VOICE-S057"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://github.com/neuphonic/neutts",
@@ -3313,10 +3024,7 @@
             "NeuCodec or distilled NeuCodec: PyTorch encode/decode versus ONNX decoder-only/int8 routes have different components.",
             "Custom NeuTTS Open License 1.0 access/commercial terms; do not substitute older Air Apache rights."
           ],
-          "source_ids": [
-            "VOICE-S231",
-            "VOICE-S322"
-          ]
+          "source_ids": ["VOICE-S231", "VOICE-S322"]
         },
         {
           "label": "NeuTTS Nano Q8_0 GGUF",
@@ -3365,10 +3073,7 @@
             "NeuCodec or distilled NeuCodec: PyTorch encode/decode versus ONNX decoder-only/int8 routes have different components.",
             "Custom NeuTTS Open License 1.0 access/commercial terms; do not substitute older Air Apache rights."
           ],
-          "source_ids": [
-            "VOICE-S231",
-            "VOICE-S323"
-          ]
+          "source_ids": ["VOICE-S231", "VOICE-S323"]
         },
         {
           "label": "NeuTTS 2E Q4_0 GGUF",
@@ -3417,10 +3122,7 @@
             "NeuCodec or distilled NeuCodec: PyTorch encode/decode versus ONNX decoder-only/int8 routes have different components.",
             "Custom NeuTTS Open License 1.0 access/commercial terms; do not substitute older Air Apache rights."
           ],
-          "source_ids": [
-            "VOICE-S231",
-            "VOICE-S324"
-          ]
+          "source_ids": ["VOICE-S231", "VOICE-S324"]
         },
         {
           "label": "NeuTTS 2E Q8_0 GGUF",
@@ -3469,10 +3171,7 @@
             "NeuCodec or distilled NeuCodec: PyTorch encode/decode versus ONNX decoder-only/int8 routes have different components.",
             "Custom NeuTTS Open License 1.0 access/commercial terms; do not substitute older Air Apache rights."
           ],
-          "source_ids": [
-            "VOICE-S231",
-            "VOICE-S325"
-          ]
+          "source_ids": ["VOICE-S231", "VOICE-S325"]
         }
       ],
       "deployment_evidence": {
@@ -3487,13 +3186,7 @@
       "blocking_unknowns": [
         "Exact artifact commit/file sizes, per-variant context verification, codec selection, runtime RAM and commercial-license eligibility remain unresolved."
       ],
-      "source_ids": [
-        "VOICE-S231",
-        "VOICE-S322",
-        "VOICE-S323",
-        "VOICE-S324",
-        "VOICE-S325"
-      ]
+      "source_ids": ["VOICE-S231", "VOICE-S322", "VOICE-S323", "VOICE-S324", "VOICE-S325"]
     }
   },
   {
@@ -3502,9 +3195,7 @@
     "category": "Self-hosted TTS",
     "priority": "Research-license",
     "model_url": "https://huggingface.co/k2-fsa/OmniVoice",
-    "model_ids": [
-      "k2-fsa/OmniVoice"
-    ],
+    "model_ids": ["k2-fsa/OmniVoice"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Report April 1 2026; current model card explicitly distinguishes code and weights.",
     "properties": "0.6B Qwen3-derived diffusion speech model; 646 languages advertised, 24 kHz, voice cloning/design, laughter and phoneme/pinyin controls.",
@@ -3529,13 +3220,7 @@
       "inspection": "Demo identified, not run."
     },
     "caveats": "646-language support does not imply equal quality; noncommercial weights prevent treating it as a cleared commercial default.",
-    "evidence_source_ids": [
-      "VOICE-S058",
-      "VOICE-S059",
-      "VOICE-S060",
-      "VOICE-S144",
-      "VOICE-S143"
-    ],
+    "evidence_source_ids": ["VOICE-S058", "VOICE-S059", "VOICE-S060", "VOICE-S144", "VOICE-S143"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/k2-fsa/OmniVoice",
@@ -3597,10 +3282,7 @@
             "Optional FlashInfer 0.6.15.post1 matching CUDA 12.8 wheel; CUDA graph path recommends batch 1; SDPA fallback available.",
             "Matching audio codec and tokenizer; pretrained CC-BY-NC terms separate from Apache code."
           ],
-          "source_ids": [
-            "VOICE-S232",
-            "VOICE-S233"
-          ]
+          "source_ids": ["VOICE-S232", "VOICE-S233"]
         }
       ],
       "deployment_evidence": {
@@ -3615,10 +3297,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S232",
-        "VOICE-S233"
-      ]
+      "source_ids": ["VOICE-S232", "VOICE-S233"]
     }
   },
   {
@@ -3627,9 +3306,7 @@
     "category": "Self-hosted TTS",
     "priority": "Watchlist-license",
     "model_url": "https://huggingface.co/TontaubeAI/TontaubeV1",
-    "model_ids": [
-      "TontaubeAI/TontaubeV1"
-    ],
+    "model_ids": ["TontaubeAI/TontaubeV1"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Technical report September 8 2026; public inference release v1.0.0.",
     "properties": "2.874B across four predictors; English/German primary, 7 languages total; audiobook/conversational/agentic styles; cloning from 5–60s reference; long-form and MP3/Opus streaming.",
@@ -3650,11 +3327,7 @@
       "inspection": "Sample labels inspected; audio not auditioned."
     },
     "caveats": "Limited public adoption; author RTX5090 ~200 ms first-audio claim is setup-specific; demonstration MP3s excluded from model-license grant.",
-    "evidence_source_ids": [
-      "VOICE-S061",
-      "VOICE-S062",
-      "VOICE-S063"
-    ],
+    "evidence_source_ids": ["VOICE-S061", "VOICE-S062", "VOICE-S063"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/TontaubeAI/TontaubeV1",
@@ -3714,10 +3387,7 @@
             "DualCodec, W2V-BERT and VibeVoice acoustic encoder/decoder are separate pinned upstream downloads; optional English verbalizer.",
             "Custom Tontaube Community Model License and third-party component rights."
           ],
-          "source_ids": [
-            "VOICE-S234",
-            "VOICE-S235"
-          ]
+          "source_ids": ["VOICE-S234", "VOICE-S235"]
         }
       ],
       "deployment_evidence": {
@@ -3732,10 +3402,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S234",
-        "VOICE-S235"
-      ]
+      "source_ids": ["VOICE-S234", "VOICE-S235"]
     }
   },
   {
@@ -3744,9 +3411,7 @@
     "category": "Self-hosted / enterprise TTS",
     "priority": "P2",
     "model_url": "https://huggingface.co/nvidia/magpie_tts_multilingual_357m",
-    "model_ids": [
-      "nvidia/magpie_tts_multilingual_357m@v2607"
-    ],
+    "model_ids": ["nvidia/magpie_tts_multilingual_357m@v2607"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Latest card version v2607 released July 21 2026, following v2602/v2512.",
     "properties": "364M parameter count in current card despite 357m repository name; 12 languages, predefined voices, autoregressive codec-based speech; enterprise streaming deployment.",
@@ -3767,11 +3432,7 @@
       "inspection": "Demo identified, not run."
     },
     "caveats": "Less direct evidence for rich free-form character acting than dedicated expressive models. Do not use repository name as exact parameter count.",
-    "evidence_source_ids": [
-      "VOICE-S064",
-      "VOICE-S065",
-      "VOICE-S236"
-    ],
+    "evidence_source_ids": ["VOICE-S064", "VOICE-S065", "VOICE-S236"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/nvidia/magpie_tts_multilingual_357m",
@@ -3829,9 +3490,7 @@
             "NeMo-Speech.cpp downloads GGUF/tokenizer/NanoCodec assets; exact selected quantization and RAM/disk not pinned.",
             "NVIDIA Open Model License; enterprise NIM service is a separate deployment contract."
           ],
-          "source_ids": [
-            "VOICE-S236"
-          ]
+          "source_ids": ["VOICE-S236"]
         }
       ],
       "deployment_evidence": {
@@ -3846,9 +3505,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S236"
-      ],
+      "source_ids": ["VOICE-S236"],
       "prior_inventory_fields": {
         "deployment": {
           "value": "NeMo Speech, NVIDIA NIM/self-hosted enterprise paths; published demo.",
@@ -3864,10 +3521,7 @@
     "category": "Hosted TTS",
     "priority": "P1-hosted",
     "model_url": "https://help.aliyun.com/en/model-studio/qwen-audio-3-1-tts-plus",
-    "model_ids": [
-      "qwen-audio-3.1-tts-plus",
-      "qwen-audio-3.1-tts-flash"
-    ],
+    "model_ids": ["qwen-audio-3.1-tts-plus", "qwen-audio-3.1-tts-flash"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current 3.1 docs updated October 2026; international price page updated October 22. July 3.0 is a predecessor, not the latest hosted version.",
     "properties": "Plus targets premium character performance/dubbing; Flash realtime use. Both stream, follow delivery instructions and fine-grained tags for emotion, persona, pace and volume; improved noisy-reference cloning. Exact 3.1 language count/size not verified.",
@@ -3888,12 +3542,7 @@
       "inspection": "Catalogue descriptions inspected; previews not auditioned."
     },
     "caveats": "Exact audio-token rate/duration conversion and all supported 3.1 locales remain unresolved; 3.0's 16-language count should not be silently copied.",
-    "evidence_source_ids": [
-      "VOICE-S066",
-      "VOICE-S067",
-      "VOICE-S068",
-      "VOICE-S069"
-    ],
+    "evidence_source_ids": ["VOICE-S066", "VOICE-S067", "VOICE-S068", "VOICE-S069"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "Current Plus/Flash model pages and international pricing unit definitions.",
@@ -3920,10 +3569,7 @@
       "blocking_unknowns": [
         "Native model parameters, portable runtime and memory/storage not disclosed; character/audio limits are blank in exact model pages."
       ],
-      "source_ids": [
-        "VOICE-S282",
-        "VOICE-S283"
-      ],
+      "source_ids": ["VOICE-S282", "VOICE-S283"],
       "hosted_route_limits": [
         {
           "label": "qwen-audio-3.1-tts-plus",
@@ -3936,9 +3582,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Exact model page leaves context/max input/max output unspecified. 180RPM listed for Beijing and Singapore; account authorization/region still matters.",
-          "source_ids": [
-            "VOICE-S282"
-          ]
+          "source_ids": ["VOICE-S282"]
         },
         {
           "label": "qwen-audio-3.1-tts-flash",
@@ -3951,9 +3595,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Exact model page leaves context/max input/max output unspecified. 180RPM listed for Beijing and Singapore; account authorization/region still matters.",
-          "source_ids": [
-            "VOICE-S283"
-          ]
+          "source_ids": ["VOICE-S283"]
         }
       ]
     }
@@ -3964,10 +3606,7 @@
     "category": "Hosted TTS",
     "priority": "P1-hosted-policy",
     "model_url": "https://elevenlabs.io/docs/overview/models",
-    "model_ids": [
-      "eleven_v4",
-      "eleven_v4_turbo"
-    ],
+    "model_ids": ["eleven_v4", "eleven_v4_turbo"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current official catalogue and pricing list v4/v4 Turbo on October 23 2026; exact launch date not established in this pass.",
     "properties": "90+ languages; expressive audio tags and character delivery; v4 multispeaker dialogue. Turbo optimized for realtime, ~100 ms median inference claim; that is not full-turn latency.",
@@ -3988,11 +3627,7 @@
       "inspection": "Descriptions read; audio not auditioned."
     },
     "caveats": "Do not assume older v3 experiences predict v4. Exact current version has limited independently audited sentiment in this research.",
-    "evidence_source_ids": [
-      "VOICE-S070",
-      "VOICE-S071",
-      "VOICE-S072"
-    ],
+    "evidence_source_ids": ["VOICE-S070", "VOICE-S071", "VOICE-S072"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://elevenlabs.io/docs/overview/models",
@@ -4016,10 +3651,7 @@
       "blocking_unknowns": [
         "Do not infer v4 private/Runpod availability from the general ElevenAgents or older-TTS private deployment offer."
       ],
-      "source_ids": [
-        "VOICE-S284",
-        "VOICE-S285"
-      ],
+      "source_ids": ["VOICE-S284", "VOICE-S285"],
       "hosted_route_limits": [
         {
           "label": "eleven_v4",
@@ -4032,9 +3664,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "10000-character request cap; table approximately 10-minute audio is an estimate, not a guaranteed maximum duration. Plan/voice terms apply.",
-          "source_ids": [
-            "VOICE-S284"
-          ]
+          "source_ids": ["VOICE-S284"]
         },
         {
           "label": "eleven_v4_turbo",
@@ -4047,9 +3677,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "No exact Turbo character/session limit established from the model table; do not inherit v4 or old Flash40K limits.",
-          "source_ids": [
-            "VOICE-S284"
-          ]
+          "source_ids": ["VOICE-S284"]
         }
       ]
     }
@@ -4060,10 +3688,7 @@
     "category": "Hosted / enterprise TTS",
     "priority": "P2-policy",
     "model_url": "https://docs.cartesia.ai/build-with-cartesia/tts-models/latest",
-    "model_ids": [
-      "sonic-3.6-2026-08-27",
-      "sonic-3.6"
-    ],
+    "model_ids": ["sonic-3.6-2026-08-27", "sonic-3.6"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Stable snapshot sonic-3.6-2026-08-27; alias may change. Current catalogue inspected October 23.",
     "properties": "44 languages, context-sensitive prosody and voice cloning; realtime streaming and faithful transcript rendering.",
@@ -4084,13 +3709,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Policy is material for this project; obtain exact game-content interpretation before committing. A moving alias is not reproducible.",
-    "evidence_source_ids": [
-      "VOICE-S073",
-      "VOICE-S074",
-      "VOICE-S075",
-      "VOICE-S076",
-      "VOICE-S149"
-    ],
+    "evidence_source_ids": ["VOICE-S073", "VOICE-S074", "VOICE-S075", "VOICE-S076", "VOICE-S149"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "Stable snapshot, current AUP and credit-meter documentation.",
@@ -4118,10 +3737,7 @@
       "blocking_unknowns": [
         "Need vendor confirmation of exact 3.6 private artifact, supported cloud/hardware, metering, memory and license; no self-host recipe fabricated."
       ],
-      "source_ids": [
-        "VOICE-S286",
-        "VOICE-S287"
-      ],
+      "source_ids": ["VOICE-S286", "VOICE-S287"],
       "hosted_route_limits": [
         {
           "label": "sonic-3.6 / sonic-3.6-2026-08-27",
@@ -4134,9 +3750,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "HTTP bytes accepts a complete transcript and streams resulting audio. Hard text/session limits and exact model context not established here; stable dated alias differs from moving alias.",
-          "source_ids": [
-            "VOICE-S286"
-          ]
+          "source_ids": ["VOICE-S286"]
         }
       ]
     }
@@ -4147,10 +3761,7 @@
     "category": "Hosted / enterprise TTS",
     "priority": "P1-hosted",
     "model_url": "https://docs.inworld.ai/tts/tts-models",
-    "model_ids": [
-      "inworld-tts-2",
-      "inworld-tts-2-flash"
-    ],
+    "model_ids": ["inworld-tts-2", "inworld-tts-2-flash"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current successor pair in September/October 2026 documentation.",
     "properties": "Docs say 200+ languages/locales for both; newer product page says about 500 languages/dialects via 623codes for TTS-2 and fewer for Flash: coverage discrepancy unresolved. Instant cloning, nonverbals; TTS-2 adds natural-language steering, phonetic timestamps and visemes. P90 server TTFB 100/20 ms excludes network.",
@@ -4210,10 +3821,7 @@
       "blocking_unknowns": [
         "Private-deployment rights/image, runtime version, GPU/RAM/disk and exact TTS2 versus Flash support require vendor-provided specification."
       ],
-      "source_ids": [
-        "VOICE-S288",
-        "VOICE-S289"
-      ],
+      "source_ids": ["VOICE-S288", "VOICE-S289"],
       "hosted_route_limits": [
         {
           "label": "inworld-tts-2 / inworld-tts-2-flash unary",
@@ -4226,9 +3834,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Numeric input is UTF-16 code units (JavaScript text.length), not Unicode code points. Returns complete audio. Context at most 5 previous requests/2000 combined characters; voice-design description 7–1024 characters.",
-          "source_ids": [
-            "VOICE-S288"
-          ]
+          "source_ids": ["VOICE-S288"]
         },
         {
           "label": "TTS2/Flash HTTP streaming",
@@ -4241,9 +3847,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "4000 UTF-16 code units per request; streamed PCM/LINEAR16/WAV header rules differ. Native samplerate differs from requested 8–48 kHz output resampling.",
-          "source_ids": [
-            "VOICE-S288"
-          ]
+          "source_ids": ["VOICE-S288"]
         }
       ],
       "prior_inventory_fields": {
@@ -4261,10 +3865,7 @@
     "category": "Hosted TTS",
     "priority": "P1-hosted",
     "model_url": "https://platform.minimax.io/docs/pricing/overview",
-    "model_ids": [
-      "speech-2.8-hd",
-      "speech-2.8-turbo"
-    ],
+    "model_ids": ["speech-2.8-hd", "speech-2.8-turbo"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current 2.8 HD/Turbo appear in official pricing on October 23; exact release date not independently established.",
     "properties": "Expressive synthesis, voice cloning/design, adjustable speed/pitch/volume and voice mixing; sync short-form and async long-form up to 1M characters.40+language support listed by official deployment-provider documentation.",
@@ -4285,10 +3886,7 @@
       "inspection": "Model listing inspected; no audio evaluation."
     },
     "caveats": "Do not use old Speech02 demos as 2.8 evidence. Commercial policy acceptance of all dark scripts unresolved.",
-    "evidence_source_ids": [
-      "VOICE-S083",
-      "VOICE-S084"
-    ],
+    "evidence_source_ids": ["VOICE-S083", "VOICE-S084"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://platform.minimax.io/docs/pricing/overview",
@@ -4311,10 +3909,7 @@
       "blocking_unknowns": [
         "Do not turn hosted request caps into a native context or GPU requirement; private artifact availability unverified."
       ],
-      "source_ids": [
-        "VOICE-S290",
-        "VOICE-S291"
-      ],
+      "source_ids": ["VOICE-S290", "VOICE-S291"],
       "hosted_route_limits": [
         {
           "label": "speech-2.8-hd / speech-2.8-turbo sync",
@@ -4327,9 +3922,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Text must be strictly less than 10000 characters; streaming output recommended over 3000. Entire input text is submitted at once; this alone is not incremental-text streaming.",
-          "source_ids": [
-            "VOICE-S290"
-          ]
+          "source_ids": ["VOICE-S290"]
         },
         {
           "label": "Speech 2.8 async text-file task",
@@ -4342,9 +3935,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "1000000-character limit refers to submitted text file; TXT/ZIP formats have their documented structure. Separate task semantics from low-latency HTTP streaming.",
-          "source_ids": [
-            "VOICE-S291"
-          ]
+          "source_ids": ["VOICE-S291"]
         }
       ]
     }
@@ -4355,10 +3946,7 @@
     "category": "Hosted / enterprise TTS",
     "priority": "P2-hosted",
     "model_url": "https://deepgram.com/product/text-to-speech/flux",
-    "model_ids": [
-      "Flux TTS",
-      "Aura-2"
-    ],
+    "model_ids": ["Flux TTS", "Aura-2"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Flux TTS is the current conversation-aware offering in October 2026; Aura2 remains a separately priced established option.",
     "properties": "Flux uses conversational context for delivery/continuity and realtime interruption-aware applications; current page demonstrates English voices. Aura-2 broader voice/language inventory must be checked separately.",
@@ -4447,9 +4035,7 @@
             "Licensed language-specific T2C/C2A models, API/Engine TOML and vendor credentials.",
             "Use separate engine/node from Flux and preferably from STT; no free/perpetual public weights."
           ],
-          "source_ids": [
-            "VOICE-S292"
-          ]
+          "source_ids": ["VOICE-S292"]
         },
         {
           "label": "Flux TTS / licensed dedicated Engine",
@@ -4498,10 +4084,7 @@
             "max_batch_size has no safe default; must obtain GPU-specific value from Deepgram, not copy placeholder 0.",
             "Contract, image/model access and metering/licensing requirements remain."
           ],
-          "source_ids": [
-            "VOICE-S293",
-            "VOICE-S292"
-          ]
+          "source_ids": ["VOICE-S293", "VOICE-S292"]
         }
       ],
       "deployment_evidence": {
@@ -4516,10 +4099,7 @@
       "blocking_unknowns": [
         "Exact Runpod driver/container support, licensed files, model sizes/disk and vendor-approved concurrency remain unverified; do not equate host RAM with VRAM."
       ],
-      "source_ids": [
-        "VOICE-S292",
-        "VOICE-S293"
-      ],
+      "source_ids": ["VOICE-S292", "VOICE-S293"],
       "hosted_route_limits": [
         {
           "label": "Flux TTS cloud",
@@ -4532,9 +4112,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Cloud route separate from private Engine. Exact text/session caps not established by the deployment guide.",
-          "source_ids": [
-            "VOICE-S293"
-          ]
+          "source_ids": ["VOICE-S293"]
         },
         {
           "label": "Aura-2 cloud",
@@ -4547,9 +4125,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Per-language/voice API choices and account limits; private deployment RAM figures do not describe a cloud-client requirement.",
-          "source_ids": [
-            "VOICE-S292"
-          ]
+          "source_ids": ["VOICE-S292"]
         }
       ],
       "prior_inventory_fields": {
@@ -4567,10 +4143,7 @@
     "category": "Hosted / enterprise TTS",
     "priority": "P2-hosted",
     "model_url": "https://docs.rime.ai/docs/models",
-    "model_ids": [
-      "coda",
-      "mistv3"
-    ],
+    "model_ids": ["coda", "mistv3"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current docs recommend Coda for new work; Coda May 2026, Mist v3 March/April 2026 sources differ. Pricing page now labels Coda v2; exact API snapshot/revision should be confirmed.",
     "properties": "Coda:10 cloud languages, 313 voices, word timestamps, conversational prosody. Mist v3:4 languages, 78 voices, English pronunciation overrides and custom pauses. Most individual voices are monolingual.",
@@ -4659,10 +4232,7 @@
             "Vendor registry access and license matching selected image; metering API key/outbound aggregate usage reporting.",
             "Standalone engine lacks caller authentication; application gateway must provide access control and TLS."
           ],
-          "source_ids": [
-            "VOICE-S294",
-            "VOICE-S295"
-          ]
+          "source_ids": ["VOICE-S294", "VOICE-S295"]
         },
         {
           "label": "Rime Coda licensed engine",
@@ -4711,10 +4281,7 @@
             "Vendor registry access and license matching selected image; metering API key/outbound aggregate usage reporting.",
             "Standalone engine lacks caller authentication; application gateway must provide access control and TLS."
           ],
-          "source_ids": [
-            "VOICE-S294",
-            "VOICE-S295"
-          ]
+          "source_ids": ["VOICE-S294", "VOICE-S295"]
         }
       ],
       "deployment_evidence": {
@@ -4729,11 +4296,7 @@
       "blocking_unknowns": [
         "Obtain exact licensed image/digest, Coda GPU requirement and contract rates; Runpod deployment has not been attempted."
       ],
-      "source_ids": [
-        "VOICE-S294",
-        "VOICE-S295",
-        "VOICE-S296"
-      ],
+      "source_ids": ["VOICE-S294", "VOICE-S295", "VOICE-S296"],
       "hosted_route_limits": [
         {
           "label": "coda / mistv3 cloud",
@@ -4746,9 +4309,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Model must be explicit; omitted/unrecognized model defaults to Mistv3. Exact per-request text caps not established here.",
-          "source_ids": [
-            "VOICE-S296"
-          ]
+          "source_ids": ["VOICE-S296"]
         }
       ],
       "prior_inventory_fields": {
@@ -4766,9 +4327,7 @@
     "category": "Hosted / enterprise TTS",
     "priority": "P2-policy",
     "model_url": "https://gradium.ai/text-to-speech",
-    "model_ids": [
-      "Gradium TTS (current hosted alias)"
-    ],
+    "model_ids": ["Gradium TTS (current hosted alias)"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current managed product October 2026; separate from new open Phonon weights.",
     "properties": "Five languages:EN/FR/DE/ES/PT with code-switching, cloning/design and custom pronunciation. Stateful streaming sessions capped at five minutes; author describes ~50 ms median first audible sound in its benchmark.",
@@ -4789,11 +4348,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Limited language set versus other providers; content contract is a material issue for dark dialogue.",
-    "evidence_source_ids": [
-      "VOICE-S092",
-      "VOICE-S093",
-      "VOICE-S094"
-    ],
+    "evidence_source_ids": ["VOICE-S092", "VOICE-S093", "VOICE-S094"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://gradium.ai/text-to-speech",
@@ -4817,9 +4372,7 @@
       "blocking_unknowns": [
         "Need vendor confirmation that its private image is licensed/supported outside SageMaker, plus GPU/RAM/disk requirements. Phonon is a separate released model."
       ],
-      "source_ids": [
-        "VOICE-S297"
-      ],
+      "source_ids": ["VOICE-S297"],
       "hosted_route_limits": [
         {
           "label": "Gradium hosted TTS",
@@ -4832,9 +4385,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Five-minute session limit (300s); retained conversational prosody context is session-scoped. This is not a300-second single-output file cap. Private-VPC offer explicitly names SageMaker.",
-          "source_ids": [
-            "VOICE-S297"
-          ]
+          "source_ids": ["VOICE-S297"]
         }
       ]
     }
@@ -4845,9 +4396,7 @@
     "category": "Hosted TTS",
     "priority": "P2-hosted",
     "model_url": "https://docs.x.ai/developers/model-capabilities/audio/text-to-speech",
-    "model_ids": [
-      "POST /v1/tts (version not exposed)"
-    ],
+    "model_ids": ["POST /v1/tts (version not exposed)"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current docs October 23 2026; service identity shown as SpaceXSI on x.ai. Exact public TTS model version not exposed in inspected endpoint docs.",
     "properties": "20 languages/locale codes, selectable/custom voices; inline laughs/cries/sighs and wrapping whisper/loud/singing/speed/pitch tags; published per-tag audio examples.",
@@ -4868,11 +4417,7 @@
       "inspection": "Tag descriptions read; audio not auditioned."
     },
     "caveats": "Brand reputation for fewer refusals is not evidence for this exact speech endpoint. No current-model independent sentiment or mature-fiction acceptance established.",
-    "evidence_source_ids": [
-      "VOICE-S095",
-      "VOICE-S096",
-      "VOICE-S097"
-    ],
+    "evidence_source_ids": ["VOICE-S095", "VOICE-S096", "VOICE-S097"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://docs.x.ai/developers/model-capabilities/audio/text-to-speech",
@@ -4896,9 +4441,7 @@
       "blocking_unknowns": [
         "Native model version/context/precision and infrastructure are undisclosed; API content/use terms still apply."
       ],
-      "source_ids": [
-        "VOICE-S298"
-      ],
+      "source_ids": ["VOICE-S298"],
       "hosted_route_limits": [
         {
           "label": "POST /v1/tts",
@@ -4911,9 +4454,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "60000 input characters; selectable output formats. with_timestamps changes raw-audio response to JSON with base64 audio and character timings; exact duration limit unknown.",
-          "source_ids": [
-            "VOICE-S298"
-          ]
+          "source_ids": ["VOICE-S298"]
         }
       ]
     }
@@ -4924,10 +4465,7 @@
     "category": "Hosted / self-deployment contract TTS",
     "priority": "P1-hosted-watch",
     "model_url": "https://docs.mistral.ai/models/voxtral-mini-tts-3-0",
-    "model_ids": [
-      "voxtral-mini-tts-3-0",
-      "voxtral-mini-tts-realtime-3-0"
-    ],
+    "model_ids": ["voxtral-mini-tts-3-0", "voxtral-mini-tts-realtime-3-0"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Model docs date October 20 2026, public preview; launch page discovered October 23. Very recent.",
     "properties": "Preset/cloned voices, 34 emotion tags and 2 pace tags, custom pronunciation, streaming; ~90 ms TTFA author claim. Docs say 9 languages, launch says 35+ languages/50+ dialects: unresolved rollout/documentation discrepancy.",
@@ -4948,11 +4486,7 @@
       "inspection": "Published transcript read; media not auditioned."
     },
     "caveats": "Free-form whole-request style instructions are not available at launch despite broad voice-control wording. Very recent; no mature independent sentiment.",
-    "evidence_source_ids": [
-      "VOICE-S098",
-      "VOICE-S099",
-      "VOICE-S100"
-    ],
+    "evidence_source_ids": ["VOICE-S098", "VOICE-S099", "VOICE-S100"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://docs.mistral.ai/models/voxtral-mini-tts-3-0",
@@ -4976,11 +4510,7 @@
       "blocking_unknowns": [
         "Need licensed exact offline/realtime 3.0 image, model files and operational requirements; do not use open 2602 ASR as a substitute recipe."
       ],
-      "source_ids": [
-        "VOICE-S299",
-        "VOICE-S300",
-        "VOICE-S301"
-      ],
+      "source_ids": ["VOICE-S299", "VOICE-S300", "VOICE-S301"],
       "hosted_route_limits": [
         {
           "label": "voxtral-mini-tts-3-0",
@@ -4993,10 +4523,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Complete text request; optional streamed response, prior audio context, cloning/tags. Hard text/ref/output limits not established in inspected overview.",
-          "source_ids": [
-            "VOICE-S299",
-            "VOICE-S300"
-          ]
+          "source_ids": ["VOICE-S299", "VOICE-S300"]
         },
         {
           "label": "voxtral-mini-tts-realtime-3-0",
@@ -5009,9 +4536,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Separate incremental-input model; offline feature support and limits must not be copied without verification.",
-          "source_ids": [
-            "VOICE-S300"
-          ]
+          "source_ids": ["VOICE-S300"]
         }
       ]
     }
@@ -5022,9 +4547,7 @@
     "category": "Self-hosted TTS",
     "priority": "P2",
     "model_url": "https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B",
-    "model_ids": [
-      "microsoft/VibeVoice-Realtime-0.5B"
-    ],
+    "model_ids": ["microsoft/VibeVoice-Realtime-0.5B"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Released December 3 2025; experimental additional voices December 16. Current main repository retains realtime release.",
     "properties": "0.5B Qwen2.5 backbone plus approximately 340M acoustic decoder and 40M diffusion head; streaming text-to-speech. Publisher reports approximately 300 ms first audible speech and roughly 10-minute generation guidance, with 8192 training-context envelope; these are not measured game performance. English-focused verified examples.",
@@ -5045,11 +4568,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Original VibeVoice TTS code was removed September 5 2025; current realtime code is separate. Do not recommend an abandoned original path from stale tutorials.",
-    "evidence_source_ids": [
-      "VOICE-S101",
-      "VOICE-S102",
-      "VOICE-S237"
-    ],
+    "evidence_source_ids": ["VOICE-S101", "VOICE-S102", "VOICE-S237"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B",
@@ -5106,9 +4625,7 @@
             "0.5B Qwen2.5 backbone plus approximately 340M acoustic decoder and 40M diffusion head; semantic encoder removed in this realtime variant.",
             "Matching acoustic tokenizer/decoder and bundled voice presets; exact lockfile, total memory and input limits require verification."
           ],
-          "source_ids": [
-            "VOICE-S237"
-          ]
+          "source_ids": ["VOICE-S237"]
         }
       ],
       "deployment_evidence": {
@@ -5123,9 +4640,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S237"
-      ],
+      "source_ids": ["VOICE-S237"],
       "prior_inventory_fields": {
         "properties": {
           "value": "0.5B streaming text-to-speech, approximately 300 ms first audible speech author claim; roughly 10 min long-form guidance; English-focused verified examples.",
@@ -5141,10 +4656,7 @@
     "category": "Hosted voice — retiring",
     "priority": "Avoid-new-integration",
     "model_url": "https://dev.hume.ai/voice/docs/text-to-speech-tts/overview",
-    "model_ids": [
-      "Octave2 preview",
-      "EVI"
-    ],
+    "model_ids": ["Octave2 preview", "EVI"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Official sunset announced: November 13 2026 at 12:01am EST; inspected October 23.",
     "properties": "Octave 2 preview:11 languages, cloning from short reference, streaming input/output and conversational context; reported~100 ms model latency excludes network. Older Octave 1 acting instructions are not identical to 2's launch features.",
@@ -5165,10 +4677,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Do not start a new production integration weeks before shutdown. Official notice says account data deleted after sunset; this is a concrete current lifecycle issue.",
-    "evidence_source_ids": [
-      "VOICE-S103",
-      "VOICE-S104"
-    ],
+    "evidence_source_ids": ["VOICE-S103", "VOICE-S104"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://dev.hume.ai/voice/docs/text-to-speech-tts/overview",
@@ -5191,9 +4700,7 @@
       "blocking_unknowns": [
         "API access ends 2026-11-13 00:01EST; no supported long-term Runpod path for Octave 2/EVI established."
       ],
-      "source_ids": [
-        "VOICE-S302"
-      ],
+      "source_ids": ["VOICE-S302"],
       "hosted_route_limits": [
         {
           "label": "Octave TTS",
@@ -5206,9 +4713,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "5000 characters per utterance, 1000-character description, up to 5 generations/request; exact Octave 2 versus generic route differences require confirmation.",
-          "source_ids": [
-            "VOICE-S302"
-          ]
+          "source_ids": ["VOICE-S302"]
         },
         {
           "label": "EVI",
@@ -5221,9 +4726,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Same published retirement applies; no exact EVI context/session ceiling established in the TTS overview.",
-          "source_ids": [
-            "VOICE-S302"
-          ]
+          "source_ids": ["VOICE-S302"]
         }
       ]
     }
@@ -5234,9 +4737,7 @@
     "category": "Self-hosted full-duplex speech",
     "priority": "P1-interaction",
     "model_url": "https://huggingface.co/nvidia/personaplex-7b-v1",
-    "model_ids": [
-      "nvidia/personaplex-7b-v1"
-    ],
+    "model_ids": ["nvidia/personaplex-7b-v1"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Released January 15 2026.",
     "properties": "7B language backbone plus speech components; English 24 kHz mono; simultaneous listening/speaking, role-text prompt and voice conditioning, Moshi-based.",
@@ -5257,11 +4758,7 @@
       "inspection": "Descriptions read; no listening or interaction."
     },
     "caveats": "Full-duplex dynamics do not establish strong planning, world-state consistency or low refusal. This is a speech-interaction candidate, not a proven decision engine.",
-    "evidence_source_ids": [
-      "VOICE-S105",
-      "VOICE-S106",
-      "VOICE-S107"
-    ],
+    "evidence_source_ids": ["VOICE-S105", "VOICE-S106", "VOICE-S107"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/nvidia/personaplex-7b-v1",
@@ -5320,11 +4817,7 @@
             "Accelerate needed for CPU offload; pure CPU path is not a demonstrated realtime route.",
             "Blackwell instructions require compatible cu130 PyTorch; inherited Moshiko attribution and NVIDIA Open Model License."
           ],
-          "source_ids": [
-            "VOICE-S238",
-            "VOICE-S239",
-            "VOICE-S240"
-          ]
+          "source_ids": ["VOICE-S238", "VOICE-S239", "VOICE-S240"]
         }
       ],
       "deployment_evidence": {
@@ -5339,11 +4832,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S238",
-        "VOICE-S239",
-        "VOICE-S240"
-      ]
+      "source_ids": ["VOICE-S238", "VOICE-S239", "VOICE-S240"]
     }
   },
   {
@@ -5352,9 +4841,7 @@
     "category": "Self-hosted multimodal speech",
     "priority": "P2-interaction",
     "model_url": "https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct",
-    "model_ids": [
-      "Qwen/Qwen3-Omni-30B-A3B-Instruct"
-    ],
+    "model_ids": ["Qwen/Qwen3-Omni-30B-A3B-Instruct"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Public open-weight generation September 22 2025; newer hosted Omni generations are separate, not replacement open checkpoints.",
     "properties": "30B MoE /3B active thinker plus speech modules; 119 text languages, 19 audio-input and 10 speech-output languages; streaming multimodal speech/text reasoning.",
@@ -5375,11 +4862,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Paper 234 ms cold-start first-packet claim is a theoretical/author setting, not full speech-turn SLA. Larger memory than active parameter count suggests. No low-refusal evidence for exact checkpoint.",
-    "evidence_source_ids": [
-      "VOICE-S108",
-      "VOICE-S109",
-      "VOICE-S110"
-    ],
+    "evidence_source_ids": ["VOICE-S108", "VOICE-S109", "VOICE-S110"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct",
@@ -5438,11 +4921,7 @@
             "Full Thinker+Talker+speech codec assets. Disabling Talker saves about 10 GB but is no longer the voiced profile.",
             "Pin compatible Transformers/Qwen processor or vLLM multimodal implementation; exact package version not established in this pass."
           ],
-          "source_ids": [
-            "VOICE-S241",
-            "VOICE-S242",
-            "VOICE-S243"
-          ]
+          "source_ids": ["VOICE-S241", "VOICE-S242", "VOICE-S243"]
         }
       ],
       "deployment_evidence": {
@@ -5457,11 +4936,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S241",
-        "VOICE-S242",
-        "VOICE-S243"
-      ]
+      "source_ids": ["VOICE-S241", "VOICE-S242", "VOICE-S243"]
     }
   },
   {
@@ -5470,9 +4945,7 @@
     "category": "Hosted speech-to-speech",
     "priority": "P2-interaction",
     "model_url": "https://docs.x.ai/developers/models/grok-voice-3.0",
-    "model_ids": [
-      "grok-voice-3.0"
-    ],
+    "model_ids": ["grok-voice-3.0"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Official launch on 2026-10-14; grok-voice-latest automatically switched to 3.0. Grok Voice 2.0 is marked deprecated; pin exact version for comparison.",
     "properties": "Realtime text/audio input and output for interactive voice agents. Exact architecture, parameter count and version-specific language count undisclosed in inspected model card.",
@@ -5493,12 +4966,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "No inference from general Grok reputation to this exact voice model's fictional-content acceptance. Keep text-only TTS $15/M characters pricing separate.",
-    "evidence_source_ids": [
-      "VOICE-S111",
-      "VOICE-S096",
-      "VOICE-S097",
-      "VOICE-S150"
-    ],
+    "evidence_source_ids": ["VOICE-S111", "VOICE-S096", "VOICE-S097", "VOICE-S150"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "Official October 14 launch announcement and pricing page.",
@@ -5525,9 +4993,7 @@
       "blocking_unknowns": [
         "Exact context/session/output limits and infrastructure specifications are not supplied on inspected model card."
       ],
-      "source_ids": [
-        "VOICE-S303"
-      ],
+      "source_ids": ["VOICE-S303"],
       "hosted_route_limits": [
         {
           "label": "grok-voice-3.0",
@@ -5540,9 +5006,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Text/audio dialogue; native context and session duration not established. Do not inherit ordinary Grok text-model token windows.",
-          "source_ids": [
-            "VOICE-S303"
-          ]
+          "source_ids": ["VOICE-S303"]
         }
       ]
     }
@@ -5553,10 +5017,7 @@
     "category": "Hosted speech-to-speech",
     "priority": "P2-interaction-policy",
     "model_url": "https://elevenlabs.io/pricing/api",
-    "model_ids": [
-      "Eleven Realtime v1 Mini",
-      "Eleven Realtime v1 Max"
-    ],
+    "model_ids": ["Eleven Realtime v1 Mini", "Eleven Realtime v1 Max"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current October 2026 new realtime pair in official API catalogue.",
     "properties": "90+ languages, integrated voice conversation; Max includes tool use/multi-step tasks. Provider TTFA examples 620msMini/570msMax depend on its test setup.",
@@ -5577,11 +5038,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Provider percentage scores describe its benchmarks, not world-state or moral-range correctness. Content policy remains relevant.",
-    "evidence_source_ids": [
-      "VOICE-S071",
-      "VOICE-S070",
-      "VOICE-S072"
-    ],
+    "evidence_source_ids": ["VOICE-S071", "VOICE-S070", "VOICE-S072"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://elevenlabs.io/docs/overview/models",
@@ -5605,10 +5062,7 @@
       "blocking_unknowns": [
         "No verified Mini/Max native context, session cap, portable image or hardware requirement."
       ],
-      "source_ids": [
-        "VOICE-S284",
-        "VOICE-S285"
-      ],
+      "source_ids": ["VOICE-S284", "VOICE-S285"],
       "hosted_route_limits": [
         {
           "label": "Eleven Realtime v1 Mini",
@@ -5621,9 +5075,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Integrated speech recognition/turn taking/LLM/TTS; API compatibility does not imply OpenAI context limits or self-hostable weights.",
-          "source_ids": [
-            "VOICE-S284"
-          ]
+          "source_ids": ["VOICE-S284"]
         },
         {
           "label": "Eleven Realtime v1 Max",
@@ -5636,9 +5088,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Integrated speech recognition/turn taking/LLM/TTS; API compatibility does not imply OpenAI context limits or self-hostable weights.",
-          "source_ids": [
-            "VOICE-S284"
-          ]
+          "source_ids": ["VOICE-S284"]
         }
       ]
     }
@@ -5679,12 +5129,7 @@
       "inspection": "Methodology and written judgments read; clips not auditioned."
     },
     "caveats": "Publisher acknowledges weaker content fidelity in some low-resource languages and excludes singing/unified sound generation. Choosing a few good demo takes is not a stability guarantee.",
-    "evidence_source_ids": [
-      "VOICE-S112",
-      "VOICE-S113",
-      "VOICE-S114",
-      "VOICE-S115"
-    ],
+    "evidence_source_ids": ["VOICE-S112", "VOICE-S113", "VOICE-S114", "VOICE-S115"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/dots-studio/dots.tts-soar",
@@ -5744,10 +5189,7 @@
             "MF-1step/2steps checkpoints require their fixed NFE; do not choose arbitrary steps or substitute them for general MF.",
             "Apache released weights/code; pin each exact checkpoint and native versus server route."
           ],
-          "source_ids": [
-            "VOICE-S244",
-            "VOICE-S245"
-          ]
+          "source_ids": ["VOICE-S244", "VOICE-S245"]
         },
         {
           "label": "dots.tts-mf / native",
@@ -5796,10 +5238,7 @@
             "MF-1step/2steps checkpoints require their fixed NFE; do not choose arbitrary steps or substitute them for general MF.",
             "Apache released weights/code; pin each exact checkpoint and native versus server route."
           ],
-          "source_ids": [
-            "VOICE-S244",
-            "VOICE-S245"
-          ]
+          "source_ids": ["VOICE-S244", "VOICE-S245"]
         },
         {
           "label": "dots.tts-mf-2steps / native",
@@ -5848,10 +5287,7 @@
             "MF-1step/2steps checkpoints require their fixed NFE; do not choose arbitrary steps or substitute them for general MF.",
             "Apache released weights/code; pin each exact checkpoint and native versus server route."
           ],
-          "source_ids": [
-            "VOICE-S244",
-            "VOICE-S245"
-          ]
+          "source_ids": ["VOICE-S244", "VOICE-S245"]
         },
         {
           "label": "dots.tts-mf-1step / native",
@@ -5900,10 +5336,7 @@
             "MF-1step/2steps checkpoints require their fixed NFE; do not choose arbitrary steps or substitute them for general MF.",
             "Apache released weights/code; pin each exact checkpoint and native versus server route."
           ],
-          "source_ids": [
-            "VOICE-S244",
-            "VOICE-S245"
-          ]
+          "source_ids": ["VOICE-S244", "VOICE-S245"]
         },
         {
           "label": "dots.tts-mf-2steps-stts / native",
@@ -5952,10 +5385,7 @@
             "MF-1step/2steps checkpoints require their fixed NFE; do not choose arbitrary steps or substitute them for general MF.",
             "Apache released weights/code; pin each exact checkpoint and native versus server route."
           ],
-          "source_ids": [
-            "VOICE-S244",
-            "VOICE-S245"
-          ]
+          "source_ids": ["VOICE-S244", "VOICE-S245"]
         }
       ],
       "deployment_evidence": {
@@ -5970,10 +5400,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S244",
-        "VOICE-S245"
-      ]
+      "source_ids": ["VOICE-S244", "VOICE-S245"]
     }
   },
   {
@@ -5982,9 +5409,7 @@
     "category": "Self-hosted speech editing",
     "priority": "P2-license",
     "model_url": "https://huggingface.co/dots-studio/dots.tts.edit",
-    "model_ids": [
-      "dots-studio/dots.tts.edit"
-    ],
+    "model_ids": ["dots-studio/dots.tts.edit"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "August 2026 release; report August 2; September doteBench adds published editing evaluation tasks.",
     "properties": "2B; English/Mandarin; 48 kHz; localized text replacement/insertion/deletion, emotion, pitch/pace, pauses, enhancement/background operations, compositional editing and zero-shot TTS.",
@@ -6005,11 +5430,7 @@
       "inspection": "Demo destination identified; audio not auditioned."
     },
     "caveats": "Local preservation/instruction-following errors are acknowledged. This is an asset-editing tool rather than a validated realtime voice engine.",
-    "evidence_source_ids": [
-      "VOICE-S116",
-      "VOICE-S113",
-      "VOICE-S117"
-    ],
+    "evidence_source_ids": ["VOICE-S116", "VOICE-S113", "VOICE-S117"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://github.com/studio-dots-ai/dots.tts",
@@ -6067,10 +5488,7 @@
             "Use editing checkpoint and audio assets with DotsTtsEditRuntime, not the SOAR/MF text-to-speech class.",
             "Do not transfer SOAR/MF GPU-memory buckets to editing; resolve HF other-versus-project Apache license wording."
           ],
-          "source_ids": [
-            "VOICE-S244",
-            "VOICE-S246"
-          ]
+          "source_ids": ["VOICE-S244", "VOICE-S246"]
         }
       ],
       "deployment_evidence": {
@@ -6085,10 +5503,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S244",
-        "VOICE-S246"
-      ]
+      "source_ids": ["VOICE-S244", "VOICE-S246"]
     }
   },
   {
@@ -6097,11 +5512,7 @@
     "category": "Speech recognition / alignment",
     "priority": "P1-companion",
     "model_url": "https://huggingface.co/Qwen/Qwen3-ASR-1.7B",
-    "model_ids": [
-      "Qwen/Qwen3-ASR-1.7B",
-      "Qwen/Qwen3-ASR-0.6B",
-      "Qwen/Qwen3-ForcedAligner-0.6B"
-    ],
+    "model_ids": ["Qwen/Qwen3-ASR-1.7B", "Qwen/Qwen3-ASR-0.6B", "Qwen/Qwen3-ForcedAligner-0.6B"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Released January 29 2026; current open-weight models inspected October 23.",
     "properties": "1.7B/0.6B; 30 languages plus 22 Chinese dialects; language-ID and unified streaming/offline ASR. Separate 0.6B forced aligner handles 11 languages and up to 5 min speech.",
@@ -6122,10 +5533,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "30 languages + 22 dialects is not 52 distinct languages. Published extreme batch throughput does not indicate single-player response latency.",
-    "evidence_source_ids": [
-      "VOICE-S118",
-      "VOICE-S119"
-    ],
+    "evidence_source_ids": ["VOICE-S118", "VOICE-S119"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/Qwen/Qwen3-ASR-1.7B",
@@ -6183,10 +5591,7 @@
             "Model tokenizer, audio frontend and backend-specific package dependencies.",
             "ForcedAligner 0.6B is optional extra model/RAM for timestamps; not included merely by choosing ASR0.6B."
           ],
-          "source_ids": [
-            "VOICE-S247",
-            "VOICE-S248"
-          ]
+          "source_ids": ["VOICE-S247", "VOICE-S248"]
         },
         {
           "label": "Qwen3-ASR 0.6B",
@@ -6235,10 +5640,7 @@
             "Model tokenizer, audio frontend and backend-specific package dependencies.",
             "ForcedAligner 0.6B is optional extra model/RAM for timestamps; not included merely by choosing ASR0.6B."
           ],
-          "source_ids": [
-            "VOICE-S247",
-            "VOICE-S249"
-          ]
+          "source_ids": ["VOICE-S247", "VOICE-S249"]
         },
         {
           "label": "Qwen3 ForcedAligner 0.6B",
@@ -6286,10 +5688,7 @@
             "Separate weights/processor and language support; memory is additional when co-loaded with ASR.",
             "Exact aligner native token context and full-pipeline memory remain unverified; published audio input envelope is 5 minutes."
           ],
-          "source_ids": [
-            "VOICE-S247",
-            "VOICE-S250"
-          ]
+          "source_ids": ["VOICE-S247", "VOICE-S250"]
         }
       ],
       "deployment_evidence": {
@@ -6304,12 +5703,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S247",
-        "VOICE-S248",
-        "VOICE-S249",
-        "VOICE-S250"
-      ]
+      "source_ids": ["VOICE-S247", "VOICE-S248", "VOICE-S249", "VOICE-S250"]
     }
   },
   {
@@ -6318,9 +5712,7 @@
     "category": "Speech recognition / streaming",
     "priority": "P1-companion",
     "model_url": "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b",
-    "model_ids": [
-      "nvidia/nemotron-speech-streaming-en-0.6b"
-    ],
+    "model_ids": ["nvidia/nemotron-speech-streaming-en-0.6b"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current checkpoint released March 13 2026; January 5 predecessor is separately tagged.",
     "properties": "600M, English; cache-aware FastConformer/RNNT, punctuation/capitalization; configurable 80/160/560/1120 ms chunk+right-context regimes, not equivalent end-to-end latency.",
@@ -6341,13 +5733,9 @@
       "inspection": "Demo identified; microphone/audio not submitted."
     },
     "caveats": "Tune chunking against accuracy later. Public card has differing training-hour statements across sections; excluded from recommendation metrics.",
-    "evidence_source_ids": [
-      "VOICE-S120"
-    ],
+    "evidence_source_ids": ["VOICE-S120"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b"
-    ],
+    "evidence_urls": ["https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -6399,9 +5787,7 @@
             "NeMo/PyTorch or supported Transformers route, Cython, libsndfile/FFmpeg as needed by audio input.",
             "NVIDIA Open Model License; do not apply LLM context arithmetic to streaming Conformer caches."
           ],
-          "source_ids": [
-            "VOICE-S251"
-          ]
+          "source_ids": ["VOICE-S251"]
         }
       ],
       "deployment_evidence": {
@@ -6416,9 +5802,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S251"
-      ]
+      "source_ids": ["VOICE-S251"]
     }
   },
   {
@@ -6427,10 +5811,7 @@
     "category": "Speech recognition",
     "priority": "P1-companion",
     "model_url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
-    "model_ids": [
-      "nvidia/parakeet-tdt-0.6b-v3",
-      "nvidia/parakeet-unified-en-0.6b"
-    ],
+    "model_ids": ["nvidia/parakeet-tdt-0.6b-v3", "nvidia/parakeet-unified-en-0.6b"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "TDTv3 August 14 2025; Unified EN April 7 2026. Different architectures/use modes, not one multilingual streaming release.",
     "properties": "TDTv3:600M, 25 European languages, automatic language detection and high-throughput transcription. Unified EN:600M, English, offline and buffered streaming, 160–2080 ms chunk/right-context options.",
@@ -6451,10 +5832,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Unified recomputes buffered context; Nemotron offers cache-aware path. Do not claim TDTv3 itself supplies Unified's native streaming behavior.",
-    "evidence_source_ids": [
-      "VOICE-S121",
-      "VOICE-S122"
-    ],
+    "evidence_source_ids": ["VOICE-S121", "VOICE-S122"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
@@ -6511,9 +5889,7 @@
             "Matching NeMo/Transformers audio processor and checkpoint; choose attention mode explicitly.",
             "CC-BY-4.0 weights; attribution differs from Unified EN."
           ],
-          "source_ids": [
-            "VOICE-S252"
-          ]
+          "source_ids": ["VOICE-S252"]
         },
         {
           "label": "Parakeet Unified EN0.6B",
@@ -6561,9 +5937,7 @@
             "Exact Unified EN checkpoint and buffered streaming configuration.",
             "NVIDIA Open Model License, not TDTv3 CC-BY."
           ],
-          "source_ids": [
-            "VOICE-S253"
-          ]
+          "source_ids": ["VOICE-S253"]
         }
       ],
       "deployment_evidence": {
@@ -6578,10 +5952,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S252",
-        "VOICE-S253"
-      ]
+      "source_ids": ["VOICE-S252", "VOICE-S253"]
     }
   },
   {
@@ -6590,9 +5961,7 @@
     "category": "Speech recognition",
     "priority": "P2-companion",
     "model_url": "https://huggingface.co/nvidia/canary-qwen-2.5b",
-    "model_ids": [
-      "nvidia/canary-qwen-2.5b"
-    ],
+    "model_ids": ["nvidia/canary-qwen-2.5b"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current released English checkpoint; exact release day not transcribed from card.",
     "properties": "2.5B; English transcription with punctuation/capitalization; separate ASR and text-LLM modes.",
@@ -6613,13 +5982,9 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "In ASR mode it does not retain reasoning skills; in LLM mode it reasons over transcript, not raw audio. Do not treat it as a unified audio NPC mind.",
-    "evidence_source_ids": [
-      "VOICE-S123"
-    ],
+    "evidence_source_ids": ["VOICE-S123"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/nvidia/canary-qwen-2.5b"
-    ],
+    "evidence_urls": ["https://huggingface.co/nvidia/canary-qwen-2.5b"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -6672,9 +6037,7 @@
             "NeMo compatible environment; platform lists Linux/Windows and NVIDIA architectures, not exact minimum GPU memory.",
             "CC-BY-4.0 attribution."
           ],
-          "source_ids": [
-            "VOICE-S254"
-          ]
+          "source_ids": ["VOICE-S254"]
         }
       ],
       "deployment_evidence": {
@@ -6689,9 +6052,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S254"
-      ]
+      "source_ids": ["VOICE-S254"]
     }
   },
   {
@@ -6700,10 +6061,7 @@
     "category": "Speech recognition / diarization",
     "priority": "P2-companion",
     "model_url": "https://huggingface.co/microsoft/VibeVoice-ASR",
-    "model_ids": [
-      "microsoft/VibeVoice-ASR",
-      "microsoft/VibeVoice-ASR-HF"
-    ],
+    "model_ids": ["microsoft/VibeVoice-ASR", "microsoft/VibeVoice-ASR-HF"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current 2026 repository contains ASR, streaming and BitNet paths; exact checkpoint/revision should be pinned for later evaluation.",
     "properties": "7B backbone, long-form up to 60 min in one pass/64Kcontext, speaker labels and timestamps, contextual hotwords; 50+ languages advertised. Total stored parameters include audio components and vary by artifact; the current original HF card rounds to 9B.",
@@ -6724,11 +6082,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Long audio support does not establish low per-turn latency; lighter recognizers may fit runtime use better.",
-    "evidence_source_ids": [
-      "VOICE-S124",
-      "VOICE-S102",
-      "VOICE-S125"
-    ],
+    "evidence_source_ids": ["VOICE-S124", "VOICE-S102", "VOICE-S125"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://github.com/microsoft/VibeVoice",
@@ -6787,11 +6141,7 @@
             "Audio encoder/tokenizer and text processor; tokenizer chunking can reduce encoding memory without establishing unlimited generation context.",
             "MIT model metadata; native container, HF Transformers and vLLM plugin are separate choices."
           ],
-          "source_ids": [
-            "VOICE-S255",
-            "VOICE-S256",
-            "VOICE-S258"
-          ]
+          "source_ids": ["VOICE-S255", "VOICE-S256", "VOICE-S258"]
         },
         {
           "label": "VibeVoice ASR-HF",
@@ -6840,9 +6190,7 @@
             "Audio encoder/tokenizer and text processor; tokenizer chunking can reduce encoding memory without establishing unlimited generation context.",
             "MIT model metadata; native container, HF Transformers and vLLM plugin are separate choices."
           ],
-          "source_ids": [
-            "VOICE-S257"
-          ]
+          "source_ids": ["VOICE-S257"]
         }
       ],
       "deployment_evidence": {
@@ -6857,12 +6205,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S255",
-        "VOICE-S257",
-        "VOICE-S258",
-        "VOICE-S256"
-      ]
+      "source_ids": ["VOICE-S255", "VOICE-S257", "VOICE-S258", "VOICE-S256"]
     }
   },
   {
@@ -6896,12 +6239,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Very recent: no mature operational sentiment. Public preview and regional access need confirming.",
-    "evidence_source_ids": [
-      "VOICE-S126",
-      "VOICE-S127",
-      "VOICE-S128",
-      "VOICE-S100"
-    ],
+    "evidence_source_ids": ["VOICE-S126", "VOICE-S127", "VOICE-S128", "VOICE-S100"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://mistral.ai/news/voxtral-3/",
@@ -6926,12 +6264,7 @@
       "blocking_unknowns": [
         "Need licensed 3.0 image/weights and model-specific memory/runtime; open 2602 profile is separate."
       ],
-      "source_ids": [
-        "VOICE-S301",
-        "VOICE-S304",
-        "VOICE-S305",
-        "VOICE-S306"
-      ],
+      "source_ids": ["VOICE-S301", "VOICE-S304", "VOICE-S305", "VOICE-S306"],
       "hosted_route_limits": [
         {
           "label": "voxtral-mini-transcribe-realtime-3-0",
@@ -6944,9 +6277,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "80–2400 ms configurable latency is not input/session limit. Exact context field is unspecified.",
-          "source_ids": [
-            "VOICE-S304"
-          ]
+          "source_ids": ["VOICE-S304"]
         },
         {
           "label": "voxtral-small-transcribe-3-0",
@@ -6959,9 +6290,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Model card labels context 32K; exact numeric expansion and output/audio caps not specified, so no invented 32768 value.",
-          "source_ids": [
-            "VOICE-S305"
-          ]
+          "source_ids": ["VOICE-S305"]
         },
         {
           "label": "voxtral-mini-transcribe-3-0",
@@ -6974,9 +6303,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Model card labels context 32K; exact numeric expansion/output/audio caps unverified.",
-          "source_ids": [
-            "VOICE-S306"
-          ]
+          "source_ids": ["VOICE-S306"]
         }
       ]
     }
@@ -6987,9 +6314,7 @@
     "category": "Self-hosted speech recognition",
     "priority": "P2-companion",
     "model_url": "https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602",
-    "model_ids": [
-      "mistralai/Voxtral-Mini-4B-Realtime-2602"
-    ],
+    "model_ids": ["mistralai/Voxtral-Mini-4B-Realtime-2602"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "February 2026 open release; separate from October 3.0 Premier service.",
     "properties": "4B streaming speech recognizer; configurable latency/quality tradeoff; 13 languages listed in the current card. The card gives conflicting minimum-latency figures in different sections, so no single minimum is promoted here.",
@@ -7010,11 +6335,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Do not infer 3.0 API features/benchmark scores from this 2.0-family checkpoint or vice versa.",
-    "evidence_source_ids": [
-      "VOICE-S129",
-      "VOICE-S130",
-      "VOICE-S259"
-    ],
+    "evidence_source_ids": ["VOICE-S129", "VOICE-S130", "VOICE-S259"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602",
@@ -7071,9 +6392,7 @@
             "Mistral tokenizer/audio processor and matching runtime; current card includes Transformers support despite older vLLM-only wording.",
             "Apache-2.0; do not attach the Voxtral 3 API license or limits to2602."
           ],
-          "source_ids": [
-            "VOICE-S259"
-          ]
+          "source_ids": ["VOICE-S259"]
         }
       ],
       "deployment_evidence": {
@@ -7088,9 +6407,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S259"
-      ],
+      "source_ids": ["VOICE-S259"],
       "prior_inventory_fields": {
         "hardware_evidence": {
           "value": "No minimum hardware verified; parameter count is not a VRAM requirement.",
@@ -7106,9 +6423,7 @@
     "category": "Speech recognition baseline",
     "priority": "Baseline",
     "model_url": "https://huggingface.co/openai/whisper-large-v3-turbo",
-    "model_ids": [
-      "openai/whisper-large-v3-turbo"
-    ],
+    "model_ids": ["openai/whisper-large-v3-turbo"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2024-generation mature open baseline; not presented as newest 2026 ASR.",
     "properties": "809M; 99 language metadata; pruned decoder from large-v3 for faster transcription; broad software ecosystem.",
@@ -7129,13 +6444,9 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Silence/noise hallucinations and translated/paraphrased text remain useful later evaluation cases. Do not equate an API named whisper with this exact local checkpoint.",
-    "evidence_source_ids": [
-      "VOICE-S131"
-    ],
+    "evidence_source_ids": ["VOICE-S131"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/openai/whisper-large-v3-turbo"
-    ],
+    "evidence_urls": ["https://huggingface.co/openai/whisper-large-v3-turbo"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -7187,10 +6498,7 @@
             "Whisper feature extractor/tokenizer; actual sample rate conversion and longform mode must be chosen.",
             "torch.compile is incompatible with the card’s chunked longform/FlashAttention 2 combination; do not combine all optimization flags blindly."
           ],
-          "source_ids": [
-            "VOICE-S260",
-            "VOICE-S261"
-          ]
+          "source_ids": ["VOICE-S260", "VOICE-S261"]
         },
         {
           "label": "Whisper Turbo / faster-whisper",
@@ -7238,10 +6546,7 @@
             "Current CUDA route needs CUDA 12 cuBLAS and cuDNN 9; older CUDA/cuDNN requires explicitly compatible CTranslate2 versions.",
             "PyAV provides decoding libraries; choose exact converted Turbo artifact and precision before disk/memory sizing."
           ],
-          "source_ids": [
-            "VOICE-S262",
-            "VOICE-S261"
-          ]
+          "source_ids": ["VOICE-S262", "VOICE-S261"]
         }
       ],
       "deployment_evidence": {
@@ -7256,11 +6561,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S260",
-        "VOICE-S261",
-        "VOICE-S262"
-      ]
+      "source_ids": ["VOICE-S260", "VOICE-S261", "VOICE-S262"]
     }
   },
   {
@@ -7269,10 +6570,7 @@
     "category": "Hosted speech recognition",
     "priority": "P1-companion",
     "model_url": "https://deepgram.com/pricing",
-    "model_ids": [
-      "flux-general-en",
-      "nova-3"
-    ],
+    "model_ids": ["flux-general-en", "nova-3"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current October 2026 pricing; some displayed rates explicitly promotional.",
     "properties": "Flux conversational recognition/end-of-turn handling; Nova-3 general streaming/pre-recorded transcription. Languages/features depend on route.",
@@ -7293,12 +6591,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Flux STT and Flux TTS are different models and meters. Promotional rates are not permanent commitments.",
-    "evidence_source_ids": [
-      "VOICE-S086",
-      "VOICE-S132",
-      "VOICE-S307",
-      "VOICE-S308"
-    ],
+    "evidence_source_ids": ["VOICE-S086", "VOICE-S132", "VOICE-S307", "VOICE-S308"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://deepgram.com/pricing",
@@ -7358,10 +6651,7 @@
             "release-261020 cannot use older .dg Flux files; obtain matching .dgv2 package before upgrade.",
             "Licensed image credentials/model key and external license service or contracted proxy."
           ],
-          "source_ids": [
-            "VOICE-S307",
-            "VOICE-S308"
-          ]
+          "source_ids": ["VOICE-S307", "VOICE-S308"]
         },
         {
           "label": "Nova-3 / licensed Engine",
@@ -7410,10 +6700,7 @@
             "Do not deploy in a Flux Engine; obtain vendor hardware/concurrency sizing and compatible image.",
             "License-server or authorized proxy requirements are part of private hosting."
           ],
-          "source_ids": [
-            "VOICE-S307",
-            "VOICE-S308"
-          ]
+          "source_ids": ["VOICE-S307", "VOICE-S308"]
         }
       ],
       "deployment_evidence": {
@@ -7428,10 +6715,7 @@
       "blocking_unknowns": [
         "Exact licensed Nova-3 package, image versions, GPU/RAM/disk and vendor concurrency recommendations remain unverified."
       ],
-      "source_ids": [
-        "VOICE-S307",
-        "VOICE-S308"
-      ],
+      "source_ids": ["VOICE-S307", "VOICE-S308"],
       "hosted_route_limits": [
         {
           "label": "flux-general-en cloud",
@@ -7444,9 +6728,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Hosted account limits are separate from Engine max_streams and hardware. Exact maximum session duration not established.",
-          "source_ids": [
-            "VOICE-S308"
-          ]
+          "source_ids": ["VOICE-S308"]
         },
         {
           "label": "nova-3 cloud",
@@ -7459,9 +6741,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "File and live-stream routes differ; exact request byte/duration caps not established in these deployment sources.",
-          "source_ids": [
-            "VOICE-S307"
-          ]
+          "source_ids": ["VOICE-S307"]
         }
       ],
       "prior_inventory_fields": {
@@ -7479,10 +6759,7 @@
     "category": "Hosted speech recognition",
     "priority": "P2-companion",
     "model_url": "https://elevenlabs.io/docs/overview/models",
-    "model_ids": [
-      "scribe_v2",
-      "scribe_v2_realtime"
-    ],
+    "model_ids": ["scribe_v2", "scribe_v2_realtime"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current model catalogue October 2026; Scribe v2 Medical is a specialized variant with little obvious game-specific need.",
     "properties": "90+ languages; keyterm prompting and timestamps; batch diarization and realtime variants. Provider realtime~150 ms claim is setup-dependent.",
@@ -7503,13 +6780,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Do not treat vendor 98% accuracy as a guarantee for accents, noise or fictional names.",
-    "evidence_source_ids": [
-      "VOICE-S070",
-      "VOICE-S071",
-      "VOICE-S309",
-      "VOICE-S285",
-      "VOICE-S284"
-    ],
+    "evidence_source_ids": ["VOICE-S070", "VOICE-S071", "VOICE-S309", "VOICE-S285", "VOICE-S284"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://elevenlabs.io/docs/overview/models",
@@ -7534,11 +6805,7 @@
       "blocking_unknowns": [
         "Private technical documentation is authorized-customer/NDA gated. Need exact image, cloud portability, Realtime support and runtime/memory specification."
       ],
-      "source_ids": [
-        "VOICE-S309",
-        "VOICE-S285",
-        "VOICE-S284"
-      ],
+      "source_ids": ["VOICE-S309", "VOICE-S285", "VOICE-S284"],
       "hosted_route_limits": [
         {
           "label": "scribe_v2 standard file",
@@ -7551,9 +6818,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Up to3GB file and 10 hours standard mode. Multichannel docs conflict: FAQ says combined channels <10 hours, summary says 1 hour; leave unresolved. Up to5channels.",
-          "source_ids": [
-            "VOICE-S309"
-          ]
+          "source_ids": ["VOICE-S309"]
         },
         {
           "label": "scribe_v2_realtime",
@@ -7566,9 +6831,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Do not inherit standard file 3 GB/10 hour limits; exact realtime session limit not established here.",
-          "source_ids": [
-            "VOICE-S284"
-          ]
+          "source_ids": ["VOICE-S284"]
         }
       ],
       "prior_inventory_fields": {
@@ -7586,9 +6849,7 @@
     "category": "Voice conversion / legacy",
     "priority": "Baseline-authoring",
     "model_url": "https://github.com/myshell-ai/OpenVoice",
-    "model_ids": [
-      "OpenVoice V2"
-    ],
+    "model_ids": ["OpenVoice V2"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "April 2024 v2 release; retained as a useful controllable conversion baseline, not newest flagship TTS.",
     "properties": "Tone-color transfer onto source speech with style/rhythm/intonation control; nativeEN/ES/FR/ZH/JA/KO in v2. Often paired with MeloTTS or recorded actor speech.",
@@ -7609,10 +6870,7 @@
       "inspection": "Repository-linked demo identified; audio not auditioned."
     },
     "caveats": "Requires a good source performance; not a standalone NPC decision or new dialogue generator. Newer direct-TTS models may outperform it in ease/quality.",
-    "evidence_source_ids": [
-      "VOICE-S133",
-      "VOICE-S005"
-    ],
+    "evidence_source_ids": ["VOICE-S133", "VOICE-S005"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine",
@@ -7670,10 +6928,7 @@
             "Source actor/TTS waveform and its voice/weight rights are separate from the MIT converter.",
             "No official game-ready streaming service or full-pipeline memory minimum established."
           ],
-          "source_ids": [
-            "VOICE-S263",
-            "VOICE-S264"
-          ]
+          "source_ids": ["VOICE-S263", "VOICE-S264"]
         }
       ],
       "deployment_evidence": {
@@ -7688,10 +6943,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S263",
-        "VOICE-S264"
-      ]
+      "source_ids": ["VOICE-S263", "VOICE-S264"]
     }
   },
   {
@@ -7700,10 +6952,7 @@
     "category": "Voice conversion",
     "priority": "P2-license",
     "model_url": "https://github.com/Plachtaa/seed-vc",
-    "model_ids": [
-      "Seed-VC v2",
-      "Seed-VC realtime"
-    ],
+    "model_ids": ["Seed-VC v2", "Seed-VC realtime"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current repository offers v2 and realtime paths; exact newest checkpoint date not established.",
     "properties": "Zero-shot spoken/singing voice conversion from 1–30s reference; optional finetuning. Realtime guide separates~300 ms algorithm delay from~100 ms device delay.",
@@ -7724,13 +6973,9 @@
       "inspection": "Demo labels inspected; no conversion performed."
     },
     "caveats": "Conversion preserves input words; it does not decide what an NPC says. ~400 ms combined claimed delay can be too much for some live use. GPL integration/distribution implications differ from offline asset generation.",
-    "evidence_source_ids": [
-      "VOICE-S134"
-    ],
+    "evidence_source_ids": ["VOICE-S134"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://github.com/Plachtaa/seed-vc"
-    ],
+    "evidence_urls": ["https://github.com/Plachtaa/seed-vc"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -7783,9 +7028,7 @@
             "AR controls accent/emotion conversion; disabling style conversion changes the pipeline.",
             "GPL-3.0 repository archived 2025-11-21; review exact pretrained/auxiliary licenses."
           ],
-          "source_ids": [
-            "VOICE-S265"
-          ]
+          "source_ids": ["VOICE-S265"]
         },
         {
           "label": "Seed-VC realtime tiny / streaming conversion",
@@ -7834,9 +7077,7 @@
             "Custom headless audio service required for Runpod; GUI/device delay is not server inference delay.",
             "Exact auxiliary model manifests and weight terms unresolved."
           ],
-          "source_ids": [
-            "VOICE-S265"
-          ]
+          "source_ids": ["VOICE-S265"]
         }
       ],
       "deployment_evidence": {
@@ -7851,9 +7092,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S265"
-      ]
+      "source_ids": ["VOICE-S265"]
     }
   },
   {
@@ -7862,9 +7101,7 @@
     "category": "On-device TTS baseline",
     "priority": "Baseline",
     "model_url": "https://huggingface.co/hexgrad/Kokoro-82M",
-    "model_ids": [
-      "hexgrad/Kokoro-82M"
-    ],
+    "model_ids": ["hexgrad/Kokoro-82M"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Established 2025-era release, still widely integrated; newer compact competitors exist.",
     "properties": "82M lightweight non-LLM TTS, predefined voices; multilingual runtime. No native free-form cloning/acting controls established in the card.",
@@ -7888,11 +7125,7 @@
       "inspection": "Demo identified; not run."
     },
     "caveats": "Less expressive/control-rich than new character-oriented models; inspect specific voice/language quality rather than global popularity.",
-    "evidence_source_ids": [
-      "VOICE-S135",
-      "VOICE-S136",
-      "VOICE-S049"
-    ],
+    "evidence_source_ids": ["VOICE-S135", "VOICE-S136", "VOICE-S049"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.reddit.com/r/LocalLLaMA/comments/1r3kzz2/how_is_the_quality_of_recent_tts/",
@@ -7950,10 +7183,7 @@
             "Separate voice tensor, matching config/weights and misaki G2P; eSpeak-NG needed for relevant fallback/languages.",
             "Apache weights, including model-card attribution notices; no native free-form clone assumed."
           ],
-          "source_ids": [
-            "VOICE-S266",
-            "VOICE-S267"
-          ]
+          "source_ids": ["VOICE-S266", "VOICE-S267"]
         }
       ],
       "deployment_evidence": {
@@ -7968,10 +7198,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S266",
-        "VOICE-S267"
-      ]
+      "source_ids": ["VOICE-S266", "VOICE-S267"]
     }
   },
   {
@@ -7980,10 +7207,7 @@
     "category": "Self-hosted TTS baseline",
     "priority": "Baseline-research-license",
     "model_url": "https://huggingface.co/SWivid/F5-TTS",
-    "model_ids": [
-      "SWivid/F5-TTS/F5TTS_v1_Base",
-      "SWivid/E2-TTS/E2TTS_Base"
-    ],
+    "model_ids": ["SWivid/F5-TTS/F5TTS_v1_Base", "SWivid/E2-TTS/E2TTS_Base"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2024/2025 research lineage; current repository lists F5TTS_v1_Base and original F5/E2 paths.",
     "properties": "Flow-matching zero-shot reference-voice TTS; F5/E2 architectures and checkpoints differ. Useful established clone/editing research baseline.",
@@ -8072,11 +7296,7 @@
             "FFmpeg; optional reference ASR adds its own model. Torch/CUDA versions must match the selected device image.",
             "MIT code versus CC-BY-NC-4.0 official pretrained weights."
           ],
-          "source_ids": [
-            "VOICE-S268",
-            "VOICE-S269",
-            "VOICE-S270"
-          ]
+          "source_ids": ["VOICE-S268", "VOICE-S269", "VOICE-S270"]
         },
         {
           "label": "E2TTS Base",
@@ -8125,11 +7345,7 @@
             "FFmpeg; optional reference ASR adds its own model. Torch/CUDA versions must match the selected device image.",
             "MIT code versus CC-BY-NC-4.0 official pretrained weights."
           ],
-          "source_ids": [
-            "VOICE-S268",
-            "VOICE-S269",
-            "VOICE-S271"
-          ]
+          "source_ids": ["VOICE-S268", "VOICE-S269", "VOICE-S271"]
         }
       ],
       "deployment_evidence": {
@@ -8144,18 +7360,10 @@
       "blocking_unknowns": [
         "Existing inventory shorthand placed E2 under F5 repository; exact hosting profile corrects it to SWivid/E2-TTS. Resolve commercial weights and exact selected file sizes before deployment."
       ],
-      "source_ids": [
-        "VOICE-S268",
-        "VOICE-S269",
-        "VOICE-S271",
-        "VOICE-S270"
-      ],
+      "source_ids": ["VOICE-S268", "VOICE-S269", "VOICE-S271", "VOICE-S270"],
       "prior_inventory_fields": {
         "model_ids": {
-          "value": [
-            "SWivid/F5-TTS/F5TTS_v1_Base",
-            "SWivid/F5-TTS/E2TTS_Base"
-          ],
+          "value": ["SWivid/F5-TTS/F5TTS_v1_Base", "SWivid/F5-TTS/E2TTS_Base"],
           "verified_on": "2026-10-23"
         }
       },
@@ -8168,9 +7376,7 @@
     "category": "Dialogue TTS baseline",
     "priority": "Baseline",
     "model_url": "https://huggingface.co/sesame/csm-1b",
-    "model_ids": [
-      "sesame/csm-1b"
-    ],
+    "model_ids": ["sesame/csm-1b"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2025 open generation model; newer voice systems above merit first evaluation.",
     "properties": "1B contextual audio generation model; English; conversation text/audio conditioning. It cannot generate dialogue text itself.",
@@ -8191,13 +7397,9 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Public model is a base generator, not the fine-tuned model behind Sesame's celebrated interactive demo. Do not infer exact demo performance or call it a complete NPC brain.",
-    "evidence_source_ids": [
-      "VOICE-S139"
-    ],
+    "evidence_source_ids": ["VOICE-S139"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/sesame/csm-1b"
-    ],
+    "evidence_urls": ["https://huggingface.co/sesame/csm-1b"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -8250,12 +7452,7 @@
             "Access to CSM1B and Llama 3.2-1B tokenizer/base resources; Mimi codec plus SilentCipher watermark module.",
             "Native Transformers integration has a different dependency set; do not mix old Torch 2.4/Transformers 4.49 pins with it blindly."
           ],
-          "source_ids": [
-            "VOICE-S272",
-            "VOICE-S273",
-            "VOICE-S274",
-            "VOICE-S275"
-          ]
+          "source_ids": ["VOICE-S272", "VOICE-S273", "VOICE-S274", "VOICE-S275"]
         }
       ],
       "deployment_evidence": {
@@ -8270,12 +7467,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S272",
-        "VOICE-S273",
-        "VOICE-S274",
-        "VOICE-S275"
-      ]
+      "source_ids": ["VOICE-S272", "VOICE-S273", "VOICE-S274", "VOICE-S275"]
     }
   },
   {
@@ -8284,11 +7476,7 @@
     "category": "Full-duplex speech baseline",
     "priority": "Baseline-interaction",
     "model_url": "https://github.com/kyutai-labs/moshi",
-    "model_ids": [
-      "Kyutai Moshi",
-      "Kyutai Moshiko",
-      "Kyutai Moshika"
-    ],
+    "model_ids": ["Kyutai Moshi", "Kyutai Moshiko", "Kyutai Moshika"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2024-era public speech-text framework; retained as architectural/behavior reference behind later systems.",
     "properties": "Full-duplex speech-text interaction using Mimi codec; distinct Moshiko/Moshika voices and multilingual/experimental derivatives require exact selection.",
@@ -8309,14 +7497,9 @@
       "inspection": "Demo destination identified; microphone not used."
     },
     "caveats": "Older conversation quality/reasoning; voice demonstrations do not establish deep game-state decision skill or unrestricted content handling.",
-    "evidence_source_ids": [
-      "VOICE-S140",
-      "VOICE-S276"
-    ],
+    "evidence_source_ids": ["VOICE-S140", "VOICE-S276"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://github.com/kyutai-labs/moshi"
-    ],
+    "evidence_urls": ["https://github.com/kyutai-labs/moshi"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -8369,9 +7552,7 @@
             "Python/web MIT, Rust Apache-2.0, weights CC-BY-4.0. Rust GPU compilation requires CUDA/nvcc.",
             "Apple MLX Q4/Q8 models are not a Runpod CUDA quantization recipe."
           ],
-          "source_ids": [
-            "VOICE-S276"
-          ]
+          "source_ids": ["VOICE-S276"]
         },
         {
           "label": "Moshika / PyTorch BF16",
@@ -8419,9 +7600,7 @@
             "Matching Moshika weights, tokenizer and Mimi; voice is checkpoint-specific.",
             "Use publisher server with explicit --hf-repo; CC-BY-4.0 weights; no MLX quantization transfer."
           ],
-          "source_ids": [
-            "VOICE-S276"
-          ]
+          "source_ids": ["VOICE-S276"]
         }
       ],
       "deployment_evidence": {
@@ -8436,9 +7615,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S276"
-      ],
+      "source_ids": ["VOICE-S276"],
       "prior_inventory_fields": {
         "hardware_evidence": {
           "value": "No minimum hardware verified; parameter count is not a VRAM requirement.",
@@ -8454,9 +7631,7 @@
     "category": "On-device TTS baseline",
     "priority": "Baseline-license",
     "model_url": "https://github.com/OHF-Voice/piper1-gpl",
-    "model_ids": [
-      "OHF-Voice/piper1-gpl + chosen voice checkpoint"
-    ],
+    "model_ids": ["OHF-Voice/piper1-gpl + chosen voice checkpoint"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current maintained project under Open Home Foundation; old rhasspy code/tutorial licenses may not describe this fork.",
     "properties": "Fast local voice-specific neural TTS with eSpeakNG phonemization; per-language/per-speaker models, no single universal parameter/language count.",
@@ -8477,13 +7652,9 @@
       "inspection": "Repository-linked samples identified; audio not auditioned."
     },
     "caveats": "Limited free-form acting controls versus modern expressive models. Game distribution needs exact engine/voice license assessment.",
-    "evidence_source_ids": [
-      "VOICE-S141"
-    ],
+    "evidence_source_ids": ["VOICE-S141"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://github.com/OHF-Voice/piper1-gpl"
-    ],
+    "evidence_urls": ["https://github.com/OHF-Voice/piper1-gpl"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -8535,10 +7706,7 @@
             "Choose exact language/speaker/quality voice and its model card; engine GPL-3.0 does not assign a voice license.",
             "eSpeak-NG phonemizer and matching ONNX config; custom authenticated production wrapper around the simple HTTP server."
           ],
-          "source_ids": [
-            "VOICE-S277",
-            "VOICE-S278"
-          ]
+          "source_ids": ["VOICE-S277", "VOICE-S278"]
         }
       ],
       "deployment_evidence": {
@@ -8553,10 +7721,7 @@
       "blocking_unknowns": [
         "Exact voice checkpoint, per-voice commercial rights, memory/disk and quality tier are unselected."
       ],
-      "source_ids": [
-        "VOICE-S277",
-        "VOICE-S278"
-      ]
+      "source_ids": ["VOICE-S277", "VOICE-S278"]
     }
   },
   {
@@ -8565,9 +7730,7 @@
     "category": "Description-controlled TTS baseline",
     "priority": "Baseline",
     "model_url": "https://huggingface.co/parler-tts/parler-tts-mini-v1",
-    "model_ids": [
-      "parler-tts/parler-tts-mini-v1"
-    ],
+    "model_ids": ["parler-tts/parler-tts-mini-v1"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2024-era release; retained for controllable open-TTS research rather than newest quality.",
     "properties": "English description-conditioned speech; natural-language voice/delivery descriptions and published training methodology. Exact parameter count not relied on here.",
@@ -8588,13 +7751,9 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Not evidence of frontier 2026 acting quality; streaming and per-turn requirements need separate evaluation.",
-    "evidence_source_ids": [
-      "VOICE-S142"
-    ],
+    "evidence_source_ids": ["VOICE-S142"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/parler-tts/parler-tts-mini-v1"
-    ],
+    "evidence_urls": ["https://huggingface.co/parler-tts/parler-tts-mini-v1"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -8646,10 +7805,7 @@
             "Matching text tokenizer/encoder and parler-tts/dac_44khZ_8kbps audio codec; install publisher Parler-TTS package.",
             "Apache-2.0 exact checkpoint; memory includes both text encoder and audio decoder/codec."
           ],
-          "source_ids": [
-            "VOICE-S279",
-            "VOICE-S280"
-          ]
+          "source_ids": ["VOICE-S279", "VOICE-S280"]
         }
       ],
       "deployment_evidence": {
@@ -8664,10 +7820,7 @@
       "blocking_unknowns": [
         "Exact pinned image/checkpoint, full-pipeline RAM/disk and usable concurrency remain unverified; no Open Legend workload measured."
       ],
-      "source_ids": [
-        "VOICE-S279",
-        "VOICE-S280"
-      ]
+      "source_ids": ["VOICE-S279", "VOICE-S280"]
     }
   },
   {
@@ -8676,9 +7829,7 @@
     "category": "Hosted streaming ASR",
     "priority": "P2-companion",
     "model_url": "https://docs.cartesia.ai/build-with-cartesia/stt/latest",
-    "model_ids": [
-      "ink-2"
-    ],
+    "model_ids": ["ink-2"],
     "verified_on": "2026-10-24",
     "release_update_provenance": "Launched 2026-07-09; stable multilingual model dated 2026-09-17 in current docs.",
     "properties": "Streaming recognition in English, French, Hindi, Japanese and Spanish; built-in turn detection and early/end/resume events. Exact model size undisclosed.",
@@ -8699,13 +7850,7 @@
       "inspection": "Text descriptions inspected; no audio audition or live transcription."
     },
     "caveats": "Recognition and turn detection do not decide an NPC action. Vendor leaderboard claims concern its evaluated workloads, not fantasy names or in-game speech.",
-    "evidence_source_ids": [
-      "VOICE-S151",
-      "VOICE-S152",
-      "VOICE-S149",
-      "VOICE-S074",
-      "VOICE-S075"
-    ],
+    "evidence_source_ids": ["VOICE-S151", "VOICE-S152", "VOICE-S149", "VOICE-S074", "VOICE-S075"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.cartesia.ai/pricing",
@@ -8731,9 +7876,7 @@
       "blocking_unknowns": [
         "Exact session/audio limits and model/runtime hardware undisclosed in inspected page."
       ],
-      "source_ids": [
-        "VOICE-S310"
-      ],
+      "source_ids": ["VOICE-S310"],
       "hosted_route_limits": [
         {
           "label": "ink-2",
@@ -8746,9 +7889,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Streaming turn-event API; exact hard session/input/output limits not established. Do not substitute Ink-Whisper batch limits.",
-          "source_ids": [
-            "VOICE-S310"
-          ]
+          "source_ids": ["VOICE-S310"]
         }
       ]
     }
@@ -8759,9 +7900,7 @@
     "category": "Hosted scene audio generation",
     "priority": "P2-authoring",
     "model_url": "https://www.alibabacloud.com/help/en/model-studio/qwen-audio-3-1-tts-next",
-    "model_ids": [
-      "qwen-audio-3.1-tts-next"
-    ],
+    "model_ids": ["qwen-audio-3.1-tts-next"],
     "verified_on": "2026-10-24",
     "release_update_provenance": "Official model document updated 2026-10-22; exact initial release day not established here.",
     "properties": "Chinese/English unified speech, multi-speaker dialogue and soundscape generation. Nonstreaming; 3,000-character input, up to 120 seconds output (240 for podcasts), up to three reference clips.",
@@ -8782,10 +7921,7 @@
       "inspection": "Documentation reviewed; no output generated or auditioned."
     },
     "caveats": "Nonstreaming makes this an authoring/scene-generation candidate rather than a low-latency dialogue replacement. No independent mature-fiction or quality study located.",
-    "evidence_source_ids": [
-      "VOICE-S153",
-      "VOICE-S068"
-    ],
+    "evidence_source_ids": ["VOICE-S153", "VOICE-S068"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
@@ -8808,9 +7944,7 @@
       "blocking_unknowns": [
         "No self-host runtime, weight size or GPU/RAM/disk information; regional API rights/limits are separate."
       ],
-      "source_ids": [
-        "VOICE-S311"
-      ],
+      "source_ids": ["VOICE-S311"],
       "hosted_route_limits": [
         {
           "label": "3.1-TTS-Next general",
@@ -8823,9 +7957,7 @@
           "output_audio_seconds": 120,
           "reference_audio_seconds": 30,
           "notes": "Up to3 reference clips, each≤30s and 10 MB; WAV/MP3/OGGOpus references, no rawPCM. OutputWAV/MP3/PCM.",
-          "source_ids": [
-            "VOICE-S311"
-          ]
+          "source_ids": ["VOICE-S311"]
         },
         {
           "label": "3.1-TTS-Next podcast",
@@ -8838,9 +7970,7 @@
           "output_audio_seconds": 240,
           "reference_audio_seconds": 30,
           "notes": "Podcast output exception 240s; same 3×30s/10 MB reference limits. Do not apply to Plus/Flash.",
-          "source_ids": [
-            "VOICE-S311"
-          ]
+          "source_ids": ["VOICE-S311"]
         }
       ]
     }
@@ -8851,9 +7981,7 @@
     "category": "Hosted speech dialogue",
     "priority": "P2-interaction",
     "model_url": "https://help.aliyun.com/en/model-studio/qwen-audio-realtime-user-guides",
-    "model_ids": [
-      "qwen-audio-3.1-realtime-plus"
-    ],
+    "model_ids": ["qwen-audio-3.1-realtime-plus"],
     "verified_on": "2026-10-24",
     "release_update_provenance": "Current 3.1 route explicitly selected in official guide, inspected 2026-10-24; exact launch day not established here.",
     "properties": "Streaming text/audio dialogue, semantic/acoustic turn detection or push-to-talk, tool calls and voice cloning. Guide lists 11 languages; 16 kHz PCM input and 24 kHz PCM output. Context retains at most 50 audio turns or 300 seconds; default 20 turns.",
@@ -8874,10 +8002,7 @@
       "inspection": "Documentation reviewed; microphone and API not used."
     },
     "caveats": "Tool calling and web search cannot be enabled simultaneously in the documented route. Full-duplex transport does not prove uninterrupted cognition or coherent long-term memory.",
-    "evidence_source_ids": [
-      "VOICE-S154",
-      "VOICE-S068"
-    ],
+    "evidence_source_ids": ["VOICE-S154", "VOICE-S068"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
@@ -8900,9 +8025,7 @@
       "blocking_unknowns": [
         "Native token context and portable hardware/runtime undisclosed; retained-history limit is not a session-duration cap."
       ],
-      "source_ids": [
-        "VOICE-S312"
-      ],
+      "source_ids": ["VOICE-S312"],
       "hosted_route_limits": [
         {
           "label": "qwen-audio-3.1-realtime-plus",
@@ -8915,9 +8038,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Retains at most 50 audio turns or 300s cumulative audio; default 20 turns, older history evicted. This is not a300s connection limit.16 kHz PCM input, 24 kHz PCM output.",
-          "source_ids": [
-            "VOICE-S312"
-          ]
+          "source_ids": ["VOICE-S312"]
         }
       ]
     }
@@ -8928,11 +8049,7 @@
     "category": "Hosted speech dialogue control",
     "priority": "P2-control",
     "model_url": "https://developers.openai.com/api/docs/models/gpt-live-1",
-    "model_ids": [
-      "gpt-live-1",
-      "gpt-realtime-2.1",
-      "gpt-realtime-2.1-mini"
-    ],
+    "model_ids": ["gpt-live-1", "gpt-realtime-2.1", "gpt-realtime-2.1-mini"],
     "verified_on": "2026-10-24",
     "release_update_provenance": "Realtime 2.1 and Mini released 2026-07-06; GPT-Live 1 GA 2026-09-10; prompt-created Live voices added 2026-10-16. These are verified API products; no equivalence to the current ChatGPT consumer voice system is assumed.",
     "properties": "GPT-Live 1 listens while speaking and delegates complex reasoning/tools to a separate backend. Realtime 2.1 integrates speech, configurable reasoning and tools; Mini is its faster, cheaper distilled sibling. Both Realtime variants list 128,000 context and 32,000 output tokens plus image input; Live lists text/audio input/output. Prompt-created voices are Live-only; recorded custom voices have a separate eligibility route.",
@@ -8945,9 +8062,7 @@
     "sentiment": {
       "summary": "Publisher account describes a working Raspberry Pi voice/display assistant with client delegation and interruptions. This is concrete implementation evidence, not independent community consensus or an NPC quality benchmark. Exact-version independent sentiment was not investigated in this narrow official-source control pass.",
       "confidence": "publisher-only",
-      "urls": [
-        "https://developers.openai.com/blog/bringing-my-led-display-to-life"
-      ]
+      "urls": ["https://developers.openai.com/blog/bringing-my-led-display-to-life"]
     },
     "published_examples": {
       "url": "https://developers.openai.com/blog/bringing-my-led-display-to-life",
@@ -8999,11 +8114,7 @@
       "blocking_unknowns": [
         "No native weight/runtime/GPU requirements for client access; Live 1 context and actual app session capacity remain unverified."
       ],
-      "source_ids": [
-        "VOICE-S313",
-        "VOICE-S314",
-        "VOICE-S315"
-      ],
+      "source_ids": ["VOICE-S313", "VOICE-S314", "VOICE-S315"],
       "hosted_route_limits": [
         {
           "label": "gpt-live-1",
@@ -9016,9 +8127,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Exact card does not state numeric context/output ceiling; do not inherit Realtime2.1 limits or delegated backend context.",
-          "source_ids": [
-            "VOICE-S313"
-          ]
+          "source_ids": ["VOICE-S313"]
         },
         {
           "label": "gpt-realtime-2.1",
@@ -9031,9 +8140,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Exact hosted token limits; not a Runpod model footprint or fixed speech-duration guarantee.",
-          "source_ids": [
-            "VOICE-S314"
-          ]
+          "source_ids": ["VOICE-S314"]
         },
         {
           "label": "gpt-realtime-2.1-mini",
@@ -9046,9 +8153,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "Exact hosted Mini token limits independently verified; actual session/turn behavior and account limits remain separate.",
-          "source_ids": [
-            "VOICE-S315"
-          ]
+          "source_ids": ["VOICE-S315"]
         }
       ]
     }
@@ -9059,10 +8164,7 @@
     "category": "Hosted speech dialogue control",
     "priority": "P2-control",
     "model_url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live",
-    "model_ids": [
-      "gemini-3.8-live",
-      "gemini-3.8-live-extended-thinking"
-    ],
+    "model_ids": ["gemini-3.8-live", "gemini-3.8-live-extended-thinking"],
     "verified_on": "2026-10-24",
     "release_update_provenance": "Official launch 2026-09-15, announcement updated September 17; both API model pages identify stable September 2026 versions. Older gemini-3.1-flash-live-preview is a migration source, not the current selection.",
     "properties": "Live targets fast speech dialogue with interleaved reasoning and asynchronous functions; Extended Thinking adds background reasoning while audio continues. Both list 131,072 input and 65,536 output tokens, text/image/audio input and text/audio output. Live API documents barge-in, affective dialogue and transcription. Language count differs: overview says 70; launch page says 97.",
@@ -9123,10 +8225,7 @@
       "blocking_unknowns": [
         "Input and output limits are distinct allowances; session/connection duration and chosen account quotas must be checked separately. No hardware sizing claim made."
       ],
-      "source_ids": [
-        "VOICE-S316",
-        "VOICE-S317"
-      ],
+      "source_ids": ["VOICE-S316", "VOICE-S317"],
       "hosted_route_limits": [
         {
           "label": "gemini-3.8-live",
@@ -9139,9 +8238,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "131072 input-token and 65536 output-token limits; not a combined 196608 context claim. Text/image/audio input and text/audio output.",
-          "source_ids": [
-            "VOICE-S316"
-          ]
+          "source_ids": ["VOICE-S316"]
         },
         {
           "label": "gemini-3.8-live-extended-thinking",
@@ -9154,9 +8251,7 @@
           "output_audio_seconds": null,
           "reference_audio_seconds": null,
           "notes": "131072 is an input-token limit; 65536 is output-token limit, not a combined 196608 context claim. Text/image/audio input and text/audio output. Extended Thinking requires asynchronous tools.",
-          "source_ids": [
-            "VOICE-S317"
-          ]
+          "source_ids": ["VOICE-S317"]
         }
       ]
     }

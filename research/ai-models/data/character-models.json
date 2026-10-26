@@ -29,9 +29,7 @@
       "summary": "Release-thread discussion is mixed: family users value creative style and willingness; other commenters report uneven quality or weak coding/tool behavior. Much discussion concerns earlier Hermes models, not a controlled 4.3 comparison.",
       "provenance": "original community discussion; mixed exact/family attribution",
       "date": "December 2025 release thread; precise post timestamp not confirmed",
-      "urls": [
-        "https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"
-      ]
+      "urls": ["https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"]
     },
     "published_outputs": {
       "status": "publisher evaluation artifacts linked",
@@ -52,14 +50,7 @@
       "https://docs.vllm.ai/en/latest/models/supported_models/"
     ],
     "name": "Hermes 4.3 36B",
-    "source_ids": [
-      "RPS001",
-      "RPS002",
-      "RPS003",
-      "RPS004",
-      "RPS114",
-      "RPS154"
-    ],
+    "source_ids": ["RPS001", "RPS002", "RPS003", "RPS004", "RPS114", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -113,12 +104,7 @@
             "Publisher documents vLLM hermes tool parser or SGLang qwen25 parser; output parsing and schema adherence still require future validation.",
             "Runtime version unpinned; serialization 4.55.0 does not establish minimum supported inference runtime."
           ],
-          "source_ids": [
-            "RPS001",
-            "RPS002",
-            "RPS114",
-            "RPS154"
-          ]
+          "source_ids": ["RPS001", "RPS002", "RPS114", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -134,12 +120,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS001",
-        "RPS002",
-        "RPS114",
-        "RPS154"
-      ]
+      "source_ids": ["RPS001", "RPS002", "RPS114", "RPS154"]
     }
   },
   {
@@ -172,9 +153,7 @@
       "summary": "Hermes-family discussion is mixed on style, logic and instruction following; no strong separate 70B current-release consensus established.",
       "provenance": "evidence gap",
       "date": null,
-      "urls": [
-        "https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"
-      ]
+      "urls": ["https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"]
     },
     "published_outputs": {
       "status": "not found",
@@ -203,14 +182,7 @@
       "https://docs.vllm.ai/en/latest/models/supported_models/"
     ],
     "name": "Hermes 4 70B",
-    "source_ids": [
-      "RPS005",
-      "RPS006",
-      "RPS001",
-      "RPS091",
-      "RPS142",
-      "RPS154"
-    ],
+    "source_ids": ["RPS005", "RPS006", "RPS001", "RPS091", "RPS142", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -264,12 +236,7 @@
             "Llama community license and inherited acceptable-use terms apply independently of low-refusal behavior.",
             "Use a compatible Llama vLLM/Transformers runtime; exact minimum/version unpinned."
           ],
-          "source_ids": [
-            "RPS005",
-            "RPS091",
-            "RPS142",
-            "RPS154"
-          ]
+          "source_ids": ["RPS005", "RPS091", "RPS142", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -285,12 +252,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS005",
-        "RPS091",
-        "RPS142",
-        "RPS154"
-      ]
+      "source_ids": ["RPS005", "RPS091", "RPS142", "RPS154"]
     }
   },
   {
@@ -355,15 +317,7 @@
       "https://huggingface.co/dphn/Venice-Role-Play-Uncensored/tree/main"
     ],
     "name": "Venice Role Play Uncensored 24B",
-    "source_ids": [
-      "RPS007",
-      "RPS008",
-      "RPS009",
-      "RPS010",
-      "RPS011",
-      "RPS012",
-      "RPS115"
-    ],
+    "source_ids": ["RPS007", "RPS008", "RPS009", "RPS010", "RPS011", "RPS012", "RPS115"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "unverified",
@@ -382,15 +336,7 @@
         "Locate an actual downloadable weight artifact with exact identity, revision, format and license before any Runpod sizing.",
         "Self-host context, output ceiling, runtime/template, VRAM, host RAM and disk remain unknown; advertised Venice API context cannot supply those facts."
       ],
-      "source_ids": [
-        "RPS007",
-        "RPS008",
-        "RPS009",
-        "RPS010",
-        "RPS011",
-        "RPS012",
-        "RPS115"
-      ],
+      "source_ids": ["RPS007", "RPS008", "RPS009", "RPS010", "RPS011", "RPS012", "RPS115"],
       "hosted_route_limits": [
         {
           "provider": "Venice",
@@ -402,10 +348,7 @@
           "observed_on": "2026-10-23",
           "scope": "provider catalog only; no downloadable-weight or deployed-cap inference",
           "notes": "Preserved earlier provider snapshot.128K label not converted to an exact token integer without fresh exact-value evidence.",
-          "source_ids": [
-            "RPS009",
-            "RPS010"
-          ]
+          "source_ids": ["RPS009", "RPS010"]
         }
       ]
     }
@@ -461,14 +404,7 @@
       "https://docs.vllm.ai/en/latest/models/supported_models/"
     ],
     "name": "Dolphin X1 Trinity Nano",
-    "source_ids": [
-      "RPS013",
-      "RPS008",
-      "RPS014",
-      "RPS092",
-      "RPS116",
-      "RPS154"
-    ],
+    "source_ids": ["RPS013", "RPS008", "RPS014", "RPS092", "RPS116", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -522,12 +458,7 @@
             "Transformers route has auto_map custom modeling_afmoe/configuration_afmoe code; review/pin it before enabling trust_remote_code.",
             "Current vLLM registry lists Afmoe. Card's old>=0.6.4 boilerplate and TP8 example are not a verified minimum or eight-GPU requirement for this checkpoint."
           ],
-          "source_ids": [
-            "RPS013",
-            "RPS092",
-            "RPS116",
-            "RPS154"
-          ]
+          "source_ids": ["RPS013", "RPS092", "RPS116", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -543,12 +474,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS013",
-        "RPS092",
-        "RPS116",
-        "RPS154"
-      ]
+      "source_ids": ["RPS013", "RPS092", "RPS116", "RPS154"]
     }
   },
   {
@@ -600,13 +526,7 @@
       "https://docs.vllm.ai/en/latest/models/supported_models/"
     ],
     "name": "Dolphin X1 8B",
-    "source_ids": [
-      "RPS015",
-      "RPS016",
-      "RPS093",
-      "RPS117",
-      "RPS154"
-    ],
+    "source_ids": ["RPS015", "RPS016", "RPS093", "RPS117", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -660,12 +580,7 @@
             "Llama3.1 community license/AUP applies; exact content behavior does not waive those terms.",
             "Pin current Llama-compatible vLLM/Transformers image; no exact version or driver minimum established."
           ],
-          "source_ids": [
-            "RPS015",
-            "RPS093",
-            "RPS117",
-            "RPS154"
-          ]
+          "source_ids": ["RPS015", "RPS093", "RPS117", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -681,12 +596,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS015",
-        "RPS093",
-        "RPS117",
-        "RPS154"
-      ]
+      "source_ids": ["RPS015", "RPS093", "RPS117", "RPS154"]
     }
   },
   {
@@ -738,12 +648,7 @@
       "https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md"
     ],
     "name": "Qwen3.6 35B-A3B Genesis Hermes",
-    "source_ids": [
-      "RPS017",
-      "RPS018",
-      "RPS118",
-      "RPS155"
-    ],
+    "source_ids": ["RPS017", "RPS018", "RPS118", "RPS155"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -798,11 +703,7 @@
             "If following publisher's8/12 GB route, CPU MoE offload is essential to that recommendation; host RAM/bandwidth minimum unknown.",
             "Vision requires matched mmproj. MTP variants are separate larger files (18.3/26.7 GB), not this selected non-MTP artifact."
           ],
-          "source_ids": [
-            "RPS017",
-            "RPS118",
-            "RPS155"
-          ]
+          "source_ids": ["RPS017", "RPS118", "RPS155"]
         }
       ],
       "deployment_evidence": {
@@ -818,11 +719,7 @@
         "No pinned APEX-capable build, verified full-context GPU/RAM fit or exact extension settings.",
         "8/12 GB publisher recommendation relies on CPU placement and cannot establish a fully resident Runpod fit."
       ],
-      "source_ids": [
-        "RPS017",
-        "RPS118",
-        "RPS155"
-      ]
+      "source_ids": ["RPS017", "RPS118", "RPS155"]
     }
   },
   {
@@ -873,14 +770,7 @@
       "https://docs.vllm.ai/en/latest/models/supported_models/"
     ],
     "name": "Huihui Qwen3.8 27B abliterated",
-    "source_ids": [
-      "RPS019",
-      "RPS020",
-      "RPS094",
-      "RPS119",
-      "RPS156",
-      "RPS154"
-    ],
+    "source_ids": ["RPS019", "RPS020", "RPS094", "RPS119", "RPS156", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -935,13 +825,7 @@
             "Serialization5.8.0.dev0 is not a runtime minimum. Do not transfer another Huihui/quantization preflight's context or hardware result.",
             "Pin supported CUDA/runtime image; parent NVFP4/RTX 5090 recipes do not prove this BF16 derivative fits24 GB."
           ],
-          "source_ids": [
-            "RPS019",
-            "RPS094",
-            "RPS119",
-            "RPS156",
-            "RPS154"
-          ]
+          "source_ids": ["RPS019", "RPS094", "RPS119", "RPS156", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -957,13 +841,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS019",
-        "RPS094",
-        "RPS119",
-        "RPS156",
-        "RPS154"
-      ]
+      "source_ids": ["RPS019", "RPS094", "RPS119", "RPS156", "RPS154"]
     }
   },
   {
@@ -999,9 +877,7 @@
       "summary": "Original base-family D&D thread praises scene play but reports refusals; follow-up discusses redirection after ablation. No exact v2 checkpoint consensus established.",
       "provenance": "original community; base/ablated-family attribution only",
       "date": "2026; exact timestamp not established",
-      "urls": [
-        "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/"
-      ]
+      "urls": ["https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/"]
     },
     "published_outputs": {
       "status": "not found",
@@ -1024,16 +900,7 @@
       "https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md"
     ],
     "name": "Huihui Qwen3.8 Flash Next abliterated v2",
-    "source_ids": [
-      "RPS021",
-      "RPS020",
-      "RPS022",
-      "RPS088",
-      "RPS146",
-      "RPS148",
-      "RPS147",
-      "RPS155"
-    ],
+    "source_ids": ["RPS021", "RPS020", "RPS022", "RPS088", "RPS146", "RPS148", "RPS147", "RPS155"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -1088,14 +955,7 @@
             "Publisher tested llama.cpp b11540; preserve ordinary artifact integrity verification and pin sources. No source suggestion to bypass verification is adopted.",
             "Custom qwen-community-1.0 terms apply; check commercial conditions. No separately quoted Huihui preflight is attributed to this checkpoint."
           ],
-          "source_ids": [
-            "RPS021",
-            "RPS088",
-            "RPS146",
-            "RPS148",
-            "RPS147",
-            "RPS155"
-          ]
+          "source_ids": ["RPS021", "RPS088", "RPS146", "RPS148", "RPS147", "RPS155"]
         }
       ],
       "deployment_evidence": {
@@ -1111,14 +971,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS021",
-        "RPS088",
-        "RPS146",
-        "RPS148",
-        "RPS147",
-        "RPS155"
-      ]
+      "source_ids": ["RPS021", "RPS088", "RPS146", "RPS148", "RPS147", "RPS155"]
     }
   },
   {
@@ -1170,12 +1023,7 @@
       "https://recipes.vllm.ai/Qwen/Qwen3.8-27B"
     ],
     "name": "Qwen3.8 27B Genesis MTP",
-    "source_ids": [
-      "RPS023",
-      "RPS120",
-      "RPS155",
-      "RPS156"
-    ],
+    "source_ids": ["RPS023", "RPS120", "RPS155", "RPS156"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -1229,12 +1077,7 @@
             "Verify runtime supports this GGUF NVFP4 encoding and target GPU; do not assume a safetensors NVFP4 runtime recipe applies.",
             "Preserved MTP and optional vision incur additional buffers; matched931 MB projector is separate."
           ],
-          "source_ids": [
-            "RPS023",
-            "RPS120",
-            "RPS155",
-            "RPS156"
-          ]
+          "source_ids": ["RPS023", "RPS120", "RPS155", "RPS156"]
         }
       ],
       "deployment_evidence": {
@@ -1250,12 +1093,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS023",
-        "RPS120",
-        "RPS155",
-        "RPS156"
-      ]
+      "source_ids": ["RPS023", "RPS120", "RPS155", "RPS156"]
     }
   },
   {
@@ -1314,15 +1152,7 @@
       "https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md"
     ],
     "name": "Qwen3.8 27B Humanlike Chat 2.0",
-    "source_ids": [
-      "RPS024",
-      "RPS025",
-      "RPS026",
-      "RPS156",
-      "RPS149",
-      "RPS150",
-      "RPS155"
-    ],
+    "source_ids": ["RPS024", "RPS025", "RPS026", "RPS156", "RPS149", "RPS150", "RPS155"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -1376,11 +1206,7 @@
             "Publisher uses qwen3_coder tool parser and qwen3 reasoning parser; ensure callers preserve required tool fields.",
             "Do not apply standalone LoRA to already merged safetensors or GGUF. Pin revision/checksum because reused GGUF names can otherwise select an older release."
           ],
-          "source_ids": [
-            "RPS024",
-            "RPS025",
-            "RPS156"
-          ]
+          "source_ids": ["RPS024", "RPS025", "RPS156"]
         },
         {
           "label": "HumanlikeChat2.0 GPTQ-Int4 safetensors",
@@ -1430,12 +1256,7 @@
             "Publisher uses qwen3_coder tool parser and qwen3 reasoning parser; ensure callers preserve required tool fields.",
             "Do not apply standalone LoRA to already merged safetensors or GGUF. Pin revision/checksum because reused GGUF names can otherwise select an older release."
           ],
-          "source_ids": [
-            "RPS024",
-            "RPS025",
-            "RPS156",
-            "RPS149"
-          ]
+          "source_ids": ["RPS024", "RPS025", "RPS156", "RPS149"]
         },
         {
           "label": "HumanlikeChat2.0 FP8 safetensors",
@@ -1485,12 +1306,7 @@
             "Publisher uses qwen3_coder tool parser and qwen3 reasoning parser; ensure callers preserve required tool fields.",
             "Do not apply standalone LoRA to already merged safetensors or GGUF. Pin revision/checksum because reused GGUF names can otherwise select an older release."
           ],
-          "source_ids": [
-            "RPS024",
-            "RPS025",
-            "RPS156",
-            "RPS150"
-          ]
+          "source_ids": ["RPS024", "RPS025", "RPS156", "RPS150"]
         },
         {
           "label": "HumanlikeChat2.0 merged IQ4_XS GGUF",
@@ -1540,12 +1356,7 @@
             "Publisher uses qwen3_coder tool parser and qwen3 reasoning parser; ensure callers preserve required tool fields.",
             "Do not apply standalone LoRA to already merged safetensors or GGUF. Pin revision/checksum because reused GGUF names can otherwise select an older release."
           ],
-          "source_ids": [
-            "RPS024",
-            "RPS025",
-            "RPS156",
-            "RPS155"
-          ]
+          "source_ids": ["RPS024", "RPS025", "RPS156", "RPS155"]
         }
       ],
       "deployment_evidence": {
@@ -1562,14 +1373,7 @@
         "Publisher speed results are H100 NVL single-request measurements, not promises for the smaller listed GPU classes.",
         "Pin2.0 revision/checksums; no measured host RAM or complete installed disk budget published."
       ],
-      "source_ids": [
-        "RPS024",
-        "RPS025",
-        "RPS156",
-        "RPS149",
-        "RPS150",
-        "RPS155"
-      ]
+      "source_ids": ["RPS024", "RPS025", "RPS156", "RPS149", "RPS150", "RPS155"]
     }
   },
   {
@@ -1594,9 +1398,7 @@
       "summary": "Creator-curated testers praise distinct voices and initiative; some still note causal mistakes. Testimonials are selected by the model creator and are not independent consensus.",
       "provenance": "publisher-curated first-person testimonials",
       "date": "Undated on card; profile update 2025-12-17",
-      "urls": [
-        "https://huggingface.co/TheDrummer/Cydonia-24B-v4.3"
-      ]
+      "urls": ["https://huggingface.co/TheDrummer/Cydonia-24B-v4.3"]
     },
     "published_outputs": {
       "status": "not found",
@@ -1624,14 +1426,7 @@
       "active_b": 24,
       "architecture": "dense Mistral Small 3.2 derivative"
     },
-    "source_ids": [
-      "RPS027",
-      "RPS028",
-      "RPS029",
-      "RPS095",
-      "RPS121",
-      "RPS154"
-    ],
+    "source_ids": ["RPS027", "RPS028", "RPS029", "RPS095", "RPS121", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -1687,12 +1482,7 @@
             "Exact derivative commercial license/grant remains unresolved in the earlier inventory; inherited base terms and modifications must be checked.",
             "The approximately 47.2 GB BF16 bundle leaves little safe headroom on a48 GB card; the 80 GB candidate avoids treating nominal weight fit as usable serving capacity."
           ],
-          "source_ids": [
-            "RPS027",
-            "RPS095",
-            "RPS121",
-            "RPS154"
-          ]
+          "source_ids": ["RPS027", "RPS095", "RPS121", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -1708,12 +1498,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS027",
-        "RPS095",
-        "RPS121",
-        "RPS154"
-      ]
+      "source_ids": ["RPS027", "RPS095", "RPS121", "RPS154"]
     }
   },
   {
@@ -1738,9 +1523,7 @@
       "summary": "Creator-curated reports praise character adherence and reading implied motives; card says many testers prefer the Magistral writing style. High-temperature overcreativity remains a concern.",
       "provenance": "selected publisher testimonials",
       "date": "Undated; 2025 portfolio",
-      "urls": [
-        "https://huggingface.co/TheDrummer/Magidonia-24B-v4.3"
-      ]
+      "urls": ["https://huggingface.co/TheDrummer/Magidonia-24B-v4.3"]
     },
     "published_outputs": {
       "status": "not found",
@@ -1766,12 +1549,7 @@
       "active_b": 24,
       "architecture": "dense Magistral Small 2509 derivative"
     },
-    "source_ids": [
-      "RPS030",
-      "RPS096",
-      "RPS122",
-      "RPS154"
-    ],
+    "source_ids": ["RPS030", "RPS096", "RPS122", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -1827,12 +1605,7 @@
             "Exact derivative commercial license/grant remains unresolved in the earlier inventory; inherited base terms and modifications must be checked.",
             "The approximately 47.2 GB BF16 bundle leaves little safe headroom on a48 GB card; the 80 GB candidate avoids treating nominal weight fit as usable serving capacity."
           ],
-          "source_ids": [
-            "RPS030",
-            "RPS096",
-            "RPS122",
-            "RPS154"
-          ]
+          "source_ids": ["RPS030", "RPS096", "RPS122", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -1848,12 +1621,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS030",
-        "RPS096",
-        "RPS122",
-        "RPS154"
-      ]
+      "source_ids": ["RPS030", "RPS096", "RPS122", "RPS154"]
     }
   },
   {
@@ -1916,15 +1684,7 @@
       "active_b": 24,
       "architecture": "dense Mistral; Heretic-modified Cydonia 4.3"
     },
-    "source_ids": [
-      "RPS031",
-      "RPS032",
-      "RPS033",
-      "RPS097",
-      "RPS123",
-      "RPS143",
-      "RPS154"
-    ],
+    "source_ids": ["RPS031", "RPS032", "RPS033", "RPS097", "RPS123", "RPS143", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -1980,13 +1740,7 @@
             "Exact derivative commercial license/grant remains unresolved in the earlier inventory; inherited base terms and modifications must be checked.",
             "The approximately 47.2 GB BF16 bundle leaves little safe headroom on a48 GB card; the 80 GB candidate avoids treating nominal weight fit as usable serving capacity."
           ],
-          "source_ids": [
-            "RPS031",
-            "RPS097",
-            "RPS123",
-            "RPS143",
-            "RPS154"
-          ]
+          "source_ids": ["RPS031", "RPS097", "RPS123", "RPS143", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -2002,13 +1756,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS031",
-        "RPS097",
-        "RPS123",
-        "RPS143",
-        "RPS154"
-      ]
+      "source_ids": ["RPS031", "RPS097", "RPS123", "RPS143", "RPS154"]
     }
   },
   {
@@ -2033,18 +1781,14 @@
       "summary": "Creator-curated users praise character fidelity, affordable creativity and extended voice chat; stock phrasing and limited wording remain smaller-model weaknesses.",
       "provenance": "publisher-curated first-person reports",
       "date": "2026-01-25 card context; individual reports undated",
-      "urls": [
-        "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1"
-      ]
+      "urls": ["https://huggingface.co/TheDrummer/Rocinante-X-12B-v1"]
     },
     "published_outputs": {
       "status": "publisher screenshot samples",
       "description": "Card contains dated sample-output images; linked for review, not transcribed or tested.",
       "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1"
     },
-    "caveats": [
-      "Current finetune does not make its 2024 foundation a frontier reasoning model."
-    ],
+    "caveats": ["Current finetune does not make its 2024 foundation a frontier reasoning model."],
     "related_variants": [],
     "id": "RP14",
     "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1",
@@ -2064,15 +1808,7 @@
       "active_b": 12,
       "architecture": "dense Mistral Nemo Instruct 2407 derivative"
     },
-    "source_ids": [
-      "RPS034",
-      "RPS035",
-      "RPS029",
-      "RPS098",
-      "RPS124",
-      "RPS144",
-      "RPS154"
-    ],
+    "source_ids": ["RPS034", "RPS035", "RPS029", "RPS098", "RPS124", "RPS144", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -2126,13 +1862,7 @@
             "Exact config serialization version4.57.6; it is not a proven minimum compatible runtime. Current vLLM supports MistralForCausalLM, but exact derivative integration remains untested.",
             "Exact derivative commercial license/grant remains unresolved in the earlier inventory; inherited base terms and modifications must be checked."
           ],
-          "source_ids": [
-            "RPS034",
-            "RPS098",
-            "RPS124",
-            "RPS144",
-            "RPS154"
-          ]
+          "source_ids": ["RPS034", "RPS098", "RPS124", "RPS144", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -2148,13 +1878,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS034",
-        "RPS098",
-        "RPS124",
-        "RPS144",
-        "RPS154"
-      ]
+      "source_ids": ["RPS034", "RPS098", "RPS124", "RPS144", "RPS154"]
     }
   },
   {
@@ -2211,15 +1935,7 @@
       "active_b": 16,
       "architecture": "expanded/upscaled Mistral Nemo 12B lineage"
     },
-    "source_ids": [
-      "RPS036",
-      "RPS029",
-      "RPS037",
-      "RPS038",
-      "RPS099",
-      "RPS125",
-      "RPS154"
-    ],
+    "source_ids": ["RPS036", "RPS029", "RPS037", "RPS038", "RPS099", "RPS125", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -2273,12 +1989,7 @@
             "Exact config serialization version4.45.2; it is not a proven minimum compatible runtime. Current vLLM supports MistralForCausalLM, but exact derivative integration remains untested.",
             "Exact derivative commercial license/grant remains unresolved in the earlier inventory; inherited base terms and modifications must be checked."
           ],
-          "source_ids": [
-            "RPS036",
-            "RPS099",
-            "RPS125",
-            "RPS154"
-          ]
+          "source_ids": ["RPS036", "RPS099", "RPS125", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -2294,12 +2005,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS036",
-        "RPS099",
-        "RPS125",
-        "RPS154"
-      ]
+      "source_ids": ["RPS036", "RPS099", "RPS125", "RPS154"]
     }
   },
   {
@@ -2324,9 +2030,7 @@
       "summary": "Creator-curated Rimtalk user praises coherent creative dialogue and JSON use. Other testers praise emotion but report long replies and repeated mistakes after a failure.",
       "provenance": "publisher-curated first-person game-mod use",
       "date": "Undated reports; profile update 2026-04-03",
-      "urls": [
-        "https://huggingface.co/TheDrummer/Skyfall-31B-v4.2"
-      ]
+      "urls": ["https://huggingface.co/TheDrummer/Skyfall-31B-v4.2"]
     },
     "published_outputs": {
       "status": "not found",
@@ -2355,14 +2059,7 @@
       "active_b": 31,
       "architecture": "expanded Magistral Small 2509 lineage"
     },
-    "source_ids": [
-      "RPS039",
-      "RPS040",
-      "RPS029",
-      "RPS100",
-      "RPS126",
-      "RPS154"
-    ],
+    "source_ids": ["RPS039", "RPS040", "RPS029", "RPS100", "RPS126", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -2418,12 +2115,7 @@
             "Exact derivative commercial license/grant remains unresolved in the earlier inventory; inherited base terms and modifications must be checked.",
             "Two large weight shards include a49.7 GB shard; loader transient RAM/mmap strategy must be established separately from final weight residency."
           ],
-          "source_ids": [
-            "RPS039",
-            "RPS100",
-            "RPS126",
-            "RPS154"
-          ]
+          "source_ids": ["RPS039", "RPS100", "RPS126", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -2439,12 +2131,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS039",
-        "RPS100",
-        "RPS126",
-        "RPS154"
-      ]
+      "source_ids": ["RPS039", "RPS100", "RPS126", "RPS154"]
     }
   },
   {
@@ -2469,9 +2156,7 @@
       "summary": "Creator-curated users praise prose and long card adherence, while acknowledging remaining logic mistakes. Independent exact-release consensus was not located.",
       "provenance": "publisher-curated reports",
       "date": "Undated",
-      "urls": [
-        "https://huggingface.co/TheDrummer/Anubis-70B-v1.2"
-      ]
+      "urls": ["https://huggingface.co/TheDrummer/Anubis-70B-v1.2"]
     },
     "published_outputs": {
       "status": "not found",
@@ -2495,12 +2180,7 @@
       "active_b": 70,
       "architecture": "dense Llama 3.3; HF parameter metadata rounds about 71B"
     },
-    "source_ids": [
-      "RPS041",
-      "RPS101",
-      "RPS127",
-      "RPS154"
-    ],
+    "source_ids": ["RPS041", "RPS101", "RPS127", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -2554,12 +2234,7 @@
             "Exact config serialization version4.57.1; it is not a proven minimum compatible runtime. Current vLLM supports LlamaForCausalLM, but exact derivative integration remains untested.",
             "Exact derivative commercial license/grant remains unresolved in the earlier inventory; inherited base terms and modifications must be checked."
           ],
-          "source_ids": [
-            "RPS041",
-            "RPS101",
-            "RPS127",
-            "RPS154"
-          ]
+          "source_ids": ["RPS041", "RPS101", "RPS127", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -2575,12 +2250,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS041",
-        "RPS101",
-        "RPS127",
-        "RPS154"
-      ]
+      "source_ids": ["RPS041", "RPS101", "RPS127", "RPS154"]
     }
   },
   {
@@ -2633,13 +2303,7 @@
       "active_b": 8,
       "architecture": "dense Llama lineage; precise parent not confirmed in retrieved card"
     },
-    "source_ids": [
-      "RPS042",
-      "RPS102",
-      "RPS128",
-      "RPS145",
-      "RPS154"
-    ],
+    "source_ids": ["RPS042", "RPS102", "RPS128", "RPS145", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -2693,13 +2357,7 @@
             "Exact config serialization version4.57.1; it is not a proven minimum compatible runtime. Current vLLM supports LlamaForCausalLM, but exact derivative integration remains untested.",
             "Exact derivative commercial license/grant remains unresolved in the earlier inventory; inherited base terms and modifications must be checked."
           ],
-          "source_ids": [
-            "RPS042",
-            "RPS102",
-            "RPS128",
-            "RPS145",
-            "RPS154"
-          ]
+          "source_ids": ["RPS042", "RPS102", "RPS128", "RPS145", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -2715,13 +2373,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS042",
-        "RPS102",
-        "RPS128",
-        "RPS145",
-        "RPS154"
-      ]
+      "source_ids": ["RPS042", "RPS102", "RPS128", "RPS145", "RPS154"]
     }
   },
   {
@@ -2773,12 +2425,7 @@
       "active_b": 128,
       "architecture": "Mistral Medium 3.5-128B derivative; HF counts about 125B"
     },
-    "source_ids": [
-      "RPS043",
-      "RPS103",
-      "RPS129",
-      "RPS154"
-    ],
+    "source_ids": ["RPS043", "RPS103", "RPS129", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -2832,12 +2479,7 @@
             "Exact config serialization version5.5.0; it is not a proven minimum compatible runtime. Current vLLM supports MistralForCausalLM, but exact derivative integration remains untested.",
             "Apache-2.0 card; pin exact128B v3 weights and tokenizer rather than substituting an older Behemoth artifact."
           ],
-          "source_ids": [
-            "RPS043",
-            "RPS103",
-            "RPS129",
-            "RPS154"
-          ]
+          "source_ids": ["RPS043", "RPS103", "RPS129", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -2853,12 +2495,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS043",
-        "RPS103",
-        "RPS129",
-        "RPS154"
-      ]
+      "source_ids": ["RPS043", "RPS103", "RPS129", "RPS154"]
     }
   },
   {
@@ -2883,9 +2520,7 @@
       "summary": "Creator explicitly labels it a research release with only basic sanity checks. No strong independent consensus found.",
       "provenance": "candid publisher limitation",
       "date": "Collection updated 2026-09-08; exact release unconfirmed",
-      "urls": [
-        "https://huggingface.co/Gryphe/Pantheon-Reasoning-27B"
-      ]
+      "urls": ["https://huggingface.co/Gryphe/Pantheon-Reasoning-27B"]
     },
     "published_outputs": {
       "status": "not found",
@@ -2912,12 +2547,7 @@
       "active_b": 27,
       "architecture": "dense Qwen3.6 via uncensored-Heretic parent; about 28B with auxiliaries"
     },
-    "source_ids": [
-      "RPS044",
-      "RPS104",
-      "RPS130",
-      "RPS154"
-    ],
+    "source_ids": ["RPS044", "RPS104", "RPS130", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -2971,12 +2601,7 @@
             "Exact config 262144; serialization 5.8.0 is not a proven minimum runtime.",
             "Repository includes MTP/vision; any text-only or speculative settings change serving memory. Host RAM minimum and auxiliary vision runtime compatibility unknown."
           ],
-          "source_ids": [
-            "RPS044",
-            "RPS104",
-            "RPS130",
-            "RPS154"
-          ]
+          "source_ids": ["RPS044", "RPS104", "RPS130", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -2992,12 +2617,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS044",
-        "RPS104",
-        "RPS130",
-        "RPS154"
-      ]
+      "source_ids": ["RPS044", "RPS104", "RPS130", "RPS154"]
     }
   },
   {
@@ -3054,15 +2674,7 @@
       "active_b": 31,
       "architecture": "dense Gemma 4"
     },
-    "source_ids": [
-      "RPS045",
-      "RPS046",
-      "RPS047",
-      "RPS105",
-      "RPS131",
-      "RPS157",
-      "RPS154"
-    ],
+    "source_ids": ["RPS045", "RPS046", "RPS047", "RPS105", "RPS131", "RPS157", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -3117,13 +2729,7 @@
             "Base recipe uses gemma4 reasoning/tool parsers and examples/tool_chat_template_gemma4.jinja. Check compatibility with the derivative's own template before replacing it.",
             "Use processor/tokenizer files and retained vision dependencies if serving images. Text-only savings require engine support and do not remove weights automatically."
           ],
-          "source_ids": [
-            "RPS045",
-            "RPS105",
-            "RPS131",
-            "RPS157",
-            "RPS154"
-          ]
+          "source_ids": ["RPS045", "RPS105", "RPS131", "RPS157", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -3139,13 +2745,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS045",
-        "RPS105",
-        "RPS131",
-        "RPS157",
-        "RPS154"
-      ]
+      "source_ids": ["RPS045", "RPS105", "RPS131", "RPS157", "RPS154"]
     }
   },
   {
@@ -3200,14 +2800,7 @@
       "active_b": 4,
       "architecture": "Gemma 4 MoE; finetuned and merged back into instruct"
     },
-    "source_ids": [
-      "RPS048",
-      "RPS049",
-      "RPS106",
-      "RPS132",
-      "RPS158",
-      "RPS154"
-    ],
+    "source_ids": ["RPS048", "RPS049", "RPS106", "RPS132", "RPS158", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -3262,13 +2855,7 @@
             "Base recipe uses gemma4 reasoning/tool parsers and examples/tool_chat_template_gemma4.jinja. Check compatibility with the derivative's own template before replacing it.",
             "Use processor/tokenizer files and retained vision dependencies if serving images. Text-only savings require engine support and do not remove weights automatically."
           ],
-          "source_ids": [
-            "RPS048",
-            "RPS106",
-            "RPS132",
-            "RPS158",
-            "RPS154"
-          ]
+          "source_ids": ["RPS048", "RPS106", "RPS132", "RPS158", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -3284,13 +2871,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS048",
-        "RPS106",
-        "RPS132",
-        "RPS158",
-        "RPS154"
-      ]
+      "source_ids": ["RPS048", "RPS106", "RPS132", "RPS158", "RPS154"]
     }
   },
   {
@@ -3344,14 +2925,7 @@
       "active_b": 31,
       "architecture": "dense Gemma 4"
     },
-    "source_ids": [
-      "RPS050",
-      "RPS051",
-      "RPS107",
-      "RPS133",
-      "RPS157",
-      "RPS154"
-    ],
+    "source_ids": ["RPS050", "RPS051", "RPS107", "RPS133", "RPS157", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -3406,13 +2980,7 @@
             "Base recipe uses gemma4 reasoning/tool parsers and examples/tool_chat_template_gemma4.jinja. Check compatibility with the derivative's own template before replacing it.",
             "Use processor/tokenizer files and retained vision dependencies if serving images. Text-only savings require engine support and do not remove weights automatically."
           ],
-          "source_ids": [
-            "RPS050",
-            "RPS107",
-            "RPS133",
-            "RPS157",
-            "RPS154"
-          ]
+          "source_ids": ["RPS050", "RPS107", "RPS133", "RPS157", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -3428,13 +2996,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS050",
-        "RPS107",
-        "RPS133",
-        "RPS157",
-        "RPS154"
-      ]
+      "source_ids": ["RPS050", "RPS107", "RPS133", "RPS157", "RPS154"]
     }
   },
   {
@@ -3487,13 +3049,7 @@
       "active_b": 10,
       "architecture": "Qwen3.5-122B-A10B MoE; HF auxiliary-inclusive total about 125B"
     },
-    "source_ids": [
-      "RPS052",
-      "RPS051",
-      "RPS108",
-      "RPS134",
-      "RPS154"
-    ],
+    "source_ids": ["RPS052", "RPS051", "RPS108", "RPS134", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -3547,12 +3103,7 @@
             "Exact config 262144; serialization 4.57.0.dev0 is not a compatible-runtime minimum. Runtime must implement the newer Qwen3.5 MoE class.",
             "Full checkpoint retains MTP and vision. Tensor-parallel/expert-parallel layout, GPU interconnect and per-rank transient memory remain unmeasured."
           ],
-          "source_ids": [
-            "RPS052",
-            "RPS108",
-            "RPS134",
-            "RPS154"
-          ]
+          "source_ids": ["RPS052", "RPS108", "RPS134", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -3568,12 +3119,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS052",
-        "RPS108",
-        "RPS134",
-        "RPS154"
-      ]
+      "source_ids": ["RPS052", "RPS108", "RPS134", "RPS154"]
     }
   },
   {
@@ -3638,14 +3184,7 @@
       "active_b": 9,
       "architecture": "dense hybrid Qwen3.5; about 10B including auxiliary components"
     },
-    "source_ids": [
-      "RPS053",
-      "RPS054",
-      "RPS051",
-      "RPS109",
-      "RPS135",
-      "RPS154"
-    ],
+    "source_ids": ["RPS053", "RPS054", "RPS051", "RPS109", "RPS135", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -3699,12 +3238,7 @@
             "Exact config 262144; serialization 4.57.0.dev0 is not a supported-runtime minimum.",
             "Vision tower and MTP retained; any text-only optimization or cache quantization depends on chosen runtime and may change fit."
           ],
-          "source_ids": [
-            "RPS053",
-            "RPS109",
-            "RPS135",
-            "RPS154"
-          ]
+          "source_ids": ["RPS053", "RPS109", "RPS135", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -3720,12 +3254,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS053",
-        "RPS109",
-        "RPS135",
-        "RPS154"
-      ]
+      "source_ids": ["RPS053", "RPS109", "RPS135", "RPS154"]
     }
   },
   {
@@ -3785,14 +3314,7 @@
     "deployment": "Native mixed FP8/FP4 assets and special DeepSeek encoding/runtime. Ordinary Jinja chat templates are not a substitute for the documented engine path.",
     "hardware": "Publisher reports 4×H200 (564 GB GPU memory) and an approximately 203 GB Engram table host-memory/offload route. Deployment is specialized; not a commodity 24 GB model.",
     "license": "MIT card; current exact repository additionally requires manual access approval and acceptance of its download terms. Research did not request gated access.",
-    "source_ids": [
-      "RPS055",
-      "RPS056",
-      "RPS057",
-      "RPS089",
-      "RPS110",
-      "RPS136"
-    ],
+    "source_ids": ["RPS055", "RPS056", "RPS057", "RPS089", "RPS110", "RPS136"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -3849,12 +3371,7 @@
             "Publisher reports CUDA12.8/torch cu128; nvcc 12.4 lacks required e8m0 support andcu130 torch mismatched their driver.",
             "Publisher notes a kernel.py num_stages=2 patch for a race. That is a runtime dependency to review/pin, not a patch applied by this research."
           ],
-          "source_ids": [
-            "RPS055",
-            "RPS089",
-            "RPS110",
-            "RPS136"
-          ]
+          "source_ids": ["RPS055", "RPS089", "RPS110", "RPS136"]
         },
         {
           "label": "Exact gated HF FP8/FP4 weights through SGLang with Engram host offload",
@@ -3907,12 +3424,7 @@
             "The1M context/max_running_requests=20 flags are requested server caps, not measured usable capacity.",
             "Pin SGLang version and confirm203 GB host-table allocation plus remaining host-memory budget before any future provisioning."
           ],
-          "source_ids": [
-            "RPS055",
-            "RPS089",
-            "RPS110",
-            "RPS136"
-          ]
+          "source_ids": ["RPS055", "RPS089", "RPS110", "RPS136"]
         }
       ],
       "deployment_evidence": {
@@ -3930,12 +3442,7 @@
         "Reference conversion disk overhead and complete host RAM are unpublished.203 GB host-table figure is not a complete RAM requirement.",
         "No measured full-context concurrency or exact Runpod fit for either serving route."
       ],
-      "source_ids": [
-        "RPS055",
-        "RPS089",
-        "RPS110",
-        "RPS136"
-      ]
+      "source_ids": ["RPS055", "RPS089", "RPS110", "RPS136"]
     }
   },
   {
@@ -3989,13 +3496,7 @@
     "deployment": "NVFP4 experts plus BF16 nonexpert tensors; weight edit, distinct from runtime-hook uncensoring.",
     "hardware": "320B implies at least 160 GB idealized 4-bit weight storage before higher-precision components, KV cache and runtime. Exact validated hardware minimum not established here.",
     "license": "MIT card.",
-    "source_ids": [
-      "RPS058",
-      "RPS090",
-      "RPS111",
-      "RPS137",
-      "RPS154"
-    ],
+    "source_ids": ["RPS058", "RPS090", "RPS111", "RPS137", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -4051,13 +3552,7 @@
             "Publisher reports empty final content whenmaximal thinking exhausts2000 output tokens; 6000 or low/high helped that workload. These are anecdotal workload settings, not universal minimum or maximum output limits.",
             "Current template clear_thinking=true addresses replay of prior reasoning; visual-input preprocessing varies by runtime version and consumes extra context/memory."
           ],
-          "source_ids": [
-            "RPS058",
-            "RPS090",
-            "RPS111",
-            "RPS137",
-            "RPS154"
-          ]
+          "source_ids": ["RPS058", "RPS090", "RPS111", "RPS137", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -4073,13 +3568,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS058",
-        "RPS090",
-        "RPS111",
-        "RPS137",
-        "RPS154"
-      ]
+      "source_ids": ["RPS058", "RPS090", "RPS111", "RPS137", "RPS154"]
     }
   },
   {
@@ -4130,11 +3619,7 @@
     "deployment": "EXL3 weights plus uncensor_spec/direction runtime hooks require matching Kyojin. Stock ExLlamaV3/TabbyAPI can load weights while ignoring the low-refusal edit. Current Kyojin also has a NVIDIA CUDA port, but exact GLM pack/hook behavior on that route is unverified.",
     "hardware": "Publisher exact-pack reference: AMD Ryzen AI Max+395/Strix Halo 128 GB unified memory, 99.73 GB pack. Current NVIDIA port reports tests of other models on RTX 3090; those do not establish this GLM 320B pack's Runpod fit.",
     "license": "MIT card.",
-    "source_ids": [
-      "RPS059",
-      "RPS151",
-      "RPS160"
-    ],
+    "source_ids": ["RPS059", "RPS151", "RPS160"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -4189,11 +3674,7 @@
             "CurrentCUDAtoolchain documentation reports torch 2.10cu130, nvcc 13.0.88, gcc 13, sm_80+; these are port build observations, not exact GLM certification.",
             "Preserve128 GB unified-memory reference evidence separately from any Runpod NVIDIA topology."
           ],
-          "source_ids": [
-            "RPS059",
-            "RPS151",
-            "RPS160"
-          ]
+          "source_ids": ["RPS059", "RPS151", "RPS160"]
         }
       ],
       "deployment_evidence": {
@@ -4210,11 +3691,7 @@
         "Runtime-specific memory at desired context/concurrency, separate host RAM and complete disk are unknown.",
         "Published128 GB is unified shared memory, not aRunpod VRAM requirement or independentCPU+GPU total."
       ],
-      "source_ids": [
-        "RPS059",
-        "RPS151",
-        "RPS160"
-      ]
+      "source_ids": ["RPS059", "RPS151", "RPS160"]
     }
   },
   {
@@ -4266,12 +3743,7 @@
     "deployment": "GGUF; preserve exact filename/quantization and runtime. Prior NEO-CODE card explicitly links this successor.",
     "hardware": "Approximately 13.5 GB idealized 4-bit text weights before overhead; exact variant filesize differs.",
     "license": "Apache-2.0 card.",
-    "source_ids": [
-      "RPS060",
-      "RPS061",
-      "RPS138",
-      "RPS155"
-    ],
+    "source_ids": ["RPS060", "RPS061", "RPS138", "RPS155"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -4326,11 +3798,7 @@
             "Confirm exactQwen3.6 MTP support in chosen runtime; optional vision requiresmatched mmproj.",
             "Card'sTerminalBench32CPU/48GBRAM environment is a benchmark harness, not an inference host-RAM requirement."
           ],
-          "source_ids": [
-            "RPS060",
-            "RPS138",
-            "RPS155"
-          ]
+          "source_ids": ["RPS060", "RPS138", "RPS155"]
         }
       ],
       "deployment_evidence": {
@@ -4346,11 +3814,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS060",
-        "RPS138",
-        "RPS155"
-      ]
+      "source_ids": ["RPS060", "RPS138", "RPS155"]
     }
   },
   {
@@ -4404,13 +3868,7 @@
     "deployment": "Approximately 55.1 MB adapter plus full licensed base; merge/PEFT path. Adapter filesize is not whole-model memory cost.",
     "hardware": "The roughly 35.95B base dominates: about 18 GB of idealized 4-bit weights plus the adapter and runtime overhead; no measured fit.",
     "license": "Adapter license not declared in inspected card. Parent Apache permission does not grant rights in the adapter; commercial readiness unresolved.",
-    "source_ids": [
-      "RPS062",
-      "RPS139",
-      "RPS152",
-      "RPS153",
-      "RPS159"
-    ],
+    "source_ids": ["RPS062", "RPS139", "RPS152", "RPS153", "RPS159"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "conditional_self_host",
@@ -4465,13 +3923,7 @@
             "Useadapter repository tokenizer/template withsystem/user/assistant/tool; publisher intendsenable_thinking: false narration.",
             "Adapter license not declared; parentApache2termsalone do not authorize adapter commercial use."
           ],
-          "source_ids": [
-            "RPS062",
-            "RPS139",
-            "RPS152",
-            "RPS153",
-            "RPS159"
-          ]
+          "source_ids": ["RPS062", "RPS139", "RPS152", "RPS153", "RPS159"]
         }
       ],
       "deployment_evidence": {
@@ -4488,13 +3940,7 @@
         "Adapter commerciallicense, quant-compatible serving runtime, complete weights/disk/host RAM/GPU fit unknown.",
         "No independent published output/context/concurrency acceptance limits beyondparent claim."
       ],
-      "source_ids": [
-        "RPS062",
-        "RPS139",
-        "RPS152",
-        "RPS153",
-        "RPS159"
-      ]
+      "source_ids": ["RPS062", "RPS139", "RPS152", "RPS153", "RPS159"]
     }
   },
   {
@@ -4552,15 +3998,7 @@
     "deployment": "Aion API/OpenRouter/Venice; OpenAI-compatible streaming. No downloadable 3.5 checkpoint found; multi-model orchestration is opaque.",
     "hardware": "Provider managed; local hardware irrelevant. Published live latency counters are time-varying, not a game SLA.",
     "license": "API-only proprietary service. Aion terms effective 2026-10-17 permit commercial products and embedding service access, but no rights in model weights; AUP applies.",
-    "source_ids": [
-      "RPS063",
-      "RPS064",
-      "RPS065",
-      "RPS066",
-      "RPS009",
-      "RPS010",
-      "RPS067"
-    ],
+    "source_ids": ["RPS063", "RPS064", "RPS065", "RPS066", "RPS009", "RPS010", "RPS067"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "external_api_only",
@@ -4579,15 +4017,7 @@
         "No downloadable weights or self-host license found; no Runpod recipe applies.",
         "Advertised OpenRouter limits are 262,144 context / 32,768 completion; actual account-specific accepted requests, rate limits and concurrency remain unmeasured."
       ],
-      "source_ids": [
-        "RPS063",
-        "RPS064",
-        "RPS065",
-        "RPS066",
-        "RPS009",
-        "RPS010",
-        "RPS067"
-      ],
+      "source_ids": ["RPS063", "RPS064", "RPS065", "RPS066", "RPS009", "RPS010", "RPS067"],
       "hosted_route_limits": [
         {
           "provider": "OpenRouter",
@@ -4598,9 +4028,7 @@
           "observed_on": "2026-10-25",
           "scope": "provider catalog only; neither model-native context nor Runpod/deployed acceptance",
           "notes": "OpenRouter's current FAQ explicitly states 262,144 context and 32,768 completion tokens. These are advertised provider limits, not accepted-request measurements by this research; account/router policies may further constrain requests.",
-          "source_ids": [
-            "RPS063"
-          ]
+          "source_ids": ["RPS063"]
         }
       ]
     }
@@ -4658,14 +4086,7 @@
     "deployment": "Aion/OpenRouter/Venice API; no downloadable 3.5 Mini checkpoint found.",
     "hardware": "Provider managed; no local sizing needed.",
     "license": "Proprietary hosted system; same Aion commercial embedding permission and host AUP as 3.5. No weight-distribution rights.",
-    "source_ids": [
-      "RPS068",
-      "RPS066",
-      "RPS065",
-      "RPS010",
-      "RPS009",
-      "RPS069"
-    ],
+    "source_ids": ["RPS068", "RPS066", "RPS065", "RPS010", "RPS009", "RPS069"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "external_api_only",
@@ -4684,14 +4105,7 @@
         "No downloadable weights or self-host license found; no Runpod recipe applies.",
         "Advertised OpenRouter limits are 262,144 context / 32,768 completion; actual account-specific accepted requests, rate limits and concurrency remain unmeasured."
       ],
-      "source_ids": [
-        "RPS068",
-        "RPS066",
-        "RPS065",
-        "RPS010",
-        "RPS009",
-        "RPS069"
-      ],
+      "source_ids": ["RPS068", "RPS066", "RPS065", "RPS010", "RPS009", "RPS069"],
       "hosted_route_limits": [
         {
           "provider": "OpenRouter",
@@ -4702,9 +4116,7 @@
           "observed_on": "2026-10-25",
           "scope": "provider catalog only; neither model-native context nor Runpod/deployed acceptance",
           "notes": "OpenRouter's current FAQ explicitly states 262,144 context and 32,768 completion tokens. These are advertised provider limits, not accepted-request measurements by this research; account/router policies may further constrain requests.",
-          "source_ids": [
-            "RPS068"
-          ]
+          "source_ids": ["RPS068"]
         }
       ]
     }
@@ -4764,16 +4176,7 @@
     "deployment": "Safetensors/GGUF; card lists Featherless. SillyTavern preset import provided; no inference was run.",
     "hardware": "October 14 user reports Q6_K with all layers on RTX 5090 and 64 GB system RAM via KoboldCpp. Anecdote, not guaranteed deployment sizing.",
     "license": "Apache-2.0 card.",
-    "source_ids": [
-      "RPS070",
-      "RPS071",
-      "RPS072",
-      "RPS073",
-      "RPS112",
-      "RPS140",
-      "RPS157",
-      "RPS154"
-    ],
+    "source_ids": ["RPS070", "RPS071", "RPS072", "RPS073", "RPS112", "RPS140", "RPS157", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -4828,13 +4231,7 @@
             "Base recipe uses gemma4 reasoning/tool parsers and examples/tool_chat_template_gemma4.jinja. Check compatibility with the derivative's own template before replacing it.",
             "Use processor/tokenizer files and retained vision dependencies if serving images. Text-only savings require engine support and do not remove weights automatically."
           ],
-          "source_ids": [
-            "RPS070",
-            "RPS112",
-            "RPS140",
-            "RPS157",
-            "RPS154"
-          ]
+          "source_ids": ["RPS070", "RPS112", "RPS140", "RPS157", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -4850,13 +4247,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS070",
-        "RPS112",
-        "RPS140",
-        "RPS157",
-        "RPS154"
-      ]
+      "source_ids": ["RPS070", "RPS112", "RPS140", "RPS157", "RPS154"]
     }
   },
   {
@@ -4919,15 +4310,7 @@
     "deployment": "Safetensors plus separately linked GGUF; preserve Gemma 4 chat/reasoning format.",
     "hardware": "Approximately 13 GB idealized 4-bit total weights before overhead; 4B active affects compute, not complete memory footprint.",
     "license": "Apache-2.0 card.",
-    "source_ids": [
-      "RPS074",
-      "RPS075",
-      "RPS076",
-      "RPS113",
-      "RPS141",
-      "RPS158",
-      "RPS154"
-    ],
+    "source_ids": ["RPS074", "RPS075", "RPS076", "RPS113", "RPS141", "RPS158", "RPS154"],
     "hosting": {
       "reviewed_on": "2026-10-25",
       "runpod_disposition": "self_host_candidate",
@@ -4982,13 +4365,7 @@
             "Base recipe uses gemma4 reasoning/tool parsers and examples/tool_chat_template_gemma4.jinja. Check compatibility with the derivative's own template before replacing it.",
             "Use processor/tokenizer files and retained vision dependencies if serving images. Text-only savings require engine support and do not remove weights automatically."
           ],
-          "source_ids": [
-            "RPS074",
-            "RPS113",
-            "RPS141",
-            "RPS158",
-            "RPS154"
-          ]
+          "source_ids": ["RPS074", "RPS113", "RPS141", "RPS158", "RPS154"]
         }
       ],
       "deployment_evidence": {
@@ -5004,13 +4381,7 @@
         "Pin exact artifact revision/runtime image; no exact-checkpoint Runpod measurement exists in this research.",
         "Host RAM minimum, working-disk overhead, peak VRAM, actual accepted request/output limits and concurrent NPC capacity are unmeasured."
       ],
-      "source_ids": [
-        "RPS074",
-        "RPS113",
-        "RPS141",
-        "RPS158",
-        "RPS154"
-      ]
+      "source_ids": ["RPS074", "RPS113", "RPS141", "RPS158", "RPS154"]
     }
   },
   {

@@ -1,8 +1,8 @@
 # Research
 
-| Research status           | Progress                                                                                                                                                     | Last updated |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Maintained research index | Links engine/platform studies and the character, decision, voice and Runpod hosting inventory; the browser-first milestone remains the selected next delivery. | 2026-10-25 |
+| Research status           | Progress                                                                                                                                                       | Last updated |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Maintained research index | Links engine/platform studies and the character, decision, voice and Runpod hosting inventory; the browser-first milestone remains the selected next delivery. | 2026-10-25   |
 
 ## Character, decision and voice models
 

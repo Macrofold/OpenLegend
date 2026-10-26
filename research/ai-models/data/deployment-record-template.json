@@ -33,7 +33,9 @@
     "structured_output_mode": null,
     "tool_parser": null,
     "reasoning_parser_and_budget": null,
-    "trust_remote_code": null
+    "trust_remote_code": null,
+    "separate_service_dependencies": [],
+    "shared_memory_and_ipc_requirements": null
   },
   "hosting": {
     "owner": null,
@@ -53,7 +55,10 @@
     "container_disk_gb": null,
     "persistent_storage_kind": null,
     "persistent_storage_gb": null,
-    "mount_path": null
+    "mount_path": null,
+    "observed_driver_version": null,
+    "inference_auth_secret_reference": null,
+    "private_service_network": null
   },
   "configuration": {
     "weight_precision": null,
@@ -80,6 +85,9 @@
     "idle_timeout_seconds": null,
     "min_workers": null,
     "max_workers": null,
+    "listen_address": null,
+    "service_port": null,
+    "health_port": null,
     "health_path": null,
     "secret_reference_names": [],
     "generation_config_load_policy": null,

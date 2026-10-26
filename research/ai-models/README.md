@@ -1,8 +1,8 @@
 # Models for independent characters, decisions and voice
 
-| Research status         | Progress                                                                                                   | Last updated |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed desk research | Broad discovery and per-model Runpod requirements are documented; no models or hosting were tested or adopted. | 2026-10-25 |
+| Research status         | Progress                                                                                                       | Last updated |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed desk research | Broad discovery and per-model Runpod requirements are documented; no models or hosting were tested or adopted. | 2026-10-25   |
 
 This collection answers which current language, decision and voice models may be useful for Open Legend's believable, imperfect characters, including permitted dark fiction. It records what the models offer, what their publishers and users actually say, how they can be deployed, and what their costs and terms mean. The initial evidence snapshot is **October 23, 2026**, with targeted review on **October 24** and a **per-record hosting, context and resource review on October 25**. Original community/sample evidence keeps its own date; the hosting review does not imply that every prior anecdote was refreshed.
 
@@ -23,13 +23,13 @@ The inventory contains **147 model or tightly scoped family entries**: **35 char
 
 ### Runpod preparation
 
-| Reference | Use it to |
-| --- | --- |
-| [Hosting matrix](hosting-matrix.md) | See every record's Runpod eligibility, profile count, memory/context evidence and unresolved requirements. |
-| [Runpod workflow](runpod-hosting.md) | Choose Pods or Serverless, prepare exact artifacts/runtimes, plan storage/networking, account for costs and recover or stop a service. |
-| [Capacity planning](capacity-planning.md) | Separate published context, config positions, configured limits and measured request fit; size VRAM, host RAM and disk without confusing them. |
-| [GPU/price snapshot](data/runpod-gpu-pricing.json) | Compare dated public prices while retaining conflicting tariffs and unverified account/region availability. |
-| [Deployment worksheet](data/deployment-record-template.json) | Record the actual selected image, artifact, hardware, limits and observations when operating qualification is authorized. |
+| Reference                                                    | Use it to                                                                                                                                      |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Hosting matrix](hosting-matrix.md)                          | See every record's Runpod eligibility, profile count, memory/context evidence and unresolved requirements.                                     |
+| [Runpod workflow](runpod-hosting.md)                         | Choose Pods or Serverless, prepare exact artifacts/runtimes, plan storage/networking, account for costs and recover or stop a service.         |
+| [Capacity planning](capacity-planning.md)                    | Separate published context, config positions, configured limits and measured request fit; size VRAM, host RAM and disk without confusing them. |
+| [GPU/price snapshot](data/runpod-gpu-pricing.json)           | Compare dated public prices while retaining conflicting tariffs and unverified account/region availability.                                    |
+| [Deployment worksheet](data/deployment-record-template.json) | Record the actual selected image, artifact, hardware, limits and observations when operating qualification is authorized.                      |
 
 Every record has structured hosting requirements or an explicit reason it cannot currently be sized/deployed on Runpod. Public requirements, estimates and measurements remain distinct. Start from the existing pinned [Kev/Huihui sources](capacity-planning.md#what-the-kevhuihui-statement-establishes) when resolving that setup; newer, larger family entries are separate candidates. Runpod's [intended-fiction contract scope](runpod-hosting.md#hosting-terms-are-part-of-fictional-freedom) remains unresolved.
 

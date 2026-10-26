@@ -1,11 +1,7 @@
 {
   "reviewed_on": "2026-10-25",
   "currency": "USD",
-  "source_ids": [
-    "RPH004",
-    "RPH018",
-    "RPH005"
-  ],
+  "source_ids": ["RPH004", "RPH018", "RPH005"],
   "page_updated_on": "2026-10-08",
   "scope": "Public retrieved pricing-page display; not inspected account inventory or a guaranteed offer. Taxes/storage/contract fees excluded.",
   "pod_cloud_scope": "Public page contains both Community/Secure toggles; selected state not reliably available in text. Do not label these as verified cloud-specific quotes.",
@@ -252,44 +248,33 @@
     {
       "kind": "pod_container",
       "usd_per_gb_month_running": 0.1,
-      "source_ids": [
-        "RPH002"
-      ],
+      "source_ids": ["RPH002"],
       "note": "Ephemeral; not billed as stopped retained disk."
     },
     {
       "kind": "pod_volume",
       "usd_per_gb_month_running": 0.1,
       "usd_per_gb_month_stopped": 0.2,
-      "source_ids": [
-        "RPH002"
-      ]
+      "source_ids": ["RPH002"]
     },
     {
       "kind": "network_standard",
       "usd_per_gb_month_first_tb": 0.07,
       "usd_per_gb_month_above_tb": 0.05,
-      "source_ids": [
-        "RPH008"
-      ]
+      "source_ids": ["RPH008"]
     },
     {
       "kind": "network_high_performance",
       "headline_usd_per_gb_month": 0.14,
       "actual_datacenter_quote": null,
-      "source_ids": [
-        "RPH004",
-        "RPH010"
-      ]
+      "source_ids": ["RPH004", "RPH010"]
     },
     {
       "kind": "global_beta",
       "usd_per_gb_month": null,
       "usd_per_1000_class_a_requests": 0.005,
       "usd_per_1000_class_b_requests": 0.0005,
-      "source_ids": [
-        "RPH011"
-      ],
+      "source_ids": ["RPH011"],
       "note": "Storage rate unverified; requests are charged separately."
     }
   ],

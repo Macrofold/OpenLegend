@@ -24,13 +24,13 @@ Runpod's [March 24, 2026 terms](https://www.runpod.io/legal/terms-of-service) co
 
 The following recommendations are research judgments based on the documented modes, not measured deployment winners.
 
-| Mode | Suitable use | Operational implication |
-| --- | --- | --- |
-| Dedicated Pod | First qualification of custom/native/speech runtimes; continuous service; direct control of loading and logs. | Owner keeps the container serving, authenticates it, monitors it and pays for running capacity. A persistent model volume makes replacement easier. |
-| Serverless load balancer | An HTTP service that needs its own paths, low-latency routing or streaming. | Direct worker routing without a job backlog; overload and cold starts require bounded handling. Use an active worker when an unacceptable cold start would interrupt play. |
-| Serverless queue | Offline voice assets, asynchronous generation and other work whose delay is acceptable. | Wrap the model in the queue handler protocol, retain job IDs and retrieve results before expiry. Queue retries and game request ownership must be reconciled. |
-| External hosted API | A closed model or a contract route unavailable to this account. | A proxy hosted on Runpod does not turn the upstream model into self-hosted weights or remove its tariff, limits and terms. |
-| Multi-GPU Pod or supported cluster | A profile whose weights/state require sharding. | Verify engine parallelism, interconnect and host memory. Several independent workers do not combine VRAM into one model. |
+| Mode                               | Suitable use                                                                                                  | Operational implication                                                                                                                                                    |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dedicated Pod                      | First qualification of custom/native/speech runtimes; continuous service; direct control of loading and logs. | Owner keeps the container serving, authenticates it, monitors it and pays for running capacity. A persistent model volume makes replacement easier.                        |
+| Serverless load balancer           | An HTTP service that needs its own paths, low-latency routing or streaming.                                   | Direct worker routing without a job backlog; overload and cold starts require bounded handling. Use an active worker when an unacceptable cold start would interrupt play. |
+| Serverless queue                   | Offline voice assets, asynchronous generation and other work whose delay is acceptable.                       | Wrap the model in the queue handler protocol, retain job IDs and retrieve results before expiry. Queue retries and game request ownership must be reconciled.              |
+| External hosted API                | A closed model or a contract route unavailable to this account.                                               | A proxy hosted on Runpod does not turn the upstream model into self-hosted weights or remove its tariff, limits and terms.                                                 |
+| Multi-GPU Pod or supported cluster | A profile whose weights/state require sharding.                                                               | Verify engine parallelism, interconnect and host memory. Several independent workers do not combine VRAM into one model.                                                   |
 
 Pods offer a configurable container environment; Serverless load balancing and queue workers have different protocols and overload behavior. [RPH001](https://docs.runpod.io/pods/overview), [RPH016](https://docs.runpod.io/serverless/load-balancing/overview), [RPH019](https://docs.runpod.io/serverless/endpoints/send-requests)
 
@@ -46,19 +46,21 @@ Pods offer a configurable container environment; Serverless load balancing and q
 
 Hugging Face documents exact-revision downloads and selected-file patterns. vLLM documents model- and kernel-specific quantization support; container architecture and CUDA compatibility must also match the host. CUDA 13.x's general driver floor is 580, with feature/PTX caveats; a model may require a newer specific build. Record the exact requirements rather than assuming any NVIDIA image runs on any NVIDIA offering. [RPH030](https://huggingface.co/docs/huggingface_hub/guides/download), [RPH028](https://docs.vllm.ai/en/latest/features/quantization/), [RPH036](https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html)
 
+Runpod's Pod guide says Docker Compose is not supported. A vendor's multi-container API/engine example therefore needs a supported hosting arrangement, rather than being pasted into a Pod unchanged. Record any separate processes/services, internal connections, license service and shared-memory/IPC requirements. A published Docker command's flags are not automatically exposed by a Runpod template or Macrofold's managed recipe. [RPH013](https://docs.runpod.io/pods/manage-pods)
+
 ### Text serving configuration to make explicit
 
-| Setting | Why it belongs in the deployment record |
-| --- | --- |
-| Model/revision and tokenizer/template | Establish which weights and exact input serialization are served. |
-| Generation config and remote code | Record `generation_config.json`, the engine's load/override policy, `code_revision` and `trust_remote_code`; these can differ from tokenizer/model identity and affect output limits or execution. |
-| Total context and output cap | Prevent an advertised family limit from being mistaken for this server's allowance. |
-| Weight format/precision and cache precision | Different memory and kernel requirements; an FP8 cache is not FP8 model weights. |
-| Maximum sequences and batched tokens | Bound concurrent state and prefill work; not equivalent to total world population. |
-| GPU allocation and parallelism | Establish per-worker device count, partitions and replica count separately. |
-| GPU-memory budget and eager/graph settings | Preserve room for runtime allocations and co-resident components. |
-| Reasoning, tool and structured-output parser | Ensure the requested wire behavior is supported by that engine and template. |
-| Prefix caching, offload and modality limits | Preserve performance assumptions and avoid allocating unused modality components. |
+| Setting                                      | Why it belongs in the deployment record                                                                                                                                                            |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model/revision and tokenizer/template        | Establish which weights and exact input serialization are served.                                                                                                                                  |
+| Generation config and remote code            | Record `generation_config.json`, the engine's load/override policy, `code_revision` and `trust_remote_code`; these can differ from tokenizer/model identity and affect output limits or execution. |
+| Total context and output cap                 | Prevent an advertised family limit from being mistaken for this server's allowance.                                                                                                                |
+| Weight format/precision and cache precision  | Different memory and kernel requirements; an FP8 cache is not FP8 model weights.                                                                                                                   |
+| Maximum sequences and batched tokens         | Bound concurrent state and prefill work; not equivalent to total world population.                                                                                                                 |
+| GPU allocation and parallelism               | Establish per-worker device count, partitions and replica count separately.                                                                                                                        |
+| GPU-memory budget and eager/graph settings   | Preserve room for runtime allocations and co-resident components.                                                                                                                                  |
+| Reasoning, tool and structured-output parser | Ensure the requested wire behavior is supported by that engine and template.                                                                                                                       |
+| Prefix caching, offload and modality limits  | Preserve performance assumptions and avoid allocating unused modality components.                                                                                                                  |
 
 Runpod's packaged vLLM worker exposes variables including `MODEL_NAME`, `MODEL_REVISION`, `MAX_MODEL_LEN`, `MAX_NUM_SEQS`, `TENSOR_PARALLEL_SIZE`, `DTYPE`, `KV_CACHE_DTYPE` and `QUANTIZATION`. These are **wrapper-specific**; they are not automatically accepted by an arbitrary upstream container. Its documentation includes older decoder options alongside current upstream APIs. Check the pinned image's accepted settings; do not combine defaults from different releases. [RPH023](https://docs.runpod.io/serverless/vllm/environment-variables), [RPH024](https://docs.runpod.io/serverless/vllm/configuration)
 
@@ -78,13 +80,13 @@ A local 24–48GB candidate may be useful for a compact selector, a particular q
 
 ## Storage, model caching and durability
 
-| Storage | Persistence and placement | Appropriate contents / caveat |
-| --- | --- | --- |
-| Pod container disk | Ephemeral; lost on stop/reset/termination. | Image/runtime and disposable work. Do not put the only model manifest or output here. |
-| Pod volume disk | Survives stop; tied to the Pod's host and deleted on termination. | A temporary retained workspace. Restart can lack the original GPU. |
-| Network volume | Independent persistent storage in a selected data center; normally `/workspace` on Pods, `/runpod-volume` on Serverless. | Reusable exact model artifacts. Attach at Pod creation; its regional placement constrains worker availability. |
-| Global volume | Beta, region-independent, optimized for infrequent writes and repeated reads. | Optional shared model distribution across regions. It has separate request charges and should not be assumed equivalent to a write-heavy filesystem. |
-| Runpod cached model | Platform-managed Hugging Face model availability for Serverless hosts. | Reduces repeated download work; does not replace GPU loading, exact-revision verification or durable output storage. |
+| Storage             | Persistence and placement                                                                                                | Appropriate contents / caveat                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pod container disk  | Ephemeral; lost on stop/reset/termination.                                                                               | Image/runtime and disposable work. Do not put the only model manifest or output here.                                                                |
+| Pod volume disk     | Survives stop; tied to the Pod's host and deleted on termination.                                                        | A temporary retained workspace. Restart can lack the original GPU.                                                                                   |
+| Network volume      | Independent persistent storage in a selected data center; normally `/workspace` on Pods, `/runpod-volume` on Serverless. | Reusable exact model artifacts. Attach at Pod creation; its regional placement constrains worker availability.                                       |
+| Global volume       | Beta, region-independent, optimized for infrequent writes and repeated reads.                                            | Optional shared model distribution across regions. It has separate request charges and should not be assumed equivalent to a write-heavy filesystem. |
+| Runpod cached model | Platform-managed Hugging Face model availability for Serverless hosts.                                                   | Reduces repeated download work; does not replace GPU loading, exact-revision verification or durable output storage.                                 |
 
 The Pod storage guide distinguishes stop/terminate behavior and attachment rules. Regional volumes persist independently of compute; global volumes remove that regional storage constraint but remain beta. [RPH009](https://docs.runpod.io/pods/storage/types), [RPH008](https://docs.runpod.io/storage/network-volumes), [RPH011](https://docs.runpod.io/storage/globalvolume/overview), [RPH012](https://docs.runpod.io/storage/globalvolume/globalvolume-serverless)
 
@@ -98,12 +100,12 @@ Runpod warns that it is not a long-term backup service. Preserve irreplaceable o
 
 ## Endpoint contracts, network limits and secrets
 
-| Route | Address / contract | Documented limit or behavior to plan for |
-| --- | --- | --- |
-| Pod HTTP proxy | `https://POD_ID-PORT.proxy.runpod.net` | Public endpoint with HTTPS; documented 100-second proxy timeout. Authenticate the application. A running Pod does not prove the model is ready. |
-| Pod direct TCP | Current allocated host/port | Own transport/authentication requirements; suitable when the HTTP proxy's behavior is unsuitable. Pods do not support UDP. |
-| Serverless load balancer | `https://ENDPOINT_ID.api.runpod.ai/<custom-path>` | 2-minute no-worker wait, 5.5-minute processing timeout, 30MB request/response cap. No queue backlog or built-in retry. |
-| Serverless queue | `https://api.runpod.ai/v2/ENDPOINT_ID/run` or `/runsync`, with an `input` envelope | Handler contract, job IDs and result retrieval. Documented payload limits: 10MB `/run`, 20MB `/runsync`; streamed chunks at most 1MB. |
+| Route                    | Address / contract                                                                 | Documented limit or behavior to plan for                                                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pod HTTP proxy           | `https://POD_ID-PORT.proxy.runpod.net`                                             | Public endpoint with HTTPS; documented 100-second proxy timeout. Authenticate the application. A running Pod does not prove the model is ready. |
+| Pod direct TCP           | Current allocated host/port                                                        | Own transport/authentication requirements; suitable when the HTTP proxy's behavior is unsuitable. Pods do not support UDP.                      |
+| Serverless load balancer | `https://ENDPOINT_ID.api.runpod.ai/<custom-path>`                                  | 2-minute no-worker wait, 5.5-minute processing timeout, 30MB request/response cap. No queue backlog or built-in retry.                          |
+| Serverless queue         | `https://api.runpod.ai/v2/ENDPOINT_ID/run` or `/runsync`, with an `input` envelope | Handler contract, job IDs and result retrieval. Documented payload limits: 10MB `/run`, 20MB `/runsync`; streamed chunks at most 1MB.           |
 
 These are transport limits, not token-context limits. Base64 audio adds byte overhead, so larger outputs should use the selected durable object route and return references when the client supports that contract. A queue envelope is not an OpenAI chat endpoint or native SystemOne endpoint merely because the model inside it can answer. [RPH015](https://docs.runpod.io/pods/configuration/expose-ports), [RPH016], [RPH021](https://docs.runpod.io/serverless/workers/handler-functions), [RPH020](https://docs.runpod.io/serverless/endpoints/operation-reference)
 
@@ -121,14 +123,14 @@ The [price snapshot](data/runpod-gpu-pricing.json) preserves the public page and
 
 Pod compute is charged while provisioned/running under its selected tariff. Current documentation describes per-second billing, deprecated savings plans and no Pod ingress/egress charge; other storage/services can still contribute costs. Serverless bills worker start through full stop, rounded to seconds, including GPU model loading, work and the idle timeout. Active workers remain running; current active-worker discounts require a sales quote rather than an assumed fixed percentage. [RPH002], [RPH003](https://docs.runpod.io/serverless/pricing)
 
-| Cost component | How to account for it |
-| --- | --- |
-| Pod compute | Actual whole-Pod hourly offer × billable hours. If quoted per GPU, multiply by GPUs; do not multiply a whole-Pod quote twice. |
-| Serverless compute | Sum billable worker seconds × applicable worker rate, including startup, waiting, overlap and retries. Track GPUs per worker separately. |
-| Persistent storage | Allocated or consumed GB × tariff × duration under that storage product's billing convention. Stopped compute can still incur storage costs. |
-| Global-volume operations | Add read/metadata and write/list request charges; do not price it as storage bytes alone. |
-| Licensed models / external stages | Contract fees, usage metering, normalization APIs, ASR or other calls, where applicable. |
-| Useful game outcome | Divide complete serving cost by successful useful work, including failed/interrupted work and reserved capacity. |
+| Cost component                    | How to account for it                                                                                                                        |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pod compute                       | Actual whole-Pod hourly offer × billable hours. If quoted per GPU, multiply by GPUs; do not multiply a whole-Pod quote twice.                |
+| Serverless compute                | Sum billable worker seconds × applicable worker rate, including startup, waiting, overlap and retries. Track GPUs per worker separately.     |
+| Persistent storage                | Allocated or consumed GB × tariff × duration under that storage product's billing convention. Stopped compute can still incur storage costs. |
+| Global-volume operations          | Add read/metadata and write/list request charges; do not price it as storage bytes alone.                                                    |
+| Licensed models / external stages | Contract fees, usage metering, normalization APIs, ASR or other calls, where applicable.                                                     |
+| Useful game outcome               | Divide complete serving cost by successful useful work, including failed/interrupted work and reserved capacity.                             |
 
 Standard network volumes list $0.07/GB-month for the first TB and $0.05 for capacity above it; Pod volume disk lists $0.10 while running and $0.20 while stopped, with container disk at $0.10 while running. Global volume request classes list $0.005/1,000 writes/creates/lists and $0.0005/1,000 reads/metadata operations; its storage rate was not reliably established here. High-performance storage has a public $0.14/GB-month headline but location-specific documentation; refresh the actual quote. [RPH002], [RPH008], [RPH011], [RPH010], [RPH004]
 
@@ -140,16 +142,16 @@ Set an operator-owned spend ceiling and finite service schedule before a selecte
 
 Before sending any selected workload, record the actual resources, image/revision, allowed limits, readiness and price in the [deployment worksheet](data/deployment-record-template.json). During an authorized qualification, retain startup/warm timings, peak VRAM/RAM, free disk, queue wait, input/output counts, completed work, failure reasons and billed duration. Inspect both application logs and host lifecycle events. None of these measurements was collected by this research.
 
-| Symptom | First distinction to establish | Relevant record or action |
-| --- | --- | --- |
-| Full scenario rejected before inference | Chat input plus generation reservation, or native state/question/choice limits, versus the selected protocol's configured caps. | Preserve exact counts, cap, template/schema and rejection; use [capacity planning](capacity-planning.md). |
-| OOM during model load | Weights/host loader peak versus GPU/CPU RAM. | Check exact artifact, precision, loader copies and required auxiliary models. |
-| OOM only on long or concurrent work | Cache, activation, graphs and per-worker concurrency. | Compare the failing workload with the publisher recipe; avoid guessing from parameter count. |
-| Service healthy but empty/invalid response | Protocol, parser, reasoning allowance, stop tokens or structured-output support. | Preserve failure class; it is not automatically content refusal. |
-| No worker / cold-start timeout | Capacity, region, cached artifact, ports and model-ready state. | Do not retry paid work blindly or send it to another model without the existing owner. |
-| Pod restarts with zero GPUs | Original host capacity was released. | Use retained storage to recover or redeploy on an eligible offer; do not assume restart reserves a GPU. |
-| A completed queue result disappears | Retention or total lifetime expired. | Persist result/operation references through the existing caller before expiry. |
-| Unexpected bill after play ends | Active workers, idle Pods, retained disks or overlapping releases. | Inspect actual resource state and receipts; closing the game is not teardown. |
+| Symptom                                    | First distinction to establish                                                                                                  | Relevant record or action                                                                                 |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Full scenario rejected before inference    | Chat input plus generation reservation, or native state/question/choice limits, versus the selected protocol's configured caps. | Preserve exact counts, cap, template/schema and rejection; use [capacity planning](capacity-planning.md). |
+| OOM during model load                      | Weights/host loader peak versus GPU/CPU RAM.                                                                                    | Check exact artifact, precision, loader copies and required auxiliary models.                             |
+| OOM only on long or concurrent work        | Cache, activation, graphs and per-worker concurrency.                                                                           | Compare the failing workload with the publisher recipe; avoid guessing from parameter count.              |
+| Service healthy but empty/invalid response | Protocol, parser, reasoning allowance, stop tokens or structured-output support.                                                | Preserve failure class; it is not automatically content refusal.                                          |
+| No worker / cold-start timeout             | Capacity, region, cached artifact, ports and model-ready state.                                                                 | Do not retry paid work blindly or send it to another model without the existing owner.                    |
+| Pod restarts with zero GPUs                | Original host capacity was released.                                                                                            | Use retained storage to recover or redeploy on an eligible offer; do not assume restart reserves a GPU.   |
+| A completed queue result disappears        | Retention or total lifetime expired.                                                                                            | Persist result/operation references through the existing caller before expiry.                            |
+| Unexpected bill after play ends            | Active workers, idle Pods, retained disks or overlapping releases.                                                              | Inspect actual resource state and receipts; closing the game is not teardown.                             |
 
 Stopping a Pod releases its GPU, clears container disk and retains its volume disk; terminating removes Pod-local data. Network-volume data survives compute removal. Editing a running Pod can reset it and erase nonpersistent data. Exact restart availability is not guaranteed. [RPH013](https://docs.runpod.io/pods/manage-pods), [RPH014](https://docs.runpod.io/pods/troubleshooting/zero-gpus)
 

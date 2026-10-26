@@ -5,9 +5,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Qwen3-TTS 12Hz — 1.7B / 0.6B family: identity and published capabilities"
-    ]
+    "supports": ["Qwen3-TTS 12Hz — 1.7B / 0.6B family: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S002",
@@ -28,9 +26,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Voice design capability"
-    ]
+    "supports": ["Voice design capability"]
   },
   {
     "source_id": "VOICE-S004",
@@ -38,10 +34,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Qwen3 TTS 24 kHz and serving",
-      "S2-Pro sampling rate"
-    ]
+    "supports": ["Qwen3 TTS 24 kHz and serving", "S2-Pro sampling rate"]
   },
   {
     "source_id": "VOICE-S005",
@@ -62,9 +55,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Fish Audio Drama 3: identity and published capabilities"
-    ]
+    "supports": ["Fish Audio Drama 3: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S007",
@@ -72,9 +63,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Community license and commercial threshold"
-    ]
+    "supports": ["Community license and commercial threshold"]
   },
   {
     "source_id": "VOICE-S008",
@@ -94,9 +83,7 @@
     "source_type": "primary",
     "source_date": "2026-10-13",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Drama 3 report and date"
-    ]
+    "supports": ["Drama 3 report and date"]
   },
   {
     "source_id": "VOICE-S010",
@@ -104,9 +91,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Fish Audio S2-Pro (open weights): identity and published capabilities"
-    ]
+    "supports": ["Fish Audio S2-Pro (open weights): identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S011",
@@ -114,9 +99,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "S2-Pro research license retained"
-    ]
+    "supports": ["S2-Pro research license retained"]
   },
   {
     "source_id": "VOICE-S012",
@@ -199,9 +182,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Fun-CosyVoice3-0.5B-2512: identity and published capabilities"
-    ]
+    "supports": ["Fun-CosyVoice3-0.5B-2512: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S019",
@@ -209,9 +190,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Current repository and release roadmap"
-    ]
+    "supports": ["Current repository and release roadmap"]
   },
   {
     "source_id": "VOICE-S020",
@@ -219,9 +198,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Serving integration"
-    ]
+    "supports": ["Serving integration"]
   },
   {
     "source_id": "VOICE-S021",
@@ -229,9 +206,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "IndexTTS-2.5: identity and published capabilities"
-    ]
+    "supports": ["IndexTTS-2.5: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S022",
@@ -239,9 +214,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Custom terms and derivative/model-improvement restrictions"
-    ]
+    "supports": ["Custom terms and derivative/model-improvement restrictions"]
   },
   {
     "source_id": "VOICE-S023",
@@ -249,9 +222,7 @@
     "source_type": "primary",
     "source_date": "2026-01-07",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Technical report date"
-    ]
+    "supports": ["Technical report date"]
   },
   {
     "source_id": "VOICE-S024",
@@ -259,9 +230,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "VoxCPM2: identity and published capabilities"
-    ]
+    "supports": ["VoxCPM2: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S025",
@@ -269,9 +238,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "April release, Apache weights/code and deployment/performance table"
-    ]
+    "supports": ["April release, Apache weights/code and deployment/performance table"]
   },
   {
     "source_id": "VOICE-S026",
@@ -279,9 +246,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "FireRedTTS3 Base / Instruct: identity and published capabilities"
-    ]
+    "supports": ["FireRedTTS3 Base / Instruct: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S027",
@@ -289,9 +254,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Inference constraints, examples and editable attributes"
-    ]
+    "supports": ["Inference constraints, examples and editable attributes"]
   },
   {
     "source_id": "VOICE-S028",
@@ -299,9 +262,7 @@
     "source_type": "primary",
     "source_date": "2026-08-18",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Report"
-    ]
+    "supports": ["Report"]
   },
   {
     "source_id": "VOICE-S029",
@@ -309,9 +270,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "MOSS-TTS v1.5 / Local-Transformer v1.5: identity and published capabilities"
-    ]
+    "supports": ["MOSS-TTS v1.5 / Local-Transformer v1.5: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S030",
@@ -330,9 +289,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "8B sibling identity"
-    ]
+    "supports": ["8B sibling identity"]
   },
   {
     "source_id": "VOICE-S032",
@@ -340,9 +297,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "MOSS-TTSD v1.0: identity and published capabilities"
-    ]
+    "supports": ["MOSS-TTSD v1.0: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S033",
@@ -350,9 +305,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "MOSS-TTS-Nano 100M: identity and published capabilities"
-    ]
+    "supports": ["MOSS-TTS-Nano 100M: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S034",
@@ -360,9 +313,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Release and runtime"
-    ]
+    "supports": ["Release and runtime"]
   },
   {
     "source_id": "VOICE-S035",
@@ -370,9 +321,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Dia2 — 1B / 2B: identity and published capabilities"
-    ]
+    "supports": ["Dia2 — 1B / 2B: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S036",
@@ -390,9 +339,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Higgs TTS 3 4B: identity and published capabilities"
-    ]
+    "supports": ["Higgs TTS 3 4B: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S038",
@@ -400,9 +347,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Code/runtime and separate model licensing"
-    ]
+    "supports": ["Code/runtime and separate model licensing"]
   },
   {
     "source_id": "VOICE-S039",
@@ -410,9 +355,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "GLM-TTS: identity and published capabilities"
-    ]
+    "supports": ["GLM-TTS: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S040",
@@ -420,9 +363,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Runtime and examples"
-    ]
+    "supports": ["Runtime and examples"]
   },
   {
     "source_id": "VOICE-S041",
@@ -430,9 +371,7 @@
     "source_type": "primary",
     "source_date": "2025-12-16",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Report"
-    ]
+    "supports": ["Report"]
   },
   {
     "source_id": "VOICE-S042",
@@ -440,9 +379,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Step-Audio-EditX: identity and published capabilities"
-    ]
+    "supports": ["Step-Audio-EditX: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S043",
@@ -450,9 +387,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Runtime / code license"
-    ]
+    "supports": ["Runtime / code license"]
   },
   {
     "source_id": "VOICE-S044",
@@ -460,9 +395,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Hume TADA — 1B / 3B-ML: identity and published capabilities"
-    ]
+    "supports": ["Hume TADA — 1B / 3B-ML: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S045",
@@ -470,9 +403,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Model variants and runtime"
-    ]
+    "supports": ["Model variants and runtime"]
   },
   {
     "source_id": "VOICE-S046",
@@ -480,9 +411,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Release announcement"
-    ]
+    "supports": ["Release announcement"]
   },
   {
     "source_id": "VOICE-S047",
@@ -500,9 +429,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "October tiny variants, multilingual runtime and MIT code"
-    ]
+    "supports": ["October tiny variants, multilingual runtime and MIT code"]
   },
   {
     "source_id": "VOICE-S049",
@@ -560,9 +487,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Separate licenses by variant"
-    ]
+    "supports": ["Separate licenses by variant"]
   },
   {
     "source_id": "VOICE-S054",
@@ -570,9 +495,7 @@
     "source_type": "primary",
     "source_date": "2026-10-21",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Launch date and hardware targets"
-    ]
+    "supports": ["Launch date and hardware targets"]
   },
   {
     "source_id": "VOICE-S055",
@@ -580,9 +503,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "NeuTTS Nano / NeuTTS-2E (alpha): identity and published capabilities"
-    ]
+    "supports": ["NeuTTS Nano / NeuTTS-2E (alpha): identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S056",
@@ -590,9 +511,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "2E alpha, emotion labels and gated terms"
-    ]
+    "supports": ["2E alpha, emotion labels and gated terms"]
   },
   {
     "source_id": "VOICE-S057",
@@ -600,9 +519,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Nano and cloning"
-    ]
+    "supports": ["Nano and cloning"]
   },
   {
     "source_id": "VOICE-S058",
@@ -610,9 +527,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "OmniVoice 0.6B: identity and published capabilities"
-    ]
+    "supports": ["OmniVoice 0.6B: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S059",
@@ -620,9 +535,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Runtime and samples"
-    ]
+    "supports": ["Runtime and samples"]
   },
   {
     "source_id": "VOICE-S060",
@@ -630,9 +543,7 @@
     "source_type": "primary",
     "source_date": "2026-04-01",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Report"
-    ]
+    "supports": ["Report"]
   },
   {
     "source_id": "VOICE-S061",
@@ -640,9 +551,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "TontaubeV1: identity and published capabilities"
-    ]
+    "supports": ["TontaubeV1: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S062",
@@ -650,9 +559,7 @@
     "source_type": "primary",
     "source_date": "2026-09-08",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Report date"
-    ]
+    "supports": ["Report date"]
   },
   {
     "source_id": "VOICE-S063",
@@ -660,9 +567,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Runtime"
-    ]
+    "supports": ["Runtime"]
   },
   {
     "source_id": "VOICE-S064",
@@ -670,9 +575,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "NVIDIA MagpieTTS Multilingual v2607: identity and published capabilities"
-    ]
+    "supports": ["NVIDIA MagpieTTS Multilingual v2607: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S065",
@@ -680,9 +583,7 @@
     "source_type": "primary",
     "source_date": "2026-08-10",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "NIM and voice-agent use"
-    ]
+    "supports": ["NIM and voice-agent use"]
   },
   {
     "source_id": "VOICE-S066",
@@ -690,9 +591,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Qwen-Audio-3.1-TTS Plus / Flash: identity and published capabilities"
-    ]
+    "supports": ["Qwen-Audio-3.1-TTS Plus / Flash: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S067",
@@ -700,9 +599,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Flash capabilities and billing"
-    ]
+    "supports": ["Flash capabilities and billing"]
   },
   {
     "source_id": "VOICE-S068",
@@ -722,9 +619,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Official voices and published preview files"
-    ]
+    "supports": ["Official voices and published preview files"]
   },
   {
     "source_id": "VOICE-S070",
@@ -756,9 +651,7 @@
     "source_type": "primary",
     "source_date": "2026-10-09",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Content restrictions"
-    ]
+    "supports": ["Content restrictions"]
   },
   {
     "source_id": "VOICE-S073",
@@ -766,9 +659,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Cartesia Sonic 3.6: identity and published capabilities"
-    ]
+    "supports": ["Cartesia Sonic 3.6: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S074",
@@ -776,10 +667,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Credits, plans and free commercial limitation",
-      "Credit bundles"
-    ]
+    "supports": ["Credits, plans and free commercial limitation", "Credit bundles"]
   },
   {
     "source_id": "VOICE-S075",
@@ -787,10 +675,7 @@
     "source_type": "primary",
     "source_date": "2025-07-23",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Violent-content AUP",
-      "Provider content restrictions"
-    ]
+    "supports": ["Violent-content AUP", "Provider content restrictions"]
   },
   {
     "source_id": "VOICE-S076",
@@ -798,9 +683,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Enterprise deployment options"
-    ]
+    "supports": ["Enterprise deployment options"]
   },
   {
     "source_id": "VOICE-S077",
@@ -808,9 +691,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Inworld Realtime TTS-2 / Flash: identity and published capabilities"
-    ]
+    "supports": ["Inworld Realtime TTS-2 / Flash: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S078",
@@ -818,9 +699,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Current model rates and commitments"
-    ]
+    "supports": ["Current model rates and commitments"]
   },
   {
     "source_id": "VOICE-S079",
@@ -828,9 +707,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Standard and customer-hosted conditions"
-    ]
+    "supports": ["Standard and customer-hosted conditions"]
   },
   {
     "source_id": "VOICE-S080",
@@ -850,9 +727,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Published samples and game-relevant features"
-    ]
+    "supports": ["Published samples and game-relevant features"]
   },
   {
     "source_id": "VOICE-S082",
@@ -860,9 +735,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Newer product-page language claim differs from model comparison docs"
-    ]
+    "supports": ["Newer product-page language claim differs from model comparison docs"]
   },
   {
     "source_id": "VOICE-S083",
@@ -870,9 +743,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "MiniMax Speech 2.8 HD / Turbo: identity and published capabilities"
-    ]
+    "supports": ["MiniMax Speech 2.8 HD / Turbo: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S084",
@@ -880,9 +751,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Official hosting-provider model/language support"
-    ]
+    "supports": ["Official hosting-provider model/language support"]
   },
   {
     "source_id": "VOICE-S085",
@@ -890,9 +759,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Deepgram Flux TTS / Aura-2: identity and published capabilities"
-    ]
+    "supports": ["Deepgram Flux TTS / Aura-2: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S086",
@@ -911,9 +778,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Flux voices and endpoint"
-    ]
+    "supports": ["Flux voices and endpoint"]
   },
   {
     "source_id": "VOICE-S088",
@@ -921,9 +786,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Enterprise deployment"
-    ]
+    "supports": ["Enterprise deployment"]
   },
   {
     "source_id": "VOICE-S089",
@@ -931,9 +794,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Rime Coda (pricing: Coda v2) / Mist v3: identity and published capabilities"
-    ]
+    "supports": ["Rime Coda (pricing: Coda v2) / Mist v3: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S090",
@@ -941,9 +802,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Current minute billing and Coda v2 label"
-    ]
+    "supports": ["Current minute billing and Coda v2 label"]
   },
   {
     "source_id": "VOICE-S091",
@@ -951,9 +810,7 @@
     "source_type": "primary",
     "source_date": "2026-04-06",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Mist v3 announcement"
-    ]
+    "supports": ["Mist v3 announcement"]
   },
   {
     "source_id": "VOICE-S092",
@@ -961,9 +818,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Gradium hosted TTS: identity and published capabilities"
-    ]
+    "supports": ["Gradium hosted TTS: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S093",
@@ -971,9 +826,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Credits, plans and units"
-    ]
+    "supports": ["Credits, plans and units"]
   },
   {
     "source_id": "VOICE-S094",
@@ -981,9 +834,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Content restrictions"
-    ]
+    "supports": ["Content restrictions"]
   },
   {
     "source_id": "VOICE-S095",
@@ -991,9 +842,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "xAI / SpaceXSI Text-to-Speech API: identity and published capabilities"
-    ]
+    "supports": ["xAI / SpaceXSI Text-to-Speech API: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S096",
@@ -1012,10 +861,7 @@
     "source_type": "primary",
     "source_date": "2026-08-14",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Current AUP",
-      "Current developer AUP"
-    ]
+    "supports": ["Current AUP", "Current developer AUP"]
   },
   {
     "source_id": "VOICE-S098",
@@ -1023,9 +869,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Mistral Voxtral TTS 3 / TTS Realtime 3: identity and published capabilities"
-    ]
+    "supports": ["Mistral Voxtral TTS 3 / TTS Realtime 3: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S099",
@@ -1033,9 +877,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Mode-specific features and unavailable style instructions"
-    ]
+    "supports": ["Mode-specific features and unavailable style instructions"]
   },
   {
     "source_id": "VOICE-S100",
@@ -1054,9 +896,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Microsoft VibeVoice-Realtime 0.5B: identity and published capabilities"
-    ]
+    "supports": ["Microsoft VibeVoice-Realtime 0.5B: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S102",
@@ -1075,9 +915,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Hume Octave 2 / EVI (retiring API): identity and published capabilities"
-    ]
+    "supports": ["Hume Octave 2 / EVI (retiring API): identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S104",
@@ -1085,9 +923,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Current product/pricing destination no longer supplies stable old-API comparison"
-    ]
+    "supports": ["Current product/pricing destination no longer supplies stable old-API comparison"]
   },
   {
     "source_id": "VOICE-S105",
@@ -1095,9 +931,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "NVIDIA PersonaPlex-7B-v1: identity and published capabilities"
-    ]
+    "supports": ["NVIDIA PersonaPlex-7B-v1: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S106",
@@ -1105,9 +939,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Runtime and code terms"
-    ]
+    "supports": ["Runtime and code terms"]
   },
   {
     "source_id": "VOICE-S107",
@@ -1115,9 +947,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Published conversations and role/voice control"
-    ]
+    "supports": ["Published conversations and role/voice control"]
   },
   {
     "source_id": "VOICE-S108",
@@ -1125,9 +955,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Qwen3-Omni-30B-A3B-Instruct: identity and published capabilities"
-    ]
+    "supports": ["Qwen3-Omni-30B-A3B-Instruct: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S109",
@@ -1135,9 +963,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Runtime and published examples"
-    ]
+    "supports": ["Runtime and published examples"]
   },
   {
     "source_id": "VOICE-S110",
@@ -1145,9 +971,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Modalities and model architecture"
-    ]
+    "supports": ["Modalities and model architecture"]
   },
   {
     "source_id": "VOICE-S111",
@@ -1155,9 +979,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Grok Voice 3.0: identity and published capabilities"
-    ]
+    "supports": ["Grok Voice 3.0: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S112",
@@ -1165,9 +987,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "dots.tts SOAR / MeanFlow streaming family: identity and published capabilities"
-    ]
+    "supports": ["dots.tts SOAR / MeanFlow streaming family: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S113",
@@ -1186,9 +1006,7 @@
     "source_type": "primary",
     "source_date": "2026-06-05",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Technical report"
-    ]
+    "supports": ["Technical report"]
   },
   {
     "source_id": "VOICE-S115",
@@ -1209,9 +1027,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "dots.tts.edit: identity and published capabilities"
-    ]
+    "supports": ["dots.tts.edit: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S117",
@@ -1219,9 +1035,7 @@
     "source_type": "primary",
     "source_date": "2026-08-02",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Editing report"
-    ]
+    "supports": ["Editing report"]
   },
   {
     "source_id": "VOICE-S118",
@@ -1229,9 +1043,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Qwen3-ASR 1.7B / 0.6B + ForcedAligner: identity and published capabilities"
-    ]
+    "supports": ["Qwen3-ASR 1.7B / 0.6B + ForcedAligner: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S119",
@@ -1239,9 +1051,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Released inference toolkit and alignment"
-    ]
+    "supports": ["Released inference toolkit and alignment"]
   },
   {
     "source_id": "VOICE-S120",
@@ -1269,9 +1079,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Unified architecture, license and latency configurations"
-    ]
+    "supports": ["Unified architecture, license and latency configurations"]
   },
   {
     "source_id": "VOICE-S123",
@@ -1279,9 +1087,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "NVIDIA Canary-Qwen2.5B: identity and published capabilities"
-    ]
+    "supports": ["NVIDIA Canary-Qwen2.5B: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S124",
@@ -1289,9 +1095,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Microsoft VibeVoice-ASR / streaming family: identity and published capabilities"
-    ]
+    "supports": ["Microsoft VibeVoice-ASR / streaming family: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S125",
@@ -1299,9 +1103,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Long-form and speaker/timestamp guidance"
-    ]
+    "supports": ["Long-form and speaker/timestamp guidance"]
   },
   {
     "source_id": "VOICE-S126",
@@ -1309,9 +1111,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Voxtral Transcribe 3 family: identity and published capabilities"
-    ]
+    "supports": ["Voxtral Transcribe 3 family: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S127",
@@ -1319,9 +1119,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Small current pricing/features"
-    ]
+    "supports": ["Small current pricing/features"]
   },
   {
     "source_id": "VOICE-S128",
@@ -1329,9 +1127,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Mini current pricing/features"
-    ]
+    "supports": ["Mini current pricing/features"]
   },
   {
     "source_id": "VOICE-S129",
@@ -1349,9 +1145,7 @@
     "source_type": "primary",
     "source_date": "2026-07-13",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Managed deployment availability"
-    ]
+    "supports": ["Managed deployment availability"]
   },
   {
     "source_id": "VOICE-S131",
@@ -1359,9 +1153,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Whisper large-v3-turbo: identity and published capabilities"
-    ]
+    "supports": ["Whisper large-v3-turbo: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S132",
@@ -1369,9 +1161,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Conversation recognition integration"
-    ]
+    "supports": ["Conversation recognition integration"]
   },
   {
     "source_id": "VOICE-S133",
@@ -1379,9 +1169,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "OpenVoice v2: identity and published capabilities"
-    ]
+    "supports": ["OpenVoice v2: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S134",
@@ -1389,9 +1177,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Seed-VC v2 / realtime conversion family: identity and published capabilities"
-    ]
+    "supports": ["Seed-VC v2 / realtime conversion family: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S135",
@@ -1399,9 +1185,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Kokoro 82M v1.0: identity and published capabilities"
-    ]
+    "supports": ["Kokoro 82M v1.0: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S136",
@@ -1409,9 +1193,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Runtime and release information"
-    ]
+    "supports": ["Runtime and release information"]
   },
   {
     "source_id": "VOICE-S137",
@@ -1419,9 +1201,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "F5-TTS v1 Base / E2-TTS baseline: identity and published capabilities"
-    ]
+    "supports": ["F5-TTS v1 Base / E2-TTS baseline: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S138",
@@ -1429,9 +1209,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Code and weight-license distinction"
-    ]
+    "supports": ["Code and weight-license distinction"]
   },
   {
     "source_id": "VOICE-S139",
@@ -1439,9 +1217,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Sesame CSM 1B: identity and published capabilities"
-    ]
+    "supports": ["Sesame CSM 1B: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S140",
@@ -1449,9 +1225,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Kyutai Moshi / Moshiko / Moshika: identity and published capabilities"
-    ]
+    "supports": ["Kyutai Moshi / Moshiko / Moshika: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S141",
@@ -1459,9 +1233,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Piper (current OHF piper1-gpl): identity and published capabilities"
-    ]
+    "supports": ["Piper (current OHF piper1-gpl): identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S142",
@@ -1469,9 +1241,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Parler-TTS Mini v1: identity and published capabilities"
-    ]
+    "supports": ["Parler-TTS Mini v1: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S143",
@@ -1541,9 +1311,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Commercial thresholds and downstream/model-training/content clauses"
-    ],
+    "supports": ["Commercial thresholds and downstream/model-training/content clauses"],
     "last_reviewed_on": "2026-10-24"
   },
   {
@@ -1564,9 +1332,7 @@
     "source_type": "primary",
     "source_date": "2026-10-14",
     "accessed_on": "2026-10-23",
-    "supports": [
-      "Exact release date, deployment use claims and automatic mutable-alias update"
-    ],
+    "supports": ["Exact release date, deployment use claims and automatic mutable-alias update"],
     "last_reviewed_on": "2026-10-24"
   },
   {
@@ -1575,9 +1341,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Cartesia Ink-2: identity and published capabilities"
-    ]
+    "supports": ["Cartesia Ink-2: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S152",
@@ -1585,9 +1349,7 @@
     "source_type": "primary",
     "source_date": "2026-07-09",
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Launch date and September language update"
-    ]
+    "supports": ["Launch date and September language update"]
   },
   {
     "source_id": "VOICE-S153",
@@ -1595,9 +1357,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Qwen-Audio-3.1-TTS-Next: identity and published capabilities"
-    ]
+    "supports": ["Qwen-Audio-3.1-TTS-Next: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S154",
@@ -1605,9 +1365,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Qwen-Audio-3.1-Realtime-Plus: identity and published capabilities"
-    ]
+    "supports": ["Qwen-Audio-3.1-Realtime-Plus: identity and published capabilities"]
   },
   {
     "source_id": "VOICE-S155",
@@ -1615,9 +1373,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "GPT-Live 1 API identity, full-duplex role and duration billing"
-    ]
+    "supports": ["GPT-Live 1 API identity, full-duplex role and duration billing"]
   },
   {
     "source_id": "VOICE-S156",
@@ -1625,9 +1381,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Realtime 2.1 identity, limits, modalities, reasoning and tariff"
-    ]
+    "supports": ["Realtime 2.1 identity, limits, modalities, reasoning and tariff"]
   },
   {
     "source_id": "VOICE-S157",
@@ -1635,9 +1389,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Realtime 2.1 Mini identity, limits, modalities and tariff"
-    ]
+    "supports": ["Realtime 2.1 Mini identity, limits, modalities and tariff"]
   },
   {
     "source_id": "VOICE-S158",
@@ -1645,9 +1397,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Current Live duration and Realtime text/audio token tariffs"
-    ]
+    "supports": ["Current Live duration and Realtime text/audio token tariffs"]
   },
   {
     "source_id": "VOICE-S159",
@@ -1655,9 +1405,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Live transport options and separation of voice from delegated backend"
-    ]
+    "supports": ["Live transport options and separation of voice from delegated backend"]
   },
   {
     "source_id": "VOICE-S160",
@@ -1665,9 +1413,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Current Realtime 2.1 SDK example and streaming speech-to-speech deployment"
-    ]
+    "supports": ["Current Realtime 2.1 SDK example and streaming speech-to-speech deployment"]
   },
   {
     "source_id": "VOICE-S161",
@@ -1695,9 +1441,7 @@
     "source_type": "primary",
     "source_date": "2026-09-23",
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Publisher first-person deployment account and embedded GPT-Live demo"
-    ]
+    "supports": ["Publisher first-person deployment account and embedded GPT-Live demo"]
   },
   {
     "source_id": "VOICE-S164",
@@ -1705,9 +1449,7 @@
     "source_type": "primary",
     "source_date": "2025-10-29",
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Usage policy effective at October 24 research cutoff"
-    ]
+    "supports": ["Usage policy effective at October 24 research cutoff"]
   },
   {
     "source_id": "VOICE-S165",
@@ -1725,9 +1467,7 @@
     "source_type": "primary",
     "source_date": "2026-09",
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Stable Live identity, context/output limits, async tools and migration behavior"
-    ]
+    "supports": ["Stable Live identity, context/output limits, async tools and migration behavior"]
   },
   {
     "source_id": "VOICE-S167",
@@ -1735,9 +1475,7 @@
     "source_type": "primary",
     "source_date": "2026-09",
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Stable Extended Thinking identity, background reasoning and session behavior"
-    ]
+    "supports": ["Stable Extended Thinking identity, background reasoning and session behavior"]
   },
   {
     "source_id": "VOICE-S168",
@@ -1745,9 +1483,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Live API transport, audio formats, multilingual features and NPC use case"
-    ]
+    "supports": ["Live API transport, audio formats, multilingual features and NPC use case"]
   },
   {
     "source_id": "VOICE-S169",
@@ -1755,9 +1491,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Developer API modality-specific Live pricing and free/paid data distinction"
-    ]
+    "supports": ["Developer API modality-specific Live pricing and free/paid data distinction"]
   },
   {
     "source_id": "VOICE-S170",
@@ -1775,9 +1509,7 @@
     "source_type": "primary",
     "source_date": "2024-12-17",
     "accessed_on": "2026-10-24",
-    "supports": [
-      "Violence/harassment restrictions and discretionary artistic exceptions"
-    ]
+    "supports": ["Violence/harassment restrictions and discretionary artistic exceptions"]
   },
   {
     "source_id": "VOICE-S172",
@@ -1857,9 +1589,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "SGLang streaming route, codec-token generation default and audio format."
-    ]
+    "supports": ["SGLang streaming route, codec-token generation default and audio format."]
   },
   {
     "source_id": "VOICE-S180",
@@ -1957,9 +1687,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Separate DAC codec and preprocessing; optional CPU offload; package versions."
-    ]
+    "supports": ["Separate DAC codec and preprocessing; optional CPU offload; package versions."]
   },
   {
     "source_id": "VOICE-S190",
@@ -1967,9 +1695,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "BF16 text max_seq_len 32768; audio-decoder sequence dimension is separate."
-    ]
+    "supports": ["BF16 text max_seq_len 32768; audio-decoder sequence dimension is separate."]
   },
   {
     "source_id": "VOICE-S191",
@@ -2017,9 +1743,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Turbo repository alternative S3Gen assets and T3/voice-encoder file listing."
-    ]
+    "supports": ["Turbo repository alternative S3Gen assets and T3/voice-encoder file listing."]
   },
   {
     "source_id": "VOICE-S196",
@@ -2027,9 +1751,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Nano repository file listing and T3 asset."
-    ]
+    "supports": ["Nano repository file listing and T3 asset."]
   },
   {
     "source_id": "VOICE-S197",
@@ -2077,9 +1799,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Approximately 5.49 GB checkpoint repository listing."
-    ]
+    "supports": ["Approximately 5.49 GB checkpoint repository listing."]
   },
   {
     "source_id": "VOICE-S202",
@@ -2147,9 +1867,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Flagship MOSS-TTS v1.5 native inference and distinct codec/runtime."
-    ]
+    "supports": ["Flagship MOSS-TTS v1.5 native inference and distinct codec/runtime."]
   },
   {
     "source_id": "VOICE-S209",
@@ -2157,9 +1875,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact flagship 40960 language positions, BF16, 24 kHz and 32 codebooks."
-    ]
+    "supports": ["Exact flagship 40960 language positions, BF16, 24 kHz and 32 codebooks."]
   },
   {
     "source_id": "VOICE-S210",
@@ -2187,9 +1903,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "BF16 8B-derived language config 40960 positions and 24 kHz audio."
-    ]
+    "supports": ["BF16 8B-derived language config 40960 positions and 24 kHz audio."]
   },
   {
     "source_id": "VOICE-S213",
@@ -2227,9 +1941,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact 1B artifact card."
-    ]
+    "supports": ["Exact 1B artifact card."]
   },
   {
     "source_id": "VOICE-S217",
@@ -2237,9 +1949,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact 2B artifact card."
-    ]
+    "supports": ["Exact 2B artifact card."]
   },
   {
     "source_id": "VOICE-S218",
@@ -2247,9 +1957,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact 4B model, audio codec requirements and model-use grant."
-    ]
+    "supports": ["Exact 4B model, audio codec requirements and model-use grant."]
   },
   {
     "source_id": "VOICE-S219",
@@ -2317,9 +2025,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "1B 131072 position config; acoustic context_window=8 is distinct."
-    ]
+    "supports": ["1B 131072 position config; acoustic context_window=8 is distinct."]
   },
   {
     "source_id": "VOICE-S226",
@@ -2367,9 +2073,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Rust/Python/browser/CoreML/QNN runtimes and compatible speech API server."
-    ]
+    "supports": ["Rust/Python/browser/CoreML/QNN runtimes and compatible speech API server."]
   },
   {
     "source_id": "VOICE-S231",
@@ -2397,9 +2101,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact 0.6B model card and pretrained-weight conditions."
-    ]
+    "supports": ["Exact 0.6B model card and pretrained-weight conditions."]
   },
   {
     "source_id": "VOICE-S234",
@@ -2447,9 +2149,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "7B full-duplex checkpoint, A100 80 GB reference and licensing/access conditions."
-    ]
+    "supports": ["7B full-duplex checkpoint, A100 80 GB reference and licensing/access conditions."]
   },
   {
     "source_id": "VOICE-S239",
@@ -2467,9 +2167,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "LM context 3000, codec context 250 and depth8 are distinct architecture axes."
-    ]
+    "supports": ["LM context 3000, codec context 250 and depth8 are distinct architecture axes."]
   },
   {
     "source_id": "VOICE-S241",
@@ -2517,9 +2215,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "SGLang speech serving route and exact MF/STTS distinctions."
-    ]
+    "supports": ["SGLang speech serving route and exact MF/STTS distinctions."]
   },
   {
     "source_id": "VOICE-S246",
@@ -2527,9 +2223,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact editing checkpoint and license-metadata mismatch."
-    ]
+    "supports": ["Exact editing checkpoint and license-metadata mismatch."]
   },
   {
     "source_id": "VOICE-S247",
@@ -2567,9 +2261,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Separate forced-aligner artifact; inputs/outputs differ from recognition."
-    ]
+    "supports": ["Separate forced-aligner artifact; inputs/outputs differ from recognition."]
   },
   {
     "source_id": "VOICE-S251",
@@ -2647,9 +2339,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "vLLM0.14.1 container/plugin, OpenAI-compatible chat streaming, TP/DP support."
-    ]
+    "supports": ["vLLM0.14.1 container/plugin, OpenAI-compatible chat streaming, TP/DP support."]
   },
   {
     "source_id": "VOICE-S259",
@@ -2677,9 +2367,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "1500 source positions, 448 decoder target positions, FP16 metadata."
-    ]
+    "supports": ["1500 source positions, 448 decoder target positions, FP16 metadata."]
   },
   {
     "source_id": "VOICE-S262",
@@ -2707,9 +2395,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "MIT V1/V2 commercial release and official usage link."
-    ]
+    "supports": ["MIT V1/V2 commercial release and official usage link."]
   },
   {
     "source_id": "VOICE-S265",
@@ -2777,9 +2463,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Separate official E2-TTS artifact family and directory layout."
-    ]
+    "supports": ["Separate official E2-TTS artifact family and directory layout."]
   },
   {
     "source_id": "VOICE-S272",
@@ -2837,9 +2521,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Current GPL-3.0 engine, local CPU/ONNX paths and per-voice model choice."
-    ]
+    "supports": ["Current GPL-3.0 engine, local CPU/ONNX paths and per-voice model choice."]
   },
   {
     "source_id": "VOICE-S278",
@@ -2847,9 +2529,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "piper-tts[http] server, voice-download/config pairing and HTTP endpoint."
-    ]
+    "supports": ["piper-tts[http] server, voice-download/config pairing and HTTP endpoint."]
   },
   {
     "source_id": "VOICE-S279",
@@ -2857,9 +2537,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Publisher Parler runtime and description/text inputs, CPU/CUDA route."
-    ]
+    "supports": ["Publisher Parler runtime and description/text inputs, CPU/CUDA route."]
   },
   {
     "source_id": "VOICE-S280",
@@ -2927,9 +2605,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Sonic3.6 request/format API; complete transcript with streamed output."
-    ]
+    "supports": ["Sonic3.6 request/format API; complete transcript with streamed output."]
   },
   {
     "source_id": "VOICE-S287",
@@ -2937,9 +2613,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Enterprise VPC/on-prem/OEM offering; no public exact Sonic3.6 portable artifact."
-    ]
+    "supports": ["Enterprise VPC/on-prem/OEM offering; no public exact Sonic3.6 portable artifact."]
   },
   {
     "source_id": "VOICE-S288",
@@ -2977,9 +2651,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Separate asynchronous text-file route up to1000000 characters."
-    ]
+    "supports": ["Separate asynchronous text-file route up to1000000 characters."]
   },
   {
     "source_id": "VOICE-S292",
@@ -3027,9 +2699,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Coda/Mistv3 exact model IDs, features and cloud route distinctions."
-    ]
+    "supports": ["Coda/Mistv3 exact model IDs, features and cloud route distinctions."]
   },
   {
     "source_id": "VOICE-S297",
@@ -3047,9 +2717,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Managed /v1/tts with 60000-character request cap and output/timestamp modes."
-    ]
+    "supports": ["Managed /v1/tts with 60000-character request cap and output/timestamp modes."]
   },
   {
     "source_id": "VOICE-S299",
@@ -3057,9 +2725,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact Premier preview model ID; no public weight artifact linked."
-    ]
+    "supports": ["Exact Premier preview model ID; no public weight artifact linked."]
   },
   {
     "source_id": "VOICE-S300",
@@ -3117,9 +2783,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Hosted Small3.0 model card32K context label."
-    ]
+    "supports": ["Hosted Small3.0 model card32K context label."]
   },
   {
     "source_id": "VOICE-S306",
@@ -3127,9 +2791,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Hosted Mini3.0 model card32K context label."
-    ]
+    "supports": ["Hosted Mini3.0 model card32K context label."]
   },
   {
     "source_id": "VOICE-S307",
@@ -3177,9 +2839,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "3000chars, 120s/240spodcast outputs, 3references×30s/10 MB, nonstreaming."
-    ]
+    "supports": ["3000chars, 120s/240spodcast outputs, 3references×30s/10 MB, nonstreaming."]
   },
   {
     "source_id": "VOICE-S312",
@@ -3197,9 +2857,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Live 1 hosted model; no numeric context in inspected exact card."
-    ]
+    "supports": ["Live 1 hosted model; no numeric context in inspected exact card."]
   },
   {
     "source_id": "VOICE-S314",
@@ -3207,9 +2865,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact hosted128000 context/32000 max output token limits."
-    ]
+    "supports": ["Exact hosted128000 context/32000 max output token limits."]
   },
   {
     "source_id": "VOICE-S315",
@@ -3217,9 +2873,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact hosted Mini128000 context/32000 max output token limits."
-    ]
+    "supports": ["Exact hosted Mini128000 context/32000 max output token limits."]
   },
   {
     "source_id": "VOICE-S316",
@@ -3227,9 +2881,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact hosted131072 input/65536 output token limits and modalities."
-    ]
+    "supports": ["Exact hosted131072 input/65536 output token limits and modalities."]
   },
   {
     "source_id": "VOICE-S317",
@@ -3237,9 +2889,7 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-26",
-    "supports": [
-      "Exact Extended Thinking131072 input/65536 output; async-only function calls."
-    ]
+    "supports": ["Exact Extended Thinking131072 input/65536 output; async-only function calls."]
   },
   {
     "source_id": "VOICE-S318",
