@@ -4,7 +4,7 @@
 
 ## Current progress
 
-Ashes of Creation is in progress. Its Early Access/closure boundary and initial primary-source evidence are recorded; mechanics, reception, commercial interpretation and full review remain underway. Finish and commit it before advancing to New World. Remaining games and the integration review below are not completed by this checkpoint.
+Ashes of Creation is researched and reviewed across R01–R15, including five firsthand written assessments and explicit financial/modding evidence limits. Its completed dossier is committed with this ledger update. New World / Aeternum is next; remaining games and final integration gates are still open.
 
 ## Scope and evidence rules
 
@@ -18,30 +18,30 @@ Ashes of Creation is in progress. Its Early Access/closure boundary and initial 
 
 ## Per-game delivery
 
-| Subject | Scope | State |
-| --- | --- | --- |
-| Ashes of Creation | Tested game, original promise, production collapse; no shipped 1.0 | In progress |
-| New World / Aeternum | Original launch, later overhaul, current service | Pending |
-| Lost Ark | Korean and Western evidence separated; test the pay-to-win explanation | Pending |
-| Guild Wars 2 | Released game and expansion changes | Pending |
-| Guild Wars 3 | Announced/development evidence only | Pending |
-| The Elder Scrolls Online | Current game versus launch; PC add-ons separated | Pending |
-| The Lord of the Rings Online | Long-lived service, world/lore and player culture | Pending |
-| Final Fantasy XIV | Refresh existing dossier; 1.0, ARR and later eras distinguished | Pending |
-| Black Desert Online | PC service; console/mobile boundaries | Pending |
-| MapleStory | Original PC game; regional and server-model differences | Pending |
-| Star Wars: The Old Republic | Class stories, service changes and current operations | Pending |
-| Albion Online | Regional worlds, economy, risk and social structures | Pending |
-| World of Warcraft | Refresh existing dossier; Retail and Classic separated | Pending |
-| Old School RuneScape | Refresh existing dossier; distinct from modern RuneScape | Pending |
-| RuneScape | Refresh existing dossier; PC/mobile shared game, separate spin-offs | Pending |
-| EVE Online | Extend earlier scoped creation research to full game | Pending |
-| Ultima Online | Refresh existing dossier; official shards versus fan services | Pending |
-| EverQuest | Original game; not EverQuest II or cancelled Next | Pending |
-| Final Fantasy XI | Refresh existing dossier; distinct current service | Pending |
-| Dungeon Fighter Online | PC original; Chinese/Korean/global and mobile separated | Pending |
-| Fantasy Westward Journey | Original PC game; mobile and franchise totals separated | Pending |
-| Lineage | Original PC game; sequel, mobile and Classic boundaries | Pending |
+| Subject                                            | Scope                                                                  | State                                               |
+| -------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------- |
+| [Ashes of Creation](dossiers/ashes-of-creation.md) | Tested game, original promise, production collapse; no shipped 1.0     | Researched and reviewed; committed with this ledger |
+| New World / Aeternum                               | Original launch, later overhaul, current service                       | Pending                                             |
+| Lost Ark                                           | Korean and Western evidence separated; test the pay-to-win explanation | Pending                                             |
+| Guild Wars 2                                       | Released game and expansion changes                                    | Pending                                             |
+| Guild Wars 3                                       | Announced/development evidence only                                    | Pending                                             |
+| The Elder Scrolls Online                           | Current game versus launch; PC add-ons separated                       | Pending                                             |
+| The Lord of the Rings Online                       | Long-lived service, world/lore and player culture                      | Pending                                             |
+| Final Fantasy XIV                                  | Refresh existing dossier; 1.0, ARR and later eras distinguished        | Pending                                             |
+| Black Desert Online                                | PC service; console/mobile boundaries                                  | Pending                                             |
+| MapleStory                                         | Original PC game; regional and server-model differences                | Pending                                             |
+| Star Wars: The Old Republic                        | Class stories, service changes and current operations                  | Pending                                             |
+| Albion Online                                      | Regional worlds, economy, risk and social structures                   | Pending                                             |
+| World of Warcraft                                  | Refresh existing dossier; Retail and Classic separated                 | Pending                                             |
+| Old School RuneScape                               | Refresh existing dossier; distinct from modern RuneScape               | Pending                                             |
+| RuneScape                                          | Refresh existing dossier; PC/mobile shared game, separate spin-offs    | Pending                                             |
+| EVE Online                                         | Extend earlier scoped creation research to full game                   | Pending                                             |
+| Ultima Online                                      | Refresh existing dossier; official shards versus fan services          | Pending                                             |
+| EverQuest                                          | Original game; not EverQuest II or cancelled Next                      | Pending                                             |
+| Final Fantasy XI                                   | Refresh existing dossier; distinct current service                     | Pending                                             |
+| Dungeon Fighter Online                             | PC original; Chinese/Korean/global and mobile separated                | Pending                                             |
+| Fantasy Westward Journey                           | Original PC game; mobile and franchise totals separated                | Pending                                             |
+| Lineage                                            | Original PC game; sequel, mobile and Classic boundaries                | Pending                                             |
 
 ## Final integration gates
 

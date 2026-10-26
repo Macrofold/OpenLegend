@@ -576,7 +576,7 @@ Select broader laws, population/geography/knowledge profiles or hosts before ext
 
 **Product proposal prepared; public discovery/settlement decisions and technical delivery open.** Reuse [participants and world travel](../projects/participants-and-world-travel-feature-spec.md), MP invitations/control/characterless entry, PS05–PS07 and production-data projections. [D68](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites) owns new entry choices.
 
-Select discoverable information, recommendations/new-community offers, joining an existing person versus authored entry, newcomer roles, abuse controls and perspective-correct return. Discovery does not imply permission to join. Public enforcement is ND37; [worlds and belonging](../product-scalability/worlds-and-belonging.md) retains the broader contract.
+Select discoverable information, recommendations/new-community offers, joining an existing person versus authored entry, newcomer roles, abuse controls and perspective-correct return. Discovery does not imply permission to join. Public enforcement is ND37; [worlds and belonging](../product-scalability/worlds-and-belonging.md) retains the broader contract. The [MMO comparison](../../archive/02-research/game-inspiration/essays/mmo-persistence-trust-and-durable-worlds.md#route-into-openlegend) supplies persistence, mature-community and return evidence for PT/PS qualification, without adding a separate MMO design scope.
 
 ### ND03 — World-authored stats, checks and their effects
 
@@ -802,7 +802,7 @@ Qualify actual source/recipient authority, spoilers, preferences, correction/ret
 
 Adopt actual offer, access/overlap, invention counting/revisions/bundles, units, any renewal/rollover, funding, cancellation/refund and fulfillment/reconciliation terms. Keep access, allowances, provider cost and optional art funding distinct. Additional character slots need switching/absence/funding scope and the RP05 embodiment decision before simultaneous control changes. Sources: [business plan](../../archive/06-marketing/business-plan.md), [creator economy](../../archive/06-marketing/creator-economy-and-mechanics-packs.md), D17/D35 and PS-D06 where applicable.
 
-Use the [Enshrouded hosting precedent](../../archive/02-research/game-inspiration/dossiers/enshrouded/04-hosting-and-world-governance.md) and [integrated hosted-world idea](../game-ideas/hosted-worlds-and-rule-profiles.md) as evidence/options in CO01. Rental availability and an in-game partner route do not adopt a price, supplier or subscription, prove renewal demand, or qualify ongoing AI-world costs.
+Use the [Enshrouded hosting precedent](../../archive/02-research/game-inspiration/dossiers/enshrouded/04-hosting-and-world-governance.md) and [integrated hosted-world idea](../game-ideas/hosted-worlds-and-rule-profiles.md) as evidence/options in CO01. Rental availability and an in-game partner route do not adopt a price, supplier or subscription, prove renewal demand, or qualify ongoing AI-world costs. Use the [MMO payment comparison](../../archive/02-research/game-inspiration/essays/mmo-persistence-trust-and-durable-worlds.md#payment-and-practical-advantage) in CO01 to assess practical participation and direct/indirect paid advantage under the selected world profile; accepted authoring allowances remain unchanged.
 
 ### ND23 — Creator revenue allocation and marketplace operation
 
