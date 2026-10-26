@@ -8,12 +8,12 @@ Enshrouded is most useful as a study of **making a handcrafted RPG world physica
 
 This dossier remains the complete game-level entry point. The supplements own the deeper evidence rather than duplicating it here.
 
-| Question | Detailed owner |
-| --- | --- |
-| How do building, terrain, water, lore and native creation fit together? What can unofficial mods do? | [Building and creation](enshrouded/01-building-and-creation.md) |
-| How did the game develop, and what do its audience and commercial figures establish? | [Development and commercial history](enshrouded/02-development-and-commercial-history.md) |
-| What do current and historical players enjoy, dislike, return for or leave over? | [Player reception](enshrouded/03-player-reception.md) |
-| What do rented servers, access permissions and world rules actually provide? | [Hosting and world governance](enshrouded/04-hosting-and-world-governance.md) |
+| Question                                                                                             | Detailed owner                                                                            |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| How do building, terrain, water, lore and native creation fit together? What can unofficial mods do? | [Building and creation](enshrouded/01-building-and-creation.md)                           |
+| How did the game develop, and what do its audience and commercial figures establish?                 | [Development and commercial history](enshrouded/02-development-and-commercial-history.md) |
+| What do current and historical players enjoy, dislike, return for or leave over?                     | [Player reception](enshrouded/03-player-reception.md)                                     |
+| What do rented servers, access permissions and world rules actually provide?                         | [Hosting and world governance](enshrouded/04-hosting-and-world-governance.md)             |
 
 ## R01 — identity, current version boundary and player promise
 
@@ -41,6 +41,7 @@ On the **Default** world rules, Enshrouded is much lighter on bodily survival th
 Players create a customizable Flameborn from presets and appearance options such as skin tone, hair, beard and eye color; after rescuing the Barber, appearance can be changed and additional cosmetic options unlocked. [Character Creation](https://enshrouded.wiki.gg/wiki/Character_Creation).
 
 The character has six primary build attributes:
+
 - **Constitution** → Health;
 - **Spirit** → Mana;
 - **Endurance** → Stamina;
@@ -55,6 +56,7 @@ XP from enemies/quests and other progression raises **Character Level**, which g
 Large low-lying/contaminated regions are covered by the **Shroud**. Entering starts a limited Shroud-time countdown; reaching safe air, interacting with qualifying time-restoration opportunities or improving the relevant progression extends/refreshes the expedition.
 
 The early design created a simple tension: loot/explore before the timer expires. Update 6, **Thralls of Twilight**, deliberately deepened the Shroud with:
+
 - overhauled visuals/topology;
 - 100+ new/reworked points of interest;
 - new enemies;
@@ -72,6 +74,7 @@ This turns the setting's signature fog from a boundary into an **alternative ris
 A **Flame Altar** establishes a base/build area. Improving the Flame expands or enables progression and lets the player push into more dangerous Shroud regions. Building/terraforming persistence is intentionally strongest inside player bases; world changes outside protected/persistent zones can reset.
 
 That distinction solves a hard authored-world problem:
+
 - allow dramatic digging/terrain destruction during play;
 - preserve player homes;
 - still let the designed world respawn/recover so shared servers do not become permanently mined-out ruins.
@@ -81,6 +84,7 @@ It also creates a freedom boundary discussed in the dated player evidence: "voxe
 ### Voxel building and terraforming
 
 Building is a recurring strength across the [historical and 1.0 reviews](enshrouded/03-player-reception.md), although precise placement and progression constraints divide players. Players can:
+
 - place blocks/shapes with construction tools;
 - carve rooms into hillsides;
 - alter terrain;
@@ -96,6 +100,7 @@ Pact of the Flame added first-person build-camera options, rotation on three axe
 ### Terrain destruction as exploration
 
 The same voxel world enables:
+
 - tunneling through terrain;
 - mining resource veins;
 - breaking structures/obstacles;
@@ -107,6 +112,7 @@ The authored world prevents this from simply becoming Minecraft procedural empti
 ### Combat: melee, ranged and magic
 
 Combat supports broad RPG archetypes rather than fixed classes:
+
 - one- and two-handed melee;
 - shields/wards and timed block/parry;
 - bows and ranged builds;
@@ -123,6 +129,7 @@ The current tree also contains actual **stealth mechanics**, not merely "avoid e
 ### Equipment, rarity, upgrading and gems
 
 Weapons/armor have RPG stats/rarities/perks. Update 6 added **Weapon Gems**:
+
 - eligible higher-rarity weapons can have gem slots;
 - gems drop from dangerous enemies;
 - Gem Forges inside the Shroud allow slotting/removal/upgrading/recycling (see the progression exception above);
@@ -157,6 +164,7 @@ Later updates made this much more concrete than the initial dossier implied. Cur
 ### Crafting stations and distributed recipes
 
 Crafting is intentionally distributed:
+
 - some recipes are personal;
 - many depend on a survivor;
 - others depend on station/factory access;
@@ -177,6 +185,7 @@ Taming itself uses behavioral stealth: approach quietly, bait, stop when the ani
 The **grappling hook** interacts with designated anchors, while the **glider** converts high ground into long-distance movement. Ancient Spires/towers and discovered fast-travel points transform the handcrafted world into a network.
 
 The combination is important:
+
 - tower ascent gives authored challenge;
 - summit gives map/fast-travel utility;
 - leap + glide converts completion into a **new traversal affordance**.
@@ -184,6 +193,7 @@ The combination is important:
 ### Dynamically simulated water (Wake of the Water)
 
 Update 7 materially changed the simulation:
+
 - lakes/ponds/open water;
 - swimming and diving;
 - underwater interactions;
@@ -216,12 +226,14 @@ At 1.0, **Sparkworks** adds supported graph-based interactions between buildable
 ### Multiplayer/server model
 
 Current PC supports:
+
 - solo/offline;
 - host co-op;
 - dedicated servers;
 - up to 16 players; the released PS5 version has its separate eight-player cap (R01).
 
 Characters can move across worlds/servers while retaining:
+
 - equipped/carried inventory;
 - level/skills;
 - some personal unlocks/map memory.
@@ -233,6 +245,7 @@ This **portable character + persistent world** split is one of the game's most i
 ### Useful absences
 
 Current Enshrouded has no:
+
 - **mandatory default** hunger/thirst loop (but World Settings can enable starvation);
 - PvP mode as a core/planned game contract;
 - permadeath default;
@@ -260,6 +273,7 @@ Runes can come from enemies, chests or dismantled weapons and feed weapon enhanc
 ### Equipment is a build package
 
 A loadout composes:
+
 - weapon category;
 - rarity/perks/upgrade state;
 - optional gem;
@@ -274,6 +288,7 @@ The same character can respec and change equipment instead of rerolling a class.
 ### The base is progression infrastructure
 
 A mature base combines:
+
 - Flame Altar;
 - rescued survivors;
 - crafting stations/factories;
@@ -289,6 +304,7 @@ The base is both "home" and a **human-readable dependency graph** of what the pl
 ### World and character are separate state containers
 
 Items/skills can travel with a character between worlds while many survivor/station unlocks and world geography belong to that server. This enables a powerful high-level composition:
+
 - persistent character identity;
 - multiple social worlds;
 - distinct shared-world progression.
@@ -324,6 +340,7 @@ The overworld can repopulate/reset resources/terrain outside the protected base 
 ### Economy is primarily materials and capability, with limited NPC exchange
 
 The meaningful economy is:
+
 - gathered materials;
 - crafting time/stations;
 - loot rarity;
@@ -337,6 +354,7 @@ The meaningful economy is:
 ### Early Access itself is a progression layer
 
 Eight major Early Access updates repeatedly redefined the systems before 1.0. Forging the Path reset/refunded skill trees because the tree's semantics changed. This is a useful distinction between:
+
 - **save continuity**;
 - **system continuity**.
 
@@ -432,6 +450,7 @@ Keen explicitly says no core PvP is planned. The game assumes a group cooperatin
 Early Access exposed a real social-design failure: launch quest progression was heavily server-wide, so one player could complete content while friends were offline. Keen publicly acknowledged the complaint in February 2024 and evolved quest/progression handling. [Quest progression statement](https://enshrouded.com/en-US/news/on-quest-progression).
 
 The September 2026 Steam sample recorded both sides:
+
 - positive players say late joiners can now repeat many quests/bosses and keep personal XP/log completion;
 - negative players still object to shared loot/chest ownership and other ways one player's action can affect group experience.
 
@@ -440,6 +459,7 @@ This is useful evidence that **shared world** and **shared experience** are not 
 ### Portable characters complicate fairness
 
 The FAQ's cross-server character transfer is powerful social UX, but it creates soft governance:
+
 - Can visitors bring late-game gear?
 - Does the host want a fresh progression run?
 - Who owns rare shared-world loot?
@@ -458,7 +478,7 @@ Difficulty is highly adjustable. One of the most-helpful all-time Steam positive
 
 ### Music and spatial identity
 
-Keen's official soundtrack release credits **Alex Röder, Armin Haas and Matthias Wolf**. Its large track list is explicitly organized around Embervale places, characters and danger states—examples include *The Ancient Spires*, *Melody of the Springlands*, *Into the Revelwoods*, *The Shroud Grows* and boss/POI cues. [Keen soundtrack announcement](https://enshrouded.com/en-US/news/the-enshrouded-original-soundtrack-is-now-available).
+Keen's official soundtrack release credits **Alex Röder, Armin Haas and Matthias Wolf**. Its large track list is explicitly organized around Embervale places, characters and danger states—examples include _The Ancient Spires_, _Melody of the Springlands_, _Into the Revelwoods_, _The Shroud Grows_ and boss/POI cues. [Keen soundtrack announcement](https://enshrouded.com/en-US/news/the-enshrouded-original-soundtrack-is-now-available).
 
 The official community reference says music loops are assigned to specific POIs/biomes and boss fights and are individual per player. This makes audio another geographic/state cue rather than an undifferentiated background album. [Music](https://enshrouded.wiki.gg/wiki/Music).
 
@@ -469,6 +489,7 @@ Keen's August 27 preview made **performance optimization**, including lower/mid-
 The world of **Embervale** fell after its people mined/used magical **Elixir** and unleashed the corrupting Shroud. Flameborn were preserved so they could awaken after the catastrophe and reclaim what remains. [FAQ](https://enshrouded.com/en-US/FAQ).
 
 Narrative delivery uses:
+
 - **The Flame**, Craftspeople/other Survivors and found Lore as quest sources;
 - primary quests that gate story/region progression and can reward NPCs, workshops or biome access;
 - secondary/lore quests that can reward weapons, armor, materials or additional NPCs;
@@ -488,6 +509,7 @@ Adventure Sharing and Sparkworks add another authorship layer: players distribut
 ## R09 — production, engine and Early Access process
 
 Keen Games' experience on **Portal Knights** directly informed Enshrouded. In a 2024 developer interview, the team explains that it wanted:
+
 - a much more advanced voxel building system;
 - a continuous handcrafted world;
 - stronger combat;
@@ -507,6 +529,7 @@ The [development supplement](enshrouded/02-development-and-commercial-history.md
 ### Early Access as active redesign
 
 The game's Early Access was not just content accumulation:
+
 - shared quest progression was publicly reconsidered after player feedback;
 - difficulty options grew;
 - Shroud gameplay was redesigned;
@@ -523,16 +546,18 @@ This is a strong example of using Early Access to change **structural systems**,
 Enshrouded was a standout Steam Next Fest demo before release. GameSpot reported it as the festival's most-played/most-wishlisted/daily-active demo context and covered its Jan. 24, 2024 Early Access launch. [GameSpot pre-launch](https://www.gamespot.com/articles/open-world-co-op-rpg-enshrouded-hits-steam-early-access-in-early-2024/1100-6518990/).
 
 The game's marketing hook combines recognizable comparisons:
+
 - Valheim-like co-op survival/building;
 - Minecraft-like editable voxel terrain;
 - Skyrim/action-RPG exploration/build variety;
 - Zelda-like glider/vertical traversal.
 
-The risk of those comparisons is "derivative survival game"; reviews often say its identity emerges from *integration* and quality rather than an unprecedented individual mechanic.
+The risk of those comparisons is "derivative survival game"; reviews often say its identity emerges from _integration_ and quality rather than an unprecedented individual mechanic.
 
 Keen created a public feature-feedback board soon after launch where players could submit/upvote ideas, while explicitly stating ranking was not a development promise. [GameSpot feedback coverage](https://www.gamespot.com/articles/enshrouded-lets-players-upvote-potential-new-features/1100-6520892/).
 
 Construction is inherently viral:
+
 - detailed castles/towns;
 - renovation of ruins;
 - terrain sculptures;
@@ -546,6 +571,7 @@ The game can circulate an artifact players **made**, not only gameplay clips.
 Enshrouded is a **premium released game** after nearly three years of Early Access. At the October 25 US Steam capture, the base game listed **$39.99**, temporarily discounted to **$35.99 through October 29**; optional purchases included the **$9.99 Deluxe Upgrade Pack** and **$7.99 soundtrack**. These are dated storefront prices, not weighted realized revenue per player. Keen also announced future free and paid content without disclosing a complete post-launch product schedule. [Steam storefront](https://store.steampowered.com/app/1203620/Enshrouded/) · [Launch release](https://www.terminals.io/games/enshrouded/news/5100).
 
 Official early milestones:
+
 - **1 million players in four days** (Jan. 29, 2024);
 - **2 million in under a month** (Feb. 20, 2024);
 - **3 million by Aug. 8, 2024**.
@@ -593,6 +619,7 @@ Direct testimony comprises **12 purposively selected reviews**, seven dated Octo
 The September pass inspected direct Steam review surfaces, including its then-current-week English reviews and **Most Helpful negative** bodies. These links are mutable; the original capture's statements below are preserved as historical findings, not independently recertified October observations. [English surface](https://steamcommunity.com/app/1203620/reviews/?filterLanguage=english) · [helpful negatives](https://steamcommunity.com/app/1203620/negativereviews/?browsefilter=toprated&l=english).
 
 **Positive themes**
+
 - handcrafted world/exploration;
 - voxel building freedom;
 - flexible difficulty;
@@ -603,6 +630,7 @@ The September pass inspected direct Steam review surfaces, including its then-cu
 A September positive explicitly praised how characters can move between solo and friend servers while many quests can be repeated by late joiners. [Steam reviews](https://steamcommunity.com/app/1203620/reviews/?filterLanguage=english).
 
 **Negative/mixed themes**
+
 - performance/crashes immediately before 1.0;
 - controller/lock-on friction;
 - combat repetition;
@@ -632,6 +660,7 @@ These were qualitative samples, not prevalence estimates. They show how the Sept
 Enshrouded's most important lesson is that **handcrafted narrative geography and voxel agency are not mutually exclusive**. Preserve authored POIs/topology at the world layer while letting player-owned areas accept deep edits.
 
 For OpenLegend:
+
 - distinguish canonical world state;
 - owned/persistent player modifications;
 - temporary/destructible local state;
@@ -666,6 +695,7 @@ OpenLegend can make roads, portals, mounts, favors, maps and social access conve
 Characters keep identity/equipment/skills across servers; worlds retain people/stations/collective history.
 
 For a future OpenLegend or Macrofold-backed hosting design, the research suggests evaluating ownership explicitly:
+
 - actor-owned state;
 - world-owned state;
 - relationship state;
@@ -836,29 +866,29 @@ https://www.cgmagonline.com/review/game/enshrouded-1-0-pc-review/
 
 ### Requirement-to-section map
 
-| Requirement | Substantive owner |
-| --- | --- |
-| R01 | shipped 1.0/current patch/platform and crossplay boundaries |
-| R02 | Shroud, building, terrain, combat, gear, food, survivors, water, multiplayer |
-| R03 | resource/equipment/base/state composition |
-| R04 | progression, persistence, economy, death and migration |
-| R05 | eight worked interactions |
-| R06 | survivors/enemies/co-op/shared progression |
-| R07 | art/UI/accessibility/control/performance |
-| R08 | authored world + player authorship |
-| R09 | Holistic Engine, Portal Knights lineage, team; complete update chronology in development supplement |
-| R10 | Next Fest, feedback board, build virality |
-| R11 | dated milestones/current commercial structure; scoped estimates, costs and uncertainty in development supplement |
-| R12 | preserved historical reviews; five freshly read review bodies and identified October/historical player sample in reception supplement |
-| R13 | transferable patterns/limits |
-| R14 | source register, preservation, route and map |
-| R15 | PC external-mod applicability finding and bounded tool evidence in building supplement |
+| Requirement          | Substantive owner                                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R01                  | shipped 1.0/current patch/platform and crossplay boundaries                                                                                                                      |
+| R02                  | Shroud, building, terrain, combat, gear, food, survivors, water, multiplayer                                                                                                     |
+| R03                  | resource/equipment/base/state composition                                                                                                                                        |
+| R04                  | progression, persistence, economy, death and migration                                                                                                                           |
+| R05                  | eight worked interactions                                                                                                                                                        |
+| R06                  | survivors/enemies/co-op/shared progression                                                                                                                                       |
+| R07                  | art/UI/accessibility/control/performance                                                                                                                                         |
+| R08                  | authored world + player authorship                                                                                                                                               |
+| R09                  | Holistic Engine, Portal Knights lineage, team; complete update chronology in development supplement                                                                              |
+| R10                  | Next Fest, feedback board, build virality                                                                                                                                        |
+| R11                  | dated milestones/current commercial structure; scoped estimates, costs and uncertainty in development supplement                                                                 |
+| R12                  | preserved historical reviews; five freshly read review bodies and identified October/historical player sample in reception supplement                                            |
+| R13                  | transferable patterns/limits                                                                                                                                                     |
+| R14                  | source register, preservation, route and map                                                                                                                                     |
+| R15                  | PC external-mod applicability finding and bounded tool evidence in building supplement                                                                                           |
 | October 13 amendment | economics: development supplement; enjoyment/replay: reception and building supplements; lore/creator workflow: building supplement; rental/access tradeoffs: hosting supplement |
 
 ### Evidence limits
 
 - No game was installed or executed; no server, mod, multiplayer-scale or performance benchmark was performed. Constructed workflows are labeled as such.
-- No video/trailer is represented as watched. Written primary sources can establish a feature independently of an embedded demonstration.
+- No video/trailer is represented as watched. The final quest journal was inspected through an explicitly unofficial game-data transcription; the narrated outro was not independently inspected. The lore supplement preserves that boundary.
 - **1.0 shipped October 15, 2026.** The current maintenance boundary located is **Hotfix 1.0.0.3, October 21**. Xbox and crossplay plans remain distinct from shipped support.
 - Historical January 2024 and September 2026 evidence remains explicitly version-limited. Some original review/written-source routes were mirrors or indexes; the current supplement states which bodies were freshly retrieved.
 - The current Steam sample comes from available helpful surfaces; Most Recent/API routes were unavailable. It is qualitative, English-accessible and purposively contrasting, not representative or causal.

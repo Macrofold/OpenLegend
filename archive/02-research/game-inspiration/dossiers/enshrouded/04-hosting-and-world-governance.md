@@ -8,11 +8,11 @@ Enshrouded combines a purchased game with optional third-party world hosting. Ke
 
 Three operating arrangements should be distinguished:
 
-| Arrangement | Who keeps the world available? | Main value and obligation |
-| --- | --- | --- |
-| Host a session from the game | The person running that session | Convenient for friends playing together; the session depends on its host remaining available. [H02] |
-| Run the supplied dedicated-server program | The group or its chosen operator | The server can run independently of a player's game session; the operator supplies the machine, connectivity and maintenance. [H03] |
-| Rent managed hosting | A hosting company under its service terms | Availability independent of a friend's computer, configuration conveniences and operational support; a separate recurring or fixed-duration purchase. [H02][H04] |
+| Arrangement                               | Who keeps the world available?            | Main value and obligation                                                                                                                                        |
+| ----------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Host a session from the game              | The person running that session           | Convenient for friends playing together; the session depends on its host remaining available. [H02]                                                              |
+| Run the supplied dedicated-server program | The group or its chosen operator          | The server can run independently of a player's game session; the operator supplies the machine, connectivity and maintenance. [H03]                              |
+| Rent managed hosting                      | A hosting company under its service terms | Availability independent of a friend's computer, configuration conveniences and operational support; a separate recurring or fixed-duration purchase. [H02][H04] |
 
 Nitrado's own guide describes choosing player slots, rental duration and server location, plus configuration tools, file access, backups and scheduled tasks. These are provider descriptions, not independently measured uptime, support quality or recovery guarantees. Its exact offer URL supplied by Mike timed out repeatedly in this research. Search indexing confirmed the Enshrouded offering, and its substantive setup guide was readable. No current Nitrado price is asserted. [H02][H05]
 
@@ -26,14 +26,14 @@ Keen documents permission groups entered through different passwords, with confi
 
 The later example configuration in the gameplay-settings article makes the distinctions concrete:
 
-| Permission | What it distinguishes |
-| --- | --- |
-| World editing | Changing terrain outside a base |
-| Base editing | Changing the construction within a base |
-| Base extension | Adding, upgrading or removing territorial anchors |
-| Inventory access | Using storage and related inventories |
-| Kick/ban | Administrative removal |
-| Reserved slots | Capacity retained for a group, separate from permission to alter the world |
+| Permission       | What it distinguishes                                                      |
+| ---------------- | -------------------------------------------------------------------------- |
+| World editing    | Changing terrain outside a base                                            |
+| Base editing     | Changing the construction within a base                                    |
+| Base extension   | Adding, upgrading or removing territorial anchors                          |
+| Inventory access | Using storage and related inventories                                      |
+| Kick/ban         | Administrative removal                                                     |
+| Reserved slots   | Capacity retained for a group, separate from permission to alter the world |
 
 The configuration gives visitors no editing/storage privileges and separates friends' construction rights from administrative powers. It also exposes Default, Relaxed, Hard, Survival and Custom profiles and tunable survival pressure, resources, enemies, progression and death loss. Those options do **not** establish a native PvP/raiding mode. [H07]
 
@@ -80,11 +80,11 @@ The useful questions for OpenLegend are direct: Can my friends enter without me?
 
 Three service approaches remain distinguishable:
 
-| Candidate | Attractive aspect | Main unresolved obligation |
-| --- | --- | --- |
-| First-party managed world | Coherent creation, membership, billing and support journey | OpenLegend operates capacity, support and the full customer lifecycle. |
-| Integrated hosting partner | Existing provider operations and an in-game entry path | Explain responsibility for billing, settings, outages, support and retained work; integration does not erase those boundaries. |
-| Self-hosted world | Operator autonomy and possible community experimentation | Distribution, updates, service-dependent features and supported authority boundaries need an explicit product decision. |
+| Candidate                  | Attractive aspect                                          | Main unresolved obligation                                                                                                     |
+| -------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| First-party managed world  | Coherent creation, membership, billing and support journey | OpenLegend operates capacity, support and the full customer lifecycle.                                                         |
+| Integrated hosting partner | Existing provider operations and an in-game entry path     | Explain responsibility for billing, settings, outages, support and retained work; integration does not erase those boundaries. |
+| Self-hosted world          | Operator autonomy and possible community experimentation   | Distribution, updates, service-dependent features and supported authority boundaries need an explicit product decision.        |
 
 These are options to compare, not three required products. Browser play does not itself decide who runs the server.
 
@@ -102,16 +102,15 @@ The positive opportunity is larger than private isolation: a home can serve trav
 
 All retrieved October 25, 2026. Provider offers are dated seller claims. No provider, server configuration, latency, uptime, backup restore or payment was tested.
 
-| ID | Source | Role and limit |
-| --- | --- | --- |
-| H01 | [Keen FAQ](https://enshrouded.zendesk.com/hc/en-us/articles/9223654187805-Frequently-Asked-Questions), updated Jan. 21, 2026 | In-game GPORTAL rental route and alternative providers; evergreen platform prose is stale and not used for release status. |
-| H02 | [Nitrado hosting guide](https://server.nitrado.net/en-US/guides/how-to-host-an-enshrouded-server/), Mar. 29, 2024 | Provider account of rental setup, local-session tradeoff, file/config/backup facilities. |
-| H03 | [Keen dedicated-server installation](https://enshrouded.zendesk.com/hc/en-us/articles/16051370691485-Dedicated-Server-Installation-on-Steam), Feb. 23, 2024 | Bundled dedicated-server executable; platform installation guidance is historical. |
-| H04 | [GPORTAL PC hosting offer](https://www.g-portal.com/en/gameserver/enshrouded-server-hosting) | Directly retrieved current displayed USD prices, slots and advertised features; no checkout or service validation. |
-| H05 | [Mike's Nitrado offer link](https://server.nitrado.net/en-US/offers/enshrouded) | Exact page timed out; indexed platform-PC variant confirms product existence. No current Nitrado price inferred. |
-| H06 | [Keen server roles](https://enshrouded.zendesk.com/hc/en-us/articles/19191581489309-Server-Roles-Configuration), Nov. 10, 2025 | Permission groups, passwords, reserved capacity; internally mixed-age examples qualified above. |
-| H07 | [Keen server gameplay settings](https://enshrouded.zendesk.com/hc/en-us/articles/20453241249821-Server-Gameplay-Settings), Nov. 10, 2025 | Gameplay profiles and newer complete permission configuration; not executed on 1.0. |
-| H08 | [Keen Wake of the Water](https://enshrouded.com/en-US/news/enshrouded-wake-of-the-water-update), Nov. 10, 2025 | Explicit response to indirect flooding/griefing. |
-| H09 | [Keen dedicated-server FAQ](https://enshrouded.zendesk.com/hc/en-us/articles/16056312924957-Dedicated-Server-FAQ), Feb. 21, 2025 | Server world/client character split; dated resource and save guidance. |
-| H10 | [Mike's hosting discussion](https://www.reddit.com/r/Enshrouded/comments/1x6qnn3/want_to_rent_a_server_for_my_friends_any_tips_on/) | Full supplied thread body read; qualitative inquiries and provider participation, not verified service performance. |
-
+| ID  | Source                                                                                                                                                      | Role and limit                                                                                                             |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| H01 | [Keen FAQ](https://enshrouded.zendesk.com/hc/en-us/articles/9223654187805-Frequently-Asked-Questions), updated Jan. 21, 2026                                | In-game GPORTAL rental route and alternative providers; evergreen platform prose is stale and not used for release status. |
+| H02 | [Nitrado hosting guide](https://server.nitrado.net/en-US/guides/how-to-host-an-enshrouded-server/), Mar. 29, 2024                                           | Provider account of rental setup, local-session tradeoff, file/config/backup facilities.                                   |
+| H03 | [Keen dedicated-server installation](https://enshrouded.zendesk.com/hc/en-us/articles/16051370691485-Dedicated-Server-Installation-on-Steam), Feb. 23, 2024 | Bundled dedicated-server executable; platform installation guidance is historical.                                         |
+| H04 | [GPORTAL PC hosting offer](https://www.g-portal.com/en/gameserver/enshrouded-server-hosting)                                                                | Directly retrieved current displayed USD prices, slots and advertised features; no checkout or service validation.         |
+| H05 | [Mike's Nitrado offer link](https://server.nitrado.net/en-US/offers/enshrouded)                                                                             | Exact page timed out; indexed platform-PC variant confirms product existence. No current Nitrado price inferred.           |
+| H06 | [Keen server roles](https://enshrouded.zendesk.com/hc/en-us/articles/19191581489309-Server-Roles-Configuration), Nov. 10, 2025                              | Permission groups, passwords, reserved capacity; internally mixed-age examples qualified above.                            |
+| H07 | [Keen server gameplay settings](https://enshrouded.zendesk.com/hc/en-us/articles/20453241249821-Server-Gameplay-Settings), Nov. 10, 2025                    | Gameplay profiles and newer complete permission configuration; not executed on 1.0.                                        |
+| H08 | [Keen Wake of the Water](https://enshrouded.com/en-US/news/enshrouded-wake-of-the-water-update), Nov. 10, 2025                                              | Explicit response to indirect flooding/griefing.                                                                           |
+| H09 | [Keen dedicated-server FAQ](https://enshrouded.zendesk.com/hc/en-us/articles/16056312924957-Dedicated-Server-FAQ), Feb. 21, 2025                            | Server world/client character split; dated resource and save guidance.                                                     |
+| H10 | [Mike's hosting discussion](https://www.reddit.com/r/Enshrouded/comments/1x6qnn3/want_to_rent_a_server_for_my_friends_any_tips_on/)                         | Full supplied thread body read; qualitative inquiries and provider participation, not verified service performance.        |

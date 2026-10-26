@@ -24,29 +24,29 @@ Mike proposes configurable private worlds and **different rules among official w
 
 Keep the underlying choices independent:
 
-| Choice | What needs to be stated |
-| --- | --- |
-| Human combat | Whether and where players can harm one another; any consensual, territorial or other exceptions |
-| Player construction | Whether players may construct at all, and in which places |
-| Editing and removal | Who may alter or dismantle an existing structure, distinct from building a new one |
-| Structure damage | Whether hostile actors, players, environmental events or indirect effects can damage player structures |
-| Storage theft | Whether another player may take stored objects, and how ownership or permission affects it |
-| Death/corpse loot | What a defeated character loses and who can recover it, separate from theft from a home |
-| Territorial claims | Who controls the land and how claims may change, expire or be contested |
-| Absence | Whether property or participants face danger when their owners are offline |
-| Progression and imports | What a newcomer or traveler may bring and how shared milestones affect absent members |
+| Choice                  | What needs to be stated                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| Human combat            | Whether and where players can harm one another; any consensual, territorial or other exceptions        |
+| Player construction     | Whether players may construct at all, and in which places                                              |
+| Editing and removal     | Who may alter or dismantle an existing structure, distinct from building a new one                     |
+| Structure damage        | Whether hostile actors, players, environmental events or indirect effects can damage player structures |
+| Storage theft           | Whether another player may take stored objects, and how ownership or permission affects it             |
+| Death/corpse loot       | What a defeated character loses and who can recover it, separate from theft from a home                |
+| Territorial claims      | Who controls the land and how claims may change, expire or be contested                                |
+| Absence                 | Whether property or participants face danger when their owners are offline                             |
+| Progression and imports | What a newcomer or traveler may bring and how shared milestones affect absent members                  |
 
 The phrase “no player building or destruction” is retained as two selectable dimensions: a world could disable construction itself, or allow construction while protecting it from other players' destruction. Neither should be silently inferred from its PvP label.
 
 Possible combinations illustrate the range; they are not a selected catalogue:
 
-| Illustrative world | Human combat | Player building | Hostile base damage / taking stored property |
-| --- | --- | --- | --- |
-| Protected community | Disabled | Allowed under land/member rights | Prevented except explicitly authorized activity |
-| Competitive world with durable homes | Enabled under its stated combat rules | Allowed | Other players cannot destroy protected homes or take their storage |
-| Destructive frontier | Enabled | Allowed | Supported under clearly stated siege, ownership, looting and absence rules |
-| Environmental survival | Human PvP disabled | Allowed | World-authored NPC/environment damage possible; player theft chosen separately |
-| Combat or adventure setting without construction | Chosen for that setting | Disabled or limited to authored facilities | Rules for existing structures and loot chosen separately |
+| Illustrative world                               | Human combat                          | Player building                            | Hostile base damage / taking stored property                                   |
+| ------------------------------------------------ | ------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| Protected community                              | Disabled                              | Allowed under land/member rights           | Prevented except explicitly authorized activity                                |
+| Competitive world with durable homes             | Enabled under its stated combat rules | Allowed                                    | Other players cannot destroy protected homes or take their storage             |
+| Destructive frontier                             | Enabled                               | Allowed                                    | Supported under clearly stated siege, ownership, looting and absence rules     |
+| Environmental survival                           | Human PvP disabled                    | Allowed                                    | World-authored NPC/environment damage possible; player theft chosen separately |
+| Combat or adventure setting without construction | Chosen for that setting               | Disabled or limited to authored facilities | Rules for existing structures and loot chosen separately                       |
 
 A PvE label does not settle whether environmental danger can damage a building. A PvP label does not imply that offline demolition, theft or unlimited territorial displacement are permitted. A protected home can still sit within an interesting world with expeditions, scarce resources, dangerous regions, political conflict and meaningful consequences.
 
@@ -76,14 +76,13 @@ First-party operation, an integrated provider and self-hosting are distinguishab
 
 The [design register](../maintainers/needs-design.md) keeps this proposed work open in its existing groups:
 
-| Owner | Outcome when this proposal is selected |
-| --- | --- |
-| DG29 / participants and world travel; MP; ND37 | Define world membership, scoped roles, property rights, revocation, owner departure and safe arrival/return. |
-| DG07 / ND11 with DG13 / ND07 | Specify independent combat, construction, damage, looting and absence profiles; preserve the already selected base-world target and choose concrete indirect-harm behavior. |
-| DG27 / ND22 / CO01 | Compare integrated managed hosting against the strongest feasible browser alternative; adopt actual customer/service/cost terms only with evidence. |
-| DG17 / PS quiet-world and funding owners | Resolve empty-world clocks and funded activity only if that continuation is part of the offered service. |
+| Owner                                          | Outcome when this proposal is selected                                                                                                                                      |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DG29 / participants and world travel; MP; ND37 | Define world membership, scoped roles, property rights, revocation, owner departure and safe arrival/return.                                                                |
+| DG07 / ND11 with DG13 / ND07                   | Specify independent combat, construction, damage, looting and absence profiles; preserve the already selected base-world target and choose concrete indirect-harm behavior. |
+| DG27 / ND22 / CO01                             | Compare integrated managed hosting against the strongest feasible browser alternative; adopt actual customer/service/cost terms only with evidence.                         |
+| DG17 / PS quiet-world and funding owners       | Resolve empty-world clocks and funded activity only if that continuation is part of the offered service.                                                                    |
 
 Before implementation, the selected profiles need player journeys, world/engine contracts, lifecycle and enforcement design, and relevant qualification. Capturing this idea does not move it ahead of the current first-playable milestone or create an infrastructure project.
 
 The most promising experience to evaluate is concrete: **a group builds somewhere worth belonging, others have reasons to visit, and everyone understands the risks and rights attached to that place.**
-

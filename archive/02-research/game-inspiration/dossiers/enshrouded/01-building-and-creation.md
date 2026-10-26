@@ -92,13 +92,13 @@ At gamescom 2026, the creative director said base invasions would not be in 1.0,
 
 The following is design analysis of the documented systems, not measured retention causality.
 
-| Play stage | Valuable question for the player | How the systems cooperate | Where the experience can weaken |
-| --- | --- | --- | --- |
-| Opening | Where can I feel safe, and what can I make? | A small shelter establishes a return point; basic crafting and a rescued specialist expand capabilities. | Too much tool/menu learning before the first satisfying structure; the assumption that every terrain edit is permanent. |
-| Established adventure | What would make home and the next expedition better? | Materials, recipes, services, gear and resting preparation connect distant discoveries to a visible settlement. | Recipe gates can make a builder do unwanted combat; repeated gathering can become obligation. |
-| Mature building | How can I make this place recognizably mine? | Fine edits, vegetation, weathering, furniture, water and inhabitants enable renovation and themed districts. | Material behavior can be opaque; comfort optimization can overwhelm personal taste; residents can feel ornamental. |
-| Late campaign | What is left that I care about doing? | Harder encounters, collection, restoration and construction projects support different motivations. | A known fixed map offers less surprise; more resources are not automatically new decisions; a finished campaign can simply be finished. |
-| After the campaign | Who would enjoy what I made? | Adventure Sharing distributes constructions; Sparkworks adds playable interactions. | Discovery, usability, reset behavior and the quality of the authored activity matter as much as the editor. |
+| Play stage            | Valuable question for the player                     | How the systems cooperate                                                                                       | Where the experience can weaken                                                                                                         |
+| --------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Opening               | Where can I feel safe, and what can I make?          | A small shelter establishes a return point; basic crafting and a rescued specialist expand capabilities.        | Too much tool/menu learning before the first satisfying structure; the assumption that every terrain edit is permanent.                 |
+| Established adventure | What would make home and the next expedition better? | Materials, recipes, services, gear and resting preparation connect distant discoveries to a visible settlement. | Recipe gates can make a builder do unwanted combat; repeated gathering can become obligation.                                           |
+| Mature building       | How can I make this place recognizably mine?         | Fine edits, vegetation, weathering, furniture, water and inhabitants enable renovation and themed districts.    | Material behavior can be opaque; comfort optimization can overwhelm personal taste; residents can feel ornamental.                      |
+| Late campaign         | What is left that I care about doing?                | Harder encounters, collection, restoration and construction projects support different motivations.             | A known fixed map offers less surprise; more resources are not automatically new decisions; a finished campaign can simply be finished. |
+| After the campaign    | Who would enjoy what I made?                         | Adventure Sharing distributes constructions; Sparkworks adds playable interactions.                             | Discovery, usability, reset behavior and the quality of the authored activity matter as much as the editor.                             |
 
 For a group, these loops can support complementary contributions. One person enjoys expeditions, another supplies food, and another transforms the materials into a settlement. This works best when all participants can recognize the value of the others' choices and retain worthwhile opportunities. It can fail when one enthusiastic player consumes the shared progression before friends arrive or when one person's private project uses everyone else's resources without agreement.
 
@@ -106,12 +106,12 @@ For a group, these loops can support complementary contributions. One person enj
 
 ### What the game supplies and what the creator still supplies
 
-| Layer | Native capability | Creator responsibility / limitation |
-| --- | --- | --- |
-| Physical construction | Terrain, blocks, furnished spaces and supported props | Composition, readable routes, visual identity and a worthwhile destination. |
-| Interaction | Sparkworks connects inputs, such as levers or pressure plates, to outputs such as doors and traps. | Design understandable cause and effect; avoid confusing or unescapable sequences. |
-| Packaging | Adventure Sharing distributes player-created environments from saves for others to visit, interact with or download. | Prepare the experience, identify it clearly and provide an inviting presentation. |
-| Authorship boundary | The game supplies a bounded palette of supported interactions. | Native sharing does not by itself provide arbitrary code execution, custom imported art, a new AI system or a complete different engine. |
+| Layer                 | Native capability                                                                                                    | Creator responsibility / limitation                                                                                                      |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Physical construction | Terrain, blocks, furnished spaces and supported props                                                                | Composition, readable routes, visual identity and a worthwhile destination.                                                              |
+| Interaction           | Sparkworks connects inputs, such as levers or pressure plates, to outputs such as doors and traps.                   | Design understandable cause and effect; avoid confusing or unescapable sequences.                                                        |
+| Packaging             | Adventure Sharing distributes player-created environments from saves for others to visit, interact with or download. | Prepare the experience, identify it clearly and provide an inviting presentation.                                                        |
+| Authorship boundary   | The game supplies a bounded palette of supported interactions.                                                       | Native sharing does not by itself provide arbitrary code execution, custom imported art, a new AI system or a complete different engine. |
 
 The Sparkworks example above follows Keen's October 8 announcement. Its description explicitly uses linked levers/pressure plates, doors and trapdoors; the article's embedded video was not watched. [Sparkworks introduction](https://enshrouded.com/en-US/news/turn-your-build-into-an-adventure-with-sparkworks)
 
@@ -123,7 +123,7 @@ The original use of “blueprints” for larger construction shapes must not be 
 
 ## Lore: why restoring a place can mean something
 
-**Spoilers for setting history and named characters.** This section examines the history that gives ruins and reconstruction meaning. It uses in-game text transcribed by the community wiki and distinguishes characters' testimony from uncontested history; it does not provide a complete account of the campaign ending.
+**Major spoilers for setting history, named characters and the final 1.0 quest.** This section examines the history that gives ruins and reconstruction meaning. It uses in-game text transcribed by the community wiki and distinguishes characters' testimony from uncontested history; the final quest is supported by an explicitly unofficial game-data transcription; the narrated outro was not independently inspected.
 
 ### A historical sequence with deliberately incomplete evidence
 
@@ -142,6 +142,26 @@ Vukah lore distinguishes different groups' rites. An observer describes a warrio
 The dragon-slayer story is explicitly contested. One text glorifies Vorgoth killing a mother dragon and claiming the summits; another narrator doubts the heroic version based on a grandfather's account, yet spots something that might still reward investigation. The useful mechanism is **a questionable story that gives the player a concrete place to investigate**. It makes skepticism playable instead of requiring the player to accept or reject an exposition paragraph. [Slayed Dragons](https://enshrouded.wiki.gg/wiki/Lore/Slayed_Dragons)
 
 Developer testimony places the fall roughly 20–30 years before the game while deliberately leaving the interval ambiguous. It also describes the Shroud as an organism whose infection progresses through behavioral change, violent defenders, physical decay and finally spore-producing forms. Those are setting explanations; do not infer that every encountered enemy dynamically simulates the full infection lifecycle. [December 2024 world-design AMA](https://www.reddit.com/r/Enshrouded/comments/1hbvfl5/enshrouded_ama_come_ask_the_developers_your/)
+
+### The final quest gives the history a present consequence
+
+**Major 1.0 ending spoilers.** The final quest, displayed as **Cinders Of The End** in a community database of build **25988036**, sends the player from Loraine Crim through Cinder’s Ascent to the Ancient capital. Its journal identifies the immediate danger: Lord Vorgoth’s forces are besieging the Mother Flame, threatening the Ancients’ survival. At Mother Flame’s Domicile, the boss has two forms, **Champion of the Shroud** and **the Wanderer’s Vessel**. Victory is followed by a rescue objective because the weakened Mother Flame still contains endangered Ancients. The closing instruction is to sustain her fire. This establishes a specific narrative endpoint beyond merely announcing that the map and campaign are complete. [Quest journal transcription](https://www.enshrouded.tools/quests/cinders-of-the-end) · [Boss database](https://www.enshrouded.tools/enemies/vorgoth)
+
+**Evidence boundary:** these pages were fully opened. They identify themselves as unofficial, with data extracted from the 1.0 game build; the extraction was not independently reproduced. The official community wiki’s indexed **Lord Vorgoth** entry independently places him at the threat to the Mother Flame, but its page is a secondary lore summary rather than a transcript of the final quest. [Lord Vorgoth](https://enshrouded.wiki.gg/wiki/Lord_Vorgoth)
+
+**Interpretation:** the long history of destructive extraction and failed refuge finally becomes a task to protect the source that made the player’s restorative agency possible. This is a connection between the authored setting and the player’s objective, not evidence that completing it permanently removes every hazard or creates an autonomous society.
+
+### What makes a Flameborn
+
+The Alchemist’s **Flame Protection** dialogue describes Flameborn as products of a sacrifice joining humans with Ancients. An Ancient flame-soul provides their temporary protection inside the Shroud. His separate **Cinder Vault** dialogue attributes the preservation chambers to cooperation between humans and a dissident Ancient group. These are **Balthazar’s in-world explanations**, preserved in the official community wiki’s indexed dialogue; they directly connect the player’s identity, limited Shroud endurance and survivor-rescue infrastructure. They should not be expanded into claims that every survivor is biologically identical to a Flameborn. [Alchemist dialogue](https://enshrouded.wiki.gg/wiki/Balthazar)
+
+### A figurative Ancient cosmology
+
+The lore note **Legacy of the Ancients — Beginning Of Time** offers an Ancient speaker’s cosmic origin account. A fragment from their star reaches the planet and nurtures life; the Ancients follow, but their attempted departure is blocked. They damage the sky while seeking escape, then investigate a dormant, living presence beneath the surface and leave it sealed. This is an in-world account expressed through metaphor. The retrieved text does not warrant a literal astronomical model or certainty about every unnamed entity. [Complete note transcription](https://enshrouded.gamevault.in/wiki/lore/legacy-of-the-ancients)
+
+The same note was also directly readable in [Flameborn Wiki’s Ancients-and-the-Flame compilation](https://flameborn.wiki/world/lore/ancients-and-the-flame). These are two fan-hosted copies of the same apparent game text, **not two independent historical witnesses**. The official wiki’s lore index lists the note, but its individual page did not become retrievable in this check. Retain this provenance if using the paragraph.
+
+The exact narrated outro was not independently inspected. An [October 16 secondary ending account](https://allthings.how/enshrouded-ending-explained-beating-vorgoth-and-what-comes-next/) describes a further sacrifice and continued play, but this study does not promote that into a personally verified cinematic account. The final quest journal is directly inspected through the stated unofficial transcription; detailed metaphysical consequences remain qualified. The community wiki index calls the quest _Cinders To The End_, while the database uses _Cinders Of The End_; the title above retains its database attribution.
 
 ### Interpretation for OpenLegend
 
@@ -204,5 +224,6 @@ The larger OpenLegend world is an opportunity, not evidence that more players au
 - Most wiki pages denied direct retrieval with HTTP 403. The observations above use the search engine's substantive indexed text and identify the community-maintained reference as such. No blocked page was represented as fully read.
 - The GINX developer interview was available as indexed text, but direct retrieval returned a category page.
 - The official December 2024 AMA contains technical and setting testimony; the voxel details, timeline and infection description are dated author statements, not measurements of the current engine or proof that lore processes are simulated.
+- The final quest journal and Ancient cosmology were read through the attributed fan transcriptions; their extraction/transcription was not independently reproduced. Alchemist dialogue was available as substantive indexed wiki text. The exact narrated outro was not inspected.
 - Current mod compatibility is stated by maintainers. The study performed no installation, performance test, security audit, multiplayer verification or save compatibility test.
 - Qualitative examples identify actual tensions and opportunities. They do not establish population prevalence, average time saved, retention uplift or that any proposed OpenLegend direction is already implemented.
