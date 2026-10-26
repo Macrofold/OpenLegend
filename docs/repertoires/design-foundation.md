@@ -170,4 +170,3 @@ Use the [selection guide](selection-and-scale.md) to choose bounded experiences 
 Fictional authority and actual platform authority remain separate under [engine/world boundaries](../engine-and-world-boundaries.md#4-what-must-remain-protected). Fictional powers and actions, including coercion and hostile effects, operate within admitted world capabilities. They grant no access to actual accounts, ungranted private information, billing, executable code or another user's control of the application.
 
 These are proposals informed by stored research and critical interpretation. No playtest, new population study, current external-source audit or empirical validation of a psychological or social model is claimed. Implementation owners and acceptance criteria remain in [the maintainer index](../maintainers/README.md); this revision closes none of them.
-

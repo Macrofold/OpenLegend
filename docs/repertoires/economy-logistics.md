@@ -593,4 +593,3 @@ Small businesses, fairs, creative commissions, teaching and gifts can be substan
 ECON-163 is a proposed outfitting-budget arrangement, not evidence that inventory and bags lack a generic prepare-supplies action. Reuse visible purchasing, equipment and capacity choices before inventing another preparation workflow. Keeping a tool available during an upgrade (ECON-241) can be Complete because it avoids blocking play; manufacturing frequent tool breakdowns to justify repair administration cannot.
 
 Deeper competition, price response, debt stories and bounded magical services follow as Depth. Dedicated industrial networks, alternative-world commerce and complex licensing or service settings are Specialist for this survival-adventure, not real-world financial recommendations or a prohibition on future worlds. Existing fictional ownership, agency, source qualifications and implementation boundaries remain preserved.
-

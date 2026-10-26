@@ -116,4 +116,3 @@ Promote a feature when its player payoff survives ordinary use: learned judgment
 Before advancing a candidate, identify the actual gap. Existing inventory and bags may already support supply preparation; existing rest may need usable presentation rather than a bedding subsystem. A small repair can stay low-priority even if easy to implement. Necessary integration and correctness work is part of the chosen slice, not a reason to expand every adjacent mechanic family.
 
 When two options offer comparable player value, cost and dependency readiness can guide execution. They must not be used to avoid a higher-priority missing game capability. When only the author can make an activity interesting, improve the activity or narrow it before adding depth. This document records no completed playtests, runtime acceptance or implementation schedule.
-

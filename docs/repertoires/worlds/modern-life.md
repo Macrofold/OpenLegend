@@ -260,4 +260,3 @@ Keep [the midnight rehearsal](../combinations.md#the-midnight-rehearsal), [missi
 Open choices before adoption: time compression, household control versus one embodied player, housing-loss severity, scope of fictional law and crime, how much of the economy runs dynamically, and whether wider politics is authored context or a selected model. Full-city simulation is not assumed.
 
 Research seeds: [The Sims](../source-atlas.md#g24), [GTA V](../source-atlas.md#g67), [Persona 5 Royal](../source-atlas.md#g124), [Ultima VII](../source-atlas.md#g128), [The Wire](../source-atlas.md#w21), [Austen](../source-atlas.md#w23), [Discworld](../source-atlas.md#w12) and [The Sopranos](../source-atlas.md#w22). The proposed city and people are original.
-

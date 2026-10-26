@@ -88,4 +88,3 @@ Narration may shape rhythm, imagery and tone around permitted facts. It cannot i
 - What actual consequence makes a later encounter different?
 
 Judge the whole encounter and its aftermath. A good line is useful when it contributes to an experience the player wants to have.
-

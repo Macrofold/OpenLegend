@@ -77,4 +77,3 @@ During the existing [rehearsal](../production-workflows/characters-and-play.md#3
 During a [cheap rehearsal](../production-workflows/characters-and-play.md#3-rehearse-the-uncertain-premise-cheaply), compare the three entry orders, a refused conversation and arrival after somebody else has completed the work. Ask what remains enjoyable without full understanding, what each source adds, and which present choice becomes more meaningful. Preserve unexpected attractions as well as repairing confusing dependencies.
 
 Then use the existing workflow to identify supported content and any concrete missing capability. Keep the chosen facts, individual accounts, actual opportunities and useful aftermath in their existing world/project owners. The [play and revision guidance](../production-workflows/characters-and-play.md#7-play-judge-and-revise-the-right-part) owns assessing the resulting experience; this example is not evidence that the game already delivers it.
-

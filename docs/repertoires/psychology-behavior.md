@@ -633,4 +633,3 @@ Music, beauty, company, romance and playful amateur creation can also provide su
 Empty-bowl interruption (PB-001), seam noticing (PB-006), preparation as procrastination (PB-066), returning borrowed gear first (PB-070), a dragon's cushion preferences (PB-224) and an inherited knife considered too precious to use (PB-294) are Detail. Their bounded expression can remain Small. Do not implement polishing, repair history or a richer domestic routine to create a reason for these reactions.
 
 Copied minds, collective personhood, alternative affect laws and focused private adult scenarios are Specialist in this survival-adventure selection, not diagnoses or judgments about real people. Ordinary memory, current participation, privacy, truthful knowledge boundaries and independent agency remain required whenever relevant, irrespective of a particular optional row's priority. Existing source evidence limits and ownership boundaries remain unchanged.
-

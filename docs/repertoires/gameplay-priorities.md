@@ -114,4 +114,3 @@ Use the [world's full acceptance requirements](../worlds/base/playable-openings.
 Complete acceptance needs the connected ordinary-player experience and its consequences, not a supplied kit, prebuilt camp, individual component pass or narrated success. Missing evidence stays explicit. A failed attempt must have understandable consequences and a viable continuation under the chosen world's rules; success is allowed to remain success.
 
 The four seed-world labels are suitability recommendations, not simultaneous delivery commitments. A future explicit product choice can rerank an alternate experience for its own goals. World-specific laws and optional lore remain world-owned.
-

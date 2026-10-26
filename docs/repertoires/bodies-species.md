@@ -776,4 +776,3 @@ Life-cycle care, synthetic citizens, radically different atmospheres and distrib
 ## Current first death-scar consumer
 
 The bundled world's [Player Death](../worlds/base/player-death.md#death-scars) now implements stiff leg, unsteady hands and tender chest as removable bodily penalties. They are separate from descriptive personality traits and reuse movement/injury/treatment owners. The [selected injury and care design](../projects/recovery-and-care-feature-spec.md) defines the next independent-condition consumer; it is not installed behavior. The broader repertoire remains optional, and neither body slots nor a universal status catalogue are required.
-

@@ -726,4 +726,3 @@ The predatory labyrinth (UNR-038), currency-sensing predators (UNR-230), adventu
 Likewise, ordinary travel does not need invitation-dependent distance, normal rest does not need separate dream lives, and basic recovery does not need a municipal resurrection economy. Basic enemies can precede whole ecosystems and supernatural political orders. A later explicit choice to build one of these alternative experiences warrants a new contextual ranking, not an automatic import into the bundled world.
 
 Fictional memory forks, restored districts, world migration or creator succession do not authorize real permission changes or override the [development save policy](../../AGENTS.md#development-save-policy). Preserve identity, actual outcomes, observer boundaries and participant agency whenever the selected fictional capability requires them.
-
