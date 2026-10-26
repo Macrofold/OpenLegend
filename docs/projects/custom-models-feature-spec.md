@@ -56,6 +56,8 @@ OpenLegend configuration changes follow its existing controlled-restart pattern;
 
 ### J5 — Compare models when useful
 
+The [current candidate inventory](../../research/ai-models/README.md#a-small-starting-panel) and [experience questions](../../research/ai-models/README.md#choose-candidates-for-a-worthwhile-encounter) help choose one useful contrast. Research interest, route availability, commercial terms and actual game qualification remain separate. Optional voice casting and delivery use [HE07](../maintainers/hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions), not this generation harness by implication.
+
 The existing benchmark can select the same generation target, optionally pin its revision, and compare it with the configured ordinary NPC model. Local preparation is offline; explicit online preflight and live execution retain their current authority and cost controls. Existing journals preserve first attempts, failed/unattempted cases, actual revisions, latency and known/unknown costs.
 
 The [optional evaluation design](custom-models-tech-design.md#8-optional-evaluation-through-the-existing-harness) preserves the low-refusal/agency rubric and useful native episodes from the October 20 research. It is not required to configure, deploy, recover or operate the production feature. Selecting a model for players still requires appropriate operational and gameplay judgment under the existing release owners; no fixed corpus, two-reviewer ceremony or experiment certificate is a universal runtime gate.

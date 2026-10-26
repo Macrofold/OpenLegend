@@ -7,9 +7,9 @@
   "no_tests": true,
   "no_weight_downloads": true,
   "priority_semantics": {
-    "P1": "Initial comparative-evaluation candidate, not a measured winner",
-    "P2": "Secondary or specialist comparison",
-    "P3": "Watchlist, sparse evidence or unresolved rights/runtime"
+    "P1": "High research interest for a selected question; not a required initial panel, measured winner or readiness/rights assessment",
+    "P2": "Useful secondary or specialist comparison",
+    "P3": "Lower-interest/watchlist coverage; availability and rights remain separate"
   },
   "evidence_grades": {
     "B": "Publisher measurement",

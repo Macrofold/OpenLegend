@@ -20,7 +20,7 @@ These choices are inferred from the cited records below. Particularly useful pri
 
 ## How to read the inventory
 
-**P1** means worth including in an initial comparative evaluation; **P2** means useful alternative or a narrower experiment; **P3** means sparse evidence, operational complexity or unresolved rights make it a watchlist item. These are research priorities, not measured quality rankings.
+**P1** means high research interest when it answers the selected question; **P2** means a useful secondary or specialist comparison; **P3** means lower-interest/watchlist coverage. These are interest labels, not a required initial panel, measured quality ranking, availability status or commercial clearance. Rights and runtime caveats remain separate even for P1 entries; use the [small starting panel](README.md#a-small-starting-panel) and [catalogue facets](catalogue.md) to narrow a comparison.
 
 Content-freedom evidence: **B** = disclosed publisher measurement; **C** = publisher claim, training intent or modified lineage; **D** = an original user anecdote; **U** = insufficient evidence. No candidate in this component earned an independent, reproducible game-specific evidence grade. A small refusal test can miss soft redirection, interrupted answers or loss of character. A fictional character disagreeing with the player can be desirable agency; an assistant stepping outside the fiction to moralize is a different behavior.
 

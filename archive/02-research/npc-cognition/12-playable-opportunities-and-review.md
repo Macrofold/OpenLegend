@@ -10,15 +10,15 @@ OpenLegend's opportunity is more than unlimited dialogue: freely expressed inten
 
 These are hypothetical experience families, not scripted outcomes or additions to first-playable scope. Use supported mechanics for early studies and identify missing dependencies explicitly.
 
-| Opportunity | Potential value | Player's meaningful role |
-| --- | --- | --- |
-| An expedition companion | Useful observations, competent voluntary help, disagreement about risk and later recollection | Choose a destination, prepare, contribute and decide whose advice to trust. |
-| Negotiation with stakes | Another person's interests enable a different outcome, including refusal | Offer, concede, reveal, risk or pursue another route. |
-| Inventing and learning together | A new supported tool or method earns a practical response and another use | Propose, experiment and evaluate tradeoffs rather than watch an NPC solve everything. |
-| Shared history | A past outing, rescue or jointly useful object matters in a later encounter | Revisit, repair a relationship, try again or move on without compulsory upkeep. |
-| Humor and quiet company | Characterful timing and performance make ordinary activity enjoyable | Choose attention, conversation or solitude. |
-| Local social consequences | Witnessed events and attributed retellings affect later independent judgments | Influence a world without controlling every relationship or becoming its sole focus. |
-| Differing expertise | People notice different possibilities and admit uncertainty | Investigate and interpret rather than receive universal hints. |
+| Opportunity                     | Potential value                                                                               | Player's meaningful role                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| An expedition companion         | Useful observations, competent voluntary help, disagreement about risk and later recollection | Choose a destination, prepare, contribute and decide whose advice to trust.           |
+| Negotiation with stakes         | Another person's interests enable a different outcome, including refusal                      | Offer, concede, reveal, risk or pursue another route.                                 |
+| Inventing and learning together | A new supported tool or method earns a practical response and another use                     | Propose, experiment and evaluate tradeoffs rather than watch an NPC solve everything. |
+| Shared history                  | A past outing, rescue or jointly useful object matters in a later encounter                   | Revisit, repair a relationship, try again or move on without compulsory upkeep.       |
+| Humor and quiet company         | Characterful timing and performance make ordinary activity enjoyable                          | Choose attention, conversation or solitude.                                           |
+| Local social consequences       | Witnessed events and attributed retellings affect later independent judgments                 | Influence a world without controlling every relationship or becoming its sole focus.  |
+| Differing expertise             | People notice different possibilities and admit uncertainty                                   | Investigate and interpret rather than receive universal hints.                        |
 
 A small connected activity can test several of these benefits without a new framework. It remains a partial study, not acceptance of the complete first-playable game.
 
@@ -42,15 +42,17 @@ A small connected activity can test several of these benefits without a new fram
 
 These sources motivate questions rather than establish a universally best NPC architecture. None was reproduced here.
 
-| Source | Relevant evidence | Limits of this reading |
-| --- | --- | --- |
-| [Comme il Faut](https://ojs.aaai.org/index.php/AIIDE/article/view/12454) and [Prom Week](https://ojs.aaai.org/index.php/AIIDE/article/view/12662) | Social knowledge and relationships can produce playable choices and consequences, not just dialogue flavor. | Primary abstracts; not a code audit. Authored norms remain world-specific. |
-| [Versu](https://ieeexplore.ieee.org/document/6648395/) | Social practices offer possibilities while autonomous agents choose actions. | Primary abstract; online 2013, journal issue 2014. A precedent for authored situations, not a proposal to replace OpenLegend's agency. |
-| [Open-Ended NPC Dialogue Favors Casual Players](https://ieeexplore.ieee.org/abstract/document/11114150), CoG 2025 | A 64-participant pilot comparing static, rephrased, hybrid and open dialogue reports engagement benefits, especially for casual players. | Publisher abstract. Conversation length is not proof of lasting enjoyment or better physical gameplay. |
-| [The Double-Edged Sword of Open-Ended Interaction](https://arxiv.org/abs/2604.10107), 2026 | A 130-participant prototype study reports greater autonomy and cognitive load, usability/trust costs and no significant overall-experience improvement. | Primary abstract. Different prototypes, participants and measures prevent pooling it with the preceding study as one verdict. |
-| [Symbolically Scaffolded Play](https://arxiv.org/html/2510.25820v1), 2025 | A small human pilot found no reliable experience difference; separate synthetic evaluation suggests role-specific effects of constraints. | HTML framing/study descriptions; manuscript contains template placeholders. Tentative evidence, not human proof that JSON or retrieval helps or harms all NPCs. |
+| Source                                                                                                                                            | Relevant evidence                                                                                                                                       | Limits of this reading                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Comme il Faut](https://ojs.aaai.org/index.php/AIIDE/article/view/12454) and [Prom Week](https://ojs.aaai.org/index.php/AIIDE/article/view/12662) | Social knowledge and relationships can produce playable choices and consequences, not just dialogue flavor.                                             | Primary abstracts; not a code audit. Authored norms remain world-specific.                                                                                      |
+| [Versu](https://ieeexplore.ieee.org/document/6648395/)                                                                                            | Social practices offer possibilities while autonomous agents choose actions.                                                                            | Primary abstract; online 2013, journal issue 2014. A precedent for authored situations, not a proposal to replace OpenLegend's agency.                          |
+| [Open-Ended NPC Dialogue Favors Casual Players](https://ieeexplore.ieee.org/abstract/document/11114150), CoG 2025                                 | A 64-participant pilot comparing static, rephrased, hybrid and open dialogue reports engagement benefits, especially for casual players.                | Publisher abstract. Conversation length is not proof of lasting enjoyment or better physical gameplay.                                                          |
+| [The Double-Edged Sword of Open-Ended Interaction](https://arxiv.org/abs/2604.10107), 2026                                                        | A 130-participant prototype study reports greater autonomy and cognitive load, usability/trust costs and no significant overall-experience improvement. | Primary abstract. Different prototypes, participants and measures prevent pooling it with the preceding study as one verdict.                                   |
+| [Symbolically Scaffolded Play](https://arxiv.org/html/2510.25820v1), 2025                                                                         | A small human pilot found no reliable experience difference; separate synthetic evaluation suggests role-specific effects of constraints.               | HTML framing/study descriptions; manuscript contains template placeholders. Tentative evidence, not human proof that JSON or retrieval helps or harms all NPCs. |
 
 ## Applying the evidence
+
+The [current model inventory's application guide](../../../research/ai-models/README.md#choose-candidates-for-a-worthwhile-encounter) connects these opportunities to contemporary candidates and existing production owners. Its small panel narrows a selected question without requiring every interesting checkpoint to be tried.
 
 Choose an activity and ask what the player can now do, understand, enjoy or care about. Compare the candidate with the current experience and an adequate simple/authored diagnostic baseline where useful; label scripted baselines honestly, since they cannot qualify independent behavior. Engineering checks, character reviewers and actual players answer different questions.
 
