@@ -14,6 +14,7 @@ and root routing make this procedure discoverable in a checkout containing these
 
 - [Request and stopping point](#request-and-stopping-point)
 - [Shared execution](#shared-execution)
+- [Production packages](production.md)
 - [Compare both flows](#compare-both-flows)
 - [Preserve and resume](#preserve-and-resume)
 - [Completion](#completion)
@@ -170,8 +171,11 @@ budget before each paid batch; account for outstanding or uncertain work. If bud
 blocks the promised scope, preserve completed work and report the precise shortfall.
 Do not quietly reduce the requested contender count or claim incomplete coverage is complete.
 
-Study runs stop after the requested candidates and review. Production runs continue through
-separated/exported files and technical checks. Integration runs also follow the existing
+Study runs stop after the requested candidates and review. For production, or integration
+that needs new or changed assets, read and execute [Production-ready art packages](production.md):
+define the consumer contract, choose a finishing method, follow only the matching asset recipes,
+check final exports and preserve the complete package. This procedure owns production finishing;
+the profiles own the subject brief and visual coverage. Integration also follows the existing
 semantic owners, native behavior, browser/runtime review and documentation rules. Read
 [scenes and interfaces](../scenes-and-interfaces.md), [assets and animation](../assets-and-animation.md)
 or [audio and feedback](../audio-and-feedback.md) only for the work actually required.
@@ -266,7 +270,8 @@ while promoting only the explicitly selected artifacts through the runtime asset
 
 A completed **study** includes the requested visual candidates, profile coverage, honest
 assessment, preserved outputs and a reusable handoff. A completed **production** request
-also includes usable exports and the relevant technical evidence. A completed **integration**
+also includes the [complete production package](production.md#5-package-preserve-and-hand-off)
+and its relevant technical evidence. A completed **integration**
 request includes the actual working game result and the project's normal verification.
 
 Keep approval, storage, technical suitability and runtime selection separate. Report any

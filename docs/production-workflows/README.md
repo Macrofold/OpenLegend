@@ -84,6 +84,12 @@ This process applies the evidence from [procedural production](../../archive/02-
 
 ## Make each handoff inspectable
 
+When the requested result includes production-ready art, execute the common
+[production-package procedure](art-flows/production.md) and only its relevant asset recipes.
+It defines source finishing, final exports, technical inspection and the reusable package;
+the chapters here retain creative development and game integration. Reuse already completed
+steps when their source/export evidence remains valid.
+
 Each stage delivers enough for the next contributor to act without guessing. The output may be a concept sheet, editable scene, material graph, rig, animation clip, component, world-content change or reviewed runtime asset. It should identify:
 
 - The input revision and intended meaning it preserves.

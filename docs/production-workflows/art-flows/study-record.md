@@ -37,6 +37,23 @@ Separate observable metadata from inferred details. Store proprietary/private so
 and operational receipts in their permitted external locations, never credentials in Git.
 An export with reconstructed layers must not be described as an original layered source.
 
+### Production package
+
+Include this section only for production or integration work; follow the
+[package procedure](production.md) and link the existing catalog/manifests rather than
+copying them into a second asset database.
+
+- Named consumer and contract: representation, required inventory, formats, dimensions/units,
+  resource constraints and relevant component, rig, playback or material conventions.
+- Finishing method and reproducible source-to-export steps, including reconstructed parts,
+  actual tool versions and export settings. Reuse the construction/source references above.
+- Exact editable-source, consumer-export and dependency references; assembly measurements,
+  frame/clip timing, loop points or other metadata required by the selected asset type.
+- Inspection recipe and checked export revision, conditions, results and concrete gaps.
+  Keep preview/import evidence distinct from verified game integration.
+- Verified preservation references and separate technical, selection and integration state;
+  remaining dependencies for the next authorized stage.
+
 ### Review and remaining gaps
 
 State observed strengths, defects, fit with the brief, and specific checks performed.
