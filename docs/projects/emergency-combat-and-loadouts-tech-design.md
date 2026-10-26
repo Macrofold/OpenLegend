@@ -44,7 +44,7 @@ The initial/reconnected snapshot can display ongoing danger without manufacturin
 
 ### 2.3 Loadout preference
 
-A **proposed `EquipmentLoadout`** preference contains application-assigned ID, revision, name, exact individualized item IDs with definition pins, optional saved permitted display labels, and an optional primary attack item ID drawn from that same set. Occupied ports, protection and current availability are derived from current permitted definitions/possessions; do not persist a second writable equipment map.
+A **proposed `EquipmentLoadout`** preference contains application-assigned ID, revision, name, exact individualized item IDs with definition pins, and optional saved permitted display labels. Occupied ports, protection and current availability are derived from current permitted definitions/possessions; do not persist a second writable equipment map. The existing installed equipped-action chooser selects an attack source from actual equipment. No per-loadout primary weapon, active-weapon authority or parallel source-priority setting is introduced.
 
 Scope these preferences by account, world and character. Store the selected automatic-loadout ID beside them. Use the existing preference storage boundary, not a new service or inventory database. The initial interface permits **12 sets per scoped character**; each set has at most as many distinct items as the installed body's equipment ports because every equipped item occupies at least one nonoverlapping port. Names use the existing user-label validation. The finite preference payload is bounded by those counts and existing request-size checks. [ECL limits](../limits/emergency-combat-and-loadouts.md) owns this deliberate initial restriction.
 
@@ -89,7 +89,7 @@ Do not alter a released flight's speed, ray, ammunition accounting, collision or
 
 Advance the quiet deadline only from relevant admitted offense, incoming preparation/release/attempt/contact and actual end of continuing relevant work. At a quiet deadline, check the exact current-life incoming/outgoing work lookup. If anything relevant still continues, wait for that owner's next terminal/change notification; do not reschedule whole-world polling. Once empty and quiet for the world-owned duration, remove the spent opening. A new physical life initializes independently; reconnect or mode changes do not.
 
-The SUR preparedness evaluator still samples its own actual evidence at its own specified cut. An assistance banner is not evidence. Guard becoming physically ready can contribute under the existing selected preparedness rules. Opening bonus, surprise damage, startle and native recovery remain distinct values/owners; none is multiplied into another merely because they concern danger.
+The SUR preparedness evaluator still samples its own actual evidence at its own specified cut. An assistance banner is not evidence. Guard becoming physically ready can contribute under the existing selected preparedness rules. Opening bonus, surprise damage, startle and native recovery remain distinct values/owners; none is multiplied into another merely because they concern danger. ECL does not depend on delivering the entire SUR/stealth project first; preserve its declared inputs and ordering when that optional installed consumer is present.
 
 Support omission and different installed timing through this same mechanism. Generic protocol/client code must not hardcode human eligibility, two seconds, the quiet interval, Focus or a bundled action name.
 
@@ -115,6 +115,8 @@ A UI reaction first captures the exact currently displayed source, target life/r
 
 Submit **one ordinary native intention with an explicit replacement transition** through the current action owner. Extend that existing contract only where necessary; do not send Stop and then an independent attack, add an emergency executor or bypass the ordinary evaluator. The pure preflight checks the state after the proposed exact cancellation, including resources it releases. A refused new action must not first destroy the current task. Required lethal review remains read-only until confirmation; only then commit the admitted transition/action together.
 
+The replacement ends the exact owning current work and its continuing plan as the existing transition requires; it does not leave an automatically resumable fishing/crafting step behind the defense. Do not blanket-cancel independent outing/help consent or other social agreements. Any actual agreement consequences follow their existing owner and appear in the shared prospective explanation.
+
 Defend delegates to the same guard operation used in ordinary combat. Retaliate delegates to one ordinary neutral attack with the captured equipped source and exact currently targetable attacker. Disallow automatic approach on this emergency route. No new timed execution score, weapon choice, model call or repeat loop is selected. Ranged retaliation uses native subject aim, not the alert button's cursor position.
 
 If a submitted result is unknown, retain the exact request and existing Check result semantics. UI closure, reconnect or another warning is not permission to retry with a new ID. A committed result wins over a later cancellation; expose what really occurred.
@@ -123,17 +125,19 @@ If a submitted result is unknown, retain the exact request and existing Check re
 
 ### 5.1 Preflight
 
-Create one shared read-only **proposed `prepareEquipmentSet`** operation returning the exact desired attachments, current attachments to stow, current item/definition pins, affected ports/custody ancestors, required claims and resulting capacity checks. Its inputs are exact item IDs and optional primary attack source; the preset is resolved by the server preference owner, or an equivalent explicitly supplied native set is validated for an NPC. Names never resolve objects.
+Create one shared read-only **proposed `prepareEquipmentSet`** operation returning the exact desired attachments, current attachments to stow, current item/definition pins, affected ports/custody ancestors, required claims and resulting capacity checks. Its inputs are exact item IDs; the preset is resolved by the server preference owner, or an equivalent explicitly supplied native set is validated for an NPC. Names never resolve objects. The existing equipped-action chooser, not the preset, continues to select the ordinary attack source.
 
 Check current control/physical life, available installed operation, compatible body, unique items, one admitted port allocation per object, no overlapping occupied ports, current accessible personal custody and all required resource/active-work constraints. An individual item may occupy several ports but appears once. All items absent from the target equipment set are stowed; unchanged exact attachments need not be rewritten. Stow into the carried root, not guessed former bags. Preflight final net capacities through the existing object owner.
+
+For a manual Equip button or named loadout shortcut, prepare the explicit replacement of incompatible current work through the same prospective-transition owner used in §4.3. Check availability against the post-cancellation resources without mutating them. The visible control explains the actual work being stopped. Admit replacement and equipment preparation together in one native request; no extra generic confirmation or Stop-then-Equip sequence. Automatic-entry requests have no permission to perform this replacement and can start only at their captured eligible idle boundary. A matching-set no-op does not cancel current work.
 
 Ordinary offers and the Apply control consume this same prepared meaning. At admission capture the exact current dependency revisions and definition meaning, not a global world revision that changes on unrelated movement. A set with changed definition pins requires review/resave before an automatic request. The empty set is a valid explicit stow-all operation; an already matching set returns a no-op result without allocating timed work.
 
 ### 5.2 Start and completion
 
-Add the finite **proposed `equip-set`** native action using the existing physical-action slot. It records actor life, installed operation pin, exact desired items/primary source, start/completion times and needed claims. Reuse the existing resource-claim envelope for selected and displaced equipment. No items move and no new equipment is active at Start.
+Add the finite **proposed `equip-set`** native action using the existing physical-action slot. It records actor life, installed operation pin, exact desired items, start/completion times and needed claims. Reuse the existing resource-claim envelope for selected and displaced equipment. No items move and no new equipment is active at Start.
 
-At the native completion boundary, revalidate current mutable access, claims, compatibility and the exact selected objects. In one existing domain/storage transaction, detach changed attachments, stow displaced items, attach desired objects, set the existing primary-use preference if supported by that same actual set, release claims and record the actual outcome. Write only changed items/ancestors plus normal action/result records. On failure discard the equipment mutation as a whole, release this action's claims and retain old attachments.
+At the native completion boundary, revalidate current mutable access, claims, compatibility and the exact selected objects. In one existing domain/storage transaction, detach changed attachments, stow displaced items, attach desired objects, release claims and record the actual outcome. Write only changed items/ancestors plus normal action/result records. On failure discard the equipment mutation as a whole, release this action's claims and retain old attachments. Ordinary source-choice caches are invalidated by the same actual equipment changes; no new primary-weapon state is written.
 
 A defensive/offensive/movement replacement may cancel this exact unfinished action. Cancellation releases only its claims and changes no attachments. An already completed switch is never rolled back. Attacks resolve against the equipment effective at their actual native ordering point. A contact and equipment completion with equal timestamps use the existing scheduler/transition order; do not add a client timestamp tie-breaker or rewrite earlier damage. Qualify that order explicitly with an equal-boundary case.
 
@@ -197,7 +201,7 @@ A failed request never claims success; an unreadable receipt never claims failur
 | --- | --- |
 | Inventory open, known melee opening | Top-center warning; ordinary world runs; actual extra preparation; Defend exposes world, preserves draft and starts one real defense. |
 | Barter draft and pending settlement | Draft survives hiding; settled exchange stands; unknown result remains checkable; failed settlement moves neither side. |
-| Busy fishing/crafting | Explicit reaction performs one valid prospective replacement; invalid reaction does not first destroy work; spent inputs are not refunded. |
+| Busy fishing/crafting | Explicit reaction or manual Equip performs one valid prospective replacement; invalid requests do not first destroy work; spent inputs are not refunded and chores do not resume automatically. |
 | Shield and body brace | Correct source/profile, facing, preparation, one interception and recovery; brace does not intercept a projectile. |
 | Equipped weapon retaliation | Exactly one neutral attack against the bound attacker, no mouse-location shot, no hidden approach, no free ammo or substitute source. |
 | Lethal review | Review precedes effects; decline cancels the matching attempt; emergency defense does not later fire the reviewed attack. |
@@ -211,7 +215,7 @@ A failed request never claims success; an unreadable receipt never claims failur
 | Positive/negative reaction contribution | Actual installed modifier changes native delay and truthful explanation once; changes during an opening do not resize it. |
 | Quiet, reconnect and new life | Genuine quiet rearms; same-life reconnect does not; new life follows its own ordinary initialization. |
 | Save/load during opening or equipment action | Same remaining native work and effects under identical next input; no duplicated transfer or granted time. |
-| Complete loadout and empty loadout | All desired attachments commit together; omitted equipment stows; empty set stows all; already matching set is a no-op. |
+| Complete loadout and empty loadout | All desired attachments commit together; omitted equipment stows; empty set stows all; already matching set is a no-op that leaves current work alone. |
 | Missing item, blocked claim, incompatible ports | Whole switch refuses with actual reason; old equipment remains; no name-based substitution or partial application. |
 | Reaction during equipment preparation | Unfinished switch cancels; reaction uses old actual gear; later automatic request cannot interrupt a newer chosen action. |
 | Auto entry, manual Off and reconnect | One opt-in attempt per true entry; Off cancels only its unfinished automatic work; no auto-return set or reconnect replay. |
