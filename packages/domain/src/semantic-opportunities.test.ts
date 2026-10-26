@@ -3,9 +3,24 @@ import { createWorld, NPC_ID } from './data.js';
 import { entityGet } from './entity-collection.js';
 import { executeCommand } from './kernel.js';
 import { updateWorld } from './draft.js';
-import { discoveryInterval, reserveDiscovery, settleDiscovery, validateSemanticContinuation } from './semantic-opportunities.js';
+import { discoveryInterval, reserveDiscovery, settleDiscovery, validateSemanticContinuation,resolveSemanticCause,semanticCauseResolved } from './semantic-opportunities.js';
 
 describe('one discovery opportunity per genuine free interval',()=>{
+  it('reuses an equivalent quiet choice across cue generations but not a genuinely changed chosen purpose',()=>{
+    let world=createWorld();
+    const anchor='current-local-exposure',family='closing-body',key=JSON.stringify([anchor,family]);
+    world=updateWorld(world,draft=>{resolveSemanticCause(draft,NPC_ID,key,'same-received-description',8);});
+    expect(semanticCauseResolved(world,NPC_ID,key,'same-received-description',8)).toBe(true);
+    // Condition generation is a separate publication fence, not a semantic change.
+    expect(semanticCauseResolved(world,NPC_ID,key,'same-received-description',8)).toBe(true);
+    expect(semanticCauseResolved(world,NPC_ID,key,'changed-received-description',8)).toBe(false);
+    const move=executeCommand(world,{id:'different-chosen-work',actorId:NPC_ID,type:'move',destination:{x:14,y:0,z:15,surfaceId:'terrain'}});
+    expect(move.outcome.ok).toBe(true);world=move.world;
+    expect(semanticCauseResolved(world,NPC_ID,key,'same-received-description',8)).toBe(false);
+    world=updateWorld(world,draft=>{resolveSemanticCause(draft,NPC_ID,key,'same-received-description',8);});
+    expect(semanticCauseResolved(world,NPC_ID,key,'same-received-description',8)).toBe(true);
+    validateSemanticContinuation(entityGet(world.entities,NPC_ID)!.actor!.agency.semantic);
+  });
   it('releases a pre-dispatch reservation but consumes actual dispatch and survives restoration',()=>{
     let world=createWorld();
     expect(discoveryInterval(world,NPC_ID)).toBe(0);

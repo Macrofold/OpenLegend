@@ -153,7 +153,7 @@ describe('received detailed attention', () => {
     ]);
     const cue = currentAttentionCues(world, PLAYER_ID)[0]!,
       key = JSON.stringify([cue.anchorKey, cue.family]),
-      qualitativeRevision = JSON.stringify([anchor.descriptionRevision, cue.generation]);
+      qualitativeRevision = anchor.descriptionRevision;
     const result = commitActorResponse(
       world,
       'fixture-cue-choice',

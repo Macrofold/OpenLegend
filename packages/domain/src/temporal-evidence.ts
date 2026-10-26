@@ -134,6 +134,7 @@ export interface TemporalActorHistory {
     optional: { bytes: number; count: number };
     required: { bytes: number; count: number };
     speech: { bytes: number; count: number };
+    archives?:Record<'optional'|'required'|'speech',{bytes:number;count:number}>;
   };
 }
 export interface TemporalSupportCapsule {

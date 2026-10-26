@@ -1,6 +1,6 @@
 # Attention and recording in the base world
 
-**Selected design, updated October 25, 2026, 23:24 EDT; runtime pending.** The [feature specification](../../projects/attention-and-scenes-feature-spec.md), [technical design](../../projects/attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) and [research comparison](../../projects/attention-and-scenes-research.md) own behavior and mechanisms. These reversible defaults are implementation hypotheses, not measured capacity. The few-second interpretation aim applies after a justified decision; it is not a recurring AI cadence. Focus is not yet installed among base-world attributes. [PS-L02](../../limits/product-scalability.md#ps-l02--attention-and-sensory-grouping) retains limits/status.
+**Supported native core implemented; integration and scale qualification remain open, October 26, 2026.** The [feature specification](../../projects/attention-and-scenes-feature-spec.md), [technical design](../../projects/attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) and [research comparison](../../projects/attention-and-scenes-research.md) own behavior and mechanisms. These reversible active defaults are not measured population or service capacity. The few-second interpretation aim applies after a justified decision; it is not a recurring AI cadence. Base-world people receive the selected Focus attribute; missing authored values use the ordinary value below. [PS-L02](../../limits/product-scalability.md#ps-l02--attention-and-sensory-grouping) retains limits/status.
 
 ## Foreground capacity
 
@@ -13,6 +13,12 @@ Direct involvement and established explicit/current-work focus have priority cla
 Set `physicalCue` to the maximum of received event urgency (0–10), 2 for newly received qualitative evidence, and `min(4, floor(received displacement / 2 metres))` since the last presented change. Use the uncertainty-safe lower displacement; absent/unsupported terms are zero. An installed sense may supply another declared normalized intensity term. Do not sum samples or read private intent/importance. An unchanged description is not novel because its position changed. Future semantic preferences may request offered subjects during ordinary thought; no reflection-generated profession/object whitelist is selected.
 
 Keep optional incumbents for 120 game seconds (two normal-play seconds) unless a higher interruption class arrives. Afterwards a challenger needs a two-point margin; break ties by earlier selection then stable local exposure order. Reservations are soft and empty lanes lend capacity. A new cue about an existing subject updates that entry. Presented transient terms clear only on exact acknowledgment; routine reinforcement alone does not buy cognition.
+
+## Received planar geometry
+
+The supported source certifies complete finite planar patch interiors with conservative convex receptor-to-patch visibility and range checks. It tries a coarse patch before refinement; two metres is the range/refinement target and 0.125 metres the selected measurement error. Each source opportunity is at least 15 game seconds apart, with at most 64 patch attempts and 64 support-index visits; retain at most 256 surface/boundary fragments and 512 unfinished rectangles. Unknown fringe and exhausted preparation remain incomplete. Actual geometry, eye/range or source changes invalidate the current grant; unchanged supported intervals retain their original measurements.
+
+A physical drop needs actual near/far surface support, not a visibility edge or private map label. The first producer can leave a normal top-side cliff unknown when its far side is occluded. This preserves evidence rather than guaranteeing a warning from every viewpoint. Native [source tests](../../verification/attention-and-memory-core.md#native-observations-and-detail-selection) include a vantage where both adjacent surfaces are visible; full specialist vision remains separate.
 
 ## Unfamiliar surroundings
 
@@ -85,3 +91,5 @@ These quotas do not bound unlimited deliberately learned capabilities, unresolve
 The controlled scenario reduced new personal observations from 2,012 to 1,244, preserving all 51 own preparation results, but did not reduce the counted physical/status/sight calculations. The combined game observation failed at 0.432× under different host load and unequal activity. It provides no acceptable full-game gain to justify adopting lost recollection. The runtime rule and its unused engine hook were removed; ordinary sensory-eligible event recording remains current.
 
 [Full experiment, limitations and retention decision](../../verification/performance/overhaul-compromises.md) · [Limits decision](../../limits/memory.md#mh16--busy-routine-witnesses). This is an experiment record, not an installed base-world law or a general engine rule. Optional routine episodes and coarse distant activity remain separate unimplemented designs.
+
+Current native and fixture evidence is recorded in [Attention and personal memory core](../../verification/attention-and-memory-core.md). Broad semantic usefulness, live response latency and large-world qualification remain open.

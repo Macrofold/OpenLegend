@@ -8,6 +8,8 @@ export function actionResponse(act: NonNullable<ResponseOperation['act']>): Acto
         note: null,
         name: null,
         appraise: null,
+        observe: null,
+        remember: null,
         localId: 'action',
         requiresAccepted: [],
         talk: null,

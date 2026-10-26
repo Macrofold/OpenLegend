@@ -118,7 +118,7 @@ export function MemoryHistory({
             ...(cursor ? { cursor } : {}),
             ...(read.query ? { query: read.query } : {}),
             ...(read.thoughts && !read.recent ? { thoughts: true } : {}),
-            ...(read.recent ? {recent:true} : {}),
+            ...(read.recent ? { recent: true } : {}),
           });
           if (!isCurrent(read)) break;
           if (!answer.ok) throw new Error(answer.message ?? 'Memories are unavailable.');
@@ -213,21 +213,31 @@ export function MemoryHistory({
   const message = error?.identity === identity ? error.message : '';
   const staleRecent = shownPage && shownPage.revision !== revision;
   const loading = busy || (!shownPage && !message);
-  const moreLabel = recent ? 'Older observations' : filtered
-    ? scanLimited
-      ? 'Search older memories'
-      : 'More matches'
-    : 'Older memories';
+  const moreLabel = recent
+    ? 'Older observations'
+    : filtered
+      ? scanLimited
+        ? 'Search older memories'
+        : 'More matches'
+      : 'Older memories';
   return (
     <div className="ol-memory-history" hidden={!visible}>
       <p className="ol-caption">
-        {recent ? 'Your character’s recent observations.' : owned
-          ? 'Your character’s retained memories.'
-          : 'Permitted private records for this character.'}{' '}
-        {recent ? 'Recent observations retain the measurements actually received; gaps remain unknown and older detail may fade.' : 'Search matches the remembered text shown here.'}
+        {recent
+          ? 'Your character’s recent observations.'
+          : owned
+            ? 'Your character’s retained memories.'
+            : 'Permitted private records for this character.'}{' '}
+        {recent
+          ? 'These are things your character noticed recently. Details may fade; missing moments remain unknown.'
+          : 'Search matches the remembered text shown here.'}
       </p>
       <label className="ol-memory-filter">
-        <input type="checkbox" checked={recent} onChange={event=>setRecent(event.target.checked)} />{' '}
+        <input
+          type="checkbox"
+          checked={recent}
+          onChange={(event) => setRecent(event.target.checked)}
+        />{' '}
         Recent observations
       </label>
       <form
@@ -244,8 +254,8 @@ export function MemoryHistory({
           <input
             ref={searchInput}
             type="search"
-            aria-label={recent ? "Search recent observations" : "Search memories"}
-            placeholder={recent ? "Search recent observations…" : "Search memories…"}
+            aria-label={recent ? 'Search recent observations' : 'Search memories'}
+            placeholder={recent ? 'Search recent observations…' : 'Search memories…'}
             value={draft}
             maxLength={200}
             onChange={(event) => setDraft(event.target.value)}
@@ -286,17 +296,22 @@ export function MemoryHistory({
         )}
       </form>
       <p className="ol-meta" role="status">
-        <LoadingIndicator active={loading} label={recent ? "Loading observations" : "Loading memories"} />
+        <LoadingIndicator
+          active={loading}
+          label={recent ? 'Loading observations' : 'Loading memories'}
+        />
         {message
           ? 'Reading did not finish.'
           : filtered
-            ? recent ? `${shown.length} recent observations${scanLimited ? '. Coverage is partial.' : ''}${next ? ' Older observations remain.' : ' End of retained observations.'}` : `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
-                scanLimited
-                  ? '. This search stopped at its record limit; older memories remain to search.'
-                  : next
-                    ? '. Older memories remain to search.'
-                    : '. End of the retained records.'
-              }`
+            ? recent
+              ? `${shown.length} recent observations${scanLimited ? '. Coverage is partial.' : ''}${next ? ' Older observations remain.' : ' End of retained observations.'}`
+              : `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
+                  scanLimited
+                    ? '. This search stopped at its record limit; older memories remain to search.'
+                    : next
+                      ? '. Older memories remain to search.'
+                      : '. End of the retained records.'
+                }`
             : shownPage && !next
               ? 'Reached the oldest retained memory.'
               : 'Reading retained history, oldest first.'}
@@ -318,15 +333,19 @@ export function MemoryHistory({
           load(false, 1);
         }}
       >
-        {recent ? (staleRecent ? 'Observations changed — read latest' : 'Refresh observations') : staleRecent
-          ? filtered
-            ? 'Updated memories — search again'
-            : 'New memories — read latest'
-          : filtered
-            ? 'Search latest memories'
-            : (shownPage?.depth ?? 1) > 1
-              ? 'Return to recent memories'
-              : 'Refresh memories'}
+        {recent
+          ? staleRecent
+            ? 'Observations changed — read latest'
+            : 'Refresh observations'
+          : staleRecent
+            ? filtered
+              ? 'Updated memories — search again'
+              : 'New memories — read latest'
+            : filtered
+              ? 'Search latest memories'
+              : (shownPage?.depth ?? 1) > 1
+                ? 'Return to recent memories'
+                : 'Refresh memories'}
       </Button>
       <ConversationThread
         conversationKey={searchIdentity}
@@ -334,8 +353,14 @@ export function MemoryHistory({
         preserveReading
         openingRevision={openingRevision}
         liveAnnouncements="off"
-        ariaLabel={recent ? 'Recent received observations' : owned ? 'Your retained memories' : 'Character memory records'}
-        newMessageLabel={recent ? "New observations" : "New memories"}
+        ariaLabel={
+          recent
+            ? 'Recent observations'
+            : owned
+              ? 'Your retained memories'
+              : 'Character memory records'
+        }
+        newMessageLabel={recent ? 'New observations' : 'New memories'}
         before={
           !!next && (
             <Button size="sm" isPending={busy} onPress={() => load(true)}>
@@ -356,11 +381,13 @@ export function MemoryHistory({
           !loading &&
           !message && (
             <p className="ol-meta">
-              {recent ? `No matching retained observations.${next ? ' Continue with older observations.' : ''}` : filtered
-                ? `No matches in the memories searched.${next ? ' Continue with older memories or change your search.' : ''}`
-                : owned
-                  ? 'Your experiences will leave memories here.'
-                  : 'This character has no retained memories yet.'}
+              {recent
+                ? `No matching retained observations.${next ? ' Continue with older observations.' : ''}`
+                : filtered
+                  ? `No matches in the memories searched.${next ? ' Continue with older memories or change your search.' : ''}`
+                  : owned
+                    ? 'Your experiences will leave memories here.'
+                    : 'This character has no retained memories yet.'}
             </p>
           )
         }

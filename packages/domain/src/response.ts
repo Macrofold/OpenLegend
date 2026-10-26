@@ -1407,8 +1407,7 @@ export function commitActorResponse(
         latch?.active &&
         latch.generation === cause.generation &&
         candidate &&
-        cause.qualitativeRevision ===
-          JSON.stringify([candidate.descriptionRevision, latch.generation])
+        cause.qualitativeRevision === candidate.descriptionRevision
       )
         resolveSemanticCause(world, actorId, cause.key, cause.qualitativeRevision, cause.severity);
     }

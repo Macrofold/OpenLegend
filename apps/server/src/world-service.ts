@@ -2168,13 +2168,22 @@ export class WorldService {
     selection: HistoryEditSelection,
     operation: (prepared?: PreparedHistoryEdit) => Promise<T>,
   ): Promise<T | (ApiResult & { revision: number })> {
+    const measured = performance.now();
+    const trace = (stage: string) => {
+      if (process.env['OL_DEBUG_MEMORY_EDIT'] === '1')
+        console.error('memory-edit-stage', stage, Math.round(performance.now() - measured));
+    };
+    trace('enter');
     await this.flush();
+    trace('flushed');
     if (!this.store.records || !this.store.adoptHistory) return this.mutate(() => operation());
     const original = this.saved;
     const generation = this.generation;
     const revision = this.persistedRevision;
     const prepared = await prepareHistoryEdit(this.store.records.db, original, selection);
+    trace('prepared');
     return this.mutate(async () => {
+      trace('mutation');
       await this.flush();
       // A newer world may have added a dependency or changed authority while the read
       // snapshot was open. Refuse stale preparation instead of dropping that dependency.
@@ -2191,9 +2200,13 @@ export class WorldService {
         };
       this.store.adoptHistory!(original, prepared.state);
       this.saved = prepared.state;
+      trace('adopted');
       freezeWorld(this.saved.world);
       try {
-        return await operation(prepared);
+        trace('operation');
+        const result = await operation(prepared);
+        trace('completed');
+        return result;
       } finally {
         if (this.store.releaseHistory && !this.storageError)
           this.saved = this.store.releaseHistory(this.saved);
@@ -6070,12 +6083,7 @@ export class WorldService {
     scope = this.localScope,
   ): Promise<ApiResult> {
     validatePersonalReceiptLocator(receipt, receipt.actorId);
-    return this.forgetMemory(
-      receipt.actorId,
-      temporalReceiptId(receipt),
-      scope,
-      receipt,
-    );
+    return this.forgetMemory(receipt.actorId, temporalReceiptId(receipt), scope, receipt);
   }
   async correctRecentObservation(
     receipt: TemporalReceiptLocator,

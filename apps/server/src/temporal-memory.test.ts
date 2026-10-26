@@ -6,34 +6,118 @@ import {
   PLAYER_ID,
   NPC_ID,
   entityGet,
+  experiences,
+  acceptConsolidation,
 } from '@open-legend/domain';
 import { appendMemory, acquireExposure } from '../../../packages/domain/src/events.js';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
 import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { WorldService } from './world-service.js';
 import { randomUUID } from 'node:crypto';
+import { personalAccountRevision } from './personal-accounts.js';
 
 const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
   for (const close of cleanup.splice(0)) await close();
 });
 async function setup() {
+  const started = performance.now();
+  const trace = (stage: string) => {
+    if (process.env['OL_DEBUG_MEMORY_EDIT'] === '1')
+      console.error('memory-setup-stage', stage, Math.round(performance.now() - started));
+  };
+  trace('start');
   const store = await testRepository();
+  trace('database-created');
+  await store.ready;
+  trace('schema-ready');
   const service = new WorldService(store, readConfig({ OPEN_LEGEND_GOD_MODE: 'true' }));
   cleanup.push(async () => {
     service.releaseHostWork();
     await store.close();
   });
   await enterLocalWorld(service);
+  trace('entered');
   await service.setPresence('temporal-memory-fixture', true);
   return { store, service };
 }
 
 describe('bounded personal temporal storage', () => {
+  it('reclaims retired exact summary leaves when only a fallible impression remains', async () => {
+    const { store, service } = await setup();
+    const ids = await editWorld(service, (world) =>
+      [1, 2].map(
+        (index) =>
+          appendMemory(world, PLAYER_ID, {
+            kind: 'episode',
+            source: 'felt',
+            summary: `Exact original outcome ${index}.`,
+            eventType: 'fixture-outcome',
+            entityIds: [],
+            importance: 1,
+          })!,
+      ),
+    );
+    const sources = experiences(service.world, PLAYER_ID, true).filter((entry) =>
+      ids.includes(entry.id),
+    );
+    const prepared = ids.map((id) => {
+      const value = service.world.memories[PLAYER_ID]!.find((value) => value.id === id)!;
+      return {
+        entry: { source: 'memory' as const, value },
+        ref: {
+          kind: 'memory' as const,
+          id,
+          revision: personalAccountRevision(JSON.stringify(value)),
+        },
+      };
+    });
+    expect(
+      (
+        await service.transition((world) =>
+          acceptConsolidation(
+            world,
+            PLAYER_ID,
+            'fixture-exact-summary',
+            sources,
+            [{ sourceIds: ids, text: 'Two personal outcomes.' }],
+            prepared,
+          ),
+        )
+      ).ok,
+    ).toBe(true);
+    expect(
+      Number(
+        (await store.db
+          .prepare(
+            'SELECT COUNT(*) AS count FROM mind_source_versions WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
+          )
+          .get(service.world.id, PLAYER_ID, ids))!['count'],
+      ),
+    ).toBe(2);
+    await editWorld(service, (world) => {
+      world.simTime += selectedTemporalPolicy(world).aftermathSeconds + 1;
+    });
+    expect(
+      Number(
+        (await store.db
+          .prepare(
+            'SELECT COUNT(*) AS count FROM mind_source_versions WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
+          )
+          .get(service.world.id, PLAYER_ID, ids))!['count'],
+      ),
+    ).toBe(0);
+  });
   it('keeps minimum exact learned-place support after its account expires and revokes it on forgetting', async () => {
     const { store, service } = await setup();
     const result = await editWorld(service, (world) => {
-      const place = Object.values(world.places)[0]!;
+      const learned = new Set(
+        (world.experience?.awareness[PLAYER_ID] ?? []).flatMap((entry) =>
+          entry.exposure?.kind === 'place' ? [entry.exposure.id] : [],
+        ),
+      );
+      const place = Object.values(world.places).find((place) => !learned.has(place.id))!;
+      if (!place) throw new Error('Fixture requires an independently unvisited authored place.');
       const event = acquireExposure(
         world,
         [],
@@ -174,13 +258,37 @@ describe('bounded personal temporal storage', () => {
       ).entries,
     ).toHaveLength(4);
     expect((await service.forgetRecentObservation(locators[2]!)).ok).toBe(true);
-    expect(await store.memories.temporalReceiptsCurrent(scope,[locators[2]!])).toBe(false);
-    expect((await store.memories.temporalHistory(scope,{subjects:['fixture-animal'],bytes:32768},service.world)).entries).toHaveLength(4);
-    expect((await service.say('temporal-correction-words',PLAYER_ID,'That earlier location was mistaken.')).ok).toBe(true);
-    const correcting=service.world.experience!.awareness[PLAYER_ID]!.filter((entry)=>entry.eventType==='speech').at(-1)!;
-    expect((await service.correctRecentObservation(locators[3]!,correcting.eventId)).ok).toBe(true);
-    expect(await store.memories.temporalReceiptsCurrent(scope,[locators[3]!])).toBe(false);
-    expect(service.world.experience!.awareness[PLAYER_ID]!.some((entry)=>entry.eventId===correcting.eventId)).toBe(true);
+    expect(await store.memories.temporalReceiptsCurrent(scope, [locators[2]!])).toBe(false);
+    expect(
+      (
+        await store.memories.temporalHistory(
+          scope,
+          { subjects: ['fixture-animal'], bytes: 32768 },
+          service.world,
+        )
+      ).entries,
+    ).toHaveLength(4);
+    expect(
+      (
+        await service.say(
+          'temporal-correction-words',
+          PLAYER_ID,
+          'That earlier location was mistaken.',
+        )
+      ).ok,
+    ).toBe(true);
+    const correcting = service.world
+      .experience!.awareness[PLAYER_ID]!.filter((entry) => entry.eventType === 'speech')
+      .at(-1)!;
+    expect((await service.correctRecentObservation(locators[3]!, correcting.eventId)).ok).toBe(
+      true,
+    );
+    expect(await store.memories.temporalReceiptsCurrent(scope, [locators[3]!])).toBe(false);
+    expect(
+      service.world.experience!.awareness[PLAYER_ID]!.some(
+        (entry) => entry.eventId === correcting.eventId,
+      ),
+    ).toBe(true);
     await editWorld(service, (world) => {
       world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 2;
     });

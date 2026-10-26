@@ -1,5 +1,7 @@
 # Verification
 
+- [Attention and personal memory core](verification/attention-and-memory-core.md) — native detail, geometry, familiarity, exact-source retention and discovery restart checks; semantic, browser and scale qualification remain explicit.
+
 - [Personal perception foundation](verification/personal-perception-foundation.md) — supported-channel evidence, local recognition, faithful retention, complete place preparation and safe player/NPC publication; future sensing and full integrated acceptance remain open.
 
 - [Combat and threat responses](verification/combat-and-threat-responses.md) — initial actual-contact native checks and explicit remaining combat qualification.

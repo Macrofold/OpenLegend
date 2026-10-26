@@ -612,6 +612,12 @@ export class SqlGameRepository implements GameRepository {
 
   readonly ready: Promise<void>;
   private async initialize() {
+    const started = performance.now();
+    const trace = (stage: string) => {
+      if (process.env['OL_DEBUG_MEMORY_EDIT'] === '1')
+        console.error('memory-schema-stage', stage, Math.round(performance.now() - started));
+    };
+    trace('start');
     await this.db.transaction(async () => {
       // Reject old layouts before any table/index initialization can modify them.
       // AGENTS.md#development-save-policy: no conversion, reset or deletion.
@@ -679,9 +685,12 @@ export class SqlGameRepository implements GameRepository {
 
       this.vectors = new VectorStore(this.db);
       await this.vectors.initialize();
+      trace('vectors');
 
       await this.records.initialize();
+      trace('records');
       await this.memories.initialize();
+      trace('memory');
       await new WorldAgentStore(this.db).initialize();
       await this.history.initialize();
       // An awaiting target must refuse retained files before ordinary startup cleanup.
@@ -692,10 +701,12 @@ export class SqlGameRepository implements GameRepository {
       await this.invites.initialize();
       await this.maintenance.initialize();
       await this.creationTargets.initialize();
+      trace('other-owners');
       await this.db
         .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
         .run('schema', DATABASE_SCHEMA);
     });
+    trace('committed');
     if (this.rawDb.materializationTransaction) {
       await this.journal.initialize();
       await this.journal.flush();

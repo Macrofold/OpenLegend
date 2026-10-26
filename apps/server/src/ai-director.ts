@@ -1,6 +1,6 @@
 import { entityHandle } from './entity-references.js';
 import { expandSituation, situationQuerySchema } from './situation-context.js';
-import { entityGet, currentBodyObservation } from '@open-legend/domain';
+import { entityGet, currentBodyObservation, currentBodySubject } from '@open-legend/domain';
 import {
   discoveryInterval,
   reserveDiscovery,
@@ -3349,8 +3349,7 @@ export class AiDirector {
       queries: z
         .array(situationQuerySchema)
         .max(prepared.situation.policy.maximumQueries)
-        .nullable()
-        .optional(),
+        .nullable(),
     });
     const responseSchema = z.toJSONSchema(querySchema, { target: 'draft-7' });
     let value: unknown;
@@ -3414,6 +3413,9 @@ export class AiDirector {
             prepared.entityReferences[handle] = id;
             prepared.binding.physicalEntityReferences![handle] = id;
             prepared.binding.entityLeases![id] = body.id;
+            const subject = currentBodySubject(prepared.situation.world, actorId, id) ??
+              (!entityGet(prepared.situation.world.entities, id)?.actor ? { kind: 'entity' as const, entityId: id } : undefined);
+            if (subject) (prepared.binding.identityReferences ??= {})[handle] = subject;
             if (!prepared.binding.entityIds.includes(id)) prepared.binding.entityIds.push(id);
             const episode = prepared.situation.world.perceptionEpisodes?.[actorId]?.[id];
             if (episode) (prepared.binding.entityEpisodes ??= {})[id] = episode;
@@ -3424,7 +3426,8 @@ export class AiDirector {
             : baseSchema;
           preview?.finish();
           preview = startPreview();
-          context += '\nRequested received evidence: ' + JSON.stringify(expansion);
+          const { expandedIds: _expandedIds, ...disclosedExpansion } = expansion;
+          context += '\nRequested received evidence: ' + JSON.stringify(disclosedExpansion);
           if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
             throw new ContextBudgetError(
               'The bounded situation expansion exceeds the decision input allowance.',
@@ -4015,7 +4018,7 @@ export class AiDirector {
             world.perceptionEvidence?.[entity.id]?.attention?.candidates[cue.anchorKey];
           if (!candidate) return [];
           const key = JSON.stringify([cue.anchorKey, cue.family]),
-            qualitativeRevision = JSON.stringify([candidate.descriptionRevision, cue.generation]),
+            qualitativeRevision = candidate.descriptionRevision,
             severity = selectedAttentionPolicy(world).urgentCue;
           return semanticCauseResolved(world, entity.id, key, qualitativeRevision, severity)
             ? []

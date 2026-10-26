@@ -714,6 +714,35 @@ function retainVisualGap(
   };
 }
 
+const CURRENT_BODY_FACET_KINDS = [
+  'detected',
+  'location',
+  'body',
+  'carried',
+  'pile-contents',
+  'public-attributes',
+  'contact',
+  'association',
+  'observed-motion',
+] as const;
+/** Exact selected IDs avoid traversing and copying every unattended body's detail. */
+function selectedCurrentSupports(
+  world: WorldState,
+  observerId: string,
+  current: PerceptionEvidenceOwner['current'] | undefined,
+  exposures: ReadonlyMap<string, string>,
+): LiveFacetSupport[] {
+  const held = current && readOnlyDraftView(current);
+  return [...exposures].flatMap(([id, exposure]) =>
+    CURRENT_BODY_FACET_KINDS.flatMap((kind) => {
+      const lease = held?.[`${id}:${kind}`];
+      return lease?.exposure.episodeId === exposure
+        ? [effectiveCurrentFacetSupport(world, observerId, lease)]
+        : [];
+    }),
+  );
+}
+
 export function currentObservedFacets(
   world: WorldState,
   observerId: string,
@@ -730,18 +759,7 @@ export function currentObservedFacets(
     return [];
   const subject = entityGet(world.entities, subjectId);
   if (!subject) return [];
-  return [
-    'detected',
-    'location',
-    'body',
-    'carried',
-    'pile-contents',
-    'public-attributes',
-    'contact',
-    'association',
-    'observed-motion',
-  ]
-    .flatMap((kind) => state.current[`${subjectId}:${kind}`] ?? [])
+  return CURRENT_BODY_FACET_KINDS.flatMap((kind) => state.current[`${subjectId}:${kind}`] ?? [])
     .filter(
       (lease) =>
         currentLeaseEligible(world, observerId, lease) &&
@@ -1373,9 +1391,7 @@ export function reconcileAttendedTemporalEvidence(
       return body ? [[id, body.exposure.episodeId] as const] : [];
     }),
   );
-  const leases = Object.values(current ? readOnlyDraftView(current) : {})
-    .map((lease) => effectiveCurrentFacetSupport(world, observerId, lease))
-    .filter((lease) => selectedExposures.get(lease.subjectId) === lease.exposure.episodeId);
+  const leases = selectedCurrentSupports(world, observerId, current, selectedExposures);
   const contacts = new Map<string, ObserverSubject>();
   for (const lease of leases) {
     if (!creditContacts || lease.value.kind !== 'body' || lease.confirmedThrough !== world.simTime)
@@ -1431,9 +1447,7 @@ export function reconcileAttendedTemporalEvidence(
           return body ? [[id, body.exposure.episodeId] as const] : [];
         }),
       );
-      const changed = Object.values(current ? readOnlyDraftView(current) : {})
-        .map((lease) => readOnlyDraftView(lease))
-        .filter((lease) => exposures.get(lease.subjectId) === lease.exposure.episodeId);
+      const changed = selectedCurrentSupports(world, observerId, current, exposures);
       // Credit may change prominence. Retain the newly selected current baseline before
       // publication, without recursively awarding contacts for an attention-only change.
       captureTemporalCurrent(

@@ -8,7 +8,11 @@ import type {
 import { validateEvidenceSource, validateSensoryFacet } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
 import { isSafeRecordId } from './records.js';
-import { temporalReceiptAliases, temporalReceiptIndividualIds, temporalReceiptId } from './temporal-evidence.js';
+import {
+  temporalReceiptAliases,
+  temporalReceiptIndividualIds,
+  temporalReceiptId,
+} from './temporal-evidence.js';
 
 const encoder = new TextEncoder();
 const encodedBytes = (value: unknown) => encoder.encode(JSON.stringify(value)).byteLength;

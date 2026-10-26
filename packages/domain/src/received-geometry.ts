@@ -683,8 +683,9 @@ export function receivedBoundarySeparation(
     });
   const d = distance(current.point),
     error = current.error + boundary.errorRadius;
+  const constantFrom=Math.max(anchor.sample.valueMeasuredFrom,measurement.from);
   const earlier = anchor.motion?.earlier;
-  const before =
+  const before = constantFrom<at?sampleAt(constantFrom):
     earlier &&
     earlier.valueMeasuredThrough >= measurement.from &&
     earlier.valueMeasuredThrough < at &&

@@ -136,7 +136,7 @@ function answer(request: JudgeRequest, script: Script): AiResult<JudgeValue> {
   return value(request.requestId, 'jev', { answers });
 }
 
-type Kind = 'talk' | 'act' | 'think' | 'goal' | 'plan' | 'note' | 'name';
+type Kind = 'talk' | 'act' | 'think' | 'goal' | 'plan' | 'note' | 'name' | 'observe' | 'remember';
 function operation(localId: string, fields: Partial<Record<Kind, unknown>>) {
   return {
     localId,
@@ -149,6 +149,8 @@ function operation(localId: string, fields: Partial<Record<Kind, unknown>>) {
     note: null,
     name: null,
     appraise: null,
+    observe: null,
+    remember: null,
     ...fields,
   };
 }
@@ -254,6 +256,7 @@ const KNOWN_HEADINGS = new Set([
   'Activities I chose to inspect',
   'Recent memories',
   'Nearby actors and objects',
+  'Received situation',
   'Inventory',
   'General knowledge notepad',
   'Knowledge',
@@ -519,6 +522,7 @@ async function harness(
     script?: Script;
     reply?: (request: GenerateRequest) => unknown;
     food?: boolean;
+    preview?: boolean;
   } = {},
 ) {
   const now = 10_000;
@@ -530,6 +534,7 @@ async function harness(
     OPENAI_EMBEDDING_API_KEY: '',
     // In-process simulated ceiling for fake receipts; no provider is reachable.
     AI_BUDGET_USD: '1',
+    ...(options.preview ? { MACROFOLD_API_KEY: 'fixture-only-preview-key' } : {}),
   });
   const store = await testRepository();
   const service = new WorldService(store, config, () => now);
@@ -551,9 +556,14 @@ async function harness(
     async generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
       calls.generations.push(request);
       // Only NPC decisions are inspected; background work receives no fixture content.
+      const result = request.task === 'npc_response' ? state.reply(request) : undefined;
+      const properties = request.schema['properties'] as Record<string, unknown> | undefined;
+      const output = result && typeof result === 'object' && !Array.isArray(result)
+        ? { ...(properties && Object.hasOwn(properties, 'queries') ? { queries: null } : {}), ...result }
+        : result;
       return (
         request.task === 'npc_response'
-          ? value(request.requestId, 'openai', state.reply(request))
+          ? value(request.requestId, 'openai', output)
           : {
               outcome: 'unavailable',
               reason: 'fixture',
@@ -1485,3 +1495,52 @@ describe(
     }, 300_000);
   },
 );
+
+
+describe('actual director situation query continuation', () => {
+  it('keeps a query-only first answer effect-free and streams only its one funded final answer', async () => {
+    let h: Harness;
+    let generations = 0;
+    const previews: string[] = [];
+    let firstSpeechCount = 0;
+    h = await harness({ preview: true, script: { route: { level2: 0.99 } }, reply(request) {
+      generations++;
+      expect(h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID)).toHaveLength(firstSpeechCount);
+      const jobId = request.requestId.split(':attempt:')[0]!;
+      const result = generations === 1
+        ? { operations: [], queries: [{ kind: 'history', subject: null, from: 0, through: h.service.world.simTime, cursor: null }] }
+        : { operations: [operation('reply', { talk: talk('I can answer after considering what I noticed.', speakerHandle(request)) })] };
+      if (generations === 2) {
+        expect(request.context).toContain('Requested received evidence:');
+        expect((request.schema['properties'] as Record<string, unknown>)['queries']).toBeUndefined();
+      } else {
+        expect((request.schema['required'] as string[])).toContain('queries');
+        expect(request.context).toContain('## Received situation');
+      }
+      request.onProgress?.({ kind: 'text', text: JSON.stringify(result), sequence: 1 });
+      const preview = h.director.replyPreviews.snapshot(h.service.localScope, jobId);
+      previews.push(preview?.text ?? '');
+      return result;
+    } });
+    firstSpeechCount = h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID).length;
+    const job = await h.chat('fixture-query-final', 'What did you notice?');
+    expect(job.status, job.message).toBe('completed');
+    expect(h.jobCalls(job.id).generations).toHaveLength(2);
+    expect(previews).toEqual(['', 'I can answer after considering what I noticed.']);
+    expect(h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID && event.data?.['text'] === 'I can answer after considering what I noticed.')).toHaveLength(1);
+  });
+
+  it('refuses the final call before dispatch when its funding is no longer available', async () => {
+    let h: Harness;
+    h = await harness({ script: { route: { level2: 0.99 } }, reply() {
+      h.config.budgetUsd = 0;
+      return { operations: [], queries: [{ kind: 'history', subject: null, from: 0, through: h.service.world.simTime, cursor: null }] };
+    } });
+    const before = h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID).length;
+    const job = await h.chat('fixture-query-unfunded', 'Please consider what you noticed.');
+    expect(h.jobCalls(job.id).generations).toHaveLength(1);
+    expect(job.status).not.toBe('running');
+    expect(h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID)).toHaveLength(before);
+    expect(Object.values(h.service.world.responseReceipts ?? {}).some((receipt) => receipt.outcome.code === 'interpretation-remembered')).toBe(false);
+  });
+});

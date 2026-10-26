@@ -9,7 +9,7 @@ export interface SemanticContinuation {
   reservation?: string;
   occupiedPurpose: string | null;
   /** One resolved choice per current cause family/anchor, pruned with exposure. */
-  resolved: Record<string, { interval: number; qualitativeRevision: string; severity: number }>;
+  resolved: Record<string, { interval: number; purpose:string|null; qualitativeRevision: string; severity: number }>;
 }
 
 export const openingSemanticInterval = (): SemanticContinuation => ({
@@ -67,19 +67,21 @@ export function settleDiscovery(world: WorldState, actorId: string, reservation:
 }
 
 export function resolveSemanticCause(world: WorldState, actorId: string, key: string, qualitativeRevision: string, severity: number): void {
-  const state = entityGet(world.entities, actorId)?.actor?.agency.semantic;
-  if (!state) return;
+  const actor=entityGet(world.entities,actorId),state = actor?.actor?.agency.semantic;
+  if (!state||!actor) return;
   const live = world.perceptionEvidence?.[actorId]?.attention?.candidates ?? {};
   for (const existing of Object.keys(state.resolved)) {
     const anchor = JSON.parse(existing) as [string, string];
     if (!live[anchor[0]]) delete state.resolved[existing];
   }
-  state.resolved[key] = { interval: state.interval, qualitativeRevision, severity };
+  // A native choice can start work before finishWorld reconciles occupiedPurpose.
+  // Pin the actual chosen work, never that preceding publication's cached label.
+  state.resolved[key] = { interval: state.interval, purpose:occupiedPurpose(actor), qualitativeRevision, severity };
 }
 
 export function semanticCauseResolved(world: WorldState, actorId: string, key: string, qualitativeRevision: string, severity: number): boolean {
-  const state = entityGet(world.entities, actorId)?.actor?.agency.semantic, resolved = state?.resolved[key];
-  return !!state && !!resolved && resolved.interval === state.interval &&
+  const actor=entityGet(world.entities,actorId),state = actor?.actor?.agency.semantic, resolved = state?.resolved[key];
+  return !!actor&&!!state && !!resolved && resolved.interval === state.interval && resolved.purpose===occupiedPurpose(actor)&&
     resolved.qualitativeRevision === qualitativeRevision && resolved.severity >= severity;
 }
 
@@ -97,6 +99,7 @@ export function validateSemanticContinuation(value: unknown): asserts value is S
     try { anchor = JSON.parse(key); } catch { throw new Error('Invalid resolved attention cause.'); }
     if (!Array.isArray(anchor) || anchor.length !== 2 || anchor.some((part) => typeof part !== 'string') ||
       !resolved || !Number.isSafeInteger(resolved.interval) || resolved.interval < 0 || resolved.interval > state.interval ||
+      (resolved.purpose!==null&&typeof resolved.purpose!=='string') ||
       typeof resolved.qualitativeRevision !== 'string' || !Number.isFinite(resolved.severity) || resolved.severity < 0 || resolved.severity > 10)
       throw new Error('Invalid resolved attention cause.');
   }
