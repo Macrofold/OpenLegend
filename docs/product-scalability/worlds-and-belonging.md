@@ -39,6 +39,8 @@ The owner should be able to understand who can do what and why an action was den
 
 Protecting ownership does not imply universal invulnerability. Public-world siege or damage rules must be agreed separately. A protected private domain can exclude such campaigns entirely, while an opt-in frontier settlement may accept meaningful risks. The distinction must be visible before irreversible investment.
 
+The [hosted worlds and rule profiles idea](../game-ideas/hosted-worlds-and-rule-profiles.md) explores an integrated rental/membership journey and different official or private world promises. It keeps PvP, construction, hostile structure damage, theft and absence separate; a possible equal PvP/PvE world mix remains an option, not a selected allocation or change to the bundled world. [Enshrouded hosting research](../../archive/02-research/game-inspiration/dossiers/enshrouded/04-hosting-and-world-governance.md) supplies a concrete precedent and its limits.
+
 ## 4. Visiting, moving, and continuity
 
 A visitor enters a place with an existing past. They do not need to have experienced that past for the place to be coherent. Explanations can come from residents, archives, visible construction, and other permitted evidence. Do not reveal all private history merely to make onboarding convenient.

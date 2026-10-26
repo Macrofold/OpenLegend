@@ -4,6 +4,8 @@
 
 ## Start here
 
+- **[Enshrouded — G145, updated for 1.0](dossiers/enshrouded.md#detailed-reading-routes):** building and terrain, inhabited homes, exploration/combat/survival, lore and native creation, the full development path, current and historical player reception, commercial evidence and rented-server governance. The [October 25 scoped record](research-progress-enshrouded-2026-10-25.md) owns coverage and source limitations; [OpenLegend hosted-world ideas](../../../docs/game-ideas/hosted-worlds-and-rule-profiles.md) remain proposals.
+
 - **[Elden Ring — deep systems and design case study](dossiers/elden-ring.md#read-by-question):** combat/builds/items, exploration, deep lore and quest studies, base-game/expansion player reactions, commercial evidence, multiplayer/modding, and [OpenLegend implications](dossiers/elden-ring/05-design-synthesis-and-openlegend.md). The [October 24 completion record](research-progress-elden-ring-2026-10-24.md) owns this expansion's coverage.
 
 - **[Player stories, authored worlds and personal meaning](#player-stories-authored-worlds-and-personal-meaning):** focused references from Outcast Tales, OPERATIVES: Revolve, ROCKBEASTS, Trailblazers, Curse of Resthaven, Emberville and Diablo, routed to writing, art, marketing, game ideas and existing design owners.
