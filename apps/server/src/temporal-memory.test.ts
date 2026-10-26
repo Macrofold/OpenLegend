@@ -85,12 +85,12 @@ describe('bounded personal temporal storage', () => {
       setSpatialPosition(world, stranger, { x: 3, y: 0, z: 2 }, 'terrain');
       const branches = entityGet(world.entities, 'branches')!;
       setSpatialPosition(world, branches, { x: 6, y: 0, z: 2 }, 'terrain');
-      const anvil = structuredClone(branches);
+      const anvil = structuredClone(
+        entityValues(world.entities).find((entity) => entity.kind === 'practice-target')!,
+      );
       anvil.id = 'ambiguous-anvil';
       anvil.name = 'Anvil';
-      anvil.kind = 'landmark';
       anvil.description = 'An ironworking block beside the plant.';
-      delete anvil.resource;
       entitySet(world.entities, anvil.id, anvil);
       setSpatialPosition(world, anvil, { x: 5.5, y: 0, z: 3 }, 'terrain');
       const plant = entityGet(world.entities, 'berries-west')!;

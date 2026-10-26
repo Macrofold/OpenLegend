@@ -1024,8 +1024,11 @@ function facetPointChanged(before: SensoryFacet, after: SensoryFacet): boolean {
       : after.kind === 'location' && after.location.kind === 'point'
         ? after.location.point
         : undefined;
-  return !!earlier && !!later &&
-    (earlier.x !== later.x || earlier.y !== later.y || earlier.z !== later.z);
+  return (
+    !!earlier &&
+    !!later &&
+    (earlier.x !== later.x || earlier.y !== later.y || earlier.z !== later.z)
+  );
 }
 /** Called only after the complete received value changed. */
 function semanticFacetChanged(before: SensoryFacet, after: SensoryFacet): boolean {
@@ -1752,16 +1755,11 @@ function awarenessBodyContext(
   awareness: Awareness,
 ): ObservationContribution['context'] {
   const state = world.perceptionEvidence?.[awareness.actorId];
-  if (
-    !state ||
-    !awareness.entityEpisodes ||
-    state.life !== (entityGet(world.entities, awareness.actorId)?.actor?.physicalLife ?? 0)
-  )
-    return;
+  if (!state || !awareness.entityEpisodes) return;
   const result: ObservationExposure[] = [];
   let attended = false;
   for (const [id, episode] of Object.entries(awareness.entityEpisodes)) {
-    const lease = state.current[`${id}:body`],
+    const lease = eligibleBodyLease(world, awareness.actorId, id),
       detected = state.current[`${id}:detected`];
     if (
       !episode ||
@@ -1773,15 +1771,7 @@ function awarenessBodyContext(
       detected.exposure.episodeId !== lease.exposure.episodeId ||
       detected.observer.actorId !== lease.observer.actorId ||
       detected.observer.physicalLife !== lease.observer.physicalLife ||
-      lease.observer.actorId !== awareness.actorId ||
-      lease.observer.physicalLife !== state.life ||
       lease.original.acquiredAt > awareness.at
-    )
-      continue;
-    const subject = entityGet(world.entities, id);
-    if (
-      !subject ||
-      lease.subjectPhysicalLife !== (subject.actor ? (subject.actor.physicalLife ?? 0) : null)
     )
       continue;
     if (awareness.speech) {
@@ -2011,7 +2001,7 @@ export function acquireAwarenessObservation(
       subject: cloneValue(awareness.sourceSubject),
       strength: awareness.recognized ? 'supported' : 'possible',
     });
-  const contribution = acquireObservation(world, observer, {
+  let contribution = acquireObservation(world, observer, {
     ...(context ? { context } : {}),
     origin: {
       kind: 'occurrence',
@@ -2097,6 +2087,30 @@ export function acquireAwarenessObservation(
       [],
       { urgency: { [id]: awareness.urgency ?? 0 }, proofs: { [id]: proof } },
     );
+  }
+  const capturedContext = contribution.context;
+  const state = owner(world, observer);
+  if (
+    capturedContext &&
+    !capturedContext.attended &&
+    state.attention?.entries.some((entry) =>
+      capturedContext.subjects.some((subject) => subject.episodeId === entry.exposure.episodeId),
+    )
+  ) {
+    // Selection belongs to this same atomic receipt boundary. No native callback
+    // has received the original yet; keep one final immutable routing header.
+    const selected = freeze(
+      {
+        ...contribution,
+        context: { ...capturedContext, attended: true },
+      },
+      true,
+    );
+    state.received[state.receipts[acquisitionKey(contribution)]!] = selected;
+    const association = binding && state.current[`${binding.entityId}:association`];
+    if (association && readOnlyDraftView(association.original) === contribution)
+      association.original = selected;
+    contribution = selected;
   }
   return contribution;
 }

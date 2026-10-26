@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { freeze } from 'immer';
 import { createWorld, NPC_ID, PLAYER_ID } from './data.js';
-import { entityGet, entitySet } from './entity-collection.js';
+import { entityGet } from './entity-collection.js';
 import { initializePerception, executeCommand, advanceWorld } from './kernel.js';
 import { setSpatialPosition, worldSupport } from './spatial-state.js';
 import {
@@ -299,22 +299,9 @@ it('retains received speech independently of optional detailed attention and rev
 it('records an actually attended target even when its visible performer is unattended', () => {
   const world = scene(53);
   const player = entityGet(world.entities, PLAYER_ID)!;
-  player.actor!.attentionCapacity = 3;
+  player.actor!.attentionCapacity = 1;
   const branches = entityGet(world.entities, 'branches')!;
   setSpatialPosition(world, branches, { x: 4, y: 0, z: 2 }, 'terrain');
-  const preferred = [branches.id];
-  for (const [id, z] of [
-    ['context-marker-a', 1],
-    ['context-marker-b', 3],
-  ] as const) {
-    const marker = structuredClone(branches);
-    marker.id = id;
-    marker.kind = 'landmark';
-    delete marker.resource;
-    entitySet(world.entities, id, marker);
-    setSpatialPosition(world, marker, { x: 2, y: 0, z }, 'terrain');
-    preferred.push(id);
-  }
   initializePerception(world, []);
   const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
   acknowledgeAttention(
@@ -322,20 +309,26 @@ it('records an actually attended target even when its visible performer is unatt
     PLAYER_ID,
     captureAttentionPresentation(world, PLAYER_ID, Object.keys(attention.candidates)),
   );
-  const keys = preferred.map(
-    (id) => Object.entries(attention.candidates).find(([, value]) => value.sourceId === id)![0],
-  );
+  const keys = [
+    Object.entries(attention.candidates).find(([, value]) => value.sourceId === branches.id)![0],
+  ];
   expect(setAttentionFocus(world, PLAYER_ID, keys)).toBe(true);
   world.simTime = 10;
-  for (const id of preferred.slice(1))
-    entityGet(world.entities, id)!.description = 'A newly changed visible marker.';
+  branches.description = 'Newly exposed branches beside the path.';
   initializePerception(world, []);
   expect(
     currentDetailedAttention(world, PLAYER_ID).some((entry) => entry.sourceId === branches.id),
   ).toBe(true);
   expect(
     currentDetailedAttention(world, PLAYER_ID).some((entry) => entry.sourceId === NPC_ID),
-    JSON.stringify(currentDetailedAttention(world, PLAYER_ID).map(entry => ({ source: entry.sourceId, basis: entry.basis, score: attention.candidates[entry.key]?.score, urgency: attention.candidates[entry.key]?.urgency }))),
+    JSON.stringify(
+      currentDetailedAttention(world, PLAYER_ID).map((entry) => ({
+        source: entry.sourceId,
+        basis: entry.basis,
+        score: attention.candidates[entry.key]?.score,
+        urgency: attention.candidates[entry.key]?.urgency,
+      })),
+    ),
   ).toBe(false);
   const exposure = currentBodyObservation(world, PLAYER_ID, branches.id)!.exposure.episodeId;
   const started = executeCommand(world, {
