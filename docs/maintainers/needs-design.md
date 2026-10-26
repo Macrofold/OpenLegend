@@ -271,6 +271,8 @@ ND15, ND14's calls and separately selected ND16 propagation/media families. Sett
 
 [Voice and calls](../projects/voice-and-calls-feature-spec.md), its [profile](../worlds/base/voice-and-calls.md), [HE07](hearing-and-speech.md) and [NC23](narration-and-conversations.md) propose permitted committed-word playback, reviewed microphone drafts, explicitly enabled private two-human calls, a later timed doorway exchange and separately qualified raw human voice.
 
+The [character-performance proposal](../projects/voice-and-calls-feature-spec.md#character-voice-and-performance) includes recognizable original voices, expressive delivery and meaningful text participation. D10/HE07 still need stage adoption, the exact provider/variant and voice-authoring route, applicable rights/terms and whole-exchange evidence. The [current model inventory](../../research/ai-models/README.md#a-small-starting-panel) supplies candidates without choosing them. NC23 must also reconcile the older call/profile dependence on local conversation enrollment with the accepted SPK design; that dependency is specific to calls.
+
 **Owners/dependencies:** HE/NC/MP, spatial/world owners, D10/spending and PS04 for timed speech. Calls consume DG24 contacts; local playback does not. Preserve text-complete participation, listener-specific fragments, unknown identity, mute/revocation/reconnect and actual speed/cost semantics. Doorway behavior uses real geometry; phrase-timed speech needs a qualified common pace. No provider, full acoustics catalogue or primitive-start phone is selected.
 
 ### Band 6 — Offer sustainable service and wider participation
@@ -697,6 +699,8 @@ Complete addressing, consent, delivery/read distinctions, availability, blocking
 ### ND15 — Audible NPC dialogue, microphone input and proximity voice
 
 **Product proposal prepared; D10/provider adoption and technical/media delivery open.** Reuse [voice/calls](../projects/voice-and-calls-feature-spec.md), HE07/NC23, [hearing](../hearing-and-speech.md) and current text-complete play. Research candidates are not chosen providers.
+
+The existing proposal covers familiar-character voice continuity, original synthetic voice authorship, selected expressive performance and text access to meaningful reactions. Use [current speech candidates](../../research/ai-models/voice-models.md) for the exact casting/provider decision, and HE07.3 for evidence that delivery improves an actual exchange. This is the remaining work within DG26, not a separate voice-model feature or a reopened audience decision.
 
 Preserve committed-word/transcript timing, partial listener eligibility, recognized identity, interruptions, permission denial, mute/revocation/reconnect, retention, rights and actual latency/cost across selected playback/dictation/raw-voice stages. Audience membership alone does not authorize a full utterance. Sources: [audio research](../../archive/02-research/engines-art-and-audio.md), [transport research](../../archive/02-research/hosting-and-scale.md), D10/R07 and HE/NC/MP/spending owners.
 

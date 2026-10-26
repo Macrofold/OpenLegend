@@ -1,8 +1,8 @@
 # Spoken words, private calls and readable conversation
 
-| Status      | Current progress                                                                                                   | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | DG26 product proposal prepared; adoption, technical design, media delivery and gameplay qualification remain open. | 2026-10-24   |
+| Status      | Current progress                                                                                                                                  | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG26 proposes text-complete communication and recognizable character performance; adoption, technical/media design and qualification remain open. | 2026-10-24   |
 
 This is DG26's product proposal for ND15, ND14's calls and a selected ND16 doorway exchange. It preserves the existing [hearing evidence](../hearing-and-speech.md), [conversation contract](../narration-and-conversations.md) and complete text play. [The optional world profile](../worlds/base/voice-and-calls.md) owns authored availability and physical meaning. No microphone, synthesis provider, media service, new starting equipment or runtime implementation is established here.
 
@@ -11,6 +11,8 @@ This is DG26's product proposal for ND15, ND14's calls and a selected ND16 doorw
 A player asks a resident whether they still want to meet at camp. They can hear the resident's actual answer while looking at the surroundings, read the same permitted words, answer by typing or review a dictated draft, and continue their outing. When two consenting people have separated, a deliberately answered slate call lets them adjust a plan together without searching the map or exchanging messages blindly.
 
 The desired improvement is easier, more expressive communication during an enjoyable activity. Audio should help someone follow a brief exchange, use a preferred input method or share a moment. It must not require a microphone, make every resident deliver long speeches, replace independent activity with compulsory conversation, or purchase an AI response whenever someone makes a sound.
+
+A familiar resident can also become more recognizable through their own original voice: a dry joke, a guarded answer, irritation, fear or quiet relief should feel like the same person in different circumstances. Delivery can make the player enjoy the company, understand the moment or care about returning. These are proposed character-performance goals, not evidence that a selected model already achieves them or a requirement that every encounter become dramatic.
 
 The first useful capabilities are independent: optional reading of committed words, private microphone drafting and a two-person call carried by text. They can succeed before live human audio or elaborate acoustics. [Research 04](#research-04--accessible-participation-in-the-same-conversation) supports including different input and reading methods within the same conversation; it does not justify a separate inferior channel for someone who cannot hear.
 
@@ -62,6 +64,18 @@ Synthesis may finish after the player closes the exchange, loses access or chang
 
 The private NP05/NC19 preview is excluded. It may show a validated draft operation before final speech admission, but creates no heard event, caption or memory. Speaking that preview would teach the human words the game might later refuse. New optional audio therefore waits for actual commitment; existing pending NPC UI remains dots only, with no provider, queue or estimated-generation prose inserted into the character transcript.
 
+### Character voice and performance
+
+For a recognized resident, use a deliberately authored vocal identity that stays recognizable across later visits and different moods. The creator can choose a legitimately licensed synthetic voice or describe an original voice through tone, texture, rhythm, register and pronunciation. A deliberate recasting is an authoring choice; a changing mood or incidental provider change should not silently replace the person. Unidentified sources retain the neutral rendering in section 3, and playback itself grants no new recognition.
+
+Performance supports the character's accepted words and permitted expression. Warmth, restraint, frustration, tiredness, deadpan humor and uncertainty may be useful; none is compulsory, and no emotion taxonomy is selected here. A performed emotion is not proof of a hidden true feeling or belief: a person can conceal, exaggerate or act. Delivery must not add a confession, agreement, private fact or other communicative content that the native exchange did not admit.
+
+Match an already chosen whisper, normal voice or shout in audible delivery when that expressive scope is selected. The existing hearing rules still determine reach and listener fragments; a loud recording does not widen its audience. Pauses, emphasis and brief reactions can improve timing, but first-stage playback remains presentation of an already committed utterance. Actual interrupted speech, late hearing and changes caused by movement remain with the later timed-speech family.
+
+Preserve meaningful participation through text. If a laugh, sigh, hesitation or other added reaction communicates something beyond the words, use it only when the accepted expression supplies a permitted text counterpart for that listener. Otherwise render the allowed words without inventing additional communicative content. The text path need not reproduce every acoustic detail, but it must let someone follow the same exchange and act on its meaningful content.
+
+The [current voice inventory](../../research/ai-models/voice-models.md) and [audio production route](../production-workflows/audio-and-feedback.md#6-voice-is-a-distinct-optional-route) support casting and later comparison. They keep fixed-line acting, original voice creation, character-generated dialogue and complete runtime conversation distinct. Candidate capabilities and unplayed demos do not establish acting quality, literal fidelity or a useful game experience.
+
 ## 5. Microphone input produces a private draft
 
 The microphone control means **Dictate a draft**, not Speak to the world. Its nearby explanation states that recording becomes editable text and nothing is sent until the player chooses Send. Capture starts only after an explicit action and the device's actual permission. Permission denial, no microphone or an unsupported transcription service leaves ordinary text entry fully usable.
@@ -81,6 +95,8 @@ Losing active game scope stops capture and rejects obsolete results; returning n
 The human's microphone is an interface input. Recording a draft does not force the fictional person to speak aloud. The same is true when the destination is a private slate. A later actual voice-emission mode must use a different explicit control and disclosure; microphone permission alone cannot enable it.
 
 ## 6. A call is an answered private conversation
+
+**Dependency to reconcile before call adoption:** the accepted [speech and social perception design](speech-and-social-perception-feature-spec.md) removes ordinary conversation joins and merges. The local-enrollment wording in this older call proposal and its world profile must be reconciled under [NC23](../maintainers/narration-and-conversations.md#nc23--consented-private-slate-calls). Preserve explicit call consent, clear destination, ordinary nearby hearing and freedom from automatic local replies; do not implement an exception to a superseded enrollment mechanism. This call-specific work does not block the independent playback stage.
 
 The first call is between two human-controlled people already connected through the selected DG24 world affordance. Each person separately chooses **Allow calls** for the relevant contact and can silence that person's invitations. Enabling it permits an invitation, not automatic acceptance, recording or microphone capture. No NPC calls, voicemail, conference calls, external notifications or account-wide calling are selected.
 
@@ -188,6 +204,8 @@ These are proposed game-side policies. Provider retention, intermediate processi
 
 Use legitimately licensed synthetic voices and disclose their artificial nature. The first scope offers no cloning of a player's voice, imitation of a particular real person, reusable voiceprint, public recording export or training permission derived from playing. A user's permission to speak in one exchange is not permission to reuse their recording elsewhere.
 
+For the selected playback stage, D10/HE07 must choose the exact model or service variant, original-voice authoring method, permitted fictional content, commercial voice rights, hosting/retention route and actual billing basis. Weight or code permission, a source speaker's rights, hosted content terms and observed model behavior answer different questions. The [model and deployment research](../../research/ai-models/deployment-and-costs.md) records the current evidence; keep mutable provider prices and release details there. No provider or character voice is selected by this proposal.
+
 Permitted synthesis can be reused only for an identical allowed rendering with compatible voice/settings and current access. Sharing is not permission widening: one listener's full sentence cannot supply another listener's partial version. Revocation must cover playable media references, delayed results and relevant caches, not merely hide a button. [Research 05](#research-05--media-publication-needs-explicit-audiences) and [Research 06](#research-06--encryption-does-not-choose-the-audience) explain why membership and encryption alone do not settle this contract.
 
 ## 11. Economics and graceful limits
@@ -197,7 +215,7 @@ Human textual calls need no language model, speech synthesis, transcription or N
 Track full cost in units that describe the actual play:
 
 - Transcription: captured minutes actually admitted, including paid failed or cancelled attempts.
-- Synthesis: characters or output duration purchased for each distinct permitted rendering.
+- Synthesis: each distinct permitted rendering at the selected service's actual unit—characters, UTF-8 bytes, tokens or output duration—and any separately billed preparation or hosting.
 - Delivery: bytes delivered to actual listeners, active connection duration and any required conversion.
 - Persistence: retained text, audience evidence, receipts and temporary media, including their copies and growth.
 - NPC interpretation, if later selected: existing preparation, retrieval, routing and response work, separately from the voice service.
@@ -226,10 +244,11 @@ Complete these journeys for each enabled capability:
 6. **Lose the channel.** Interrupt capture, remove a slate, revoke control, pause, disconnect, restore and return. Verify no automatic join, capture, send, replay or duplicated turn, with current private history and original receipts preserved.
 7. **Pass the doorway.** Only for the timed stage, approach during speech, close the actual door, leave and re-enter, interrupt the speaker and vary time. Later cognition and history must contain exactly the acquired phrases, not a retrospective whole sentence.
 8. **Remain useful without money or sound.** Exhaust only optional media allowance, deny microphone permission and use text throughout the same call. No silent fallback charge, invented apology, inaccessible participant or compulsory NPC answer is acceptable.
+9. **Recognize and enjoy the same person.** Use an actual authored resident in an ordinary exchange and later return, with contrasting permitted delivery such as amusement, guardedness or urgency. Preserve vocal identity, exact allowed words, understandable names and meaningful text participation. Where selected, a whisper and a shout sound appropriate without changing hearing reach. Check whether a pause, dry joke or restrained reaction helps the moment, and whether the whole exchange remains worthwhile after its novelty fades.
 
 Measure time from explicit action to first usable draft, first permitted text and first audible playback separately, including preparation and failures. Record actual cost per completed useful exchange, correction effort, skipped audio, interrupted calls, wrong-recipient attempts and whether players can explain who heard what. Do not treat a fast synthesis microbenchmark as conversation latency.
 
-Judge the game with a matched ordinary text journey. Did hearing help the player follow the surroundings? Did dictation save effort after corrections? Did a call improve coordination enough to justify acquiring and operating the slate? Did the doorway produce a comprehensible choice rather than confusion? Set implementation acceptance thresholds before the pilot from the selected supported workload, and keep observed enjoyment separate from transport correctness.
+Judge the game with a matched ordinary text journey. Did hearing help the player follow the surroundings? Did this resident sound recognizable across different situations, and did the delivery add humor, interest or useful understanding without needless waiting? Could the text participant follow the same meaningful reactions? Did dictation save effort after corrections? Did a call improve coordination enough to justify acquiring and operating the slate? Did the doorway produce a comprehensible choice rather than confusion? Set implementation acceptance thresholds before the pilot from the selected supported workload, and keep observed enjoyment separate from transport correctness.
 
 ## 13. Gameplay critique and delivery discipline
 
