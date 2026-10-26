@@ -1562,7 +1562,7 @@
       "content_evidence": ["related_model_anecdote", "no_direct_behavior_evidence"],
       "sample_status": ["usage_report_without_output"],
       "cost_basis": ["self_host_compute", "text_tokens"],
-      "selection_caveat": "Official Flash-1017 weights are documented; published hardware evidence belongs to0909, and derivative RP reports are separate.",
+      "selection_caveat": "Official Flash-1017 weights are documented; published hardware evidence belongs to 0909, and derivative RP reports are separate.",
       "qualification_status": "not_evaluated",
       "source_ledger": "data/decision-sources.json",
       "source_ids": ["D039", "D041", "D042", "D077", "D134", "D133"],

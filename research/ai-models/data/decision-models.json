@@ -180,7 +180,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "publisher family; exact current Elephant files not retrievable in this pass",
-              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context.",
+              "notes": "Published input-context limit only. The encoded state, questions, options, protocol markers and supported media must satisfy the native input limits. This head returns probabilities or scores without an autoregressive continuation budget. Actual admitted input length and serialized-response/transport limits remain unmeasured.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
@@ -188,7 +188,7 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "Companion family documents16,384 tokens; exact current Elephant loader/request checks and byte limits remain unverified."
+              "other": "Companion family documents 16,384 tokens; exact current Elephant loader/request checks and byte limits remain unverified."
             },
             "memory": {
               "parameters_total_b": 9,
@@ -300,7 +300,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context.",
+              "notes": "Published input-context limit only. The encoded state, questions, options, protocol markers and supported media must satisfy the native input limits. This head returns probabilities or scores without an autoregressive continuation budget. Actual admitted input length and serialized-response/transport limits remain unmeasured.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
@@ -512,7 +512,7 @@
             "memory": {
               "parameters_total_b": 35,
               "raw_weights_gb": 70,
-              "raw_weight_basis": "Publisher approximate BF16 payload70 GB; not measured VRAM.",
+              "raw_weight_basis": "Publisher approximate BF16 payload 70 GB; not measured VRAM.",
               "published_vram_gb": null,
               "published_hardware": "No published GPU minimum verified.",
               "gpu_candidate": "1× H200 or2× H100 80 GB",
@@ -530,7 +530,7 @@
             "requirements": [
               "Native head kev_head.pt and publisher tokenization; vision weights discarded by text decision loader",
               "Nace llama.cpp/Ollama branch drex-v2.0; stock engines are not protocol-compatible",
-              "Nace OpenRAIL-M license; all35B weights matter despite3B active"
+              "Nace OpenRAIL-M license; all35B weights matter despite 3B active"
             ],
             "source_ids": ["D010"]
           },
@@ -549,7 +549,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Published -np2 -c32768 shares context between two slots:16,384/request.128k needs SYSTEMONE_CONTEXT=131072 and -c262144.",
+              "notes": "Published -np2 -c32768 shares context between two slots:16,384/request. 128k needs SYSTEMONE_CONTEXT=131072 and -c262144.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
@@ -557,7 +557,7 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Prompt, schema, media and generated output must fit the selected runtime allocation."
+              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Encoded state, question/option text, protocol markers and supported media must satisfy the native request limits. Serialized-answer size and accounting follow the exact protocol and transport; no chat-generation reservation applies."
             },
             "memory": {
               "parameters_total_b": 35,
@@ -580,7 +580,7 @@
             "requirements": [
               "Native head kev_head.pt and publisher tokenization; vision weights discarded by text decision loader",
               "Nace llama.cpp/Ollama branch drex-v2.0; stock engines are not protocol-compatible",
-              "Nace OpenRAIL-M license; all35B weights matter despite3B active"
+              "Nace OpenRAIL-M license; all35B weights matter despite 3B active"
             ],
             "source_ids": ["D010"]
           },
@@ -607,7 +607,7 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Prompt, schema, media and generated output must fit the selected runtime allocation."
+              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Encoded state, question/option text, protocol markers and supported media must satisfy the native request limits. Serialized-answer size and accounting follow the exact protocol and transport; no chat-generation reservation applies."
             },
             "memory": {
               "parameters_total_b": 35,
@@ -630,7 +630,7 @@
             "requirements": [
               "Native head kev_head.pt and publisher tokenization; vision weights discarded by text decision loader",
               "Nace llama.cpp/Ollama branch drex-v2.0; stock engines are not protocol-compatible",
-              "Nace OpenRAIL-M license; all35B weights matter despite3B active"
+              "Nace OpenRAIL-M license; all35B weights matter despite 3B active"
             ],
             "source_ids": ["D010", "D108"]
           }
@@ -767,7 +767,7 @@
               "artifact_size_gb": 55
             },
             "requirements": [
-              "torch2.11 and Transformers5.10.2 reference environment",
+              "torch 2.11 and Transformers5.10.2 reference environment",
               "Keep joint_head.safetensors, joint_head_config.json, joint_schema_model.py, tokenizer, chat template and multimodal processor together",
               "Call load_release_model/encode_record/collate_records/systemone; ordinary AutoModelForCausalLM generation is not equivalent",
               "SGLang alternative image lmsysorg/sglang:dev-clef; exact commit unresolved; 32 GB shared-memory example is not host RAM minimum"
@@ -788,7 +788,7 @@
               "runtime_default_tokens": null,
               "extended_tokens": null,
               "max_output_tokens": null,
-              "scope": "conversion; reference16,384 budget does not establish converted runtime default",
+              "scope": "conversion; reference 16,384 budget does not establish converted runtime default",
               "notes": "Native context/default and option limits need exact converted build verification.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
@@ -797,7 +797,7 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Prompt, schema, media and generated output must fit the selected runtime allocation."
+              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Encoded state, question/option text, protocol markers and supported media must satisfy the native request limits. Serialized-answer size and accounting follow the exact protocol and transport; no chat-generation reservation applies."
             },
             "memory": {
               "parameters_total_b": 27,
@@ -814,7 +814,7 @@
             "storage": {
               "artifact_bytes": null,
               "disk_gb": null,
-              "basis": "Selected text GGUF19.5 GB + BF16 projector0.931 GB≈20.431 GB for vision. Q8 projector0.629 GB is an alternative; whole 104 GB repo includes multiple quantizations.",
+              "basis": "Selected text GGUF19.5 GB + BF16 projector 0.931 GB≈20.431 GB for vision. Q8 projector 0.629 GB is an alternative; whole 104 GB repo includes multiple quantizations.",
               "artifact_size_gb": 20.431
             },
             "requirements": [
@@ -945,7 +945,7 @@
               "artifact_size_gb": 19.1
             },
             "requirements": [
-              "torch2.11 and Transformers5.10.2 reference environment",
+              "torch 2.11 and Transformers5.10.2 reference environment",
               "Keep joint_head.safetensors, joint_head_config.json, joint_schema_model.py, tokenizer, chat template and multimodal processor together",
               "Call load_release_model/encode_record/collate_records/systemone; ordinary AutoModelForCausalLM generation is not equivalent",
               "SGLang alternative image lmsysorg/sglang:dev-clef; exact commit unresolved; 32 GB shared-memory example is not host RAM minimum"
@@ -967,7 +967,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "State truncates to 16,384 or lower max_model_len; schema alone exceeding bound returns400.",
+              "notes": "State truncates to 16,384 or lower max_model_len; schema alone exceeding bound returns 400.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
@@ -975,12 +975,12 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "Fixed prompt; top-level instructions rejected; chat_template_kwargs ignored. Images/video before state; video2fps; no audio. Do not assume generic vLLM26-choice limit applies to this native head."
+              "other": "Fixed prompt; top-level instructions rejected; chat_template_kwargs ignored. Images/video before state; video at 2fps; no audio. Do not assume generic vLLM 26-choice limit applies to this native head."
             },
             "memory": {
               "parameters_total_b": 9,
               "raw_weights_gb": 18,
-              "raw_weight_basis": "Arithmetic 9B BF16 backbone18 GB; head and vision are additional.",
+              "raw_weight_basis": "Arithmetic 9B BF16 backbone 18 GB; head and vision are additional.",
               "published_vram_gb": null,
               "published_hardware": "No published GPU minimum verified.",
               "gpu_candidate": "1× L40S 48 GB",
@@ -1105,7 +1105,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context.",
+              "notes": "Published input-context limit only. The encoded state, questions, options, protocol markers and supported media must satisfy the native input limits. This head returns probabilities or scores without an autoregressive continuation budget. Actual admitted input length and serialized-response/transport limits remain unmeasured.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
@@ -1154,7 +1154,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "official conversion; default runtime allocation unresolved",
-              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context.",
+              "notes": "Published input-context limit only. The encoded state, questions, options, protocol markers and supported media must satisfy the native input limits. This head returns probabilities or scores without an autoregressive continuation budget. Actual admitted input length and serialized-response/transport limits remain unmeasured.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
@@ -1162,7 +1162,7 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Prompt, schema, media and generated output must fit the selected runtime allocation."
+              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Encoded state, question/option text, protocol markers and supported media must satisfy the native request limits. Serialized-answer size and accounting follow the exact protocol and transport; no chat-generation reservation applies."
             },
             "memory": {
               "parameters_total_b": 3.12,
@@ -1179,7 +1179,7 @@
             "storage": {
               "artifact_bytes": null,
               "disk_gb": null,
-              "basis": "SelectedQ8 text2.87 GB + Q8 projector0.583 GB≈3.453 GB.17.6 GB repository includes alternative quantizations.",
+              "basis": "SelectedQ8 text 2.87 GB + Q8 projector 0.583 GB≈3.453 GB.17.6 GB repository includes alternative quantizations.",
               "artifact_size_gb": 3.453
             },
             "requirements": [
@@ -1288,7 +1288,7 @@
               "input_audio_seconds": 30,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "Image-mode text≤896 tokens as trained; images OR one mono16kHz audio clip≤30s. Byte/question cap not established."
+              "other": "Image-mode text≤896 tokens as trained; images OR one mono 16kHz audio clip≤30s. Byte/question cap not established."
             },
             "memory": {
               "parameters_total_b": 0.587,
@@ -1330,7 +1330,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context.",
+              "notes": "Published input-context limit only. The encoded state, questions, options, protocol markers and supported media must satisfy the native input limits. This head returns probabilities or scores without an autoregressive continuation budget. Actual admitted input length and serialized-response/transport limits remain unmeasured.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
@@ -1338,7 +1338,7 @@
               "input_audio_seconds": 30,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "Same30s mono16kHz audio ORimages. Image text training cap 896. Server single-batch restriction is independent of context."
+              "other": "Same 30s mono 16kHz audio OR images. Image text training cap 896. Server single-batch restriction is independent of context."
             },
             "memory": {
               "parameters_total_b": 0.587,
@@ -1355,12 +1355,12 @@
             "storage": {
               "artifact_bytes": null,
               "disk_gb": null,
-              "basis": "SelectedQ8 text0.407 GB + projector0.263 GB≈0.670 GB; whole3.08 GB repo contains alternatives.",
+              "basis": "SelectedQ8 text 0.407 GB + projector 0.263 GB≈0.670 GB; whole 3.08 GB repo contains alternatives.",
               "artifact_size_gb": 0.67
             },
             "requirements": [
               "-b4096 -ub4096 example; one question must fit a single batch",
-              "Increase both batch settings for longer questions, at most16,384; more workspace required",
+              "Increase both batch settings for longer questions, at most 16,384; more workspace required",
               "Matching multimodal projector; LFM license"
             ],
             "source_ids": ["D118", "D120"]
@@ -1515,7 +1515,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Trained around 32k; 262,144 positional/default max_length limit.243k only spot-checked. Split overlong question batches; one question still too long raises LengthError.",
+              "notes": "Trained around 32k; 262,144 positional/default max_length limit. 243k only spot-checked. Split overlong question batches; one question still too long raises LengthError.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
@@ -1523,12 +1523,12 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "Choice1–255, score 2–255; question count limited by budget. Images up to 1,638,400 pixels. Joint questions can influence each other; Flash publisher default is one question/request. Byte cap unknown."
+              "other": "Choice 1–255, score 2–255; question count limited by budget. Images up to 1,638,400 pixels. Joint questions can influence each other; Flash publisher default is one question/request. Byte cap unknown."
             },
             "memory": {
               "parameters_total_b": 27,
               "raw_weights_gb": 55.8346,
-              "raw_weight_basis": "Publisher BF16 weight estimate52 GiB converted to decimalGB; excludes runtime workspace.",
+              "raw_weight_basis": "Publisher BF16 weight estimate 52 GiB converted to decimalGB; excludes runtime workspace.",
               "published_vram_gb": 102.0055,
               "published_hardware": "GB200 at 243k:95 GiB reference,107 GiB fast; ~3min/~2min. These are spot checks, not general minima.",
               "gpu_candidate": "1× H200 for long context; H100 80 GB only shorter-context investigation",
@@ -1547,7 +1547,7 @@
               "Authorized Hugging Face access required despite public documentation",
               "Keep decision_config.json, joint_config.json, readout.safetensors and exact fim_suffix marker/tokenizer",
               "Noncausal full attention and joint-question readout; no causal decoder substitution",
-              "Fast path uses flash-linear-attention and CUDA-graph buckets; fixed32k padding changes latency"
+              "Fast path uses flash-linear-attention and CUDA-graph buckets; fixed 32k padding changes latency"
             ],
             "source_ids": ["D020"]
           }
@@ -1628,7 +1628,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Trained around 32k; 262,144 positional/default max_length limit.243k only spot-checked. Split overlong question batches; one question still too long raises LengthError.",
+              "notes": "Trained around 32k; 262,144 positional/default max_length limit. 243k only spot-checked. Split overlong question batches; one question still too long raises LengthError.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
@@ -1636,12 +1636,12 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "Choice1–255, score 2–255; question count limited by budget. Images up to 1,638,400 pixels. Joint questions can influence each other; Flash publisher default is one question/request. Byte cap unknown."
+              "other": "Choice 1–255, score 2–255; question count limited by budget. Images up to 1,638,400 pixels. Joint questions can influence each other; Flash publisher default is one question/request. Byte cap unknown."
             },
             "memory": {
               "parameters_total_b": 4,
               "raw_weights_gb": 9.6637,
-              "raw_weight_basis": "Publisher BF16 weight estimate9 GiB converted to decimalGB; excludes runtime workspace.",
+              "raw_weight_basis": "Publisher BF16 weight estimate 9 GiB converted to decimalGB; excludes runtime workspace.",
               "published_vram_gb": 41.8759,
               "published_hardware": "GB200 at 243k:39 GiB reference,54 GiB fast; ~60s/~20s.",
               "gpu_candidate": "1× L40S 48 GB for short context; H100 80 GB for 243k investigation",
@@ -1660,7 +1660,7 @@
               "Authorized Hugging Face access required despite public documentation",
               "Keep decision_config.json, joint_config.json, readout.safetensors and exact fim_suffix marker/tokenizer",
               "Noncausal full attention and joint-question readout; no causal decoder substitution",
-              "Fast path uses flash-linear-attention and CUDA-graph buckets; fixed32k padding changes latency"
+              "Fast path uses flash-linear-attention and CUDA-graph buckets; fixed 32k padding changes latency"
             ],
             "source_ids": ["D021"]
           }
@@ -1753,7 +1753,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Config 262,144; authored launch caps32,768. Published warning:262k startup does not fit80 GB even with FP8. Exact launch cap remains unconfigured here.",
+              "notes": "Config 262,144; authored launch caps 32,768. Published warning: 262k startup does not fit 80 GB even with FP8. Exact launch cap remains unconfigured here.",
               "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
@@ -1761,14 +1761,14 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "Choice≤255. Images≤1.6MP; video2fps,≤32frames each≤0.2MP. Audio not supported. Engine example admits32 in-flight requests then503; not a measured safe concurrency here."
+              "other": "Choice≤255. Images≤1.6MP; video at 2fps,≤32 frames each≤0.2MP. Audio not supported. Engine example admits 32 in-flight requests then 503; not a measured safe concurrency here."
             },
             "memory": {
               "parameters_total_b": 26.09,
               "raw_weights_gb": 52.18,
-              "raw_weight_basis": "Arithmetic 26.09B×2≈52.18 GB BF16; tree52.2 GB includes readout and files.",
+              "raw_weight_basis": "Arithmetic 26.09B×2≈52.18 GB BF16; tree 52.2 GB includes readout and files.",
               "published_vram_gb": 66.3572,
-              "published_hardware": "Publisher MI325X: reference61.8 GiB peak, package65.2, Engine65.4, batch62.1; PyTorch2.12/ROCm7.2. NVIDIA reference installation command is not a measurement.",
+              "published_hardware": "Publisher MI325X: reference 61.8 GiB peak, package 65.2, Engine65.4, batch 62.1; PyTorch2.12/ROCm7.2. NVIDIA reference installation command is not a measurement.",
               "gpu_candidate": "1× H100 80 GB at≤32,768, one request; investigate",
               "gpu_candidate_basis": "Estimate from weight size and published AMD memory. No NVIDIA memory measurement; no262k fit claim.",
               "host_ram_gb": null,
@@ -2186,7 +2186,7 @@
       "hosting": {
         "reviewed_on": "2026-10-25",
         "runpod_disposition": "external_api_only",
-        "reason": "Hosted endpoint supports1–400 questions. It can return refusal answers. Full request token and byte ceilings were not established from the decision guide; do not inherit ordinary chat context automatically.",
+        "reason": "Hosted endpoint supports 1–400 questions. It can return refusal answers. Full request token and byte ceilings were not established from the decision guide; do not inherit ordinary chat context automatically.",
         "profiles": [],
         "deployment_evidence": {
           "status": "not_deployed_or_tested_by_this_research",
@@ -2207,7 +2207,7 @@
             "context_tokens": null,
             "max_output_tokens": null,
             "input_bytes": null,
-            "notes": "Hosted endpoint supports1–400 questions. It can return refusal answers. Full request token and byte ceilings were not established from the decision guide; do not inherit ordinary chat context automatically.",
+            "notes": "Hosted endpoint supports 1–400 questions. It can return refusal answers. Full request token and byte ceilings were not established from the decision guide; do not inherit ordinary chat context automatically.",
             "source_ids": ["D030"]
           }
         ]
@@ -2293,7 +2293,7 @@
               "extended_tokens": 1048576,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "1M uses YaRN factor4; longer setting can affect short-context behavior. Output ceiling not separately established."
+              "notes": "1M uses YaRN factor 4; longer setting can affect short-context behavior. Output ceiling not separately established."
             },
             "request_limits": {
               "input_characters": null,
@@ -2428,7 +2428,7 @@
               "extended_tokens": 1048576,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "YaRN factor4 for 1M. Published262k startup validation did not process a full262k request."
+              "notes": "YaRN factor 4 for 1M. Published 262k startup validation did not process a full 262k request."
             },
             "request_limits": {
               "input_characters": null,
@@ -2440,9 +2440,9 @@
             "memory": {
               "parameters_total_b": 180,
               "raw_weights_gb": 360.004,
-              "raw_weight_basis": "Recipe BF16 checkpoint335.28 GiB converted to decimalGB; roughly 180B includes125B language+51B n-gram+4B MTP.",
+              "raw_weight_basis": "Recipe BF16 checkpoint 335.28 GiB converted to decimalGB; roughly 180B includes 125B language+51B n-gram+4B MTP.",
               "published_vram_gb": null,
-              "published_hardware": "Recipe TP2 on2× GB300 reports approximately190 GiB/device residency; 8× H200/H100 profiles also documented.",
+              "published_hardware": "Recipe TP2 on2× GB300 reports approximately 190 GiB/device residency; 8× H200/H100 profiles also documented.",
               "gpu_candidate": "2× GB300 or 8× H200",
               "gpu_candidate_basis": "Published recipe topology; Runpod availability and interconnect must be checked. No full-context or concurrency fit claimed.",
               "host_ram_gb": null,
@@ -2456,7 +2456,7 @@
               "artifact_size_gb": 360
             },
             "requirements": [
-              "Custom Qwen Community license; all weights/tables matter despite6B active",
+              "Custom Qwen Community license; all weights/tables matter despite 6B active",
               "qwen3 reasoning and qwen3_coder tool parsers; qwen4_exp support",
               "Single-node TP/TEP recipes; pipeline parallel unsupported initially",
               "CPU lookup offload needs precision-specific host memory; do not copy FP8 table budget to BF16"
@@ -2490,13 +2490,13 @@
             "memory": {
               "parameters_total_b": 180,
               "raw_weights_gb": 185.521,
-              "raw_weight_basis": "Recipe selected FP8 checkpoint172.78 GiB converted to decimalGB.",
+              "raw_weight_basis": "Recipe selected FP8 checkpoint 172.78 GiB converted to decimalGB.",
               "published_vram_gb": null,
               "published_hardware": "OneGB300 capacity demonstrated; 4× GB300 recommended. Hopper8× H200 uses TEP8, not plainTP8 because of128-wide quantization blocks.",
               "gpu_candidate": "1× GB300 or 8× H200; 8× H100 with CPU lookup offload",
-              "gpu_candidate_basis": "Published hardware routes; not a guarantee of Runpod availability, full1M context or target concurrency.",
+              "gpu_candidate_basis": "Published hardware routes; not a guarantee of Runpod availability, full 1M context or target concurrency.",
               "host_ram_gb": 51,
-              "host_ram_basis": "Only8× H100 FP8 lookup-offload route: at least51 GB host RAM for n-gram table, plus runtime/system headroom. Not a universal RAM minimum.",
+              "host_ram_basis": "Only8× H100 FP8 lookup-offload route: at least 51 GB host RAM for n-gram table, plus runtime/system headroom. Not a universal RAM minimum.",
               "kv_cache_notes": "Sparse/hybrid cache, indexer and SSM allocations; 1M context not established by startup checks."
             },
             "storage": {
@@ -2823,7 +2823,7 @@
       "hosting": {
         "reviewed_on": "2026-10-25",
         "runpod_disposition": "self_host_candidate",
-        "reason": "Latest exact official1017 checkpoint now verified; hardware evidence belongs to 0909 and is labeled accordingly.",
+        "reason": "Latest exact official 1017 checkpoint now verified; hardware evidence belongs to 0909 and is labeled accordingly.",
         "profiles": [
           {
             "label": "Official1017 Flash mixed-precision checkpoint",
@@ -2840,7 +2840,7 @@
               "extended_tokens": 1048576,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Training/native64k; checkpoint serves1M throughYaRN factor16. API384k output allowance is not a self-host output guarantee."
+              "notes": "Training/native 64k; checkpoint serves 1M throughYaRN factor 16. API384k output allowance is not a self-host output guarantee."
             },
             "request_limits": {
               "input_characters": null,
@@ -2852,9 +2852,9 @@
             "memory": {
               "parameters_total_b": null,
               "raw_weights_gb": 510,
-              "raw_weight_basis": "Exact1017 repository rounded510 GB; includes552B backbone,196.6B Engram and approximately14B DSpark plus scales. Do not equate6-bit/4-bit arithmetic with full payload.",
+              "raw_weight_basis": "Exact 1017 repository rounded 510 GB; includes 552B backbone,196.6B Engram and approximately 14B DSpark plus scales. Do not equate 6-bit/4-bit arithmetic with full payload.",
               "published_vram_gb": null,
-              "published_hardware": "Recipe4× GB200NVL4 or 8× H200 validated with0909, not rerun1017.614 GB recipe allowance is1.2× weights, not measured VRAM.",
+              "published_hardware": "Recipe4× GB200NVL4 or 8× H200 validated with 0909, not rerun on 1017. The 614 GB recipe allowance is1.2× weights, not measured VRAM.",
               "gpu_candidate": "4× GB200NVL4 or 8× H200",
               "gpu_candidate_basis": "Published predecessor recipe with same architecture/footprint; 1017 hardware parity remains untested.",
               "host_ram_gb": null,
@@ -2981,7 +2981,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Published1M model/config window; training-native span not independently established.8× H200 recipe caps800,000."
+              "notes": "Published 1M model/config window; training-native span not independently established.8× H200 recipe caps 800,000."
             },
             "request_limits": {
               "input_characters": null,
@@ -2993,7 +2993,7 @@
             "memory": {
               "parameters_total_b": 1600,
               "raw_weights_gb": 865,
-              "raw_weight_basis": "Recipe approximate preview checkpoint865 GB; not 1600B×active-count arithmetic.",
+              "raw_weight_basis": "Recipe approximate preview checkpoint 865 GB; not 1600B×active-count arithmetic.",
               "published_vram_gb": null,
               "published_hardware": "8× H200 DP/EP recipe at 800k; 8× GB200 multi-tray route.",
               "gpu_candidate": "8× H200",
@@ -3011,7 +3011,7 @@
             "requirements": [
               "deepseek_v4 tokenizer/tool/reasoning support",
               "Compatible mixed-precision kernels and GPU interconnect",
-              "Preview artifact lacks0813 DSpark additions; do not mix files"
+              "Preview artifact lacks 0813 DSpark additions; do not mix files"
             ],
             "source_ids": ["D040", "D135"]
           },
@@ -3030,7 +3030,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Config 1M; published8× H200 cap 800,000. No self-host output cap established."
+              "notes": "Config 1M; published 8× H200 cap 800,000. No self-host output cap established."
             },
             "request_limits": {
               "input_characters": null,
@@ -3042,11 +3042,11 @@
             "memory": {
               "parameters_total_b": 1600,
               "raw_weights_gb": 893,
-              "raw_weight_basis": "Rounded exact0813 repository893 GB including draft additions; recipe contains a divergent~960 GB line, so not treated as measured VRAM.",
+              "raw_weight_basis": "Rounded exact 0813 repository 893 GB including draft additions; recipe contains a divergent~960 GB line, so not treated as measured VRAM.",
               "published_vram_gb": null,
               "published_hardware": "Same recipe family:8× H200800k or 8× GB200 route; exact target workload not measured here.",
               "gpu_candidate": "8× H200 or 8× GB200",
-              "gpu_candidate_basis": "Published model-family recipe; actual0813 context/concurrency requires measurement.",
+              "gpu_candidate_basis": "Published model-family recipe; actual 0813 context/concurrency requires measurement.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
               "kv_cache_notes": "Compressed/sparse attention plus draft memory; larger host KV-offload presets only apply when selected."
@@ -3060,7 +3060,7 @@
             "requirements": [
               "Official encoding helpers; no ordinary Jinja chat template",
               "deepseek_v4 tokenizer, tool parser, reasoning parser",
-              "DSpark draft and decoding config must match0813; no generic MTP substitution"
+              "DSpark draft and decoding config must match 0813; no generic MTP substitution"
             ],
             "source_ids": ["D040", "D136", "D135"]
           }
@@ -3172,7 +3172,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "API128k output is separate. Hopper16k recipe validation does not establish1M request fit."
+              "notes": "API128k output is separate. Hopper16k recipe validation does not establish 1M request fit."
             },
             "request_limits": {
               "input_characters": null,
@@ -3184,9 +3184,9 @@
             "memory": {
               "parameters_total_b": 320,
               "raw_weights_gb": 328.565,
-              "raw_weight_basis": "Recipe306 GiB selected weights≈328.565 GB; tree rounded328 GB.320B card vs321B recipe rounding retained.",
+              "raw_weight_basis": "Recipe306 GiB selected weights≈328.565 GB; tree rounded 328 GB.320B card vs321B recipe rounding retained.",
               "published_vram_gb": null,
-              "published_hardware": "4× GB200 TP4; 4× H200 text16k/offload validation atvLLMd1b4028d7e.",
+              "published_hardware": "4× GB200 TP4; 4× H200 text 16k/offload validation atvLLMd1b4028d7e.",
               "gpu_candidate": "4× H200 or4× GB200",
               "gpu_candidate_basis": "Published hardware configurations; 1M context and concurrency not independently verified.",
               "host_ram_gb": null,
@@ -3203,7 +3203,7 @@
               "glm47 tool and reasoning parsers",
               "Default repo isFP8; BF16-suffixed andNVFP4 derivatives are separate artifacts",
               "Hopper: BF16 KV required; FP8 KV is Blackwell route only",
-              "All320B total weights and sparse indexer remain material despite18B active"
+              "All320B total weights and sparse indexer remain material despite 18B active"
             ],
             "source_ids": ["D043", "D138", "D137"]
           }
@@ -3325,7 +3325,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Config window; full1M recipe usesB200. Hosted128k output cap is not a self-host setting."
+              "notes": "Config window; full 1M recipe usesB200. Hosted128k output cap is not a self-host setting."
             },
             "request_limits": {
               "input_characters": null,
@@ -3337,9 +3337,9 @@
             "memory": {
               "parameters_total_b": 743,
               "raw_weights_gb": 756,
-              "raw_weight_basis": "Rounded repository756 GB; 743B/39B count attributed to runtime recipe rather than inferred from active weights.",
+              "raw_weight_basis": "Rounded repository 756 GB; 743B/39B count attributed to runtime recipe rather than inferred from active weights.",
               "published_vram_gb": null,
-              "published_hardware": "8× H200/H20FP8 recipe; 8× B200 for full1M; BF16 uses multiple nodes.",
+              "published_hardware": "8× H200/H20FP8 recipe; 8× B200 for full 1M; BF16 uses multiple nodes.",
               "gpu_candidate": "8× H200 or 8× B200",
               "gpu_candidate_basis": "Published recipe routes; no throughput/concurrency guarantee.",
               "host_ram_gb": null,
@@ -3466,7 +3466,7 @@
               "extended_tokens": 1048576,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Exact config 1048576; ROCm recipe calls524288 native and requiresYaRN2 for 1M. Training/native ceiling remains ambiguous; do not conflate config with validated request."
+              "notes": "Exact config 1048576; ROCm recipe calls 524288 native and requiresYaRN2 for 1M. Training/native ceiling remains ambiguous; do not conflate config with validated request."
             },
             "request_limits": {
               "input_characters": null,
@@ -3478,7 +3478,7 @@
             "memory": {
               "parameters_total_b": 428,
               "raw_weights_gb": 854,
-              "raw_weight_basis": "Exact repository rounded854 GB. Publisher 428B/23B active differs from recipe427B/26B; publisher count retained.",
+              "raw_weight_basis": "Exact repository rounded 854 GB. Publisher 428B/23B active differs from recipe 427B/26B; publisher count retained.",
               "published_vram_gb": null,
               "published_hardware": "8× H200/H20 BF16 capacity recipe is tight; long context may need more. Published NVFP4GB200 lane uses another artifact.",
               "gpu_candidate": "8× H200; larger topology for long context",
@@ -3496,7 +3496,7 @@
             "requirements": [
               "MiniMax custom license; product revenue/notification terms apply",
               "minimax_m3 tool and reasoning parsers",
-              "MSA-compatible attention kernels; blocksize128 where specified",
+              "MSA-compatible attention kernels; block size 128 where specified",
               "Exact tokenizer/processor; do not treat incomplete Transformers integration or automatic HF snippet as support"
             ],
             "source_ids": ["D050", "D051", "D142", "D143", "D141"]
@@ -3609,7 +3609,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Config: 1M positions. The Hopper recipe deliberately caps context at 262,144. max-num-seqs80 is a configured admission setting, not demonstrated concurrent capacity."
+              "notes": "Config: 1M positions. The Hopper recipe deliberately caps context at 262,144. max-num-seqs 80 is a configured admission setting, not demonstrated concurrent capacity."
             },
             "request_limits": {
               "input_characters": null,
@@ -3621,14 +3621,14 @@
             "memory": {
               "parameters_total_b": 428,
               "raw_weights_gb": 252,
-              "raw_weight_basis": "Exact official repository rounded252 GB including mixed-precision scales and draft artifacts; not BF16 estimate.",
+              "raw_weight_basis": "Exact official repository rounded 252 GB including mixed-precision scales and draft artifacts; not BF16 estimate.",
               "published_vram_gb": null,
               "published_hardware": "4× B200/B300/GB200/GB300 with native NVFP4; 8× H100/H200 with the Marlin route at 262k.",
               "gpu_candidate": "4× Blackwell or 8× H100/H200",
               "gpu_candidate_basis": "Published recipe: Hopper disables DSpark and video and uses FP8 KV/indexer storage. Availability, topology and request fit remain unmeasured.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "MSA throughout60layers with indexer/cache precision constraints. Full1M is not established byHopper262k recipe."
+              "kv_cache_notes": "MSA throughout 60 layers with indexer/cache precision constraints. Full1M is not established byHopper262k recipe."
             },
             "storage": {
               "artifact_bytes": null,
@@ -3638,7 +3638,7 @@
             },
             "requirements": [
               "MiniMax M3.1 Flash license: attribution, one-time notification and authorization conditions above $20M annual product revenue",
-              "minimax_m3 tool/reasoning parsers; block size128; disable-hybrid-kv-cache-manager",
+              "minimax_m3 tool/reasoning parsers; block size 128; disable-hybrid-kv-cache-manager",
               "Hopper: Marlin, TP8, 262144 context cap and no DSpark. Blackwell TP4 is a different route.",
               "Transformers, KTransformers, Unsloth and ATOM integrations are listed as in progress; use the authored SGLang, vLLM or TokenSpeed support."
             ],
@@ -3748,11 +3748,11 @@
             "memory": {
               "parameters_total_b": 2800,
               "raw_weights_gb": 1560,
-              "raw_weight_basis": "Rounded repository1.56 TB decimal; 104B active is compute, not weight memory.",
+              "raw_weight_basis": "Rounded repository 1.56 TB decimal; 104B active is compute, not weight memory.",
               "published_vram_gb": null,
-              "published_hardware": "Recipe at least8× GB300; AMD8× MI350/355 paths also published.",
+              "published_hardware": "Recipe at least 8× GB300; AMD8× MI350/355 paths also published.",
               "gpu_candidate": "8× GB300-class connected system",
-              "gpu_candidate_basis": "Published lower topology for this artifact; not a claim that a generic8-GPU Runpod instance has required interconnect.",
+              "gpu_candidate_basis": "Published lower topology for this artifact; not a claim that a generic 8-GPU Runpod instance has required interconnect.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
               "kv_cache_notes": "KDA+gatedMLA+AttnRes hybrid; shared cache and host offload budgets are preset-specific.1799 GB host budget in oneP/Drecipe is not a universal minimum."
@@ -3765,7 +3765,7 @@
             },
             "requirements": [
               "Kimi custom commercial license",
-              "CUDA13cu130; notcu129; NVIDIA580+ driver; pinK3-compatible image",
+              "CUDA13cu130; not cu129; NVIDIA580+ driver; pinK3-compatible image",
               "kimi_k3 tool and reasoning parsers; validate returned tool schema",
               "MegaMoE/NVLink topology assumptions; RDMA-only multi-node is not equivalent",
               "Retain quantization scales, vision/tokenizer and any draft files selected"
@@ -3835,7 +3835,7 @@
       "hosting": {
         "reviewed_on": "2026-10-25",
         "runpod_disposition": "external_api_only",
-        "reason": "Public API preview; official HFpage still marks weights upcoming2026-10-31. No currently verified Runpod artifact to profile.",
+        "reason": "Public API preview; official HFpage still marks weights upcoming 2026-10-31. No currently verified Runpod artifact to profile.",
         "profiles": [],
         "deployment_evidence": {
           "status": "not_deployed_or_tested_by_this_research",
@@ -3920,7 +3920,7 @@
               "extended_tokens": 262144,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Recommended262,144 viaYaRN128 over8,192 RoPEbase. Config advertises1Mpositions; do not promote to validated 1M. Original training-native length not established. Published launch command sets max_model_len262144; effective allocation remains unmeasured."
+              "notes": "Recommended262,144 viaYaRN128 over 8,192 RoPEbase. Config advertises 1M positions; do not promote to validated 1M. Original training-native length not established. Published launch command sets max_model_len262144; effective allocation remains unmeasured."
             },
             "request_limits": {
               "input_characters": null,
@@ -3934,17 +3934,17 @@
               "raw_weights_gb": 120.97,
               "raw_weight_basis": "Sum of rounded selected consolidated shards≈120.97 GB; HF sharded alternative≈120.9 GB.242 GB whole-repository total double-counts formats.",
               "published_vram_gb": null,
-              "published_hardware": "2× H200/B200FP8 recipe; full256kcanOOM, recipe suggests128k/64k.",
+              "published_hardware": "2× H200/B200FP8 recipe; full 256k can OOM, recipe suggests 128k/64k.",
               "gpu_candidate": "2× H200 or2× B200",
-              "gpu_candidate_basis": "Published route with context-dependent OOM caveat; not a guaranteed256k fit.",
+              "gpu_candidate_basis": "Published route with context-dependent OOM caveat; not a guaranteed 256k fit.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "MoE6.5B active still loads119B total; long-context KV and vision workspace canexhaust2× H200headroom."
+              "kv_cache_notes": "MoE6.5B active still loads119B total; long-context KV and vision workspace can exhaust 2× H200headroom."
             },
             "storage": {
               "artifact_bytes": null,
               "disk_gb": null,
-              "basis": "Choose consolidated7shards ORHF3shards, roughly 121 GB plus 16.3 MB tekken andconfig; notboth242 GB.",
+              "basis": "Choose seven consolidated shards ORHF3shards, roughly 121 GB plus 16.3 MB tekken andconfig; not both 242 GB.",
               "artifact_size_gb": 121
             },
             "requirements": [
@@ -4018,7 +4018,7 @@
       "hosting": {
         "reviewed_on": "2026-10-25",
         "runpod_disposition": "self_host_candidate",
-        "reason": "Public Apache 2.0 compactFP8 option; published12 GB claim has unspecified workload.",
+        "reason": "Public Apache 2.0 compactFP8 option; published 12 GB claim has unspecified workload.",
         "profiles": [
           {
             "label": "Ministral3 8BInstruct FP8",
@@ -4049,17 +4049,17 @@
               "raw_weights_gb": 10.4,
               "raw_weight_basis": "Selected consolidatedFP8file10.4 GB; 8.4B text+0.4B vision. Payload includes non-FP8/auxiliary tensors.",
               "published_vram_gb": 12,
-              "published_hardware": "Publisher says fits12 GBVRAM, without context/concurrency detail; family runtime demonstratedH200.",
+              "published_hardware": "Publisher says fits 12 GBVRAM, without context/concurrency detail; family runtime demonstratedH200.",
               "gpu_candidate": "1× RTX4090 24 GB or L40S 48 GB",
-              "gpu_candidate_basis": "Estimate for 8k total allocation, batch1. Published12 GB fitdoesnotestablish256k capacity.",
+              "gpu_candidate_basis": "Estimate for 8k total allocation, batch 1. Published 12 GB fit does not establish 256k capacity.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "8.8Bmultimodalweightfit separate from262kKVandvision allocations; output shares context."
+              "kv_cache_notes": "8.8Bmultimodalweightfit separate from 262kKVandvision allocations; output shares context."
             },
             "storage": {
               "artifact_bytes": null,
               "disk_gb": null,
-              "basis": "Select consolidated10.4 GB ORHFshards~10.415 GB plus 16.8 MB tekken; 20.9 GB repo duplicates layouts.",
+              "basis": "Select consolidated 10.4 GB ORHFshards~10.415 GB plus 16.8 MB tekken; 20.9 GB repo duplicates layouts.",
               "artifact_size_gb": 10.42
             },
             "requirements": [
@@ -4280,14 +4280,14 @@
             "memory": {
               "parameters_total_b": 120,
               "raw_weights_gb": 248.91,
-              "raw_weight_basis": "Published weightindex248.91 GB; recipe299 GB includes20%allowance and is not measured VRAM.",
+              "raw_weight_basis": "Published weight index 248.91 GB; recipe 299 GB includes 20%allowance and is not measured VRAM.",
               "published_vram_gb": null,
               "published_hardware": "Publisher route: 4× H100 or 2× GB200. The cited recipe uses a 114,688-token allocation.",
               "gpu_candidate": "4× H100 80 GB or2× GB200",
               "gpu_candidate_basis": "Published hardware/profile; full 1M request fit and concurrency remain unknown.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "Hybrid Mamba2/Transformer MoE recurrent states plus attention KV and visual tokens; 12B activedoesnotreduce120Bweights."
+              "kv_cache_notes": "Hybrid Mamba2/Transformer MoE recurrent states plus attention KV and visual tokens; 12B active does not reduce 120B weight storage."
             },
             "storage": {
               "artifact_bytes": null,
@@ -4443,7 +4443,7 @@
             "memory": {
               "parameters_total_b": 8,
               "raw_weights_gb": 16,
-              "raw_weight_basis": "Arithmetic 8B×2≈16 GB; exactrepo17.6 GB includesadditionaltensors/files.",
+              "raw_weight_basis": "Arithmetic 8B×2≈16 GB; exact repo 17.6 GB includesadditionaltensors/files.",
               "published_vram_gb": null,
               "published_hardware": "No published GPU minimum verified.",
               "gpu_candidate": "1× L40S 48 GB",
@@ -4461,7 +4461,7 @@
             "requirements": [
               "Exactgranite_thinking_parser.pyplugin andparsernamegranite_thinking_parser; documentednemotron_v3fallback",
               "qwen3_codertoolparser; SGLangauto usesnemotron_3",
-              "Preserve thinking/nonthinking template; example8192/2048generationbudgetsarenotmodeloutputceilings",
+              "Preserve thinking/nonthinking template; example 8192/2048generationbudgetsarenotmodeloutputceilings",
               "Apache 2.0"
             ],
             "source_ids": ["D062", "D158"]
@@ -4717,7 +4717,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Current config 262144; runtime recipe still states131072. Treat this as a source discrepancy, not a measured runtime ceiling."
+              "notes": "Current config 262144; runtime recipe still states 131072. Treat this as a source discrepancy, not a measured runtime ceiling."
             },
             "request_limits": {
               "input_characters": null,
@@ -4736,7 +4736,7 @@
               "gpu_candidate_basis": "Published GPU class and reduced-context examples; full native window and concurrency remain unmeasured.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "30 layers, five1024-token sliding-window layers per full-attention layer; local8/global2 KV heads, k_equals_v in global attention."
+              "kv_cache_notes": "30 layers, five 1024-token sliding-window layers per full-attention layer; local 8/global 2 KV heads, k_equals_v in global attention."
             },
             "storage": {
               "artifact_bytes": null,
@@ -4767,7 +4767,7 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Exact config 262144; quickstart32768 is a chosen cap, not native maximum."
+              "notes": "Exact config 262144; quickstart 32768 is a chosen cap, not native maximum."
             },
             "request_limits": {
               "input_characters": null,
@@ -4781,12 +4781,12 @@
               "raw_weights_gb": 62.6,
               "raw_weight_basis": "Rounded public checkpoint inventory; no conversion to a supposed minimum VRAM.",
               "published_vram_gb": null,
-              "published_hardware": "Published BF16 route uses2× A100/H100; quickstart allocations are smaller than maximum context.",
+              "published_hardware": "Published BF16 route uses 2× A100/H100; quickstart allocations are smaller than maximum context.",
               "gpu_candidate": "2× A100 80 GB or2× H100 80 GB",
               "gpu_candidate_basis": "Published GPU class and reduced-context examples; full native window and concurrency remain unmeasured.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "60 layers with five sliding-window layers per full-attention layer; local16/global4 KV heads and k_equals_v."
+              "kv_cache_notes": "60 layers with five sliding-window layers per full-attention layer; local 16/global 4 KV heads and k_equals_v."
             },
             "storage": {
               "artifact_bytes": null,
@@ -4924,7 +4924,7 @@
               "raw_weights_gb": 16,
               "raw_weight_basis": "Rounded public checkpoint inventory; no conversion to a supposed minimum VRAM.",
               "published_vram_gb": null,
-              "published_hardware": "Published BF16 example: one GPU with at least 24 GB; quickstart cap32768 and full-feature cap16384.",
+              "published_hardware": "Published BF16 example: one GPU with at least 24 GB; quickstart cap 32768 and full-feature cap 16384.",
               "gpu_candidate": "1× RTX4090 24 GB or L40S 48 GB",
               "gpu_candidate_basis": "Published GPU class and reduced-context examples; full native window and concurrency remain unmeasured.",
               "host_ram_gb": null,
@@ -4974,12 +4974,12 @@
               "raw_weights_gb": 24,
               "raw_weight_basis": "Rounded public checkpoint inventory; no conversion to a supposed minimum VRAM.",
               "published_vram_gb": null,
-              "published_hardware": "Published BF16 example: one GPU with at least 40 GB; quickstart cap32768, full-feature cap16384 and audio cap8192.",
+              "published_hardware": "Published BF16 example: one GPU with at least 40 GB; quickstart cap 32768, full-feature cap 16384 and audio cap 8192.",
               "gpu_candidate": "1× L40S 48 GB or A100 80 GB",
               "gpu_candidate_basis": "Published GPU class and reduced-context examples; full native window and concurrency remain unmeasured.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "48 layers; sliding/full attention, local8/global1 KV heads and k_equals_v; media tokens and audio workspace are additional."
+              "kv_cache_notes": "48 layers; sliding/full attention, local 8/global 1 KV heads and k_equals_v; media tokens and audio workspace are additional."
             },
             "storage": {
               "artifact_bytes": null,
@@ -5092,19 +5092,19 @@
             "memory": {
               "parameters_total_b": 0.27,
               "raw_weights_gb": 0.536,
-              "raw_weight_basis": "Selected model.safetensors536 MB public metadata; not phone RSS or a minimum VRAM.",
+              "raw_weight_basis": "Selected model.safetensors (536 MB) public metadata; not phone RSS or a minimum VRAM.",
               "published_vram_gb": null,
-              "published_hardware": "TinyGarden phone549 MB RSS example is a different fine-tuned artifact; no exact base GPU minimum.",
+              "published_hardware": "TinyGarden phone 549 MB RSS example is a different fine-tuned artifact; no exact base GPU minimum.",
               "gpu_candidate": "16 GB CUDA GPU; likely oversized for weights",
-              "gpu_candidate_basis": "Conservative research candidate for 8k context/batch1. CPU route may be preferable; no GPU measurement performed.",
+              "gpu_candidate_basis": "Conservative research candidate for 8k context/batch 1. CPU route may be preferable; no GPU measurement performed.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "Small weight payload does not remove32k KV/prefill costs; output uses the same context budget."
+              "kv_cache_notes": "Small weight payload does not remove 32k KV/prefill costs; output uses the same context budget."
             },
             "storage": {
               "artifact_bytes": null,
               "disk_gb": null,
-              "basis": "Approximate selected536 MB safetensors plus tokenizer/config files: about 575 MB. tiny_garden.litertlm288 MB is a separate fine-tuned deployment artifact, not needed for this base profile.",
+              "basis": "Approximate selected 536 MB safetensors plus tokenizer/config files: about 575 MB. tiny_garden.litertlm (288 MB) is a separate fine-tuned deployment artifact, not needed for this base profile.",
               "artifact_size_gb": 0.575
             },
             "requirements": [
@@ -5198,7 +5198,7 @@
               "extended_tokens": 131072,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Official trained 64k; YaRN factor2 supports128k. Card mentions other extrapolation settings but no256k quality/fit claim recorded."
+              "notes": "Official trained 64k; YaRN factor 2 supports 128k. Card mentions other extrapolation settings but no256k quality/fit claim recorded."
             },
             "request_limits": {
               "input_characters": null,
@@ -5210,14 +5210,14 @@
             "memory": {
               "parameters_total_b": 3,
               "raw_weights_gb": 6.15,
-              "raw_weight_basis": "Selected two safetensors shards4.97+1.18≈6.15 GB; repository6.17 GB includes tokenizer.",
+              "raw_weight_basis": "Selected two safetensors shards 4.97+1.18≈6.15 GB; repository 6.17 GB includes tokenizer.",
               "published_vram_gb": null,
               "published_hardware": "No published GPU minimum verified.",
               "gpu_candidate": "1× 16 GB CUDA GPU orRTX4090 24 GB",
               "gpu_candidate_basis": "Research estimate for the specified precision, one request at a time and an initial 8,192-token total allocation; not a measured fit or minimum. Runtime workspaces, media, graphs and cache are additional.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "36-layer GQA with4 KV heads and periodic NoPE; native64k allocation and output/concurrency add substantial cache beyond6.15 GB weights."
+              "kv_cache_notes": "36-layer GQA with 4 KV heads and periodic NoPE; native 64k allocation and output/concurrency add substantial cache beyond 6.15 GB weights."
             },
             "storage": {
               "artifact_bytes": null,
@@ -5303,7 +5303,7 @@
       "hosting": {
         "reviewed_on": "2026-10-25",
         "runpod_disposition": "self_host_candidate",
-        "reason": "Public Apache 2.0 model family with distinct20b/120b artifacts, native Harmony protocol and published memory observations.",
+        "reason": "Public Apache 2.0 model family with distinct 20b/120b artifacts, native Harmony protocol and published memory observations.",
         "profiles": [
           {
             "label": "Native MXFP4 gpt-oss-20b",
@@ -5334,9 +5334,9 @@
               "raw_weights_gb": 13.76,
               "raw_weight_basis": "Sum of rounded selected safetensors shard metadata; exact byte count not recovered. Total MoE weights, not active count.",
               "published_vram_gb": null,
-              "published_hardware": "Publisher states16 GB memory fit, without full-context/concurrency guarantee.",
+              "published_hardware": "Publisher states 16 GB memory fit, without full-context/concurrency guarantee.",
               "gpu_candidate": "1× RTX4090 24 GB",
-              "gpu_candidate_basis": "Publisher capacity claim, with8k/batch1 initial investigation; 128k and concurrency not established by weight fit.",
+              "gpu_candidate_basis": "Publisher capacity claim, with 8k/batch 1 initial investigation; 128k and concurrency not established by weight fit.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
               "kv_cache_notes": "Sliding/global attention and MoE workspace; quantized weights do not establish cache precision. Keep reasoning tokens in total output/context budget."
@@ -5344,7 +5344,7 @@
             "storage": {
               "artifact_bytes": null,
               "disk_gb": null,
-              "basis": "Selected safetensors layout plus tokenizer/config approximation. Whole repo41.3 GB(20b)/196 GB(120b) includes alternate/original layouts; do not download all by default.",
+              "basis": "Selected safetensors layout plus tokenizer/config approximation. Whole repo 41.3 GB(20b)/196 GB(120b) includes alternate/original layouts; do not download all by default.",
               "artifact_size_gb": 13.8
             },
             "requirements": [
@@ -5382,11 +5382,11 @@
             "memory": {
               "parameters_total_b": 117,
               "raw_weights_gb": 65.3,
-              "raw_weight_basis": "Sum of rounded metadata for the15 selected safetensors shards is approximately65.30 GB; exact bytes were not recovered. This is payload, not minimum VRAM.",
+              "raw_weight_basis": "Sum of rounded metadata for the15 selected safetensors shards is approximately 65.30 GB; exact bytes were not recovered. This is payload, not minimum VRAM.",
               "published_vram_gb": null,
               "published_hardware": "Publisher states one 80 GB GPU; runtime recipe lists H100/H200/B200/A10080 and AMD.",
               "gpu_candidate": "1× H100 80 GB or H200",
-              "gpu_candidate_basis": "Publisher capacity claim, with8k/batch1 initial investigation; 128k and concurrency not established by weight fit.",
+              "gpu_candidate_basis": "Publisher capacity claim, with 8k/batch 1 initial investigation; 128k and concurrency not established by weight fit.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
               "kv_cache_notes": "Sliding/global attention and MoE workspace; quantized weights do not establish cache precision. Keep reasoning tokens in total output/context budget."
@@ -5394,7 +5394,7 @@
             "storage": {
               "artifact_bytes": null,
               "disk_gb": null,
-              "basis": "Selected safetensors layout plus tokenizer/config approximation. Whole repo41.3 GB(20b)/196 GB(120b) includes alternate/original layouts; do not download all by default.",
+              "basis": "Selected safetensors layout plus tokenizer/config approximation. Whole repo 41.3 GB(20b)/196 GB(120b) includes alternate/original layouts; do not download all by default.",
               "artifact_size_gb": 65.5
             },
             "requirements": [
@@ -5510,12 +5510,12 @@
               "raw_weights_gb": 218,
               "raw_weight_basis": "Arithmetic only:109B×2 bytes≈218 GB BF16 before vision, scales and auxiliaries. Selected shard total not established.",
               "published_vram_gb": null,
-              "published_hardware": "Scout runtime recipe shows4-GPU BF16; singleGPU quantized variants are separate.",
+              "published_hardware": "Scout runtime recipe shows 4-GPU BF16; singleGPU quantized variants are separate.",
               "gpu_candidate": "4× H100 80 GB or2× H200",
-              "gpu_candidate_basis": "Explicit estimate from total BF16 weights for 8k/batch1; requires compatible tensor/expert parallelism and interconnect. Not a full-context or latency claim.",
+              "gpu_candidate_basis": "Explicit estimate from total BF16 weights for 8k/batch 1; requires compatible tensor/expert parallelism and interconnect. Not a full-context or latency claim.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "Llama4 iRoPE/chunked and global attention behavior; do not estimate10M cache using an all-layer full-attention shortcut. Advertised context can require distributed capacity."
+              "kv_cache_notes": "Llama4 iRoPE/chunked and global attention behavior; do not estimate 10M cache using an all-layer full-attention shortcut. Advertised context can require distributed capacity."
             },
             "storage": {
               "artifact_bytes": null,
@@ -5525,7 +5525,7 @@
             },
             "requirements": [
               "Meta gated download authorization and Llama4 community license/AUP",
-              "Exact Llama4 tokenizer/template/vision processor; 17B active does not mean17B resident",
+              "Exact Llama4 tokenizer/template/vision processor; 17B active does not mean 17B resident",
               "Pin a runtime supporting multimodal MoE and chosen parallel topology",
               "Scout FP4 or Maverick FP8 variants require separate artifact/runtime profiles"
             ],
@@ -5562,10 +5562,10 @@
               "published_vram_gb": null,
               "published_hardware": "No exact BF16 Maverick capacity measurement established from retrieved primary sources.",
               "gpu_candidate": "8× H200",
-              "gpu_candidate_basis": "Explicit estimate from total BF16 weights for 8k/batch1; requires compatible tensor/expert parallelism and interconnect. Not a full-context or latency claim.",
+              "gpu_candidate_basis": "Explicit estimate from total BF16 weights for 8k/batch 1; requires compatible tensor/expert parallelism and interconnect. Not a full-context or latency claim.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "Llama4 iRoPE/chunked and global attention behavior; do not estimate10M cache using an all-layer full-attention shortcut. Advertised context can require distributed capacity."
+              "kv_cache_notes": "Llama4 iRoPE/chunked and global attention behavior; do not estimate 10M cache using an all-layer full-attention shortcut. Advertised context can require distributed capacity."
             },
             "storage": {
               "artifact_bytes": null,
@@ -5575,7 +5575,7 @@
             },
             "requirements": [
               "Meta gated download authorization and Llama4 community license/AUP",
-              "Exact Llama4 tokenizer/template/vision processor; 17B active does not mean17B resident",
+              "Exact Llama4 tokenizer/template/vision processor; 17B active does not mean 17B resident",
               "Pin a runtime supporting multimodal MoE and chosen parallel topology",
               "Scout FP4 or Maverick FP8 variants require separate artifact/runtime profiles"
             ],
@@ -5894,7 +5894,7 @@
       "hosting": {
         "reviewed_on": "2026-10-25",
         "runpod_disposition": "external_api_only",
-        "reason": "Ordinary output128K; Message Batches beta allows300K with output-300k-2026-03-24. Neither is a self-host setting.",
+        "reason": "Ordinary output 128K; Message Batches beta allows 300K with output-300k-2026-03-24. Neither is a self-host setting.",
         "profiles": [],
         "deployment_evidence": {
           "status": "not_deployed_or_tested_by_this_research",
@@ -5915,7 +5915,7 @@
             "context_tokens": 1000000,
             "max_output_tokens": 128000,
             "input_bytes": null,
-            "notes": "Ordinary output128K; Message Batches beta allows300K with output-300k-2026-03-24. Neither is a self-host setting.",
+            "notes": "Ordinary output 128K; Message Batches beta allows 300K with output-300k-2026-03-24. Neither is a self-host setting.",
             "source_ids": ["D087"]
           }
         ]
@@ -5980,7 +5980,7 @@
       "hosting": {
         "reviewed_on": "2026-10-25",
         "runpod_disposition": "external_api_only",
-        "reason": "Unified input/output context. Long decode can use up to 1,048,576 output tokens within the same unified budget. Separate from default synchronous65,536.",
+        "reason": "Unified input/output context. Long decode can use up to 1,048,576 output tokens within the same unified budget. Separate from default synchronous 65,536.",
         "profiles": [],
         "deployment_evidence": {
           "status": "not_deployed_or_tested_by_this_research",
@@ -6001,7 +6001,7 @@
             "context_tokens": 1048576,
             "max_output_tokens": 65536,
             "input_bytes": null,
-            "notes": "Unified input/output context. Long decode can use up to 1,048,576 output tokens within the same unified budget. Separate from default synchronous65,536.",
+            "notes": "Unified input/output context. Long decode can use up to 1,048,576 output tokens within the same unified budget. Separate from default synchronous 65,536.",
             "source_ids": ["D092"]
           }
         ]
@@ -6339,7 +6339,7 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "State<=65,536 tokens plus up to 8,192 for each question; overflow returns422 without truncation. Choice and Score each allow 1–255 options. No fixed question-count ceiling: the canonical server splits work into bounded forward-pass batches. No separate HTTP byte ceiling established."
+              "other": "State<=65,536 tokens plus up to 8,192 for each question; overflow returns 422 without truncation. Choice and Score each allow 1–255 options. No fixed question-count ceiling: the canonical server splits work into bounded forward-pass batches. No separate HTTP byte ceiling established."
             },
             "memory": {
               "parameters_total_b": 4,
@@ -6392,7 +6392,7 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "State<=65,536 tokens plus up to 8,192 for each question; overflow returns422 without truncation. Choice and Score each allow 1–255 options. No fixed question-count ceiling: the canonical server splits work into bounded forward-pass batches. No separate HTTP byte ceiling established."
+              "other": "State<=65,536 tokens plus up to 8,192 for each question; overflow returns 422 without truncation. Choice and Score each allow 1–255 options. No fixed question-count ceiling: the canonical server splits work into bounded forward-pass batches. No separate HTTP byte ceiling established."
             },
             "memory": {
               "parameters_total_b": 9,
@@ -6445,7 +6445,7 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Prompt, schema, media and generated output must fit the selected runtime allocation."
+              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Encoded state, question/option text, protocol markers and supported media must satisfy the native request limits. Serialized-answer size and accounting follow the exact protocol and transport; no chat-generation reservation applies."
             },
             "memory": {
               "parameters_total_b": 4,
@@ -6495,19 +6495,19 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "State<=65,536 tokens plus up to 8,192 for each question; overflow returns422 without truncation. Choice and Score each allow 1–255 options. No fixed question-count ceiling: the canonical server splits work into bounded forward-pass batches. No separate HTTP byte ceiling established."
+              "other": "State<=65,536 tokens plus up to 8,192 for each question; overflow returns 422 without truncation. Choice and Score each allow 1–255 options. No fixed question-count ceiling: the canonical server splits work into bounded forward-pass batches. No separate HTTP byte ceiling established."
             },
             "memory": {
               "parameters_total_b": 25.6,
               "raw_weights_gb": 51.3,
-              "raw_weight_basis": "Publisher full checkpoint51.3 GB; loaded backbone25.6B plus 2.6Mhead, vision/LMhead/MTPexcluded.",
+              "raw_weight_basis": "Publisher full checkpoint 51.3 GB; loaded backbone 25.6B plus 2.6Mhead, vision/LMhead/MTPexcluded.",
               "published_vram_gb": 78.7,
               "published_hardware": "H200: 65.5 GB resident server; 78.7 GB peak with a 32k-token state and 87.1 GB with a 64k-token state. Publisher measurements.",
               "gpu_candidate": "1× H200; H100 80 GB only shorter contexts",
               "gpu_candidate_basis": "Published H200 observations: the 32k case leaves little headroom on an 80 GB GPU and the 64k case exceeds 80 GB. No concurrency guarantee.",
               "host_ram_gb": null,
               "host_ram_basis": "Linux host RAM minimum not published in the retrieved sources.",
-              "kv_cache_notes": "State cache plus question reads; published peak depends onstate32k/64k, not a universal constant."
+              "kv_cache_notes": "State cache plus question reads; published peak depends on state 32k/64k, not a universal constant."
             },
             "storage": {
               "artifact_bytes": null,
@@ -6549,7 +6549,7 @@
               "input_audio_seconds": null,
               "output_audio_seconds": null,
               "reference_audio_seconds": null,
-              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Prompt, schema, media and generated output must fit the selected runtime allocation."
+              "other": "No independent character/byte, question-count or HTTP-body ceiling established. Encoded state, question/option text, protocol markers and supported media must satisfy the native request limits. Serialized-answer size and accounting follow the exact protocol and transport; no chat-generation reservation applies."
             },
             "memory": {
               "parameters_total_b": 4,
