@@ -12,7 +12,7 @@
 
 ## ECL-L02 — Assistance and information
 
-**Authored capability:** the initial targeted player attack can expose an anonymous incoming-danger cue without sensory identification. This is an explicit player-assistance tradeoff, not private actor knowledge. No hidden name, position, weapon or targetable body is disclosed; ordinary experience determines recognition and preparedness separately.
+**Authored capability:** the initial targeted player attack can expose an anonymous incoming-danger cue without sensory identification. This is an explicit player-assistance tradeoff, not private actor knowledge. No hidden name, position, weapon or targetable body is disclosed; ordinary experience determines recognition and preparedness separately. A visible person's identity cannot be joined to a private attack target; naming the source requires its independently permitted attack association.
 
 **UI restriction:** one expanded emergency region, stable action binding during a held/focused activation, and only personally disclosed additional threats. A banner does not close menus, act, stop time or make the player invulnerable. Native pause, control and maintenance restrictions remain.
 
@@ -38,15 +38,17 @@
 
 ## ECL-L05 — Automatic action and user control
 
-**Finite convenience:** at most one automatic set intention per true off-to-on combat-mode transition and one pending convenience in the current foreground scope. Default is None. An explicit Defend/Retaliate uses current gear first. New deliberate physical work, manual equipment choice, mode exit, blur/pause/disconnect or scope/life change cancels the pending convenience; native rules decide any already admitted work.
+**Finite convenience:** at most one equipment attempt per true off-to-on combat-mode transition and one not-yet-submitted selection in the current foreground scope. Default is None. A deliberate mode switch with the preference enabled may replace current work, just like manual Equip; a mode notice from incoming assault/own offense may not. An explicit Defend/Retaliate uses current gear first and can carry the same unsubmitted selection behind its confirmed action/recovery, without allocating another attempt.
 
-**Restriction:** no automatic retries after refusal, no resubmission of an uncertain effect, no forced set during repeated chosen attacks and no automatic set on combat exit. Reconnect, repeated hits and old mode notices are not new entries. Missing combat gear leaves the actual old set intact.
+Ordinary new movement/attack commands, manual equipment choices, mode exit, blur/pause/disconnect or scope/life changes clear the pending convenience. A refused/declined reaction clears it; unresolved review/results block dispatch. If a reaction cancels an already admitted equipment action, that mode entry's attempt is spent and is not automatically retried. Native rules decide any already admitted work.
 
-**Reconsider through:** reaction during gear preparation, manual fighting before an idle boundary, an unavailable preset, slow response/unknown receipt and mode exit immediately before/after commit. Preserve the intended distinction between an attempt, a pending convenience and actually equipped gear.
+**Restriction:** no automatic retries after cancellation/refusal, no resubmission of an uncertain effect, no forced set interrupting repeated chosen actions and no automatic set on combat exit. Reconnect, repeated hits and old mode notices are not new entries. Missing combat gear leaves actual old equipment/work intact. A manual Equip control remains available independently.
+
+**Reconsider through:** explicit mode entry while fishing versus notice-driven entry, reaction during gear preparation, ordinary manual fighting before an idle boundary, an unavailable preset, slow response/unknown receipt and mode exit immediately before/after commit. Preserve the intended distinction between an attempt, an unsubmitted convenience and actually equipped gear.
 
 ## ECL-L06 — Interaction and acceptance boundaries
 
-Existing right-click/context and camera bindings remain. New Defend and per-loadout shortcut actions are remappable but initially unassigned; every action has a visible keyboard-operable control. Text/IME, child overlays and blocking authority dialogs retain input ownership. A reaction consumes its input and hides ordinary menus in one deliberate transition, preserving the existing task owner rather than copying its private data.
+Existing right-click/context and camera bindings remain. New Defend and per-loadout shortcut actions are remappable but initially unassigned; every action has a visible keyboard-operable control. Text/IME, child overlays and blocking authority dialogs retain input ownership. A reaction consumes its input and hides ordinary menus in one deliberate transition, preserving the existing task owner rather than copying its private data. Repeated reactions do not erase the last nonempty workspace return point.
 
 **Not selected:** forced camera motion, automatic reopening of large panels, automatic resumption of interrupted work, trade rollback, new shop/market rules, offline reaction automation, controller parity without evidence, legacy readers or a general concurrent-action framework.
 
