@@ -4,7 +4,7 @@ import {
 } from './worlds/base/recognition.js';
 import { validSpeechLabel, validatePerceivedSpeech } from './speech.js';
 import { validObserverSubject } from './knowledge.js';
-import { validPersonalSourceRef, type PersonalSourceRef } from './experience-source.js';
+import { validPersonalSourceRef, personalFactAlias, type PersonalSourceRef } from './experience-source.js';
 export {
   PERSONAL_EVIDENCE_PREPARATION,
   personalFactAlias,
@@ -12,6 +12,7 @@ export {
   type PersonalSourceRef,
 } from './experience-source.js';
 import { canonicalJson } from './events.js';
+import { temporalReceiptId } from './temporal-evidence.js';
 import type { Awareness, ExperienceSummary } from './experience.js';
 import type { ExperienceEntry, MemoryRecord } from './types.js';
 import { validateObservationContribution } from './perception-evidence.js';
@@ -313,6 +314,9 @@ export function observationDependencies(
     if (value.kind === 'claim') {
       const aliases = (value.supportAliases ?? []).map((alias) => alias.id);
       for (const support of value.support) add(support.source, support.ordinal, aliases);
+    } else if (value.kind === 'physical-boundary') {
+      for (const support of [value.boundary.nearSurface.support, value.boundary.farSurface.support])
+        add(support.source, support.ordinal, [personalFactAlias(support.source.id, support.ordinal)]);
     } else if (value.kind === 'confirmation') {
       visit(value.snapshot.original);
       add(value.snapshot.confirmation, value.snapshot.originalOrdinal, []);
@@ -348,6 +352,9 @@ export function observationLearningSources(
     if (value.kind === 'association')
       for (const source of recognitionSupportSources(value.learningSupport ?? []))
         sources.set(canonicalJson(source), source);
+    if (value.kind === 'physical-boundary')
+      for (const support of [value.boundary.nearSurface.support, value.boundary.farSurface.support])
+        sources.set(canonicalJson(support.source), support.source);
     if (value.kind === 'confirmation') {
       visit(value.snapshot.original);
       facet(value.snapshot.value);
@@ -388,6 +395,7 @@ export function manifestDependsOn(
   return (
     observationLearningSources(manifest.observations).some((source) => affected.has(source.id)) ||
     manifest.coverage.some((ref) => affected.has(ref.id)) ||
+    !!manifest.receipts?.some((receipt) => affected.has(temporalReceiptId(receipt))) ||
     observationDependencies(manifest.observations).some(
       ({ source, aliases }) => affected.has(source.id) || aliases.some((id) => affected.has(id)),
     )

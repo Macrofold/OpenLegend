@@ -37,6 +37,7 @@ import type {
   ExperienceEntry,
   ExperienceSummary,
   MemoryRecord,
+  ImpressionDependency,
 } from '@open-legend/domain';
 import {
   EXPERIENCE_LIMITS,
@@ -81,6 +82,7 @@ const sourceTables = MEMORY_SOURCE_TABLES;
 export type MemoryChanges = Map<string, Set<string> | null> & {
   /** Transaction-local canonical creations, never a reusable eligibility cache. */
   newSources?: Map<string, Map<string, SourceKind>>;
+  retiredClosure?: Array<{ actorId: string; source: PersonalSourceRef }>;
 };
 type SourceKind = keyof typeof sourceTables;
 const sourceKey = (kind: string, id: string) => JSON.stringify([kind, id]);
@@ -243,6 +245,10 @@ export interface MemoryModel {
  * interpretation remains with domain/AI owners; this repository invents no semantics.
  */
 export class MemoryRepository {
+  /** Establish the committed SQL source cut before a caller captures a read fence. */
+  async synchronizeSources(): Promise<void> {
+    await this.db.synchronizeProjection?.();
+  }
   private derivedAllowance?: DerivedMemoryAllowance;
   private derivedPolicyDirty = false;
   configureWorld(world: WorldState): void {
@@ -713,6 +719,20 @@ export class MemoryRepository {
           'ON CONFLICT DO NOTHING',
         );
         const released = old.filter((row) => expired.has(String(row['id'])));
+        for (const row of released) {
+          const value = JSON.parse(String(row['payload'])) as {
+            sources?: PersonalSourceRef[];
+            manifest?: { coverage: PersonalSourceRef[] };
+            impression?: { dependencies: ImpressionDependency[] };
+          };
+          for (const source of [
+            ...(value.sources ?? []),
+            ...(value.manifest?.coverage ?? []),
+            ...(value.impression?.dependencies ?? []),
+          ])
+            if (validPersonalSourceRef(source))
+              (affected.retiredClosure ??= []).push({ actorId: String(row['actor_id']), source });
+        }
         if (released.length) {
           const keys = JSON.stringify(
             released.map((row) => ({
@@ -1353,6 +1373,25 @@ export class MemoryRepository {
           IS DISTINCT FROM (excluded.source_revision,excluded.importance,excluded.at)`,
         )
         .run(...params, worldId, worldId);
+    }
+    if (changes.retiredClosure?.length) {
+      const unique = [
+        ...new Map(
+          changes.retiredClosure.map(({ actorId, source }) => [
+            JSON.stringify([actorId, source]),
+            { actor_id: actorId, kind: source.kind, id: source.id, revision: source.revision },
+          ]),
+        ).values(),
+      ];
+      for (let offset = 0; offset < unique.length; offset += 800)
+        await this.db
+          .prepare(
+            `DELETE FROM mind_source_versions v USING jsonb_to_recordset(?::jsonb) q(actor_id text,kind text,id text,revision text)
+        WHERE v.world_id=? AND v.actor_id=q.actor_id AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision
+        AND NOT EXISTS(SELECT 1 FROM mind_source_dependencies d JOIN recall_sources r ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id
+          WHERE d.world_id=v.world_id AND d.actor_id=v.actor_id AND d.source_kind=v.source_kind AND d.source_id=v.source_id AND d.source_revision=v.revision AND r.memory_kind IS DISTINCT FROM 'impression')`,
+          )
+          .run(JSON.stringify(unique.slice(offset, offset + 800)), worldId);
     }
     await this.trimDerived(worldId, changes.keys());
   }

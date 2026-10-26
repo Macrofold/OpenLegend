@@ -601,6 +601,8 @@ export interface MemoryEntryView {
   fidelity: 'exact' | 'impression';
   id: string;
   sourceKind: 'awareness' | 'memory' | 'summary' | 'observation';
+  /** Opaque reader-issued address; creator edits still require current authority. */
+  editReference?: string;
   text: string;
   time: number;
 }

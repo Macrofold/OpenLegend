@@ -239,7 +239,7 @@ export function pruneObserverIndividuals(
   for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
     if (document.subjectId?.kind === 'individual' && document.text.trim())
       pinned.add(document.subjectId.individualId);
-  for(const record of world.minds[actorId]?.records??[])
+  for(const record of world.minds?.[actorId]?.records??[])
     if(record.subjectId?.kind==='individual')pinned.add(record.subjectId.individualId);
   let removed = 0;
   for (const key of input.candidates ?? Object.keys(identities)) {

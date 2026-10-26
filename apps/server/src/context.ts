@@ -171,7 +171,9 @@ function describeTargets(
     const target = id ? entityGet(service.world.entities, id) : undefined;
     if (target && !health.has(target.id)) {
       health.set(target.id, observedBodyHealth(service.world, actorId, target.id));
-      positions.set(target.id, effectivePosition(service.world, target.id));
+      const point = target.id === actorId ? effectivePosition(service.world, target.id)
+        : currentBodyObservation(service.world, actorId, target.id)?.value.body.position;
+      if (point) positions.set(target.id, point);
     }
     const position = target && positions.get(target.id);
     // Descriptions already use permitted names where they are constructed.
@@ -179,7 +181,7 @@ function describeTargets(
     return target && position
       ? {
           ...candidate,
-          description: `${candidate.description} Target: ${observerDescription(service.world, actorId, target.id)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''} Distance: ${Math.hypot(origin.x - position.x, origin.y - position.y, origin.z - position.z).toFixed(1)} m. Route length is not known.`,
+          description: `${candidate.description} Target: ${observerDescription(service.world, actorId, target.id)}.${health.get(target.id) ? ` Last observed ${health.get(target.id)}` : ''} Distance to the observed position: ${Math.hypot(origin.x - position.x, origin.y - position.y, origin.z - position.z).toFixed(1)} m. Route length is not known.`,
         }
       : candidate;
   });

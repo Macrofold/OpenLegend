@@ -1,3 +1,4 @@
+import { resolveRecentObservationReference } from './recent-history.js';
 import { KnownPlacePreparationError } from '@open-legend/domain';
 import { MemoryPreparationError } from './memory-repository.js';
 import {
@@ -2736,33 +2737,59 @@ async function initializeGameServer(
             case '/api/god/correct-memory': {
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'God access required.' });
+              const fields = { actorId: requestIdSchema, correctionEventId: requestIdSchema };
               const value = z
-                .object({
-                  actorId: requestIdSchema,
-                  sourceId: requestIdSchema,
-                  correctionEventId: requestIdSchema,
-                })
-                .strict()
+                .union([
+                  z.object({ ...fields, sourceId: requestIdSchema }).strict(),
+                  z.object({ ...fields, receiptReference: z.string().min(1).max(2048) }).strict(),
+                ])
                 .parse(body);
-              return send(
-                response,
-                200,
-                await service.correctMemory(
-                  value.actorId,
-                  value.sourceId,
-                  value.correctionEventId,
-                  scope,
-                ),
-              );
+              const result =
+                'receiptReference' in value
+                  ? await service.correctRecentObservation(
+                      resolveRecentObservationReference(
+                        service,
+                        value.actorId,
+                        scope,
+                        value.receiptReference,
+                      ),
+                      value.correctionEventId,
+                      scope,
+                    )
+                  : await service.correctMemory(
+                      value.actorId,
+                      value.sourceId,
+                      value.correctionEventId,
+                      scope,
+                    );
+              return send(response, 200, result);
             }
             case '/api/god/forget-memory': {
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'God access required.' });
               const value = z
-                .object({ actorId: requestIdSchema, sourceId: requestIdSchema })
-                .strict()
+                .union([
+                  z.object({ actorId: requestIdSchema, sourceId: requestIdSchema }).strict(),
+                  z
+                    .object({
+                      actorId: requestIdSchema,
+                      receiptReference: z.string().min(1).max(2048),
+                    })
+                    .strict(),
+                ])
                 .parse(body);
-              const result = await service.forgetMemory(value.actorId, value.sourceId, scope);
+              const result =
+                'receiptReference' in value
+                  ? await service.forgetRecentObservation(
+                      resolveRecentObservationReference(
+                        service,
+                        value.actorId,
+                        scope,
+                        value.receiptReference,
+                      ),
+                      scope,
+                    )
+                  : await service.forgetMemory(value.actorId, value.sourceId, scope);
               if (result.ok) await store.db.exec('DELETE FROM intelligence_calls');
               return send(response, 200, result);
             }

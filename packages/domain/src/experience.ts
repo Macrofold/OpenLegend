@@ -75,6 +75,7 @@ import {
   retainTemporalSupport,
   temporalFacetEligible,
   temporalReceiptSource,
+  temporalReceiptId,
   temporalReceiptAliases,
   type TemporalReceipt,
   type TemporalValue,
@@ -1034,6 +1035,7 @@ function experienceDependsOn(
   return (
     affected.has(entry.id) ||
     ('eventId' in entry && !!entry.eventId && affected.has(entry.eventId)) ||
+    ('sourceReceipt' in entry && !!entry.sourceReceipt && affected.has(temporalReceiptId(entry.sourceReceipt))) ||
     ('observation' in entry && !!entry.observation && affected.has(entry.observation.id)) ||
     ('sources' in entry && entry.sources.some((source) => affected.has(source.id))) ||
     (!!entry.manifest && manifestDependsOn(entry.manifest, affected)) ||
@@ -1061,6 +1063,8 @@ export function retainedExperienceSource(
     )
   )
     return true;
+  if (world.experience?.temporal?.actors[actorId]?.chunks.some((chunk) => chunk.receipts.some((receipt) =>
+    receipt.id === sourceId || receipt.sourceIds.includes(sourceId)))) return true;
   const retained = experiences(world, actorId, true);
   if (retained.some((entry) => experienceDependsOn(entry, affected))) return true;
   // Memory projections carry original coverage. Read immediate typed summary sources
@@ -1523,6 +1527,7 @@ export function invalidateExperience(
       ];
       if (
         affected.has(entry.eventId) ||
+        (entry.sourceReceipt && affected.has(temporalReceiptId(entry.sourceReceipt))) ||
         (entry.observation && affected.has(entry.observation.id))
       ) {
         include(entry.eventId);
@@ -1557,6 +1562,7 @@ export function invalidateExperience(
     for (const memory of world.memories[actorId] ?? []) {
       if (
         (memory.eventId && affected.has(memory.eventId)) ||
+        (memory.sourceReceipt && affected.has(temporalReceiptId(memory.sourceReceipt))) ||
         (memory.activityId && affected.has(memory.activityId))
       )
         include(memory.id);

@@ -4,13 +4,19 @@ import { entityGet } from './entity-collection.js';
 import { initializePerception, executeCommand } from './kernel.js';
 import { setSpatialPosition, worldSupport } from './spatial-state.js';
 import { setAttentionFocus } from './attention.js';
-import { currentBodyObservation } from './perception-evidence.js';
+import {
+  currentBodyObservation,
+  currentObservedFacets,
+  captureEvidenceCut,
+  validatePerceptionEvidenceState,
+} from './perception-evidence.js';
 import { invalidateExperience } from './experience.js';
 import {
   selectTemporalHistory,
   temporalReceiptSource,
   retainedTemporalSupport,
   retainTemporalSupport,
+  beginTemporalReceiptEpoch,
 } from './temporal-evidence.js';
 
 function scene(seed = 41) {
@@ -287,4 +293,70 @@ it('reports an empty change window as unavailable without renewing an older acqu
   expect(
     held.entries.flatMap(({ receipt }) => receipt.facets).every((facet) => facet.acquiredAt === 0),
   ).toBe(true);
+});
+
+it('confirms unchanged sight without rewriting every detail and freezes the last actual sample on loss', () => {
+  const world = scene(49);
+  const raw = world.perceptionEvidence![PLAYER_ID]!.current[`${NPC_ID}:body`]!;
+  const originalTime = raw.valueMeasuredThrough;
+  for (const at of [1, 2, 3]) {
+    world.simTime = at;
+    initializePerception(world, []);
+    expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)!.valueMeasuredThrough).toBe(at);
+  }
+  expect(
+    world.perceptionEvidence![PLAYER_ID]!.current[`${NPC_ID}:body`]!.valueMeasuredThrough,
+  ).toBe(originalTime);
+  const cut = captureEvidenceCut(world, PLAYER_ID);
+  const location = currentObservedFacets(world, PLAYER_ID, NPC_ID).find(
+    (f) => f.value.kind === 'location',
+  )!;
+  expect(location.valueMeasuredFrom).toBe(3);
+  const npc = entityGet(world.entities, NPC_ID)!;
+  world.simTime = 4;
+  setSpatialPosition(world, npc, { x: 4, y: 0, z: 2 }, worldSupport(npc), 'physical');
+  initializePerception(world, []);
+  const motion = currentObservedFacets(world, PLAYER_ID, NPC_ID).find(
+    (f) => f.value.kind === 'observed-motion',
+  )!;
+  expect(motion.value.kind === 'observed-motion' && motion.value.earlier.valueMeasuredThrough).toBe(
+    3,
+  );
+  expect(
+    cut.current.find(
+      (f) => f.exposure.episodeId === raw.exposure.episodeId && f.value.kind === 'body',
+    )!.valueMeasuredThrough,
+  ).toBe(3);
+  world.simTime = 5;
+  setSpatialPosition(world, npc, { x: 100, y: 0, z: 2 }, worldSupport(npc), 'physical');
+  initializePerception(world, []);
+  const losses = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    bytes: 1024 * 1024,
+    limit: 1000,
+  }).entries.filter(
+    ({ receipt, values }) => receipt.change === 'loss' && values.some((v) => v.kind === 'body'),
+  );
+  expect(losses.at(-1)!.receipt.facets[0]!.measuredThrough).toBe(4);
+  validatePerceptionEvidenceState(JSON.parse(JSON.stringify(world)));
+});
+
+
+it('keeps same-time receipt chronology ordered across independently named restore epochs', () => {
+  let world = scene(48);
+  beginTemporalReceiptEpoch(world, 'zzz-restored-timeline');
+  const first = executeCommand(world, { id: 'epoch-first', type: 'say', actorId: NPC_ID, volume: 'normal', text: 'First actual words.' });
+  world = JSON.parse(JSON.stringify(first.world));
+  beginTemporalReceiptEpoch(world, 'aaa-newer-timeline');
+  const second = executeCommand(world, { id: 'epoch-second', type: 'say', actorId: NPC_ID, volume: 'normal', text: 'Second actual words.' });
+  const event = second.events.find((value) => value.type === 'speech')!;
+  const latest = selectTemporalHistory(second.world.experience!.temporal, PLAYER_ID, { limit: 1, bytes: 1024 * 1024 });
+  expect(latest.entries).toHaveLength(1);
+  const receipt = latest.entries[0]!.receipt;
+  expect(receipt.sourceIds).toContain(event.id);
+  expect(receipt.epoch.startsWith('aaa-newer-timeline')).toBe(true);
+  const preceding = selectTemporalHistory(second.world.experience!.temporal, PLAYER_ID, {
+    before: { at: receipt.at, order: receipt.order, epoch: receipt.epoch, ordinal: receipt.ordinal }, limit: 1000, bytes: 1024 * 1024,
+  });
+  expect(preceding.entries.some(({ receipt }) => receipt.epoch.startsWith('zzz-restored-timeline'))).toBe(true);
+  expect(preceding.entries.every((entry) => entry.receipt.id !== receipt.id)).toBe(true);
 });

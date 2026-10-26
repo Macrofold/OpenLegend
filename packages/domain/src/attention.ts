@@ -4,6 +4,7 @@ import { validObserverSubject, type ObserverSubject } from './knowledge.js';
 import {
   currentBodyAssociation,
   currentBodyLocalSubject,
+  effectiveCurrentFacetSupport,
   reconcileAttendedTemporalEvidence,
 } from './perception-evidence.js';
 import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
@@ -262,10 +263,11 @@ function point(location: ObservedLocation, at: number): AttentionPoint | undefin
 function currentPoint(
   owner: PerceptionEvidenceOwner,
   sourceId: string,
-  world:WorldState,observerId:string,
+  world: WorldState,
+  observerId: string,
 ): AttentionPoint | undefined {
   const source = readOnlyDraftView(owner.current)[`${sourceId}:location`];
-  const lease = source && readOnlyDraftView(source),
+  const lease = source && effectiveCurrentFacetSupport(world, observerId, source),
     value = lease && readOnlyDraftView(lease.value);
   return value?.kind === 'location'
     ? point(readOnlyDraftView(value.location), lease!.valueMeasuredThrough)
@@ -359,7 +361,7 @@ export function updateAttention(
     const old = originalCandidate && readOnlyDraftView(originalCandidate);
     const locationSource = readOnlyDraftView(owner.current)[`${sourceId}:location`];
     const location = locationSource && readOnlyDraftView(locationSource);
-    const measured = currentPoint(owner, sourceId,world,observerId);
+    const measured = currentPoint(owner, sourceId, world, observerId);
     const subject =
       currentBodyAssociation(world, observerId, sourceId) ??
       currentBodyLocalSubject(world, observerId, sourceId);
@@ -626,7 +628,7 @@ export function captureAttentionPresentation(
             key,
             descriptionRevision: candidate.descriptionRevision,
             changeRevision: candidate.changeRevision,
-            point: currentPoint(owner, candidate.sourceId,world,observerId),
+            point: currentPoint(owner, candidate.sourceId, world, observerId),
           },
         ]
       : [];
@@ -989,9 +991,14 @@ export function validateAttentionState(value: unknown): asserts value is Attenti
       throw new Error('Invalid attention relation latch.');
     validProof(latch.entryProof);
     validProof(latch.newestProof);
-    const observer=state.candidates[latch.anchorKey]!.exposure.observer;
-    if([...(latch.entryProof??[]),...(latch.newestProof??[])].some((fact)=>
-      fact.source.observer.actorId!==observer.actorId||fact.source.observer.physicalLife!==observer.physicalLife))
+    const observer = state.candidates[latch.anchorKey]!.exposure.observer;
+    if (
+      [...(latch.entryProof ?? []), ...(latch.newestProof ?? [])].some(
+        (fact) =>
+          fact.source.observer.actorId !== observer.actorId ||
+          fact.source.observer.physicalLife !== observer.physicalLife,
+      )
+    )
       throw new Error('Attention relation proof belongs to another observer life.');
   }
   for (const [key, revision] of Object.entries(state.relationDirty)) {

@@ -6,7 +6,6 @@ import {
   PLAYER_ID,
   NPC_ID,
   entityGet,
-  knownPlaceEvidence,
 } from '@open-legend/domain';
 import { appendMemory, acquireExposure } from '../../../packages/domain/src/events.js';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
@@ -79,9 +78,12 @@ describe('bounded personal temporal storage', () => {
       (await store.memories.knownPlaces(scope, { placeId: result.placeId, limit: 20, scan: 128 }))
         .entries,
     ).toHaveLength(1);
-    expect(knownPlaceEvidence(service.world, PLAYER_ID, result.label)).toHaveLength(1);
     expect(
-      (await store.load(true))!.state.world.experience!.temporal!.actors[PLAYER_ID]!.supports,
+      (await store.memories.prepareKnownPlaceEvidence(scope)).labels.get(result.label),
+    ).toHaveLength(1);
+    expect(
+      (await store.records.load(true))!.state.world.experience!.temporal!.actors[PLAYER_ID]!
+        .supports,
     ).toBeDefined();
     expect((await service.forgetMemory(PLAYER_ID, result.eventId)).ok).toBe(true);
     expect(
@@ -128,7 +130,7 @@ describe('bounded personal temporal storage', () => {
       return result;
     });
     await service.flush();
-    expect((await store.load(true))?.state.world.experience?.temporal).toBeDefined();
+    expect((await store.records.load(true))?.state.world.experience?.temporal).toBeDefined();
     const head = await store.db
       .prepare('SELECT generation FROM world_head WHERE world_id=?')
       .get(service.world.id);
@@ -171,6 +173,14 @@ describe('bounded personal temporal storage', () => {
         )
       ).entries,
     ).toHaveLength(4);
+    expect((await service.forgetRecentObservation(locators[2]!)).ok).toBe(true);
+    expect(await store.memories.temporalReceiptsCurrent(scope,[locators[2]!])).toBe(false);
+    expect((await store.memories.temporalHistory(scope,{subjects:['fixture-animal'],bytes:32768},service.world)).entries).toHaveLength(4);
+    expect((await service.say('temporal-correction-words',PLAYER_ID,'That earlier location was mistaken.')).ok).toBe(true);
+    const correcting=service.world.experience!.awareness[PLAYER_ID]!.filter((entry)=>entry.eventType==='speech').at(-1)!;
+    expect((await service.correctRecentObservation(locators[3]!,correcting.eventId)).ok).toBe(true);
+    expect(await store.memories.temporalReceiptsCurrent(scope,[locators[3]!])).toBe(false);
+    expect(service.world.experience!.awareness[PLAYER_ID]!.some((entry)=>entry.eventId===correcting.eventId)).toBe(true);
     await editWorld(service, (world) => {
       world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 2;
     });
@@ -223,7 +233,7 @@ describe('bounded personal temporal storage', () => {
     const oldNamespace = service.world.experience!.temporal!.namespace;
     await service.restoreSave(saveId, randomUUID(), saved);
     expect(service.world.experience!.temporal!.namespace).not.toBe(oldNamespace);
-    const stored = (await store.load(true))!.state.world;
+    const stored = (await store.records.load(true))!.state.world;
     validateTemporalEvidenceState(stored);
     const scope = {
       worldId: stored.id,
@@ -235,7 +245,9 @@ describe('bounded personal temporal storage', () => {
       ),
     };
     expect(await store.memories.temporalReceiptsCurrent(scope, [first])).toBe(true);
-    await service.control({ paused: false });
+    expect((await service.control({ paused: false, clientId: 'temporal-memory-fixture' })).ok).toBe(
+      true,
+    );
     const second = await editWorld(
       service,
       (world) =>

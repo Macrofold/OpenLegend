@@ -8,7 +8,7 @@ import type {
 import { validateEvidenceSource, validateSensoryFacet } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
 import { isSafeRecordId } from './records.js';
-import { temporalReceiptAliases, temporalReceiptIndividualIds } from './temporal-evidence.js';
+import { temporalReceiptAliases, temporalReceiptIndividualIds, temporalReceiptId } from './temporal-evidence.js';
 
 const encoder = new TextEncoder();
 const encodedBytes = (value: unknown) => encoder.encode(JSON.stringify(value)).byteLength;
@@ -192,7 +192,7 @@ export function validateTemporalEvidenceState(
         typeof receipt.epoch !== 'string' ||
         !receipt.epoch ||
         !ordinal(receipt.ordinal) ||
-        receipt.id !== `temporal-receipt-${receipt.epoch}-${receipt.ordinal}` ||
+        receipt.id !== temporalReceiptId(receipt) ||
         !finite(receipt.at) ||
         receipt.at < 0 ||
         receipt.at > world.simTime ||

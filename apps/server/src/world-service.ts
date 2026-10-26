@@ -18,6 +18,9 @@ import {
   beginTemporalReceiptEpoch,
   personalFactAlias,
   KnownPlacePreparationError,
+  validatePersonalReceiptLocator,
+  temporalReceiptId,
+  type TemporalReceiptLocator,
 } from '@open-legend/domain';
 import { reconcileNativeControl } from '@open-legend/domain';
 import { entityGet, entityKeys, entityValues, projectWorldHistory } from '@open-legend/domain';
@@ -2290,6 +2293,9 @@ export class WorldService {
     if (!this.config.godMode || !this.mayInspectPrivate(actorId, scope))
       throw new Error('Private mind inspection is unavailable.');
     await this.flush();
+    // A durable append can precede its SQL projection. Settle this already
+    // committed cut before capturing the private read fence, not during retrieval.
+    await this.store.memories?.synchronizeSources();
     const world = this.world,
       generation = this.generation;
     const sourceRevision = this.store.memories?.actorRevision(actorId);
@@ -5974,9 +5980,11 @@ export class WorldService {
     sourceId: string,
     correctionEventId: string,
     scope = this.localScope,
+    receipt?: TemporalReceiptLocator,
   ): Promise<ApiResult> {
     return this.withHistoryEdit(
       {
+        ...(receipt ? { receipts: [receipt] } : {}),
         sources: [
           { actorId, sourceId },
           { actorId, sourceId: correctionEventId },
@@ -6011,42 +6019,77 @@ export class WorldService {
     actorId: string,
     sourceId: string,
     scope = this.localScope,
+    receipt?: TemporalReceiptLocator,
   ): Promise<ApiResult> {
-    return this.withHistoryEdit({ sources: [{ actorId, sourceId }] }, async () => {
-      await this.ready;
-      if (!this.mayInspectPrivate(actorId, scope))
-        return {
-          ok: false as const,
-          code: 'forbidden',
-          message: 'Human-private character content is unavailable to this principal.',
-        };
+    return this.withHistoryEdit(
+      { sources: [{ actorId, sourceId }], ...(receipt ? { receipts: [receipt] } : {}) },
+      async () => {
+        await this.ready;
+        if (!this.mayInspectPrivate(actorId, scope))
+          return {
+            ok: false as const,
+            code: 'forbidden',
+            message: 'Human-private character content is unavailable to this principal.',
+          };
 
-      if (!entityGet(this.world.entities, actorId)?.actor)
-        return { ok: false, code: 'actor', message: 'Unknown actor.' };
-      const recordedAction =
-        this.world.actionExperience.occurrences[actorId]?.some((entry) => entry.id === sourceId) ||
-        (await this.store.records?.activityPage(this.world.id, actorId, -1, [sourceId]))?.length;
-      if (!recordedAction && !retainedExperienceSource(this.world, actorId, sourceId))
+        if (!entityGet(this.world.entities, actorId)?.actor)
+          return { ok: false, code: 'actor', message: 'Unknown actor.' };
+        const recordedAction =
+          this.world.actionExperience.occurrences[actorId]?.some(
+            (entry) => entry.id === sourceId,
+          ) ||
+          (await this.store.records?.activityPage(this.world.id, actorId, -1, [sourceId]))?.length;
+        if (!recordedAction && !retainedExperienceSource(this.world, actorId, sourceId))
+          return {
+            ok: false,
+            code: 'source',
+            message: 'That source is not retained for this actor.',
+          };
+        const forgotten = forgetExperience(this.world, actorId, sourceId);
+        if (!forgotten.outcome.ok) return forgotten.outcome;
+        const ok = await this.commit(
+          { ...this.saved, world: forgotten.world },
+          forgotten.invalidatedMemoryIds,
+          'unchanged',
+        );
         return {
-          ok: false,
-          code: 'source',
-          message: 'That source is not retained for this actor.',
+          ok,
+          code: ok ? 'forgotten' : 'storage',
+          message: ok
+            ? 'Recall and derived text invalidated; workspace resets before its next fresh job.'
+            : this.storageError!,
         };
-      const forgotten = forgetExperience(this.world, actorId, sourceId);
-      if (!forgotten.outcome.ok) return forgotten.outcome;
-      const ok = await this.commit(
-        { ...this.saved, world: forgotten.world },
-        forgotten.invalidatedMemoryIds,
-        'unchanged',
-      );
-      return {
-        ok,
-        code: ok ? 'forgotten' : 'storage',
-        message: ok
-          ? 'Recall and derived text invalidated; workspace resets before its next fresh job.'
-          : this.storageError!,
-      };
-    });
+      },
+    );
+  }
+
+  /** Creator edits use the original issued address. Shared fragment IDs and a
+   * reader's opaque display handle never grant another observer's record. */
+  async forgetRecentObservation(
+    receipt: TemporalReceiptLocator,
+    scope = this.localScope,
+  ): Promise<ApiResult> {
+    validatePersonalReceiptLocator(receipt, receipt.actorId);
+    return this.forgetMemory(
+      receipt.actorId,
+      temporalReceiptId(receipt),
+      scope,
+      receipt,
+    );
+  }
+  async correctRecentObservation(
+    receipt: TemporalReceiptLocator,
+    correctionEventId: string,
+    scope = this.localScope,
+  ): Promise<ApiResult> {
+    validatePersonalReceiptLocator(receipt, receipt.actorId);
+    return this.correctMemory(
+      receipt.actorId,
+      temporalReceiptId(receipt),
+      correctionEventId,
+      scope,
+      receipt,
+    );
   }
 
   async setGoal(requestId: string, text: string): Promise<ApiResult> {

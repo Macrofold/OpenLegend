@@ -28,6 +28,9 @@ export interface TemporalReceiptLocator {
   epoch: string;
   ordinal: number;
 }
+export function temporalReceiptId(locator: Pick<TemporalReceiptLocator, 'epoch' | 'ordinal'>): string {
+  return `temporal-receipt-${locator.epoch}-${locator.ordinal}`;
+}
 export interface TemporalValueReference {
   blockId: string;
   valueOrdinal: number;
@@ -390,7 +393,7 @@ export function appendTemporalReceipt(
   let addedSourceBytes = 0;
   const ordinal = actor.nextOrdinal++;
   const receipt: TemporalReceipt = {
-    id: `temporal-receipt-${actor.epoch}-${ordinal}`,
+    id: temporalReceiptId({ epoch: actor.epoch, ordinal }),
     actorId,
     physicalLife: actor.physicalLife,
     epoch: actor.epoch,
@@ -769,7 +772,7 @@ export function invalidateTemporalEvidence(
   for (const chunk of actor.chunks) {
     const removed = chunk.receipts.filter(
       (receipt) =>
-        receipt.sourceIds.some((id) => sourceIds.has(id)) ||
+        sourceIds.has(receipt.id) || receipt.sourceIds.some((id) => sourceIds.has(id)) ||
         receipt.facets.some((facet) => facet.original && sourceIds.has(facet.original.source.id)),
     );
     if (!removed.length) continue;
@@ -1012,7 +1015,7 @@ export function retainedTemporalReceipt(
     receipt.physicalLife === locator.physicalLife &&
     receipt.epoch === locator.epoch &&
     receipt.ordinal === locator.ordinal;
-  const support = actor.supports?.[`temporal-receipt-${locator.epoch}-${locator.ordinal}`];
+  const support = actor.supports?.[temporalReceiptId(locator)];
   const receipt = actor.chunks.flatMap((chunk) => chunk.receipts).find(matches);
   if (!receipt)
     return support && matches(support.receipt)
@@ -1054,7 +1057,7 @@ export function retainTemporalSupport(
   const temporal = world.experience?.temporal;
   const actor = temporal?.actors[locator.actorId];
   if (!temporal || !actor) return;
-  const id = `temporal-receipt-${locator.epoch}-${locator.ordinal}`;
+  const id = temporalReceiptId(locator);
   const prior = actor.supports?.[id];
   if (
     prior &&

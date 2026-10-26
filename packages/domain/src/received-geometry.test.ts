@@ -11,6 +11,7 @@ import { entityGet, entitySet, emptyEntities } from './entity-collection.js';
 import { worldPlacement, setSpatialPosition } from './spatial-state.js';
 import { initializePerception } from './kernel.js';
 import { currentAttentionCues, currentDetailedAttention, setAttentionFocus } from './attention.js';
+import { observationDependencies, observationLearningSources } from './experience-manifest.js';
 import { perceptionEvidenceOwner } from './perception-evidence.js';
 import {
   currentReceivedGeometry,
@@ -129,6 +130,17 @@ describe('certified received planar geometry', () => {
         ),
     );
     expect(boundaries.length).toBeGreaterThan(0);
+    const observations = currentReceivedGeometry(world, PLAYER_ID).observations.filter((observation) =>
+      observation.facets.some((facet) => facet.value.kind === 'physical-boundary'));
+    const dependencies = observationDependencies(observations);
+    const sources = observationLearningSources(observations);
+    for (const boundary of boundaries)
+      for (const support of [boundary.nearSurface.support, boundary.farSurface.support]) {
+        expect(dependencies).toContainEqual({ source: support.source, ordinal: support.ordinal,
+          aliases: [JSON.stringify(['perception-fact', support.source.id, support.ordinal])] });
+        expect(sources).toContainEqual(support.source);
+      }
+
     expect(
       boundaries.every(
         (boundary) =>
