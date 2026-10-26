@@ -1,0 +1,58 @@
+[
+  {
+    "source_id": "SHARED-001",
+    "url": "https://docs.vllm.ai/en/latest/features/structured_outputs/",
+    "retrieved_at": "2026-10-24",
+    "source_type": "primary documentation or publisher page",
+    "scope": "Cross-inventory synthesis, serving or pricing interpretation; detailed model evidence remains in domain source ledgers."
+  },
+  {
+    "source_id": "SHARED-002",
+    "url": "https://huggingface.co/Cloudflare/clef-flash",
+    "retrieved_at": "2026-10-24",
+    "source_type": "primary documentation or publisher page",
+    "scope": "Cross-inventory synthesis, serving or pricing interpretation; detailed model evidence remains in domain source ledgers."
+  },
+  {
+    "source_id": "SHARED-003",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-27B",
+    "retrieved_at": "2026-10-24",
+    "source_type": "primary documentation or publisher page",
+    "scope": "Cross-inventory synthesis, serving or pricing interpretation; detailed model evidence remains in domain source ledgers."
+  },
+  {
+    "source_id": "SHARED-004",
+    "url": "https://huggingface.co/docs/huggingface_hub/en/guides/inference_endpoints",
+    "retrieved_at": "2026-10-24",
+    "source_type": "primary documentation or publisher page",
+    "scope": "Cross-inventory synthesis, serving or pricing interpretation; detailed model evidence remains in domain source ledgers."
+  },
+  {
+    "source_id": "SHARED-005",
+    "url": "https://huggingface.co/docs/inference-endpoints/en/pricing",
+    "retrieved_at": "2026-10-24",
+    "source_type": "primary documentation or publisher page",
+    "scope": "Cross-inventory synthesis, serving or pricing interpretation; detailed model evidence remains in domain source ledgers."
+  },
+  {
+    "source_id": "SHARED-006",
+    "url": "https://huggingface.co/google/gemma-4-26B-A4B-it",
+    "retrieved_at": "2026-10-24",
+    "source_type": "primary documentation or publisher page",
+    "scope": "Cross-inventory synthesis, serving or pricing interpretation; detailed model evidence remains in domain source ledgers."
+  },
+  {
+    "source_id": "SHARED-007",
+    "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16",
+    "retrieved_at": "2026-10-24",
+    "source_type": "primary documentation or publisher page",
+    "scope": "Cross-inventory synthesis, serving or pricing interpretation; detailed model evidence remains in domain source ledgers."
+  },
+  {
+    "source_id": "SHARED-008",
+    "url": "https://openrouter.ai/docs/guides/routing/provider-selection",
+    "retrieved_at": "2026-10-24",
+    "source_type": "primary documentation or publisher page",
+    "scope": "Cross-inventory synthesis, serving or pricing interpretation; detailed model evidence remains in domain source ledgers."
+  }
+]

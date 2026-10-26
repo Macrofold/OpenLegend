@@ -3,21 +3,18 @@
     "title": "Open Legend: decision and planning model research",
     "as_of": "2026-10-23",
     "scope": "Web research only; no model inference, tests, weight downloads or paid usage performed.",
-    "model_count": 42,
+    "model_count": 47,
     "pricing_note": "All prices are snapshots. Input tokens include supplied state/questions; zero output fee does not mean zero request cost. No GPU rental quotation was fabricated.",
     "interpretation": "Research priority expresses relevance and evidence, not measured model quality. Ordinary LLMs and classifiers are not labeled uncensored without evidence. Hardware claims distinguish vendor observations from unknowns.",
     "targeted_review_date": "2026-10-24",
-    "targeted_review_scope": "Selected current primary pages, model-type labeling, exact-ID provenance, source references and typography; not every source was refreshed."
+    "targeted_review_scope": "Selected current primary pages, model-type labeling, exact-ID provenance, source references and typography; GLM 5.3 flagship and five closed quality-control records added October 24. Not every original source was refreshed."
   },
   "models": [
     {
       "id": "decision-jev-114",
       "name": "TypeSafe Jev 1.14",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "jev-1.14.0",
-        "typesafe/jev-1.14"
-      ],
+      "exact_model_ids": ["jev-1.14.0", "typesafe/jev-1.14"],
       "official_url": "https://docs.typesafe.ai/models",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-14",
@@ -45,12 +42,7 @@
         "url": "https://openrouter.ai/docs/guides/community/jev",
         "description": "Typed decision integration examples; not an authored NPC transcript."
       },
-      "source_ids": [
-        "D001",
-        "D002",
-        "D003",
-        "D004"
-      ],
+      "source_ids": ["D001", "D002", "D003", "D004"],
       "tested_by_us": false,
       "sources": [
         {
@@ -75,10 +67,7 @@
       "id": "decision-elephant-1",
       "name": "Base Labs Elephant 1",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "baselabs/elephant-1",
-        "baseten/elephant-1:free"
-      ],
+      "exact_model_ids": ["baselabs/elephant-1", "baseten/elephant-1:free"],
       "official_url": "https://huggingface.co/baselabs/elephant-1",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-21",
@@ -94,7 +83,7 @@
       "pricing": {
         "currency": "USD",
         "unit": "per million tokens unless stated",
-        "semantics": "Temporary free route; Baseten family free week ends 2026-10-27 23: 59 PT. Subsequent price unknown. Self-host compute payable.",
+        "semantics": "Temporary free route; Baseten family free week ends 2026-10-27 23:59 PT. Subsequent price unknown. Self-host compute payable.",
         "checked_at": "2026-10-23"
       },
       "openlegend_fit": "Fast supplied-action ratings; appealing recent small open challenger",
@@ -106,11 +95,7 @@
         "url": "https://openrouter.ai/baseten/elephant-1:free",
         "description": "Provider Decisions Lab entry; not executed."
       },
-      "source_ids": [
-        "D006",
-        "D005",
-        "D007"
-      ],
+      "source_ids": ["D006", "D005", "D007"],
       "tested_by_us": false,
       "sources": [
         {
@@ -131,10 +116,7 @@
       "id": "decision-mammoth-1",
       "name": "Base Labs Mammoth 1",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "baselabs/mammoth-1",
-        "baseten/mammoth-1:free"
-      ],
+      "exact_model_ids": ["baselabs/mammoth-1", "baseten/mammoth-1:free"],
       "official_url": "https://huggingface.co/baselabs/mammoth-1",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-21",
@@ -150,7 +132,7 @@
       "pricing": {
         "currency": "USD",
         "unit": "per million tokens unless stated",
-        "semantics": "Temporary free week ends 2026-10-27 23: 59 PT; post-promo rate unknown. Self-host compute payable.",
+        "semantics": "Temporary free week ends 2026-10-27 23:59 PT; post-promo rate unknown. Self-host compute payable.",
         "checked_at": "2026-10-23"
       },
       "openlegend_fit": "Higher-capacity open supplied-choice selector",
@@ -162,10 +144,7 @@
         "url": "https://huggingface.co/baselabs/mammoth-1",
         "description": "Card includes API/self-host requests; representative dark-character outputs not found."
       },
-      "source_ids": [
-        "D005",
-        "D008"
-      ],
+      "source_ids": ["D005", "D008"],
       "tested_by_us": false,
       "sources": [
         {
@@ -182,9 +161,7 @@
       "id": "decision-drex-max",
       "name": "Nace Drex Max",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "nace-ai/drex-max"
-      ],
+      "exact_model_ids": ["nace-ai/drex-max"],
       "official_url": "https://openrouter.ai/nace-ai/drex-max",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-21",
@@ -212,9 +189,7 @@
         "url": "https://openrouter.ai/nace-ai/drex-max",
         "description": "Decisions Lab linked by current provider catalog; not run."
       },
-      "source_ids": [
-        "D009"
-      ],
+      "source_ids": ["D009"],
       "tested_by_us": false,
       "sources": [
         {
@@ -227,9 +202,7 @@
       "id": "decision-drex-20",
       "name": "Nace Drex v2.0",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "nace-ai/drex-v2.0"
-      ],
+      "exact_model_ids": ["nace-ai/drex-v2.0"],
       "official_url": "https://huggingface.co/nace-ai/drex-v2.0",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -257,10 +230,7 @@
         "url": "https://huggingface.co/nace-ai/drex-v2.0",
         "description": "Card links game-arena evaluation and usage examples; vendor-produced, not independently replicated."
       },
-      "source_ids": [
-        "D010",
-        "D009"
-      ],
+      "source_ids": ["D010", "D009"],
       "tested_by_us": false,
       "sources": [
         {
@@ -277,9 +247,7 @@
       "id": "decision-clef",
       "name": "Cloudflare Clef",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "Cloudflare/clef"
-      ],
+      "exact_model_ids": ["Cloudflare/clef"],
       "official_url": "https://huggingface.co/Cloudflare/clef",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-01",
@@ -307,11 +275,7 @@
         "url": "https://huggingface.co/spaces/hugging-apps/clef-decision-model",
         "description": "Published decision demo link; not executed."
       },
-      "source_ids": [
-        "D011",
-        "D013",
-        "D014"
-      ],
+      "source_ids": ["D011", "D013", "D014"],
       "tested_by_us": false,
       "sources": [
         {
@@ -332,9 +296,7 @@
       "id": "decision-clef-flash",
       "name": "Cloudflare Clef Flash",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "Cloudflare/clef-flash"
-      ],
+      "exact_model_ids": ["Cloudflare/clef-flash"],
       "official_url": "https://huggingface.co/Cloudflare/clef-flash/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-01",
@@ -362,11 +324,7 @@
         "url": "https://huggingface.co/Cloudflare/clef-flash/raw/main/README.md",
         "description": "Invoice/urgency/routing calls; not a published NPC-output benchmark."
       },
-      "source_ids": [
-        "D012",
-        "D013",
-        "D014"
-      ],
+      "source_ids": ["D012", "D013", "D014"],
       "tested_by_us": false,
       "sources": [
         {
@@ -387,9 +345,7 @@
       "id": "decision-liquid-d1-3b",
       "name": "Liquid d1-3B",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "LiquidAI/d1-3B"
-      ],
+      "exact_model_ids": ["LiquidAI/d1-3B"],
       "official_url": "https://huggingface.co/LiquidAI/d1-3B",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -417,11 +373,7 @@
         "url": "https://huggingface.co/spaces/LiquidAI/system-one-arcade",
         "description": "Official arcade offers multiple decision demos; not executed."
       },
-      "source_ids": [
-        "D015",
-        "D017",
-        "D064"
-      ],
+      "source_ids": ["D015", "D017", "D064"],
       "tested_by_us": false,
       "sources": [
         {
@@ -442,9 +394,7 @@
       "id": "decision-liquid-d1-omni",
       "name": "Liquid d1-omni-600M",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "LiquidAI/d1-omni-600M"
-      ],
+      "exact_model_ids": ["LiquidAI/d1-omni-600M"],
       "official_url": "https://huggingface.co/LiquidAI/d1-omni-600M/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -472,10 +422,7 @@
         "url": "https://huggingface.co/LiquidAI/d1-omni-600M/raw/main/README.md",
         "description": "Refund ticket, image classification, audio intent examples; not fabricated output."
       },
-      "source_ids": [
-        "D016",
-        "D064"
-      ],
+      "source_ids": ["D016", "D064"],
       "tested_by_us": false,
       "sources": [
         {
@@ -492,9 +439,7 @@
       "id": "decision-liquid-d1-ultra",
       "name": "Liquid d1-ultra",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "liquid/d1-ultra"
-      ],
+      "exact_model_ids": ["liquid/d1-ultra"],
       "official_url": "https://www.liquid.ai/blog/d1-ultra",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-15",
@@ -522,10 +467,7 @@
         "url": "https://d1.liquid.ai",
         "description": "Vendor demonstration linked in launch; not executed."
       },
-      "source_ids": [
-        "D018",
-        "D019"
-      ],
+      "source_ids": ["D018", "D019"],
       "tested_by_us": false,
       "sources": [
         {
@@ -542,9 +484,7 @@
       "id": "decision-pplx-12",
       "name": "Perplexity Decider v1.2",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "perplexity-ai/pplx-decider-v1.2"
-      ],
+      "exact_model_ids": ["perplexity-ai/pplx-decider-v1.2"],
       "official_url": "https://huggingface.co/perplexity-ai/pplx-decider-v1.2",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -572,9 +512,7 @@
         "url": "https://huggingface.co/perplexity-ai/pplx-decider-v1.2",
         "description": "Support-routing joint question example; output transcript not independently verified."
       },
-      "source_ids": [
-        "D020"
-      ],
+      "source_ids": ["D020"],
       "tested_by_us": false,
       "sources": [
         {
@@ -587,9 +525,7 @@
       "id": "decision-pplx-flash-12",
       "name": "Perplexity Decider Flash v1.2",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "perplexity-ai/pplx-decider-flash-v1.2"
-      ],
+      "exact_model_ids": ["perplexity-ai/pplx-decider-flash-v1.2"],
       "official_url": "https://huggingface.co/perplexity-ai/pplx-decider-flash-v1.2",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -617,9 +553,7 @@
         "url": "https://huggingface.co/perplexity-ai/pplx-decider-flash-v1.2",
         "description": "Support, urgency, frustration multi-question example; no NPC transcript."
       },
-      "source_ids": [
-        "D021"
-      ],
+      "source_ids": ["D021"],
       "tested_by_us": false,
       "sources": [
         {
@@ -632,9 +566,7 @@
       "id": "decision-d3",
       "name": "vLLM-SR Decision3 d3",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "vllm-sr/d3"
-      ],
+      "exact_model_ids": ["vllm-sr/d3"],
       "official_url": "https://huggingface.co/vllm-sr/d3",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -662,10 +594,7 @@
         "url": "https://huggingface.co/vllm-sr/d3",
         "description": "Card prints MI300X response selecting code with 0.9996 and reasoning yes probability 0.5808; not our run."
       },
-      "source_ids": [
-        "D022",
-        "D023"
-      ],
+      "source_ids": ["D022", "D023"],
       "tested_by_us": false,
       "sources": [
         {
@@ -713,10 +642,7 @@
         "url": "https://huggingface.co/ibm-granite/granite-switch-4.1-8b",
         "description": "Decision, chat, speech and Guardian example invocations; vendor benchmark subset, not game validation."
       },
-      "source_ids": [
-        "D024",
-        "D076"
-      ],
+      "source_ids": ["D024", "D076"],
       "tested_by_us": false,
       "sources": [
         {
@@ -733,10 +659,7 @@
       "id": "decision-microsoft-1",
       "name": "Microsoft-Decision-1",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "microsoft/microsoft-decision-1",
-        "Microsoft-Decision-1"
-      ],
+      "exact_model_ids": ["microsoft/microsoft-decision-1", "Microsoft-Decision-1"],
       "official_url": "https://commandline.microsoft.com/microsoft-decision-1-model-foundry/",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-09",
@@ -764,10 +687,7 @@
         "url": "https://commandline.microsoft.com/microsoft-decision-1-model-foundry/",
         "description": "Vendor routing/verification demonstrations; no representative dark NPC output found."
       },
-      "source_ids": [
-        "D025",
-        "D026"
-      ],
+      "source_ids": ["D025", "D026"],
       "tested_by_us": false,
       "sources": [
         {
@@ -784,9 +704,7 @@
       "id": "decision-mercury-decide",
       "name": "Inception Mercury Decide",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "inception/mercury-decide"
-      ],
+      "exact_model_ids": ["inception/mercury-decide"],
       "official_url": "https://openrouter.ai/inception/mercury-decide",
       "checked_at": "2026-10-23",
       "release_date": "2026-09-30",
@@ -814,11 +732,7 @@
         "url": "https://www.linkedin.com/posts/inception-labs-ai_mercury-decide-now-accepts-image-input-activity-7515833421299081216-PyK6",
         "description": "Vendor Ring King game demonstration uses image inputs; not executed or independently verified."
       },
-      "source_ids": [
-        "D027",
-        "D028",
-        "D029"
-      ],
+      "source_ids": ["D027", "D028", "D029"],
       "tested_by_us": false,
       "sources": [
         {
@@ -839,10 +753,7 @@
       "id": "decision-gpt6luna",
       "name": "OpenAI GPT-6 Luna Decisions",
       "category": "dedicated decision",
-      "exact_model_ids": [
-        "gpt-6-luna",
-        "openai/gpt-6-luna-decisions"
-      ],
+      "exact_model_ids": ["gpt-6-luna", "openai/gpt-6-luna-decisions"],
       "official_url": "https://developers.openai.com/api/docs/guides/decisions",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-06",
@@ -870,10 +781,7 @@
         "url": "https://developers.openai.com/api/docs/guides/decisions",
         "description": "Published driving-lane probabilities and billing-route examples; illustrative vendor outputs, not our game samples."
       },
-      "source_ids": [
-        "D030",
-        "D031"
-      ],
+      "source_ids": ["D030", "D031"],
       "tested_by_us": false,
       "sources": [
         {
@@ -890,9 +798,7 @@
       "id": "planner-qwen38-27b",
       "name": "Qwen 3.8-27B",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "Qwen/Qwen3.8-27B"
-      ],
+      "exact_model_ids": ["Qwen/Qwen3.8-27B"],
       "official_url": "https://huggingface.co/Qwen/Qwen3.8-27B/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -920,11 +826,7 @@
         "url": "https://huggingface.co/Qwen/Qwen3.8-27B/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D032",
-        "D037",
-        "D038"
-      ],
+      "source_ids": ["D032", "D037", "D038"],
       "tested_by_us": false,
       "sources": [
         {
@@ -945,9 +847,7 @@
       "id": "planner-qwen38-flash-next",
       "name": "Qwen 3.8-Flash-Next",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "Qwen/Qwen3.8-Flash-Next"
-      ],
+      "exact_model_ids": ["Qwen/Qwen3.8-Flash-Next"],
       "official_url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -975,12 +875,7 @@
         "url": "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/",
         "description": "Firsthand description of D&D outcomes, not a reproducible output transcript."
       },
-      "source_ids": [
-        "D033",
-        "D034",
-        "D038",
-        "D078"
-      ],
+      "source_ids": ["D033", "D034", "D038", "D078"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1005,9 +900,7 @@
       "id": "planner-qwen36-35b",
       "name": "Qwen 3.6-35B-A3B",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "Qwen/Qwen3.6-35B-A3B"
-      ],
+      "exact_model_ids": ["Qwen/Qwen3.6-35B-A3B"],
       "official_url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": "2026-04-22",
@@ -1035,9 +928,7 @@
         "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D035"
-      ],
+      "source_ids": ["D035"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1050,9 +941,7 @@
       "id": "planner-qwen35-9b",
       "name": "Qwen 3.5-9B small-model anchor",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "Qwen/Qwen3.5-9B"
-      ],
+      "exact_model_ids": ["Qwen/Qwen3.5-9B"],
       "official_url": "https://huggingface.co/Qwen/Qwen3.5-9B/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -1080,9 +969,7 @@
         "url": "https://huggingface.co/Qwen/Qwen3.5-9B/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D036"
-      ],
+      "source_ids": ["D036"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1095,10 +982,7 @@
       "id": "planner-deepseek41-flash",
       "name": "DeepSeek V4.1 Flash / 1017 API",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "deepseek-flash",
-        "deepseek-ai/DeepSeek-V4.1-Flash"
-      ],
+      "exact_model_ids": ["deepseek-flash", "deepseek-ai/DeepSeek-V4.1-Flash"],
       "official_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-17 API snapshot",
@@ -1126,12 +1010,7 @@
         "url": "https://www.reddit.com/r/SillyTavernAI/comments/1xaomu2/deepseek_v41_flash_1017_surprisingly_good/",
         "description": "Local derivative roleplay report includes hardware and settings. It is not evidence of stock API outputs."
       },
-      "source_ids": [
-        "D039",
-        "D041",
-        "D042",
-        "D077"
-      ],
+      "source_ids": ["D039", "D041", "D042", "D077"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1156,10 +1035,7 @@
       "id": "planner-deepseek4-pro",
       "name": "DeepSeek V4 Pro 0813",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "deepseek-v4-pro",
-        "deepseek-ai/DeepSeek-V4-Pro"
-      ],
+      "exact_model_ids": ["deepseek-v4-pro", "deepseek-ai/DeepSeek-V4-Pro"],
       "official_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -1187,11 +1063,7 @@
         "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D040",
-        "D041",
-        "D049"
-      ],
+      "source_ids": ["D040", "D041", "D049"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1212,11 +1084,7 @@
       "id": "planner-glm53-flash",
       "name": "GLM 5.3 Flash / FlashX serving tier",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "zai-org/GLM-5.3-Flash",
-        "glm-5.3-flash",
-        "glm-5.3-flashx"
-      ],
+      "exact_model_ids": ["zai-org/GLM-5.3-Flash", "glm-5.3-flash", "glm-5.3-flashx"],
       "official_url": "https://huggingface.co/zai-org/GLM-5.3-Flash",
       "checked_at": "2026-10-23",
       "release_date": "2026-08-26 Flash",
@@ -1244,15 +1112,7 @@
         "url": "https://www.reddit.com/r/SillyTavernAI/comments/1vz5cy0/first_to_post_and_happy_to_say_glm_53_flash_is/",
         "description": "Original user post includes a roleplay-output screenshot. Not reproduced or independently verified; it may contain adult content."
       },
-      "source_ids": [
-        "D043",
-        "D044",
-        "D045",
-        "D046",
-        "D047",
-        "D048",
-        "D049"
-      ],
+      "source_ids": ["D043", "D044", "D045", "D046", "D047", "D048", "D049"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1289,10 +1149,7 @@
       "id": "planner-glm53",
       "name": "GLM 5.3",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "zai-org/GLM-5.3",
-        "glm-5.3"
-      ],
+      "exact_model_ids": ["zai-org/GLM-5.3", "glm-5.3"],
       "official_url": "https://huggingface.co/zai-org/GLM-5.3",
       "checked_at": "2026-10-24",
       "release_date": null,
@@ -1320,15 +1177,7 @@
         "url": "https://docs.z.ai/guides/llm/glm-5.3",
         "description": "Official reasoning/API examples; no representative dark-character transcript found."
       },
-      "source_ids": [
-        "D079",
-        "D080",
-        "D081",
-        "D082",
-        "D045",
-        "D046",
-        "D049"
-      ],
+      "source_ids": ["D079", "D080", "D081", "D082", "D045", "D046", "D049"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1365,10 +1214,7 @@
       "id": "planner-minimax-m3",
       "name": "MiniMax M3",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "MiniMaxAI/MiniMax-M3",
-        "MiniMax-M3"
-      ],
+      "exact_model_ids": ["MiniMaxAI/MiniMax-M3", "MiniMax-M3"],
       "official_url": "https://huggingface.co/MiniMaxAI/MiniMax-M3",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -1396,11 +1242,7 @@
         "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D050",
-        "D051",
-        "D053"
-      ],
+      "source_ids": ["D050", "D051", "D053"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1421,10 +1263,7 @@
       "id": "planner-minimax-m31flash",
       "name": "MiniMax M3.1 Flash",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "MiniMax-M3.1-Flash",
-        "minimax/minimax-m3.1-flash"
-      ],
+      "exact_model_ids": ["MiniMax-M3.1-Flash", "minimax/minimax-m3.1-flash"],
       "official_url": "https://www.minimax.io/blog/minimax-m31f",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-19",
@@ -1452,11 +1291,7 @@
         "url": "https://www.minimax.io/blog/minimax-m31f",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D052",
-        "D053",
-        "D054"
-      ],
+      "source_ids": ["D052", "D053", "D054"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1477,9 +1312,7 @@
       "id": "planner-kimi-k3",
       "name": "Kimi K3",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "moonshotai/Kimi-K3"
-      ],
+      "exact_model_ids": ["moonshotai/Kimi-K3"],
       "official_url": "https://huggingface.co/moonshotai/Kimi-K3",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -1507,11 +1340,7 @@
         "url": "https://huggingface.co/moonshotai/Kimi-K3",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D055",
-        "D056",
-        "D047"
-      ],
+      "source_ids": ["D055", "D056", "D047"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1560,9 +1389,7 @@
         "url": "https://mistral.ai/news/mistral-large-4/",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D057"
-      ],
+      "source_ids": ["D057"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1575,9 +1402,7 @@
       "id": "planner-mistral-small4",
       "name": "Mistral Small 4 119B 2603",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "mistralai/Mistral-Small-4-119B-2603"
-      ],
+      "exact_model_ids": ["mistralai/Mistral-Small-4-119B-2603"],
       "official_url": "https://huggingface.co/mistralai/Mistral-Small-4-119B-2603/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": "2026-03",
@@ -1605,9 +1430,7 @@
         "url": "https://huggingface.co/mistralai/Mistral-Small-4-119B-2603/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D058"
-      ],
+      "source_ids": ["D058"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1620,9 +1443,7 @@
       "id": "planner-ministral3",
       "name": "Ministral 3 8B Instruct 2512",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "mistralai/Ministral-3-8B-Instruct-2512"
-      ],
+      "exact_model_ids": ["mistralai/Ministral-3-8B-Instruct-2512"],
       "official_url": "https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": "2025-12-02 family",
@@ -1650,9 +1471,7 @@
         "url": "https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D059"
-      ],
+      "source_ids": ["D059"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1665,9 +1484,7 @@
       "id": "planner-nemotron3nano4b",
       "name": "NVIDIA Nemotron 3 Nano 4B",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16"
-      ],
+      "exact_model_ids": ["nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16"],
       "official_url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -1695,9 +1512,7 @@
         "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D060"
-      ],
+      "source_ids": ["D060"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1710,9 +1525,7 @@
       "id": "planner-nemotron35supervl",
       "name": "NVIDIA Nemotron 3.5 Super VL 120B-A12B",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16"
-      ],
+      "exact_model_ids": ["nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16"],
       "official_url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-15",
@@ -1740,9 +1553,7 @@
         "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D061"
-      ],
+      "source_ids": ["D061"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1755,9 +1566,7 @@
       "id": "planner-granite42",
       "name": "IBM Granite 4.2-8B family",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "ibm-granite/granite-4.2-8b"
-      ],
+      "exact_model_ids": ["ibm-granite/granite-4.2-8b"],
       "official_url": "https://huggingface.co/ibm-granite/granite-4.2-8b/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": "2026-08-25",
@@ -1785,9 +1594,7 @@
         "url": "https://huggingface.co/ibm-granite/granite-4.2-8b/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D062"
-      ],
+      "source_ids": ["D062"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1800,9 +1607,7 @@
       "id": "planner-lfm25-24b",
       "name": "Liquid LFM2.5-24B-A2B",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "LiquidAI/LFM2.5-24B-A2B"
-      ],
+      "exact_model_ids": ["LiquidAI/LFM2.5-24B-A2B"],
       "official_url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": "2026-10-13",
@@ -1830,10 +1635,7 @@
         "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D063",
-        "D064"
-      ],
+      "source_ids": ["D063", "D064"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1850,10 +1652,7 @@
       "id": "planner-gemma4-large",
       "name": "Gemma 4 26B-A4B / 31B",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "google/gemma-4-26B-A4B-it",
-        "google/gemma-4-31B-it"
-      ],
+      "exact_model_ids": ["google/gemma-4-26B-A4B-it", "google/gemma-4-31B-it"],
       "official_url": "https://huggingface.co/google/gemma-4-26B-A4B-it/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -1881,12 +1680,7 @@
         "url": "https://huggingface.co/google/gemma-4-26B-A4B-it/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D065",
-        "D037",
-        "D038",
-        "D073"
-      ],
+      "source_ids": ["D065", "D037", "D038", "D073"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1911,10 +1705,7 @@
       "id": "planner-gemma4-edge",
       "name": "Gemma 4 E4B / 12B edge family",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "google/gemma-4-E4B-it",
-        "google/gemma-4-12B-it"
-      ],
+      "exact_model_ids": ["google/gemma-4-E4B-it", "google/gemma-4-12B-it"],
       "official_url": "https://huggingface.co/google/gemma-4-E4B-it",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -1942,11 +1733,7 @@
         "url": "https://huggingface.co/google/gemma-4-E4B-it",
         "description": "Publisher card for the actual E4B family member; no representative Open Legend character transcript found. Nothing was run by us."
       },
-      "source_ids": [
-        "D065",
-        "D074",
-        "D075"
-      ],
+      "source_ids": ["D065", "D074", "D075"],
       "tested_by_us": false,
       "sources": [
         {
@@ -1967,9 +1754,7 @@
       "id": "planner-functiongemma",
       "name": "FunctionGemma 270m-it",
       "category": "specialized function model",
-      "exact_model_ids": [
-        "google/functiongemma-270m-it"
-      ],
+      "exact_model_ids": ["google/functiongemma-270m-it"],
       "official_url": "https://huggingface.co/google/functiongemma-270m-it",
       "checked_at": "2026-10-23",
       "release_date": "2025-12-18",
@@ -1997,10 +1782,7 @@
         "url": "https://huggingface.co/google/functiongemma-270m-it",
         "description": "Tiny Garden translates spoken planting/watering commands into application functions. Published vendor demonstration; not our test."
       },
-      "source_ids": [
-        "D066",
-        "D067"
-      ],
+      "source_ids": ["D066", "D067"],
       "tested_by_us": false,
       "sources": [
         {
@@ -2017,9 +1799,7 @@
       "id": "planner-smollm3",
       "name": "SmolLM 3-3B",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "HuggingFaceTB/SmolLM3-3B"
-      ],
+      "exact_model_ids": ["HuggingFaceTB/SmolLM3-3B"],
       "official_url": "https://huggingface.co/HuggingFaceTB/SmolLM3-3B/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": null,
@@ -2047,9 +1827,7 @@
         "url": "https://huggingface.co/HuggingFaceTB/SmolLM3-3B/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D068"
-      ],
+      "source_ids": ["D068"],
       "tested_by_us": false,
       "sources": [
         {
@@ -2062,10 +1840,7 @@
       "id": "planner-gptoss",
       "name": "OpenAI gpt-oss 20B / 120B",
       "category": "general planner/dialogue",
-      "exact_model_ids": [
-        "openai/gpt-oss-20b",
-        "openai/gpt-oss-120b"
-      ],
+      "exact_model_ids": ["openai/gpt-oss-20b", "openai/gpt-oss-120b"],
       "official_url": "https://huggingface.co/openai/gpt-oss-20b/raw/main/README.md",
       "checked_at": "2026-10-23",
       "release_date": "2025-08-05",
@@ -2093,9 +1868,7 @@
         "url": "https://huggingface.co/openai/gpt-oss-20b/raw/main/README.md",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D069"
-      ],
+      "source_ids": ["D069"],
       "tested_by_us": false,
       "sources": [
         {
@@ -2139,9 +1912,7 @@
         "url": "https://dev.meta.ai/llama/docs/model-cards-and-prompt-formats/llama4",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D070"
-      ],
+      "source_ids": ["D070"],
       "tested_by_us": false,
       "sources": [
         {
@@ -2182,10 +1953,7 @@
         "url": "https://www.inceptionlabs.ai/blog/introducing-mercury-3",
         "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
       },
-      "source_ids": [
-        "D071",
-        "D028"
-      ],
+      "source_ids": ["D071", "D028"],
       "tested_by_us": false,
       "sources": [
         {
@@ -2195,6 +1963,279 @@
         {
           "id": "D028",
           "url": "https://www.inceptionlabs.ai/models"
+        }
+      ]
+    },
+    {
+      "id": "control-grok47",
+      "name": "Grok 4.7",
+      "category": "closed quality control",
+      "exact_model_ids": ["grok-4.7"],
+      "official_url": "https://docs.x.ai/developers/grok-4-7",
+      "checked_at": "2026-10-24",
+      "release_date": "2026-09-21",
+      "version_status": "Current hosted flagship verified on October 24; no immutable dated ID established in the reviewed guide.",
+      "parameters": "Undisclosed",
+      "context": "500,000 tokens. The guide states no separate text-output limit; context and service constraints still apply.",
+      "modalities": "Text/image input; text output",
+      "decision_and_tool_capabilities": "Four reasoning effort levels; Responses API, function calls, web/X search and code execution.",
+      "low_refusal_evidence": "No representative dark-fiction audit found. The launch emphasizes safeguards, and the AUP requires respecting guardrails; brand reputation does not establish unrestricted NPC behavior.",
+      "deployment": "Proprietary xAI/SpaceXSI API; hosted conversation and agent workloads.",
+      "hardware_evidence": "Closed hosted models; no downloadable weights or self-host hardware requirement verified.",
+      "license_and_aup": "Proprietary service. Reviewed AUP is effective August 14, 2026; it restricts harmful uses and circumvention. No unrestricted-fiction commitment verified.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "$2 input; $6 output. Tool charges, cache behavior and account rate limits can change effective cost; no cached-input rate established in this row.",
+        "checked_at": "2026-10-24"
+      },
+      "openlegend_fit": "Contemporary general dialogue and action-planning comparator; useful for measuring character fidelity versus refusal behavior in a later evaluation.",
+      "research_priority": "quality control",
+      "caveats": "Vendor coding/knowledge-work results do not measure NPC personality, invented actions or game latency. No dedicated probability-head interface verified.",
+      "sentiment": "No independent, exact-version dark-NPC or roleplay review was collected in this narrow addition. Publisher positioning and benchmarks are not community consensus.",
+      "published_example": {
+        "kind": "published request example",
+        "url": "https://docs.x.ai/developers/grok-4-7",
+        "description": "Developer guide includes a code-debugging request. It is not a character-output transcript, and we did not run it."
+      },
+      "source_ids": ["D083", "D084", "D085"],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D083",
+          "url": "https://docs.x.ai/developers/grok-4-7"
+        },
+        {
+          "id": "D084",
+          "url": "https://x.ai/news/grok-4-7"
+        },
+        {
+          "id": "D085",
+          "url": "https://x.ai/legal/acceptable-use-policy"
+        }
+      ]
+    },
+    {
+      "id": "control-claude-fable51",
+      "name": "Claude Fable 5.1",
+      "category": "closed quality control",
+      "exact_model_ids": ["claude-fable-5-1"],
+      "official_url": "https://platform.claude.com/docs/en/models/fable-5-1/overview",
+      "checked_at": "2026-10-24",
+      "release_date": "2026-09-01",
+      "version_status": "Current high-capability public Fable model. Mythos 5.1 is a restricted counterpart, not assumed available.",
+      "parameters": "Undisclosed",
+      "context": "1M context; 128K maximum output.",
+      "modalities": "Text/image input; text output",
+      "decision_and_tool_capabilities": "Adaptive reasoning and structured tool schemas. Forced tool-choice modes are unsupported; schema conformance does not force a particular action.",
+      "low_refusal_evidence": "Official API documentation explicitly describes classifier refusals with stop_reason: refusal, including this exact model. No representative dark-NPC refusal rate found.",
+      "deployment": "Claude API and supported cloud partners. Release notes specify 30-day retention unless separately authorized for zero data retention.",
+      "hardware_evidence": "Closed hosted models; no downloadable weights or self-host hardware requirement verified.",
+      "license_and_aup": "Proprietary hosted terms. The retrieved AUP landing page was future-effective November 12, 2026, so it was excluded as current policy evidence; applicable contract/AUP remains a procurement check.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "$10 input; $50 output; $0.25 cache reads. Cache writes: $12.50 for 5 minutes or $20 for 1 hour. Mid-stream refusals are billable; some pre-output refusal categories are also billed.",
+        "checked_at": "2026-10-24"
+      },
+      "openlegend_fit": "Expensive reasoning and characterization quality control for a small later benchmark subset; not an uncensored candidate.",
+      "research_priority": "quality control",
+      "caveats": "Always-on adaptive reasoning affects latency/cost. Do not confuse public Fable access with restricted Mythos verification. No measured character-quality advantage established.",
+      "sentiment": "No independent, exact-version dark-NPC or roleplay review was collected in this narrow addition. Publisher positioning and benchmarks are not community consensus.",
+      "published_example": {
+        "kind": "publisher documentation",
+        "url": "https://platform.claude.com/docs/en/models/fable-5-1/overview",
+        "description": "Model and integration documentation; no representative published dark-character transcript collected in this narrow addition."
+      },
+      "source_ids": ["D086", "D088", "D089", "D090", "D091"],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D086",
+          "url": "https://platform.claude.com/docs/en/models/fable-5-1/overview"
+        },
+        {
+          "id": "D088",
+          "url": "https://platform.claude.com/docs/en/about-claude/pricing"
+        },
+        {
+          "id": "D089",
+          "url": "https://platform.claude.com/docs/en/release-notes/overview"
+        },
+        {
+          "id": "D090",
+          "url": "https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback"
+        },
+        {
+          "id": "D091",
+          "url": "https://www.anthropic.com/legal/aup"
+        }
+      ]
+    },
+    {
+      "id": "control-claude-sonnet55",
+      "name": "Claude Sonnet 5.5",
+      "category": "closed quality control",
+      "exact_model_ids": ["claude-sonnet-5-5"],
+      "official_url": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+      "checked_at": "2026-10-24",
+      "release_date": "2026-09-28",
+      "version_status": "Current Sonnet release; cache-read price reduced October 7.",
+      "parameters": "Undisclosed",
+      "context": "1M context; 128K maximum output.",
+      "modalities": "Text/image input; text output",
+      "decision_and_tool_capabilities": "Adaptive reasoning, tools and structured schemas; between_tools can omit up-front reasoning. Forced tool-choice modes are unsupported.",
+      "low_refusal_evidence": "Official refusal documentation names Sonnet 5.5 and its classifier stop reason. Lower price is not evidence of lower refusals or unrestricted roleplay.",
+      "deployment": "Claude API and supported cloud partners, including Amazon Bedrock, Google Cloud and Microsoft Foundry.",
+      "hardware_evidence": "Closed hosted models; no downloadable weights or self-host hardware requirement verified.",
+      "license_and_aup": "Proprietary hosted terms. Public AUP landing page displayed a future November 12 effective date; that version is excluded from cutoff claims. Current API refusal behavior is documented.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "$2 input; $10 output; $0.10 cache reads. Cache writes: $2.50 for 5 minutes or $4 for 1 hour. Refusal billing depends on timing/category; do not assume all refusals are free.",
+        "checked_at": "2026-10-24"
+      },
+      "openlegend_fit": "Practical closed-model price/quality control for dialogue and candidate-action generation, alongside the more expensive Fable control.",
+      "research_priority": "quality control",
+      "caveats": "No exact-version NPC latency or roleplay sentiment established. Tool-use support does not make the model a calibrated decision head.",
+      "sentiment": "No independent, exact-version dark-NPC or roleplay review was collected in this narrow addition. Publisher positioning and benchmarks are not community consensus.",
+      "published_example": {
+        "kind": "publisher documentation",
+        "url": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+        "description": "Integration examples and migration behavior; no representative published dark-character transcript collected."
+      },
+      "source_ids": ["D087", "D088", "D089", "D090", "D091"],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D087",
+          "url": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview"
+        },
+        {
+          "id": "D088",
+          "url": "https://platform.claude.com/docs/en/about-claude/pricing"
+        },
+        {
+          "id": "D089",
+          "url": "https://platform.claude.com/docs/en/release-notes/overview"
+        },
+        {
+          "id": "D090",
+          "url": "https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback"
+        },
+        {
+          "id": "D091",
+          "url": "https://www.anthropic.com/legal/aup"
+        }
+      ]
+    },
+    {
+      "id": "control-gemini4-argon",
+      "name": "Gemini 4 Argon",
+      "category": "closed quality control",
+      "exact_model_ids": ["gemini-4-argon"],
+      "official_url": "https://ai.google.dev/gemini-api/docs/models/gemini-4-argon",
+      "checked_at": "2026-10-24",
+      "release_date": "2026-10-13",
+      "version_status": "Current generally available flagship; introductory token prices have a scheduled expiry.",
+      "parameters": "Undisclosed",
+      "context": "1,048,576 unified input/output tokens. Default synchronous output limit 65,536; long decode can use up to the unified limit.",
+      "modalities": "Text, image, video, audio and PDF input; text output. No native audio generation or Live API for this model.",
+      "decision_and_tool_capabilities": "Functions, structured output, three reasoning levels, code execution, search/file grounding and preview computer use.",
+      "low_refusal_evidence": "Google documentation explicitly uses game dialogue to explain adjustable content thresholds. Mandatory core protections remain; no Argon-specific dark-fiction refusal audit found.",
+      "deployment": "Hosted Gemini API/Google AI Studio; no free tier for Argon. Implicit caching only.",
+      "hardware_evidence": "Closed hosted models; no downloadable weights or self-host hardware requirement verified.",
+      "license_and_aup": "Proprietary hosted service. Documented adjustable filters coexist with non-adjustable core protections; service terms still apply.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Through November 30: $2 input, $10 output including thinking, $0.10 cache. From December 1: $4/$20/$0.20 respectively. Batch/Flex are half Standard; grounding can add charges.",
+        "checked_at": "2026-10-24"
+      },
+      "openlegend_fit": "Especially relevant closed control for game dialogue because official filter guidance recognizes that use case; also a multimodal scene/state comparator.",
+      "research_priority": "quality control",
+      "caveats": "Long-decode maximum consumes the same unified context budget. Capability list and adjustable thresholds do not demonstrate roleplay quality or complete filter removal.",
+      "sentiment": "No independent, exact-version dark-NPC or roleplay review was collected in this narrow addition. Publisher positioning and benchmarks are not community consensus.",
+      "published_example": {
+        "kind": "not found",
+        "url": null,
+        "description": "No representative published dark-NPC output sample collected; model documentation and safety guidance are specifications, not output demonstrations."
+      },
+      "source_ids": ["D092", "D093", "D094", "D095"],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D092",
+          "url": "https://ai.google.dev/gemini-api/docs/models/gemini-4-argon"
+        },
+        {
+          "id": "D093",
+          "url": "https://ai.google.dev/gemini-api/docs/pricing"
+        },
+        {
+          "id": "D094",
+          "url": "https://ai.google.dev/gemini-api/docs/changelog"
+        },
+        {
+          "id": "D095",
+          "url": "https://ai.google.dev/gemini-api/docs/safety-settings"
+        }
+      ]
+    },
+    {
+      "id": "control-openai-gpt6",
+      "name": "OpenAI GPT-6.1 Sol / GPT-6 Astra",
+      "category": "closed quality control",
+      "exact_model_ids": ["gpt-6.1-sol", "gpt-6-astra"],
+      "official_url": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+      "checked_at": "2026-10-24",
+      "release_date": null,
+      "version_status": "Current general-model controls verified October 24. Sol is the lower-cost workhorse; Astra is the higher-capability comparator. Exact release dates and immutable dated snapshots not established.",
+      "parameters": "Undisclosed",
+      "context": "Both: 1,050,000 context; 128,000 maximum output.",
+      "modalities": "Text/image input; text output. Native audio/video unsupported on these general-model endpoints.",
+      "decision_and_tool_capabilities": "Reasoning, function calls and structured output. Sol requires Responses API for tools; its Chat Completions support excludes tool calls. No dedicated probability-head interface established.",
+      "low_refusal_evidence": "Publisher describes safety-trained general models, not unrestricted fiction models. No representative dark-NPC refusal/character-fidelity audit collected for either exact ID.",
+      "deployment": "Proprietary hosted OpenAI API; no fine-tuning support listed for these models. Tool execution and latency tiers have separate semantics.",
+      "hardware_evidence": "Closed hosted models; no downloadable weights or self-host hardware requirement verified.",
+      "license_and_aup": "Proprietary service policies apply. Recorded previous policy is effective October 29, 2025; the landing page showed a future November 20, 2026 version, excluded from current-policy claims.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Sol: $2 input/$10 output/$0.10 cached input; Astra: $10/$50/$1. Cache writes $2.50/$12.50 respectively. Above 272K input, the whole request has 2x input/cache and 1.5x output rates. Batch/Flex half Standard; Fast 2x; Sol Ultrafast 6x. Tools and eligible regional processing add charges.",
+        "checked_at": "2026-10-24"
+      },
+      "openlegend_fit": "Current general reasoning, instruction-following and coherent-state controls; compare Sol cost and Astra headroom on the same future NPC workload.",
+      "research_priority": "quality control",
+      "caveats": "Reasoning consumes time/tokens; no none/minimal effort for Sol. Publisher professional/coding comparisons are not NPC results. Do not equate this row with GPT-6 Luna Decisions, which is a different interface/model.",
+      "sentiment": "No independent, exact-version dark-NPC or roleplay review was collected in this narrow addition. Publisher positioning and benchmarks are not community consensus.",
+      "published_example": {
+        "kind": "publisher announcement",
+        "url": "https://openai.com/index/introducing-gpt-6-1-sol/",
+        "description": "Publisher capability comparisons and examples; no representative dark-NPC output audit. Nothing was executed."
+      },
+      "source_ids": ["D096", "D097", "D098", "D099", "D100"],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D096",
+          "url": "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+        },
+        {
+          "id": "D097",
+          "url": "https://developers.openai.com/api/docs/models/gpt-6-astra"
+        },
+        {
+          "id": "D098",
+          "url": "https://openai.com/index/introducing-gpt-6-1-sol/"
+        },
+        {
+          "id": "D099",
+          "url": "https://openai.com/policies/usage-policies/revisions/2025-10-29/"
+        },
+        {
+          "id": "D100",
+          "url": "https://openai.com/policies/usage-policies/"
         }
       ]
     }

@@ -29,9 +29,7 @@
       "summary": "Release-thread discussion is mixed: family users value creative style and willingness; other commenters report uneven quality or weak coding/tool behavior. Much discussion concerns earlier Hermes models, not a controlled 4.3 comparison.",
       "provenance": "original community discussion; mixed exact/family attribution",
       "date": "December 2025 release thread; precise post timestamp not confirmed",
-      "urls": [
-        "https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"
-      ]
+      "urls": ["https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"]
     },
     "published_outputs": {
       "status": "publisher evaluation artifacts linked",
@@ -50,12 +48,7 @@
       "https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"
     ],
     "name": "Hermes 4.3 36B",
-    "source_ids": [
-      "RPS001",
-      "RPS002",
-      "RPS003",
-      "RPS004"
-    ]
+    "source_ids": ["RPS001", "RPS002", "RPS003", "RPS004"]
   },
   {
     "id": "RP02",
@@ -87,9 +80,7 @@
       "summary": "Hermes-family discussion is mixed on style, logic and instruction following; no strong separate 70B current-release consensus established.",
       "provenance": "evidence gap",
       "date": null,
-      "urls": [
-        "https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"
-      ]
+      "urls": ["https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"]
     },
     "published_outputs": {
       "status": "not found",
@@ -115,11 +106,7 @@
       "https://huggingface.co/NousResearch/Hermes-4.3-36B"
     ],
     "name": "Hermes 4 70B",
-    "source_ids": [
-      "RPS005",
-      "RPS006",
-      "RPS001"
-    ]
+    "source_ids": ["RPS005", "RPS006", "RPS001"]
   },
   {
     "id": "RP03",
@@ -181,14 +168,7 @@
       "https://www.reddit.com/r/VeniceAI/comments/1ubov9f/what_uncensored_models_are_the_best/"
     ],
     "name": "Venice Role Play Uncensored 24B",
-    "source_ids": [
-      "RPS007",
-      "RPS008",
-      "RPS009",
-      "RPS010",
-      "RPS011",
-      "RPS012"
-    ]
+    "source_ids": ["RPS007", "RPS008", "RPS009", "RPS010", "RPS011", "RPS012"]
   },
   {
     "id": "RP04",
@@ -238,11 +218,7 @@
       "https://blog.dphn.ai/dphn-x1-trinity-nano/"
     ],
     "name": "Dolphin X1 Trinity Nano",
-    "source_ids": [
-      "RPS013",
-      "RPS008",
-      "RPS014"
-    ]
+    "source_ids": ["RPS013", "RPS008", "RPS014"]
   },
   {
     "id": "RP05",
@@ -290,10 +266,7 @@
       "https://www.reddit.com/r/LocalLLaMA/comments/1o5l62w/dolphin_x1_8b_llama31_8b_decensor_live_on_hf/"
     ],
     "name": "Dolphin X1 8B",
-    "source_ids": [
-      "RPS015",
-      "RPS016"
-    ]
+    "source_ids": ["RPS015", "RPS016"]
   },
   {
     "id": "RP06",
@@ -342,10 +315,7 @@
       "https://huggingface.co/LuffyTheFox"
     ],
     "name": "Qwen3.6 35B-A3B Genesis Hermes",
-    "source_ids": [
-      "RPS017",
-      "RPS018"
-    ]
+    "source_ids": ["RPS017", "RPS018"]
   },
   {
     "id": "RP07",
@@ -391,10 +361,7 @@
       "https://huggingface.co/collections/huihui-ai/qwen38-abliterated"
     ],
     "name": "Huihui Qwen3.8 27B abliterated",
-    "source_ids": [
-      "RPS019",
-      "RPS020"
-    ]
+    "source_ids": ["RPS019", "RPS020"]
   },
   {
     "id": "RP08",
@@ -429,9 +396,7 @@
       "summary": "Original base-family D&D thread praises scene play but reports refusals; follow-up discusses redirection after ablation. No exact v2 checkpoint consensus established.",
       "provenance": "original community; base/ablated-family attribution only",
       "date": "2026; exact timestamp not established",
-      "urls": [
-        "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/"
-      ]
+      "urls": ["https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/"]
     },
     "published_outputs": {
       "status": "not found",
@@ -450,12 +415,7 @@
       "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/raw/main/README.md"
     ],
     "name": "Huihui Qwen3.8 Flash Next abliterated v2",
-    "source_ids": [
-      "RPS021",
-      "RPS020",
-      "RPS022",
-      "RPS088"
-    ]
+    "source_ids": ["RPS021", "RPS020", "RPS022", "RPS088"]
   },
   {
     "id": "RP09",
@@ -499,13 +459,9 @@
       "No exact-checkpoint independent sentiment or published game sample found."
     ],
     "related_variants": [],
-    "sources": [
-      "https://huggingface.co/LuffyTheFox/Qwen3.8-27B-Uncensored-Genesis-MTP-GGUF"
-    ],
+    "sources": ["https://huggingface.co/LuffyTheFox/Qwen3.8-27B-Uncensored-Genesis-MTP-GGUF"],
     "name": "Qwen3.8 27B Genesis MTP",
-    "source_ids": [
-      "RPS023"
-    ]
+    "source_ids": ["RPS023"]
   },
   {
     "id": "RP10",
@@ -559,11 +515,7 @@
       "https://www.reddit.com/r/LocalLLaMA/comments/1wvxl4n/qwen3827bhumanlikechat_20_texts_like_a_human_now/"
     ],
     "name": "Qwen3.8 27B Humanlike Chat 2.0",
-    "source_ids": [
-      "RPS024",
-      "RPS025",
-      "RPS026"
-    ]
+    "source_ids": ["RPS024", "RPS025", "RPS026"]
   },
   {
     "as_of": "2026-10-23",
@@ -587,9 +539,7 @@
       "summary": "Creator-curated testers praise distinct voices and initiative; some still note causal mistakes. Testimonials are selected by the model creator and are not independent consensus.",
       "provenance": "publisher-curated first-person testimonials",
       "date": "Undated on card; profile update 2025-12-17",
-      "urls": [
-        "https://huggingface.co/TheDrummer/Cydonia-24B-v4.3"
-      ]
+      "urls": ["https://huggingface.co/TheDrummer/Cydonia-24B-v4.3"]
     },
     "published_outputs": {
       "status": "not found",
@@ -614,11 +564,7 @@
       "active_b": 24,
       "architecture": "dense Mistral Small 3.2 derivative"
     },
-    "source_ids": [
-      "RPS027",
-      "RPS028",
-      "RPS029"
-    ]
+    "source_ids": ["RPS027", "RPS028", "RPS029"]
   },
   {
     "as_of": "2026-10-23",
@@ -642,9 +588,7 @@
       "summary": "Creator-curated reports praise character adherence and reading implied motives; card says many testers prefer the Magistral writing style. High-temperature overcreativity remains a concern.",
       "provenance": "selected publisher testimonials",
       "date": "Undated; 2025 portfolio",
-      "urls": [
-        "https://huggingface.co/TheDrummer/Magidonia-24B-v4.3"
-      ]
+      "urls": ["https://huggingface.co/TheDrummer/Magidonia-24B-v4.3"]
     },
     "published_outputs": {
       "status": "not found",
@@ -657,9 +601,7 @@
     "related_variants": [],
     "id": "RP12",
     "url": "https://huggingface.co/TheDrummer/Magidonia-24B-v4.3",
-    "sources": [
-      "https://huggingface.co/TheDrummer/Magidonia-24B-v4.3"
-    ],
+    "sources": ["https://huggingface.co/TheDrummer/Magidonia-24B-v4.3"],
     "model_id": "TheDrummer/Magidonia-24B-v4.3",
     "name": "Magidonia 24B v4.3",
     "parameters": {
@@ -667,9 +609,7 @@
       "active_b": 24,
       "architecture": "dense Magistral Small 2509 derivative"
     },
-    "source_ids": [
-      "RPS030"
-    ]
+    "source_ids": ["RPS030"]
   },
   {
     "as_of": "2026-10-23",
@@ -727,11 +667,7 @@
       "active_b": 24,
       "architecture": "dense Mistral; Heretic-modified Cydonia 4.3"
     },
-    "source_ids": [
-      "RPS031",
-      "RPS032",
-      "RPS033"
-    ]
+    "source_ids": ["RPS031", "RPS032", "RPS033"]
   },
   {
     "as_of": "2026-10-23",
@@ -755,18 +691,14 @@
       "summary": "Creator-curated users praise character fidelity, affordable creativity and extended voice chat; stock phrasing and limited wording remain smaller-model weaknesses.",
       "provenance": "publisher-curated first-person reports",
       "date": "2026-01-25 card context; individual reports undated",
-      "urls": [
-        "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1"
-      ]
+      "urls": ["https://huggingface.co/TheDrummer/Rocinante-X-12B-v1"]
     },
     "published_outputs": {
       "status": "publisher screenshot samples",
       "description": "Card contains dated sample-output images; linked for review, not transcribed or tested.",
       "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1"
     },
-    "caveats": [
-      "Current finetune does not make its 2024 foundation a frontier reasoning model."
-    ],
+    "caveats": ["Current finetune does not make its 2024 foundation a frontier reasoning model."],
     "related_variants": [],
     "id": "RP14",
     "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1",
@@ -782,11 +714,7 @@
       "active_b": 12,
       "architecture": "dense Mistral Nemo Instruct 2407 derivative"
     },
-    "source_ids": [
-      "RPS034",
-      "RPS035",
-      "RPS029"
-    ]
+    "source_ids": ["RPS034", "RPS035", "RPS029"]
   },
   {
     "as_of": "2026-10-23",
@@ -839,12 +767,7 @@
       "active_b": 16,
       "architecture": "expanded/upscaled Mistral Nemo 12B lineage"
     },
-    "source_ids": [
-      "RPS036",
-      "RPS029",
-      "RPS037",
-      "RPS038"
-    ]
+    "source_ids": ["RPS036", "RPS029", "RPS037", "RPS038"]
   },
   {
     "as_of": "2026-10-23",
@@ -868,9 +791,7 @@
       "summary": "Creator-curated Rimtalk user praises coherent creative dialogue and JSON use. Other testers praise emotion but report long replies and repeated mistakes after a failure.",
       "provenance": "publisher-curated first-person game-mod use",
       "date": "Undated reports; profile update 2026-04-03",
-      "urls": [
-        "https://huggingface.co/TheDrummer/Skyfall-31B-v4.2"
-      ]
+      "urls": ["https://huggingface.co/TheDrummer/Skyfall-31B-v4.2"]
     },
     "published_outputs": {
       "status": "not found",
@@ -896,11 +817,7 @@
       "active_b": 31,
       "architecture": "expanded Magistral Small 2509 lineage"
     },
-    "source_ids": [
-      "RPS039",
-      "RPS040",
-      "RPS029"
-    ]
+    "source_ids": ["RPS039", "RPS040", "RPS029"]
   },
   {
     "as_of": "2026-10-23",
@@ -924,9 +841,7 @@
       "summary": "Creator-curated users praise prose and long card adherence, while acknowledging remaining logic mistakes. Independent exact-release consensus was not located.",
       "provenance": "publisher-curated reports",
       "date": "Undated",
-      "urls": [
-        "https://huggingface.co/TheDrummer/Anubis-70B-v1.2"
-      ]
+      "urls": ["https://huggingface.co/TheDrummer/Anubis-70B-v1.2"]
     },
     "published_outputs": {
       "status": "not found",
@@ -937,9 +852,7 @@
     "related_variants": [],
     "id": "RP17",
     "url": "https://huggingface.co/TheDrummer/Anubis-70B-v1.2",
-    "sources": [
-      "https://huggingface.co/TheDrummer/Anubis-70B-v1.2"
-    ],
+    "sources": ["https://huggingface.co/TheDrummer/Anubis-70B-v1.2"],
     "model_id": "TheDrummer/Anubis-70B-v1.2",
     "name": "Anubis 70B v1.2",
     "parameters": {
@@ -947,9 +860,7 @@
       "active_b": 70,
       "architecture": "dense Llama 3.3; HF parameter metadata rounds about 71B"
     },
-    "source_ids": [
-      "RPS041"
-    ]
+    "source_ids": ["RPS041"]
   },
   {
     "as_of": "2026-10-23",
@@ -987,9 +898,7 @@
     "related_variants": [],
     "id": "RP18",
     "url": "https://huggingface.co/TheDrummer/Anubis-Mini-8B-v1",
-    "sources": [
-      "https://huggingface.co/TheDrummer/Anubis-Mini-8B-v1"
-    ],
+    "sources": ["https://huggingface.co/TheDrummer/Anubis-Mini-8B-v1"],
     "model_id": "TheDrummer/Anubis-Mini-8B-v1",
     "name": "Anubis Mini 8B v1",
     "parameters": {
@@ -997,9 +906,7 @@
       "active_b": 8,
       "architecture": "dense Llama lineage; precise parent not confirmed in retrieved card"
     },
-    "source_ids": [
-      "RPS042"
-    ]
+    "source_ids": ["RPS042"]
   },
   {
     "as_of": "2026-10-23",
@@ -1037,9 +944,7 @@
     "related_variants": [],
     "id": "RP19",
     "url": "https://huggingface.co/TheDrummer/Behemoth-128B-v3",
-    "sources": [
-      "https://huggingface.co/TheDrummer/Behemoth-128B-v3"
-    ],
+    "sources": ["https://huggingface.co/TheDrummer/Behemoth-128B-v3"],
     "model_id": "TheDrummer/Behemoth-128B-v3",
     "name": "Behemoth 128B v3",
     "parameters": {
@@ -1047,9 +952,7 @@
       "active_b": 128,
       "architecture": "Mistral Medium 3.5-128B derivative; HF counts about 125B"
     },
-    "source_ids": [
-      "RPS043"
-    ]
+    "source_ids": ["RPS043"]
   },
   {
     "as_of": "2026-10-23",
@@ -1073,9 +976,7 @@
       "summary": "Creator explicitly labels it a research release with only basic sanity checks. No strong independent consensus found.",
       "provenance": "candid publisher limitation",
       "date": "Collection updated 2026-09-08; exact release unconfirmed",
-      "urls": [
-        "https://huggingface.co/Gryphe/Pantheon-Reasoning-27B"
-      ]
+      "urls": ["https://huggingface.co/Gryphe/Pantheon-Reasoning-27B"]
     },
     "published_outputs": {
       "status": "not found",
@@ -1089,9 +990,7 @@
     "related_variants": [],
     "id": "RP20",
     "url": "https://huggingface.co/Gryphe/Pantheon-Reasoning-27B",
-    "sources": [
-      "https://huggingface.co/Gryphe/Pantheon-Reasoning-27B"
-    ],
+    "sources": ["https://huggingface.co/Gryphe/Pantheon-Reasoning-27B"],
     "model_id": "Gryphe/Pantheon-Reasoning-27B",
     "name": "Pantheon Reasoning 27B",
     "parameters": {
@@ -1099,9 +998,7 @@
       "active_b": 27,
       "architecture": "dense Qwen3.6 via uncensored-Heretic parent; about 28B with auxiliaries"
     },
-    "source_ids": [
-      "RPS044"
-    ]
+    "source_ids": ["RPS044"]
   },
   {
     "as_of": "2026-10-23",
@@ -1153,11 +1050,7 @@
       "active_b": 31,
       "architecture": "dense Gemma 4"
     },
-    "source_ids": [
-      "RPS045",
-      "RPS046",
-      "RPS047"
-    ]
+    "source_ids": ["RPS045", "RPS046", "RPS047"]
   },
   {
     "as_of": "2026-10-23",
@@ -1207,10 +1100,7 @@
       "active_b": 4,
       "architecture": "Gemma 4 MoE; finetuned and merged back into instruct"
     },
-    "source_ids": [
-      "RPS048",
-      "RPS049"
-    ]
+    "source_ids": ["RPS048", "RPS049"]
   },
   {
     "as_of": "2026-10-23",
@@ -1259,10 +1149,7 @@
       "active_b": 31,
       "architecture": "dense Gemma 4"
     },
-    "source_ids": [
-      "RPS050",
-      "RPS051"
-    ]
+    "source_ids": ["RPS050", "RPS051"]
   },
   {
     "as_of": "2026-10-23",
@@ -1311,10 +1198,7 @@
       "active_b": 10,
       "architecture": "Qwen3.5-122B-A10B MoE; HF auxiliary-inclusive total about 125B"
     },
-    "source_ids": [
-      "RPS052",
-      "RPS051"
-    ]
+    "source_ids": ["RPS052", "RPS051"]
   },
   {
     "as_of": "2026-10-23",
@@ -1375,11 +1259,7 @@
       "active_b": 9,
       "architecture": "dense hybrid Qwen3.5; about 10B including auxiliary components"
     },
-    "source_ids": [
-      "RPS053",
-      "RPS054",
-      "RPS051"
-    ]
+    "source_ids": ["RPS053", "RPS054", "RPS051"]
   },
   {
     "as_of": "2026-10-23",
@@ -1436,12 +1316,7 @@
     "deployment": "Native mixed FP8/FP4 assets and special DeepSeek encoding/runtime. Ordinary Jinja chat templates are not a substitute for the documented engine path.",
     "hardware": "Publisher reports 4×H200 (564 GB GPU memory) and an approximately 203 GB Engram table host-memory/offload route. Deployment is specialized; not a commodity 24 GB model.",
     "license": "MIT card.",
-    "source_ids": [
-      "RPS055",
-      "RPS056",
-      "RPS057",
-      "RPS089"
-    ]
+    "source_ids": ["RPS055", "RPS056", "RPS057", "RPS089"]
   },
   {
     "as_of": "2026-10-23",
@@ -1491,10 +1366,7 @@
     "deployment": "NVFP4 experts plus BF16 nonexpert tensors; weight edit, distinct from runtime-hook uncensoring.",
     "hardware": "320B implies at least 160 GB idealized 4-bit weight storage before higher-precision components, KV cache and runtime. Exact validated hardware minimum not established here.",
     "license": "MIT card.",
-    "source_ids": [
-      "RPS058",
-      "RPS090"
-    ]
+    "source_ids": ["RPS058", "RPS090"]
   },
   {
     "as_of": "2026-10-23",
@@ -1524,9 +1396,7 @@
     "related_variants": [],
     "id": "RP28",
     "url": "https://huggingface.co/yamz-labs/GLM-5.3-Flash-EXL3-Yamz-Uncensored",
-    "sources": [
-      "https://huggingface.co/yamz-labs/GLM-5.3-Flash-EXL3-Yamz-Uncensored"
-    ],
+    "sources": ["https://huggingface.co/yamz-labs/GLM-5.3-Flash-EXL3-Yamz-Uncensored"],
     "model_id": "yamz-labs/GLM-5.3-Flash-EXL3-Yamz-Uncensored",
     "name": "GLM 5.3 Flash EXL3 Yamz Uncensored",
     "parameters": {
@@ -1542,9 +1412,7 @@
     "deployment": "EXL3 with runtime uncensor_spec hooks in 34 blocks; requires the matching Kyojin execution path. This is not simply a generic GGUF repack.",
     "hardware": "Author tested only AMD Ryzen AI Max+395/Strix Halo 128 GB with Kyojin; other hardware explicitly untested.",
     "license": "MIT card.",
-    "source_ids": [
-      "RPS059"
-    ]
+    "source_ids": ["RPS059"]
   },
   {
     "as_of": "2026-10-23",
@@ -1593,10 +1461,7 @@
     "deployment": "GGUF; preserve exact filename/quantization and runtime. Prior NEO-CODE card explicitly links this successor.",
     "hardware": "Approximately 13.5 GB idealized 4-bit text weights before overhead; exact variant filesize differs.",
     "license": "Apache-2.0 card.",
-    "source_ids": [
-      "RPS060",
-      "RPS061"
-    ]
+    "source_ids": ["RPS060", "RPS061"]
   },
   {
     "as_of": "2026-10-23",
@@ -1626,9 +1491,7 @@
     "related_variants": [],
     "id": "RP30",
     "url": "https://huggingface.co/Darksp33d/loreweaver-rp-v1",
-    "sources": [
-      "https://huggingface.co/Darksp33d/loreweaver-rp-v1"
-    ],
+    "sources": ["https://huggingface.co/Darksp33d/loreweaver-rp-v1"],
     "model_id": "Darksp33d/loreweaver-rp-v1",
     "name": "Loreweaver RP v1 LoRA",
     "parameters": {
@@ -1645,9 +1508,7 @@
     "deployment": "Approximately 55.1 MB adapter plus full licensed base; merge/PEFT path. Adapter filesize is not whole-model memory cost.",
     "hardware": "The roughly 35.95B base dominates: about 18 GB of idealized 4-bit weights plus the adapter and runtime overhead; no measured fit.",
     "license": "Adapter license not declared in inspected card. Parent Apache permission does not grant rights in the adapter; commercial readiness unresolved.",
-    "source_ids": [
-      "RPS062"
-    ]
+    "source_ids": ["RPS062"]
   },
   {
     "as_of": "2026-10-23",
@@ -1704,15 +1565,7 @@
     "deployment": "Aion API/OpenRouter/Venice; OpenAI-compatible streaming. No downloadable 3.5 checkpoint found; multi-model orchestration is opaque.",
     "hardware": "Provider managed; local hardware irrelevant. Published live latency counters are time-varying, not a game SLA.",
     "license": "API-only proprietary service. Aion terms effective 2026-10-17 permit commercial products and embedding service access, but no rights in model weights; AUP applies.",
-    "source_ids": [
-      "RPS063",
-      "RPS064",
-      "RPS065",
-      "RPS066",
-      "RPS009",
-      "RPS010",
-      "RPS067"
-    ]
+    "source_ids": ["RPS063", "RPS064", "RPS065", "RPS066", "RPS009", "RPS010", "RPS067"]
   },
   {
     "as_of": "2026-10-23",
@@ -1767,14 +1620,7 @@
     "deployment": "Aion/OpenRouter/Venice API; no downloadable 3.5 Mini checkpoint found.",
     "hardware": "Provider managed; no local sizing needed.",
     "license": "Proprietary hosted system; same Aion commercial embedding permission and host AUP as 3.5. No weight-distribution rights.",
-    "source_ids": [
-      "RPS068",
-      "RPS066",
-      "RPS065",
-      "RPS010",
-      "RPS009",
-      "RPS069"
-    ]
+    "source_ids": ["RPS068", "RPS066", "RPS065", "RPS010", "RPS009", "RPS069"]
   },
   {
     "as_of": "2026-10-23",
@@ -1827,12 +1673,7 @@
     "deployment": "Safetensors/GGUF; card lists Featherless. SillyTavern preset import provided; no inference was run.",
     "hardware": "October 14 user reports Q6_K with all layers on RTX 5090 and 64 GB system RAM via KoboldCpp. Anecdote, not guaranteed deployment sizing.",
     "license": "Apache-2.0 card.",
-    "source_ids": [
-      "RPS070",
-      "RPS071",
-      "RPS072",
-      "RPS073"
-    ]
+    "source_ids": ["RPS070", "RPS071", "RPS072", "RPS073"]
   },
   {
     "as_of": "2026-10-23",
@@ -1890,10 +1731,6 @@
     "deployment": "Safetensors plus separately linked GGUF; preserve Gemma 4 chat/reasoning format.",
     "hardware": "Approximately 13 GB idealized 4-bit total weights before overhead; 4B active affects compute, not complete memory footprint.",
     "license": "Apache-2.0 card.",
-    "source_ids": [
-      "RPS074",
-      "RPS075",
-      "RPS076"
-    ]
+    "source_ids": ["RPS074", "RPS075", "RPS076"]
   }
 ]

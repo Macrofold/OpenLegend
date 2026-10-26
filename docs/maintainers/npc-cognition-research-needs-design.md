@@ -2,6 +2,8 @@
 
 **October 22, 2026 — selected production model-hosting and optional evaluation design complete; implementation and comparisons remain open.** The [research library](../../archive/02-research/npc-cognition/README.md) holds the evidence; its [evaluation brief](../../archive/02-research/npc-cognition/11-evaluation-and-research-gates.md) holds the combined model panel and methodology. [MX](custom-models.md) owns the selected [feature specification](../projects/custom-models-feature-spec.md) and [technical design](../projects/custom-models-tech-design.md). This map routes follow-ups to existing owners rather than duplicating implementation tasks. [Gameplay priorities](../repertoires/gameplay-priorities.md) governs selection.
 
+The [October 23–24 model inventory](../../research/ai-models/README.md) supplies the current broad candidate catalogue for sections 1, 4, 5, 8–10 below, including per-model source, content-freedom, cost, deployment, example and sentiment evidence. It completes discovery research only; no comparison, hosting integration or behavioral acceptance checkbox is closed by that inventory.
+
 Existing combat, perception, speech, memory and agency designs remain authoritative. Unfinished delivery is not automatically missing design. The [service-content policy](../agent-content-and-companion-safety.md), required character evidence, independent choice and native action validation are unchanged. No item below authorizes a new service, model, paid run or wider gameplay scope.
 
 ## 1. A bounded local decision-provider comparison

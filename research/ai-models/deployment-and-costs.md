@@ -1,0 +1,69 @@
+# Deployment, content freedom and cost interpretation
+
+**Research snapshot: October 23–24, 2026.** This guide explains the inventory's fields. It selects no architecture, host, model or paid experiment. Model-specific claims and source dates remain in the three inventories.
+
+## The same model name can describe different products
+
+| Deployment                            | What is under our control                                                       | What remains to establish                                                                       | Cost semantics                                                                                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Downloaded weights on our own machine | Exact artifact, runtime, template and inference settings.                       | Weight/derivative license, actual runtime support, useful quality, memory and serving capacity. | Hardware purchase or rental, power, idle time, storage and operations; often no separate token royalty under the applicable permissive license.     |
+| Dedicated managed endpoint            | Selected artifact/container and instance, within the host's supported controls. | Both weight and hosting terms, initialization, scaling, privacy and exact feature support.      | Provisioned compute time and replicas. Hugging Face documents billing by the minute for successfully deployed endpoints while initializing/running. |
+| Shared hosted model API               | Request contents and whatever version/route/settings the provider exposes.      | Actual served revision, filters, format support, quotas, retention and service terms.           | Input/output/cached tokens, characters, audio duration or subscription credits; not one universal unit.                                             |
+| Multi-provider router                 | Model and supported provider preferences.                                       | Which endpoint actually handled the request and whether it supports the required parameters.    | The selected endpoint's tariff, routing/service charges where applicable, cache rules and final usage receipt.                                      |
+| Local speech in the browser/device    | Runtime and selected small artifact, where the model supports that deployment.  | Download size, startup, memory, voice quality and device/browser support.                       | User-device resources plus distribution and maintenance; no demonstrated scalability follows from a small parameter count.                          |
+
+Sources: [HF dedicated-endpoint pricing](https://huggingface.co/docs/inference-endpoints/en/pricing), [endpoint lifecycle](https://huggingface.co/docs/huggingface_hub/en/guides/inference_endpoints), and [OpenRouter provider selection](https://openrouter.ai/docs/guides/routing/provider-selection), inspected October 24.
+
+OpenRouter documents model selection and provider selection separately. Its routing can accept a parameter that a provider does not implement unless support is required; a JSON/tool-capable family name is insufficient evidence about a particular endpoint. A router's data-policy metadata is also not a substitute for the underlying provider policy. The inventory therefore records deployment separately from the checkpoint.
+
+For later comparisons, a model name alone is an incomplete identity. Useful provenance includes the exact checkpoint revision/file hashes, adapter or quantization, tokenizer/chat template, serving engine, model/route version, reasoning settings, output allowance, structured-output mode and upstream provider. These are comparison conditions, not changes made by this research.
+
+## Three separate meanings of content freedom
+
+1. **Model behavior:** does it portray the intended fictional situation, or refuse, moralize, quietly soften motives, omit facts, or become implausibly agreeable?
+2. **Service behavior and terms:** does a host filter the request or output, and does its published agreement accommodate the intended content?
+3. **Artifact rights:** may this exact checkpoint, derivative, runtime and voice material be used in this product and deployment?
+
+Evidence for one does not settle the others. A low-refusal checkpoint may sit behind a restrictive API. A service may explicitly allow fictional violence while its model still occasionally refuses. A model card's MIT code label may coexist with restrictive weight terms. An affectionate or hostile performance is not permission to clone an unrelated person's voice.
+
+The most directly relevant positive hosted-policy evidence found is [Inworld AUP section 4](https://inworld.ai/aup/): its violent/hateful/harassing-material restriction expressly excludes purely fictional contexts and identifies video-game character speech as an example. Other sections remain applicable. This is a documented policy fit, not an observed zero-refusal result.
+
+[Fish Drama 3's actual weight license](https://huggingface.co/fishaudio/drama-3/raw/main/LICENSE) permits qualifying commercial use below its $500,000 aggregate trailing-year revenue threshold. Its separate restriction on offering a general speech-generation service expressly excludes speech generated by one's own product, including game characters. The threshold and other terms still matter. [Fish's cloud terms](https://fish.audio/terms/) are a separate agreement; neither those terms nor a stale research-license metadata label should replace the exact weight artifact's license.
+
+The inventories preserve other materially different cases, including research-only weights, noncommercial larger siblings, commercial thresholds, access-gated use conditions, and provider policies without a verified fictional-content exception. These records identify terms to check for a selected deployment; they do not claim a legal clearance or invent forbidden content from hypothetical risk.
+
+## Metering examples
+
+Prices below are **USD snapshots inspected October 24**, provided to explain billing units. Full model records preserve regional, promotional, cache and access conditions.
+
+| Model / service                                                                   | Published unit and example rate                                                                              | What it does not include                                                                                                                                                   |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Jev 1.14](https://docs.typesafe.ai/models)                                       | $0.042 per million input tokens; no output-token charge.                                                     | Repeated state/questions still consume input. Other model stages and game hosting are separate.                                                                            |
+| [DeepSeek V4.1 Flash-1017](https://api-docs.deepseek.com/quick_start/pricing/)    | Off-peak cache-miss input $0.15/M; output $0.60/M. Peak $0.30/$1.20. Cached input has a separate lower rate. | A short visible answer can still use reasoning output; tariffs depend on the provider's UTC schedule.                                                                      |
+| [Venice Role Play Uncensored](https://docs.venice.ai/overview/pricing)            | $0.50/M input and $2/M output on the listed route.                                                           | Downloading a related checkpoint does not provide this hosted service or its economics.                                                                                    |
+| [Inworld TTS-2 / Flash](https://inworld.ai/pricing)                               | On-demand $25 / $15 per million characters. Commitment tiers have different rates.                           | Dialogue generation, recognition, unused commitments and complete interaction overhead.                                                                                    |
+| [Qwen Audio 3.1](https://www.alibabacloud.com/help/en/model-studio/model-pricing) | Singapore Plus: $0.30 per 10,000 billed characters. Flash: $0.23/M input tokens plus $1.87/M output tokens.  | Character and token tariffs are not directly comparable. Its documented character counting differs by script; audio duration is not inferable without the tokenizer/meter. |
+| [Cartesia Sonic 3.6](https://www.cartesia.ai/pricing)                             | Credit bundles; roughly one TTS credit per processed character.                                              | A nominal bundle rate assumes the credits are consumed. Unused credits, preprocessing and the selected plan affect effective cost.                                         |
+| Self-hosted permissively licensed weights                                         | No per-token/character license fee where the exact license provides that.                                    | All deployment, hardware, idle time, engineering and external-service costs remain. “Free weights” is not “free operation.”                                                |
+
+For an ordinary token-billed model, an approximate request charge is input tokens × input rate + cached tokens × cache rate + output tokens × output rate, with rates converted from their listed units. Add separately billed tools, speech, retrieval and any provider-specific minimums. For a fixed answer model, use its actual input/answer metering rather than pretending it generates ordinary output tokens.
+
+**Illustrative arithmetic only:** 100 characters each making one decision every ten seconds means 36,000 requests per hour. At an assumed 2,000 billed input tokens each, that is 72 million tokens; Jev's listed unit rate would imply **$3.024/hour for those decision calls alone**. This assumes that request count and token size, no discounts, and no other calls. It is not a measured Open Legend workload, selected scheduling policy, or total operating-cost forecast. The example demonstrates why request frequency and supplied history matter alongside the price per million tokens.
+
+For self-hosting, divide the whole serving cost by useful completed work at the observed utilization. A faster model can still cost more if it requires a costly always-on machine. Scale-to-zero avoids idle compute under some services but adds initialization delay; no cold-start or capacity measurement was made here.
+
+## Hardware and latency without false precision
+
+The idealized size of four-bit weights is parameter count × 0.5 bytes. That is a lower-bound arithmetic illustration, not a GPU requirement: scales, tensors retained at higher precision, runtime allocations, key/value attention caches, audio components and concurrent requests add memory. CPU offload changes performance. For a mixture-of-experts model, total parameters drive stored weights even when only some experts participate in a token's computation.
+
+The records label actual publisher hardware runs, user setups and rough estimates differently. A model's advertised maximum context does not establish useful quality at that length or prove it fits alongside that history on the example GPU. A tiny adaptation file still requires its full parent model.
+
+Latency figures also have different endpoints. Inworld documents **P90 server-side time to the first audio byte**, excluding network time; that is not the delay from a player finishing a sentence to hearing the character's reply. TTS real-time factor, tokens/second, first-token latency, full speech generation and a complete game interaction should not be silently compared as the same measurement. [Inworld's metric definition](https://docs.inworld.ai/tts/tts-models) is explicit.
+
+Finally, schema-constrained generation controls output structure; it does not prove that the chosen person, object or action is correct. [vLLM's structured-output documentation](https://docs.vllm.ai/en/latest/features/structured_outputs/) also shows that engine versions, API fields and decoding backends differ. This is a capability dimension to record alongside model quality, not a reason to run new implementation work during this research.
+
+## Evidence and maintenance
+
+Before spending on a selected comparison, refresh its exact license, live model/route availability, price units, account quota, version alias and retirement notice. Preserve the original research record and add actual findings to the existing evaluation owners. Do not relabel a failed transport, unsupported parser, exhausted reasoning allowance or missing final answer as censorship without evidence.
+
+The [existing evaluation brief](../../archive/02-research/npc-cognition/11-evaluation-and-research-gates.md), [AI provider contract](../../docs/ai-providers.md), and [MX tracker](../../docs/maintainers/custom-models.md) own later execution and acceptance. This research incurred **$0 in model-call charges**, including **$0 additional Jev cost**; no hosting instance was provisioned.

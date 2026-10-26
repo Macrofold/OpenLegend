@@ -5,10 +5,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP01",
-      "RP02"
-    ],
+    "used_by": ["RP01", "RP02"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -18,9 +15,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary configuration file",
     "scope": "Configured architecture/context values; configuration alone does not validate practical quality at that context.",
-    "used_by": [
-      "RP01"
-    ],
+    "used_by": ["RP01"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -30,9 +25,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model release article",
     "scope": "Hermes 4.3 release timing, capability descriptions and links to evaluation artifacts.",
-    "used_by": [
-      "RP01"
-    ],
+    "used_by": ["RP01"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -41,9 +34,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP01"
-    ],
+    "used_by": ["RP01"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -52,9 +43,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP02"
-    ],
+    "used_by": ["RP02"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -63,9 +52,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": [
-      "RP02"
-    ],
+    "used_by": ["RP02"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -74,9 +61,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP03"
-    ],
+    "used_by": ["RP03"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -85,10 +70,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": [
-      "RP03",
-      "RP04"
-    ],
+    "used_by": ["RP03", "RP04"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -97,11 +79,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary serving-provider documentation",
     "scope": "Current exact API identifiers, catalog capabilities, context and/or per-million-token prices. Provider layer does not prove weight behavior.",
-    "used_by": [
-      "RP03",
-      "RP31",
-      "RP32"
-    ],
+    "used_by": ["RP03", "RP31", "RP32"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -110,11 +88,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary serving-provider documentation",
     "scope": "Current exact API identifiers, catalog capabilities, context and/or per-million-token prices. Provider layer does not prove weight behavior.",
-    "used_by": [
-      "RP03",
-      "RP31",
-      "RP32"
-    ],
+    "used_by": ["RP03", "RP31", "RP32"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -124,9 +98,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP03"
-    ],
+    "used_by": ["RP03"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -135,9 +107,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP03"
-    ],
+    "used_by": ["RP03"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -146,9 +116,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP04"
-    ],
+    "used_by": ["RP04"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -158,9 +126,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author release article",
     "scope": "Dolphin X1 Nano training/evaluation claims.",
-    "used_by": [
-      "RP04"
-    ],
+    "used_by": ["RP04"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -169,9 +135,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP05"
-    ],
+    "used_by": ["RP05"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -180,9 +144,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP05"
-    ],
+    "used_by": ["RP05"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -191,9 +153,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP06"
-    ],
+    "used_by": ["RP06"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -202,9 +162,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": [
-      "RP06"
-    ],
+    "used_by": ["RP06"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -213,9 +171,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP07"
-    ],
+    "used_by": ["RP07"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -224,10 +180,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": [
-      "RP07",
-      "RP08"
-    ],
+    "used_by": ["RP07", "RP08"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -236,9 +189,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP08"
-    ],
+    "used_by": ["RP08"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -248,9 +199,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP08"
-    ],
+    "used_by": ["RP08"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -259,9 +208,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP09"
-    ],
+    "used_by": ["RP09"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -270,9 +217,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP10"
-    ],
+    "used_by": ["RP10"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -282,9 +227,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP10"
-    ],
+    "used_by": ["RP10"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -294,9 +237,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP10"
-    ],
+    "used_by": ["RP10"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -305,9 +246,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP11"
-    ],
+    "used_by": ["RP11"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -316,9 +255,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary raw model card",
     "scope": "Exact authored README text; runtime claims and selected testimonials remain publisher evidence.",
-    "used_by": [
-      "RP11"
-    ],
+    "used_by": ["RP11"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -327,12 +264,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": [
-      "RP11",
-      "RP14",
-      "RP15",
-      "RP16"
-    ],
+    "used_by": ["RP11", "RP14", "RP15", "RP16"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -341,9 +273,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP12"
-    ],
+    "used_by": ["RP12"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -352,9 +282,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP13"
-    ],
+    "used_by": ["RP13"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -364,9 +292,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP13"
-    ],
+    "used_by": ["RP13"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -375,9 +301,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP13"
-    ],
+    "used_by": ["RP13"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -386,9 +310,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP14"
-    ],
+    "used_by": ["RP14"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -397,9 +319,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary raw model card",
     "scope": "Exact authored README text; runtime claims and selected testimonials remain publisher evidence.",
-    "used_by": [
-      "RP14"
-    ],
+    "used_by": ["RP14"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -408,9 +328,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP15"
-    ],
+    "used_by": ["RP15"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -419,9 +337,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP15"
-    ],
+    "used_by": ["RP15"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -430,9 +346,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP15"
-    ],
+    "used_by": ["RP15"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -441,9 +355,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP16"
-    ],
+    "used_by": ["RP16"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -452,9 +364,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary raw model card",
     "scope": "Exact authored README text; runtime claims and selected testimonials remain publisher evidence.",
-    "used_by": [
-      "RP16"
-    ],
+    "used_by": ["RP16"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -464,9 +374,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP17"
-    ],
+    "used_by": ["RP17"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -475,9 +383,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP18"
-    ],
+    "used_by": ["RP18"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -486,9 +392,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP19"
-    ],
+    "used_by": ["RP19"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -497,9 +401,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP20"
-    ],
+    "used_by": ["RP20"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -508,9 +410,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP21"
-    ],
+    "used_by": ["RP21"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -520,9 +420,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": [
-      "RP21"
-    ],
+    "used_by": ["RP21"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -531,9 +429,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP21"
-    ],
+    "used_by": ["RP21"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -542,9 +438,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP22"
-    ],
+    "used_by": ["RP22"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -553,9 +447,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP22"
-    ],
+    "used_by": ["RP22"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -564,9 +456,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP23"
-    ],
+    "used_by": ["RP23"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -575,11 +465,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": [
-      "RP23",
-      "RP24",
-      "RP25"
-    ],
+    "used_by": ["RP23", "RP24", "RP25"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -588,9 +474,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP24"
-    ],
+    "used_by": ["RP24"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -599,9 +483,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP25"
-    ],
+    "used_by": ["RP25"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -610,9 +492,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP25"
-    ],
+    "used_by": ["RP25"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -621,9 +501,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP26"
-    ],
+    "used_by": ["RP26"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -633,9 +511,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP26"
-    ],
+    "used_by": ["RP26"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -644,9 +520,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP26"
-    ],
+    "used_by": ["RP26"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -655,9 +529,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP27"
-    ],
+    "used_by": ["RP27"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -667,9 +539,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP28"
-    ],
+    "used_by": ["RP28"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -679,9 +549,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP29"
-    ],
+    "used_by": ["RP29"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -690,9 +558,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP29"
-    ],
+    "used_by": ["RP29"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -701,9 +567,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP30"
-    ],
+    "used_by": ["RP30"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -712,9 +576,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary serving-provider model listing",
     "scope": "Hosted system description, release date, live pricing/context and application usage. Live counters are snapshots, not guarantees.",
-    "used_by": [
-      "RP31"
-    ],
+    "used_by": ["RP31"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -723,9 +585,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary provider website",
     "scope": "API access/billing semantics and service positioning.",
-    "used_by": [
-      "RP31"
-    ],
+    "used_by": ["RP31"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -734,10 +594,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary provider website",
     "scope": "API access/billing semantics and service positioning.",
-    "used_by": [
-      "RP31",
-      "RP32"
-    ],
+    "used_by": ["RP31", "RP32"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -746,10 +603,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary provider terms",
     "scope": "Terms effective 2026-10-17: commercial embedding and model access rights, AUP; not a claim of zero technical refusal.",
-    "used_by": [
-      "RP31",
-      "RP32"
-    ],
+    "used_by": ["RP31", "RP32"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -758,9 +612,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP31"
-    ],
+    "used_by": ["RP31"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -769,9 +621,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary serving-provider model listing",
     "scope": "Hosted system description, release date, live pricing/context and application usage. Live counters are snapshots, not guarantees.",
-    "used_by": [
-      "RP32"
-    ],
+    "used_by": ["RP32"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -781,9 +631,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP32"
-    ],
+    "used_by": ["RP32"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -792,9 +640,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP33"
-    ],
+    "used_by": ["RP33"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -804,9 +650,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP33"
-    ],
+    "used_by": ["RP33"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -815,9 +659,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP33"
-    ],
+    "used_by": ["RP33"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -826,9 +668,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": [
-      "RP33"
-    ],
+    "used_by": ["RP33"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -837,9 +677,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": [
-      "RP34"
-    ],
+    "used_by": ["RP34"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -849,9 +687,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP34"
-    ],
+    "used_by": ["RP34"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -860,9 +696,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": [
-      "RP34"
-    ],
+    "used_by": ["RP34"],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -970,9 +804,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary base-model raw card",
     "scope": "Official component-level parameter, activated-compute and context definitions; distinguishes base architecture from unvalidated derivative behavior.",
-    "used_by": [
-      "RP08"
-    ],
+    "used_by": ["RP08"],
     "retrieval_note": "Opened and inspected official raw README; no model execution."
   },
   {
@@ -981,9 +813,7 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary base-model raw card",
     "scope": "Official component-level parameter, activated-compute and context definitions; distinguishes base architecture from unvalidated derivative behavior.",
-    "used_by": [
-      "RP26"
-    ],
+    "used_by": ["RP26"],
     "retrieval_note": "Opened and inspected official raw README; no model execution."
   },
   {
@@ -992,9 +822,7 @@
     "retrieved_at": "2026-10-24",
     "source_type": "primary raw model card",
     "scope": "Exact derivative publisher warning about reasoning-budget exhaustion, empty final content and parser/template dependencies; not independently tested.",
-    "used_by": [
-      "RP27"
-    ],
+    "used_by": ["RP27"],
     "retrieval_note": "Targeted review read only; no model inference."
   }
 ]

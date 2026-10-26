@@ -25,9 +25,7 @@
       "summary": "A developer comparing models on his own voice preferred Qwen3-TTS quality; Chatterbox was simpler but shifted his accent. This is one voice and setup, not a representative ranking.",
       "confidence": "anecdotal",
       "date": "2026-10-04",
-      "urls": [
-        "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine"
-      ]
+      "urls": ["https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine"]
     },
     "published_examples": {
       "url": "https://huggingface.co/spaces/Qwen/Qwen3-TTS",
@@ -35,13 +33,7 @@
       "inspection": "Linked demo identified; no audio generated or auditioned."
     },
     "caveats": "Do not transfer hosted-model latency to a local deployment. Base clone quality depends on the reference and transcript; hardware/latency are implementation-specific.",
-    "evidence_source_ids": [
-      "VOICE-S001",
-      "VOICE-S002",
-      "VOICE-S003",
-      "VOICE-S004",
-      "VOICE-S005"
-    ],
+    "evidence_source_ids": ["VOICE-S001", "VOICE-S002", "VOICE-S003", "VOICE-S004", "VOICE-S005"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
@@ -57,10 +49,7 @@
     "category": "Self-hosted / hosted TTS",
     "priority": "P1-license",
     "model_url": "https://huggingface.co/fishaudio/drama-3",
-    "model_ids": [
-      "fishaudio/drama-3",
-      "drama-3"
-    ],
+    "model_ids": ["fishaudio/drama-3", "drama-3"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Technical report 2026-10-13; current publisher repository and pricing inspected 2026-10-23.",
     "properties": "35B total / 3B active MoE backbone; HF total differs when auxiliary components are counted. 83 languages listed in current model-card metadata. Multi-character dialogue, 16 speaker tags, inline direction, cloning, speech infilling and editing; streaming.",
@@ -107,9 +96,7 @@
     "category": "Self-hosted TTS",
     "priority": "Research-license",
     "model_url": "https://huggingface.co/fishaudio/s2-pro",
-    "model_ids": [
-      "fishaudio/s2-pro"
-    ],
+    "model_ids": ["fishaudio/s2-pro"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Predecessor retained in current Fish repository; newer hosted S2.1-Pro is a separate model.",
     "properties": "4B; 83 languages; inline emotions and nonverbal directions, voice cloning, 44.1 kHz output.",
@@ -133,13 +120,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Not a default commercial shipping option under the research terms. Do not describe S2.1 API results as S2-Pro open-weight behavior.",
-    "evidence_source_ids": [
-      "VOICE-S010",
-      "VOICE-S011",
-      "VOICE-S008",
-      "VOICE-S004",
-      "VOICE-S012"
-    ],
+    "evidence_source_ids": ["VOICE-S010", "VOICE-S011", "VOICE-S008", "VOICE-S004", "VOICE-S012"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/speech_api/",
@@ -155,10 +136,7 @@
     "category": "Hosted TTS",
     "priority": "P2-hosted",
     "model_url": "https://fish.audio/blog/s2-1-pro-free-api/",
-    "model_ids": [
-      "s2.1-pro",
-      "s2.1-pro-free"
-    ],
+    "model_ids": ["s2.1-pro", "s2.1-pro-free"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Free API announced 2026-06-23; current pricing still lists paid and free variants; Drama 3 is newer.",
     "properties": "83 languages; cloning and expressive character delivery; streaming API. Exact public parameter count not verified.",
@@ -179,11 +157,7 @@
       "inspection": "Demo descriptions read; audio not auditioned."
     },
     "caveats": "Provider advertising says free unlimited usage under fair use; capacity and terms still constrain it. No dark-fiction acceptance result.",
-    "evidence_source_ids": [
-      "VOICE-S013",
-      "VOICE-S008",
-      "VOICE-S014"
-    ],
+    "evidence_source_ids": ["VOICE-S013", "VOICE-S008", "VOICE-S014"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "Hosted terms; commercial entitlement of free API remains unresolved.",
@@ -199,10 +173,7 @@
     "category": "Self-hosted TTS",
     "priority": "P1",
     "model_url": "https://huggingface.co/ResembleAI/chatterbox-turbo",
-    "model_ids": [
-      "ResembleAI/chatterbox-turbo",
-      "ResembleAI/chatterbox"
-    ],
+    "model_ids": ["ResembleAI/chatterbox-turbo", "ResembleAI/chatterbox"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Turbo already public by Dec 2025; current repository offers Turbo 350M, Multilingual 500M and original English 500M.",
     "properties": "Turbo: 350M English, one-step distilled speech decoder, native laugh/cough/chuckle tags, cloning. Multilingual: 500M, 23+ languages. Original supports exaggeration/CFG controls; do not assume every knob exists on Turbo.",
@@ -227,12 +198,7 @@
       "inspection": "Linked samples identified; audio not auditioned."
     },
     "caveats": "A hosted sub-200 ms claim is not a local runtime guarantee. Community ONNX streaming can create chunk-boundary artifacts.",
-    "evidence_source_ids": [
-      "VOICE-S015",
-      "VOICE-S016",
-      "VOICE-S017",
-      "VOICE-S005"
-    ],
+    "evidence_source_ids": ["VOICE-S015", "VOICE-S016", "VOICE-S017", "VOICE-S005"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine",
@@ -247,9 +213,7 @@
     "category": "Self-hosted TTS",
     "priority": "P1",
     "model_url": "https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
-    "model_ids": [
-      "FunAudioLLM/Fun-CosyVoice3-0.5B-2512"
-    ],
+    "model_ids": ["FunAudioLLM/Fun-CosyVoice3-0.5B-2512"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "December 2025 released checkpoint; paper discussed 0.5B and 1.5B, which does not establish public 1.5B weights.",
     "properties": "0.5B; 9 languages, 18+ Chinese dialects; zero-shot/cross-language cloning, phoneme control, emotion/speed/volume instructions; text-in/audio-out streaming.",
@@ -273,12 +237,7 @@
       "inspection": "Published sample page identified; audio not auditioned."
     },
     "caveats": "Advertised 150 ms latency lacks an equivalent Open Legend test condition; do not rank it directly against cloud network measurements.",
-    "evidence_source_ids": [
-      "VOICE-S018",
-      "VOICE-S019",
-      "VOICE-S020",
-      "VOICE-S115"
-    ],
+    "evidence_source_ids": ["VOICE-S018", "VOICE-S019", "VOICE-S020", "VOICE-S115"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
@@ -293,9 +252,7 @@
     "category": "Self-hosted TTS",
     "priority": "P1-license",
     "model_url": "https://huggingface.co/IndexTeam/IndexTTS-2.5",
-    "model_ids": [
-      "IndexTeam/IndexTTS-2.5"
-    ],
+    "model_ids": ["IndexTeam/IndexTTS-2.5"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Report 2026-01-07; current 2.5 model card and demo verified (report date is not asserted as weight-release date).",
     "properties": "~0.8B GPT backbone; Chinese, English, Japanese, Spanish, Arabic; 22.05 kHz. Separates timbre from emotion; eight-dimensional emotion controls include anger, fear and disgust; speed and Pinyin/CMU/Kana controls.",
@@ -316,12 +273,7 @@
       "inspection": "Published demos identified; audio not auditioned."
     },
     "caveats": "Emotion support is not proof of acceptance of every script. Base backbone size excludes auxiliaries. Separate prerequisite licenses matter.",
-    "evidence_source_ids": [
-      "VOICE-S021",
-      "VOICE-S022",
-      "VOICE-S023",
-      "VOICE-S148"
-    ],
+    "evidence_source_ids": ["VOICE-S021", "VOICE-S022", "VOICE-S023", "VOICE-S148"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "Exact weight-license text, including commercial thresholds and downstream clauses.",
@@ -338,9 +290,7 @@
     "category": "Self-hosted TTS",
     "priority": "P1",
     "model_url": "https://huggingface.co/openbmb/VoxCPM2",
-    "model_ids": [
-      "openbmb/VoxCPM2"
-    ],
+    "model_ids": ["openbmb/VoxCPM2"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Repository news dates release April 2026; technical report June 2026. Current code and weights Apache-2.0.",
     "properties": "2B tokenizer-free diffusion-autoregressive TTS; 30 languages plus Chinese dialects, 48 kHz; description-driven voice design, controlled voice cloning, streaming.",
@@ -365,12 +315,7 @@
       "inspection": "Links and described capabilities inspected; no listening or generation."
     },
     "caveats": "Publisher acknowledges run-to-run style variation and instability on long/highly expressive passages; retries increase cost and latency.",
-    "evidence_source_ids": [
-      "VOICE-S024",
-      "VOICE-S025",
-      "VOICE-S143",
-      "VOICE-S144"
-    ],
+    "evidence_source_ids": ["VOICE-S024", "VOICE-S025", "VOICE-S143", "VOICE-S144"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/openbmb/VoxCPM2",
@@ -409,11 +354,7 @@
       "inspection": "Page text inspected; videos/audio not auditioned."
     },
     "caveats": "Headline free-form editing description is broader than current acoustic-edit examples: fixed instruction templates are documented for some edits. No independently verified refusal or production latency evidence.",
-    "evidence_source_ids": [
-      "VOICE-S026",
-      "VOICE-S027",
-      "VOICE-S028"
-    ],
+    "evidence_source_ids": ["VOICE-S026", "VOICE-S027", "VOICE-S028"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/FireRedTeam/FireRedTTS3",
@@ -427,10 +368,7 @@
     "category": "Self-hosted TTS",
     "priority": "P1",
     "model_url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5",
-    "model_ids": [
-      "OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5",
-      "OpenMOSS-Team/MOSS-TTS-v1.5"
-    ],
+    "model_ids": ["OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5", "OpenMOSS-Team/MOSS-TTS-v1.5"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "8B v1.5 released May 26 2026; Local-Transformer 4B v1.5 June 18. MOSS 2.0 remains a roadmap announcement in the inspected repository.",
     "properties": "Local 4B and flagship 8B; 31 languages, voice cloning, long-form speech, code-switching, duration/pause and Pinyin/IPA control. Local v1.5 explicitly adds 48 kHz stereo; do not apply that output format to the separate 8B checkpoint.",
@@ -455,13 +393,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Do not substitute older 1.7B reviews for 4B/8B v1.5 quality. Stereo 48 kHz raises transport cost; concurrent memory/latency not verified.",
-    "evidence_source_ids": [
-      "VOICE-S029",
-      "VOICE-S030",
-      "VOICE-S031",
-      "VOICE-S115",
-      "VOICE-S145"
-    ],
+    "evidence_source_ids": ["VOICE-S029", "VOICE-S030", "VOICE-S031", "VOICE-S115", "VOICE-S145"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5",
@@ -477,9 +409,7 @@
     "category": "Self-hosted dialogue TTS",
     "priority": "P2",
     "model_url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTSD-v1.0",
-    "model_ids": [
-      "OpenMOSS-Team/MOSS-TTSD-v1.0"
-    ],
+    "model_ids": ["OpenMOSS-Team/MOSS-TTSD-v1.0"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current released v1.0 in MOSS family; technical paper February 2026.",
     "properties": "8B dialogue model, 20-language card; multi-speaker long-form conversation, turn control and voice references.",
@@ -500,10 +430,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Full-dialogue synthesis is distinct from low-latency interactive turn synthesis; no validated minimum hardware or game latency.",
-    "evidence_source_ids": [
-      "VOICE-S032",
-      "VOICE-S030"
-    ],
+    "evidence_source_ids": ["VOICE-S032", "VOICE-S030"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://github.com/OpenMOSS/MOSS-TTS",
@@ -516,9 +443,7 @@
     "category": "On-device TTS",
     "priority": "P2-edge",
     "model_url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M",
-    "model_ids": [
-      "OpenMOSS-Team/MOSS-TTS-Nano-100M"
-    ],
+    "model_ids": ["OpenMOSS-Team/MOSS-TTS-Nano-100M"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Released April 10 2026.",
     "properties": "100M; 20 languages; 48 kHz stereo; reference voice cloning and streaming; CPU-oriented.",
@@ -542,11 +467,7 @@
       "inspection": "Demo link identified; not executed."
     },
     "caveats": "Small size is not evidence of flagship acting quality; expressions and reference robustness still need later evaluation.",
-    "evidence_source_ids": [
-      "VOICE-S033",
-      "VOICE-S034",
-      "VOICE-S146"
-    ],
+    "evidence_source_ids": ["VOICE-S033", "VOICE-S034", "VOICE-S146"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M",
@@ -560,10 +481,7 @@
     "category": "Self-hosted dialogue TTS",
     "priority": "P2",
     "model_url": "https://github.com/nari-labs/dia2",
-    "model_ids": [
-      "nari-labs/Dia2-1B",
-      "nari-labs/Dia2-2B"
-    ],
+    "model_ids": ["nari-labs/Dia2-1B", "nari-labs/Dia2-2B"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current successor to original Dia1.6B; public by December 2025, exact release day not established.",
     "properties": "1B and 2B; English; streaming dialogue with contextual prefix audio and speaker conditioning; up to about two minutes per generation in published guidance.",
@@ -587,10 +505,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Prefix handling can affect latency/echoing. Do not confuse streaming output with proven full-duplex interaction.",
-    "evidence_source_ids": [
-      "VOICE-S035",
-      "VOICE-S036"
-    ],
+    "evidence_source_ids": ["VOICE-S035", "VOICE-S036"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://github.com/nari-labs/dia2",
@@ -603,9 +518,7 @@
     "category": "Self-hosted / licensed TTS",
     "priority": "Research-license",
     "model_url": "https://huggingface.co/bosonai/higgs-tts-3-4b",
-    "model_ids": [
-      "bosonai/higgs-tts-3-4b"
-    ],
+    "model_ids": ["bosonai/higgs-tts-3-4b"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current public 4B model; June 2026 release evidence, retrieved October 23.",
     "properties": "4B backbone plus speech components; 100+ languages; 24 kHz; zero-shot cloning, emotion/style/prosody/pause/sound controls and streaming.",
@@ -629,11 +542,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "High practical interest, but not a cleared commercial default. Provider subsecond claims depend on serving setup.",
-    "evidence_source_ids": [
-      "VOICE-S037",
-      "VOICE-S038",
-      "VOICE-S012"
-    ],
+    "evidence_source_ids": ["VOICE-S037", "VOICE-S038", "VOICE-S012"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.reddit.com/r/LocalLLaMA/comments/1v4w5cj/audiocpp_release_04_higgs_audio_v3_tts_4b_10x/",
@@ -647,9 +556,7 @@
     "category": "Self-hosted TTS",
     "priority": "P2",
     "model_url": "https://huggingface.co/zai-org/GLM-TTS",
-    "model_ids": [
-      "zai-org/GLM-TTS"
-    ],
+    "model_ids": ["zai-org/GLM-TTS"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Report December 16 2025; current model card verified.",
     "properties": "Chinese/English; streaming speech-token generation plus flow-matching rendering; 3–10 second reference cloning; phoneme/text input and emotion-oriented training. Exact total size not verified.",
@@ -670,11 +577,7 @@
       "inspection": "Demo destination identified; not auditioned."
     },
     "caveats": "LoRA/training capability is not proof of off-the-shelf character performance. No current independent broad comparison verified.",
-    "evidence_source_ids": [
-      "VOICE-S039",
-      "VOICE-S040",
-      "VOICE-S041"
-    ],
+    "evidence_source_ids": ["VOICE-S039", "VOICE-S040", "VOICE-S041"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/zai-org/GLM-TTS",
@@ -688,9 +591,7 @@
     "category": "Self-hosted TTS / editing",
     "priority": "P2-license",
     "model_url": "https://huggingface.co/stepfun-ai/Step-Audio-EditX",
-    "model_ids": [
-      "stepfun-ai/Step-Audio-EditX"
-    ],
+    "model_ids": ["stepfun-ai/Step-Audio-EditX"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Initial Nov 2025; Jan 23 2026 weight update adds paralinguistic tags and vLLM/training support.",
     "properties": "3B; speech generation and iterative editing of emotion, speaking style and paralinguistics; Japanese/Korean added Nov 28 alongside earlier languages; exact complete language count not verified.",
@@ -711,10 +612,7 @@
       "inspection": "Text examples inspected; no audio audition."
     },
     "caveats": "Model-updated-in-place risk: pin checkpoint revision for reproducible later evaluation. Commercial weight interpretation unresolved.",
-    "evidence_source_ids": [
-      "VOICE-S042",
-      "VOICE-S043"
-    ],
+    "evidence_source_ids": ["VOICE-S042", "VOICE-S043"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/stepfun-ai/Step-Audio-EditX",
@@ -727,10 +625,7 @@
     "category": "Self-hosted TTS / continuation",
     "priority": "P2-license",
     "model_url": "https://huggingface.co/HumeAI/tada-1b",
-    "model_ids": [
-      "HumeAI/tada-1b",
-      "HumeAI/tada-3b-ml"
-    ],
+    "model_ids": ["HumeAI/tada-1b", "HumeAI/tada-3b-ml"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Report February 2026; open release blog March 2026; distinct from the retiring Octave/EVI APIs.",
     "properties": "Llama3.2-derived 1B and 3B backbone variants; jointly aligned text/acoustic stream, speech continuation and cloning; multilingual 3B variant. File parameter totals include extra speech components.",
@@ -751,11 +646,7 @@
       "inspection": "Demo link identified, not executed."
     },
     "caveats": "Author zero-hallucination benchmark is dataset-specific, not a guarantee. API sunset does not itself revoke downloadable model availability.",
-    "evidence_source_ids": [
-      "VOICE-S044",
-      "VOICE-S045",
-      "VOICE-S046"
-    ],
+    "evidence_source_ids": ["VOICE-S044", "VOICE-S045", "VOICE-S046"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/HumeAI/tada-1b",
@@ -800,13 +691,7 @@
       "inspection": "Demo identified; not executed."
     },
     "caveats": "Quality and speed vary widely by CPU/runtime, reference voice and language; tiny variants too recent for mature sentiment.",
-    "evidence_source_ids": [
-      "VOICE-S047",
-      "VOICE-S048",
-      "VOICE-S049",
-      "VOICE-S050",
-      "VOICE-S051"
-    ],
+    "evidence_source_ids": ["VOICE-S047", "VOICE-S048", "VOICE-S049", "VOICE-S050", "VOICE-S051"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "HF weight license metadata and gated-access use notices.",
@@ -824,10 +709,7 @@
     "category": "On-device TTS",
     "priority": "P1-edge",
     "model_url": "https://huggingface.co/gradium/phonon-31m-en",
-    "model_ids": [
-      "gradium/phonon-31m-en",
-      "gradium/phonon-40m-multilingual"
-    ],
+    "model_ids": ["gradium/phonon-31m-en", "gradium/phonon-40m-multilingual"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Launched 2026-10-21; very recent, no mature user consensus.",
     "properties": "31M backbone (excludes tokenizer),24 kHz mono, 64.5 MB Q8 weights; streaming. 40M monolingual and five-language variants share runtime; catalogue of about 100 voices.",
@@ -848,11 +730,7 @@
       "inspection": "Demo description inspected; not executed."
     },
     "caveats": "Publisher preference/accuracy comparisons are author benchmarks; release is two days old. Character acting range needs later evaluation.",
-    "evidence_source_ids": [
-      "VOICE-S052",
-      "VOICE-S053",
-      "VOICE-S054"
-    ],
+    "evidence_source_ids": ["VOICE-S052", "VOICE-S053", "VOICE-S054"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/gradium/phonon-31m-en",
@@ -866,10 +744,7 @@
     "category": "On-device TTS",
     "priority": "P2-license",
     "model_url": "https://github.com/neuphonic/neutts",
-    "model_ids": [
-      "neuphonic/neutts-nano",
-      "neuphonic/neutts-2e"
-    ],
+    "model_ids": ["neuphonic/neutts-nano", "neuphonic/neutts-2e"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Nano multilingual collection current July 2026; current 2E English emotion alpha verified October 23, exact 2E release day unknown.",
     "properties": "Nano ~120M active /229M with embeddings; separate EN/FR/DE/ES models with cloning. 2E ~125M active /236M total: four fixed speakers, six emotions plus neutral, including anger/disgust/fear; text input rather than Nano phonemes.",
@@ -890,11 +765,7 @@
       "inspection": "Descriptions inspected, audio not auditioned."
     },
     "caveats": "2E is early alpha and English-only; gated custom model terms are a production decision point.",
-    "evidence_source_ids": [
-      "VOICE-S055",
-      "VOICE-S056",
-      "VOICE-S057"
-    ],
+    "evidence_source_ids": ["VOICE-S055", "VOICE-S056", "VOICE-S057"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://github.com/neuphonic/neutts",
@@ -908,9 +779,7 @@
     "category": "Self-hosted TTS",
     "priority": "Research-license",
     "model_url": "https://huggingface.co/k2-fsa/OmniVoice",
-    "model_ids": [
-      "k2-fsa/OmniVoice"
-    ],
+    "model_ids": ["k2-fsa/OmniVoice"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Report April 1 2026; current model card explicitly distinguishes code and weights.",
     "properties": "0.6B Qwen3-derived diffusion speech model; 646 languages advertised, 24 kHz, voice cloning/design, laughter and phoneme/pinyin controls.",
@@ -935,13 +804,7 @@
       "inspection": "Demo identified, not run."
     },
     "caveats": "646-language support does not imply equal quality; noncommercial weights prevent treating it as a cleared commercial default.",
-    "evidence_source_ids": [
-      "VOICE-S058",
-      "VOICE-S059",
-      "VOICE-S060",
-      "VOICE-S144",
-      "VOICE-S143"
-    ],
+    "evidence_source_ids": ["VOICE-S058", "VOICE-S059", "VOICE-S060", "VOICE-S144", "VOICE-S143"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/k2-fsa/OmniVoice",
@@ -957,9 +820,7 @@
     "category": "Self-hosted TTS",
     "priority": "Watchlist-license",
     "model_url": "https://huggingface.co/TontaubeAI/TontaubeV1",
-    "model_ids": [
-      "TontaubeAI/TontaubeV1"
-    ],
+    "model_ids": ["TontaubeAI/TontaubeV1"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Technical report September 8 2026; public inference release v1.0.0.",
     "properties": "2.874B across four predictors; English/German primary, 7 languages total; audiobook/conversational/agentic styles; cloning from 5–60s reference; long-form and MP3/Opus streaming.",
@@ -980,11 +841,7 @@
       "inspection": "Sample labels inspected; audio not auditioned."
     },
     "caveats": "Limited public adoption; author RTX5090 ~200 ms first-audio claim is setup-specific; demonstration MP3s excluded from model-license grant.",
-    "evidence_source_ids": [
-      "VOICE-S061",
-      "VOICE-S062",
-      "VOICE-S063"
-    ],
+    "evidence_source_ids": ["VOICE-S061", "VOICE-S062", "VOICE-S063"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/TontaubeAI/TontaubeV1",
@@ -998,9 +855,7 @@
     "category": "Self-hosted / enterprise TTS",
     "priority": "P2",
     "model_url": "https://huggingface.co/nvidia/magpie_tts_multilingual_357m",
-    "model_ids": [
-      "nvidia/magpie_tts_multilingual_357m@v2607"
-    ],
+    "model_ids": ["nvidia/magpie_tts_multilingual_357m@v2607"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Latest card version v2607 released July 21 2026, following v2602/v2512.",
     "properties": "364M parameter count in current card despite 357m repository name; 12 languages, predefined voices, autoregressive codec-based speech; enterprise streaming deployment.",
@@ -1021,10 +876,7 @@
       "inspection": "Demo identified, not run."
     },
     "caveats": "Less direct evidence for rich free-form character acting than dedicated expressive models. Do not use repository name as exact parameter count.",
-    "evidence_source_ids": [
-      "VOICE-S064",
-      "VOICE-S065"
-    ],
+    "evidence_source_ids": ["VOICE-S064", "VOICE-S065"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/nvidia/magpie_tts_multilingual_357m",
@@ -1037,10 +889,7 @@
     "category": "Hosted TTS",
     "priority": "P1-hosted",
     "model_url": "https://help.aliyun.com/en/model-studio/qwen-audio-3-1-tts-plus",
-    "model_ids": [
-      "qwen-audio-3.1-tts-plus",
-      "qwen-audio-3.1-tts-flash"
-    ],
+    "model_ids": ["qwen-audio-3.1-tts-plus", "qwen-audio-3.1-tts-flash"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current 3.1 docs updated October 2026; international price page updated October 22. July 3.0 is a predecessor, not the latest hosted version.",
     "properties": "Plus targets premium character performance/dubbing; Flash realtime use. Both stream, follow delivery instructions and fine-grained tags for emotion, persona, pace and volume; improved noisy-reference cloning. Exact 3.1 language count/size not verified.",
@@ -1061,12 +910,7 @@
       "inspection": "Catalogue descriptions inspected; previews not auditioned."
     },
     "caveats": "Exact audio-token rate/duration conversion and all supported 3.1 locales remain unresolved; 3.0's 16-language count should not be silently copied.",
-    "evidence_source_ids": [
-      "VOICE-S066",
-      "VOICE-S067",
-      "VOICE-S068",
-      "VOICE-S069"
-    ],
+    "evidence_source_ids": ["VOICE-S066", "VOICE-S067", "VOICE-S068", "VOICE-S069"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "Current Plus/Flash model pages and international pricing unit definitions.",
@@ -1083,10 +927,7 @@
     "category": "Hosted TTS",
     "priority": "P1-hosted-policy",
     "model_url": "https://elevenlabs.io/docs/overview/models",
-    "model_ids": [
-      "eleven_v4",
-      "eleven_v4_turbo"
-    ],
+    "model_ids": ["eleven_v4", "eleven_v4_turbo"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current official catalogue and pricing list v4/v4 Turbo on October 23 2026; exact launch date not established in this pass.",
     "properties": "90+ languages; expressive audio tags and character delivery; v4 multispeaker dialogue. Turbo optimized for realtime, ~100 ms median inference claim; that is not full-turn latency.",
@@ -1107,11 +948,7 @@
       "inspection": "Descriptions read; audio not auditioned."
     },
     "caveats": "Do not assume older v3 experiences predict v4. Exact current version has limited independently audited sentiment in this research.",
-    "evidence_source_ids": [
-      "VOICE-S070",
-      "VOICE-S071",
-      "VOICE-S072"
-    ],
+    "evidence_source_ids": ["VOICE-S070", "VOICE-S071", "VOICE-S072"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://elevenlabs.io/docs/overview/models",
@@ -1125,10 +962,7 @@
     "category": "Hosted / enterprise TTS",
     "priority": "P2-policy",
     "model_url": "https://docs.cartesia.ai/build-with-cartesia/tts-models/latest",
-    "model_ids": [
-      "sonic-3.6-2026-08-27",
-      "sonic-3.6"
-    ],
+    "model_ids": ["sonic-3.6-2026-08-27", "sonic-3.6"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Stable snapshot sonic-3.6-2026-08-27; alias may change. Current catalogue inspected October 23.",
     "properties": "44 languages, context-sensitive prosody and voice cloning; realtime streaming and faithful transcript rendering.",
@@ -1149,13 +983,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Policy is material for this project; obtain exact game-content interpretation before committing. A moving alias is not reproducible.",
-    "evidence_source_ids": [
-      "VOICE-S073",
-      "VOICE-S074",
-      "VOICE-S075",
-      "VOICE-S076",
-      "VOICE-S149"
-    ],
+    "evidence_source_ids": ["VOICE-S073", "VOICE-S074", "VOICE-S075", "VOICE-S076", "VOICE-S149"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "Stable snapshot, current AUP and credit-meter documentation.",
@@ -1173,10 +1001,7 @@
     "category": "Hosted / enterprise TTS",
     "priority": "P1-hosted",
     "model_url": "https://docs.inworld.ai/tts/tts-models",
-    "model_ids": [
-      "inworld-tts-2",
-      "inworld-tts-2-flash"
-    ],
+    "model_ids": ["inworld-tts-2", "inworld-tts-2-flash"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current successor pair in September/October 2026 documentation.",
     "properties": "Docs say 200+ languages/locales for both; newer product page says about 500 languages/dialects via 623codes for TTS-2 and fewer for Flash: coverage discrepancy unresolved. Instant cloning, nonverbals; TTS-2 adds natural-language steering, phonetic timestamps and visemes. P90 server TTFB 100/20 ms excludes network.",
@@ -1223,10 +1048,7 @@
     "category": "Hosted TTS",
     "priority": "P1-hosted",
     "model_url": "https://platform.minimax.io/docs/pricing/overview",
-    "model_ids": [
-      "speech-2.8-hd",
-      "speech-2.8-turbo"
-    ],
+    "model_ids": ["speech-2.8-hd", "speech-2.8-turbo"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current 2.8 HD/Turbo appear in official pricing on October 23; exact release date not independently established.",
     "properties": "Expressive synthesis, voice cloning/design, adjustable speed/pitch/volume and voice mixing; sync short-form and async long-form up to 1M characters.40+language support listed by official deployment-provider documentation.",
@@ -1247,10 +1069,7 @@
       "inspection": "Model listing inspected; no audio evaluation."
     },
     "caveats": "Do not use old Speech02 demos as 2.8 evidence. Commercial policy acceptance of all dark scripts unresolved.",
-    "evidence_source_ids": [
-      "VOICE-S083",
-      "VOICE-S084"
-    ],
+    "evidence_source_ids": ["VOICE-S083", "VOICE-S084"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://platform.minimax.io/docs/pricing/overview",
@@ -1263,10 +1082,7 @@
     "category": "Hosted / enterprise TTS",
     "priority": "P2-hosted",
     "model_url": "https://deepgram.com/product/text-to-speech/flux",
-    "model_ids": [
-      "Flux TTS",
-      "Aura-2"
-    ],
+    "model_ids": ["Flux TTS", "Aura-2"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Flux TTS is the current conversation-aware offering in October 2026; Aura2 remains a separately priced established option.",
     "properties": "Flux uses conversational context for delivery/continuity and realtime interruption-aware applications; current page demonstrates English voices. Aura2 broader voice/language inventory must be checked separately.",
@@ -1287,12 +1103,7 @@
       "inspection": "Page text inspected; demo not used."
     },
     "caveats": "Do not transfer Aura2 language coverage or pricing to Flux. No current fictional violence acceptance test.",
-    "evidence_source_ids": [
-      "VOICE-S085",
-      "VOICE-S086",
-      "VOICE-S087",
-      "VOICE-S088"
-    ],
+    "evidence_source_ids": ["VOICE-S085", "VOICE-S086", "VOICE-S087", "VOICE-S088"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://deepgram.com/product/text-to-speech/flux",
@@ -1307,10 +1118,7 @@
     "category": "Hosted / enterprise TTS",
     "priority": "P2-hosted",
     "model_url": "https://docs.rime.ai/docs/models",
-    "model_ids": [
-      "coda",
-      "mistv3"
-    ],
+    "model_ids": ["coda", "mistv3"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current docs recommend Coda for new work; Coda May 2026, Mist v3 March/April 2026 sources differ. Pricing page now labels Coda v2; exact API snapshot/revision should be confirmed.",
     "properties": "Coda:10 cloud languages, 313 voices, word timestamps, conversational prosody. Mist v3:4 languages, 78 voices, English pronunciation overrides and custom pauses. Most individual voices are monolingual.",
@@ -1331,11 +1139,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Coda lacks inline phoneme override. Marketing 50+ languages is not the audited Coda 10-language / Mist 4-language API matrix. Version/date naming discrepancies recorded.",
-    "evidence_source_ids": [
-      "VOICE-S089",
-      "VOICE-S090",
-      "VOICE-S091"
-    ],
+    "evidence_source_ids": ["VOICE-S089", "VOICE-S090", "VOICE-S091"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://docs.rime.ai/docs/models",
@@ -1349,9 +1153,7 @@
     "category": "Hosted / enterprise TTS",
     "priority": "P2-policy",
     "model_url": "https://gradium.ai/text-to-speech",
-    "model_ids": [
-      "Gradium TTS (current hosted alias)"
-    ],
+    "model_ids": ["Gradium TTS (current hosted alias)"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current managed product October 2026; separate from new open Phonon weights.",
     "properties": "Five languages:EN/FR/DE/ES/PT with code-switching, cloning/design and custom pronunciation. Stateful streaming sessions capped at five minutes; author describes ~50 ms median first audible sound in its benchmark.",
@@ -1372,11 +1174,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Limited language set versus other providers; content contract is a material issue for dark dialogue.",
-    "evidence_source_ids": [
-      "VOICE-S092",
-      "VOICE-S093",
-      "VOICE-S094"
-    ],
+    "evidence_source_ids": ["VOICE-S092", "VOICE-S093", "VOICE-S094"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://gradium.ai/text-to-speech",
@@ -1390,9 +1188,7 @@
     "category": "Hosted TTS",
     "priority": "P2-hosted",
     "model_url": "https://docs.x.ai/developers/model-capabilities/audio/text-to-speech",
-    "model_ids": [
-      "POST /v1/tts (version not exposed)"
-    ],
+    "model_ids": ["POST /v1/tts (version not exposed)"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current docs October 23 2026; service identity shown as SpaceXSI on x.ai. Exact public TTS model version not exposed in inspected endpoint docs.",
     "properties": "20 languages/locale codes, selectable/custom voices; inline laughs/cries/sighs and wrapping whisper/loud/singing/speed/pitch tags; published per-tag audio examples.",
@@ -1413,11 +1209,7 @@
       "inspection": "Tag descriptions read; audio not auditioned."
     },
     "caveats": "Brand reputation for fewer refusals is not evidence for this exact speech endpoint. No current-model independent sentiment or mature-fiction acceptance established.",
-    "evidence_source_ids": [
-      "VOICE-S095",
-      "VOICE-S096",
-      "VOICE-S097"
-    ],
+    "evidence_source_ids": ["VOICE-S095", "VOICE-S096", "VOICE-S097"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://docs.x.ai/developers/model-capabilities/audio/text-to-speech",
@@ -1431,10 +1223,7 @@
     "category": "Hosted / self-deployment contract TTS",
     "priority": "P1-hosted-watch",
     "model_url": "https://docs.mistral.ai/models/voxtral-mini-tts-3-0",
-    "model_ids": [
-      "voxtral-mini-tts-3-0",
-      "voxtral-mini-tts-realtime-3-0"
-    ],
+    "model_ids": ["voxtral-mini-tts-3-0", "voxtral-mini-tts-realtime-3-0"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Model docs date October 20 2026, public preview; launch page discovered October 23. Very recent.",
     "properties": "Preset/cloned voices, 34 emotion tags and 2 pace tags, custom pronunciation, streaming; ~90 ms TTFA author claim. Docs say 9 languages, launch says 35+ languages/50+ dialects: unresolved rollout/documentation discrepancy.",
@@ -1455,11 +1244,7 @@
       "inspection": "Published transcript read; media not auditioned."
     },
     "caveats": "Free-form whole-request style instructions are not available at launch despite broad voice-control wording. Very recent; no mature independent sentiment.",
-    "evidence_source_ids": [
-      "VOICE-S098",
-      "VOICE-S099",
-      "VOICE-S100"
-    ],
+    "evidence_source_ids": ["VOICE-S098", "VOICE-S099", "VOICE-S100"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://docs.mistral.ai/models/voxtral-mini-tts-3-0",
@@ -1473,9 +1258,7 @@
     "category": "Self-hosted TTS",
     "priority": "P2",
     "model_url": "https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B",
-    "model_ids": [
-      "microsoft/VibeVoice-Realtime-0.5B"
-    ],
+    "model_ids": ["microsoft/VibeVoice-Realtime-0.5B"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Released December 3 2025; experimental additional voices December 16. Current main repository retains realtime release.",
     "properties": "0.5B streaming text-to-speech, approximately 300 ms first audible speech author claim; roughly 10 min long-form guidance; English-focused verified examples.",
@@ -1496,10 +1279,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Original VibeVoice TTS code was removed September 5 2025; current realtime code is separate. Do not recommend an abandoned original path from stale tutorials.",
-    "evidence_source_ids": [
-      "VOICE-S101",
-      "VOICE-S102"
-    ],
+    "evidence_source_ids": ["VOICE-S101", "VOICE-S102"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B",
@@ -1512,10 +1292,7 @@
     "category": "Hosted voice — retiring",
     "priority": "Avoid-new-integration",
     "model_url": "https://dev.hume.ai/voice/docs/text-to-speech-tts/overview",
-    "model_ids": [
-      "Octave2 preview",
-      "EVI"
-    ],
+    "model_ids": ["Octave2 preview", "EVI"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Official sunset announced: November 13 2026 at 12:01am EST; inspected October 23.",
     "properties": "Octave 2 preview:11 languages, cloning from short reference, streaming input/output and conversational context; reported~100 ms model latency excludes network. Older Octave 1 acting instructions are not identical to 2's launch features.",
@@ -1536,10 +1313,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Do not start a new production integration weeks before shutdown. Official notice says account data deleted after sunset; this is a concrete current lifecycle issue.",
-    "evidence_source_ids": [
-      "VOICE-S103",
-      "VOICE-S104"
-    ],
+    "evidence_source_ids": ["VOICE-S103", "VOICE-S104"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://dev.hume.ai/voice/docs/text-to-speech-tts/overview",
@@ -1552,9 +1326,7 @@
     "category": "Self-hosted full-duplex speech",
     "priority": "P1-interaction",
     "model_url": "https://huggingface.co/nvidia/personaplex-7b-v1",
-    "model_ids": [
-      "nvidia/personaplex-7b-v1"
-    ],
+    "model_ids": ["nvidia/personaplex-7b-v1"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Released January 15 2026.",
     "properties": "7B language backbone plus speech components; English 24 kHz mono; simultaneous listening/speaking, role-text prompt and voice conditioning, Moshi-based.",
@@ -1575,11 +1347,7 @@
       "inspection": "Descriptions read; no listening or interaction."
     },
     "caveats": "Full-duplex dynamics do not establish strong planning, world-state consistency or low refusal. This is a speech-interaction candidate, not a proven decision engine.",
-    "evidence_source_ids": [
-      "VOICE-S105",
-      "VOICE-S106",
-      "VOICE-S107"
-    ],
+    "evidence_source_ids": ["VOICE-S105", "VOICE-S106", "VOICE-S107"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/nvidia/personaplex-7b-v1",
@@ -1593,9 +1361,7 @@
     "category": "Self-hosted multimodal speech",
     "priority": "P2-interaction",
     "model_url": "https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct",
-    "model_ids": [
-      "Qwen/Qwen3-Omni-30B-A3B-Instruct"
-    ],
+    "model_ids": ["Qwen/Qwen3-Omni-30B-A3B-Instruct"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Public open-weight generation September 22 2025; newer hosted Omni generations are separate, not replacement open checkpoints.",
     "properties": "30B MoE /3B active thinker plus speech modules; 119 text languages, 19 audio-input and 10 speech-output languages; streaming multimodal speech/text reasoning.",
@@ -1616,11 +1382,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Paper 234 ms cold-start first-packet claim is a theoretical/author setting, not full speech-turn SLA. Larger memory than active parameter count suggests. No low-refusal evidence for exact checkpoint.",
-    "evidence_source_ids": [
-      "VOICE-S108",
-      "VOICE-S109",
-      "VOICE-S110"
-    ],
+    "evidence_source_ids": ["VOICE-S108", "VOICE-S109", "VOICE-S110"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct",
@@ -1634,9 +1396,7 @@
     "category": "Hosted speech-to-speech",
     "priority": "P2-interaction",
     "model_url": "https://docs.x.ai/developers/models/grok-voice-3.0",
-    "model_ids": [
-      "grok-voice-3.0"
-    ],
+    "model_ids": ["grok-voice-3.0"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Official launch on 2026-10-14; grok-voice-latest automatically switched to 3.0. Grok Voice 2.0 is marked deprecated; pin exact version for comparison.",
     "properties": "Realtime text/audio input and output for interactive voice agents. Exact architecture, parameter count and version-specific language count undisclosed in inspected model card.",
@@ -1657,12 +1417,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "No inference from general Grok reputation to this exact voice model's fictional-content acceptance. Keep text-only TTS $15/M characters pricing separate.",
-    "evidence_source_ids": [
-      "VOICE-S111",
-      "VOICE-S096",
-      "VOICE-S097",
-      "VOICE-S150"
-    ],
+    "evidence_source_ids": ["VOICE-S111", "VOICE-S096", "VOICE-S097", "VOICE-S150"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "Official October 14 launch announcement and pricing page.",
@@ -1679,10 +1434,7 @@
     "category": "Hosted speech-to-speech",
     "priority": "P2-interaction-policy",
     "model_url": "https://elevenlabs.io/pricing/api",
-    "model_ids": [
-      "Eleven Realtime v1 Mini",
-      "Eleven Realtime v1 Max"
-    ],
+    "model_ids": ["Eleven Realtime v1 Mini", "Eleven Realtime v1 Max"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current October 2026 new realtime pair in official API catalogue.",
     "properties": "90+ languages, integrated voice conversation; Max includes tool use/multi-step tasks. Provider TTFA examples 620msMini/570msMax depend on its test setup.",
@@ -1703,11 +1455,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Provider percentage scores describe its benchmarks, not world-state or moral-range correctness. Content policy remains relevant.",
-    "evidence_source_ids": [
-      "VOICE-S071",
-      "VOICE-S070",
-      "VOICE-S072"
-    ],
+    "evidence_source_ids": ["VOICE-S071", "VOICE-S070", "VOICE-S072"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://elevenlabs.io/docs/overview/models",
@@ -1751,12 +1499,7 @@
       "inspection": "Methodology and written judgments read; clips not auditioned."
     },
     "caveats": "Publisher acknowledges weaker content fidelity in some low-resource languages and excludes singing/unified sound generation. Choosing a few good demo takes is not a stability guarantee.",
-    "evidence_source_ids": [
-      "VOICE-S112",
-      "VOICE-S113",
-      "VOICE-S114",
-      "VOICE-S115"
-    ],
+    "evidence_source_ids": ["VOICE-S112", "VOICE-S113", "VOICE-S114", "VOICE-S115"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/dots-studio/dots.tts-soar",
@@ -1771,9 +1514,7 @@
     "category": "Self-hosted speech editing",
     "priority": "P2-license",
     "model_url": "https://huggingface.co/dots-studio/dots.tts.edit",
-    "model_ids": [
-      "dots-studio/dots.tts.edit"
-    ],
+    "model_ids": ["dots-studio/dots.tts.edit"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "August 2026 release; report August 2; September doteBench adds published editing evaluation tasks.",
     "properties": "2B; English/Mandarin; 48 kHz; localized text replacement/insertion/deletion, emotion, pitch/pace, pauses, enhancement/background operations, compositional editing and zero-shot TTS.",
@@ -1794,11 +1535,7 @@
       "inspection": "Demo destination identified; audio not auditioned."
     },
     "caveats": "Local preservation/instruction-following errors are acknowledged. This is an asset-editing tool rather than a validated realtime voice engine.",
-    "evidence_source_ids": [
-      "VOICE-S116",
-      "VOICE-S113",
-      "VOICE-S117"
-    ],
+    "evidence_source_ids": ["VOICE-S116", "VOICE-S113", "VOICE-S117"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://github.com/studio-dots-ai/dots.tts",
@@ -1812,11 +1549,7 @@
     "category": "Speech recognition / alignment",
     "priority": "P1-companion",
     "model_url": "https://huggingface.co/Qwen/Qwen3-ASR-1.7B",
-    "model_ids": [
-      "Qwen/Qwen3-ASR-1.7B",
-      "Qwen/Qwen3-ASR-0.6B",
-      "Qwen/Qwen3-ForcedAligner-0.6B"
-    ],
+    "model_ids": ["Qwen/Qwen3-ASR-1.7B", "Qwen/Qwen3-ASR-0.6B", "Qwen/Qwen3-ForcedAligner-0.6B"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Released January 29 2026; current open-weight models inspected October 23.",
     "properties": "1.7B/0.6B; 30 languages plus 22 Chinese dialects; language-ID and unified streaming/offline ASR. Separate 0.6B forced aligner handles 11 languages and up to 5 min speech.",
@@ -1837,10 +1570,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "30 languages + 22 dialects is not 52 distinct languages. Published extreme batch throughput does not indicate single-player response latency.",
-    "evidence_source_ids": [
-      "VOICE-S118",
-      "VOICE-S119"
-    ],
+    "evidence_source_ids": ["VOICE-S118", "VOICE-S119"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/Qwen/Qwen3-ASR-1.7B",
@@ -1853,9 +1583,7 @@
     "category": "Speech recognition / streaming",
     "priority": "P1-companion",
     "model_url": "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b",
-    "model_ids": [
-      "nvidia/nemotron-speech-streaming-en-0.6b"
-    ],
+    "model_ids": ["nvidia/nemotron-speech-streaming-en-0.6b"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current checkpoint released March 13 2026; January 5 predecessor is separately tagged.",
     "properties": "600M, English; cache-aware FastConformer/RNNT, punctuation/capitalization; configurable 80/160/560/1120 ms chunk+right-context regimes, not equivalent end-to-end latency.",
@@ -1876,13 +1604,9 @@
       "inspection": "Demo identified; microphone/audio not submitted."
     },
     "caveats": "Tune chunking against accuracy later. Public card has differing training-hour statements across sections; excluded from recommendation metrics.",
-    "evidence_source_ids": [
-      "VOICE-S120"
-    ],
+    "evidence_source_ids": ["VOICE-S120"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b"
-    ]
+    "evidence_urls": ["https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b"]
   },
   {
     "id": "voice-asr-parakeet",
@@ -1890,10 +1614,7 @@
     "category": "Speech recognition",
     "priority": "P1-companion",
     "model_url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
-    "model_ids": [
-      "nvidia/parakeet-tdt-0.6b-v3",
-      "nvidia/parakeet-unified-en-0.6b"
-    ],
+    "model_ids": ["nvidia/parakeet-tdt-0.6b-v3", "nvidia/parakeet-unified-en-0.6b"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "TDTv3 August 14 2025; Unified EN April 7 2026. Different architectures/use modes, not one multilingual streaming release.",
     "properties": "TDTv3:600M, 25 European languages, automatic language detection and high-throughput transcription. Unified EN:600M, English, offline and buffered streaming, 160–2080 ms chunk/right-context options.",
@@ -1914,10 +1635,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Unified recomputes buffered context; Nemotron offers cache-aware path. Do not claim TDTv3 itself supplies Unified's native streaming behavior.",
-    "evidence_source_ids": [
-      "VOICE-S121",
-      "VOICE-S122"
-    ],
+    "evidence_source_ids": ["VOICE-S121", "VOICE-S122"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
@@ -1930,9 +1648,7 @@
     "category": "Speech recognition",
     "priority": "P2-companion",
     "model_url": "https://huggingface.co/nvidia/canary-qwen-2.5b",
-    "model_ids": [
-      "nvidia/canary-qwen-2.5b"
-    ],
+    "model_ids": ["nvidia/canary-qwen-2.5b"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current released English checkpoint; exact release day not transcribed from card.",
     "properties": "2.5B; English transcription with punctuation/capitalization; separate ASR and text-LLM modes.",
@@ -1953,13 +1669,9 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "In ASR mode it does not retain reasoning skills; in LLM mode it reasons over transcript, not raw audio. Do not treat it as a unified audio NPC mind.",
-    "evidence_source_ids": [
-      "VOICE-S123"
-    ],
+    "evidence_source_ids": ["VOICE-S123"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/nvidia/canary-qwen-2.5b"
-    ]
+    "evidence_urls": ["https://huggingface.co/nvidia/canary-qwen-2.5b"]
   },
   {
     "id": "voice-asr-vibe",
@@ -1967,10 +1679,7 @@
     "category": "Speech recognition / diarization",
     "priority": "P2-companion",
     "model_url": "https://huggingface.co/microsoft/VibeVoice-ASR",
-    "model_ids": [
-      "microsoft/VibeVoice-ASR",
-      "microsoft/VibeVoice-ASR-HF"
-    ],
+    "model_ids": ["microsoft/VibeVoice-ASR", "microsoft/VibeVoice-ASR-HF"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current 2026 repository contains ASR, streaming and BitNet paths; exact checkpoint/revision should be pinned for later evaluation.",
     "properties": "7B backbone, long-form up to 60 min in one pass/64Kcontext, speaker labels and timestamps, contextual hotwords; 50+ languages advertised. Total stored parameters include audio components and vary by artifact; the current original HF card rounds to 9B.",
@@ -1991,11 +1700,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Long audio support does not establish low per-turn latency; lighter recognizers may fit runtime use better.",
-    "evidence_source_ids": [
-      "VOICE-S124",
-      "VOICE-S102",
-      "VOICE-S125"
-    ],
+    "evidence_source_ids": ["VOICE-S124", "VOICE-S102", "VOICE-S125"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://github.com/microsoft/VibeVoice",
@@ -2034,12 +1739,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Very recent: no mature operational sentiment. Public preview and regional access need confirming.",
-    "evidence_source_ids": [
-      "VOICE-S126",
-      "VOICE-S127",
-      "VOICE-S128",
-      "VOICE-S100"
-    ],
+    "evidence_source_ids": ["VOICE-S126", "VOICE-S127", "VOICE-S128", "VOICE-S100"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://mistral.ai/news/voxtral-3/",
@@ -2054,9 +1754,7 @@
     "category": "Self-hosted speech recognition",
     "priority": "P2-companion",
     "model_url": "https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602",
-    "model_ids": [
-      "mistralai/Voxtral-Mini-4B-Realtime-2602"
-    ],
+    "model_ids": ["mistralai/Voxtral-Mini-4B-Realtime-2602"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "February 2026 open release; separate from October 3.0 Premier service.",
     "properties": "4B streaming speech recognizer; configurable latency/quality tradeoff; 13 languages listed in the current card. The card gives conflicting minimum-latency figures in different sections, so no single minimum is promoted here.",
@@ -2077,10 +1775,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Do not infer 3.0 API features/benchmark scores from this 2.0-family checkpoint or vice versa.",
-    "evidence_source_ids": [
-      "VOICE-S129",
-      "VOICE-S130"
-    ],
+    "evidence_source_ids": ["VOICE-S129", "VOICE-S130"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602",
@@ -2093,9 +1788,7 @@
     "category": "Speech recognition baseline",
     "priority": "Baseline",
     "model_url": "https://huggingface.co/openai/whisper-large-v3-turbo",
-    "model_ids": [
-      "openai/whisper-large-v3-turbo"
-    ],
+    "model_ids": ["openai/whisper-large-v3-turbo"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2024-generation mature open baseline; not presented as newest 2026 ASR.",
     "properties": "809M; 99 language metadata; pruned decoder from large-v3 for faster transcription; broad software ecosystem.",
@@ -2116,13 +1809,9 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Silence/noise hallucinations and translated/paraphrased text remain useful later evaluation cases. Do not equate an API named whisper with this exact local checkpoint.",
-    "evidence_source_ids": [
-      "VOICE-S131"
-    ],
+    "evidence_source_ids": ["VOICE-S131"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/openai/whisper-large-v3-turbo"
-    ]
+    "evidence_urls": ["https://huggingface.co/openai/whisper-large-v3-turbo"]
   },
   {
     "id": "voice-asr-deepgram",
@@ -2130,10 +1819,7 @@
     "category": "Hosted speech recognition",
     "priority": "P1-companion",
     "model_url": "https://deepgram.com/pricing",
-    "model_ids": [
-      "flux-general-en",
-      "nova-3"
-    ],
+    "model_ids": ["flux-general-en", "nova-3"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current October 2026 pricing; some displayed rates explicitly promotional.",
     "properties": "Flux conversational recognition/end-of-turn handling; Nova3 general streaming/pre-recorded transcription. Languages/features depend on route.",
@@ -2154,10 +1840,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Flux STT and Flux TTS are different models and meters. Promotional rates are not permanent commitments.",
-    "evidence_source_ids": [
-      "VOICE-S086",
-      "VOICE-S132"
-    ],
+    "evidence_source_ids": ["VOICE-S086", "VOICE-S132"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://deepgram.com/pricing",
@@ -2170,10 +1853,7 @@
     "category": "Hosted speech recognition",
     "priority": "P2-companion",
     "model_url": "https://elevenlabs.io/docs/overview/models",
-    "model_ids": [
-      "scribe_v2",
-      "scribe_v2_realtime"
-    ],
+    "model_ids": ["scribe_v2", "scribe_v2_realtime"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current model catalogue October 2026; Scribe v2 Medical is a specialized variant with little obvious game-specific need.",
     "properties": "90+ languages; keyterm prompting and timestamps; batch diarization and realtime variants. Provider realtime~150 ms claim is setup-dependent.",
@@ -2194,10 +1874,7 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Do not treat vendor 98% accuracy as a guarantee for accents, noise or fictional names.",
-    "evidence_source_ids": [
-      "VOICE-S070",
-      "VOICE-S071"
-    ],
+    "evidence_source_ids": ["VOICE-S070", "VOICE-S071"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://elevenlabs.io/docs/overview/models",
@@ -2210,9 +1887,7 @@
     "category": "Voice conversion / legacy",
     "priority": "Baseline-authoring",
     "model_url": "https://github.com/myshell-ai/OpenVoice",
-    "model_ids": [
-      "OpenVoice V2"
-    ],
+    "model_ids": ["OpenVoice V2"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "April 2024 v2 release; retained as a useful controllable conversion baseline, not newest flagship TTS.",
     "properties": "Tone-color transfer onto source speech with style/rhythm/intonation control; nativeEN/ES/FR/ZH/JA/KO in v2. Often paired with MeloTTS or recorded actor speech.",
@@ -2233,10 +1908,7 @@
       "inspection": "Repository-linked demo identified; audio not auditioned."
     },
     "caveats": "Requires a good source performance; not a standalone NPC decision or new dialogue generator. Newer direct-TTS models may outperform it in ease/quality.",
-    "evidence_source_ids": [
-      "VOICE-S133",
-      "VOICE-S005"
-    ],
+    "evidence_source_ids": ["VOICE-S133", "VOICE-S005"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine",
@@ -2249,10 +1921,7 @@
     "category": "Voice conversion",
     "priority": "P2-license",
     "model_url": "https://github.com/Plachtaa/seed-vc",
-    "model_ids": [
-      "Seed-VC v2",
-      "Seed-VC realtime"
-    ],
+    "model_ids": ["Seed-VC v2", "Seed-VC realtime"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current repository offers v2 and realtime paths; exact newest checkpoint date not established.",
     "properties": "Zero-shot spoken/singing voice conversion from 1–30s reference; optional finetuning. Realtime guide separates~300 ms algorithm delay from~100 ms device delay.",
@@ -2273,13 +1942,9 @@
       "inspection": "Demo labels inspected; no conversion performed."
     },
     "caveats": "Conversion preserves input words; it does not decide what an NPC says. ~400 ms combined claimed delay can be too much for some live use. GPL integration/distribution implications differ from offline asset generation.",
-    "evidence_source_ids": [
-      "VOICE-S134"
-    ],
+    "evidence_source_ids": ["VOICE-S134"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://github.com/Plachtaa/seed-vc"
-    ]
+    "evidence_urls": ["https://github.com/Plachtaa/seed-vc"]
   },
   {
     "id": "voice-kokoro",
@@ -2287,9 +1952,7 @@
     "category": "On-device TTS baseline",
     "priority": "Baseline",
     "model_url": "https://huggingface.co/hexgrad/Kokoro-82M",
-    "model_ids": [
-      "hexgrad/Kokoro-82M"
-    ],
+    "model_ids": ["hexgrad/Kokoro-82M"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Established 2025-era release, still widely integrated; newer compact competitors exist.",
     "properties": "82M lightweight non-LLM TTS, predefined voices; multilingual runtime. No native free-form cloning/acting controls established in the card.",
@@ -2313,11 +1976,7 @@
       "inspection": "Demo identified; not run."
     },
     "caveats": "Less expressive/control-rich than new character-oriented models; inspect specific voice/language quality rather than global popularity.",
-    "evidence_source_ids": [
-      "VOICE-S135",
-      "VOICE-S136",
-      "VOICE-S049"
-    ],
+    "evidence_source_ids": ["VOICE-S135", "VOICE-S136", "VOICE-S049"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.reddit.com/r/LocalLLaMA/comments/1r3kzz2/how_is_the_quality_of_recent_tts/",
@@ -2331,10 +1990,7 @@
     "category": "Self-hosted TTS baseline",
     "priority": "Baseline-research-license",
     "model_url": "https://huggingface.co/SWivid/F5-TTS",
-    "model_ids": [
-      "SWivid/F5-TTS/F5TTS_v1_Base",
-      "SWivid/F5-TTS/E2TTS_Base"
-    ],
+    "model_ids": ["SWivid/F5-TTS/F5TTS_v1_Base", "SWivid/F5-TTS/E2TTS_Base"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2024/2025 research lineage; current repository lists F5TTS_v1_Base and original F5/E2 paths.",
     "properties": "Flow-matching zero-shot reference-voice TTS; F5/E2 architectures and checkpoints differ. Useful established clone/editing research baseline.",
@@ -2355,15 +2011,9 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Do not repeat common claim that MIT code makes all generated commercial assets cleared. E2 is not a separate current flagship.",
-    "evidence_source_ids": [
-      "VOICE-S137",
-      "VOICE-S138"
-    ],
+    "evidence_source_ids": ["VOICE-S137", "VOICE-S138"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/SWivid/F5-TTS",
-      "https://github.com/SWivid/F5-TTS"
-    ]
+    "evidence_urls": ["https://huggingface.co/SWivid/F5-TTS", "https://github.com/SWivid/F5-TTS"]
   },
   {
     "id": "voice-csm",
@@ -2371,9 +2021,7 @@
     "category": "Dialogue TTS baseline",
     "priority": "Baseline",
     "model_url": "https://huggingface.co/sesame/csm-1b",
-    "model_ids": [
-      "sesame/csm-1b"
-    ],
+    "model_ids": ["sesame/csm-1b"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2025 open generation model; newer voice systems above merit first evaluation.",
     "properties": "1B contextual audio generation model; English; conversation text/audio conditioning. It cannot generate dialogue text itself.",
@@ -2394,13 +2042,9 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Public model is a base generator, not the fine-tuned model behind Sesame's celebrated interactive demo. Do not infer exact demo performance or call it a complete NPC brain.",
-    "evidence_source_ids": [
-      "VOICE-S139"
-    ],
+    "evidence_source_ids": ["VOICE-S139"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/sesame/csm-1b"
-    ]
+    "evidence_urls": ["https://huggingface.co/sesame/csm-1b"]
   },
   {
     "id": "voice-moshi",
@@ -2408,11 +2052,7 @@
     "category": "Full-duplex speech baseline",
     "priority": "Baseline-interaction",
     "model_url": "https://github.com/kyutai-labs/moshi",
-    "model_ids": [
-      "Kyutai Moshi",
-      "Kyutai Moshiko",
-      "Kyutai Moshika"
-    ],
+    "model_ids": ["Kyutai Moshi", "Kyutai Moshiko", "Kyutai Moshika"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2024-era public speech-text framework; retained as architectural/behavior reference behind later systems.",
     "properties": "Full-duplex speech-text interaction using Mimi codec; distinct Moshiko/Moshika voices and multilingual/experimental derivatives require exact selection.",
@@ -2433,13 +2073,9 @@
       "inspection": "Demo destination identified; microphone not used."
     },
     "caveats": "Older conversation quality/reasoning; voice demonstrations do not establish deep game-state decision skill or unrestricted content handling.",
-    "evidence_source_ids": [
-      "VOICE-S140"
-    ],
+    "evidence_source_ids": ["VOICE-S140"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://github.com/kyutai-labs/moshi"
-    ]
+    "evidence_urls": ["https://github.com/kyutai-labs/moshi"]
   },
   {
     "id": "voice-piper",
@@ -2447,9 +2083,7 @@
     "category": "On-device TTS baseline",
     "priority": "Baseline-license",
     "model_url": "https://github.com/OHF-Voice/piper1-gpl",
-    "model_ids": [
-      "OHF-Voice/piper1-gpl + chosen voice checkpoint"
-    ],
+    "model_ids": ["OHF-Voice/piper1-gpl + chosen voice checkpoint"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Current maintained project under Open Home Foundation; old rhasspy code/tutorial licenses may not describe this fork.",
     "properties": "Fast local voice-specific neural TTS with eSpeakNG phonemization; per-language/per-speaker models, no single universal parameter/language count.",
@@ -2470,13 +2104,9 @@
       "inspection": "Repository-linked samples identified; audio not auditioned."
     },
     "caveats": "Limited free-form acting controls versus modern expressive models. Game distribution needs exact engine/voice license assessment.",
-    "evidence_source_ids": [
-      "VOICE-S141"
-    ],
+    "evidence_source_ids": ["VOICE-S141"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://github.com/OHF-Voice/piper1-gpl"
-    ]
+    "evidence_urls": ["https://github.com/OHF-Voice/piper1-gpl"]
   },
   {
     "id": "voice-parler",
@@ -2484,9 +2114,7 @@
     "category": "Description-controlled TTS baseline",
     "priority": "Baseline",
     "model_url": "https://huggingface.co/parler-tts/parler-tts-mini-v1",
-    "model_ids": [
-      "parler-tts/parler-tts-mini-v1"
-    ],
+    "model_ids": ["parler-tts/parler-tts-mini-v1"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "2024-era release; retained for controllable open-TTS research rather than newest quality.",
     "properties": "English description-conditioned speech; natural-language voice/delivery descriptions and published training methodology. Exact parameter count not relied on here.",
@@ -2507,13 +2135,9 @@
       "inspection": "Page text inspected; audio not auditioned and model not run."
     },
     "caveats": "Not evidence of frontier 2026 acting quality; streaming and per-turn requirements need separate evaluation.",
-    "evidence_source_ids": [
-      "VOICE-S142"
-    ],
+    "evidence_source_ids": ["VOICE-S142"],
     "tested_by_us": false,
-    "evidence_urls": [
-      "https://huggingface.co/parler-tts/parler-tts-mini-v1"
-    ]
+    "evidence_urls": ["https://huggingface.co/parler-tts/parler-tts-mini-v1"]
   },
   {
     "id": "voice-ink2",
@@ -2521,9 +2145,7 @@
     "category": "Hosted streaming ASR",
     "priority": "P2-companion",
     "model_url": "https://docs.cartesia.ai/build-with-cartesia/stt/latest",
-    "model_ids": [
-      "ink-2"
-    ],
+    "model_ids": ["ink-2"],
     "verified_on": "2026-10-24",
     "release_update_provenance": "Launched 2026-07-09; stable multilingual model dated 2026-09-17 in current docs.",
     "properties": "Streaming recognition in English, French, Hindi, Japanese and Spanish; built-in turn detection and early/end/resume events. Exact model size undisclosed.",
@@ -2544,13 +2166,7 @@
       "inspection": "Text descriptions inspected; no audio audition or live transcription."
     },
     "caveats": "Recognition and turn detection do not decide an NPC action. Vendor leaderboard claims concern its evaluated workloads, not fantasy names or in-game speech.",
-    "evidence_source_ids": [
-      "VOICE-S151",
-      "VOICE-S152",
-      "VOICE-S149",
-      "VOICE-S074",
-      "VOICE-S075"
-    ],
+    "evidence_source_ids": ["VOICE-S151", "VOICE-S152", "VOICE-S149", "VOICE-S074", "VOICE-S075"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.cartesia.ai/pricing",
@@ -2566,9 +2182,7 @@
     "category": "Hosted scene audio generation",
     "priority": "P2-authoring",
     "model_url": "https://www.alibabacloud.com/help/en/model-studio/qwen-audio-3-1-tts-next",
-    "model_ids": [
-      "qwen-audio-3.1-tts-next"
-    ],
+    "model_ids": ["qwen-audio-3.1-tts-next"],
     "verified_on": "2026-10-24",
     "release_update_provenance": "Official model document updated 2026-10-22; exact initial release day not established here.",
     "properties": "Chinese/English unified speech, multi-speaker dialogue and soundscape generation. Nonstreaming; 3,000-character input, up to 120 seconds output (240 for podcasts), up to three reference clips.",
@@ -2589,10 +2203,7 @@
       "inspection": "Documentation reviewed; no output generated or auditioned."
     },
     "caveats": "Nonstreaming makes this an authoring/scene-generation candidate rather than a low-latency dialogue replacement. No independent mature-fiction or quality study located.",
-    "evidence_source_ids": [
-      "VOICE-S153",
-      "VOICE-S068"
-    ],
+    "evidence_source_ids": ["VOICE-S153", "VOICE-S068"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
@@ -2605,9 +2216,7 @@
     "category": "Hosted speech dialogue",
     "priority": "P2-interaction",
     "model_url": "https://help.aliyun.com/en/model-studio/qwen-audio-realtime-user-guides",
-    "model_ids": [
-      "qwen-audio-3.1-realtime-plus"
-    ],
+    "model_ids": ["qwen-audio-3.1-realtime-plus"],
     "verified_on": "2026-10-24",
     "release_update_provenance": "Current 3.1 route explicitly selected in official guide, inspected 2026-10-24; exact launch day not established here.",
     "properties": "Streaming text/audio dialogue, semantic/acoustic turn detection or push-to-talk, tool calls and voice cloning. Guide lists 11 languages; 16 kHz PCM input and 24 kHz PCM output. Context retains at most 50 audio turns or 300 seconds; default 20 turns.",
@@ -2628,14 +2237,117 @@
       "inspection": "Documentation reviewed; microphone and API not used."
     },
     "caveats": "Tool calling and web search cannot be enabled simultaneously in the documented route. Full-duplex transport does not prove uninterrupted cognition or coherent long-term memory.",
-    "evidence_source_ids": [
-      "VOICE-S154",
-      "VOICE-S068"
-    ],
+    "evidence_source_ids": ["VOICE-S154", "VOICE-S068"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
       "https://help.aliyun.com/en/model-studio/qwen-audio-realtime-user-guides"
+    ]
+  },
+  {
+    "id": "voice-openai-live-control",
+    "model": "OpenAI GPT-Live 1 / GPT-Realtime-2.1 / Mini",
+    "category": "Hosted speech dialogue control",
+    "priority": "P2-control",
+    "model_url": "https://developers.openai.com/api/docs/models/gpt-live-1",
+    "model_ids": ["gpt-live-1", "gpt-realtime-2.1", "gpt-realtime-2.1-mini"],
+    "verified_on": "2026-10-24",
+    "release_update_provenance": "Realtime 2.1 and Mini released 2026-07-06; GPT-Live 1 GA 2026-09-10; prompt-created Live voices added 2026-10-16. These are verified API products; no equivalence to the current ChatGPT consumer voice system is assumed.",
+    "properties": "GPT-Live 1 listens while speaking and delegates complex reasoning/tools to a separate backend. Realtime 2.1 integrates speech, configurable reasoning and tools; Mini is its faster, cheaper distilled sibling. Both Realtime variants list 128,000 context and 32,000 output tokens plus image input; Live lists text/audio input/output. Prompt-created voices are Live-only; recorded custom voices have a separate eligibility route.",
+    "deployment": "Proprietary cloud APIs: Live sessions versus Realtime sessions. WebRTC, WebSocket and SIP routes are documented. Live supports managed Responses delegation or client delegation to an application-owned backend; this does not make the voice component self-hosted. Store game authority and durable state in the application.",
+    "hardware_evidence": "No downloadable weights or local GPU requirement. Client audio/network conditions and backend work affect observed latency; no comparable game-turn timing was measured.",
+    "license_and_commercial_terms": "Hosted API agreement and usage policies apply; no weight redistribution license. Recorded voice replication requires eligible-customer access and matching speaker consent/sample recordings. Prompt-created voices are available to API customers but must be adult, non-impersonating and disclosed as synthetic; output rights remain governed by the agreement.",
+    "cost_semantics": "GPT-Live 1: $0.05 per session minute, billed per second without minute rounding, plus backend models/tools. Realtime 2.1 per M tokens: text input/output $4/$24, audio $32/$64; cached text/audio input $0.40. Mini: text $0.60/$2.40, audio $10/$20; cached text/audio $0.06/$0.30. Image input and tools add charges. These meters are not interchangeable with generated-audio minutes.",
+    "open_legend_use_cases": "Closed-provider quality and conversation-timing control: interruption handling, nonverbal conversational flow and voice/backend separation. Useful for comparing an independently chosen NPC decision backend with an integrated speech-reasoning system.",
+    "content_and_refusal_evidence": "The policy effective at this cutoff is the October 29, 2025 revision. It restricts harmful violence, harassment and deceptive voice-likeness use; the inspected text provides no explicit game-fiction exemption. This does not establish refusal of all dark fiction. Script acceptance remains untested, and an external backend does not remove the hosted voice layer's restrictions. The main policy URL announces a November 20, 2026 effective update; that update is pending here.",
+    "sentiment": {
+      "summary": "Publisher account describes a working Raspberry Pi voice/display assistant with client delegation and interruptions. This is concrete implementation evidence, not independent community consensus or an NPC quality benchmark. Exact-version independent sentiment was not investigated in this narrow official-source control pass.",
+      "confidence": "publisher-only",
+      "urls": ["https://developers.openai.com/blog/bringing-my-led-display-to-life"]
+    },
+    "published_examples": {
+      "url": "https://developers.openai.com/blog/bringing-my-led-display-to-life",
+      "description": "Published GPT-Live 1 voice-controlled LED assistant article with an embedded demonstration; illustrates spoken requests, interruptions and delegated display actions. It is not a Realtime 2.1 performance sample.",
+      "inspection": "Article and demo destination inspected; video/audio not played. No API session or sample generation."
+    },
+    "caveats": "Grouped provider control contains distinct architectures, not one interchangeable model. Live has separate backend cost; Realtime reasoning can add latency/output usage. No numerical refusal rate or latency ranking established. Child-voice restrictions and custom-voice eligibility can affect character coverage.",
+    "evidence_source_ids": [
+      "VOICE-S155",
+      "VOICE-S156",
+      "VOICE-S157",
+      "VOICE-S158",
+      "VOICE-S159",
+      "VOICE-S160",
+      "VOICE-S161",
+      "VOICE-S162",
+      "VOICE-S163",
+      "VOICE-S164",
+      "VOICE-S165"
+    ],
+    "tested_by_us": false,
+    "evidence_urls": [
+      "https://developers.openai.com/api/docs/models/gpt-live-1",
+      "https://developers.openai.com/api/docs/models/gpt-realtime-2.1",
+      "https://developers.openai.com/api/docs/models/gpt-realtime-2.1-mini",
+      "https://developers.openai.com/api/docs/pricing",
+      "https://developers.openai.com/api/docs/guides/live",
+      "https://developers.openai.com/api/docs/guides/realtime",
+      "https://developers.openai.com/api/docs/changelog",
+      "https://developers.openai.com/api/docs/guides/custom-voices",
+      "https://developers.openai.com/blog/bringing-my-led-display-to-life",
+      "https://openai.com/policies/usage-policies/revisions/2025-10-29/",
+      "https://openai.com/policies/usage-policies/"
+    ]
+  },
+  {
+    "id": "voice-gemini-live38-control",
+    "model": "Gemini 3.8 Live / Live Extended Thinking",
+    "category": "Hosted speech dialogue control",
+    "priority": "P2-control",
+    "model_url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live",
+    "model_ids": ["gemini-3.8-live", "gemini-3.8-live-extended-thinking"],
+    "verified_on": "2026-10-24",
+    "release_update_provenance": "Official launch 2026-09-15, announcement updated September 17; both API model pages identify stable September 2026 versions. Older gemini-3.1-flash-live-preview is a migration source, not the current selection.",
+    "properties": "Live targets fast speech dialogue with interleaved reasoning and asynchronous functions; Extended Thinking adds background reasoning while audio continues. Both list 131,072 input and 65,536 output tokens, text/image/audio input and text/audio output. Live API documents barge-in, affective dialogue and transcription. Language count differs: overview says 70; launch page says 97.",
+    "deployment": "Hosted Gemini Developer API over stateful WebSocket; 16-bit PCM 16 kHz input and 24 kHz output, image frames up to 1 FPS. Server proxy or client connection with ephemeral credentials. Live supports asynchronous calls by default; Extended Thinking requires asynchronous calls and continued event handling after turnComplete.",
+    "hardware_evidence": "No public weights or local GPU requirement. Transport latency, turn detection and tools matter; no end-to-end NPC latency was measured.",
+    "license_and_commercial_terms": "Proprietary hosted service. Developer API terms are for professional/business development, retain no Google ownership claim over generated content, and prohibit API clients directed toward or likely accessed by under-18s. Paid Developer API and enterprise services have different contractual/data terms; do not generalize this route to every Google product.",
+    "cost_semantics": "Developer API paid tier per M tokens, same published rates for both: text input $0.75/output $4.50; audio input $3/output $12; image/video input $1. Page also lists audio equivalents $0.005 input-minute and $0.018 output-minute, not one whole-session rate. Output price includes thinking tokens. Search calls add charges after the shared allowance. Free-tier content may improve products; paid-tier content is not used for that purpose.",
+    "open_legend_use_cases": "Closed-provider control for spoken NPC responsiveness, visual scene context, interruptions and asynchronous game actions. Extended Thinking supplies a comparison for complex spoken negotiations or multi-step tasks while dialogue continues.",
+    "content_and_refusal_evidence": "Google's referenced policy restricts violent, hateful, harassing and sexually explicit uses and permits discretionary artistic exceptions. That is not an automatic game-fiction exemption or a measured refusal result. General configurable API filters do not establish an unrestricted Live endpoint; terms retain safety enforcement and possible review of less restrictive applications.",
+    "sentiment": {
+      "summary": "Launch material reports positive partner reactions and selected benchmark results; they are publisher-selected evidence, not an independently verified ranking here. Published applications include spoken visual interaction, document work and multi-step bookings. Exact-version independent sentiment was not investigated in this narrow official-source control pass.",
+      "confidence": "publisher-only",
+      "urls": [
+        "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/"
+      ]
+    },
+    "published_examples": {
+      "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/",
+      "description": "Published demonstrations include live chess with visual context, sketch-to-React work and multi-step booking while conversation continues. These are vendor demonstrations, not dark-fiction outputs.",
+      "inspection": "Written descriptions and demo destinations inspected; audio/video not played, AI Studio and API not run."
+    },
+    "caveats": "No strict structured-output support in these model cards; validate proposed game actions in application code. Live proactive audio is permanently enabled; Extended Thinking may keep processing after a turn-complete event. Language-count conflict and Developer API age restriction remain material integration questions.",
+    "evidence_source_ids": [
+      "VOICE-S166",
+      "VOICE-S167",
+      "VOICE-S168",
+      "VOICE-S169",
+      "VOICE-S170",
+      "VOICE-S171",
+      "VOICE-S172",
+      "VOICE-S173"
+    ],
+    "tested_by_us": false,
+    "evidence_urls": [
+      "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live",
+      "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live-extended-thinking",
+      "https://ai.google.dev/gemini-api/docs/live-api",
+      "https://ai.google.dev/gemini-api/docs/pricing",
+      "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/",
+      "https://policies.google.com/terms/generative-ai/use-policy",
+      "https://ai.google.dev/gemini-api/terms",
+      "https://ai.google.dev/gemini-api/docs/safety-settings"
     ]
   }
 ]

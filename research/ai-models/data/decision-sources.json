@@ -749,5 +749,167 @@
     "published_or_updated": "Current at targeted review",
     "retrieved_at": "2026-10-24",
     "supported_claims": "Published 78-layer MoE configuration and 1,048,576 positions; no inferred parameter total"
+  },
+  {
+    "id": "D083",
+    "url": "https://docs.x.ai/developers/grok-4-7",
+    "title": "Grok 4.7 developer guide",
+    "type": "official documentation",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Exact ID, 500k context, modalities, reasoning, tools and base token prices"
+  },
+  {
+    "id": "D084",
+    "url": "https://x.ai/news/grok-4-7",
+    "title": "Introducing Grok 4.7",
+    "type": "official announcement",
+    "published_or_updated": "2026-09-21",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Release date, publisher workload claims and calibrated-safeguards positioning; not NPC validation"
+  },
+  {
+    "id": "D085",
+    "url": "https://x.ai/legal/acceptable-use-policy",
+    "title": "SpaceXSI acceptable use policy",
+    "type": "official policy",
+    "published_or_updated": "Effective 2026-08-14",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Hosted Grok use remains subject to service guardrails and use restrictions"
+  },
+  {
+    "id": "D086",
+    "url": "https://platform.claude.com/docs/en/models/fable-5-1/overview",
+    "title": "Claude Fable 5.1 overview",
+    "type": "official documentation",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Model ID, limits, availability, adaptive reasoning, strict tools and restricted Mythos counterpart"
+  },
+  {
+    "id": "D087",
+    "url": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+    "title": "Claude Sonnet 5.5 overview",
+    "type": "official documentation",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Model ID, limits, hosted availability and reasoning/tool-use constraints"
+  },
+  {
+    "id": "D088",
+    "url": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "title": "Claude API pricing",
+    "type": "official pricing",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Fable 5.1 and Sonnet 5.5 input/output/cache tariffs"
+  },
+  {
+    "id": "D089",
+    "url": "https://platform.claude.com/docs/en/release-notes/overview",
+    "title": "Claude Platform release notes",
+    "type": "official release notes",
+    "published_or_updated": "Entries through 2026-10-24",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Fable 5.1 September 1 and Sonnet 5.5 September 28 launches; Fable data-retention requirement"
+  },
+  {
+    "id": "D090",
+    "url": "https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback",
+    "title": "Claude refusals and fallback",
+    "type": "official documentation",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Fable 5.1/Sonnet 5.5 classifier refusals, stop reason and refusal billing"
+  },
+  {
+    "id": "D091",
+    "url": "https://www.anthropic.com/legal/aup",
+    "title": "Anthropic usage-policy landing page: future version",
+    "type": "official policy; future-effective page excluded from current-policy inference",
+    "published_or_updated": "Effective 2026-11-12",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Landing page displayed a future effective date at the October 24 review; current policy text was not established from it"
+  },
+  {
+    "id": "D092",
+    "url": "https://ai.google.dev/gemini-api/docs/models/gemini-4-argon",
+    "title": "Gemini 4 Argon model reference",
+    "type": "official documentation",
+    "published_or_updated": "Updated 2026-10-14",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Exact model code, unified context, long decode, modalities, tools and implicit-only caching"
+  },
+  {
+    "id": "D093",
+    "url": "https://ai.google.dev/gemini-api/docs/pricing",
+    "title": "Gemini Developer API pricing",
+    "type": "official pricing",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Argon introductory rates through November 30, scheduled December rates, cache and batch semantics"
+  },
+  {
+    "id": "D094",
+    "url": "https://ai.google.dev/gemini-api/docs/changelog",
+    "title": "Gemini API changelog",
+    "type": "official release notes",
+    "published_or_updated": "2026-10-13 Argon entry",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Gemini 4 Argon general availability date"
+  },
+  {
+    "id": "D095",
+    "url": "https://ai.google.dev/gemini-api/docs/safety-settings",
+    "title": "Gemini API safety settings",
+    "type": "official documentation",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Game-dialogue example for adjustable filters; mandatory core protections remain"
+  },
+  {
+    "id": "D096",
+    "url": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+    "title": "GPT-6.1 Sol model reference",
+    "type": "official documentation and pricing",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Exact ID, limits, text/image modalities, tool endpoint, reasoning efforts, token prices and modifiers"
+  },
+  {
+    "id": "D097",
+    "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+    "title": "GPT-6 Astra model reference",
+    "type": "official documentation and pricing",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Exact ID, limits, modalities, tools, token prices and modifiers"
+  },
+  {
+    "id": "D098",
+    "url": "https://openai.com/index/introducing-gpt-6-1-sol/",
+    "title": "Introducing GPT-6.1 Sol",
+    "type": "official announcement",
+    "published_or_updated": "Current at targeted review; exact release date not established",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Publisher capability comparisons and safety positioning; no NPC behavior results"
+  },
+  {
+    "id": "D099",
+    "url": "https://openai.com/policies/usage-policies/revisions/2025-10-29/",
+    "title": "OpenAI usage policies: previous effective version",
+    "type": "official policy",
+    "published_or_updated": "Effective 2025-10-29",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Previous-version page linked by the future-effective landing page; hosted use restrictions and safeguard requirements"
+  },
+  {
+    "id": "D100",
+    "url": "https://openai.com/policies/usage-policies/",
+    "title": "OpenAI usage-policy landing page: future version",
+    "type": "official policy; future-effective page excluded from current-policy inference",
+    "published_or_updated": "Effective 2026-11-20",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Latest landing page displayed a future effective date at the October 24 review; previous version recorded separately"
   }
 ]
