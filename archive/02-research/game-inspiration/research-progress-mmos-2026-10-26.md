@@ -4,7 +4,7 @@
 
 ## Current progress
 
-Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2 and Guild Wars 3 are researched and reviewed against the applicable R01–R15 requirements. The unreleased GW3 case uses five independent observer previews, with no claimed hands-on play or commercial outcome; the other four retain five substantive firsthand editorial assessments. Completed dossiers are committed with their ledger updates. The Elder Scrolls Online is in progress: its systems checkpoint is incomplete and awaits integration of status/economics, lore, reception, production and add-on evidence, then review. The comparative essay records the census, persistence definitions and existing design routes; its full game-by-game conclusions and final integration gates remain open.
+Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2 and Guild Wars 3 are researched and reviewed against the applicable R01–R15 requirements. The unreleased GW3 case uses five independent observer previews, with no claimed hands-on play or commercial outcome; the other four retain five substantive firsthand editorial assessments. Completed dossiers are committed with their ledger updates. The Elder Scrolls Online is in progress: its integrated draft is incomplete pending final lore/companion and presentation details, the full source register and independent review. The comparative essay records the census, persistence definitions and existing design routes; its full game-by-game conclusions and final integration gates remain open.
 
 ## Scope and evidence rules
 
@@ -25,7 +25,7 @@ Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2 and Guild Wars 3
 | [Lost Ark](dossiers/lost-ark.md)                             | Korean and Western evidence separated; test the pay-to-win explanation   | Researched and reviewed; committed with this ledger |
 | [Guild Wars 2](dossiers/guild-wars-2.md)                     | Released game and expansion changes                                      | Researched and reviewed; committed with this ledger |
 | [Guild Wars 3](dossiers/guild-wars-3.md)                     | Announced/development evidence and observed alpha, not released outcomes | Researched and reviewed; committed with this ledger |
-| [The Elder Scrolls Online](dossiers/elder-scrolls-online.md) | Current game versus launch; PC and console add-on boundaries             | In progress; incomplete systems checkpoint          |
+| [The Elder Scrolls Online](dossiers/elder-scrolls-online.md) | Current game versus launch; PC and console add-on boundaries             | In progress; integrated draft awaits completion/review          |
 | The Lord of the Rings Online                                 | Long-lived service, world/lore and player culture                        | Pending                                             |
 | Final Fantasy XIV                                            | Refresh existing dossier; 1.0, ARR and later eras distinguished          | Pending                                             |
 | Black Desert Online                                          | PC service; console/mobile boundaries                                    | Pending                                             |
