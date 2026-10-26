@@ -96,8 +96,6 @@ The human's microphone is an interface input. Recording a draft does not force t
 
 ## 6. A call is an answered private conversation
 
-**Dependency to reconcile before call adoption:** the accepted [speech and social perception design](speech-and-social-perception-feature-spec.md) removes ordinary conversation joins and merges. The local-enrollment wording in this older call proposal and its world profile must be reconciled under [NC23](../maintainers/narration-and-conversations.md#nc23--consented-private-slate-calls). Preserve explicit call consent, clear destination, ordinary nearby hearing and freedom from automatic local replies; do not implement an exception to a superseded enrollment mechanism. This call-specific work does not block the independent playback stage.
-
 The first call is between two human-controlled people already connected through the selected DG24 world affordance. Each person separately chooses **Allow calls** for the relevant contact and can silence that person's invitations. Enabling it permits an invitation, not automatic acceptance, recording or microphone capture. No NPC calls, voicemail, conference calls, external notifications or account-wide calling are selected.
 
 The installed slate family must explicitly support the extension. Existing primitive inventory does not change. A person needs the actual carried valid bound slate and current operating capability; contacts, history and private authority still belong to the person. The item remains ordinary finite property, with DG24's recovery and replacement behavior.

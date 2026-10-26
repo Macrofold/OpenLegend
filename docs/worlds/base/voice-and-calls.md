@@ -1,6 +1,6 @@
 # Optional speech and private slate conversations
 
-**Proposed DG26 world profile, October 8, 2026.** [Voice and calls](../../projects/voice-and-calls-feature-spec.md) owns the product proposal and stages. This profile introduces no runtime behavior or primitive starting equipment. Current speech/hearing and [personal message slates](text-messages.md) retain their exact existing or proposed status.
+**Proposed DG26 world profile, October 24, 2026.** [Voice and calls](../../projects/voice-and-calls-feature-spec.md) owns the product proposal and stages. This profile introduces no runtime behavior or primitive starting equipment. Current speech/hearing and [personal message slates](text-messages.md) retain their exact existing or proposed status.
 
 ## Ordinary words before richer acoustics
 

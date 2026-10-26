@@ -25,9 +25,7 @@
       "summary": "A developer comparing models on his own voice preferred Qwen3-TTS quality; Chatterbox was simpler but shifted his accent. This is one voice and setup, not a representative ranking.",
       "confidence": "anecdotal",
       "date": "2026-10-04",
-      "urls": [
-        "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine"
-      ]
+      "urls": ["https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine"]
     },
     "published_examples": {
       "url": "https://huggingface.co/spaces/Qwen/Qwen3-TTS",
@@ -35,13 +33,7 @@
       "inspection": "Linked demo identified; no audio generated or auditioned."
     },
     "caveats": "Design-then-Base is a documented continuity workflow, not proof of consistent acting or inheritance of CustomVoice instruction controls. Do not transfer hosted-model latency to local deployment. Base clone quality depends on the reference and transcript; hardware/latency are implementation-specific.",
-    "evidence_source_ids": [
-      "VOICE-S001",
-      "VOICE-S002",
-      "VOICE-S003",
-      "VOICE-S004",
-      "VOICE-S005"
-    ],
+    "evidence_source_ids": ["VOICE-S001", "VOICE-S002", "VOICE-S003", "VOICE-S004", "VOICE-S005"],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
@@ -146,10 +138,7 @@
     "category": "Hosted TTS",
     "priority": "P2-hosted",
     "model_url": "https://fish.audio/blog/s2-1-pro-free-api/",
-    "model_ids": [
-      "s2.1-pro",
-      "s2.1-pro-free"
-    ],
+    "model_ids": ["s2.1-pro", "s2.1-pro-free"],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Free API announced 2026-06-23; an October 24 recheck of the updated article records free access through November 30, 2026. This is the current extension, not the original June announcement deadline. Current pricing lists paid and free variants; Drama 3 is newer.",
     "properties": "83 languages; cloning and expressive character delivery; streaming API. Exact public parameter count not verified.",
@@ -170,11 +159,7 @@
       "inspection": "Demo descriptions read; audio not auditioned."
     },
     "caveats": "Free requests may be retained for model improvement. The updated article directs products above $1M ARR to contact Fish before free-tier use; it does not resolve all commercial entitlement under generic terms. Capacity, fair use and the November 30 free-window expiry remain constraints. No dark-fiction acceptance result.",
-    "evidence_source_ids": [
-      "VOICE-S013",
-      "VOICE-S008",
-      "VOICE-S014"
-    ],
+    "evidence_source_ids": ["VOICE-S013", "VOICE-S008", "VOICE-S014"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "Hosted terms and unresolved free-API commercial entitlement; October 24 targeted recheck of the updated free-window expiry, best-effort service and retention notices.",
@@ -731,13 +716,7 @@
       "inspection": "Demo identified; not executed."
     },
     "caveats": "Quality and speed vary widely by CPU/runtime, reference voice and language; tiny variants too recent for mature sentiment.",
-    "evidence_source_ids": [
-      "VOICE-S047",
-      "VOICE-S048",
-      "VOICE-S049",
-      "VOICE-S050",
-      "VOICE-S051"
-    ],
+    "evidence_source_ids": ["VOICE-S047", "VOICE-S048", "VOICE-S049", "VOICE-S050", "VOICE-S051"],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
     "review_scope": "HF weight license and gated-access notices; source-specific community attribution and dated follow-ups, including English preprocessing improvement and remaining multilingual reports.",
