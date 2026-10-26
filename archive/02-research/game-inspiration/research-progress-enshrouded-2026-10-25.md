@@ -1,5 +1,11 @@
 # Enshrouded G145 — October 25, 2026 research refresh
 
+## October 26 UTC follow-up — in progress
+
+Mike requested a complete placement/coverage check of the hosting and world-owner ideas, analysis of the supplied Fort Armco building/server transcript, a precise account of Enshrouded NPC recruitment and residence, and a comparison with RuneScape: Dragonwilds using the supplied written, Steam, Reddit and video sources. The original completed pass below remains historical; this follow-up extends it without recertifying all of G50 or reopening the whole research corpus.
+
+The hosting traceability review found the prior commitments already covered in their existing owners. New testimony about asynchronous shared construction and its contribution/service-lifecycle implications has been added to chapter 04 and the idea note. NPC recruitment and the version-qualified Dragonwilds comparison are being researched and drafted. Remaining work: finish those additions, link both game dossiers, review source/claim boundaries and the affected diff, validate formatting/links, then commit completion. Existing branch: `codex/enshrouded-dossier-world-hosting-20261025`; follow-up base: `97ef4d19c405de87ef17966875561fcdd18879e8`.
+
 | Status   | Completed scope                                                                                                                              | Evidence cutoff |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
 | Complete | Full G145 refresh, four detailed research chapters, and proposed OpenLegend hosting and world-rule ideas integrated through existing owners. | 2026-10-25      |

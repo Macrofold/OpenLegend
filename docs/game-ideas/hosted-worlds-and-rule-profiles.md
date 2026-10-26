@@ -6,6 +6,8 @@
 
 A player or group could create a persistent OpenLegend world through the product, arrange its hosting, choose who may join and select supported rules for the experience they want. Friends could participate without depending on the paying owner's personal computer or presence. Membership management and the world's continued service would be understandable within the same product.
 
+The shared project should also work across different schedules: one member explores or supplies materials, another builds, and someone returning later discovers useful work their friends contributed. The [supplied Fort Armco account](../../archive/02-research/game-inspiration/dossiers/enshrouded/04-hosting-and-world-governance.md#a-players-reported-rental-motive-asynchronous-building) describes that as a reason to rent a server. It is one attributed use case, not measured demand or a promise that absent players experience every shared milestone.
+
 Private worlds complement the larger shared-world ambition. In official worlds, a base could become a home, shop, inn, workshop, sanctuary, trading stop or contested stronghold used by many people and autonomous inhabitants. More participants can make construction socially consequential through visitors, trade, shared projects, alliances and rivalry. Population alone does not create that value; people need useful reasons to encounter and affect one another.
 
 Enshrouded supplies a concrete precedent for rented dedicated worlds and an in-game hosting-partner route. Its small cooperative worlds are not evidence that OpenLegend's larger persistent worlds or AI costs are already qualified. The [hosting research](../../archive/02-research/game-inspiration/dossiers/enshrouded/04-hosting-and-world-governance.md) separates the observed product from that proposed extension.
@@ -15,6 +17,8 @@ Enshrouded supplies a concrete precedent for rented dedicated worlds and an in-g
 The proposal includes an integrated way to create or select a world, invite members, approve or restrict entry, remove or ban participants and delegate appropriate management. Owners could distinguish visitors, ordinary members, trusted builders and administrators. Public discovery, invitation-only access and application-based entry are possible policies rather than mandatory modes.
 
 Membership, administrative power and fictional property must remain distinct. Visiting a world need not grant permission to remodel a house or empty its supplies. Membership in a guild need not grant the same powers as managing it. Paying for service does not grant access to a visiting human's protected memories, private information or spending authority.
+
+Hosting payment also differs from authorship of a shared home. The later design should make contributors' credit, shared ownership and permission to change or remove one another's work understandable, including when a member leaves, the payer changes or service ends. Paying the bill should not silently settle everyone's contribution or retrieval rights. Reuse [DG13's shelter/contribution owners](../maintainers/needs-design.md#dg13--editable-shelter-and-useful-places) and existing property authority rather than inventing a separate ownership system here.
 
 Reuse [MP's account/invite/revocation foundation](../maintainers/multiplayer.md), [ND37's operator-policy work](../maintainers/needs-design.md#nd37--public-world-reporting-participation-controls-and-operator-authority) and [participants/world-travel design](../projects/participants-and-world-travel-feature-spec.md). This idea does not propose a separate identity or permission system.
 
@@ -69,6 +73,8 @@ The attractive promise is a convenient, persistent place for a chosen group, wit
 A hosting offer must distinguish stored world retention, hours of availability, simultaneous capacity, background simulation, model/invention allowances and support. An always-accessible world does not automatically imply unlimited autonomous activity while empty. If the host has paid for guest participation, the existing commercial direction does not require those guests to buy another hosting subscription for the same access.
 
 The later product decision must settle price and included usage, who operates the service, member limits and service capacity, suspension/cancellation, retained work and permitted retrieval, owner departure or transfer, outages and restoration. OpenLegend's private human records make unrestricted raw server-file export a different question from exporting a construction or customer-owned world content.
+
+Those terms should state what access stops when payment ends, what remains stored and for how long, and how permitted retrieval works. Backups and restoration need their own scope: who may request a restore, and what happens to other contributors' work completed after that backup. No retention duration, unrestricted export or unilateral rollback right is selected by this idea.
 
 First-party operation, an integrated provider and self-hosting are distinguishable options. No vendor, subscription price, lifetime service promise, capacity figure or data-export entitlement is selected here. Enshrouded rental offers and discussion establish a relevant market precedent; they do not measure demand, renewal or operating margin for OpenLegend.
 

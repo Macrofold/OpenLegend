@@ -66,6 +66,14 @@ There are several distinct product promises:
 
 These promises should be specified and costed separately. Enshrouded hosting evidence establishes neither continuous autonomous social simulation nor unlimited AI spending. Likewise, a backup is not automatically a safe shared-world rollback: other people may have made valuable changes since it was taken.
 
+## A player's reported rental motive: asynchronous building
+
+Mike's supplied Fort Armco transcript adds an attributed use case beyond a hosting inquiry. The narrator says they rented a dedicated server so friends could explore, gather and keep building their shared castle while the narrator was offline. They distinguish their own structural work from another member's tower and interior decoration, and describe a water feature built together. Returning to find something another person had added is part of the pleasure. [H11]
+
+**Interpretation:** the purchased value is the group's ability to continue a shared project across different schedules. Billing responsibility, administrative control and credit for contributions are different roles. This account motivates examining who may alter shared work and what happens when contributors or the payer leave; it does not establish Enshrouded's ownership safeguards or OpenLegend permission contracts.
+
+Only the supplied transcript was read; no footage was inspected, purchase corroborated or game version established. Its descriptions of game systems remain player testimony.
+
 ## Reading Mike's supplied Reddit thread fairly
 
 The supplied [r/Enshrouded thread](https://www.reddit.com/r/Enshrouded/comments/1x6qnn3/want_to_rent_a_server_for_my_friends_any_tips_on/) was accessible. The author asks for hosting experiences. Replies discuss self-hosting, independence from the host's computer, regional latency, file access, trying a service before committing and interest in usage-based payment. At least one commenter explicitly identifies their work on a hosting service, and another uses provider branding. [H10]
@@ -100,7 +108,7 @@ The positive opportunity is larger than private isolation: a home can serve trav
 
 ## Sources and access notes
 
-All retrieved October 25, 2026. Provider offers are dated seller claims. No provider, server configuration, latency, uptime, backup restore or payment was tested.
+Web sources retrieved October 25, 2026; H11 is the subsequently supplied transcript and retains its separate provenance. Provider offers are dated seller claims. No provider, server configuration, latency, uptime, backup restore or payment was tested.
 
 | ID  | Source                                                                                                                                                      | Role and limit                                                                                                             |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -114,3 +122,4 @@ All retrieved October 25, 2026. Provider offers are dated seller claims. No prov
 | H08 | [Keen Wake of the Water](https://enshrouded.com/en-US/news/enshrouded-wake-of-the-water-update), Nov. 10, 2025                                              | Explicit response to indirect flooding/griefing.                                                                           |
 | H09 | [Keen dedicated-server FAQ](https://enshrouded.zendesk.com/hc/en-us/articles/16056312924957-Dedicated-Server-FAQ), Feb. 21, 2025                            | Server world/client character split; dated resource and save guidance.                                                     |
 | H10 | [Mike's hosting discussion](https://www.reddit.com/r/Enshrouded/comments/1x6qnn3/want_to_rent_a_server_for_my_friends_any_tips_on/)                         | Full supplied thread body read; qualitative inquiries and provider participation, not verified service performance.        |
+| H11 | [Supplied Enshrouded video](https://www.youtube.com/watch?v=AQ3XXXYek5c&t=90s); full user-supplied `Pasted text(4).txt` transcript | Reported paid rental, asynchronous shared castle and credited contributions. No footage inspected; narrator identity, publication date and game version are not established here. The transcript has no timestamps; the URL's 90-second start does not locate the cited remarks. |
