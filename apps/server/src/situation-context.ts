@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   captureEvidenceCut,
   captureTemporalReceiptPrefix,
+  temporalReceiptWithinPrefix,
   evidenceCutEligible,
   currentDetailedAttention,
   captureAttentionPresentation,
@@ -69,6 +70,7 @@ export function temporalHistoryForModel(
         receipt.ordinal,
       ]),
       subject: permittedSourceHandle(world, actorId, ['received-subject', receipt.subject]),
+      ...(receipt.contextSubjects?.length ? { contextFor: receipt.contextSubjects.map((subject) => permittedSourceHandle(world, actorId, ['received-subject', subject])) } : {}),
       acquiredAt: receipt.at,
       change: receipt.change,
       facts: values.map((value, index) => {
@@ -124,7 +126,7 @@ export function captureSituation(
   world: WorldState,
   actorId: string,
   jobId: string,
-  history: TemporalHistorySelection,
+  retainedHistory: TemporalHistorySelection,
 ) {
   const policy = selectedAttentionPolicy(world).scene,
     scene = receivedScene(world, actorId);
@@ -132,6 +134,15 @@ export function captureSituation(
   const cut = captureEvidenceCut(world, actorId, geometry.observations),
     entries = currentDetailedAttention(world, actorId);
   const receiptPrefix = captureTemporalReceiptPrefix(world, actorId);
+  const historyEntries = retainedHistory.entries.filter(({ receipt }) =>
+    temporalReceiptWithinPrefix(receipt, receiptPrefix),
+  );
+  const history = {
+    ...retainedHistory,
+    entries: historyEntries,
+    incomplete:
+      retainedHistory.incomplete || historyEntries.length !== retainedHistory.entries.length,
+  };
   const references = new Map(
     [...scene.bodies.keys()].map((id) => [entityHandle(world, actorId, id), id]),
   );
@@ -660,10 +671,11 @@ export async function expandSituation(
     );
   }
   for (const { receipt } of captured.history.entries)
-    subjects.set(
-      permittedSourceHandle(world, actorId, ['received-subject', receipt.subject]),
-      receipt.subject,
-    );
+    for (const subject of [receipt.subject, ...(receipt.contextSubjects ?? [])])
+      subjects.set(
+        permittedSourceHandle(world, actorId, ['received-subject', subject]),
+        subject,
+      );
   for (const query of queries) {
     const frameStart = captured.frames.length;
     let result: unknown;

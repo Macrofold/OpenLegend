@@ -309,6 +309,55 @@ describe('bounded received situation', () => {
         .success,
     ).toBe(false);
   });
+  it('acknowledges only the actual additional body descriptions that survived the query byte limit', async () => {
+    const world = crowded();
+    world.paused = false;
+    const captured = captureSituation(world, PLAYER_ID, 'ack-expanded', {
+      entries: [],
+      incomplete: true,
+    });
+    const before = new Set(captured.presented.map((entry) => entry.key));
+    const expanded = await expandSituation(
+      captured,
+      [{ kind: 'near', anchor: entityHandle(world, PLAYER_ID, 'crowd-15'), radius: 100 }],
+      async () => {
+        throw Error('not history');
+      },
+    );
+    const rows = (expanded.results[0] as { result: { bodies: Array<{ reference: string }> } })
+      .result.bodies;
+    const supplied = new Set(
+      rows.map((row) => captured.allAttentionReferences[row.reference]).filter(Boolean),
+    );
+    const newlyPresented = captured.presented.filter((entry) => !before.has(entry.key));
+    expect(newlyPresented.length).toBeGreaterThan(0);
+    expect(newlyPresented.every((entry) => supplied.has(entry.key))).toBe(true);
+    const original = world.perceptionEvidence![PLAYER_ID]!.attention!.candidates;
+    const omitted = Object.keys(original).filter((key) => !before.has(key) && !supplied.has(key));
+    const result = commitActorResponse(
+      world,
+      'accept-expanded',
+      PLAYER_ID,
+      { operations: [] },
+      {},
+      [PLAYER_ID],
+      0,
+      [],
+      undefined,
+      [],
+      {},
+      undefined,
+      {},
+      {},
+      situationProposalBinding(captured),
+    );
+    expect(result.outcome.ok, result.outcome.message).toBe(true);
+    const current = result.world.perceptionEvidence![PLAYER_ID]!.attention!.candidates;
+    for (const supplied of newlyPresented)
+      expect(current[supplied.key]!.presentedDescription).toBe(supplied.descriptionRevision);
+    for (const key of omitted)
+      expect(current[key]!.presentedDescription).toBe(original[key]!.presentedDescription);
+  });
   it('keeps exact newest rows chronological and marks byte-shortened history partial', async () => {
     const world = crowded(1),
       history = selectTemporalHistory(world.experience?.temporal, PLAYER_ID);

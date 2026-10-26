@@ -766,18 +766,16 @@ describe(
       const section = secondInput.indexOf('## Conversation so far');
       expect(section).toBeGreaterThanOrEqual(0);
       const conversation = secondInput.slice(section, secondInput.indexOf('\n## ', section + 1));
-      expect(conversation).toContain('I said to a person (ID:');
-      const mentions = secondInput.split('\n').filter((line) => line.includes('river camp'));
+      expect(conversation).toContain('I said to a person: “Welcome to the river camp.”');
+      expect(conversation).not.toContain('(ID:');
+      const mentions = secondInput
+        .split('\n')
+        .filter((line) => line.includes('[internal]') && line.includes('river camp'));
       expect(mentions.length).toBeGreaterThan(0);
       for (const line of mentions)
-        expect(line).toMatch(/I said to .+: "Welcome to the river camp\."$/);
+        expect(line).toMatch(/I said to .+: “Welcome to the river camp\.”$/);
       expect(transport.outputs[0]).toContain('"text":"Welcome to the river camp."');
-      for (const transcript of [
-        'resp_fixture_1',
-        transport.outputs[0]!,
-        '"text":"Welcome to the river camp."',
-        RESPONSE_INSTRUCTIONS,
-      ])
+      for (const transcript of ['resp_fixture_1', transport.outputs[0]!, RESPONSE_INSTRUCTIONS])
         expect(secondInput).not.toContain(transcript);
 
       const jev = transport.requests.filter((request) => request.url === JEV_URL);
@@ -873,6 +871,13 @@ describe(
       const jevOnly = await harness({
         env: { AI_JEV_ONLY: 'true' },
         client: (config) => directClient(config, jevOnlyTransport.fetch),
+      });
+      await editWorld(jevOnly.service, (world) => {
+        const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates)
+          .filter(([, candidate]) => entityGet(world.entities, candidate.sourceId)?.heat)
+          .map(([key]) => key);
+        expect(keys.length).toBeGreaterThan(0);
+        expect(setAttentionFocus(world, NPC_ID, keys)).toBe(true);
       });
       const job = await jevOnly.chat('jev-only', 'Hello');
       const routing = jevOnlyTransport.requests.find(

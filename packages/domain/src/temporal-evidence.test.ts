@@ -18,6 +18,8 @@ import {
   retainTemporalSupport,
   beginTemporalReceiptEpoch,
   clearTemporalCaptureReferences,
+  captureTemporalReceiptPrefix,
+  temporalReceiptWithinPrefix,
 } from './temporal-evidence.js';
 
 function scene(seed = 41) {
@@ -33,6 +35,52 @@ function scene(seed = 41) {
   expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
   return world;
 }
+
+it('binds history to the captured receipt prefix even when later measurements share its game time', () => {
+  const world = scene(49),
+    actorId = PLAYER_ID;
+  const cut = captureTemporalReceiptPrefix(world, actorId);
+  const prior = selectTemporalHistory(world.experience!.temporal, actorId, {
+    cut,
+    limit: 1000,
+    bytes: 1024 * 1024,
+  });
+  const npc = entityGet(world.entities, NPC_ID)!;
+  setSpatialPosition(world, npc, { x: 4, y: 0, z: 2 }, worldSupport(npc), 'physical');
+  initializePerception(world, []);
+  const later = selectTemporalHistory(world.experience!.temporal, actorId, {
+    limit: 1000,
+    bytes: 1024 * 1024,
+  });
+  expect(later.entries.some(({ receipt }) => !temporalReceiptWithinPrefix(receipt, cut))).toBe(
+    true,
+  );
+  expect(
+    selectTemporalHistory(world.experience!.temporal, actorId, {
+      cut,
+      limit: 1000,
+      bytes: 1024 * 1024,
+    }),
+  ).toEqual(prior);
+  beginTemporalReceiptEpoch(world, 'different-namespace');
+  setSpatialPosition(world, npc, { x: 5, y: 0, z: 2 }, worldSupport(npc), 'physical');
+  initializePerception(world, []);
+  const newCut = captureTemporalReceiptPrefix(world, actorId);
+  const restoredStream = selectTemporalHistory(world.experience!.temporal, actorId, {
+    cut: newCut,
+    limit: 1000,
+    bytes: 1024 * 1024,
+  });
+  expect(restoredStream.entries.some(({ receipt }) => receipt.epoch !== newCut.epoch)).toBe(true);
+  expect(restoredStream.entries.some(({ receipt }) => receipt.epoch === newCut.epoch)).toBe(true);
+  expect(
+    selectTemporalHistory(world.experience!.temporal, actorId, {
+      cut,
+      limit: 1000,
+      bytes: 1024 * 1024,
+    }),
+  ).toEqual(prior);
+});
 
 it('releases stale deduplication references without changing current sensory support', () => {
   const world = scene(),

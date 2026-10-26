@@ -213,7 +213,7 @@ export async function readTemporalHistory(
         (!query.cut || temporalReceiptWithinPrefix(receipt, query.cut)) &&
         receipt.at >= from &&
         receipt.at <= through &&
-        (!subjects.length || subjects.includes(receipt.subject)) &&
+        (!subjects.length || subjects.includes(receipt.subject) || receipt.contextSubjects?.some((subject) => subjects.includes(subject))) &&
         (!query.before ||
           receipt.at < query.before.at ||
           (receipt.at === query.before.at &&

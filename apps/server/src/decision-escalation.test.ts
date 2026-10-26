@@ -6,6 +6,7 @@ import {
   NPC_ID,
   PLAYER_ID,
   createItemLot,
+  setAttentionFocus,
   quantityOf,
   activeAppraisals,
   commitActorResponse,
@@ -946,6 +947,14 @@ describe('enabled character decision reconsideration', () => {
         false,
       ).ok,
     ).toBe(true);
+    await editWorld(h.service, (world) => {
+      const key = Object.keys(world.perceptionEvidence![NPC_ID]!.attention!.candidates).find(
+        (key) =>
+          world.perceptionEvidence![NPC_ID]!.attention!.candidates[key]!.sourceId === 'charge-bank',
+      );
+      expect(key).toBeDefined();
+      expect(setAttentionFocus(world, NPC_ID, [key!])).toBe(true);
+    });
     const supply = entityGet(h.service.world.entities, 'charge-bank')!.replenisher!.remaining;
     const job = await h.thought();
     expect(job.decision?.groups['q0']?.state, JSON.stringify(job)).toBe('resolved');

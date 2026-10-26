@@ -8,6 +8,7 @@ import type {
 import { validateEvidenceSource, validateSensoryFacet } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
 import { isSafeRecordId } from './records.js';
+import { selectedAttentionPolicy } from './world-composition.js';
 import {
   temporalReceiptAliases,
   temporalReceiptIndividualIds,
@@ -104,6 +105,7 @@ export function validateTemporalEvidenceState(
 ): void {
   const value = world.experience?.temporal;
   if (value === undefined) return;
+  const maximumContextSubjects = selectedAttentionPolicy(world).maximumCapacity * 2;
   if (
     !record(value) ||
     value.version !== 1 ||
@@ -222,6 +224,9 @@ export function validateTemporalEvidenceState(
         !ordinal(receipt.order) ||
         typeof receipt.subject !== 'string' ||
         !receipt.subject ||
+        (receipt.contextSubjects !== undefined &&
+          (!strings(receipt.contextSubjects) ||
+            receipt.contextSubjects.length > maximumContextSubjects)) ||
         (receipt.subjectIdentity !== undefined && !validObserverSubject(receipt.subjectIdentity)) ||
         !['baseline', 'change', 'loss', 'occurrence', 'attention-exit'].includes(receipt.change) ||
         typeof receipt.required !== 'boolean' ||
@@ -385,6 +390,7 @@ export function validateTemporalEvidenceState(
         lastOrdinal = receipt.ordinal;
         lastAt = receipt.at;
         subjects.add(receipt.subject);
+        for (const subject of receipt.contextSubjects ?? []) subjects.add(subject);
         for (const alias of temporalReceiptAliases(receipt, temporal.sources, world))
           aliases.add(alias);
         for (const id of temporalReceiptIndividualIds(receipt, temporal.sources))

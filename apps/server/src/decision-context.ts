@@ -1,5 +1,9 @@
 import { currentBodyObservation } from '@open-legend/domain';
-import { currentDetailedAttention, selectTemporalHistory } from '@open-legend/domain';
+import {
+  captureTemporalReceiptPrefix,
+  currentDetailedAttention,
+  selectTemporalHistory,
+} from '@open-legend/domain';
 import { captureSituation } from './situation-context.js';
 import { entityGet } from '@open-legend/domain';
 import {
@@ -359,6 +363,7 @@ export async function prepareDecision(
   const evidenceScope = head
     ? { worldId: world.id, actorId, generation: head.generation }
     : undefined;
+  const receiptPrefix = captureTemporalReceiptPrefix(world, actorId);
   const recentHistory =
     service.store.memories && evidenceScope
       ? await service.store.memories.temporalHistory(
@@ -368,10 +373,11 @@ export async function prepareDecision(
               (entry) => entry.exposure.episodeId,
             ),
             through: world.simTime,
+            cut: receiptPrefix,
           },
           world,
         )
-      : selectTemporalHistory(world.experience?.temporal, actorId);
+      : selectTemporalHistory(world.experience?.temporal, actorId, { cut: receiptPrefix });
   // Size the same received measurements that this decision will actually use,
   // before optional paid selection. Later waits cannot replace them with a new
   // scene or make older retained changes newly observed.
