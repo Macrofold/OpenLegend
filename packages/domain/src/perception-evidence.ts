@@ -49,7 +49,7 @@ import {
 import { hasMemory } from './living.js';
 import { knownPlaceEvidence } from './known-place-evidence.js';
 import { validEncounterExposure, type EncounterExposure } from './places.js';
-import { hasRecordFields, isSafeRecordId, isImmutableData, jsonEncoding } from './records.js';
+import { hasRecordFields, isSafeRecordId, isImmutableData, jsonText } from './records.js';
 import {
   selectedBodyIndividual,
   selectedPruneObserverIndividuals,
@@ -1020,6 +1020,7 @@ function semanticFacetChanged(before: SensoryFacet, after: SensoryFacet): boolea
       previous.heatLit !== current.heatLit ||
       previous.remainsPhase !== current.remainsPhase ||
       !!previous.storage !== !!current.storage ||
+      previous.outward.length !== current.outward.length ||
       previous.outward.some((value, index) => value !== current.outward[index]) ||
       previous.label?.name !== current.label?.name ||
       previous.label?.nameForm !== current.label?.nameForm ||
@@ -1168,8 +1169,7 @@ export function reconcileVisualEvidence(
       // Drafting every unchanged nested body here makes later native previews copy it.
       const previous = prior && effectiveCurrentFacetSupport(world, observer.id, prior),
         previousValue = previous && readOnlyDraftView(previous.value);
-      const changed =
-        !previousValue || jsonEncoding(previousValue).json !== jsonEncoding(facet).json;
+      const changed = !previousValue || jsonText(previousValue) !== jsonText(facet);
       if (changed) attentionChanges.add(subject.id);
       if (
         prior &&

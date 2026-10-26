@@ -14,7 +14,7 @@ export const BASE_ATTENTION_POLICY: AttentionPolicy = {
     maxFragments: 256,
     preparationPatches: 512,
   },
-  semantic: { discovery: true, coalesceMs: 250, deadlineMs: 5000 },
+  semantic: { discovery: true, coalesceMs: 250 },
   scene: {
     maxBytes: 12 * 1024,
     maxRows: 48,

@@ -270,7 +270,7 @@ General significance uses the existing cognition turn, with bounded native expan
 
 An AI request holds only a bounded temporary copy of the supplied observations; it does not extend optional memory retention. If the exact supporting detail expires before the answer can be accepted, that answer may be declined as stale. Required knowledge and obligations retain their separately admitted minimum proof.
 
-The short world-selected noticing deadline applies to the initial autonomous request. Player conversations retain their existing interactive deadlines, and a separately funded higher-model reconsideration retains its existing useful-later contract. Neither a delayed answer nor an expired initial request authorizes another paid attempt.
+The two-to-five-real-second noticing objective is measured from justified cause to useful publication; it is not a separate cancellation deadline. Ordinary autonomous requests and player conversations preserve their configured provider timeouts and applicable decision-usefulness checks. A separately funded higher-model reconsideration retains its existing useful-later contract. Neither delay nor expiry authorizes another paid attempt.
 
 ### 9.6 Why this should be worth playing
 

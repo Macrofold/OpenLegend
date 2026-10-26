@@ -210,7 +210,6 @@ const judgeMeter = (
   },
 });
 interface Running {
-  attentionDeadline?: { wall: number; monotonic: number };
   discovery?: { actorId: string; reservation: string; spent: boolean };
   /** Admission lane, independent of later provider duration or outcome. */
   urgent: boolean;
@@ -1452,16 +1451,6 @@ export class AiDirector {
   }
 
   private current(run: Running): string {
-    if (
-      run.attentionDeadline &&
-      (this.now() >= run.attentionDeadline.wall ||
-        performance.now() >= run.attentionDeadline.monotonic)
-    )
-      throw new StopJob(
-        'stale',
-        'This attention decision exceeded its useful lifetime.',
-        'expired',
-      );
     const decision = run.job.decision;
     if (
       decision &&
@@ -1617,17 +1606,6 @@ export class AiDirector {
     }
     const run: Running = {
       urgent,
-      ...(job.kind === 'thought' && actorId
-        ? {
-            // Ordinary noticing has the world's short useful-lifetime limit. Player
-            // conversations retain their existing interactive decision/transport budgets.
-            attentionDeadline: {
-              wall: this.now() + selectedAttentionPolicy(this.service.world).semantic.deadlineMs,
-              monotonic:
-                performance.now() + selectedAttentionPolicy(this.service.world).semantic.deadlineMs,
-            },
-          }
-        : {}),
       ...(discovery ? { discovery: { ...discovery, spent: false } } : {}),
       job,
       controller: new AbortController(),
@@ -1681,18 +1659,10 @@ export class AiDirector {
           Math.min(
             job.decision.usefulUntilWall - this.now(),
             job.decision.usefulUntilMonotonic - performance.now(),
-            run.attentionDeadline ? run.attentionDeadline.monotonic - performance.now() : Infinity,
           ),
         ),
       );
       run.immediateTimer.unref();
-      run.expiryTimer.unref();
-    }
-    if (!run.expiryTimer && run.attentionDeadline) {
-      run.expiryTimer = setTimeout(
-        () => run.controller.abort(),
-        Math.max(1, run.attentionDeadline.monotonic - performance.now()),
-      );
       run.expiryTimer.unref();
     }
     await this.log.save({
@@ -2503,9 +2473,6 @@ export class AiDirector {
       async (id) =>
         await this.client.generate<T>({
           ...request,
-          ...(run.attentionDeadline
-            ? { deadlineMs: Math.min(request.deadlineMs ?? Infinity, run.attentionDeadline.wall) }
-            : {}),
           requestId: id,
           signal: run.controller.signal,
           maxOutputTokens:

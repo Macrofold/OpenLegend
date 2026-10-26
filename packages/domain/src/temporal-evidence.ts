@@ -6,7 +6,7 @@ import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
 import { ensureExperienceAccounting } from './remembered-impressions.js';
 import { personalFactAlias } from './experience-source.js';
-import { jsonEncoding } from './records.js';
+import { jsonEncoding, jsonText } from './records.js';
 import { selectedRecognitionSupportSourceIds } from './world-composition.js';
 import type { WorldState } from './types.js';
 import type { ObserverSubject } from './knowledge.js';
@@ -210,7 +210,7 @@ function valueEncoding(value: TemporalValue): { json: string; bytes: number } {
   return jsonEncoding(readOnlyDraftView(value));
 }
 const equalValue = (left: TemporalValue, right: TemporalValue) =>
-  valueEncoding(left).json === valueEncoding(right).json;
+  jsonText(readOnlyDraftView(left)) === jsonText(readOnlyDraftView(right));
 function sourceHeaderBytes(block: TemporalSourceBlock): number {
   return byteLength({ ...readOnlyDraftView(block), values: [] });
 }

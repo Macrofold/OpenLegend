@@ -391,6 +391,7 @@ import {
   emit,
   encounterEmitter,
   acquireExposure,
+  reconcileTransition,
   finish,
   outcome,
 } from './events.js';
@@ -2092,7 +2093,9 @@ function nativeMovementTransition(
         'No proposed native movement remains available.',
       ),
     };
-  const selecting = draftWorld(original);
+  // The common one-route case has no random choice to commit. Avoid a discarded
+  // whole-world draft before the ordinary command transaction.
+  const selecting = available.length > 1 ? draftWorld(original) : original;
   let selected = available[0]!,
     draw: number | undefined;
   if (available.length > 1) {
@@ -2109,19 +2112,30 @@ function nativeMovementTransition(
   }
   const transition = executeCommand(selecting, command(selected), {
     nativeController: true,
-    nativeMovement: { binding, path: selected.path },
+    nativeMovement: { binding, path: selected.path, draw },
   });
   if (!transition.outcome.ok) return { ...transition, world: original, events: [] };
-  const world = draftWorld(transition.world),
-    current = entityGet(world.entities, actorId)!,
-    action = current.actor!.action!;
-  if (mode === 'escape') {
+  return transition;
+}
+
+/** Finish the native controller's bookkeeping in the admitted movement transaction,
+ * rather than publishing and copying the same world a second time for every animal.
+ * No choice/admission is skipped; a rejected command still discards its saved draw. */
+function bindNativeMovement(
+  world: WorldState,
+  current: Entity,
+  action: Action,
+  movement: NonNullable<CommandOptions['nativeMovement']>,
+  events: WorldEvent[],
+): void {
+  if (movement.binding.mode === 'escape') {
     const active = current.animal!.episode!;
+    const profile = nativeResponseProfile(world, active.profilePin)!;
     active.refuge = {
-      point: { ...selected.candidate.point },
+      point: { ...action.destination! },
       selectedAt: world.simTime,
       generation: active.proposalGeneration,
-      ...(draw === undefined ? {} : { draw }),
+      ...(movement.draw === undefined ? {} : { draw: movement.draw }),
     };
     active.movement = { kind: 'action', id: action.id };
     active.mode = 'escaping';
@@ -2131,28 +2145,29 @@ function nativeMovementTransition(
     delete active.clearSince;
     emit(
       world,
-      transition.events,
+      events,
       'animal-response',
       subjectNarration(current, profile.presentation.escaping),
       current,
     );
   }
   reconcileAnimalWander(world, current);
-  recordAnimalClockWrite(world, actorId);
-  recordSemanticChange(world, { kind: 'state', entityId: actorId, field: 'behavior' });
-  return finish(world, transition.events, transition.outcome);
+  recordAnimalClockWrite(world, current.id);
+  recordSemanticChange(world, { kind: 'state', entityId: current.id, field: 'behavior' });
 }
+
+type CommandOptions = {
+  preview?: boolean;
+  nativeController?: true;
+  nativeMovement?: { binding: NativeLocomotion; path: SurfacePoint[]; draw?: number };
+  constructionPermissions?: readonly ConstructionPermission[];
+};
 
 /** Accepted commands are idempotent by id+body. Rejections cause no physical effects. */
 export function executeCommand(
   original: WorldState,
   command: Command,
-  options: {
-    preview?: boolean;
-    nativeController?: true;
-    nativeMovement?: { binding: NativeLocomotion; path: SurfacePoint[] };
-    constructionPermissions?: readonly ConstructionPermission[];
-  } = {},
+  options: CommandOptions = {},
 ): Transition {
   const nested = inWorkGroup();
   try {
@@ -2170,12 +2185,7 @@ export function executeCommand(
 function executeCommandNative(
   original: WorldState,
   command: Command,
-  options: {
-    preview?: boolean;
-    nativeController?: true;
-    nativeMovement?: { binding: NativeLocomotion; path: SurfacePoint[] };
-    constructionPermissions?: readonly ConstructionPermission[];
-  },
+  options: CommandOptions,
   standalone: boolean,
 ): Transition {
   const reject = (code: string, message: string): Transition => ({
@@ -3404,6 +3414,12 @@ function executeCommandNative(
   // Direct changes and consent replies can reconcile now without mistaking that gap for departure.
   if (!action || !component.agency.plan?.steps.some((step) => step.id === command.id))
     reconcileOutings(world, events, { changedOnly: true });
+  if (options.nativeMovement && action) {
+    // Preserve due commitment/coaching/conversation effects before the controller's
+    // movement notice, as the earlier compound transition did before publication.
+    reconcileTransition(world, events);
+    bindNativeMovement(world, actor, action, options.nativeMovement, events);
+  }
   return finish(world, events, result);
 }
 

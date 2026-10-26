@@ -12,6 +12,13 @@ import {
   selectTemporalHistory,
   currentDetailedAttention,
   commitActorResponse,
+  emptyEntities,
+  setAttentionFocus,
+  currentAttentionCues,
+  currentBodyObservation,
+  selectedAttentionPolicy,
+  updateWorld,
+  executeCommand,
 } from '@open-legend/domain';
 import {
   captureSituation,
@@ -23,6 +30,8 @@ import {
 import { boundResponseSchema } from './cognition-contracts.js';
 import { entityHandle } from './entity-references.js';
 import { appendMemory } from '../../../packages/domain/src/events.js';
+import { cloneValue } from '../../../packages/domain/src/draft.js';
+import { assignGivenName } from '../../../packages/domain/src/worlds/base/knowledge.js';
 
 function crowded(count = 16) {
   const world = createWorld(734),
@@ -47,6 +56,148 @@ function crowded(count = 16) {
 }
 
 describe('bounded received situation', () => {
+  it('keeps actually received changes and native relation proof before optional crowd detail', () => {
+    let world = updateWorld(createWorld(117), (draft) => {
+      const observer = entityGet(draft.entities, NPC_ID)!,
+        player = entityGet(draft.entities, PLAYER_ID)!,
+        prototype = cloneValue(observer);
+      draft.entities = emptyEntities();
+      entitySet(draft.entities, NPC_ID, observer);
+      entitySet(draft.entities, PLAYER_ID, player);
+      draft.map.width = 42;
+      draft.map.height = 5;
+      draft.map.tiles = Array.from({ length: 5 }, () => Array(42).fill('grass'));
+      const surface = (id: string, minX: number, maxX: number, y: number) => ({
+        id,
+        name: 'Private terrain name',
+        levelId: 'level',
+        minX,
+        maxX,
+        minZ: 0,
+        maxZ: 4,
+        y,
+        slopeX: 0,
+        slopeZ: 0,
+        thickness: 0.1,
+        material: 'stone',
+        acousticTransmission: 0,
+      });
+      draft.map.spatial = {
+        version: 1,
+        revision: draft.map.spatial.revision + 1,
+        disclosure: 'public',
+        levels: [{ id: 'level', name: 'Private level', focusY: 0 }],
+        blockers: [],
+        surfaces: [surface('high', 0, 20, 2), surface('low', 20, 40, 0)],
+      };
+      // Qualified far-side observation: both actual surfaces are visible. These
+      // coordinates supply no hidden destination, pursuit or relationship.
+      setSpatialPosition(draft, observer, { x: 25, y: 2, z: 2 }, null);
+      setSpatialPosition(draft, player, { x: 7, y: 2, z: 3 }, null);
+      for (let index = 0; index < 15; index++) {
+        const person = structuredClone(prototype);
+        person.id = `edge-person-${index}`;
+        person.name = `Hidden person ${index}`;
+        person.actor!.action = null;
+        if (index === 0)
+          person.actor!.voiceProfile = {
+            pitchRange: 930,
+            resonance: 120,
+            texture: 740,
+            rhythm: 380,
+          };
+        else delete person.actor!.voiceProfile;
+        entitySet(draft.entities, person.id, person);
+        setSpatialPosition(
+          draft,
+          person,
+          {
+            x: index === 0 ? 15 : 5 + index / 3,
+            y: 2,
+            z: 2,
+          },
+          null,
+        );
+      }
+      expect(
+        assignGivenName(
+          draft,
+          NPC_ID,
+          {
+            subjectId: 'edge-person-0',
+            expectedRevision: 0,
+            givenName: 'An acquaintance',
+          },
+          ['edge-person-0'],
+          true,
+        ).ok,
+      ).toBe(true);
+      initializePerception(draft, []);
+    });
+    const voice = executeCommand(world, {
+      id: 'edge-known-voice',
+      actorId: 'edge-person-0',
+      type: 'say',
+      text: 'Here I am.',
+      targetId: NPC_ID,
+    });
+    expect(voice.outcome.ok).toBe(true);
+    world = updateWorld(voice.world, (draft) => {
+      const key = Object.entries(draft.perceptionEvidence![NPC_ID]!.attention!.candidates).find(
+        ([, candidate]) => candidate.sourceId === 'edge-person-0',
+      )![0];
+      expect(setAttentionFocus(draft, NPC_ID, [key])).toBe(true);
+      draft.simTime = 15;
+      setSpatialPosition(
+        draft,
+        entityGet(draft.entities, 'edge-person-0')!,
+        { x: 16, y: 2, z: 2 },
+        null,
+        'physical',
+      );
+      initializePerception(draft, []);
+    });
+    const nativeBefore = currentAttentionCues(world, NPC_ID);
+    expect(
+      nativeBefore.some((cue) => cue.sourceId === 'edge-person-0' && cue.family === 'closing-drop'),
+    ).toBe(true);
+    const eventsBefore = world.events,
+      currentBefore = world.perceptionEvidence;
+    // No history fallback: this is the actual current-source narrowing path.
+    const captured = captureSituation(world, NPC_ID, 'crowded-edge', {
+      entries: [],
+      incomplete: true,
+    });
+    const reference = entityHandle(world, NPC_ID, 'edge-person-0');
+    const row = captured.packet.detailed.find((row) => row.reference === reference)!;
+    expect(
+      row.facts.facts.some(
+        (fact) => (fact['value'] as { kind: string }).kind === 'observed-motion',
+      ),
+    ).toBe(true);
+    expect(
+      captured.packet.relations
+        .find((row) => row.anchor === reference)!
+        .boundaries.some(
+          (edge) =>
+            edge.status === 'complete' &&
+            (edge.dropLower ?? 0) >= 1 &&
+            (edge.decreaseLower ?? 0) > 0,
+        ),
+    ).toBe(true);
+    expect(captured.packet.coverage.omittedOptionalFacets).toBeGreaterThan(0);
+    expect(captured.packet.broad.reduce((sum, row) => sum + row.count, 0)).toBe(16);
+    expect(
+      Buffer.byteLength(JSON.stringify({ ...captured.packet, recent: undefined })),
+    ).toBeLessThanOrEqual(selectedAttentionPolicy(world).scene.maxBytes);
+    expect(JSON.stringify(captured.packet)).not.toContain('Hidden person');
+    expect(JSON.stringify(captured.packet)).not.toContain('Private terrain name');
+    expect(world.events).toBe(eventsBefore);
+    expect(world.perceptionEvidence).toBe(currentBefore);
+    expect(currentAttentionCues(world, NPC_ID)).toEqual(nativeBefore);
+    expect(currentBodyObservation(world, NPC_ID, 'edge-person-0')).toBeDefined();
+  });
+
   it('retains an interpretation of an actually supplied discovery fact without exposing omitted candidates', () => {
     const world = crowded();
     world.paused = false;

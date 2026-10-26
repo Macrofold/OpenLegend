@@ -4,7 +4,14 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createItemLot, createWorld, executeCommand, inventoryFor } from '@open-legend/domain';
+import {
+  createItemLot,
+  createWorld,
+  executeCommand,
+  inventoryFor,
+  entityGet,
+  freezeWorld,
+} from '@open-legend/domain';
 import type { AiReceipt } from '@open-legend/ai';
 import { SqlGameRepository, type JobRecord, type SavedWorld } from './store.js';
 
@@ -64,6 +71,40 @@ afterEach(async () => {
 });
 
 describe('PostgreSQL committed world boundary', () => {
+  it('prepares exact frozen leaf bodies without mutating owners or hiding mutable edits', async () => {
+    const store = await open();
+    await store.ready;
+    const initial = save();
+    const original = JSON.stringify(initial);
+    const reference = store.records.prepare(undefined, JSON.parse(original));
+    freezeWorld(initial.world);
+    expect(store.records.prepare(undefined, initial)).toEqual(reference);
+    expect(JSON.stringify(initial)).toBe(original);
+
+    const builder: SavedWorld = JSON.parse(original);
+    const attributes = entityGet(builder.world.entities, PLAYER_ID)!.actor!.attributes!;
+    const [name, attribute] = Object.entries(attributes).find(
+      ([, value]) => typeof value.value === 'number',
+    )!;
+    if (typeof attribute.value !== 'number') throw new Error('Expected a numeric fixture meter.');
+    const source = JSON.stringify(['world', 'entities', PLAYER_ID, 'actor', 'attributes', name]);
+    const payload = () => {
+      const before = JSON.stringify(builder);
+      const changed = store.records.prepare(initial, builder);
+      expect(JSON.stringify(builder)).toBe(before);
+      return changed.writes.get('sim_actor_attributes')!.find((row) => row.id === source)!.payload;
+    };
+    attribute.value++;
+    attribute.revision++;
+    expect(JSON.parse(payload())).toEqual(attribute);
+    attribute.value++;
+    attribute.revision++;
+    const mutablePayload = payload();
+    expect(JSON.parse(mutablePayload)).toEqual(attribute);
+    freezeWorld(builder.world);
+    expect(payload()).toBe(mutablePayload);
+    expect(payload()).toBe(mutablePayload);
+  });
   it('persists state and command receipts together across close/reopen', async () => {
     const path = diskPath();
     let store = await open(path);

@@ -491,7 +491,7 @@ describe(
   'CR02 cognition verification with explicit fixtures, no live calls',
   { timeout: 480_000 },
   () => {
-    it('keeps interactive conversation budgets while ordinary noticing expires after five seconds', async () => {
+    it('preserves configured conversation and ordinary noticing budgets beyond the latency objective', async () => {
       const chat = await harness();
       chat.state.policy = { route: 'level2', reflection: 'no', possibleAction: 'no' };
       chat.state.generate = (request) => {
@@ -506,13 +506,14 @@ describe(
       const ordinary = await harness();
       ordinary.state.policy = { route: 'level2', reflection: 'no', possibleAction: 'no' };
       ordinary.state.generate = (request) => {
-        expect(request.deadlineMs).toBe(15000);
+        expect(request.deadlineMs).toBeUndefined();
         ordinary.advanceClock(6000);
         return value(request.requestId, 'openai', { operations: [] });
       };
       const job = await ordinary.think();
-      expect(job).toMatchObject({ status: 'stale', result: { disposition: 'expired' } });
-      expect(ordinary.service.world.responseReceipts?.[job.id]).toBeUndefined();
+      expect(ordinary.config.aiTimeoutMs).toBe(35000);
+      expect(job).toMatchObject({ status: 'completed', result: { disposition: 'response-empty' } });
+      expect(ordinary.service.world.responseReceipts?.[job.id]).toBeDefined();
     });
     it('answers a greeting with one low-effort level-2 mini request, a minimal schema, no reflection and no harness', async () => {
       const h = await harness();

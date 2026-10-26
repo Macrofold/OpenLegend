@@ -39,6 +39,8 @@ import {
   markPartialObjectHistory,
   completeObjectHistory,
   isSafeRecordId,
+  isImmutableData,
+  jsonText,
   type Appraisal,
   type Entity,
   type ItemInstance,
@@ -92,6 +94,19 @@ function body(node: RecordNode, value: Value): Value {
     if (part !== undefined && part !== null) copy[field] = child.mode === 'list' ? [] : {};
   }
   return copy;
+}
+function payload(node: RecordNode, value: Value): string {
+  // A leaf's exact immutable value was already encoded when it was the newer
+  // snapshot. Reuse that body without allocating another stripped wrapper.
+  if (
+    !node.children &&
+    node.table !== 'world_hot_events' &&
+    value &&
+    typeof value === 'object' &&
+    isImmutableData(value)
+  )
+    return jsonText(value);
+  return JSON.stringify(body(node, value));
 }
 function put(object: Value, key: string, value: Value) {
   if (!object || typeof object !== 'object') throw new Error('Invalid record parent.');
@@ -296,12 +311,12 @@ export class WorldRecords {
         changes.deletes.set(node.table, ids);
         return;
       }
-      const payload = JSON.stringify(body(node, next));
+      const encoded = payload(node, next);
       if (
         old === undefined ||
         (this.needsHotPrune && node.table === 'world_settings') ||
         oldPosition !== position ||
-        payload !== JSON.stringify(body(node, old))
+        encoded !== payload(node, old)
       ) {
         const rows = changes.writes.get(node.table) ?? [];
         rows.push({
@@ -309,7 +324,7 @@ export class WorldRecords {
           parent,
           slot,
           position,
-          payload,
+          payload: encoded,
           create: old === undefined,
           extra: Object.values(node.columns ?? {}).map((column) =>
             column.value(next as JsonRecord, path),

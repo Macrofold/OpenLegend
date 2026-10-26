@@ -5,6 +5,8 @@ import { populateScenario, type Scenario } from './performance/scenario.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { Session } from 'node:inspector/promises';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { workspaceBindings } from './performance/workspace-bindings.js';
 import {
   advanceWorld,
   freezeWorld,
@@ -28,6 +30,7 @@ if (
 const scenario: Scenario | undefined =
   experiment === '--scenario' ? JSON.parse(scenarioArgument ?? 'null') : undefined;
 const mutable = experiment === '--mutable-snapshots';
+const resolvedWorkspace = await workspaceBindings(fileURLToPath(new URL('..', import.meta.url)));
 // Optional differential trace (EPR00/PF03): per-step outcome, events with audiences, and
 // RNG/id/sequence scalars. Hashing happens after the timed loop so it cannot inflate cpuMs.
 const tracePath = process.env['OPENLEGEND_PROFILE_TRACE'];
@@ -211,6 +214,7 @@ try {
     JSON.stringify(
       {
         node: process.version,
+        workspaceBindings: resolvedWorkspace,
         status:
           scenario?.durationSeconds === undefined
             ? completedSteps === steps

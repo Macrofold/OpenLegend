@@ -22,7 +22,11 @@ import { isSpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
 import { soundOrigin, speechObservers, seesEntity } from './perception.js';
 import { appraiseEvent } from './worlds/base/appraisals.js';
-import { admitAutomaticExperience, acquireEventAwareness, type ExperienceMutation } from './experience.js';
+import {
+  admitAutomaticExperience,
+  acquireEventAwareness,
+  type ExperienceMutation,
+} from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';
 import { finishWorld, cloneValue, appendEvents, readOnlyDraftView } from './draft.js';
@@ -232,7 +236,8 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
   const flush = () => {
     if (owner && pending.length) {
       const entries = pending.map((operation) => {
-        if (operation.operation !== 'add') throw new Error('Automatic evidence must be an acquisition.');
+        if (operation.operation !== 'add')
+          throw new Error('Automatic evidence must be an acquisition.');
         return operation.entry;
       });
       if (admitAutomaticExperience(world, owner, entries) === null)
@@ -582,15 +587,20 @@ function recordEvent(
   }
   return event;
 }
+/** Reconcile consequences before another operation in the same owned transaction.
+ * Compound native work can retain this ordering without publishing an intermediate world. */
+export function reconcileTransition(world: WorldState, events: WorldEvent[]): void {
+  reconcileCoaching(world, events);
+  advanceCommitments(world, events);
+  reconcileConversations(world);
+}
 export function finish(
   world: WorldState,
   events: WorldEvent[],
   result: Outcome,
   beforePublication?: () => void,
 ): Transition {
-  reconcileCoaching(world, events);
-  advanceCommitments(world, events);
-  reconcileConversations(world);
+  reconcileTransition(world, events);
   // Native preparation observes the exact final owner writes before publication
   // clears private revision counters; this callback grants no gameplay authority.
   beforePublication?.();

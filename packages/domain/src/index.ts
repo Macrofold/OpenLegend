@@ -238,7 +238,7 @@ export {
 } from './narration.js';
 
 export * from './participation.js';
-export { isSafeRecordId } from './records.js';
+export { isSafeRecordId, isImmutableData, jsonText } from './records.js';
 export { BASE_PARTICIPATION_POLICY } from './worlds/base/participation.js';
 
 export {

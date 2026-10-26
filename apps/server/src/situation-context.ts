@@ -5,6 +5,8 @@ import {
   temporalReceiptWithinPrefix,
   evidenceCutEligible,
   currentDetailedAttention,
+  currentAttentionCues,
+  observationFactKey,
   captureAttentionPresentation,
   currentObservedFacets,
   currentReceivedGeometry,
@@ -226,6 +228,15 @@ export function captureSituation(
     frameIds.clear();
     frames.forEach((frame, id) => frameIds.set(JSON.stringify(frame), id));
   };
+  const activeCues = currentAttentionCues(world, actorId);
+  const cueAnchors = new Set(activeCues.map((cue) => entityHandle(world, actorId, cue.sourceId)));
+  const cueFacts = new Set(
+    activeCues.flatMap((cue) => cue.proof.map((fact) => JSON.stringify(fact))),
+  );
+  const supportsCue = (sample: Pick<CapturedCurrentFacet, 'original' | 'originalOrdinal'>) =>
+    cueFacts.has(JSON.stringify(observationFactKey(sample.original, sample.originalOrdinal)));
+  const entryBySource = new Map(entries.map((entry) => [entry.sourceId, entry]));
+  const salientFacts = new Set<string>();
   const detailIds = new Set(entries.map((entry) => entry.sourceId));
   const bodyFacts = (id: string, kinds?: readonly string[]) => {
     const facets = currentObservedFacets(world, actorId, id);
@@ -241,6 +252,19 @@ export function captureSituation(
           facet.originalOrdinal,
         ]);
         allCurrentReferences[reference] = facet;
+        const entry = entryBySource.get(id);
+        const candidate =
+          entry && world.perceptionEvidence?.[actorId]?.attention?.candidates[entry.key];
+        if (
+          supportsCue(facet) ||
+          (facet.value.kind === 'observed-motion' &&
+            [facet.value.earlier, facet.value.later].some(supportsCue)) ||
+          (entry &&
+            candidate?.presentedChange !== candidate?.changeRevision &&
+            facet.original.acquiredAt > entry.startedAt)
+        )
+          salientFacts.add(reference);
+
         // Current motion carries exact received endpoints, not two recursively repeated accounts.
         const value =
           facet.value.kind === 'observed-motion'
@@ -496,14 +520,17 @@ export function captureSituation(
       detail: 'unexpanded',
     }));
   }
-  while (currentBytes() > policy.maxBytes && packet.relations.length) packet.relations.pop();
   let omittedDetailedSubjects = 0;
   let omittedFacets = 0;
   for (const row of [...packet.detailed].reverse()) {
     for (let i = row.facts.facts.length - 1; currentBytes() > policy.maxBytes && i >= 0; i--) {
       const fact = row.facts.facts[i]!;
       const value = fact['value'] as { kind: string };
-      if (['body', 'location', 'association'].includes(value.kind)) continue;
+      if (
+        ['body', 'location', 'association'].includes(value.kind) ||
+        salientFacts.has(fact['reference'] as string)
+      )
+        continue;
       row.facts.facts.splice(i, 1);
       omittedFacets++;
       const key = attentionReferences[row.reference],
@@ -511,21 +538,51 @@ export function captureSituation(
       if (at >= 0) presentedKeys.splice(at, 1);
     }
   }
-  while (currentBytes() > policy.maxBytes && packet.detailed.length) {
-    // Keep the discovery lane; unfamiliar quiet content must not lose its reserved turn.
-    let index = packet.detailed.length - 1;
-    while (
-      index >= 0 &&
-      entries.find((entry) => entry.sourceId === references.get(packet.detailed[index]!.reference))
-        ?.basis === 'discovery'
-    )
-      index--;
-    const [removed] = packet.detailed.splice(index < 0 ? packet.detailed.length - 1 : index, 1);
+  // Source-backed change and active cue measurements precede unchanged optional
+  // equipment/meters. Narrow the derived read, never the acquired evidence or
+  // native reaction; broad presence and all original quotas stay unchanged.
+  while (currentBytes() > policy.maxBytes && packet.relations.length) {
+    let index = packet.relations.length - 1;
+    while (index >= 0 && cueAnchors.has(packet.relations[index]!.anchor)) index--;
+    if (index < 0) break;
+    packet.relations.splice(index, 1);
+  }
+  const omitDetailed = (index: number) => {
+    const [removed] = packet.detailed.splice(index, 1);
     const key = removed && attentionReferences[removed.reference];
     if (removed) delete attentionReferences[removed.reference];
     const at = key ? presentedKeys.indexOf(key) : -1;
     if (at >= 0) presentedKeys.splice(at, 1);
     omittedDetailedSubjects++;
+  };
+  while (currentBytes() > policy.maxBytes && packet.detailed.length) {
+    let index = packet.detailed.length - 1;
+    while (index >= 0) {
+      const row = packet.detailed[index]!;
+      const entry = entryBySource.get(references.get(row.reference)!);
+      if (
+        entry?.basis !== 'discovery' &&
+        !cueAnchors.has(row.reference) &&
+        !row.facts.facts.some((fact) => salientFacts.has(fact['reference'] as string))
+      )
+        break;
+      index--;
+    }
+    if (index < 0) break;
+    omitDetailed(index);
+  }
+  // Finite input cannot guarantee every selected detail. If even prioritized
+  // sources exceed the allowance, retain honest partial coverage without changing
+  // the character's ongoing attention or any already committed native outcome.
+  while (currentBytes() > policy.maxBytes && packet.relations.length) packet.relations.pop();
+  while (currentBytes() > policy.maxBytes && packet.detailed.length) {
+    let index = packet.detailed.length - 1;
+    while (
+      index >= 0 &&
+      entryBySource.get(references.get(packet.detailed[index]!.reference)!)?.basis === 'discovery'
+    )
+      index--;
+    omitDetailed(index < 0 ? packet.detailed.length - 1 : index);
   }
   Object.assign(packet.coverage, {
     omittedOptionalFacets: omittedFacets,
