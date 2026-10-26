@@ -1,0 +1,1000 @@
+[
+  {
+    "source_id": "RPS001",
+    "url": "https://huggingface.co/NousResearch/Hermes-4.3-36B",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP01",
+      "RP02"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS002",
+    "url": "https://huggingface.co/NousResearch/Hermes-4.3-36B/raw/main/config.json",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary configuration file",
+    "scope": "Configured architecture/context values; configuration alone does not validate practical quality at that context.",
+    "used_by": [
+      "RP01"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS003",
+    "url": "https://nousresearch.com/introducing-hermes-4-3/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model release article",
+    "scope": "Hermes 4.3 release timing, capability descriptions and links to evaluation artifacts.",
+    "used_by": [
+      "RP01"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS004",
+    "url": "https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP01"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS005",
+    "url": "https://huggingface.co/NousResearch/Hermes-4-70B",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP02"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS006",
+    "url": "https://huggingface.co/NousResearch",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [
+      "RP02"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS007",
+    "url": "https://huggingface.co/dphn/Venice-Role-Play-Uncensored",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP03"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS008",
+    "url": "https://huggingface.co/dphn",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [
+      "RP03",
+      "RP04"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS009",
+    "url": "https://docs.venice.ai/models/text",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary serving-provider documentation",
+    "scope": "Current exact API identifiers, catalog capabilities, context and/or per-million-token prices. Provider layer does not prove weight behavior.",
+    "used_by": [
+      "RP03",
+      "RP31",
+      "RP32"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS010",
+    "url": "https://docs.venice.ai/overview/pricing",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary serving-provider documentation",
+    "scope": "Current exact API identifiers, catalog capabilities, context and/or per-million-token prices. Provider layer does not prove weight behavior.",
+    "used_by": [
+      "RP03",
+      "RP31",
+      "RP32"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS011",
+    "url": "https://www.reddit.com/r/VeniceAI/comments/1s0tqqh/roleplay/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP03"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS012",
+    "url": "https://www.reddit.com/r/VeniceAI/comments/1ubov9f/what_uncensored_models_are_the_best/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP03"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS013",
+    "url": "https://huggingface.co/dphn/Dolphin-X1-Trinity-Nano",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP04"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS014",
+    "url": "https://blog.dphn.ai/dphn-x1-trinity-nano/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author release article",
+    "scope": "Dolphin X1 Nano training/evaluation claims.",
+    "used_by": [
+      "RP04"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS015",
+    "url": "https://huggingface.co/dphn/Dolphin-X1-8B",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP05"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS016",
+    "url": "https://www.reddit.com/r/LocalLLaMA/comments/1o5l62w/dolphin_x1_8b_llama31_8b_decensor_live_on_hf/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP05"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS017",
+    "url": "https://huggingface.co/LuffyTheFox/Qwen3.6-35B-A3B-Uncensored-Genesis-Hermes-GGUF",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP06"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS018",
+    "url": "https://huggingface.co/LuffyTheFox",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [
+      "RP06"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS019",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-27B-abliterated",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP07"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS020",
+    "url": "https://huggingface.co/collections/huihui-ai/qwen38-abliterated",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [
+      "RP07",
+      "RP08"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS021",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-Flash-Next-abliterated-v2-GGUF",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP08"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS022",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP08"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS023",
+    "url": "https://huggingface.co/LuffyTheFox/Qwen3.8-27B-Uncensored-Genesis-MTP-GGUF",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP09"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS024",
+    "url": "https://huggingface.co/LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-2.0",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP10"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS025",
+    "url": "https://huggingface.co/LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-GGUF",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP10"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS026",
+    "url": "https://www.reddit.com/r/LocalLLaMA/comments/1wvxl4n/qwen3827bhumanlikechat_20_texts_like_a_human_now/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP10"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS027",
+    "url": "https://huggingface.co/TheDrummer/Cydonia-24B-v4.3",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP11"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS028",
+    "url": "https://huggingface.co/TheDrummer/Cydonia-24B-v4.3/raw/main/README.md",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary raw model card",
+    "scope": "Exact authored README text; runtime claims and selected testimonials remain publisher evidence.",
+    "used_by": [
+      "RP11"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS029",
+    "url": "https://huggingface.co/TheDrummer",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [
+      "RP11",
+      "RP14",
+      "RP15",
+      "RP16"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS030",
+    "url": "https://huggingface.co/TheDrummer/Magidonia-24B-v4.3",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP12"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS031",
+    "url": "https://huggingface.co/coder3101/Cydonia-24B-v4.3-heretic",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP13"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS032",
+    "url": "https://huggingface.co/coder3101/Cydonia-24B-v4.3-heretic-v2",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP13"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS033",
+    "url": "https://www.reddit.com/r/LocalLLaMA/comments/1prm2tq/thedrummer_models_meet_heretic/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP13"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS034",
+    "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP14"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS035",
+    "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1/raw/main/README.md",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary raw model card",
+    "scope": "Exact authored README text; runtime claims and selected testimonials remain publisher evidence.",
+    "used_by": [
+      "RP14"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS036",
+    "url": "https://huggingface.co/TheDrummer/Rocinante-XL-16B-v1",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP15"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS037",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1uwgbvf/anyone_willing_to_help_a_newbie_with_a_few/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP15"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS038",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1sq77o9/megathread_best_modelsapi_discussion_week_of/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP15"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS039",
+    "url": "https://huggingface.co/TheDrummer/Skyfall-31B-v4.2",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP16"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS040",
+    "url": "https://huggingface.co/TheDrummer/Skyfall-31B-v4.2/raw/main/README.md",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary raw model card",
+    "scope": "Exact authored README text; runtime claims and selected testimonials remain publisher evidence.",
+    "used_by": [
+      "RP16"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS041",
+    "url": "https://huggingface.co/TheDrummer/Anubis-70B-v1.2",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP17"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS042",
+    "url": "https://huggingface.co/TheDrummer/Anubis-Mini-8B-v1",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP18"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS043",
+    "url": "https://huggingface.co/TheDrummer/Behemoth-128B-v3",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP19"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS044",
+    "url": "https://huggingface.co/Gryphe/Pantheon-Reasoning-27B",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP20"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS045",
+    "url": "https://huggingface.co/zerofata/G4-MeroMero-v2-31B",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP21"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS046",
+    "url": "https://huggingface.co/collections/zerofata/meromero",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [
+      "RP21"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS047",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1th7q0q/im_stunned_with_gemma4meromero31b/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP21"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS048",
+    "url": "https://huggingface.co/zerofata/G4-MeroMero-26B-A4B",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP22"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS049",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1x9odzm/gemma_4_31b_significantly_better_than_gemma_4_26b/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP22"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS050",
+    "url": "https://huggingface.co/AuriAetherwiing/G4-31B-Musica-v1",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP23"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS051",
+    "url": "https://huggingface.co/ArliAI",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [
+      "RP23",
+      "RP24",
+      "RP25"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS052",
+    "url": "https://huggingface.co/ArliAI/Qwen3.5-122B-RpRMax-v1",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP24"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS053",
+    "url": "https://huggingface.co/ArliAI/Qwen3.5-9B-RpRMax-v1",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP25"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS054",
+    "url": "https://huggingface.co/ArliAI/Qwen3.5-27B-RpRMax-v1",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP25"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS055",
+    "url": "https://huggingface.co/dealignai/DeepSeek-V4.1-Flash-1017-UNCENSORED-FP8",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP26"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS056",
+    "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP26"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS057",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1xaomu2/deepseek_v41_flash_1017_surprisingly_good/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP26"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS058",
+    "url": "https://huggingface.co/dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP27"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS059",
+    "url": "https://huggingface.co/yamz-labs/GLM-5.3-Flash-EXL3-Yamz-Uncensored",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP28"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS060",
+    "url": "https://huggingface.co/DavidAU/Qwen3.6-27B-Fable-Fusion-711-Uncensored-Heretic-NM-DAU-NEO-MAX-MTP-GGUF",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP29"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS061",
+    "url": "https://huggingface.co/DavidAU/Qwen3.6-27B-Heretic-Uncensored-FINETUNE-NEO-CODE-Di-IMatrix-MAX-GGUF",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP29"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS062",
+    "url": "https://huggingface.co/Darksp33d/loreweaver-rp-v1",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP30"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS063",
+    "url": "https://openrouter.ai/aion-labs/aion-3.5",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary serving-provider model listing",
+    "scope": "Hosted system description, release date, live pricing/context and application usage. Live counters are snapshots, not guarantees.",
+    "used_by": [
+      "RP31"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS064",
+    "url": "https://www.aionlabs.ai/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary provider website",
+    "scope": "API access/billing semantics and service positioning.",
+    "used_by": [
+      "RP31"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS065",
+    "url": "https://www.aionlabs.ai/pricing/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary provider website",
+    "scope": "API access/billing semantics and service positioning.",
+    "used_by": [
+      "RP31",
+      "RP32"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS066",
+    "url": "https://www.aionlabs.ai/terms/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary provider terms",
+    "scope": "Terms effective 2026-10-17: commercial embedding and model access rights, AUP; not a claim of zero technical refusal.",
+    "used_by": [
+      "RP31",
+      "RP32"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS067",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1wovzj1/aion_35_thoughts/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP31"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS068",
+    "url": "https://openrouter.ai/aion-labs/aion-3.5-mini",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary serving-provider model listing",
+    "scope": "Hosted system description, release date, live pricing/context and application usage. Live counters are snapshots, not guarantees.",
+    "used_by": [
+      "RP32"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS069",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1x4tit7/could_i_please_have_some_advice_on_preset_vs_model/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP32"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS070",
+    "url": "https://huggingface.co/sophosympatheia/Glistening-Gem-31B-v2.1",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP33"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS071",
+    "url": "https://huggingface.co/sophosympatheia/Glistening-Gem-31B-v2.1?not-for-all-audiences=true",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP33"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS072",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1x670pt/my_fully_local_ai_setup_for_others_to_copy_and/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP33"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS073",
+    "url": "https://huggingface.co/sophosympatheia/models",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [
+      "RP33"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS074",
+    "url": "https://huggingface.co/llmfan46/G4-MeroMero-26B-A4B-it-uncensored-heretic",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [
+      "RP34"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "spot_checked_at": "2026-10-24"
+  },
+  {
+    "source_id": "RPS075",
+    "url": "https://www.reddit.com/r/LocalLLaMA/comments/1tl1wpd/g4meromero26ba4bituncensoredheretic_is_out_now_a/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP34"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS076",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1tf68fx/g4meromero31buncensoredheretic_is_out_now_a/",
+    "retrieved_at": "2026-10-23",
+    "source_type": "original community discussion",
+    "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
+    "used_by": [
+      "RP34"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS077",
+    "url": "https://huggingface.co/NousResearch/DeepHermes-3-Mistral-24B-Preview",
+    "retrieved_at": "2026-10-23",
+    "source_type": "checkpoint reference discovered from primary catalog",
+    "scope": "Verified discovery/link identity only; baseline timing/relevance is sourced to the separate author profile/collection or raw card.",
+    "used_by": [],
+    "retrieval_note": "Discovered through primary catalog/search; not a full technical/license audit of this older baseline."
+  },
+  {
+    "source_id": "RPS078",
+    "url": "https://huggingface.co/collections/NousResearch/deephermes",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS079",
+    "url": "https://huggingface.co/anthracite-org/magnum-v4-123b",
+    "retrieved_at": "2026-10-23",
+    "source_type": "checkpoint reference discovered from primary catalog",
+    "scope": "Verified discovery/link identity only; baseline timing/relevance is sourced to the separate author profile/collection or raw card.",
+    "used_by": [],
+    "retrieval_note": "Discovered through primary catalog/search; not a full technical/license audit of this older baseline."
+  },
+  {
+    "source_id": "RPS080",
+    "url": "https://huggingface.co/anthracite-org/models",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS081",
+    "url": "https://huggingface.co/Sao10K/L3.3-70B-Euryale-v2.3",
+    "retrieved_at": "2026-10-23",
+    "source_type": "checkpoint reference discovered from primary catalog",
+    "scope": "Verified discovery/link identity only; baseline timing/relevance is sourced to the separate author profile/collection or raw card.",
+    "used_by": [],
+    "retrieval_note": "Discovered through primary catalog/search; not a full technical/license audit of this older baseline."
+  },
+  {
+    "source_id": "RPS082",
+    "url": "https://huggingface.co/Sao10K",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS083",
+    "url": "https://huggingface.co/sophosympatheia/Midnight-Miqu-70B-v1.5",
+    "retrieved_at": "2026-10-23",
+    "source_type": "checkpoint reference discovered from primary catalog",
+    "scope": "Verified discovery/link identity only; baseline timing/relevance is sourced to the separate author profile/collection or raw card.",
+    "used_by": [],
+    "retrieval_note": "Discovered through primary catalog/search; not a full technical/license audit of this older baseline."
+  },
+  {
+    "source_id": "RPS084",
+    "url": "https://huggingface.co/collections/sophosympatheia/midnight-miqu",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary author profile or collection",
+    "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
+    "used_by": [],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS085",
+    "url": "https://huggingface.co/TheDrummer/RimDialogue-3B-v1-GGUF",
+    "retrieved_at": "2026-10-23",
+    "source_type": "checkpoint reference discovered from primary catalog",
+    "scope": "Verified discovery/link identity only; baseline timing/relevance is sourced to the separate author profile/collection or raw card.",
+    "used_by": [],
+    "retrieval_note": "Discovered through primary catalog/search; not a full technical/license audit of this older baseline."
+  },
+  {
+    "source_id": "RPS086",
+    "url": "https://huggingface.co/TheDrummer/RimDialogue-3B-v1-GGUF/raw/main/README.md",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary raw model card",
+    "scope": "Exact authored README text; runtime claims and selected testimonials remain publisher evidence.",
+    "used_by": [],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS087",
+    "url": "https://huggingface.co/TheDrummer/Behemoth-X-123B-v2.2",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary model card",
+    "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
+    "used_by": [],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+  },
+  {
+    "source_id": "RPS088",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/raw/main/README.md",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary base-model raw card",
+    "scope": "Official component-level parameter, activated-compute and context definitions; distinguishes base architecture from unvalidated derivative behavior.",
+    "used_by": [
+      "RP08"
+    ],
+    "retrieval_note": "Opened and inspected official raw README; no model execution."
+  },
+  {
+    "source_id": "RPS089",
+    "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/raw/main/README.md",
+    "retrieved_at": "2026-10-23",
+    "source_type": "primary base-model raw card",
+    "scope": "Official component-level parameter, activated-compute and context definitions; distinguishes base architecture from unvalidated derivative behavior.",
+    "used_by": [
+      "RP26"
+    ],
+    "retrieval_note": "Opened and inspected official raw README; no model execution."
+  },
+  {
+    "source_id": "RPS090",
+    "url": "https://huggingface.co/dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4/raw/main/README.md",
+    "retrieved_at": "2026-10-24",
+    "source_type": "primary raw model card",
+    "scope": "Exact derivative publisher warning about reasoning-budget exhaustion, empty final content and parser/template dependencies; not independently tested.",
+    "used_by": [
+      "RP27"
+    ],
+    "retrieval_note": "Targeted review read only; no model inference."
+  }
+]

@@ -1,0 +1,753 @@
+[
+  {
+    "id": "D001",
+    "url": "https://docs.typesafe.ai/models",
+    "title": "TypeSafe model versions and pricing",
+    "type": "official documentation",
+    "published_or_updated": "2026-10-14",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Jev 1.14 release, direct API limits and price",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D002",
+    "url": "https://openrouter.ai/docs/guides/community/jev",
+    "title": "OpenRouter Jev integration",
+    "type": "provider documentation",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Hosted route, images, long-context behavior and typed outputs"
+  },
+  {
+    "id": "D003",
+    "url": "https://arxiv.org/abs/2610.19619",
+    "title": "Are AI Decision Models Biased? A Case Study of Jev",
+    "type": "original research preprint",
+    "published_or_updated": "2026-10-14",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Option ordering, irrelevant numbers, probability consistency; not an Open Legend evaluation"
+  },
+  {
+    "id": "D004",
+    "url": "https://arxiv.org/abs/2610.06625",
+    "title": "JEV versus LLMs: Accuracy, Cost and Calibration on Seven Political Science Replications",
+    "type": "original research preprint",
+    "published_or_updated": "2026-10-06",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Task-specific accuracy, calibration and batch-price comparison; predates Jev 1.14"
+  },
+  {
+    "id": "D005",
+    "url": "https://huggingface.co/baselabs/mammoth-1",
+    "title": "Base Labs Mammoth 1 card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Mammoth and Elephant relationship, 16384 length, CUDA runtime, free promotion and vendor benchmarks",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D006",
+    "url": "https://huggingface.co/baselabs/elephant-1",
+    "title": "Base Labs Elephant 1 card",
+    "type": "official model card; search-index access",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "9B Qwen 3.5 derivative; direct full page not retrieved",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D007",
+    "url": "https://openrouter.ai/baseten/elephant-1:free",
+    "title": "Elephant 1 free endpoint",
+    "type": "provider catalog/pricing",
+    "published_or_updated": "2026-10-21",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "October 21 availability, 16k endpoint and temporary free route"
+  },
+  {
+    "id": "D008",
+    "url": "https://openrouter.ai/baseten/mammoth-1:free",
+    "title": "Mammoth 1 free endpoint",
+    "type": "provider catalog/pricing",
+    "published_or_updated": "2026-10-21",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "October 21 availability, 16k endpoint and temporary free route"
+  },
+  {
+    "id": "D009",
+    "url": "https://openrouter.ai/nace-ai/drex-max",
+    "title": "Drex Max endpoint",
+    "type": "provider catalog/pricing",
+    "published_or_updated": "2026-10-21",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "262144 text context, $0.06 per million input tokens, October 21 release; successor status"
+  },
+  {
+    "id": "D010",
+    "url": "https://huggingface.co/nace-ai/drex-v2.0",
+    "title": "Nace Drex 2.0 card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D011",
+    "url": "https://huggingface.co/Cloudflare/clef",
+    "title": "Cloudflare Clef card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D012",
+    "url": "https://huggingface.co/Cloudflare/clef-flash/raw/main/README.md",
+    "title": "Cloudflare Clef Flash authored README",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D013",
+    "url": "https://blog.cloudflare.com/clef-decision-models",
+    "title": "Cloudflare Clef launch",
+    "type": "official announcement",
+    "published_or_updated": "2026-10-01",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "October 1 release, Workers AI, Apache 2.0 and RL platform"
+  },
+  {
+    "id": "D014",
+    "url": "https://huggingface.co/spaces/hugging-apps/clef-decision-model",
+    "title": "Clef public demo",
+    "type": "published demo link",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Demo existence; not executed"
+  },
+  {
+    "id": "D015",
+    "url": "https://huggingface.co/LiquidAI/d1-3B",
+    "title": "Liquid d1-3B card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D016",
+    "url": "https://huggingface.co/LiquidAI/d1-omni-600M/raw/main/README.md",
+    "title": "Liquid d1-omni-600M authored README",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D017",
+    "url": "https://huggingface.co/spaces/LiquidAI/system-one-arcade",
+    "title": "Liquid System One arcade",
+    "type": "official demo link",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Decision-model interactive examples; not executed"
+  },
+  {
+    "id": "D018",
+    "url": "https://www.liquid.ai/blog/d1-ultra",
+    "title": "Liquid d1-ultra launch",
+    "type": "official announcement",
+    "published_or_updated": "2026-10-15",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "October 15 API release, vendor comparison, price and applications"
+  },
+  {
+    "id": "D019",
+    "url": "https://openrouter.ai/liquid/d1-ultra",
+    "title": "Liquid d1-ultra endpoint",
+    "type": "provider catalog/pricing",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "32k context, input $0.042 per million tokens, zero output charge, images"
+  },
+  {
+    "id": "D020",
+    "url": "https://huggingface.co/perplexity-ai/pplx-decider-v1.2",
+    "title": "Perplexity Decider1.2 card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D021",
+    "url": "https://huggingface.co/perplexity-ai/pplx-decider-flash-v1.2",
+    "title": "Perplexity Decider Flash1.2 card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D022",
+    "url": "https://huggingface.co/vllm-sr/d3",
+    "title": "vLLM Semantic Router Decision3 card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "26.09B, video/images, 262k configured versus 32k serving recommendation, actual response, ROCm verification"
+  },
+  {
+    "id": "D023",
+    "url": "https://decision.vllm-sr.ai",
+    "title": "Decision3 demo",
+    "type": "official demo link",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Interactive demonstration; not executed"
+  },
+  {
+    "id": "D024",
+    "url": "https://huggingface.co/ibm-granite/granite-switch-4.1-8b",
+    "title": "IBM Granite Switch 4.1 card",
+    "type": "official model card",
+    "published_or_updated": "2026-10-14",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "8B/30B adapter bundles, decision head, 128k, English ASR, Apache 2.0"
+  },
+  {
+    "id": "D025",
+    "url": "https://commandline.microsoft.com/microsoft-decision-1-model-foundry/",
+    "title": "Microsoft Decision1 launch",
+    "type": "official announcement",
+    "published_or_updated": "2026-10-09",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Qwen 3.5-9B-derived, Foundry availability, task scope"
+  },
+  {
+    "id": "D026",
+    "url": "https://openrouter.ai/microsoft/microsoft-decision-1",
+    "title": "Microsoft Decision1 endpoint",
+    "type": "provider catalog/pricing",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "32k context, $0.042 per million input tokens, zero output, continually updated weights"
+  },
+  {
+    "id": "D027",
+    "url": "https://openrouter.ai/inception/mercury-decide",
+    "title": "Mercury Decide endpoint",
+    "type": "provider catalog/pricing",
+    "published_or_updated": "2026-09-30",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "65,536 context, SystemOne API, September 30 release, promotional $0.02 per million input tokens"
+  },
+  {
+    "id": "D028",
+    "url": "https://www.inceptionlabs.ai/models",
+    "title": "Inception model catalog",
+    "type": "official catalog",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Mercury Decide and Mercury 3 product position"
+  },
+  {
+    "id": "D029",
+    "url": "https://www.linkedin.com/posts/inception-labs-ai_mercury-decide-now-accepts-image-input-activity-7515833421299081216-PyK6",
+    "title": "Mercury Decide Ring King demo",
+    "type": "vendor-authored demo announcement",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Image-input addition and game decision demonstration"
+  },
+  {
+    "id": "D030",
+    "url": "https://developers.openai.com/api/docs/guides/decisions",
+    "title": "OpenAI Decisions API",
+    "type": "official documentation",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "400 questions, typed refusals, sample outputs, $0.10 per million input tokens, cache/region/length modifiers"
+  },
+  {
+    "id": "D031",
+    "url": "https://community.openai.com/t/decisions-api-is-now-available-in-public-beta/1403877",
+    "title": "Decisions API public beta announcement",
+    "type": "official developer community announcement",
+    "published_or_updated": "2026-10-06",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "October 6 public beta origin; current docs supersede beta limits"
+  },
+  {
+    "id": "D032",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-27B/raw/main/README.md",
+    "title": "Qwen 3.8-27B authored README",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D033",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next",
+    "title": "Qwen 3.8 Flash Next card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D034",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/blob/main/LICENSE",
+    "title": "Qwen Flash Next license",
+    "type": "official license",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Qwen Community 1.0, MaaS/work-assistant exceptions and scale attribution"
+  },
+  {
+    "id": "D035",
+    "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/raw/main/README.md",
+    "title": "Qwen 3.6-35B-A3B authored README",
+    "type": "official model card",
+    "published_or_updated": "2026-04-22",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "35B/3B, context, multimodal, Apache 2.0, serving"
+  },
+  {
+    "id": "D036",
+    "url": "https://huggingface.co/Qwen/Qwen3.5-9B/raw/main/README.md",
+    "title": "Qwen 3.5-9B authored README",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D037",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1vp24rj/qwen_38_27b_is_the_next_stepping_stone_for_local/",
+    "title": "Qwen 3.8-27B RP firsthand report",
+    "type": "original user discussion",
+    "published_or_updated": "approximately August2026; page relative date",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Positive coherence/instruction following; edited censorship claim; other users disagree"
+  },
+  {
+    "id": "D038",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/",
+    "title": "Qwen 3.8 Flash Next D&D report",
+    "type": "original user discussion",
+    "published_or_updated": "approximately September2026; page relative date",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Good D&D when allowed; stock refusals and derivative redirection"
+  },
+  {
+    "id": "D039",
+    "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+    "title": "DeepSeek V4.1 Flash card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D040",
+    "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro",
+    "title": "DeepSeek V4 Pro card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D041",
+    "url": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "title": "DeepSeek API pricing",
+    "type": "official documentation/pricing",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Flash 1017 and Pro 0813 IDs, peak/off-peak input/cache/output, 1M context",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D042",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1xaomu2/deepseek_v41_flash_1017_surprisingly_good/",
+    "title": "DeepSeek 1017 local abliterated RP report",
+    "type": "original user discussion",
+    "published_or_updated": "approximately October2026; relative timestamp inconsistent with crawl",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Improved prose and character-centered thoughts specifically for an abliterated local copy"
+  },
+  {
+    "id": "D043",
+    "url": "https://huggingface.co/zai-org/GLM-5.3-Flash",
+    "title": "GLM 5.3 Flash card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "320B total / 18B active, MIT license and authored runtimes.",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D044",
+    "url": "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+    "title": "GLM 5.3 Flash/FlashX documentation",
+    "type": "official documentation",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "1M context, 128k output, FlashX speed tier and native multimodal input."
+  },
+  {
+    "id": "D045",
+    "url": "https://docs.z.ai/guides/overview/pricing",
+    "title": "Z.ai API pricing",
+    "type": "official pricing",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Flash $0.15/$0.50, FlashX $0.37/$1.25 per million tokens; cache rates",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D046",
+    "url": "https://docs.z.ai/guides/capabilities/thinking-mode",
+    "title": "Z.ai thinking documentation",
+    "type": "official documentation",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "GLM 5.3 and Flash API reasoning is compulsory; low/high/max effort levels are supported.",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D047",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1vz5cy0/first_to_post_and_happy_to_say_glm_53_flash_is/",
+    "title": "GLM 5.3 Flash RP report",
+    "type": "original user discussion",
+    "published_or_updated": "approximately August2026; page relative date",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "NPC voice/persona and banter praise; direct Z.ai anecdote"
+  },
+  {
+    "id": "D048",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1vzi848/while_playing_around_with_glm_53_flash_i_had_a/",
+    "title": "GLM 5.3 Flash interrupted fiction/refusal report",
+    "type": "original user discussion",
+    "published_or_updated": "approximately September2026; page relative date",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Fiction can begin then refuse; cause speculation unverified"
+  },
+  {
+    "id": "D049",
+    "url": "https://www.reddit.com/r/SillyTavernAI/comments/1w0nh19/glm_53_vs_glm_53_flash/",
+    "title": "GLM 5.3 comparison discussion",
+    "type": "original user discussion",
+    "published_or_updated": "approximately August2026; page relative date",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Mixed pro/con prose, dialogue, thinking delay and refusal experiences"
+  },
+  {
+    "id": "D050",
+    "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3",
+    "title": "MiniMax M3 card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D051",
+    "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3/blob/main/LICENSE",
+    "title": "MiniMax M3 license",
+    "type": "official license",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Commercial attribution, notification, $20M annual revenue authorization threshold and use restrictions."
+  },
+  {
+    "id": "D052",
+    "url": "https://www.minimax.io/blog/minimax-m31f",
+    "title": "MiniMax M3.1 Flash launch",
+    "type": "official announcement",
+    "published_or_updated": "2026-10-19",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "October 19 API release, weights later, agentic benchmarks"
+  },
+  {
+    "id": "D053",
+    "url": "https://platform.minimax.io/docs/pricing/overview",
+    "title": "MiniMax API prices",
+    "type": "official pricing",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "M3.1 Flash $0.15/$0.60/$0.015 cache; M3 length tiers, priority 1.5x"
+  },
+  {
+    "id": "D054",
+    "url": "https://openrouter.ai/minimax/minimax-m3.1-flash",
+    "title": "MiniMax M3.1 Flash endpoint",
+    "type": "provider catalog/pricing",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "1M endpoint; free launch ended October 22; paid at retrieval."
+  },
+  {
+    "id": "D055",
+    "url": "https://huggingface.co/moonshotai/Kimi-K3",
+    "title": "Kimi K3 card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D056",
+    "url": "https://huggingface.co/moonshotai/Kimi-K3/blob/main/LICENSE",
+    "title": "Kimi K3 license",
+    "type": "official license",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Custom MaaS revenue conditions, scale attribution and exemptions",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D057",
+    "url": "https://mistral.ai/news/mistral-large-4/",
+    "title": "Mistral Large 4 preview",
+    "type": "official announcement",
+    "published_or_updated": "2026-10-06",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "October 6 API preview, weights promised for late October and approximately 1T total / 52B active launch claim."
+  },
+  {
+    "id": "D058",
+    "url": "https://huggingface.co/mistralai/Mistral-Small-4-119B-2603/raw/main/README.md",
+    "title": "Mistral Small 4 authored README",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D059",
+    "url": "https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512/raw/main/README.md",
+    "title": "Ministral 3 8B authored README",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D060",
+    "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16/raw/main/README.md",
+    "title": "Nemotron 3 Nano 4B authored README",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "3.97B parameters, up to 262k context, hybrid architecture, intended NPC use and Transformers/NeMo support."
+  },
+  {
+    "id": "D061",
+    "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16",
+    "title": "Nemotron 3.5 Super VL card",
+    "type": "official model card",
+    "published_or_updated": "2026-10-15",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "October 15 release; 120B total / 12B active, 1M context and vendor BF16 deployment on four H100 or two GB200 GPUs."
+  },
+  {
+    "id": "D062",
+    "url": "https://huggingface.co/ibm-granite/granite-4.2-8b/raw/main/README.md",
+    "title": "Granite 4.2 8B authored README",
+    "type": "official model card",
+    "published_or_updated": "2026-08-25",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "August 25, 128k/512k, thinking and tools, Apache 2.0"
+  },
+  {
+    "id": "D063",
+    "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/raw/main/README.md",
+    "title": "LFM2.5-24B-A2B authored README",
+    "type": "official model card",
+    "published_or_updated": "2026-10-13",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "131k, 24B total / 2.45B active, always reasoning, GGUF, ONNX and FP8"
+  },
+  {
+    "id": "D064",
+    "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/blob/main/LICENSE",
+    "title": "LFM 1.0 license",
+    "type": "official license",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Custom license with a $10M annual revenue commercial threshold; apply the exact checkpoint license."
+  },
+  {
+    "id": "D065",
+    "url": "https://huggingface.co/google/gemma-4-26B-A4B-it/raw/main/README.md",
+    "title": "Gemma 4 family authored README",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Apache 2.0; 26B-A4B, 31B and E4B distinctions, context, multimodal input and functions."
+  },
+  {
+    "id": "D066",
+    "url": "https://huggingface.co/google/functiongemma-270m-it",
+    "title": "FunctionGemma 270m card",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "32k, task fine-tuning base, TinyGarden actual game demo, Gemma terms, device benchmark"
+  },
+  {
+    "id": "D067",
+    "url": "https://blog.google/innovation-and-ai/technology/developers-tools/functiongemma/",
+    "title": "FunctionGemma release",
+    "type": "official announcement",
+    "published_or_updated": "2025-12-18",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "December 18 release, edge function calling, TinyGarden"
+  },
+  {
+    "id": "D068",
+    "url": "https://huggingface.co/HuggingFaceTB/SmolLM3-3B/raw/main/README.md",
+    "title": "SmolLM 3 authored README",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Specifications, deployment, capabilities and license"
+  },
+  {
+    "id": "D069",
+    "url": "https://huggingface.co/openai/gpt-oss-20b/raw/main/README.md",
+    "title": "gpt-oss family authored README",
+    "type": "official model card",
+    "published_or_updated": "2025-08-05",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "20B/120B family sizes; vendor 16/80 GB fit claims, Apache 2.0, Harmony format and tools."
+  },
+  {
+    "id": "D070",
+    "url": "https://dev.meta.ai/llama/docs/model-cards-and-prompt-formats/llama4",
+    "title": "Llama 4 official model guide",
+    "type": "official documentation",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Scout 109B / Maverick 400B, 17B active, headline context evaluated across 512 GPUs and tool support."
+  },
+  {
+    "id": "D071",
+    "url": "https://www.inceptionlabs.ai/blog/introducing-mercury-3",
+    "title": "Mercury 3 launch",
+    "type": "official announcement",
+    "published_or_updated": "2026-10-19",
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "October 19, 1M, diffusion, vendor 1,068 tokens/s, promotional $0.10/$0.35 versus standard $0.20/$0.70",
+    "targeted_rechecked_at": "2026-10-24"
+  },
+  {
+    "id": "D072",
+    "url": "https://huggingface.co/models?other=decision-model",
+    "title": "Hugging Face decision-model catalog",
+    "type": "discovery catalog",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Watchlist discovery only; not sufficient for specs or quality"
+  },
+  {
+    "id": "D073",
+    "url": "https://huggingface.co/google/gemma-4-31B-it",
+    "title": "Gemma 4 31B exact artifact",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Exact Gemma 4 artifact identity and family membership; use the corresponding variant card for modality, context and license details."
+  },
+  {
+    "id": "D074",
+    "url": "https://huggingface.co/google/gemma-4-E4B-it",
+    "title": "Gemma 4 E4B exact artifact",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Exact Gemma 4 artifact identity and family membership; use the corresponding variant card for modality, context and license details."
+  },
+  {
+    "id": "D075",
+    "url": "https://huggingface.co/google/gemma-4-12B-it",
+    "title": "Gemma 4 12B exact artifact",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Exact Gemma 4 artifact identity and family membership; use the corresponding variant card for modality, context and license details."
+  },
+  {
+    "id": "D076",
+    "url": "https://huggingface.co/ibm-granite/granite-switch-4.1-30b",
+    "title": "Granite Switch 4.1 30B exact artifact",
+    "type": "official model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "Exact Granite Switch 4.1 30B artifact identity, adapter composition and family membership."
+  },
+  {
+    "id": "D077",
+    "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/raw/main/README.md",
+    "title": "DeepSeek V4.1 Flash authored README",
+    "type": "official authored model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "552B backbone, 196B Engram, 8B/16B active; distinguishes architectural counts."
+  },
+  {
+    "id": "D078",
+    "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/raw/main/README.md",
+    "title": "Qwen3.8 Flash Next authored README",
+    "type": "official authored model card",
+    "published_or_updated": null,
+    "retrieved_at": "2026-10-23",
+    "supported_claims": "125B backbone, 51B ngram, 4B MTP, 6B active; native 262,144 and extension 1M."
+  },
+  {
+    "id": "D079",
+    "url": "https://huggingface.co/zai-org/GLM-5.3",
+    "title": "GLM 5.3 exact checkpoint",
+    "type": "official model card",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Released checkpoint, post-training lineage, tool/agent benchmarks and authored serving links"
+  },
+  {
+    "id": "D080",
+    "url": "https://docs.z.ai/guides/llm/glm-5.3",
+    "title": "GLM 5.3 API documentation",
+    "type": "official documentation",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Text-only API, 1M context, 128k output and mandatory reasoning with three effort levels"
+  },
+  {
+    "id": "D081",
+    "url": "https://huggingface.co/zai-org/GLM-5.3/raw/main/LICENSE",
+    "title": "GLM 5.3 license",
+    "type": "official license",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Custom license; $10 billion aggregate 12-month revenue security-review condition for MaaS operators; embedded-feature and relay exclusions"
+  },
+  {
+    "id": "D082",
+    "url": "https://huggingface.co/zai-org/GLM-5.3/raw/main/config.json",
+    "title": "GLM 5.3 configuration",
+    "type": "official configuration",
+    "published_or_updated": "Current at targeted review",
+    "retrieved_at": "2026-10-24",
+    "supported_claims": "Published 78-layer MoE configuration and 1,048,576 positions; no inferred parameter total"
+  }
+]

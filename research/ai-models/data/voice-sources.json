@@ -1,0 +1,1578 @@
+[
+  {
+    "source_id": "VOICE-S001",
+    "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Qwen3-TTS 12Hz — 1.7B / 0.6B family: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S002",
+    "url": "https://github.com/QwenLM/Qwen3-TTS",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Released variants and inference support"
+    ]
+  },
+  {
+    "source_id": "VOICE-S003",
+    "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Voice design capability"
+    ]
+  },
+  {
+    "source_id": "VOICE-S004",
+    "url": "https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/speech_api/",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Qwen3 TTS 24 kHz and serving",
+      "S2-Pro sampling rate"
+    ]
+  },
+  {
+    "source_id": "VOICE-S005",
+    "url": "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine",
+    "source_type": "community_first_person",
+    "source_date": "2026-10-04",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "A developer comparing models on his own voice preferred Qwen3-TTS quality; Chatterbox was simpler but shifted his accent. This is one voice and setup, not a representative ranking.",
+      "A first-person ONNX streaming report describes clicks/pops at chunk joins; the author notes non-ONNX behavior differs. A separate own-voice comparison found Chatterbox convenient but accent fidelity weaker than Qwen. Neither measures latest game workloads.",
+      "Developer considered MeloTTS+OpenVoice for own-voice local workflow"
+    ]
+  },
+  {
+    "source_id": "VOICE-S006",
+    "url": "https://huggingface.co/fishaudio/drama-3",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Fish Audio Drama 3: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S007",
+    "url": "https://github.com/fishaudio/fish-speech/blob/main/LICENSE",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Community license and commercial threshold"
+    ]
+  },
+  {
+    "source_id": "VOICE-S008",
+    "url": "https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Drama 3 API byte billing and dated promotion",
+      "Current S2 API pricing",
+      "Paid/free model prices and units"
+    ]
+  },
+  {
+    "source_id": "VOICE-S009",
+    "url": "https://arxiv.org/abs/2610.18010",
+    "source_type": "primary",
+    "source_date": "2026-10-13",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Drama 3 report and date"
+    ]
+  },
+  {
+    "source_id": "VOICE-S010",
+    "url": "https://huggingface.co/fishaudio/s2-pro",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Fish Audio S2-Pro (open weights): identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S011",
+    "url": "https://github.com/fishaudio/fish-speech",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "S2-Pro research license retained"
+    ]
+  },
+  {
+    "source_id": "VOICE-S012",
+    "url": "https://www.reddit.com/r/LocalLLaMA/comments/1v4w5cj/audiocpp_release_04_higgs_audio_v3_tts_4b_10x/",
+    "source_type": "community_first_person",
+    "source_date": "approximately July 2026 (Reddit relative date)",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "The audio.cpp port author reports S2-Pro working in C++/GGUF, about 3.1–3.4x real time on warmed RTX5090 Q8 requests. Useful ecosystem evidence, not a fidelity or game-load validation.",
+      "audio.cpp author reports 8.8–10.1x realtime warmed Q8 requests on RTX5090 and long-form support. It shows active porting; it does not establish equivalent quality or a cleared commercial license."
+    ]
+  },
+  {
+    "source_id": "VOICE-S013",
+    "url": "https://fish.audio/blog/s2-1-pro-free-api/",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Fish Audio S2.1-Pro API: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S014",
+    "url": "https://fish.audio/terms/",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Hosted terms",
+      "Hosted content restrictions and paid-service commercial permission",
+      "Hosted restrictions and free-versus-paid commercial distinction"
+    ],
+    "last_reviewed_on": "2026-10-24"
+  },
+  {
+    "source_id": "VOICE-S015",
+    "url": "https://huggingface.co/ResembleAI/chatterbox-turbo",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Chatterbox Turbo / Multilingual: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S016",
+    "url": "https://github.com/resemble-ai/chatterbox",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Model zoo, MIT license and watermark"
+    ]
+  },
+  {
+    "source_id": "VOICE-S017",
+    "url": "https://huggingface.co/ResembleAI/chatterbox-turbo/discussions/18",
+    "source_type": "community_first_person",
+    "source_date": "2025-12-27 and 2026-10-04",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "A first-person ONNX streaming report describes clicks/pops at chunk joins; the author notes non-ONNX behavior differs. A separate own-voice comparison found Chatterbox convenient but accent fidelity weaker than Qwen. Neither measures latest game workloads."
+    ]
+  },
+  {
+    "source_id": "VOICE-S018",
+    "url": "https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Fun-CosyVoice3-0.5B-2512: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S019",
+    "url": "https://github.com/QwenAudio/CosyVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Current repository and release roadmap"
+    ]
+  },
+  {
+    "source_id": "VOICE-S020",
+    "url": "https://docs.vllm.ai/projects/vllm-omni/en/v0.18.0/user_guide/examples/offline_inference/cosyvoice3/",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Serving integration"
+    ]
+  },
+  {
+    "source_id": "VOICE-S021",
+    "url": "https://huggingface.co/IndexTeam/IndexTTS-2.5",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "IndexTTS-2.5: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S022",
+    "url": "https://huggingface.co/IndexTeam/IndexTTS-2.5/blob/main/LICENSE",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Custom terms and derivative/model-improvement restrictions"
+    ]
+  },
+  {
+    "source_id": "VOICE-S023",
+    "url": "https://arxiv.org/abs/2601.03888",
+    "source_type": "primary",
+    "source_date": "2026-01-07",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Technical report date"
+    ]
+  },
+  {
+    "source_id": "VOICE-S024",
+    "url": "https://huggingface.co/openbmb/VoxCPM2",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "VoxCPM2: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S025",
+    "url": "https://github.com/OpenBMB/VoxCPM",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "April release, Apache weights/code and deployment/performance table"
+    ]
+  },
+  {
+    "source_id": "VOICE-S026",
+    "url": "https://huggingface.co/FireRedTeam/FireRedTTS3",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "FireRedTTS3 Base / Instruct: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S027",
+    "url": "https://github.com/FireRedTeam/FireRedTTS3",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Inference constraints, examples and editable attributes"
+    ]
+  },
+  {
+    "source_id": "VOICE-S028",
+    "url": "https://arxiv.org/abs/2608.17492",
+    "source_type": "primary",
+    "source_date": "2026-08-18",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Report"
+    ]
+  },
+  {
+    "source_id": "VOICE-S029",
+    "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "MOSS-TTS v1.5 / Local-Transformer v1.5: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S030",
+    "url": "https://github.com/OpenMOSS/MOSS-TTS",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Release chronology, serving support and unreleased 2.0 distinction",
+      "Family model table and intended long-form dialogue use"
+    ]
+  },
+  {
+    "source_id": "VOICE-S031",
+    "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "8B sibling identity"
+    ]
+  },
+  {
+    "source_id": "VOICE-S032",
+    "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTSD-v1.0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "MOSS-TTSD v1.0: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S033",
+    "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "MOSS-TTS-Nano 100M: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S034",
+    "url": "https://github.com/OpenMOSS/MOSS-TTS-Nano",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Release and runtime"
+    ]
+  },
+  {
+    "source_id": "VOICE-S035",
+    "url": "https://github.com/nari-labs/dia2",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Dia2 — 1B / 2B: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S036",
+    "url": "https://www.reddit.com/r/speechtech/comments/1pjc901/does_anyone_know_how_to_stream_dia2/",
+    "source_type": "community_first_person",
+    "source_date": "approximately December2025 (relative date)",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "One builder reported either about 700 ms startup or repetition of prefix speech while adapting Dia2 for realtime streaming. This is an integration anecdote, not a universal model limit."
+    ]
+  },
+  {
+    "source_id": "VOICE-S037",
+    "url": "https://huggingface.co/bosonai/higgs-tts-3-4b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Higgs TTS 3 4B: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S038",
+    "url": "https://github.com/boson-ai/higgs-audio",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Code/runtime and separate model licensing"
+    ]
+  },
+  {
+    "source_id": "VOICE-S039",
+    "url": "https://huggingface.co/zai-org/GLM-TTS",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "GLM-TTS: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S040",
+    "url": "https://github.com/zai-org/GLM-TTS",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Runtime and examples"
+    ]
+  },
+  {
+    "source_id": "VOICE-S041",
+    "url": "https://arxiv.org/abs/2512.14291",
+    "source_type": "primary",
+    "source_date": "2025-12-16",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Report"
+    ]
+  },
+  {
+    "source_id": "VOICE-S042",
+    "url": "https://huggingface.co/stepfun-ai/Step-Audio-EditX",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Step-Audio-EditX: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S043",
+    "url": "https://github.com/stepfun-ai/Step-Audio-EditX",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Runtime / code license"
+    ]
+  },
+  {
+    "source_id": "VOICE-S044",
+    "url": "https://huggingface.co/HumeAI/tada-1b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Hume TADA — 1B / 3B-ML: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S045",
+    "url": "https://github.com/HumeAI/tada",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Model variants and runtime"
+    ]
+  },
+  {
+    "source_id": "VOICE-S046",
+    "url": "https://www.hume.ai/blog/opensource-tada",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Release announcement"
+    ]
+  },
+  {
+    "source_id": "VOICE-S047",
+    "url": "https://huggingface.co/kyutai/pocket-tts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Kyutai Pocket TTS — 100M and October tiny variants: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S048",
+    "url": "https://github.com/kyutai-labs/pocket-tts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "October tiny variants, multilingual runtime and MIT code"
+    ]
+  },
+  {
+    "source_id": "VOICE-S049",
+    "url": "https://www.reddit.com/r/LocalLLaMA/comments/1r3kzz2/how_is_the_quality_of_recent_tts/",
+    "source_type": "community_first_person",
+    "source_date": "2026, relative dates vary",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Builders use Pocket for coding-assistant spoken updates and phone/CPU speech. Reports range from strong practical praise to distorted voices and slower-than-realtime server setups; these anecdotes concern older 100M implementations, not October tiny models.",
+      "In a community comparison some users continue to prefer Kokoro for practical multilingual output while others favor newer models. This reflects usability/coverage preferences, not a controlled quality ranking."
+    ]
+  },
+  {
+    "source_id": "VOICE-S050",
+    "url": "https://www.reddit.com/r/TextToSpeech/comments/1vvzdbi/anybody_tried_pocket_tts_on_gpu_if_yes_how_much/",
+    "source_type": "community_first_person",
+    "source_date": "2026, relative dates vary",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Builders use Pocket for coding-assistant spoken updates and phone/CPU speech. Reports range from strong practical praise to distorted voices and slower-than-realtime server setups; these anecdotes concern older 100M implementations, not October tiny models."
+    ]
+  },
+  {
+    "source_id": "VOICE-S051",
+    "url": "https://github.com/kyutai-labs/pocket-tts/issues/174",
+    "source_type": "community_first_person",
+    "source_date": "2026, relative dates vary",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Builders use Pocket for coding-assistant spoken updates and phone/CPU speech. Reports range from strong practical praise to distorted voices and slower-than-realtime server setups; these anecdotes concern older 100M implementations, not October tiny models."
+    ]
+  },
+  {
+    "source_id": "VOICE-S052",
+    "url": "https://huggingface.co/gradium/phonon-31m-en",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Gradium Phonon 1.0 — 31M English / 40M family: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S053",
+    "url": "https://gradium.ai/phonon",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Separate licenses by variant"
+    ]
+  },
+  {
+    "source_id": "VOICE-S054",
+    "url": "https://gradium.ai/blog/gradium-releases-phonon",
+    "source_type": "primary",
+    "source_date": "2026-10-21",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Launch date and hardware targets"
+    ]
+  },
+  {
+    "source_id": "VOICE-S055",
+    "url": "https://github.com/neuphonic/neutts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "NeuTTS Nano / NeuTTS-2E (alpha): identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S056",
+    "url": "https://huggingface.co/neuphonic/neutts-2e",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "2E alpha, emotion labels and gated terms"
+    ]
+  },
+  {
+    "source_id": "VOICE-S057",
+    "url": "https://huggingface.co/neuphonic/neutts-nano",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Nano and cloning"
+    ]
+  },
+  {
+    "source_id": "VOICE-S058",
+    "url": "https://huggingface.co/k2-fsa/OmniVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "OmniVoice 0.6B: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S059",
+    "url": "https://github.com/k2-fsa/OmniVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Runtime and samples"
+    ]
+  },
+  {
+    "source_id": "VOICE-S060",
+    "url": "https://arxiv.org/abs/2604.00688",
+    "source_type": "primary",
+    "source_date": "2026-04-01",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Report"
+    ]
+  },
+  {
+    "source_id": "VOICE-S061",
+    "url": "https://huggingface.co/TontaubeAI/TontaubeV1",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "TontaubeV1: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S062",
+    "url": "https://arxiv.org/abs/2609.08703",
+    "source_type": "primary",
+    "source_date": "2026-09-08",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Report date"
+    ]
+  },
+  {
+    "source_id": "VOICE-S063",
+    "url": "https://github.com/craitech/tontaube",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Runtime"
+    ]
+  },
+  {
+    "source_id": "VOICE-S064",
+    "url": "https://huggingface.co/nvidia/magpie_tts_multilingual_357m",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "NVIDIA MagpieTTS Multilingual v2607: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S065",
+    "url": "https://huggingface.co/blog/nvidia/magpie-tts-multilingual-voice-agents",
+    "source_type": "primary",
+    "source_date": "2026-08-10",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "NIM and voice-agent use"
+    ]
+  },
+  {
+    "source_id": "VOICE-S066",
+    "url": "https://help.aliyun.com/en/model-studio/qwen-audio-3-1-tts-plus",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Qwen-Audio-3.1-TTS Plus / Flash: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S067",
+    "url": "https://help.aliyun.com/en/model-studio/qwen-audio-3-1-tts-flash",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Flash capabilities and billing"
+    ]
+  },
+  {
+    "source_id": "VOICE-S068",
+    "url": "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+    "source_type": "primary",
+    "source_date": "2026-10-22",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Current regional3.1 prices",
+      "Separate TTS-Next token tariff",
+      "Realtime Plus four-way text/audio input/output token rates"
+    ]
+  },
+  {
+    "source_id": "VOICE-S069",
+    "url": "https://help.aliyun.com/en/model-studio/qwen-audio-tts-voice-list",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Official voices and published preview files"
+    ]
+  },
+  {
+    "source_id": "VOICE-S070",
+    "url": "https://elevenlabs.io/docs/overview/models",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "ElevenLabs Eleven v4 / v4 Turbo: identity and published capabilities",
+      "Current model family",
+      "ElevenLabs Scribe v2 / v2 Realtime: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S071",
+    "url": "https://elevenlabs.io/pricing/api",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "v4/Turbo current prices and units",
+      "Eleven Realtime v1 Mini / Max: identity and published capabilities",
+      "STT and add-on rates"
+    ]
+  },
+  {
+    "source_id": "VOICE-S072",
+    "url": "https://elevenlabs.io/use-policy",
+    "source_type": "primary",
+    "source_date": "2026-10-09",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Content restrictions"
+    ]
+  },
+  {
+    "source_id": "VOICE-S073",
+    "url": "https://docs.cartesia.ai/build-with-cartesia/tts-models/latest",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Cartesia Sonic 3.6: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S074",
+    "url": "https://www.cartesia.ai/pricing",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Credits, plans and free commercial limitation",
+      "Credit bundles"
+    ]
+  },
+  {
+    "source_id": "VOICE-S075",
+    "url": "https://www.cartesia.ai/legal/acceptable-use",
+    "source_type": "primary",
+    "source_date": "2025-07-23",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Violent-content AUP",
+      "Provider content restrictions"
+    ]
+  },
+  {
+    "source_id": "VOICE-S076",
+    "url": "https://www.cartesia.ai/sonic",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Enterprise deployment options"
+    ]
+  },
+  {
+    "source_id": "VOICE-S077",
+    "url": "https://docs.inworld.ai/tts/tts-models",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Inworld Realtime TTS-2 / Flash: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S078",
+    "url": "https://inworld.ai/pricing",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Current model rates and commitments"
+    ]
+  },
+  {
+    "source_id": "VOICE-S079",
+    "url": "https://inworld.ai/terms",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Standard and customer-hosted conditions"
+    ]
+  },
+  {
+    "source_id": "VOICE-S080",
+    "url": "https://inworld.ai/aup/",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Policy destination inspected; mature-fiction scope unresolved",
+      "AUP section 4 explicitly excludes purely fictional video-game character speech; other sections remain applicable"
+    ],
+    "last_reviewed_on": "2026-10-24"
+  },
+  {
+    "source_id": "VOICE-S081",
+    "url": "https://inworld.ai/realtime-tts-2",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Published samples and game-relevant features"
+    ]
+  },
+  {
+    "source_id": "VOICE-S082",
+    "url": "https://inworld.ai/tts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Newer product-page language claim differs from model comparison docs"
+    ]
+  },
+  {
+    "source_id": "VOICE-S083",
+    "url": "https://platform.minimax.io/docs/pricing/overview",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "MiniMax Speech 2.8 HD / Turbo: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S084",
+    "url": "https://developers.cloudflare.com/ai/models/minimax/speech-2.8-turbo/",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Official hosting-provider model/language support"
+    ]
+  },
+  {
+    "source_id": "VOICE-S085",
+    "url": "https://deepgram.com/product/text-to-speech/flux",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Deepgram Flux TTS / Aura-2: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S086",
+    "url": "https://deepgram.com/pricing",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Current Flux/Aura2 rates",
+      "Deepgram Flux STT / Nova3: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S087",
+    "url": "https://developers.deepgram.com/docs/flux-tts/voices",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Flux voices and endpoint"
+    ]
+  },
+  {
+    "source_id": "VOICE-S088",
+    "url": "https://developers.deepgram.com/docs/deploy-tts-services",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Enterprise deployment"
+    ]
+  },
+  {
+    "source_id": "VOICE-S089",
+    "url": "https://docs.rime.ai/docs/models",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Rime Coda (pricing: Coda v2) / Mist v3: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S090",
+    "url": "https://www.rime.ai/pricing",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Current minute billing and Coda v2 label"
+    ]
+  },
+  {
+    "source_id": "VOICE-S091",
+    "url": "https://www.rime.ai/resources/introducing-mist-v3-enterprise-tts",
+    "source_type": "primary",
+    "source_date": "2026-04-06",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Mist v3 announcement"
+    ]
+  },
+  {
+    "source_id": "VOICE-S092",
+    "url": "https://gradium.ai/text-to-speech",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Gradium hosted TTS: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S093",
+    "url": "https://gradium.ai/pricing",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Credits, plans and units"
+    ]
+  },
+  {
+    "source_id": "VOICE-S094",
+    "url": "https://gradium.ai/terms-of-service",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Content restrictions"
+    ]
+  },
+  {
+    "source_id": "VOICE-S095",
+    "url": "https://docs.x.ai/developers/model-capabilities/audio/text-to-speech",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "xAI / SpaceXSI Text-to-Speech API: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S096",
+    "url": "https://docs.x.ai/developers/pricing",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "TTS rate and separate voice-service billing",
+      "Current voice rates and 2.0deprecation"
+    ]
+  },
+  {
+    "source_id": "VOICE-S097",
+    "url": "https://x.ai/legal/acceptable-use-policy",
+    "source_type": "primary",
+    "source_date": "2026-08-14",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Current AUP",
+      "Current developer AUP"
+    ]
+  },
+  {
+    "source_id": "VOICE-S098",
+    "url": "https://docs.mistral.ai/models/voxtral-mini-tts-3-0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Mistral Voxtral TTS 3 / TTS Realtime 3: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S099",
+    "url": "https://docs.mistral.ai/studio/audio/text-to-speech/overview",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Mode-specific features and unavailable style instructions"
+    ]
+  },
+  {
+    "source_id": "VOICE-S100",
+    "url": "https://mistral.ai/news/voxtral-3/",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Launch, self-deployment and differing language claim",
+      "Language and deployment claims"
+    ]
+  },
+  {
+    "source_id": "VOICE-S101",
+    "url": "https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Microsoft VibeVoice-Realtime 0.5B: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S102",
+    "url": "https://github.com/microsoft/VibeVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Realtime release dates and original TTS code removal",
+      "ASR/streaming/BitNet current family"
+    ]
+  },
+  {
+    "source_id": "VOICE-S103",
+    "url": "https://dev.hume.ai/voice/docs/text-to-speech-tts/overview",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Hume Octave 2 / EVI (retiring API): identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S104",
+    "url": "https://hume.ai/pricing",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Current product/pricing destination no longer supplies stable old-API comparison"
+    ]
+  },
+  {
+    "source_id": "VOICE-S105",
+    "url": "https://huggingface.co/nvidia/personaplex-7b-v1",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "NVIDIA PersonaPlex-7B-v1: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S106",
+    "url": "https://github.com/NVIDIA/personaplex/blob/main/README.md",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Runtime and code terms"
+    ]
+  },
+  {
+    "source_id": "VOICE-S107",
+    "url": "https://research.nvidia.com/labs/adlr/personaplex/",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Published conversations and role/voice control"
+    ]
+  },
+  {
+    "source_id": "VOICE-S108",
+    "url": "https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Qwen3-Omni-30B-A3B-Instruct: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S109",
+    "url": "https://github.com/QwenLM/Qwen3-Omni",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Runtime and published examples"
+    ]
+  },
+  {
+    "source_id": "VOICE-S110",
+    "url": "https://arxiv.org/abs/2509.17765",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Modalities and model architecture"
+    ]
+  },
+  {
+    "source_id": "VOICE-S111",
+    "url": "https://docs.x.ai/developers/models/grok-voice-3.0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Grok Voice 3.0: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S112",
+    "url": "https://huggingface.co/dots-studio/dots.tts-soar",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "dots.tts SOAR / MeanFlow streaming family: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S113",
+    "url": "https://github.com/studio-dots-ai/dots.tts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Current namespace, release versions, runtime limitations and licenses",
+      "General release/license statement"
+    ]
+  },
+  {
+    "source_id": "VOICE-S114",
+    "url": "https://arxiv.org/abs/2606.07080",
+    "source_type": "primary",
+    "source_date": "2026-06-05",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Technical report"
+    ]
+  },
+  {
+    "source_id": "VOICE-S115",
+    "url": "https://nexustrade.io/blog/best-ai-voice-cloning-2026-how-to-clone-your-voice-with-ai-20260824",
+    "source_type": "community_first_person",
+    "source_date": "2026-08-24",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "One developer's blinded own-voice comparison chose fine-tuned SOAR over MOSS v1.5; useful reproducible clips, but one speaker and selected takes.",
+      "Own-voice finetuning comparison ranked MOSS v1.5 close behind SOAR. Community reports describe large speed differences between reference Python and native serving; comments are not an exact Local 4B benchmark.",
+      "A developer reports successfully shipping a finetuned 0.5B voice before switching to newer candidates; a single-speaker workflow, not broad ranking."
+    ]
+  },
+  {
+    "source_id": "VOICE-S116",
+    "url": "https://huggingface.co/dots-studio/dots.tts.edit",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "dots.tts.edit: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S117",
+    "url": "https://arxiv.org/abs/2608.02673",
+    "source_type": "primary",
+    "source_date": "2026-08-02",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Editing report"
+    ]
+  },
+  {
+    "source_id": "VOICE-S118",
+    "url": "https://huggingface.co/Qwen/Qwen3-ASR-1.7B",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Qwen3-ASR 1.7B / 0.6B + ForcedAligner: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S119",
+    "url": "https://github.com/QwenLM/Qwen3-ASR",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Released inference toolkit and alignment"
+    ]
+  },
+  {
+    "source_id": "VOICE-S120",
+    "url": "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "NVIDIA Nemotron Speech Streaming EN 0.6B (March 2026): identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S121",
+    "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "NVIDIA Parakeet TDT 0.6B-v3 / Unified EN 0.6B: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S122",
+    "url": "https://huggingface.co/nvidia/parakeet-unified-en-0.6b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Unified architecture, license and latency configurations"
+    ]
+  },
+  {
+    "source_id": "VOICE-S123",
+    "url": "https://huggingface.co/nvidia/canary-qwen-2.5b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "NVIDIA Canary-Qwen2.5B: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S124",
+    "url": "https://huggingface.co/microsoft/VibeVoice-ASR",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Microsoft VibeVoice-ASR / streaming family: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S125",
+    "url": "https://github.com/microsoft/VibeVoice/blob/main/docs/vibevoice-asr.md",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Long-form and speaker/timestamp guidance"
+    ]
+  },
+  {
+    "source_id": "VOICE-S126",
+    "url": "https://docs.mistral.ai/models/voxtral-mini-transcribe-realtime-3-0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Voxtral Transcribe 3 family: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S127",
+    "url": "https://docs.mistral.ai/models/voxtral-small-transcribe-3-0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Small current pricing/features"
+    ]
+  },
+  {
+    "source_id": "VOICE-S128",
+    "url": "https://docs.mistral.ai/models/voxtral-mini-transcribe-3-0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Mini current pricing/features"
+    ]
+  },
+  {
+    "source_id": "VOICE-S129",
+    "url": "https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Voxtral Mini 4B Realtime 2602 (open weights): identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S130",
+    "url": "https://aws.amazon.com/about-aws/whats-new/2026/07/voxtral-mini-realtime-on-sagemaker-jumpstart/",
+    "source_type": "primary",
+    "source_date": "2026-07-13",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Managed deployment availability"
+    ]
+  },
+  {
+    "source_id": "VOICE-S131",
+    "url": "https://huggingface.co/openai/whisper-large-v3-turbo",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Whisper large-v3-turbo: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S132",
+    "url": "https://developers.deepgram.com/docs/flux/quickstart",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Conversation recognition integration"
+    ]
+  },
+  {
+    "source_id": "VOICE-S133",
+    "url": "https://github.com/myshell-ai/OpenVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "OpenVoice v2: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S134",
+    "url": "https://github.com/Plachtaa/seed-vc",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Seed-VC v2 / realtime conversion family: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S135",
+    "url": "https://huggingface.co/hexgrad/Kokoro-82M",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Kokoro 82M v1.0: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S136",
+    "url": "https://github.com/hexgrad/kokoro",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Runtime and release information"
+    ]
+  },
+  {
+    "source_id": "VOICE-S137",
+    "url": "https://huggingface.co/SWivid/F5-TTS",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "F5-TTS v1 Base / E2-TTS baseline: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S138",
+    "url": "https://github.com/SWivid/F5-TTS",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Code and weight-license distinction"
+    ]
+  },
+  {
+    "source_id": "VOICE-S139",
+    "url": "https://huggingface.co/sesame/csm-1b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Sesame CSM 1B: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S140",
+    "url": "https://github.com/kyutai-labs/moshi",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Kyutai Moshi / Moshiko / Moshika: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S141",
+    "url": "https://github.com/OHF-Voice/piper1-gpl",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Piper (current OHF piper1-gpl): identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S142",
+    "url": "https://huggingface.co/parler-tts/parler-tts-mini-v1",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Parler-TTS Mini v1: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S143",
+    "url": "https://www.reddit.com/r/speechtech/comments/1ulsm98/datasetbacked_voice_cloning_benchmark_omnivoice/",
+    "source_type": "community_first_person",
+    "source_date": "approximately April–July2026 (relative dates)",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Reports are mixed: a five-language regression experiment found strong Arabic speaker similarity, while individual users reported language drift or weak French cloning. Emotional control draws interest; setup and reference choice matter.",
+      "Cloning similarity receives strong praise, including Polish, but one user found repeated/flat intonation. A small five-language regression favored it; comments challenge the tiny sample and non-perceptual metrics. Commercial restrictions remain independent of quality."
+    ]
+  },
+  {
+    "source_id": "VOICE-S144",
+    "url": "https://www.reddit.com/r/LocalLLaMA/comments/1sg89kl/new_tts_model_voxcpm2/",
+    "source_type": "community_first_person",
+    "source_date": "approximately April–July2026 (relative dates)",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Reports are mixed: a five-language regression experiment found strong Arabic speaker similarity, while individual users reported language drift or weak French cloning. Emotional control draws interest; setup and reference choice matter.",
+      "Cloning similarity receives strong praise, including Polish, but one user found repeated/flat intonation. A small five-language regression favored it; comments challenge the tiny sample and non-perceptual metrics. Commercial restrictions remain independent of quality."
+    ]
+  },
+  {
+    "source_id": "VOICE-S145",
+    "url": "https://www.reddit.com/r/LocalLLaMA/comments/1toah65/openmossteammossttsv15_hugging_face/",
+    "source_type": "community_first_person",
+    "source_date": "2026-08-24 and approximately June2026",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Own-voice finetuning comparison ranked MOSS v1.5 close behind SOAR. Community reports describe large speed differences between reference Python and native serving; comments are not an exact Local 4B benchmark."
+    ]
+  },
+  {
+    "source_id": "VOICE-S146",
+    "url": "https://www.reddit.com/r/LocalLLaMA/comments/1sjdfp6/mossttsnano_a_01b_opensource_multilingual_tts/",
+    "source_type": "community_first_person",
+    "source_date": "approximately April2026 (relative date)",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "An early user reported poor speaker resemblance, capitalized-text handling and glitches after several hours of use. Treat as an April-era anecdote alongside the author's practical low-compute goal."
+    ]
+  },
+  {
+    "source_id": "VOICE-S147",
+    "url": "https://huggingface.co/fishaudio/drama-3/raw/main/LICENSE",
+    "source_type": "primary",
+    "source_date": "2026-10-13",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Exact weight license, revenue threshold, hosted-service restriction and express own-game exemption"
+    ],
+    "last_reviewed_on": "2026-10-24"
+  },
+  {
+    "source_id": "VOICE-S148",
+    "url": "https://huggingface.co/IndexTeam/IndexTTS-2.5/raw/main/LICENSE",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Commercial thresholds and downstream/model-training/content clauses"
+    ],
+    "last_reviewed_on": "2026-10-24"
+  },
+  {
+    "source_id": "VOICE-S149",
+    "url": "https://docs.cartesia.ai/pricing",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-24",
+    "supports": [
+      "TTS approximate credit-per-character meter and preprocessing caveat",
+      "Ink-2 stream pricing, silence billing and no batch route"
+    ],
+    "last_reviewed_on": "2026-10-24"
+  },
+  {
+    "source_id": "VOICE-S150",
+    "url": "https://x.ai/news/grok-voice-3",
+    "source_type": "primary",
+    "source_date": "2026-10-14",
+    "accessed_on": "2026-10-23",
+    "supports": [
+      "Exact release date, deployment use claims and automatic mutable-alias update"
+    ],
+    "last_reviewed_on": "2026-10-24"
+  },
+  {
+    "source_id": "VOICE-S151",
+    "url": "https://docs.cartesia.ai/build-with-cartesia/stt/latest",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-24",
+    "supports": [
+      "Cartesia Ink-2: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S152",
+    "url": "https://www.cartesia.ai/blog/ink-2",
+    "source_type": "primary",
+    "source_date": "2026-07-09",
+    "accessed_on": "2026-10-24",
+    "supports": [
+      "Launch date and September language update"
+    ]
+  },
+  {
+    "source_id": "VOICE-S153",
+    "url": "https://www.alibabacloud.com/help/en/model-studio/qwen-audio-3-1-tts-next",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-24",
+    "supports": [
+      "Qwen-Audio-3.1-TTS-Next: identity and published capabilities"
+    ]
+  },
+  {
+    "source_id": "VOICE-S154",
+    "url": "https://help.aliyun.com/en/model-studio/qwen-audio-realtime-user-guides",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-24",
+    "supports": [
+      "Qwen-Audio-3.1-Realtime-Plus: identity and published capabilities"
+    ]
+  }
+]

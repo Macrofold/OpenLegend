@@ -1,0 +1,2202 @@
+{
+  "metadata": {
+    "title": "Open Legend: decision and planning model research",
+    "as_of": "2026-10-23",
+    "scope": "Web research only; no model inference, tests, weight downloads or paid usage performed.",
+    "model_count": 42,
+    "pricing_note": "All prices are snapshots. Input tokens include supplied state/questions; zero output fee does not mean zero request cost. No GPU rental quotation was fabricated.",
+    "interpretation": "Research priority expresses relevance and evidence, not measured model quality. Ordinary LLMs and classifiers are not labeled uncensored without evidence. Hardware claims distinguish vendor observations from unknowns.",
+    "targeted_review_date": "2026-10-24",
+    "targeted_review_scope": "Selected current primary pages, model-type labeling, exact-ID provenance, source references and typography; not every source was refreshed."
+  },
+  "models": [
+    {
+      "id": "decision-jev-114",
+      "name": "TypeSafe Jev 1.14",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "jev-1.14.0",
+        "typesafe/jev-1.14"
+      ],
+      "official_url": "https://docs.typesafe.ai/models",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-14",
+      "version_status": "Current direct version; pin the exact ID rather than a mutable latest alias.",
+      "parameters": "Undisclosed",
+      "context": "Direct default: 64k per request and 32k per question; opt-in 262k. OpenRouter advertises 262,144 and image input, with different routing thresholds.",
+      "modalities": "Text/JSON; images on documented OpenRouter route",
+      "decision_and_tool_capabilities": "Choice, Noul yes/no and Score; typed probabilities rather than dialogue.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Closed hosted API, direct TypeSafe or OpenRouter.",
+      "hardware_evidence": "No self-host weights or hardware minimum verified.",
+      "license_and_aup": "Proprietary service terms; no uncensored commitment verified",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "$0.042 input; $0 output. Long context same unit rate, more tokens and latency; direct docs warn less accurate.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Existing selector baseline; best continuity with project scoring semantics",
+      "research_priority": "high",
+      "caveats": "Do not interpret score as objective character motive or proven calibration. Independent papers do not establish 1.14 results.",
+      "sentiment": "Independent October preprints find useful classification and calibration, but task-dependent cost advantages, option-order sensitivity and probability inconsistency. They predate or coincide with 1.14 and do not evaluate gaming.",
+      "published_example": {
+        "kind": "documentation examples",
+        "url": "https://openrouter.ai/docs/guides/community/jev",
+        "description": "Typed decision integration examples; not an authored NPC transcript."
+      },
+      "source_ids": [
+        "D001",
+        "D002",
+        "D003",
+        "D004"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D001",
+          "url": "https://docs.typesafe.ai/models"
+        },
+        {
+          "id": "D002",
+          "url": "https://openrouter.ai/docs/guides/community/jev"
+        },
+        {
+          "id": "D003",
+          "url": "https://arxiv.org/abs/2610.19619"
+        },
+        {
+          "id": "D004",
+          "url": "https://arxiv.org/abs/2610.06625"
+        }
+      ]
+    },
+    {
+      "id": "decision-elephant-1",
+      "name": "Base Labs Elephant 1",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "baselabs/elephant-1",
+        "baseten/elephant-1:free"
+      ],
+      "official_url": "https://huggingface.co/baselabs/elephant-1",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-21",
+      "version_status": "New open checkpoint with a temporary hosted promotion.",
+      "parameters": "9B; derived from Qwen 3.5-9B.",
+      "context": "16384",
+      "modalities": "Text and images in vendor model; OpenRouter listing is text",
+      "decision_and_tool_capabilities": "Shared-prefix single-pass answer probabilities; smaller Mammoth sibling.",
+      "low_refusal_evidence": "No dark-fiction willingness audit. The shared family training report explicitly includes safety/abstention data and a learned unknown option; being a decision head does not establish unrestricted choices.",
+      "deployment": "Baseten hosted; family self-host instructions use pinned OneJev and a serving patch.",
+      "hardware_evidence": "CUDA serving; minimum VRAM not verified for Elephant",
+      "license_and_aup": "MIT is verified on the sibling family card. Elephant’s own full license file was inaccessible and should be checked before shipping.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Temporary free route; Baseten family free week ends 2026-10-27 23: 59 PT. Subsequent price unknown. Self-host compute payable.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Fast supplied-action ratings; appealing recent small open challenger",
+      "research_priority": "high",
+      "caveats": "Only days of release history; own full card inaccessible, core details cross-checked from sibling card/provider. No mature sentiment.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "provider demo link",
+        "url": "https://openrouter.ai/baseten/elephant-1:free",
+        "description": "Provider Decisions Lab entry; not executed."
+      },
+      "source_ids": [
+        "D006",
+        "D005",
+        "D007"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D006",
+          "url": "https://huggingface.co/baselabs/elephant-1"
+        },
+        {
+          "id": "D005",
+          "url": "https://huggingface.co/baselabs/mammoth-1"
+        },
+        {
+          "id": "D007",
+          "url": "https://openrouter.ai/baseten/elephant-1:free"
+        }
+      ]
+    },
+    {
+      "id": "decision-mammoth-1",
+      "name": "Base Labs Mammoth 1",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "baselabs/mammoth-1",
+        "baseten/mammoth-1:free"
+      ],
+      "official_url": "https://huggingface.co/baselabs/mammoth-1",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-21",
+      "version_status": "Newly released 27B sibling.",
+      "parameters": "27B; derived from Qwen 3.5-27B.",
+      "context": "16384",
+      "modalities": "Text/images",
+      "decision_and_tool_capabilities": "One shared prefill scores all questions. Publisher claims leadership on Decision Index 0.4; no game validation.",
+      "low_refusal_evidence": "No dark-fiction willingness audit. Card reports 16.1% safety/abstention training and a learned unknown option. These are not uncensored-choice guarantees.",
+      "deployment": "Baseten API; OneJev with serve.patch and a pinned CUDA/PyTorch runtime.",
+      "hardware_evidence": "Vendor says one CUDA GPU; minimum capacity not specified",
+      "license_and_aup": "MIT",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Temporary free week ends 2026-10-27 23: 59 PT; post-promo rate unknown. Self-host compute payable.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Higher-capacity open supplied-choice selector",
+      "research_priority": "high",
+      "caveats": "Do not compare publisher 0.4 scores with competitors quoted on 0.3 or 0.3.2. New release has limited independent evidence.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published request examples",
+        "url": "https://huggingface.co/baselabs/mammoth-1",
+        "description": "Card includes API/self-host requests; representative dark-character outputs not found."
+      },
+      "source_ids": [
+        "D005",
+        "D008"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D005",
+          "url": "https://huggingface.co/baselabs/mammoth-1"
+        },
+        {
+          "id": "D008",
+          "url": "https://openrouter.ai/baseten/mammoth-1:free"
+        }
+      ]
+    },
+    {
+      "id": "decision-drex-max",
+      "name": "Nace Drex Max",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "nace-ai/drex-max"
+      ],
+      "official_url": "https://openrouter.ai/nace-ai/drex-max",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-21",
+      "version_status": "Current largest hosted successor to Drex 2.0.",
+      "parameters": "Undisclosed",
+      "context": "262144",
+      "modalities": "Text/JSON",
+      "decision_and_tool_capabilities": "SystemOne choice, yes/no and ordinal probability distributions; no generated prose.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "OpenRouter/DeepInfra; self-host availability for the exact Max artifact not verified.",
+      "hardware_evidence": "Provider median about 0.30 s at retrieval is routing telemetry, not a game latency guarantee.",
+      "license_and_aup": "Exact Max weight license and self-host rights not established; hosted terms apply.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "$0.06 input; $0 output",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Current API challenger for supplied-choice scoring",
+      "research_priority": "high",
+      "caveats": "Do not assign Drex 2.0 size, license or hardware requirements to Max. Released only October 21.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "provider demo link",
+        "url": "https://openrouter.ai/nace-ai/drex-max",
+        "description": "Decisions Lab linked by current provider catalog; not run."
+      },
+      "source_ids": [
+        "D009"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D009",
+          "url": "https://openrouter.ai/nace-ai/drex-max"
+        }
+      ]
+    },
+    {
+      "id": "decision-drex-20",
+      "name": "Nace Drex v2.0",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "nace-ai/drex-v2.0"
+      ],
+      "official_url": "https://huggingface.co/nace-ai/drex-v2.0",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Downloadable predecessor; Max is newer as a hosted offering.",
+      "parameters": "35B total/3B active; Qwen 3.6-35B-A3B with the vision tower removed.",
+      "context": "16,384 default; 131,072 with extension.",
+      "modalities": "Text/JSON",
+      "decision_and_tool_capabilities": "Pointer decision head; SystemOne choice, Noul and Score.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Python runtime; specialized Drex branches of llama.cpp and Ollama.",
+      "hardware_evidence": "Publisher approximately 70 GB BF16 or 37 GB Q8 weights; runtime and KV cache add memory.",
+      "license_and_aup": "Nace.AI Open RAIL-M custom use restrictions; not Apache 2.0",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "$0.06 input; $0 output on listed route; self-host compute payable",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Self-hostable medium MoE selector with existing schema",
+      "research_priority": "high",
+      "caveats": "Requires fork support rather than arbitrary stock llama.cpp. Vendor eight-game arena is not Open Legend validation.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "vendor game arena/reference",
+        "url": "https://huggingface.co/nace-ai/drex-v2.0",
+        "description": "Card links game-arena evaluation and usage examples; vendor-produced, not independently replicated."
+      },
+      "source_ids": [
+        "D010",
+        "D009"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D010",
+          "url": "https://huggingface.co/nace-ai/drex-v2.0"
+        },
+        {
+          "id": "D009",
+          "url": "https://openrouter.ai/nace-ai/drex-max"
+        }
+      ]
+    },
+    {
+      "id": "decision-clef",
+      "name": "Cloudflare Clef",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "Cloudflare/clef"
+      ],
+      "official_url": "https://huggingface.co/Cloudflare/clef",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-01",
+      "version_status": "Open 27B model and Workers AI endpoint.",
+      "parameters": "27B; Qwen 3.8-27B backbone.",
+      "context": "16,384 default documented in the family runtime.",
+      "modalities": "Text/JSON/images/video per card",
+      "decision_and_tool_capabilities": "Joint question head; Jev/SystemOne-compatible scoring.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Workers AI; authored Transformers and SGLang dev-clef recipes.",
+      "hardware_evidence": "Family runtime tested on H200; this is a tested host, not a minimum VRAM claim.",
+      "license_and_aup": "Apache 2.0; hosted service policies are separate.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Open weights; Workers AI token tariff not verified in retrieved announcement",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Open alternative for shared-state multiple action judgments",
+      "research_priority": "high",
+      "caveats": "Publisher launch claim that it led benchmark was time-specific; newer Mammoth/Decider claims exist.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "interactive demo",
+        "url": "https://huggingface.co/spaces/hugging-apps/clef-decision-model",
+        "description": "Published decision demo link; not executed."
+      },
+      "source_ids": [
+        "D011",
+        "D013",
+        "D014"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D011",
+          "url": "https://huggingface.co/Cloudflare/clef"
+        },
+        {
+          "id": "D013",
+          "url": "https://blog.cloudflare.com/clef-decision-models"
+        },
+        {
+          "id": "D014",
+          "url": "https://huggingface.co/spaces/hugging-apps/clef-decision-model"
+        }
+      ]
+    },
+    {
+      "id": "decision-clef-flash",
+      "name": "Cloudflare Clef Flash",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "Cloudflare/clef-flash"
+      ],
+      "official_url": "https://huggingface.co/Cloudflare/clef-flash/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-01",
+      "version_status": "Small released Clef sibling",
+      "parameters": "9B; Qwen 3.5-9B backbone.",
+      "context": "16,384 default.",
+      "modalities": "Text/JSON/images",
+      "decision_and_tool_capabilities": "Single-pass typed answers; published routing and invoice examples.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Workers AI; custom Transformers 5.10.2/Torch 2.11 and SGLang dev-clef support.",
+      "hardware_evidence": "Single H200 verification in README; minimum VRAM unverified.",
+      "license_and_aup": "Apache 2.0",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Open weights; hosted tariff not verified; self-host compute payable",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Small open selector; high practical relevance to NPC population throughput",
+      "research_priority": "high",
+      "caveats": "Custom attention/readout requires compatible runtime; ordinary text-generation endpoint insufficient.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published request examples",
+        "url": "https://huggingface.co/Cloudflare/clef-flash/raw/main/README.md",
+        "description": "Invoice/urgency/routing calls; not a published NPC-output benchmark."
+      },
+      "source_ids": [
+        "D012",
+        "D013",
+        "D014"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D012",
+          "url": "https://huggingface.co/Cloudflare/clef-flash/raw/main/README.md"
+        },
+        {
+          "id": "D013",
+          "url": "https://blog.cloudflare.com/clef-decision-models"
+        },
+        {
+          "id": "D014",
+          "url": "https://huggingface.co/spaces/hugging-apps/clef-decision-model"
+        }
+      ]
+    },
+    {
+      "id": "decision-liquid-d1-3b",
+      "name": "Liquid d1-3B",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "LiquidAI/d1-3B"
+      ],
+      "official_url": "https://huggingface.co/LiquidAI/d1-3B",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Open small multimodal decision checkpoint",
+      "parameters": "3.12B; LFM2.5-VL backbone.",
+      "context": "32768",
+      "modalities": "Text/JSON/images",
+      "decision_and_tool_capabilities": "Typed choices, yes/no and ratings in one forward pass.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Custom Transformers≥5.14; authored CUDA, MPS and CPU paths.",
+      "hardware_evidence": "Vendor 8 ms on RTX4090, 9 ms on MI325X and 30 ms on M5 Pro for its workload; not end-to-end game latency.",
+      "license_and_aup": "LFM 1.0 custom license; applicable revenue conditions affect commercial eligibility.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Self-host compute payable; no fixed per-token fee under eligible license; hosted quote unknown",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Especially relevant low-footprint supplied-action selector",
+      "research_priority": "high",
+      "caveats": "Vendor latency depends on workload and setup. No verified dark-choice willingness results.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "interactive demos",
+        "url": "https://huggingface.co/spaces/LiquidAI/system-one-arcade",
+        "description": "Official arcade offers multiple decision demos; not executed."
+      },
+      "source_ids": [
+        "D015",
+        "D017",
+        "D064"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D015",
+          "url": "https://huggingface.co/LiquidAI/d1-3B"
+        },
+        {
+          "id": "D017",
+          "url": "https://huggingface.co/spaces/LiquidAI/system-one-arcade"
+        },
+        {
+          "id": "D064",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/blob/main/LICENSE"
+        }
+      ]
+    },
+    {
+      "id": "decision-liquid-d1-omni",
+      "name": "Liquid d1-omni-600M",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "LiquidAI/d1-omni-600M"
+      ],
+      "official_url": "https://huggingface.co/LiquidAI/d1-omni-600M/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Early research checkpoint",
+      "parameters": "587M total: 381M trunk, 94M vision, 112M audio.",
+      "context": "16,384 combined positions; image-mode text was trained with an 896-token cap.",
+      "modalities": "Text/JSON; images OR up to 30 seconds of English audio, not both together.",
+      "decision_and_tool_capabilities": "Typed single-pass classification; possible direct audio intent decisions.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Custom Transformers≥5.15; CPU, CUDA and MPS.",
+      "hardware_evidence": "FP16 recommended on GPU; README warns BF16 can change answers. No measured latency published.",
+      "license_and_aup": "LFM 1.0 custom license.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Self-host compute payable; commercial license threshold applies",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Tiny local voice-intent or immediate scene classification candidate",
+      "research_priority": "medium",
+      "caveats": "Not a general long-form NPC reasoner. Trained multimodal budgets are narrower than headline context.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published request examples",
+        "url": "https://huggingface.co/LiquidAI/d1-omni-600M/raw/main/README.md",
+        "description": "Refund ticket, image classification, audio intent examples; not fabricated output."
+      },
+      "source_ids": [
+        "D016",
+        "D064"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D016",
+          "url": "https://huggingface.co/LiquidAI/d1-omni-600M/raw/main/README.md"
+        },
+        {
+          "id": "D064",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/blob/main/LICENSE"
+        }
+      ]
+    },
+    {
+      "id": "decision-liquid-d1-ultra",
+      "name": "Liquid d1-ultra",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "liquid/d1-ultra"
+      ],
+      "official_url": "https://www.liquid.ai/blog/d1-ultra",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-15",
+      "version_status": "Current hosted high-capacity decision model.",
+      "parameters": "Undisclosed larger backbone.",
+      "context": "32768",
+      "modalities": "Text/images",
+      "decision_and_tool_capabilities": "SystemOne Choice, Noul and Score with direct probabilities.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Closed API, including OpenRouter.",
+      "hardware_evidence": "No downloadable weights or hardware verified. Provider median about 0.18–0.19 s is not an SLA.",
+      "license_and_aup": "Hosted proprietary terms; not the downloadable d1-3B checkpoint.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "$0.042 input; $0 output; listed cache read also $0.042",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Higher-capacity current Jev-compatible comparator",
+      "research_priority": "high",
+      "caveats": "Vendor calibration comparisons on 112 tasks do not prove game-action calibration.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "interactive vendor demo",
+        "url": "https://d1.liquid.ai",
+        "description": "Vendor demonstration linked in launch; not executed."
+      },
+      "source_ids": [
+        "D018",
+        "D019"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D018",
+          "url": "https://www.liquid.ai/blog/d1-ultra"
+        },
+        {
+          "id": "D019",
+          "url": "https://openrouter.ai/liquid/d1-ultra"
+        }
+      ]
+    },
+    {
+      "id": "decision-pplx-12",
+      "name": "Perplexity Decider v1.2",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "perplexity-ai/pplx-decider-v1.2"
+      ],
+      "official_url": "https://huggingface.co/perplexity-ai/pplx-decider-v1.2",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Current public card; README still says the repository is private and requires an authorized token.",
+      "parameters": "27B; Qwen 3.8-27B backbone.",
+      "context": "262,144 position limit; trained on about 32k. Long requests need task-specific validation.",
+      "modalities": "Text/JSON; images up to 1.6 MP by default.",
+      "decision_and_tool_capabilities": "Joint structured questions; temperature-calibrated Choice, Noul and Score.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Custom pplx_decider/Python 3.12/CUDA, with reference and compiled paths.",
+      "hardware_evidence": "Publisher approximately 52 GiB BF16 weights plus working memory.",
+      "license_and_aup": "Apache 2.0 on the card; actual weight access must be confirmed.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "If available, permitted self-host compute only; no hosted tariff verified",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Strong open-card candidate for richer state/choice scoring",
+      "research_priority": "high",
+      "caveats": "Questions influence each other. Independent candidates should use separate requests. Card acknowledges benchmark training splits and imperfect calibration.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published request examples",
+        "url": "https://huggingface.co/perplexity-ai/pplx-decider-v1.2",
+        "description": "Support-routing joint question example; output transcript not independently verified."
+      },
+      "source_ids": [
+        "D020"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D020",
+          "url": "https://huggingface.co/perplexity-ai/pplx-decider-v1.2"
+        }
+      ]
+    },
+    {
+      "id": "decision-pplx-flash-12",
+      "name": "Perplexity Decider Flash v1.2",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "perplexity-ai/pplx-decider-flash-v1.2"
+      ],
+      "official_url": "https://huggingface.co/perplexity-ai/pplx-decider-flash-v1.2",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Current distilled small sibling; README access warning remains.",
+      "parameters": "Qwen 3.5-4B backbone; approximately one-seventh the 27B sibling.",
+      "context": "262,144 configured; training about 32k; 243k only spot-checked.",
+      "modalities": "Text/JSON/images",
+      "decision_and_tool_capabilities": "Up to 255 options. Choice, Noul and Score. One question per request often improves independent-task accuracy.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Custom pplx_decider with noncausal attention and per-marker readout. Stock causal serving changes results.",
+      "hardware_evidence": "About 9 GiB BF16 weights plus workspace. At 243k, vendor GB200 example uses 39 GiB reference/54 GiB fast and about 60s/20 s.",
+      "license_and_aup": "Apache 2.0 on the card; repository access must be confirmed.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Self-host compute payable; host quote not verified",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Small selector with unusually explicit serving/calibration limitations",
+      "research_priority": "high",
+      "caveats": "Large context is not necessarily fast or well validated. Joint grouping affects probabilities.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published request examples",
+        "url": "https://huggingface.co/perplexity-ai/pplx-decider-flash-v1.2",
+        "description": "Support, urgency, frustration multi-question example; no NPC transcript."
+      },
+      "source_ids": [
+        "D021"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D021",
+          "url": "https://huggingface.co/perplexity-ai/pplx-decider-flash-v1.2"
+        }
+      ]
+    },
+    {
+      "id": "decision-d3",
+      "name": "vLLM-SR Decision3 d3",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "vllm-sr/d3"
+      ],
+      "official_url": "https://huggingface.co/vllm-sr/d3",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Current released Decision3 checkpoint.",
+      "parameters": "26.09B including 0.46B vision; marketed 27B.",
+      "context": "262,144 configured; authored vLLM recipe recommends 32,768.",
+      "modalities": "Text/JSON, images and video.",
+      "decision_and_tool_capabilities": "Choice, yes/no and Score with probabilities; Jev-compatible.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Custom model runtime and vLLM nightly; ROCm verified.",
+      "hardware_evidence": "Vendor verified MI300X.80 GB cannot profile 262k even with FP8. CUDA recipe had not been run by publisher.",
+      "license_and_aup": "Apache 2.0.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Open multimodal action/scene selector with an actual published API response.",
+      "research_priority": "high",
+      "caveats": "Bidirectional attention and no chunked prefill affect serving. Generic vLLM installation and full-context fit cannot be assumed.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "actual published model response",
+        "url": "https://huggingface.co/vllm-sr/d3",
+        "description": "Card prints MI300X response selecting code with 0.9996 and reasoning yes probability 0.5808; not our run."
+      },
+      "source_ids": [
+        "D022",
+        "D023"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D022",
+          "url": "https://huggingface.co/vllm-sr/d3"
+        },
+        {
+          "id": "D023",
+          "url": "https://decision.vllm-sr.ai"
+        }
+      ]
+    },
+    {
+      "id": "decision-granite-switch",
+      "name": "IBM Granite Switch 4.1",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "ibm-granite/granite-switch-4.1-8b",
+        "ibm-granite/granite-switch-4.1-30b"
+      ],
+      "official_url": "https://huggingface.co/ibm-granite/granite-switch-4.1-8b",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-14",
+      "version_status": "Released adapter bundles; underlying 4.1 differs from the newer general 4.2 family.",
+      "parameters": "8B or 30B backbone plus adapters; 470M English ASR component.",
+      "context": "128k backbone.",
+      "modalities": "Text; optional English speech transcription.",
+      "decision_and_tool_capabilities": "Decision aLoRA first-token scores; separate Guardian adapter and chat. ASR is not jointly trained end to end.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Authored Transformers/vLLM recipes; select the intended adapter.",
+      "hardware_evidence": "Exact GPU minimum unverified; ASR adds memory.",
+      "license_and_aup": "Apache 2.0.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "One family for dialogue and typed choices, using different adapters.",
+      "research_priority": "medium",
+      "caveats": "Guardian detects content categories; this does not establish decision-adapter refusal behavior. ASR is English, lowercase and unpunctuated.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published adapter usage",
+        "url": "https://huggingface.co/ibm-granite/granite-switch-4.1-8b",
+        "description": "Decision, chat, speech and Guardian example invocations; vendor benchmark subset, not game validation."
+      },
+      "source_ids": [
+        "D024",
+        "D076"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D024",
+          "url": "https://huggingface.co/ibm-granite/granite-switch-4.1-8b"
+        },
+        {
+          "id": "D076",
+          "url": "https://huggingface.co/ibm-granite/granite-switch-4.1-30b"
+        }
+      ]
+    },
+    {
+      "id": "decision-microsoft-1",
+      "name": "Microsoft-Decision-1",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "microsoft/microsoft-decision-1",
+        "Microsoft-Decision-1"
+      ],
+      "official_url": "https://commandline.microsoft.com/microsoft-decision-1-model-foundry/",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-09",
+      "version_status": "Hosted model; weights update continually while the API shape stays stable.",
+      "parameters": "Post-trained from Qwen 3.5-9B.",
+      "context": "32,768.",
+      "modalities": "Text/JSON.",
+      "decision_and_tool_capabilities": "Fixed-answer probabilities and ordinal rubrics; classification, routing and verification, not prose generation.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Azure Foundry/OpenRouter.",
+      "hardware_evidence": "Provider median latency about 0.27 s at retrieval; no open weights or minimum hardware verified.",
+      "license_and_aup": "Proprietary hosted terms; no open checkpoint license verified.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Input $0.042; output $0.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Hosted selector comparison with established cloud integration.",
+      "research_priority": "medium",
+      "caveats": "Mutable weights complicate reproducibility. Vendor speed ratios are workload-specific.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published workflow examples",
+        "url": "https://commandline.microsoft.com/microsoft-decision-1-model-foundry/",
+        "description": "Vendor routing/verification demonstrations; no representative dark NPC output found."
+      },
+      "source_ids": [
+        "D025",
+        "D026"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D025",
+          "url": "https://commandline.microsoft.com/microsoft-decision-1-model-foundry/"
+        },
+        {
+          "id": "D026",
+          "url": "https://openrouter.ai/microsoft/microsoft-decision-1"
+        }
+      ]
+    },
+    {
+      "id": "decision-mercury-decide",
+      "name": "Inception Mercury Decide",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "inception/mercury-decide"
+      ],
+      "official_url": "https://openrouter.ai/inception/mercury-decide",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-09-30",
+      "version_status": "Current SystemOne endpoint; image input addition documented.",
+      "parameters": "Undisclosed.",
+      "context": "65,536.",
+      "modalities": "Text/JSON; image input announced by vendor.",
+      "decision_and_tool_capabilities": "Choice, Score and Noul; no generated output-token bill.",
+      "low_refusal_evidence": "Unverified for dark fiction. A typed probability head avoids prose generation but can still bias away from an offered unsavory action; no Open Legend-specific refusal/choice audit was found.",
+      "deployment": "Inception API/OpenRouter; closed weights.",
+      "hardware_evidence": "Vendor up to 14 decisions/s; provider median about 0.33 s is a different measurement.",
+      "license_and_aup": "Proprietary service terms; no unrestricted-content claim.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Input $0.02 under 50% promotion, standard $0.04; output $0. Free route exists with separate limits.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Low-cost fast selector with a published videogame demonstration.",
+      "research_priority": "high",
+      "caveats": "No independent gaming-quality or censorship audit. Promotional pricing can end.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "vendor game demo",
+        "url": "https://www.linkedin.com/posts/inception-labs-ai_mercury-decide-now-accepts-image-input-activity-7515833421299081216-PyK6",
+        "description": "Vendor Ring King game demonstration uses image inputs; not executed or independently verified."
+      },
+      "source_ids": [
+        "D027",
+        "D028",
+        "D029"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D027",
+          "url": "https://openrouter.ai/inception/mercury-decide"
+        },
+        {
+          "id": "D028",
+          "url": "https://www.inceptionlabs.ai/models"
+        },
+        {
+          "id": "D029",
+          "url": "https://www.linkedin.com/posts/inception-labs-ai_mercury-decide-now-accepts-image-input-activity-7515833421299081216-PyK6"
+        }
+      ]
+    },
+    {
+      "id": "decision-gpt6luna",
+      "name": "OpenAI GPT-6 Luna Decisions",
+      "category": "dedicated decision",
+      "exact_model_ids": [
+        "gpt-6-luna",
+        "openai/gpt-6-luna-decisions"
+      ],
+      "official_url": "https://developers.openai.com/api/docs/guides/decisions",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-06",
+      "version_status": "Public beta October 6; current docs supersede beta with 400 questions.",
+      "parameters": "Undisclosed.",
+      "context": "Full request context not verified; up to 400 questions per request.",
+      "modalities": "Text/JSON and images.",
+      "decision_and_tool_capabilities": "Typed binary, choice and score; explicit refusal answer type; prompt caching.",
+      "low_refusal_evidence": "Official API explicitly models answer.type=refusal. No evidence of unrestricted dark-fiction decisions; use as an aligned comparator.",
+      "deployment": "Closed OpenAI API; provider route also available.",
+      "hardware_evidence": "No self-host weights. Vendor customer testimonials are not our measurements.",
+      "license_and_aup": "Proprietary OpenAI service terms/AUP; aligned comparison control.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Uncached input $0.10; output $0. Cache read/write, region and long-context modifiers apply.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Format and cost comparison; low refusal is not established.",
+      "research_priority": "baseline",
+      "caveats": "The dedicated endpoint can explicitly refuse. A decision interface does not remove content refusals.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "actual documentation response examples",
+        "url": "https://developers.openai.com/api/docs/guides/decisions",
+        "description": "Published driving-lane probabilities and billing-route examples; illustrative vendor outputs, not our game samples."
+      },
+      "source_ids": [
+        "D030",
+        "D031"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D030",
+          "url": "https://developers.openai.com/api/docs/guides/decisions"
+        },
+        {
+          "id": "D031",
+          "url": "https://community.openai.com/t/decisions-api-is-now-available-in-public-beta/1403877"
+        }
+      ]
+    },
+    {
+      "id": "planner-qwen38-27b",
+      "name": "Qwen 3.8-27B",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "Qwen/Qwen3.8-27B"
+      ],
+      "official_url": "https://huggingface.co/Qwen/Qwen3.8-27B/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Current Qwen 3.8 dense open checkpoint.",
+      "parameters": "27B dense hybrid.",
+      "context": "262,144 native; up to 1M with extension.",
+      "modalities": "Text, images and video.",
+      "decision_and_tool_capabilities": "Thinking is enabled by default, with effort controls and an option to disable it; tool and agent workflows.",
+      "low_refusal_evidence": "Mixed firsthand reports. An initial favorable uncensored claim was edited to acknowledge trained censorship; other users report refusals. No verified low-refusal rate.",
+      "deployment": "Authored support for Transformers, vLLM, SGLang and TokenSpeed.",
+      "hardware_evidence": "No universal VRAM minimum verified. One user reports a Q3 quantization with 30k context on 16 GB before RAM offload.",
+      "license_and_aup": "Apache 2.0.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Practical base for novel action proposals and persona dialogue; also a selector comparison.",
+      "research_priority": "high",
+      "caveats": "Stock model is aligned. The card described hosted QwenCloud 27B as coming soon; API availability was not established.",
+      "sentiment": "August 2026 thread praises coherence and instruction following; other commenters prefer Gemma 4 character portrayal. Small, setup-dependent sample.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/Qwen/Qwen3.8-27B/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D032",
+        "D037",
+        "D038"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D032",
+          "url": "https://huggingface.co/Qwen/Qwen3.8-27B/raw/main/README.md"
+        },
+        {
+          "id": "D037",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1vp24rj/qwen_38_27b_is_the_next_stepping_stone_for_local/"
+        },
+        {
+          "id": "D038",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/"
+        }
+      ]
+    },
+    {
+      "id": "planner-qwen38-flash-next",
+      "name": "Qwen 3.8-Flash-Next",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "Qwen/Qwen3.8-Flash-Next"
+      ],
+      "official_url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Experimental architecture preview; distinct from hosted Qwen 3.8 Flash.",
+      "parameters": "125B language backbone with 6B active, plus 51B ngram embedding and 4B MTP weights; vision accounting may be separate.",
+      "context": "262,144 native; 1M with extension.",
+      "modalities": "Text, images and video.",
+      "decision_and_tool_capabilities": "Agentic reasoning and instruction following; tool-oriented training.",
+      "low_refusal_evidence": "Firsthand D&D report finds stock hard refusals and soft redirection in some ablated variants. Not established as uncensored.",
+      "deployment": "Authored vLLM, SGLang, TokenSpeed and Transformers support; offloading implementation matters.",
+      "hardware_evidence": "6B active is not the storage footprint; the 51B tables also consume storage or RAM.",
+      "license_and_aup": "Qwen Community 1.0. Separate license for MaaS or AI work assistant businesses; scale attribution above 100M MAU or $20M monthly revenue.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Large planner with lower active compute; relevant base for roleplay derivatives.",
+      "research_priority": "medium",
+      "caveats": "Preview architecture and custom license. Hosted Flash features and limits must be checked separately.",
+      "sentiment": "September 2026 D&D user likes responses and speed when content is accepted. Comments praise instruction following but criticize repetition and creativity.",
+      "published_example": {
+        "kind": "firsthand usage report",
+        "url": "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/",
+        "description": "Firsthand description of D&D outcomes, not a reproducible output transcript."
+      },
+      "source_ids": [
+        "D033",
+        "D034",
+        "D038",
+        "D078"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D033",
+          "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next"
+        },
+        {
+          "id": "D034",
+          "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/blob/main/LICENSE"
+        },
+        {
+          "id": "D038",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/"
+        },
+        {
+          "id": "D078",
+          "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/raw/main/README.md"
+        }
+      ]
+    },
+    {
+      "id": "planner-qwen36-35b",
+      "name": "Qwen 3.6-35B-A3B",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "Qwen/Qwen3.6-35B-A3B"
+      ],
+      "official_url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-04-22",
+      "version_status": "Older than Qwen 3.8, but a distinct smaller MoE budget tier.",
+      "parameters": "35B total; 3B active.",
+      "context": "262,144 native; up to 1,010,000 with extension.",
+      "modalities": "Text, images and video.",
+      "decision_and_tool_capabilities": "Agentic reasoning, tools and preserved thinking.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Authored vLLM, SGLang and KTransformers support.",
+      "hardware_evidence": "Minimum GPU capacity unverified; all 35B weights still need storage or offloading.",
+      "license_and_aup": "Apache 2.0.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Smaller active-compute planner, selector control and fine-tuning base.",
+      "research_priority": "medium",
+      "caveats": "Not the latest flagship; no current audit of stock-model dark-fiction behavior found.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D035"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D035",
+          "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/raw/main/README.md"
+        }
+      ]
+    },
+    {
+      "id": "planner-qwen35-9b",
+      "name": "Qwen 3.5-9B small-model anchor",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "Qwen/Qwen3.5-9B"
+      ],
+      "official_url": "https://huggingface.co/Qwen/Qwen3.5-9B/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Useful 9B base; the smaller 0.8B and 4B family variants are discovery options.",
+      "parameters": "9B dense.",
+      "context": "262,144 native; up to 1,010,000 with extension.",
+      "modalities": "Text, images and video.",
+      "decision_and_tool_capabilities": "Instruction, reasoning and tool-oriented generation. Several dedicated decision models derive from this family.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Authored Transformers, vLLM and SGLang support.",
+      "hardware_evidence": "No measured minimum verified; context and KV cache can dominate weight-only size.",
+      "license_and_aup": "Apache 2.0.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Cheap general control for simple action scores and short proposals.",
+      "research_priority": "high",
+      "caveats": "Small-model quality does not establish complex character planning. Refusal behavior needs separate evidence.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/Qwen/Qwen3.5-9B/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D036"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D036",
+          "url": "https://huggingface.co/Qwen/Qwen3.5-9B/raw/main/README.md"
+        }
+      ]
+    },
+    {
+      "id": "planner-deepseek41-flash",
+      "name": "DeepSeek V4.1 Flash / 1017 API",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "deepseek-flash",
+        "deepseek-ai/DeepSeek-V4.1-Flash"
+      ],
+      "official_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-17 API snapshot",
+      "version_status": "Latest API snapshot is 1017. The unversioned weight repository was not established as the identical snapshot.",
+      "parameters": "552B backbone plus 196B Engram; 8B active in prefill and 16B in decode. Vision/draft extras are not silently folded into a grand total.",
+      "context": "1M context; API maximum output 384k.",
+      "modalities": "Text and images.",
+      "decision_and_tool_capabilities": "Thinking and nonthinking modes, JSON, tools, Responses API and Anthropic-compatible interface.",
+      "low_refusal_evidence": "Stock low-refusal behavior unverified. The freshest positive roleplay report explicitly concerns an abliterated local derivative.",
+      "deployment": "Hosted API or large MIT checkpoint; specialized sparse attention and offloading support matter.",
+      "hardware_evidence": "Cluster or large workstation class. Conditional Engram memory makes active parameters an especially poor RAM estimate.",
+      "license_and_aup": "MIT checkpoint; hosted service AUP is separate.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Off-peak input $0.15, cached input $0.003, output $0.60. Peak $0.30/$0.006/$1.20. Peak windows are 01–04 and 06–10 UTC on weekdays excluding Chinese public holidays.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Economical frontier-size planner via API; base for local roleplay derivatives.",
+      "research_priority": "high",
+      "caveats": "Pin API and weight versions independently. Fresh positive 1017 roleplay feedback concerns a local abliterated copy, not the stock API.",
+      "sentiment": "October 1017 user reports snappier, more character-centered thoughts and less stereotyped prose versus 0910, for their abliterated setup only.",
+      "published_example": {
+        "kind": "firsthand usage report",
+        "url": "https://www.reddit.com/r/SillyTavernAI/comments/1xaomu2/deepseek_v41_flash_1017_surprisingly_good/",
+        "description": "Local derivative roleplay report includes hardware and settings. It is not evidence of stock API outputs."
+      },
+      "source_ids": [
+        "D039",
+        "D041",
+        "D042",
+        "D077"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D039",
+          "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash"
+        },
+        {
+          "id": "D041",
+          "url": "https://api-docs.deepseek.com/quick_start/pricing/"
+        },
+        {
+          "id": "D042",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1xaomu2/deepseek_v41_flash_1017_surprisingly_good/"
+        },
+        {
+          "id": "D077",
+          "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/raw/main/README.md"
+        }
+      ]
+    },
+    {
+      "id": "planner-deepseek4-pro",
+      "name": "DeepSeek V4 Pro 0813",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "deepseek-v4-pro",
+        "deepseek-ai/DeepSeek-V4-Pro"
+      ],
+      "official_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Current Pro API snapshot 0813; Flash 4.1 is a separate model line.",
+      "parameters": "1.6T total; 49B active.",
+      "context": "1M.",
+      "modalities": "Text.",
+      "decision_and_tool_capabilities": "Thinking and nonthinking modes, JSON and tools.",
+      "low_refusal_evidence": "No audited stock-model refusal rate found. Community impressions do not establish API policy or consistent willingness.",
+      "deployment": "Hosted API or very large downloadable checkpoint.",
+      "hardware_evidence": "Cluster class; 49B active does not mean only 49B weights must be stored.",
+      "license_and_aup": "MIT checkpoint; hosted service AUP is separate.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Off-peak input $0.66, cached input $0.022, output $1.98. Peak $1.32/$0.044/$3.96.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "High-capacity planning and reference dialogue candidate.",
+      "research_priority": "medium",
+      "caveats": "More expensive than Flash. Community comparisons are uncontrolled and may mix snapshots or providers.",
+      "sentiment": "A GLM comparison thread contains mixed, indirect comparisons with DeepSeek; it does not establish a model-specific consensus or a controlled Pro-0813 comparison.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D040",
+        "D041",
+        "D049"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D040",
+          "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro"
+        },
+        {
+          "id": "D041",
+          "url": "https://api-docs.deepseek.com/quick_start/pricing/"
+        },
+        {
+          "id": "D049",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1w0nh19/glm_53_vs_glm_53_flash/"
+        }
+      ]
+    },
+    {
+      "id": "planner-glm53-flash",
+      "name": "GLM 5.3 Flash / FlashX serving tier",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "zai-org/GLM-5.3-Flash",
+        "glm-5.3-flash",
+        "glm-5.3-flashx"
+      ],
+      "official_url": "https://huggingface.co/zai-org/GLM-5.3-Flash",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-08-26 Flash",
+      "version_status": "Flash released August 26; FlashX is a current faster hosted tier.",
+      "parameters": "320B total; 18B active.",
+      "context": "1M context; 128k maximum output.",
+      "modalities": "Text, images, video and files.",
+      "decision_and_tool_capabilities": "Tools and multistep agents. The API forces thinking, with low/high/max effort; it cannot simply be disabled.",
+      "low_refusal_evidence": "Mixed roleplay experiences: some users report dark fiction working; others report refusals during an answer. Model-versus-provider cause not established.",
+      "deployment": "Authored SGLang, vLLM, TokenSpeed, Transformers and KTransformers support; Z.ai API.",
+      "hardware_evidence": "Large weight footprint. FlashX vendor 200 tokens/s claim does not measure complete NPC response latency.",
+      "license_and_aup": "MIT weights; hosted service policies are separate.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Flash input $0.15, cached input $0.03, output $0.50. FlashX $0.37/$0.075/$1.25. Cache storage is temporarily free.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Strong current dialogue and planning candidate, particularly NPC persona speech.",
+      "research_priority": "high",
+      "caveats": "Forced API thinking can hurt latency. A separate downloadable FlashX checkpoint was not verified.",
+      "sentiment": "August–September threads praise banter, persona voice and prose, but also report refusals, sloppiness and thinking delays. Anecdotal and provider-dependent.",
+      "published_example": {
+        "kind": "user-posted output screenshot",
+        "url": "https://www.reddit.com/r/SillyTavernAI/comments/1vz5cy0/first_to_post_and_happy_to_say_glm_53_flash_is/",
+        "description": "Original user post includes a roleplay-output screenshot. Not reproduced or independently verified; it may contain adult content."
+      },
+      "source_ids": [
+        "D043",
+        "D044",
+        "D045",
+        "D046",
+        "D047",
+        "D048",
+        "D049"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D043",
+          "url": "https://huggingface.co/zai-org/GLM-5.3-Flash"
+        },
+        {
+          "id": "D044",
+          "url": "https://docs.z.ai/guides/vlm/glm-5.3-flash"
+        },
+        {
+          "id": "D045",
+          "url": "https://docs.z.ai/guides/overview/pricing"
+        },
+        {
+          "id": "D046",
+          "url": "https://docs.z.ai/guides/capabilities/thinking-mode"
+        },
+        {
+          "id": "D047",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1vz5cy0/first_to_post_and_happy_to_say_glm_53_flash_is/"
+        },
+        {
+          "id": "D048",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1vzi848/while_playing_around_with_glm_53_flash_i_had_a/"
+        },
+        {
+          "id": "D049",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1w0nh19/glm_53_vs_glm_53_flash/"
+        }
+      ]
+    },
+    {
+      "id": "planner-glm53",
+      "name": "GLM 5.3",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "zai-org/GLM-5.3",
+        "glm-5.3"
+      ],
+      "official_url": "https://huggingface.co/zai-org/GLM-5.3",
+      "checked_at": "2026-10-24",
+      "release_date": null,
+      "version_status": "Current downloadable flagship; distinct from the smaller multimodal Flash family. Exact release date not confirmed in the pages retrieved.",
+      "parameters": "MoE; 78 layers in the published configuration. Total and active parameter counts were not established by the reviewed 5.3 card.",
+      "context": "API: 1M context window and 128k maximum output. Published weight configuration has 1,048,576 positions.",
+      "modalities": "Text-only input and text output on the documented API.",
+      "decision_and_tool_capabilities": "Long-horizon reasoning and tool/agent workflows. Thinking is compulsory; low, high and max effort are available.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found. Coding capability and open weights do not establish unrestricted fictional portrayal.",
+      "deployment": "Z.ai API plus checkpoint; authored SGLang, vLLM, TokenSpeed, Transformers, KTransformers, Unsloth and Ascend paths.",
+      "hardware_evidence": "Large model; no minimum VRAM or per-NPC latency verified. Do not transfer Flash hardware claims.",
+      "license_and_aup": "Custom GLM-5.3 license, not Flash’s MIT. A MaaS operator exceeding $10 billion aggregate revenue over 12 consecutive months must pass a Z.ai security review before commercial use; the MaaS definition excludes solely embedded features and simple request relays.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Input $1.40; cached input $0.26; output $4.40. Cache storage listed as temporarily free.",
+        "checked_at": "2026-10-24"
+      },
+      "openlegend_fit": "High-capacity planner and consistency reference; compare against Flash before assuming the premium improves characters.",
+      "research_priority": "medium",
+      "caveats": "Mandatory reasoning and a higher output price may be unsuitable for frequent short decisions. No Open Legend quality measurement.",
+      "sentiment": "An existing GLM 5.3-versus-Flash thread offers mixed dialogue/prose preferences; uncontrolled anecdotes do not establish a consistent winner.",
+      "published_example": {
+        "kind": "published request examples",
+        "url": "https://docs.z.ai/guides/llm/glm-5.3",
+        "description": "Official reasoning/API examples; no representative dark-character transcript found."
+      },
+      "source_ids": [
+        "D079",
+        "D080",
+        "D081",
+        "D082",
+        "D045",
+        "D046",
+        "D049"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D079",
+          "url": "https://huggingface.co/zai-org/GLM-5.3"
+        },
+        {
+          "id": "D080",
+          "url": "https://docs.z.ai/guides/llm/glm-5.3"
+        },
+        {
+          "id": "D081",
+          "url": "https://huggingface.co/zai-org/GLM-5.3/raw/main/LICENSE"
+        },
+        {
+          "id": "D082",
+          "url": "https://huggingface.co/zai-org/GLM-5.3/raw/main/config.json"
+        },
+        {
+          "id": "D045",
+          "url": "https://docs.z.ai/guides/overview/pricing"
+        },
+        {
+          "id": "D046",
+          "url": "https://docs.z.ai/guides/capabilities/thinking-mode"
+        },
+        {
+          "id": "D049",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1w0nh19/glm_53_vs_glm_53_flash/"
+        }
+      ]
+    },
+    {
+      "id": "planner-minimax-m3",
+      "name": "MiniMax M3",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "MiniMaxAI/MiniMax-M3",
+        "MiniMax-M3"
+      ],
+      "official_url": "https://huggingface.co/MiniMaxAI/MiniMax-M3",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Current downloadable predecessor to API-only M3.1 Flash.",
+      "parameters": "428B total; 23B active.",
+      "context": "1M.",
+      "modalities": "Text, images and video.",
+      "decision_and_tool_capabilities": "Thinking can be enabled, adaptive or disabled; tools and agent workflows.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Authored SGLang, vLLM, Transformers, KTransformers, Unsloth and ATOM support.",
+      "hardware_evidence": "Large cluster or workstation deployment; no minimum hardware verified.",
+      "license_and_aup": "MiniMax Community License: commercial attribution and one-time notification; above $20M annual product/service revenue, prior authorization. Additional use restrictions apply.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Standard up to 512k input: input $0.30/output $1.20/cache $0.06. Above 512k: $0.60/$2.40/$0.12. Priority costs 1.5x. Self-hosting and licensing are separate.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Large open planner and multimodal generator candidate.",
+      "research_priority": "medium",
+      "caveats": "Not MIT. License conditions matter before production; M3.1 Flash is already newer on the API.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D050",
+        "D051",
+        "D053"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D050",
+          "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3"
+        },
+        {
+          "id": "D051",
+          "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3/blob/main/LICENSE"
+        },
+        {
+          "id": "D053",
+          "url": "https://platform.minimax.io/docs/pricing/overview"
+        }
+      ]
+    },
+    {
+      "id": "planner-minimax-m31flash",
+      "name": "MiniMax M3.1 Flash",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "MiniMax-M3.1-Flash",
+        "minimax/minimax-m3.1-flash"
+      ],
+      "official_url": "https://www.minimax.io/blog/minimax-m31f",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-19",
+      "version_status": "API released October 19. Official weights are promised later; not verified released by October 23.",
+      "parameters": "Exact M3.1 parameters unverified; M3 size must not be copied across.",
+      "context": "1M provider context.",
+      "modalities": "Text, images and video.",
+      "decision_and_tool_capabilities": "Multistep agents, tools and computer use; vendor reports stronger capability and lower costs than M3.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "MiniMax API and OpenRouter. No verified self-hostable checkpoint yet.",
+      "hardware_evidence": "No local hardware estimate because weights are not released.",
+      "license_and_aup": "Proprietary API terms currently; future weight license not announced.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Input $0.15; output $0.60; cached input $0.015. Free launch ended October 22, 2026.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Very current, economical API planning comparison.",
+      "research_priority": "high",
+      "caveats": "Do not label it free or open weights based on launch marketing. Independent NPC reviews were not found.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://www.minimax.io/blog/minimax-m31f",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D052",
+        "D053",
+        "D054"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D052",
+          "url": "https://www.minimax.io/blog/minimax-m31f"
+        },
+        {
+          "id": "D053",
+          "url": "https://platform.minimax.io/docs/pricing/overview"
+        },
+        {
+          "id": "D054",
+          "url": "https://openrouter.ai/minimax/minimax-m3.1-flash"
+        }
+      ]
+    },
+    {
+      "id": "planner-kimi-k3",
+      "name": "Kimi K3",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "moonshotai/Kimi-K3"
+      ],
+      "official_url": "https://huggingface.co/moonshotai/Kimi-K3",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Current released K3 checkpoint.",
+      "parameters": "2.8T total; 104B active.",
+      "context": "1,048,576.",
+      "modalities": "Text, images and video.",
+      "decision_and_tool_capabilities": "Long-horizon reasoning, tool and agent planning, native vision.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Kimi API; MXFP4 weights and MXFP8 activations require compatible serving.",
+      "hardware_evidence": "Cluster class; unsuitable as a typical consumer GPU candidate.",
+      "license_and_aup": "Kimi K3 custom license. MaaS revenue conditions and scale attribution apply, with distinct embedded-feature and hosted/internal-use exemptions.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Hosted token rate unverified; self-host compute and applicable commercial terms remain payable.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "High-capacity planning reference; a community comparison target for persona dialogue.",
+      "research_priority": "medium",
+      "caveats": "Huge footprint and custom license. Kimi K2 licensing must not be assumed to apply.",
+      "sentiment": "GLM comparison commenters use Kimi K3 as a positive NPC-dialogue reference. Indirect anecdote, not a dedicated K3 evaluation.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/moonshotai/Kimi-K3",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D055",
+        "D056",
+        "D047"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D055",
+          "url": "https://huggingface.co/moonshotai/Kimi-K3"
+        },
+        {
+          "id": "D056",
+          "url": "https://huggingface.co/moonshotai/Kimi-K3/blob/main/LICENSE"
+        },
+        {
+          "id": "D047",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1vz5cy0/first_to_post_and_happy_to_say_glm_53_flash_is/"
+        }
+      ]
+    },
+    {
+      "id": "planner-mistral-large4",
+      "name": "Mistral Large 4 preview",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [],
+      "official_url": "https://mistral.ai/news/mistral-large-4/",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-06 preview",
+      "version_status": "October 6 public API preview. Weights promised for late October, not verified released as of October 23. Exact callable API model ID was not verified in the retrieved announcement.",
+      "parameters": "Launch blog says about 1T total and 52B active; another publisher index says 49B active. Discrepancy unresolved.",
+      "context": "Exact context not verified from the retrieved announcement.",
+      "modalities": "Native multimodal.",
+      "decision_and_tool_capabilities": "Agentic reasoning and tools. Restricted cyber-partner access does not establish general low-refusal behavior.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "API preview; downloadable checkpoint not yet verified.",
+      "hardware_evidence": "No local estimate for unreleased weights.",
+      "license_and_aup": "Future weight license unverified; API service terms apply.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Preview token price not verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Frontier planning watchlist and comparator.",
+      "research_priority": "watchlist",
+      "caveats": "Publisher parameter discrepancy; weights and unrestricted content behavior are not promised by this inventory.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://mistral.ai/news/mistral-large-4/",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D057"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D057",
+          "url": "https://mistral.ai/news/mistral-large-4/"
+        }
+      ]
+    },
+    {
+      "id": "planner-mistral-small4",
+      "name": "Mistral Small 4 119B 2603",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "mistralai/Mistral-Small-4-119B-2603"
+      ],
+      "official_url": "https://huggingface.co/mistralai/Mistral-Small-4-119B-2603/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-03",
+      "version_status": "Released March 2026 MoE; distinct from Large 4 preview.",
+      "parameters": "119B total; 6.5B active.",
+      "context": "256k.",
+      "modalities": "Text and images to text.",
+      "decision_and_tool_capabilities": "Configurable instruction/reasoning modes; native function calling and JSON.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Authored vLLM support; NVFP4 and EAGLE draft variants available.",
+      "hardware_evidence": "119B weights require substantial RAM/GPU capacity or offloading; minimum unverified.",
+      "license_and_aup": "Apache 2.0.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Open multimodal planner with tools and reasoning controls.",
+      "research_priority": "medium",
+      "caveats": "Small is the product name; 119B total is not an edge-size model. Low-refusal NPC behavior unverified.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/mistralai/Mistral-Small-4-119B-2603/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D058"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D058",
+          "url": "https://huggingface.co/mistralai/Mistral-Small-4-119B-2603/raw/main/README.md"
+        }
+      ]
+    },
+    {
+      "id": "planner-ministral3",
+      "name": "Ministral 3 8B Instruct 2512",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "mistralai/Ministral-3-8B-Instruct-2512"
+      ],
+      "official_url": "https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": "2025-12-02 family",
+      "version_status": "Useful current edge family anchor; 3B and 14B siblings also exist.",
+      "parameters": "8.4B language plus 0.4B vision.",
+      "context": "256k.",
+      "modalities": "Text and images to text.",
+      "decision_and_tool_capabilities": "Native function calling and JSON; multilingual instructions.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Open FP8 checkpoint with authored inference instructions.",
+      "hardware_evidence": "Vendor says FP8 fits 12 GB VRAM; long context cache adds demand.",
+      "license_and_aup": "Apache 2.0.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Local short proposals, tool selection and dialogue baseline.",
+      "research_priority": "high",
+      "caveats": "Released December 2025, not the newest frontier. Complex character planning quality unverified.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D059"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D059",
+          "url": "https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512/raw/main/README.md"
+        }
+      ]
+    },
+    {
+      "id": "planner-nemotron3nano4b",
+      "name": "NVIDIA Nemotron 3 Nano 4B",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16"
+      ],
+      "official_url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Released small hybrid compressed from a 9B model.",
+      "parameters": "3.97B; Mamba2/Transformer hybrid.",
+      "context": "Up to 262k.",
+      "modalities": "Text; English supported.",
+      "decision_and_tool_capabilities": "Reasoning on/off, tools and structured-data training. Vendor explicitly targets NPC teammates and companions.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Authored Transformers and NeMo support; Linux with NVIDIA GPUs.",
+      "hardware_evidence": "Card lists RTX, A10G, A100 and H100; this is not a minimum VRAM promise.",
+      "license_and_aup": "NVIDIA Nemotron Open Model License; commercial use subject to terms.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Directly relevant small NPC model and local voice-assistant reasoning candidate.",
+      "research_priority": "high",
+      "caveats": "An intended gaming use case does not demonstrate dark-persona willingness or prose quality.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D060"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D060",
+          "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16/raw/main/README.md"
+        }
+      ]
+    },
+    {
+      "id": "planner-nemotron35supervl",
+      "name": "NVIDIA Nemotron 3.5 Super VL 120B-A12B",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16"
+      ],
+      "official_url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-15",
+      "version_status": "Fresh October 15 multimodal Super checkpoint.",
+      "parameters": "120B total; 12B active.",
+      "context": "1M.",
+      "modalities": "Text, images and video to text.",
+      "decision_and_tool_capabilities": "Hybrid Mamba2/Transformer MoE, reasoning toggle and multitoken prediction.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Authored GPU serving; BF16 and NVFP4 variants.",
+      "hardware_evidence": "Vendor BF16 recipe uses 4×H100 or 2×GB200; quantized variant requirements differ.",
+      "license_and_aup": "NVIDIA Nemotron Open Model License.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Modern open visual planner and comparison model with reasoning control.",
+      "research_priority": "medium",
+      "caveats": "Large footprint; no representative roleplay or refusal audit found. Quantization does not establish equivalent quality.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D061"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D061",
+          "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-BF16"
+        }
+      ]
+    },
+    {
+      "id": "planner-granite42",
+      "name": "IBM Granite 4.2-8B family",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "ibm-granite/granite-4.2-8b"
+      ],
+      "official_url": "https://huggingface.co/ibm-granite/granite-4.2-8b/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-08-25",
+      "version_status": "Current general Granite family; 3B and 30B related tiers.",
+      "parameters": "8B dense anchor.",
+      "context": "128k native; 512k with extension.",
+      "modalities": "Text; 12 tested languages.",
+      "decision_and_tool_capabilities": "Full, low or no thinking; tool calling.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Open checkpoint with authored Transformers serving path.",
+      "hardware_evidence": "No vendor GPU minimum verified.",
+      "license_and_aup": "Apache 2.0.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Small tool/planning control with a permissive license; oriented toward business tasks.",
+      "research_priority": "medium",
+      "caveats": "General 4.2 is not the Switch 4.1 decision adapter. Creative persona quality remains unverified.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/ibm-granite/granite-4.2-8b/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D062"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D062",
+          "url": "https://huggingface.co/ibm-granite/granite-4.2-8b/raw/main/README.md"
+        }
+      ]
+    },
+    {
+      "id": "planner-lfm25-24b",
+      "name": "Liquid LFM2.5-24B-A2B",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "LiquidAI/LFM2.5-24B-A2B"
+      ],
+      "official_url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-13",
+      "version_status": "Recent October 13 reasoning MoE.",
+      "parameters": "24B total; 2.45B active, marketed as A2B.",
+      "context": "131,072.",
+      "modalities": "Text.",
+      "decision_and_tool_capabilities": "Always reasons; tool and agentic generation.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Official GGUF, ONNX and FP8; Transformers, vLLM and SGLang.",
+      "hardware_evidence": "Vendor M5 Max 184 tokens/s and B300 21k aggregate throughput refer to different operating regimes, not our measurements.",
+      "license_and_aup": "LFM 1.0 custom license; $10M annual revenue commercial-license threshold.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Efficient local planner with small active compute.",
+      "research_priority": "high",
+      "caveats": "Always-on reasoning adds output and latency. Custom commercial terms and full 24B storage still matter.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D063",
+        "D064"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D063",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/raw/main/README.md"
+        },
+        {
+          "id": "D064",
+          "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B/blob/main/LICENSE"
+        }
+      ]
+    },
+    {
+      "id": "planner-gemma4-large",
+      "name": "Gemma 4 26B-A4B / 31B",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "google/gemma-4-26B-A4B-it",
+        "google/gemma-4-31B-it"
+      ],
+      "official_url": "https://huggingface.co/google/gemma-4-26B-A4B-it/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Current open Gemma 4 large family; April 2026 generation.",
+      "parameters": "26B MoE with 4B active; 31B is about 30.7B dense.",
+      "context": "256k.",
+      "modalities": "Text, images and video.",
+      "decision_and_tool_capabilities": "Native functions, system messages and thinking control.",
+      "low_refusal_evidence": "No representative audited refusal rate. Users sometimes prefer Gemma 4 or derivatives to stock Qwen; that does not prove unrestricted content.",
+      "deployment": "Open models with authored serving paths; runtime support depends on variant.",
+      "hardware_evidence": "No universal minimum verified; 4B active does not reduce 26B weight storage.",
+      "license_and_aup": "Apache 2.0 for Gemma 4; different from FunctionGemma/Gemma 3 terms.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Creative and planning baseline; MoE versus dense variants expose useful footprint/prose tradeoffs.",
+      "research_priority": "high",
+      "caveats": "No validated dark-fiction refusal rate. Exact repositories are now recorded, but variant compatibility still needs checking.",
+      "sentiment": "Qwen roleplay threads use Gemma 4 as a quality baseline; some prefer 31B character portrayal. Indirect anecdotal comparison.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/google/gemma-4-26B-A4B-it/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D065",
+        "D037",
+        "D038",
+        "D073"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D065",
+          "url": "https://huggingface.co/google/gemma-4-26B-A4B-it/raw/main/README.md"
+        },
+        {
+          "id": "D037",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1vp24rj/qwen_38_27b_is_the_next_stepping_stone_for_local/"
+        },
+        {
+          "id": "D038",
+          "url": "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/"
+        },
+        {
+          "id": "D073",
+          "url": "https://huggingface.co/google/gemma-4-31B-it"
+        }
+      ]
+    },
+    {
+      "id": "planner-gemma4-edge",
+      "name": "Gemma 4 E4B / 12B edge family",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "google/gemma-4-E4B-it",
+        "google/gemma-4-12B-it"
+      ],
+      "official_url": "https://huggingface.co/google/gemma-4-E4B-it",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Current Gemma 4 edge-capable family; exact E4B and 12B repositories verified.",
+      "parameters": "E4B: 4.5B effective/8B including embeddings.12B: 11.95B.",
+      "context": "E4B128k; 12B256k.",
+      "modalities": "Text, images, video and audio input; no TTS output established.",
+      "decision_and_tool_capabilities": "Small multimodal functions and instructions; possible voice-intent integration.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Open family serving; use each variant’s documented runtime.",
+      "hardware_evidence": "Effective parameter labels understate full storage. No hardware minimum verified.",
+      "license_and_aup": "Apache 2.0 Gemma 4.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Smaller local multimodal reasoning candidate.",
+      "research_priority": "medium",
+      "caveats": "Audio input does not mean expressive speech output. Performance and modality support remain variant-specific.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/google/gemma-4-E4B-it",
+        "description": "Publisher card for the actual E4B family member; no representative Open Legend character transcript found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D065",
+        "D074",
+        "D075"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D065",
+          "url": "https://huggingface.co/google/gemma-4-26B-A4B-it/raw/main/README.md"
+        },
+        {
+          "id": "D074",
+          "url": "https://huggingface.co/google/gemma-4-E4B-it"
+        },
+        {
+          "id": "D075",
+          "url": "https://huggingface.co/google/gemma-4-12B-it"
+        }
+      ]
+    },
+    {
+      "id": "planner-functiongemma",
+      "name": "FunctionGemma 270m-it",
+      "category": "specialized function model",
+      "exact_model_ids": [
+        "google/functiongemma-270m-it"
+      ],
+      "official_url": "https://huggingface.co/google/functiongemma-270m-it",
+      "checked_at": "2026-10-23",
+      "release_date": "2025-12-18",
+      "version_status": "Task-adaptation foundation released December 2025.",
+      "parameters": "270M.",
+      "context": "32k combined input and output.",
+      "modalities": "Text to function-call text.",
+      "decision_and_tool_capabilities": "Specialized function calling; further fine-tuning for custom single/multiturn actions is intended. Not a direct dialogue model.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Transformers; on-device fine-tunes demonstrated with LiteRT.",
+      "hardware_evidence": "Vendor TinyGarden on S25 Ultra: 288 MB model, about 549 MB peak RSS,.3 s TTFT at 1024 context; not a full 32k base-model benchmark.",
+      "license_and_aup": "Gemma custom terms; not Gemma 4 Apache 2.0.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Tiny constrained action-translation control, backed by an actual voice-controlled game demonstration.",
+      "research_priority": "high",
+      "caveats": "Vendor MobileActions accuracy rises from 58% base to 85% fine-tuned, illustrating adaptation needs rather than general NPC planning ability.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published interactive game demo",
+        "url": "https://huggingface.co/google/functiongemma-270m-it",
+        "description": "Tiny Garden translates spoken planting/watering commands into application functions. Published vendor demonstration; not our test."
+      },
+      "source_ids": [
+        "D066",
+        "D067"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D066",
+          "url": "https://huggingface.co/google/functiongemma-270m-it"
+        },
+        {
+          "id": "D067",
+          "url": "https://blog.google/innovation-and-ai/technology/developers-tools/functiongemma/"
+        }
+      ]
+    },
+    {
+      "id": "planner-smollm3",
+      "name": "SmolLM 3-3B",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "HuggingFaceTB/SmolLM3-3B"
+      ],
+      "official_url": "https://huggingface.co/HuggingFaceTB/SmolLM3-3B/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Older open baseline, not a 2026 frontier model.",
+      "parameters": "3B dense.",
+      "context": "65,536 native; 128k with YaRN.",
+      "modalities": "Text; six supported languages.",
+      "decision_and_tool_capabilities": "Dual reasoning modes; general instruction and agent training.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Transformers and vLLM; open recipe and data orientation.",
+      "hardware_evidence": "No measured hardware minimum verified.",
+      "license_and_aup": "Apache 2.0.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Very small reproducible baseline for local resource constraints.",
+      "research_priority": "baseline",
+      "caveats": "Included for footprint and openness, not a claim of best current quality.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/HuggingFaceTB/SmolLM3-3B/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D068"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D068",
+          "url": "https://huggingface.co/HuggingFaceTB/SmolLM3-3B/raw/main/README.md"
+        }
+      ]
+    },
+    {
+      "id": "planner-gptoss",
+      "name": "OpenAI gpt-oss 20B / 120B",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b"
+      ],
+      "official_url": "https://huggingface.co/openai/gpt-oss-20b/raw/main/README.md",
+      "checked_at": "2026-10-23",
+      "release_date": "2025-08-05",
+      "version_status": "Released 2025 open reasoning baseline.",
+      "parameters": "20B version: 21B total/3.6B active.120B version: 117B total/5.1B active.",
+      "context": "128k family; runtime allocation must be checked.",
+      "modalities": "Text and tools.",
+      "decision_and_tool_capabilities": "Reasoning effort, tool calls and structured outputs; Harmony format required.",
+      "low_refusal_evidence": "Aligned reasoning models; low refusal is not claimed. Useful controls against derivatives.",
+      "deployment": "Open MXFP4 weights and established serving ecosystem.",
+      "hardware_evidence": "Vendor 20B fits 16 GB; 120B fits 80 GB. Context and concurrency add memory.",
+      "license_and_aup": "Apache 2.0; aligned post-training remains.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "No per-token license fee established for permitted self-hosting; hardware/hosting, power and serving overhead remain payable. Hosted per-token quote not independently verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Open aligned tool and selector comparison with mature serving.",
+      "research_priority": "baseline",
+      "caveats": "Open weights is not evidence of unrestricted content. Harmony format and reasoning affect integration.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://huggingface.co/openai/gpt-oss-20b/raw/main/README.md",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D069"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D069",
+          "url": "https://huggingface.co/openai/gpt-oss-20b/raw/main/README.md"
+        }
+      ]
+    },
+    {
+      "id": "planner-llama4",
+      "name": "Llama 4 Scout / Maverick",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+        "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
+      ],
+      "official_url": "https://dev.meta.ai/llama/docs/model-cards-and-prompt-formats/llama4",
+      "checked_at": "2026-10-23",
+      "release_date": null,
+      "version_status": "Older open-weight multimodal baseline, not the latest frontier.",
+      "parameters": "Scout 109B; Maverick 400B; both 17B active.",
+      "context": "Scout 10M; Maverick 1M. Headline context was evaluated across 512 GPUs.",
+      "modalities": "Text and up to 5 images to text; 12 languages, image understanding in English.",
+      "decision_and_tool_capabilities": "Tools, agents and instruction generation.",
+      "low_refusal_evidence": "Official guide discusses reducing false refusals and preachiness. No representative dark-NPC audit found.",
+      "deployment": "Meta’s official deployment ecosystem.",
+      "hardware_evidence": "Vendor says Scout INT4 fits one H100; that does not mean its 10M context fits on one GPU.",
+      "license_and_aup": "Llama 4 Community License and AUP; review custom commercial and eligibility conditions.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Download and serve under license; compute payable. Hosted prices vary and were not verified.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Compatibility and historical baseline; lower priority than newer options.",
+      "research_priority": "baseline",
+      "caveats": "Headline context and single-GPU fit describe different setups. Applicable license eligibility must be checked.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://dev.meta.ai/llama/docs/model-cards-and-prompt-formats/llama4",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D070"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D070",
+          "url": "https://dev.meta.ai/llama/docs/model-cards-and-prompt-formats/llama4"
+        }
+      ]
+    },
+    {
+      "id": "planner-mercury3",
+      "name": "Inception Mercury 3",
+      "category": "general planner/dialogue",
+      "exact_model_ids": [],
+      "official_url": "https://www.inceptionlabs.ai/blog/introducing-mercury-3",
+      "checked_at": "2026-10-23",
+      "release_date": "2026-10-19",
+      "version_status": "Fresh October 19 diffusion LLM API release. Exact callable API model ID was not verified in the retrieved announcement.",
+      "parameters": "Undisclosed.",
+      "context": "1M.",
+      "modalities": "Text; other modalities not verified.",
+      "decision_and_tool_capabilities": "Fast reasoning and agentic generation using a diffusion approach.",
+      "low_refusal_evidence": "No representative dark-fiction refusal or action-choice audit found for this exact model. General instruction following, tool support and open weights do not establish willingness to portray morally flawed characters.",
+      "deployment": "Closed Inception API; no verified self-host checkpoint.",
+      "hardware_evidence": "Vendor reports 1,068 tokens/s on NVIDIA GPUs; not time to first token or whole game-loop latency.",
+      "license_and_aup": "Proprietary service terms/AUP; no unrestricted-content commitment.",
+      "pricing": {
+        "currency": "USD",
+        "unit": "per million tokens unless stated",
+        "semantics": "Launch 50% promotion: input $0.10/output $0.35. Standard $0.20/$0.70. Cached input gets 90% discount.",
+        "checked_at": "2026-10-23"
+      },
+      "openlegend_fit": "Latency-sensitive proposals and dialogue comparison.",
+      "research_priority": "high",
+      "caveats": "Speed and partner use cases are vendor evidence. Very recent launch; independent NPC sentiment not found.",
+      "sentiment": "No independent, substantive Open Legend-like user review found in this research pass; publisher benchmarks are vendor evidence.",
+      "published_example": {
+        "kind": "published documentation or demonstration",
+        "url": "https://www.inceptionlabs.ai/blog/introducing-mercury-3",
+        "description": "Publisher examples and usage material at this link; no representative Open Legend character transcript was found. Nothing was run by us."
+      },
+      "source_ids": [
+        "D071",
+        "D028"
+      ],
+      "tested_by_us": false,
+      "sources": [
+        {
+          "id": "D071",
+          "url": "https://www.inceptionlabs.ai/blog/introducing-mercury-3"
+        },
+        {
+          "id": "D028",
+          "url": "https://www.inceptionlabs.ai/models"
+        }
+      ]
+    }
+  ]
+}

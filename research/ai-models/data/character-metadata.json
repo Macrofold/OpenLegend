@@ -1,0 +1,61 @@
+{
+  "as_of": "2026-10-23",
+  "scope": "Open Legend roleplay and low-refusal LLM research",
+  "record_count": 34,
+  "source_count": 90,
+  "older_reference_count": 6,
+  "no_tests": true,
+  "no_weight_downloads": true,
+  "priority_semantics": {
+    "P1": "Initial comparative-evaluation candidate, not a measured winner",
+    "P2": "Secondary or specialist comparison",
+    "P3": "Watchlist, sparse evidence or unresolved rights/runtime"
+  },
+  "evidence_grades": {
+    "B": "Publisher measurement",
+    "C": "Publisher claim/intent/lineage",
+    "D": "Original user anecdote",
+    "U": "Unknown"
+  },
+  "hardware_estimate_method": "Idealized raw 4-bit weight bytes=parameters×0.5; excludes overhead and KV cache",
+  "baseline_references": [
+    {
+      "name": "DeepHermes 3 Mistral 24B Preview",
+      "url": "https://huggingface.co/NousResearch/DeepHermes-3-Mistral-24B-Preview",
+      "reason": "Collection update 2025-03-13; retain only as a hybrid-reasoning historical control. Hermes 4.3 is the newer documented Nous comparison.",
+      "source": "https://huggingface.co/collections/NousResearch/deephermes"
+    },
+    {
+      "name": "Magnum v4 family",
+      "url": "https://huggingface.co/anthracite-org/magnum-v4-123b",
+      "reason": "Publisher profile lists 123B/72B and smaller releases updated 2024-11-25. Useful prose controls, but recent quant repacks do not make the underlying models current. Exact variant license must be checked.",
+      "source": "https://huggingface.co/anthracite-org/models"
+    },
+    {
+      "name": "Euryale L3.3 70B v2.3",
+      "url": "https://huggingface.co/Sao10K/L3.3-70B-Euryale-v2.3",
+      "reason": "Publisher profile shows 2024-12-08 generation. Do not market it as a new 2026 Stheno successor merely because quants were uploaded later.",
+      "source": "https://huggingface.co/Sao10K"
+    },
+    {
+      "name": "Midnight Miqu 70B v1.5",
+      "url": "https://huggingface.co/sophosympatheia/Midnight-Miqu-70B-v1.5",
+      "reason": "Author collection updated 2024-12-10; old foundation and unclear commercial lineage make it a historical style reference, not a preferred new production dependency. Same author now has Glistening Gem 2.1.",
+      "source": "https://huggingface.co/collections/sophosympatheia/midnight-miqu"
+    },
+    {
+      "name": "RimDialogue 3B v1",
+      "url": "https://huggingface.co/TheDrummer/RimDialogue-3B-v1-GGUF",
+      "reason": "Historical game-NPC-specific Llama 3.2 example. Card says the associated mod was taken down by Ludeon; useful evidence of actual game-dialogue use, not a current integration recommendation.",
+      "source": "https://huggingface.co/TheDrummer/RimDialogue-3B-v1-GGUF/raw/main/README.md"
+    },
+    {
+      "name": "Behemoth X 123B v2.2",
+      "url": "https://huggingface.co/TheDrummer/Behemoth-X-123B-v2.2",
+      "reason": "Card identifies Mistral Large 2411 lineage. A recent upload is not a contemporary foundation; newer Behemoth 128B v3 is tracked separately, with weak WIP evidence.",
+      "source": "https://huggingface.co/TheDrummer/Behemoth-X-123B-v2.2"
+    }
+  ],
+  "reviewed_at": "2026-10-24",
+  "review_scope": "All 34 records and tables reviewed; targeted primary-source spot checks, not a fresh full-market scan or model evaluation."
+}

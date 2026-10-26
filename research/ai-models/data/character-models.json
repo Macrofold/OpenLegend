@@ -1,0 +1,1899 @@
+[
+  {
+    "id": "RP01",
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "model_id": "NousResearch/Hermes-4.3-36B",
+    "url": "https://huggingface.co/NousResearch/Hermes-4.3-36B",
+    "release_evidence": "Publisher launch article is dated December 2025; HF profile shows an update on 2025-12-06 (update is not a separate release).",
+    "parameters": {
+      "total_b": 36,
+      "active_b": 36,
+      "architecture": "dense Seed-OSS-derived transformer"
+    },
+    "context": "524,288 positions in the published config; end-to-end RP quality at that length unverified.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "B: publisher benchmark",
+      "summary": "Publisher RefusalBench reports 74.60% answered without reasoning and 72.29% with reasoning, averaged over five trials; substantial refusals remain."
+    },
+    "character_fit": "Strong first-wave comparison for dialogue, motive explanations and flexible fictional personas.",
+    "decision_fit": "Training explicitly includes tool use and structured/JSON output. This is more direct evidence for action-selection trials than prose-only finetunes, but no game benchmark.",
+    "deployment": "Safetensors and community quantizations; publisher lists Nous Portal/Chutes hosting. Hybrid reasoning is optional.",
+    "hardware": "36B means about 18 GB of idealized 4-bit weights before scales, KV cache, runtime and batching; a fit estimate, not a verified 24-GB deployment.",
+    "cost_semantics": "Weights are downloadable without a per-token charge; GPU/CPU time, memory, storage and operations remain costs. No exact hosted rate verified.",
+    "license": "Apache-2.0 shown on publisher card.",
+    "sentiment": {
+      "summary": "Release-thread discussion is mixed: family users value creative style and willingness; other commenters report uneven quality or weak coding/tool behavior. Much discussion concerns earlier Hermes models, not a controlled 4.3 comparison.",
+      "provenance": "original community discussion; mixed exact/family attribution",
+      "date": "December 2025 release thread; precise post timestamp not confirmed",
+      "urls": [
+        "https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"
+      ]
+    },
+    "published_outputs": {
+      "status": "publisher evaluation artifacts linked",
+      "description": "Launch article links full evaluation responses and scores; these are published evaluation artifacts, not our generated game examples.",
+      "url": "https://nousresearch.com/introducing-hermes-4-3/"
+    },
+    "caveats": [
+      "RefusalBench is not a benchmark of believable morally flawed NPCs.",
+      "Thinking adds tokens/latency; optional nonthinking mode merits separate future comparison."
+    ],
+    "related_variants": [],
+    "sources": [
+      "https://huggingface.co/NousResearch/Hermes-4.3-36B",
+      "https://huggingface.co/NousResearch/Hermes-4.3-36B/raw/main/config.json",
+      "https://nousresearch.com/introducing-hermes-4-3/",
+      "https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"
+    ],
+    "name": "Hermes 4.3 36B",
+    "source_ids": [
+      "RPS001",
+      "RPS002",
+      "RPS003",
+      "RPS004"
+    ]
+  },
+  {
+    "id": "RP02",
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "model_id": "NousResearch/Hermes-4-70B",
+    "url": "https://huggingface.co/NousResearch/Hermes-4-70B",
+    "release_evidence": "2025 generation; HF profile last-update evidence is 2025-09-02. Deliberately retained as the larger Hermes-family comparison to 4.3.",
+    "parameters": {
+      "total_b": 70,
+      "active_b": 70,
+      "architecture": "dense Llama 3.1"
+    },
+    "context": "128K-class parent; exact derivative's useful long-session limit not independently established.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "B: publisher benchmark",
+      "summary": "Hermes 4.3 publisher comparison gives Hermes 4 70B reasoning a 59.5% RefusalBench answered rate. 'Uncensored' should not be read as refusal-free."
+    },
+    "character_fit": "Large-character/prose comparison when memory budget permits.",
+    "decision_fit": "Explicit hybrid reasoning, tools and structured-output training; no Open Legend schema results.",
+    "deployment": "Safetensors and community GGUF/other quants. Related 14B and 405B variants are size options, not counted as separate discoveries.",
+    "hardware": "About 35 GB idealized 4-bit weights before overhead; multi-GPU or high-memory local machine likely required at useful context. No measured capacity claim here.",
+    "cost_semantics": "Weights are downloadable without a per-token charge; GPU/CPU time, memory, storage and operations remain costs. No exact hosted rate verified.",
+    "license": "Llama-family license label on card; parent community license and acceptable-use terms apply, not Apache.",
+    "sentiment": {
+      "summary": "Hermes-family discussion is mixed on style, logic and instruction following; no strong separate 70B current-release consensus established.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": [
+        "https://www.reddit.com/r/LocalLLaMA/comments/1pdfk0o/hermes_43_36b_model_released/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found in the inspected material. Loading/inference snippets are not sample outputs.",
+      "url": null
+    },
+    "caveats": [],
+    "related_variants": [
+      {
+        "model_id": "NousResearch/Hermes-4-14B",
+        "url": "https://huggingface.co/NousResearch/Hermes-4-14B",
+        "note": "Smaller family option; not separately evaluated here."
+      },
+      {
+        "model_id": "NousResearch/Hermes-4-405B",
+        "url": "https://huggingface.co/NousResearch/Hermes-4-405B",
+        "note": "Very large family option; verify exact dtype/checkpoint before budgeting."
+      }
+    ],
+    "sources": [
+      "https://huggingface.co/NousResearch/Hermes-4-70B",
+      "https://huggingface.co/NousResearch",
+      "https://huggingface.co/NousResearch/Hermes-4.3-36B"
+    ],
+    "name": "Hermes 4 70B",
+    "source_ids": [
+      "RPS005",
+      "RPS006",
+      "RPS001"
+    ]
+  },
+  {
+    "id": "RP03",
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "model_id": "dphn/Venice-Role-Play-Uncensored",
+    "url": "https://huggingface.co/dphn/Venice-Role-Play-Uncensored",
+    "release_evidence": "HF dphn profile shows update June 12, 2026; this is update evidence, not a proven launch date.",
+    "parameters": {
+      "total_b": 24,
+      "active_b": 24,
+      "architecture": "dense Mistral Small lineage"
+    },
+    "context": "Venice exact API ID advertises 128K. Card's deployment example sets 131,072, but is partly copied from the predecessor.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C + D: publisher claim and conflicting user anecdotes",
+      "summary": "Publisher explicitly targets uncensored roleplay. June 2026 users nevertheless report refusal and intrusive narration; host behavior is not proof of the downloadable checkpoint."
+    },
+    "character_fit": "Direct roleplay/adventure specialization makes it a useful reference for flawed NPC dialogue and scene narration.",
+    "decision_fit": "Publisher claims retained instruction-following; Venice catalog labels function calling, but no exact structured-action reliability data.",
+    "deployment": "Apache-licensed downloadable model and Venice API ID venice-uncensored-role-play; provider settings may add behavior beyond weights.",
+    "hardware": "Approximately 12 GB idealized 4-bit weights before overhead. Card's large-GPU example is illustrative and partly inherited, not a proven consumer-card fit.",
+    "cost_semantics": "Venice: $0.50 input / $2.00 output per 1M tokens, 128K, snapshot 2026-10-23; downloaded weights incur local compute instead.",
+    "license": "Apache-2.0 card. Hosted use additionally depends on Venice terms/AUP.",
+    "sentiment": {
+      "summary": "Mixed firsthand reports: March users describe capable roleplay; June reports include refusal, taking actions for the player, and preference for Uncensored 1.2. Prompt and sampling differences are uncontrolled.",
+      "provenance": "original users of hosted service, not isolated checkpoint tests",
+      "date": "2026-03-22 to 2026-03-24; 2026-06-21 to 2026-06-23",
+      "urls": [
+        "https://www.reddit.com/r/VeniceAI/comments/1s0tqqh/roleplay/",
+        "https://www.reddit.com/r/VeniceAI/comments/1ubov9f/what_uncensored_models_are_the_best/"
+      ]
+    },
+    "published_outputs": {
+      "status": "publisher sample screenshots",
+      "description": "Card includes a Sample Outputs section. Link provided for human review; screenshots were not transcribed or independently reproduced.",
+      "url": "https://huggingface.co/dphn/Venice-Role-Play-Uncensored"
+    },
+    "caveats": [
+      "Both this and the predecessor card claim a default Venice alias; use explicit current API ID.",
+      "The card includes predecessor-model inference snippets; do not treat them as tested exact-model instructions."
+    ],
+    "related_variants": [
+      {
+        "model_id": "dphn/Dolphin-Mistral-24B-Venice-Edition",
+        "url": "https://huggingface.co/dphn/Dolphin-Mistral-24B-Venice-Edition",
+        "note": "Earlier general-purpose 24B predecessor; current catalog separately lists venice-uncensored-1-2 at $0.20/$0.90 per 1M and 128K. Exact equivalence to this checkpoint was not established."
+      }
+    ],
+    "sources": [
+      "https://huggingface.co/dphn/Venice-Role-Play-Uncensored",
+      "https://huggingface.co/dphn",
+      "https://docs.venice.ai/models/text",
+      "https://docs.venice.ai/overview/pricing",
+      "https://www.reddit.com/r/VeniceAI/comments/1s0tqqh/roleplay/",
+      "https://www.reddit.com/r/VeniceAI/comments/1ubov9f/what_uncensored_models_are_the_best/"
+    ],
+    "name": "Venice Role Play Uncensored 24B",
+    "source_ids": [
+      "RPS007",
+      "RPS008",
+      "RPS009",
+      "RPS010",
+      "RPS011",
+      "RPS012"
+    ]
+  },
+  {
+    "id": "RP04",
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "model_id": "dphn/Dolphin-X1-Trinity-Nano",
+    "url": "https://huggingface.co/dphn/Dolphin-X1-Trinity-Nano",
+    "release_evidence": "HF dphn profile shows update 2026-05-29; launch date not independently pinned.",
+    "parameters": {
+      "total_b": 6,
+      "active_b": null,
+      "architecture": "afmoe; Trinity Nano Preview derivative"
+    },
+    "context": "Exact derivative context ceiling not verified in this pass.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "B: publisher benchmark",
+      "summary": "Publisher reports 100% answered on its refusal evaluation versus 77.11% for Trinity Nano Preview. This is not independent evidence or an NPC coherence score."
+    },
+    "character_fit": "Small low-refusal control for inexpensive background dialogue and short barks.",
+    "decision_fit": "Publisher aims to preserve instructions after RL de-alignment; no schema/action or long-horizon character evidence.",
+    "deployment": "Safetensors; publisher names Transformers, vLLM and llama.cpp. Confirm exact afmoe support in the intended build.",
+    "hardware": "About 3 GB idealized 4-bit weight storage before overhead; active parameter count and real latency not verified.",
+    "cost_semantics": "Weights are downloadable without a per-token charge; GPU/CPU time, memory, storage and operations remain costs. No exact hosted rate verified.",
+    "license": "Apache-2.0 shown on card.",
+    "sentiment": {
+      "summary": "No substantive independent report on this exact release was found in the reviewed sources; quality remains a publisher claim.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "illustrative publisher snippet",
+      "description": "Card includes a casual French-response example. It is an illustrative snippet, not a documented game evaluation.",
+      "url": "https://huggingface.co/dphn/Dolphin-X1-Trinity-Nano"
+    },
+    "caveats": [
+      "Small total size does not demonstrate adequate memory, planning or consistent nuanced personality.",
+      "No independent exact-release RP report located."
+    ],
+    "related_variants": [],
+    "sources": [
+      "https://huggingface.co/dphn/Dolphin-X1-Trinity-Nano",
+      "https://huggingface.co/dphn",
+      "https://blog.dphn.ai/dphn-x1-trinity-nano/"
+    ],
+    "name": "Dolphin X1 Trinity Nano",
+    "source_ids": [
+      "RPS013",
+      "RPS008",
+      "RPS014"
+    ]
+  },
+  {
+    "id": "RP05",
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "model_id": "dphn/Dolphin-X1-8B",
+    "url": "https://huggingface.co/dphn/Dolphin-X1-8B",
+    "release_evidence": "Author launch thread is a 2025 release; exact calendar date not established from the retrieved page.",
+    "parameters": {
+      "total_b": 8,
+      "active_b": 8,
+      "architecture": "dense Llama 3.1 Instruct derivative"
+    },
+    "context": "Derivative's validated context not established; do not equate inherited configuration with demonstrated long-session coherence.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "B: author-reported evaluation",
+      "summary": "Author launch reports roughly 96% pass with 181 refusals in 4483 tests; stronger evidence than the label alone, but not independently reproduced."
+    },
+    "character_fit": "Small-footprint low-refusal baseline; more recent Dolphin line than old Dolphin 2.x lists.",
+    "decision_fit": "Instruction model derivative; no model-specific action/JSON benchmark found.",
+    "deployment": "Llama-compatible safetensors and community quants; exact prompt template matters.",
+    "hardware": "About 4 GB idealized 4-bit weights before KV/runtime overhead; no measured concurrency claim.",
+    "cost_semantics": "Weights are downloadable without a per-token charge; GPU/CPU time, memory, storage and operations remain costs. No exact hosted rate verified.",
+    "license": "Llama 3.1 community license lineage; acceptable-use restrictions are separate from checkpoint refusal behavior.",
+    "sentiment": {
+      "summary": "The retrieved original announcement provides creator evaluation details; substantial independent exact-release RP sentiment was not established.",
+      "provenance": "author announcement",
+      "date": "2025; exact date unconfirmed",
+      "urls": [
+        "https://www.reddit.com/r/LocalLLaMA/comments/1o5l62w/dolphin_x1_8b_llama31_8b_decensor_live_on_hf/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found in the inspected material. Loading/inference snippets are not sample outputs.",
+      "url": null
+    },
+    "caveats": [],
+    "related_variants": [],
+    "sources": [
+      "https://huggingface.co/dphn/Dolphin-X1-8B",
+      "https://www.reddit.com/r/LocalLLaMA/comments/1o5l62w/dolphin_x1_8b_llama31_8b_decensor_live_on_hf/"
+    ],
+    "name": "Dolphin X1 8B",
+    "source_ids": [
+      "RPS015",
+      "RPS016"
+    ]
+  },
+  {
+    "id": "RP06",
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "model_id": "LuffyTheFox/Qwen3.6-35B-A3B-Uncensored-Genesis-Hermes-GGUF",
+    "url": "https://huggingface.co/LuffyTheFox/Qwen3.6-35B-A3B-Uncensored-Genesis-Hermes-GGUF",
+    "release_evidence": "HF author profile showed a recent October 2026 update; exact release date not established.",
+    "parameters": {
+      "total_b": 35,
+      "active_b": 3,
+      "architecture": "Qwen3.6 MoE with transferred Hermes-family tensors"
+    },
+    "context": "Parent is long-context; exact modified checkpoint's reliable ceiling not verified.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: derivative claim; parent-only benchmark",
+      "summary": "Built from HauhauCS aggressive uncensored Qwen3.6 and Hermes tensors. Claimed 0/465 refusal figure concerns the parent, not a measured final Genesis-Hermes checkpoint."
+    },
+    "character_fit": "Candidate for combining contemporary Qwen reasoning with expressive Hermes-style character text.",
+    "decision_fit": "Reasoning/tool capability of the bases is promising; tensor merging can change it and no final action benchmark was found.",
+    "deployment": "GGUF/local llama.cpp-family serving; pin file and engine revision. Repository offers many quants, which are not separate models.",
+    "hardware": "About 17.5 GB idealized 4-bit total weights before overhead; 3B active computation does not reduce total memory to 3B.",
+    "cost_semantics": "Weights are downloadable without a per-token charge; GPU/CPU time, memory, storage and operations remain costs. No exact hosted rate verified.",
+    "license": "Apache-2.0 card metadata; inspect all ingredient provenance before distribution.",
+    "sentiment": {
+      "summary": "No substantive independent report on this exact release was found in the reviewed sources; quality remains a publisher claim.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found in the inspected material. Loading/inference snippets are not sample outputs.",
+      "url": null
+    },
+    "caveats": [
+      "Publisher 'Genesis repair' explanations and quality claims are not independently validated.",
+      "No exact-model published fictional output or independent comparison located."
+    ],
+    "related_variants": [],
+    "sources": [
+      "https://huggingface.co/LuffyTheFox/Qwen3.6-35B-A3B-Uncensored-Genesis-Hermes-GGUF",
+      "https://huggingface.co/LuffyTheFox"
+    ],
+    "name": "Qwen3.6 35B-A3B Genesis Hermes",
+    "source_ids": [
+      "RPS017",
+      "RPS018"
+    ]
+  },
+  {
+    "id": "RP07",
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "model_id": "huihui-ai/Huihui-Qwen3.8-27B-abliterated",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-27B-abliterated",
+    "release_evidence": "Author collection shows 2026-08-24 update for full weights; quantized releases have later updates. Dates identify updates, not necessarily launches.",
+    "parameters": {
+      "total_b": 27,
+      "active_b": 27,
+      "architecture": "dense hybrid Qwen3.8; some HF totals include vision/auxiliary parameters"
+    },
+    "context": "262K-class parent; exact long-context behavior after ablation not independently established.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: publisher ablation claim",
+      "summary": "Direct refusal-reduction modification; author calls it a crude proof of concept. No zero-refusal guarantee or exact game suite."
+    },
+    "character_fit": "Current general low-refusal parent/control for character experiments; foundation of Humanlike Chat 2.0.",
+    "decision_fit": "Useful counterpoint to specialized prose tunes; preservation of Qwen structured reasoning must be checked later.",
+    "deployment": "Full safetensors and GGUF variants; current Qwen3.8-capable runtime required.",
+    "hardware": "About 13.5 GB idealized 4-bit text weights before overhead; exact vision, context and batch memory add to this.",
+    "cost_semantics": "Weights are downloadable without a per-token charge; GPU/CPU time, memory, storage and operations remain costs. No exact hosted rate verified.",
+    "license": "Apache-2.0 card.",
+    "sentiment": {
+      "summary": "No substantive independent report on this exact release was found in the reviewed sources; quality remains a publisher claim.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found in the inspected material. Loading/inference snippets are not sample outputs.",
+      "url": null
+    },
+    "caveats": [],
+    "related_variants": [],
+    "sources": [
+      "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-27B-abliterated",
+      "https://huggingface.co/collections/huihui-ai/qwen38-abliterated"
+    ],
+    "name": "Huihui Qwen3.8 27B abliterated",
+    "source_ids": [
+      "RPS019",
+      "RPS020"
+    ]
+  },
+  {
+    "id": "RP08",
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "model_id": "huihui-ai/Huihui-Qwen3.8-Flash-Next-abliterated-v2-GGUF",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-Flash-Next-abliterated-v2-GGUF",
+    "release_evidence": "Author collection showed a recent October 2026 update; exact release date unconfirmed.",
+    "parameters": {
+      "total_b": 180,
+      "active_b": 6,
+      "backbone_b": 125,
+      "ngram_embedding_b": 51,
+      "mtp_b": 4,
+      "architecture": "Qwen3.8 Flash Next MoE: approximately 180B language-side total (125B backbone + 51B n-gram + 4B MTP); 6B backbone active. Vision accounting is additional; GGUF sidebar 177B is not a reliable full decomposition."
+    },
+    "context": "Official parent specifies 262,144 native and extension to 1M; the exact ablated derivative's long-context quality is unvalidated.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: publisher ablation claim",
+      "summary": "v2 changes the targeted ablation and excludes expert ablation; low-refusal/novel-writing claims are not a published universal refusal result."
+    },
+    "character_fit": "Large-model creative/generalist comparison if substantial RAM/VRAM is available.",
+    "decision_fit": "Author targets programming and writing too, but reliable tool/action retention after ablation remains unproven.",
+    "deployment": "GGUF; publisher says tested with llama.cpp b11540. Treat that as author-tested compatibility, not every runtime.",
+    "hardware": "About 90 GB idealized 4-bit language-side weights before overhead and any vision components; embeddings/MTP and quantization details matter. 6B active is not the storage requirement.",
+    "cost_semantics": "Weights are downloadable without a per-token charge; GPU/CPU time, memory, storage and operations remain costs. No exact hosted rate verified.",
+    "license": "qwen-community-1.0 custom license shown on card; do not classify as Apache.",
+    "sentiment": {
+      "summary": "Original base-family D&D thread praises scene play but reports refusals; follow-up discusses redirection after ablation. No exact v2 checkpoint consensus established.",
+      "provenance": "original community; base/ablated-family attribution only",
+      "date": "2026; exact timestamp not established",
+      "urls": [
+        "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found in the inspected material. Loading/inference snippets are not sample outputs.",
+      "url": null
+    },
+    "caveats": [
+      "Any unsafe install/checksum-bypass instructions in model cards were not followed or copied into this research.",
+      "Use the official component decomposition and chosen files for capacity planning; 177B GGUF metadata is not the total architecture definition."
+    ],
+    "related_variants": [],
+    "sources": [
+      "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-Flash-Next-abliterated-v2-GGUF",
+      "https://huggingface.co/collections/huihui-ai/qwen38-abliterated",
+      "https://www.reddit.com/r/SillyTavernAI/comments/1wbyfav/qwen_38_flash_next/",
+      "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/raw/main/README.md"
+    ],
+    "name": "Huihui Qwen3.8 Flash Next abliterated v2",
+    "source_ids": [
+      "RPS021",
+      "RPS020",
+      "RPS022",
+      "RPS088"
+    ]
+  },
+  {
+    "id": "RP09",
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "model_id": "LuffyTheFox/Qwen3.8-27B-Uncensored-Genesis-MTP-GGUF",
+    "url": "https://huggingface.co/LuffyTheFox/Qwen3.8-27B-Uncensored-Genesis-MTP-GGUF",
+    "release_evidence": "Available at retrieval; exact release date not established from the inspected sources.",
+    "parameters": {
+      "total_b": 27,
+      "active_b": 27,
+      "architecture": "dense hybrid Qwen3.8; card's MoE tag is inconsistent with described architecture"
+    },
+    "context": "Publisher lists 262,144 native and 1M extension; extension is a configuration claim, not demonstrated fictional continuity.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: publisher derivative claim",
+      "summary": "Based on HauhauCS aggressive Qwen3.8 with additional Genesis modifications. No final-checkpoint independent refusal benchmark found."
+    },
+    "character_fit": "Modern 27B alternative for users who need permissive narrative generation and retained contemporary base features.",
+    "decision_fit": "Publisher claims retained vision/MTP and capability; no reliable game-action or JSON result found.",
+    "deployment": "GGUF and related NVFP4 variants; MTP/vision support depends on exact runtime/file, not the name alone.",
+    "hardware": "About 13.5 GB idealized 4-bit text weights before overhead.",
+    "cost_semantics": "Weights are downloadable without a per-token charge; GPU/CPU time, memory, storage and operations remain costs. No exact hosted rate verified.",
+    "license": "Apache-2.0 card.",
+    "sentiment": {
+      "summary": "No substantive independent report on this exact release was found in the reviewed sources; quality remains a publisher claim.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found in the inspected material. Loading/inference snippets are not sample outputs.",
+      "url": null
+    },
+    "caveats": [
+      "Architecture tags and technical prose disagree; dense architecture is the supported interpretation.",
+      "No exact-checkpoint independent sentiment or published game sample found."
+    ],
+    "related_variants": [],
+    "sources": [
+      "https://huggingface.co/LuffyTheFox/Qwen3.8-27B-Uncensored-Genesis-MTP-GGUF"
+    ],
+    "name": "Qwen3.8 27B Genesis MTP",
+    "source_ids": [
+      "RPS023"
+    ]
+  },
+  {
+    "id": "RP10",
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "model_id": "LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-2.0",
+    "url": "https://huggingface.co/LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-2.0",
+    "release_evidence": "Original author announcement indexed 2026-10-02; publisher evaluation dated 2026-10-01.",
+    "parameters": {
+      "total_b": 27,
+      "active_b": 27,
+      "architecture": "dense Qwen3.8; finetuned from Huihui abliterated weights"
+    },
+    "context": "262,144 configured; publisher suggests 32K. Training prompts were 12K and multi-turn evaluation limited; full-window persona persistence unproved.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: ablated lineage, not a direct final refusal score",
+      "summary": "Low-refusal base plus conversational post-training; final refusal behavior not established independently."
+    },
+    "character_fit": "High-priority natural short dialogue candidate; can take character cards. Default lowercase contemporary texting may need a fantasy/register prompt.",
+    "decision_fit": "Publisher small-set tool and instruction scores improve, while MMLU-Pro 78.5→72.5 and LiveCode 56→51 decline. Treat as a voice/action tradeoff, not universal improvement.",
+    "deployment": "BF16/FP8/GPTQ weights and GGUF; publisher documents llama.cpp, vLLM and SGLang serving. A free rate-limited demo API advertises model ID qwen3.8-27b-humanlike-chat; availability was not tested.",
+    "hardware": "Publisher lists IQ4_XS 15.10 GB for 24 GB GPUs; GPTQ 20.62 GB/24 GB at 8K; FP8/48 GB. These are publisher fit claims, not our validation.",
+    "cost_semantics": "Self-hosting incurs compute and operations costs. Publisher advertises a free, rate-limited demonstration API; no paid production rate verified. The service scales to zero, so cold starts can be long.",
+    "license": "Apache-2.0.",
+    "sentiment": {
+      "summary": "Author openly documents v1 criticism (fixed persona, brevity, failed tools) and claims 2.0 addresses it. Enthusiastic launch engagement does not establish independent 2.0 consensus.",
+      "provenance": "original author thread with candid failure history",
+      "date": "2026-10-02 search-index date",
+      "urls": [
+        "https://www.reddit.com/r/LocalLLaMA/comments/1wvxl4n/qwen3827bhumanlikechat_20_texts_like_a_human_now/"
+      ]
+    },
+    "published_outputs": {
+      "status": "publisher-selected comparison outputs",
+      "description": "Publisher-selected screenshots compare character chat, formal-task switching and clarification before tools. Screenshot alt-text attributes the short quoted jet-lag reply to 2.0; we did not generate or independently reproduce it.",
+      "excerpt": "I don't, haha",
+      "url": "https://huggingface.co/LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-GGUF"
+    },
+    "caveats": [
+      "Custom human-likeness evaluation is publisher-run, with limited prompts.",
+      "H100 speed numbers on the card must not be misattributed to a 24 GB consumer GPU.",
+      "GGUF filenames were reused for 2.0; record the published file hash to distinguish old and current weights. The free demonstration endpoint is not evidence of production availability."
+    ],
+    "related_variants": [],
+    "sources": [
+      "https://huggingface.co/LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-2.0",
+      "https://huggingface.co/LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-GGUF",
+      "https://www.reddit.com/r/LocalLLaMA/comments/1wvxl4n/qwen3827bhumanlikechat_20_texts_like_a_human_now/"
+    ],
+    "name": "Qwen3.8 27B Humanlike Chat 2.0",
+    "source_ids": [
+      "RPS024",
+      "RPS025",
+      "RPS026"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "Author profile shows update 2025-12-17; current final version inspected, built on Mistral Small 3.2-2506.",
+    "context": "Publisher-curated users describe 20–32K sessions; that is not a maximum-context validation.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: explicit qualified publisher claim",
+      "summary": "Creator says roleplay improved but it may refuse or become more positive. This is a useful quality baseline, not the strongest no-refusal choice."
+    },
+    "character_fit": "Multi-character dialogue, character-card adherence, emotional differentiation and scene initiative.",
+    "decision_fit": "Curated reports mention fewer contradictions but remaining physics/causality issues. No measured JSON/tool evidence.",
+    "deployment": "Safetensors/GGUF/EXL3; Mistral v7 Tekken; optional thinking.",
+    "hardware": "Approximately 12 GB idealized 4-bit weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Derivative license not fully established from the inspected card; verify exact files and inherited terms before commercial adoption.",
+    "sentiment": {
+      "summary": "Creator-curated testers praise distinct voices and initiative; some still note causal mistakes. Testimonials are selected by the model creator and are not independent consensus.",
+      "provenance": "publisher-curated first-person testimonials",
+      "date": "Undated on card; profile update 2025-12-17",
+      "urls": [
+        "https://huggingface.co/TheDrummer/Cydonia-24B-v4.3"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Use as a creative-quality comparator against its Heretic derivative; low refusal and good characterization may trade off."
+    ],
+    "related_variants": [],
+    "id": "RP11",
+    "url": "https://huggingface.co/TheDrummer/Cydonia-24B-v4.3",
+    "sources": [
+      "https://huggingface.co/TheDrummer/Cydonia-24B-v4.3",
+      "https://huggingface.co/TheDrummer/Cydonia-24B-v4.3/raw/main/README.md",
+      "https://huggingface.co/TheDrummer"
+    ],
+    "model_id": "TheDrummer/Cydonia-24B-v4.3",
+    "name": "Cydonia 24B v4.3",
+    "parameters": {
+      "total_b": 24,
+      "active_b": 24,
+      "architecture": "dense Mistral Small 3.2 derivative"
+    },
+    "source_ids": [
+      "RPS027",
+      "RPS028",
+      "RPS029"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "release_evidence": "Available at retrieval; exact release date not established from the inspected sources.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: explicit qualified publisher claim",
+      "summary": "Like Cydonia 4.3, the creator acknowledges potential refusals and increased positivity."
+    },
+    "character_fit": "Companion, dungeon/CYOA and multi-character prose alternative to Cydonia; deliberately different style.",
+    "decision_fit": "Thinking is optional; selected testers describe improved situational awareness and fewer contradictions, not a formal decision benchmark.",
+    "deployment": "Mistral v7 Tekken; safetensors/GGUF/EXL3 links. HF sidebar parameter count is inconsistent with 24B lineage.",
+    "hardware": "About 12 GB idealized 4-bit weights before overhead; verify actual artifacts rather than the anomalous HF sidebar.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Derivative license not fully established from the inspected card; verify exact files and inherited terms before commercial adoption.",
+    "sentiment": {
+      "summary": "Creator-curated reports praise character adherence and reading implied motives; card says many testers prefer the Magistral writing style. High-temperature overcreativity remains a concern.",
+      "provenance": "selected publisher testimonials",
+      "date": "Undated; 2025 portfolio",
+      "urls": [
+        "https://huggingface.co/TheDrummer/Magidonia-24B-v4.3"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Not a new architecture relative to the current Qwen/Gemma families; retained for a valuable style comparison."
+    ],
+    "related_variants": [],
+    "id": "RP12",
+    "url": "https://huggingface.co/TheDrummer/Magidonia-24B-v4.3",
+    "sources": [
+      "https://huggingface.co/TheDrummer/Magidonia-24B-v4.3"
+    ],
+    "model_id": "TheDrummer/Magidonia-24B-v4.3",
+    "name": "Magidonia 24B v4.3",
+    "parameters": {
+      "total_b": 24,
+      "active_b": 24,
+      "architecture": "dense Magistral Small 2509 derivative"
+    },
+    "source_ids": [
+      "RPS030"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "Available at retrieval; exact release date not established from the inspected sources.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "B: publisher benchmark",
+      "summary": "Publisher reports 5/100 refusals versus 73/100 original, KL 0.0447. Related v2 has 22/100 refusals with smaller KL 0.0097: v2 is a tradeoff, not uniformly better."
+    },
+    "character_fit": "Directly relevant permissive counterpart to Cydonia's character-focused writing.",
+    "decision_fit": "KL distance measures distribution change, not decision reliability; no demonstrated game-schema or continuity preservation.",
+    "deployment": "Safetensors and community GGUF; keep parent template. Variant weights need separate provenance.",
+    "hardware": "Approximately 12 GB idealized 4-bit weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Derivative license not fully established from the inspected card; verify exact files and inherited terms before commercial adoption.",
+    "sentiment": {
+      "summary": "Original author discussion explains the refusal/KL tradeoff; Drummer acknowledges parent 4.3 became more positive than 4.1. No robust independent long-session derivative consensus found.",
+      "provenance": "original creator discussion",
+      "date": "Late 2025 thread; exact day unconfirmed",
+      "urls": [
+        "https://www.reddit.com/r/LocalLLaMA/comments/1prm2tq/thedrummer_models_meet_heretic/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Small refusal benchmark is not the target game's fictional-scene distribution.",
+      "Exact derivative license was not established in the inspected card."
+    ],
+    "related_variants": [
+      {
+        "model_id": "coder3101/Cydonia-24B-v4.3-heretic-v2",
+        "url": "https://huggingface.co/coder3101/Cydonia-24B-v4.3-heretic-v2",
+        "note": "Less distribution shift but more refusals on the publisher's 100-prompt evaluation; compare as a related variant."
+      }
+    ],
+    "id": "RP13",
+    "url": "https://huggingface.co/coder3101/Cydonia-24B-v4.3-heretic",
+    "sources": [
+      "https://huggingface.co/coder3101/Cydonia-24B-v4.3-heretic",
+      "https://huggingface.co/coder3101/Cydonia-24B-v4.3-heretic-v2",
+      "https://www.reddit.com/r/LocalLLaMA/comments/1prm2tq/thedrummer_models_meet_heretic/"
+    ],
+    "model_id": "coder3101/Cydonia-24B-v4.3-heretic",
+    "name": "Cydonia 24B v4.3 Heretic",
+    "parameters": {
+      "total_b": 24,
+      "active_b": 24,
+      "architecture": "dense Mistral; Heretic-modified Cydonia 4.3"
+    },
+    "source_ids": [
+      "RPS031",
+      "RPS032",
+      "RPS033"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "Author profile/samples show 2026-01-25 update; underlying Nemo 2407 is older.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: publisher intent",
+      "summary": "Character/creative tuning with low-refusal intent, but no independent exact-checkpoint refusal result found."
+    },
+    "character_fit": "Affordable expressive NPC and voice-conversation candidate; useful lower-memory prose baseline.",
+    "decision_fit": "No direct evidence of reliable schema/action selection; strong prose does not establish game-state correctness.",
+    "deployment": "Mistral v3 Tekken or Metharme templates; optional thinking. Do not substitute the v7 template used by newer Mistral tunes.",
+    "hardware": "Approximately 6 GB idealized 4-bit weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Derivative license not fully established from the inspected card; verify exact files and inherited terms before commercial adoption.",
+    "sentiment": {
+      "summary": "Creator-curated users praise character fidelity, affordable creativity and extended voice chat; stock phrasing and limited wording remain smaller-model weaknesses.",
+      "provenance": "publisher-curated first-person reports",
+      "date": "2026-01-25 card context; individual reports undated",
+      "urls": [
+        "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1"
+      ]
+    },
+    "published_outputs": {
+      "status": "publisher screenshot samples",
+      "description": "Card contains dated sample-output images; linked for review, not transcribed or tested.",
+      "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1"
+    },
+    "caveats": [
+      "Current finetune does not make its 2024 foundation a frontier reasoning model."
+    ],
+    "related_variants": [],
+    "id": "RP14",
+    "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1",
+    "sources": [
+      "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1",
+      "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1/raw/main/README.md",
+      "https://huggingface.co/TheDrummer"
+    ],
+    "model_id": "TheDrummer/Rocinante-X-12B-v1",
+    "name": "Rocinante X 12B v1",
+    "parameters": {
+      "total_b": 12,
+      "active_b": 12,
+      "architecture": "dense Mistral Nemo Instruct 2407 derivative"
+    },
+    "source_ids": [
+      "RPS034",
+      "RPS035",
+      "RPS029"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "Author profile shows update 2026-08-05; release date itself not pinned.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: publisher intent",
+      "summary": "Character/creative tuning with low-refusal intent, but no independent exact-checkpoint refusal result found."
+    },
+    "character_fit": "NPC agency, emotional continuity and engaging prose at a moderate local footprint.",
+    "decision_fit": "Curated and independent accounts still mention logical/factual inconsistency; character initiative is not game-state authority.",
+    "deployment": "Safetensors and community quants; template/preset sensitivity is material.",
+    "hardware": "Approximately 8 GB idealized 4-bit weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Derivative license not fully established from the inspected card; verify exact files and inherited terms before commercial adoption.",
+    "sentiment": {
+      "summary": "Selected testers praise agency and emotional continuity. An independent zombie-apocalypse user reports interesting prose but disruptive all-caps formatting; a prototype review praised prose but noted wrong facts. Prototype evidence is not final-v1 evidence.",
+      "provenance": "mixed exact-release user report and older prototype report",
+      "date": "2026; April 19 prototype thread, exact final-v1 report day unconfirmed",
+      "urls": [
+        "https://www.reddit.com/r/SillyTavernAI/comments/1uwgbvf/anyone_willing_to_help_a_newbie_with_a_few/",
+        "https://www.reddit.com/r/SillyTavernAI/comments/1sq77o9/megathread_best_modelsapi_discussion_week_of/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "A character rejecting nonsensical player pressure can be desirable agency; distinguish that from out-of-character safety refusal."
+    ],
+    "related_variants": [],
+    "id": "RP15",
+    "url": "https://huggingface.co/TheDrummer/Rocinante-XL-16B-v1",
+    "sources": [
+      "https://huggingface.co/TheDrummer/Rocinante-XL-16B-v1",
+      "https://huggingface.co/TheDrummer",
+      "https://www.reddit.com/r/SillyTavernAI/comments/1uwgbvf/anyone_willing_to_help_a_newbie_with_a_few/",
+      "https://www.reddit.com/r/SillyTavernAI/comments/1sq77o9/megathread_best_modelsapi_discussion_week_of/"
+    ],
+    "model_id": "TheDrummer/Rocinante-XL-16B-v1",
+    "name": "Rocinante XL 16B v1",
+    "parameters": {
+      "total_b": 16,
+      "active_b": 16,
+      "architecture": "expanded/upscaled Mistral Nemo 12B lineage"
+    },
+    "source_ids": [
+      "RPS036",
+      "RPS029",
+      "RPS037",
+      "RPS038"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "Author profile update 2026-04-03.",
+    "context": "Selected tester reports about 20K multi-character use; not a formal limit or coherence evaluation.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: publisher intent",
+      "summary": "Character/creative tuning with low-refusal intent, but no independent exact-checkpoint refusal result found."
+    },
+    "character_fit": "Character-driven dialogue and multi-character scenes; particularly relevant real game-mod usage evidence.",
+    "decision_fit": "Card includes a first-person Rimtalk report involving JSON; this is anecdotal integration evidence, not schema-validity statistics.",
+    "deployment": "Mistral v7 template; safetensors/community GGUF/EXL3.",
+    "hardware": "Approximately 15.5 GB idealized 4-bit weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Derivative license not fully established from the inspected card; verify exact files and inherited terms before commercial adoption.",
+    "sentiment": {
+      "summary": "Creator-curated Rimtalk user praises coherent creative dialogue and JSON use. Other testers praise emotion but report long replies and repeated mistakes after a failure.",
+      "provenance": "publisher-curated first-person game-mod use",
+      "date": "Undated reports; profile update 2026-04-03",
+      "urls": [
+        "https://huggingface.co/TheDrummer/Skyfall-31B-v4.2"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Verbose 500-plus-token replies in reports could increase NPC turn latency/cost.",
+      "Publisher-selected testimonials may overrepresent successful sessions."
+    ],
+    "related_variants": [],
+    "id": "RP16",
+    "url": "https://huggingface.co/TheDrummer/Skyfall-31B-v4.2",
+    "sources": [
+      "https://huggingface.co/TheDrummer/Skyfall-31B-v4.2",
+      "https://huggingface.co/TheDrummer/Skyfall-31B-v4.2/raw/main/README.md",
+      "https://huggingface.co/TheDrummer"
+    ],
+    "model_id": "TheDrummer/Skyfall-31B-v4.2",
+    "name": "Skyfall 31B v4.2",
+    "parameters": {
+      "total_b": 31,
+      "active_b": 31,
+      "architecture": "expanded Magistral Small 2509 lineage"
+    },
+    "source_ids": [
+      "RPS039",
+      "RPS040",
+      "RPS029"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "release_evidence": "Available at retrieval; exact release date not established from the inspected sources.",
+    "context": "Selected testers mention 24K; exact practical ceiling unverified.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: publisher intent",
+      "summary": "Character/creative tuning with low-refusal intent, but no independent exact-checkpoint refusal result found."
+    },
+    "character_fit": "Large prose-oriented character-card adherence comparison.",
+    "decision_fit": "No direct evidence of reliable schema/action selection; strong prose does not establish game-state correctness.",
+    "deployment": "Llama 3 chat template; safetensors and community quants.",
+    "hardware": "Approximately 35 GB idealized 4-bit weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Llama 3.3 parent terms are relevant; exact derivative license grant not fully established from inspected card.",
+    "sentiment": {
+      "summary": "Creator-curated users praise prose and long card adherence, while acknowledging remaining logic mistakes. Independent exact-release consensus was not located.",
+      "provenance": "publisher-curated reports",
+      "date": "Undated",
+      "urls": [
+        "https://huggingface.co/TheDrummer/Anubis-70B-v1.2"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [],
+    "related_variants": [],
+    "id": "RP17",
+    "url": "https://huggingface.co/TheDrummer/Anubis-70B-v1.2",
+    "sources": [
+      "https://huggingface.co/TheDrummer/Anubis-70B-v1.2"
+    ],
+    "model_id": "TheDrummer/Anubis-70B-v1.2",
+    "name": "Anubis 70B v1.2",
+    "parameters": {
+      "total_b": 70,
+      "active_b": 70,
+      "architecture": "dense Llama 3.3; HF parameter metadata rounds about 71B"
+    },
+    "source_ids": [
+      "RPS041"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P3",
+    "release_evidence": "Available at retrieval; exact release date not established from the inspected sources.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: publisher intent",
+      "summary": "Character/creative tuning with low-refusal intent, but no independent exact-checkpoint refusal result found."
+    },
+    "character_fit": "Small character-tuned comparator for low-memory deployment; secondary to better documented current candidates.",
+    "decision_fit": "No direct evidence of reliable schema/action selection; strong prose does not establish game-state correctness.",
+    "deployment": "Llama 3 template; publisher links GGUF/iMatrix/EXL3.",
+    "hardware": "Approximately 4 GB idealized 4-bit weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Llama-family inherited terms likely relevant, but exact base and derivative license were not fully verified.",
+    "sentiment": {
+      "summary": "No substantial independent report on this exact release found in the reviewed sources.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Sparse card; weak exact-release performance, date and licensing evidence.",
+      "Include for inventory breadth, not as a recommended winner."
+    ],
+    "related_variants": [],
+    "id": "RP18",
+    "url": "https://huggingface.co/TheDrummer/Anubis-Mini-8B-v1",
+    "sources": [
+      "https://huggingface.co/TheDrummer/Anubis-Mini-8B-v1"
+    ],
+    "model_id": "TheDrummer/Anubis-Mini-8B-v1",
+    "name": "Anubis Mini 8B v1",
+    "parameters": {
+      "total_b": 8,
+      "active_b": 8,
+      "architecture": "dense Llama lineage; precise parent not confirmed in retrieved card"
+    },
+    "source_ids": [
+      "RPS042"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "watchlist",
+    "priority": "P3",
+    "release_evidence": "Available at retrieval; exact release date not established from the inspected sources.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: creative-tune intent, weak supporting detail",
+      "summary": "Roleplay-oriented author family, but work-in-progress card provides no exact refusal evaluation."
+    },
+    "character_fit": "Large current Mistral-based creative candidate when mature documentation or independent comparisons emerge.",
+    "decision_fit": "No derivative reasoning/tool/schema results; publisher mentions nonreasoning testing only.",
+    "deployment": "Mistral v7 according to card; downloadable weights. Work-in-progress documentation.",
+    "hardware": "About 64 GB idealized 4-bit weights before overhead; large GPU/unified-memory budget.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Apache-2.0 explicitly shown on card.",
+    "sentiment": {
+      "summary": "No substantial independent report on this exact release found in the reviewed sources.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Sparse WIP evidence is insufficient to rank above documented smaller models.",
+      "Do not confuse this newer 128B foundation with Behemoth X 123B v2.2 on older Mistral Large 2411."
+    ],
+    "related_variants": [],
+    "id": "RP19",
+    "url": "https://huggingface.co/TheDrummer/Behemoth-128B-v3",
+    "sources": [
+      "https://huggingface.co/TheDrummer/Behemoth-128B-v3"
+    ],
+    "model_id": "TheDrummer/Behemoth-128B-v3",
+    "name": "Behemoth 128B v3",
+    "parameters": {
+      "total_b": 128,
+      "active_b": 128,
+      "architecture": "Mistral Medium 3.5-128B derivative; HF counts about 125B"
+    },
+    "source_ids": [
+      "RPS043"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "research watchlist",
+    "priority": "P2",
+    "release_evidence": "Available at retrieval; exact release date not established from the inspected sources.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: parent lineage and research intent",
+      "summary": "Built on an uncensored-Heretic Qwen3.6 parent; no final refusal/character benchmark established."
+    },
+    "character_fit": "Reasoning focused on character psychology, tone and world simulation; promising for NPC motives.",
+    "decision_fit": "Reasoning traces target character behavior; they do not prove correct world-state decisions or justify extra thinking latency.",
+    "deployment": "Safetensors with MTP-preserving parent lineage; exact runtime support must be confirmed.",
+    "hardware": "Approximately 13.5 GB idealized 4-bit text weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Apache-2.0 card.",
+    "sentiment": {
+      "summary": "Creator explicitly labels it a research release with only basic sanity checks. No strong independent consensus found.",
+      "provenance": "candid publisher limitation",
+      "date": "Collection updated 2026-09-08; exact release unconfirmed",
+      "urls": [
+        "https://huggingface.co/Gryphe/Pantheon-Reasoning-27B"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Additional reasoning may improve motive consistency or merely add delay; evidence does not settle this.",
+      "Synthetic reasoning sources include other frontier-model traces; rights/provenance review remains separate from weight license."
+    ],
+    "related_variants": [],
+    "id": "RP20",
+    "url": "https://huggingface.co/Gryphe/Pantheon-Reasoning-27B",
+    "sources": [
+      "https://huggingface.co/Gryphe/Pantheon-Reasoning-27B"
+    ],
+    "model_id": "Gryphe/Pantheon-Reasoning-27B",
+    "name": "Pantheon Reasoning 27B",
+    "parameters": {
+      "total_b": 27,
+      "active_b": 27,
+      "architecture": "dense Qwen3.6 via uncensored-Heretic parent; about 28B with auxiliaries"
+    },
+    "source_ids": [
+      "RPS044"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "MeroMero collection updated 2026-08-03; not necessarily exact v2 release date.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: creative tuning; refusal freedom not established",
+      "summary": "Publisher emphasizes narrative variety/reduced repetitive phrasing, not a final zero-refusal result. Keep separate from independently modified Heretic variants."
+    },
+    "character_fit": "Distinct voices, less repetitive prose and alternative scene generations.",
+    "decision_fit": "Creator claims benchmark retention; no game-action/schema evaluation. Increased variation can also introduce inconsistency.",
+    "deployment": "Safetensors/community GGUF; supports thinking and nonthinking.",
+    "hardware": "Approximately 15.5 GB idealized 4-bit weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Apache-2.0 card.",
+    "sentiment": {
+      "summary": "May 19 first-person review praises older MeroMero 31B's variety and Polish; another reports melodramatic style and lost scene facts. This is earlier-family evidence, not a review of v2.",
+      "provenance": "original independent users, earlier-version attribution",
+      "date": "2026-05-19 to 2026-05-20",
+      "urls": [
+        "https://www.reddit.com/r/SillyTavernAI/comments/1th7q0q/im_stunned_with_gemma4meromero31b/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Creator diversity/repetition metrics are self-evaluation, not established RP ground truth.",
+      "Validate exact current v2 instead of transferring all older-family praise."
+    ],
+    "related_variants": [],
+    "id": "RP21",
+    "url": "https://huggingface.co/zerofata/G4-MeroMero-v2-31B",
+    "sources": [
+      "https://huggingface.co/zerofata/G4-MeroMero-v2-31B",
+      "https://huggingface.co/collections/zerofata/meromero",
+      "https://www.reddit.com/r/SillyTavernAI/comments/1th7q0q/im_stunned_with_gemma4meromero31b/"
+    ],
+    "model_id": "zerofata/G4-MeroMero-v2-31B",
+    "name": "Gemma 4 MeroMero v2 31B",
+    "parameters": {
+      "total_b": 31,
+      "active_b": 31,
+      "architecture": "dense Gemma 4"
+    },
+    "source_ids": [
+      "RPS045",
+      "RPS046",
+      "RPS047"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "Available at retrieval; exact release date not established from the inspected sources.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: no final refusal guarantee",
+      "summary": "Original creative tune is not the same as Heretic variant. Its publisher does not establish unrestricted content behavior."
+    },
+    "character_fit": "Potentially faster sparse-model character dialogue with less flowery writing.",
+    "decision_fit": "Author says logic/repetition roughly match stock and swipe variation did not improve; no action-schema benchmark.",
+    "deployment": "Safetensors/GGUF; thinking and nonthinking supported.",
+    "hardware": "Approximately 13 GB idealized 4-bit total weights before overhead; 4B active does not mean 4B of memory.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Apache-2.0 card.",
+    "sentiment": {
+      "summary": "October 19 user running Q5 MeroMero 26B praises character voices but reports reversed/missed details and overly compliant characters. This is especially relevant to believable independent NPCs.",
+      "provenance": "original exact-family user experience",
+      "date": "2026-10-19",
+      "urls": [
+        "https://www.reddit.com/r/SillyTavernAI/comments/1x9odzm/gemma_4_31b_significantly_better_than_gemma_4_26b/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Model compliance with a prompt and a character having its own opinions are distinct requirements."
+    ],
+    "related_variants": [],
+    "id": "RP22",
+    "url": "https://huggingface.co/zerofata/G4-MeroMero-26B-A4B",
+    "sources": [
+      "https://huggingface.co/zerofata/G4-MeroMero-26B-A4B",
+      "https://www.reddit.com/r/SillyTavernAI/comments/1x9odzm/gemma_4_31b_significantly_better_than_gemma_4_26b/"
+    ],
+    "model_id": "zerofata/G4-MeroMero-26B-A4B",
+    "name": "Gemma 4 MeroMero 26B-A4B",
+    "parameters": {
+      "total_b": 26,
+      "active_b": 4,
+      "architecture": "Gemma 4 MoE; finetuned and merged back into instruct"
+    },
+    "source_ids": [
+      "RPS048",
+      "RPS049"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "release_evidence": "Arli-related author listing shows update 2026-08-13; release date not separately pinned.",
+    "context": "Training mentioned 8K prompts; that does not establish an 8K maximum or prove long-context quality.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: author anecdote",
+      "summary": "Author says refusals were absent in personal use; no disclosed representative refusal benchmark or independent reproduction."
+    },
+    "character_fit": "Roleplay, conversation and storytelling; alternative Gemma 4 voice.",
+    "decision_fit": "Both reasoning modes offered, but card notes occasional failure to honor requested thinking behavior. Tool/schema reliability unknown.",
+    "deployment": "Full weights plus LoRA variant; community quants. Arli sponsorship does not by itself verify a live hosted endpoint.",
+    "hardware": "Approximately 15.5 GB idealized 4-bit weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Apache-2.0 card.",
+    "sentiment": {
+      "summary": "No substantial independent report on this exact release found in the reviewed sources.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Limited independent exact-model sentiment; creator claim is weaker than broad measurement.",
+      "No attributable final-checkpoint sample output found."
+    ],
+    "related_variants": [],
+    "id": "RP23",
+    "url": "https://huggingface.co/AuriAetherwiing/G4-31B-Musica-v1",
+    "sources": [
+      "https://huggingface.co/AuriAetherwiing/G4-31B-Musica-v1",
+      "https://huggingface.co/ArliAI"
+    ],
+    "model_id": "AuriAetherwiing/G4-31B-Musica-v1",
+    "name": "Gemma 4 Musica 31B v1",
+    "parameters": {
+      "total_b": 31,
+      "active_b": 31,
+      "architecture": "dense Gemma 4"
+    },
+    "source_ids": [
+      "RPS050",
+      "RPS051"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "release_evidence": "Author profile update 2026-04-29.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: collection-level roleplay claim",
+      "summary": "Collection identifies thinking-trained RP specialization; inspected card largely repeats the base Qwen README, with no derivative refusal result."
+    },
+    "character_fit": "Large sparse RP candidate for reasoning-rich character scenes.",
+    "decision_fit": "Base-model tool/reasoning benchmark tables are not measurements of this RP finetune.",
+    "deployment": "Safetensors/community quants. Verify a current endpoint with the exact RpRMax ID before assuming Arli hosting.",
+    "hardware": "Approximately 61 GB idealized 4-bit total weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Apache-2.0 shown on card.",
+    "sentiment": {
+      "summary": "No substantial independent report on this exact release found in the reviewed sources.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Copied base documentation creates a material evidence gap.",
+      "No credible exact-release independent user/sample evidence located."
+    ],
+    "related_variants": [],
+    "id": "RP24",
+    "url": "https://huggingface.co/ArliAI/Qwen3.5-122B-RpRMax-v1",
+    "sources": [
+      "https://huggingface.co/ArliAI/Qwen3.5-122B-RpRMax-v1",
+      "https://huggingface.co/ArliAI"
+    ],
+    "model_id": "ArliAI/Qwen3.5-122B-RpRMax-v1",
+    "name": "Arli Qwen3.5 122B RpRMax v1",
+    "parameters": {
+      "total_b": 122,
+      "active_b": 10,
+      "architecture": "Qwen3.5-122B-A10B MoE; HF auxiliary-inclusive total about 125B"
+    },
+    "source_ids": [
+      "RPS052",
+      "RPS051"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "release_evidence": "Author profile update 2026-04-28.",
+    "context": "Validated long-context ceiling not established for this exact derivative.",
+    "modalities": "Text; other capabilities unverified for this derivative.",
+    "content_freedom": {
+      "grade": "C: collection-level roleplay intent",
+      "summary": "RP specialization is claimed; no exact final refusal test found."
+    },
+    "character_fit": "Smaller thinking-capable roleplay option for broad NPC populations.",
+    "decision_fit": "Base README scores cannot establish derivative action/tool reliability.",
+    "deployment": "Safetensors and community quants; exact current Qwen3.5 runtime required.",
+    "hardware": "Approximately 4.5 GB idealized 4-bit text weights before overhead.",
+    "cost_semantics": "No per-token charge for downloaded weights; compute, memory, storage and operations remain costs. Exact hosted price not verified.",
+    "license": "Apache-2.0 card.",
+    "sentiment": {
+      "summary": "No substantial independent report on this exact release found in the reviewed sources.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable exact-release output found in the inspected material; inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Card largely reproduces base documentation.",
+      "Sparse public evidence limits confidence despite useful size range."
+    ],
+    "related_variants": [
+      {
+        "model_id": "ArliAI/Qwen3.5-27B-RpRMax-v1",
+        "url": "https://huggingface.co/ArliAI/Qwen3.5-27B-RpRMax-v1",
+        "note": "Profile update Apr 28; inspected repository lacks a substantive card, so licensing/performance evidence is incomplete."
+      },
+      {
+        "model_id": "ArliAI/Qwen3.5-4B-RpRMax-v1",
+        "url": "https://huggingface.co/ArliAI/Qwen3.5-4B-RpRMax-v1",
+        "note": "Author profile lists a smaller size; not separately verified or counted."
+      }
+    ],
+    "id": "RP25",
+    "url": "https://huggingface.co/ArliAI/Qwen3.5-9B-RpRMax-v1",
+    "sources": [
+      "https://huggingface.co/ArliAI/Qwen3.5-9B-RpRMax-v1",
+      "https://huggingface.co/ArliAI/Qwen3.5-27B-RpRMax-v1",
+      "https://huggingface.co/ArliAI"
+    ],
+    "model_id": "ArliAI/Qwen3.5-9B-RpRMax-v1",
+    "name": "Arli Qwen3.5 9B RpRMax v1",
+    "parameters": {
+      "total_b": 9,
+      "active_b": 9,
+      "architecture": "dense hybrid Qwen3.5; about 10B including auxiliary components"
+    },
+    "source_ids": [
+      "RPS053",
+      "RPS054",
+      "RPS051"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "large-hardware watchlist",
+    "priority": "P2",
+    "release_evidence": "Derivative is of the October 17, 2026 base refresh, verified available October 23; exact derivative release date not pinned.",
+    "context": "Publisher lists 1M; exact derivative full-context character continuity unverified.",
+    "modalities": "Publisher claims retained text, vision/video, tools and reasoning tiers.",
+    "decision_fit": "Publisher compares official-API base MMLU 87.63% with derivative 83.77% on 1,140 questions. This cautions against unqualified capability-preservation claims; serving/quantization differences also confound causal attribution.",
+    "cost_semantics": "Downloadable weights have no per-token charge; hardware and operations are costs. Hosted exact-model price not verified.",
+    "sentiment": {
+      "summary": "October 2026 firsthand report praises snappier, character-centered reasoning and fewer tropes for a local abliterated 1017 copy. Exact checkpoint was not identified as dealignai, so treat as related-variant evidence only.",
+      "provenance": "original local-user report; exact variant uncertain",
+      "date": "Retrieved 2026-10-23; thread is October 2026, exact calendar day not exposed in open view",
+      "urls": [
+        "https://www.reddit.com/r/SillyTavernAI/comments/1xaomu2/deepseek_v41_flash_1017_surprisingly_good/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found. Inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Huge model/Engram footprint and specialist quantization make operational risk materially higher.",
+      "Alternate low-bit conversions may change refusal behavior; aliases pointing to the same weights are not extra models."
+    ],
+    "related_variants": [],
+    "id": "RP26",
+    "url": "https://huggingface.co/dealignai/DeepSeek-V4.1-Flash-1017-UNCENSORED-FP8",
+    "sources": [
+      "https://huggingface.co/dealignai/DeepSeek-V4.1-Flash-1017-UNCENSORED-FP8",
+      "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "https://www.reddit.com/r/SillyTavernAI/comments/1xaomu2/deepseek_v41_flash_1017_surprisingly_good/",
+      "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/raw/main/README.md"
+    ],
+    "model_id": "dealignai/DeepSeek-V4.1-Flash-1017-UNCENSORED-FP8",
+    "name": "DeepSeek V4.1 Flash 1017 Uncensored FP8",
+    "parameters": {
+      "total_b": null,
+      "active_b": null,
+      "backbone_b": 552,
+      "engram_b": 196,
+      "active_prefill_b": 8,
+      "active_decode_b": 16,
+      "architecture": "Official V4.1 family: 552B backbone +196B Engram, plus vision/projector; 8B active during prefill and 16B during decode. Exact 1017 derivative grand total not independently established; HF sidebar totals should not be treated as ordinary dense counts."
+    },
+    "content_freedom": {
+      "grade": "B: publisher benchmark",
+      "summary": "Publisher reports 320/320 compliance on HarmBench at max reasoning with its classifier. Some traces are graded before final answer if the budget expires; not a guarantee for other prompts."
+    },
+    "character_fit": "Very current permissive frontier-family candidate for complex multi-character worlds if hardware budget supports it.",
+    "deployment": "Native mixed FP8/FP4 assets and special DeepSeek encoding/runtime. Ordinary Jinja chat templates are not a substitute for the documented engine path.",
+    "hardware": "Publisher reports 4×H200 (564 GB GPU memory) and an approximately 203 GB Engram table host-memory/offload route. Deployment is specialized; not a commodity 24 GB model.",
+    "license": "MIT card.",
+    "source_ids": [
+      "RPS055",
+      "RPS056",
+      "RPS057",
+      "RPS089"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "large-hardware candidate",
+    "priority": "P2",
+    "release_evidence": "Card documents corrected files on 2026-08-29; correction date is not necessarily launch.",
+    "context": "Publisher lists 1M; no exact NPC long-context evaluation.",
+    "modalities": "Publisher claims retained vision and MTP alongside text.",
+    "decision_fit": "Base capabilities and retained-tool claims are plausible leads, not proof that ablation preserves structured decisions.",
+    "cost_semantics": "Downloadable weights have no per-token charge; hardware and operations are costs. Hosted exact-model price not verified.",
+    "sentiment": {
+      "summary": "No substantive independent exact-checkpoint report found in reviewed sources.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found. Inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Refusal behavior depends on reasoning mode; do not use a single universal refusal percentage.",
+      "NVFP4 runtime/hardware support is a concrete deployment dependency.",
+      "Publisher warns that the default deepest reasoning can consume a small output budget and leave empty final content; this is budget exhaustion, not demonstrated refusal. Exact parser and template settings matter."
+    ],
+    "related_variants": [],
+    "id": "RP27",
+    "url": "https://huggingface.co/dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+    "sources": [
+      "https://huggingface.co/dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "https://huggingface.co/dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4/raw/main/README.md"
+    ],
+    "model_id": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+    "name": "GLM 5.3 Flash Uncensored NVFP4",
+    "parameters": {
+      "total_b": 320,
+      "active_b": 18,
+      "architecture": "hybrid MoE with linear/sparse attention"
+    },
+    "content_freedom": {
+      "grade": "B: publisher benchmark",
+      "summary": "Publisher HarmBench 320 refusal figures vary by reasoning setting: 0% off/max, about 4% high and 9% low. No independent reproduction or game-scene evaluation."
+    },
+    "character_fit": "Current large permissive generalist alternative for complex NPC reasoning and narrative.",
+    "deployment": "NVFP4 experts plus BF16 nonexpert tensors; weight edit, distinct from runtime-hook uncensoring.",
+    "hardware": "320B implies at least 160 GB idealized 4-bit weight storage before higher-precision components, KV cache and runtime. Exact validated hardware minimum not established here.",
+    "license": "MIT card.",
+    "source_ids": [
+      "RPS058",
+      "RPS090"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "runtime-specific watchlist",
+    "priority": "P3",
+    "release_evidence": "Available at retrieval; exact release date not established from the inspected sources.",
+    "context": "Parent ceiling not a validated capacity for the tested 128 GB configuration.",
+    "modalities": "Text; other modalities only when explicitly documented below.",
+    "decision_fit": "No exact action/JSON evaluation; runtime edits may change behavior independently of stored quantized weights.",
+    "cost_semantics": "Downloadable weights have no per-token charge; hardware and operations are costs. Hosted exact-model price not verified.",
+    "sentiment": {
+      "summary": "No substantive independent exact-checkpoint report found in reviewed sources.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found. Inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Counts separately from dealignai because the runtime transformation is behaviorally distinct; EXL3 bit-width files themselves are not counted as separate models.",
+      "Exact engine compatibility is essential."
+    ],
+    "related_variants": [],
+    "id": "RP28",
+    "url": "https://huggingface.co/yamz-labs/GLM-5.3-Flash-EXL3-Yamz-Uncensored",
+    "sources": [
+      "https://huggingface.co/yamz-labs/GLM-5.3-Flash-EXL3-Yamz-Uncensored"
+    ],
+    "model_id": "yamz-labs/GLM-5.3-Flash-EXL3-Yamz-Uncensored",
+    "name": "GLM 5.3 Flash EXL3 Yamz Uncensored",
+    "parameters": {
+      "total_b": 320,
+      "active_b": 18,
+      "architecture": "GLM 5.3 Flash MoE; HF packed-word sidebar count is misleading"
+    },
+    "content_freedom": {
+      "grade": "B: small publisher benchmark",
+      "summary": "Author reports 0/100 versus 81/100 refusals using 64-token regex screening. English-only short checks can miss soft refusals; not comparable to a broad multi-turn game evaluation."
+    },
+    "character_fit": "Interesting large-model local option on high unified-memory systems.",
+    "deployment": "EXL3 with runtime uncensor_spec hooks in 34 blocks; requires the matching Kyojin execution path. This is not simply a generic GGUF repack.",
+    "hardware": "Author tested only AMD Ryzen AI Max+395/Strix Halo 128 GB with Kyojin; other hardware explicitly untested.",
+    "license": "MIT card.",
+    "source_ids": [
+      "RPS059"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P2",
+    "release_evidence": "Available at retrieval; exact release date not established from the inspected sources.",
+    "context": "Exact derivative long-context validation not established.",
+    "modalities": "Text; other modalities only when explicitly documented below.",
+    "decision_fit": "Reasoning/MTP/coding claims require exact derivative validation; creativity-oriented modifications can trade off consistency.",
+    "cost_semantics": "Downloadable weights have no per-token charge; hardware and operations are costs. Hosted exact-model price not verified.",
+    "sentiment": {
+      "summary": "No substantive independent exact-checkpoint report found in reviewed sources.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found. Inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Large marketing-heavy card mixes base material and derivative assertions; evidence confidence is limited.",
+      "No clearly attributable exact-release sample output or independent review found in inspected material."
+    ],
+    "related_variants": [],
+    "id": "RP29",
+    "url": "https://huggingface.co/DavidAU/Qwen3.6-27B-Fable-Fusion-711-Uncensored-Heretic-NM-DAU-NEO-MAX-MTP-GGUF",
+    "sources": [
+      "https://huggingface.co/DavidAU/Qwen3.6-27B-Fable-Fusion-711-Uncensored-Heretic-NM-DAU-NEO-MAX-MTP-GGUF",
+      "https://huggingface.co/DavidAU/Qwen3.6-27B-Heretic-Uncensored-FINETUNE-NEO-CODE-Di-IMatrix-MAX-GGUF"
+    ],
+    "model_id": "DavidAU/Qwen3.6-27B-Fable-Fusion-711-Uncensored-Heretic-NM-DAU-NEO-MAX-MTP-GGUF",
+    "name": "Qwen3.6 27B Fable Fusion 711",
+    "parameters": {
+      "total_b": 27,
+      "active_b": 27,
+      "architecture": "dense hybrid Qwen3.6; creative/Heretic-derived merged variant"
+    },
+    "content_freedom": {
+      "grade": "C: publisher modification claim",
+      "summary": "Publisher presents it as uncensored creative/Heretic derivative; copied parent tables and recipe claims are not independent final-model measurements."
+    },
+    "character_fit": "Fiction and roleplay alternative with contemporary 27B foundation.",
+    "deployment": "GGUF; preserve exact filename/quantization and runtime. Prior NEO-CODE card explicitly links this successor.",
+    "hardware": "Approximately 13.5 GB idealized 4-bit text weights before overhead; exact variant filesize differs.",
+    "license": "Apache-2.0 card.",
+    "source_ids": [
+      "RPS060",
+      "RPS061"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "rights/adapter watchlist",
+    "priority": "P3",
+    "release_evidence": "Card explicitly dates release 2026-07-19.",
+    "context": "262,144 config; long fictional continuity not validated.",
+    "modalities": "Text; other modalities only when explicitly documented below.",
+    "decision_fit": "Text-only specialization not validated for tools, vision or reliable decisions.",
+    "cost_semantics": "Downloadable weights have no per-token charge; hardware and operations are costs. Hosted exact-model price not verified.",
+    "sentiment": {
+      "summary": "No substantive independent exact-checkpoint report found in reviewed sources.",
+      "provenance": "evidence gap",
+      "date": null,
+      "urls": []
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found. Inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Not a complete 35B model download.",
+      "No exact independent sentiment or example output found; lower priority despite recency."
+    ],
+    "related_variants": [],
+    "id": "RP30",
+    "url": "https://huggingface.co/Darksp33d/loreweaver-rp-v1",
+    "sources": [
+      "https://huggingface.co/Darksp33d/loreweaver-rp-v1"
+    ],
+    "model_id": "Darksp33d/loreweaver-rp-v1",
+    "name": "Loreweaver RP v1 LoRA",
+    "parameters": {
+      "total_b": 0.01376256,
+      "active_b": null,
+      "architecture": "PEFT LoRA adapter only; requires Qwen3.6-35B-A3B base (~35.95B)",
+      "count_scope": "adapter_only; full base required separately"
+    },
+    "content_freedom": {
+      "grade": "U: unknown",
+      "summary": "Narrative/RP intent alone does not establish permissive content behavior; no refusal measurements found."
+    },
+    "character_fit": "Character/narrator specialization experiment if adapter rights and efficacy are clarified.",
+    "deployment": "Approximately 55.1 MB adapter plus full licensed base; merge/PEFT path. Adapter filesize is not whole-model memory cost.",
+    "hardware": "The roughly 35.95B base dominates: about 18 GB of idealized 4-bit weights plus the adapter and runtime overhead; no measured fit.",
+    "license": "Adapter license not declared in inspected card. Parent Apache permission does not grant rights in the adapter; commercial readiness unresolved.",
+    "source_ids": [
+      "RPS062"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "hosted_roleplay_system",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "OpenRouter listing explicitly says released 2026-09-23.",
+    "context": "262K advertised by serving provider; no independent maximum-context character test.",
+    "modalities": "Text; other modalities only when explicitly documented below.",
+    "decision_fit": "Multiple specialized models are used internally; no public proof of deterministic action schema/consistency. Commercial provider markets general agent use separately.",
+    "cost_semantics": "OpenRouter snapshot: $3 input/$6 output per 1M, cache-read $0.75. Venice route: $3.75/$7.50 per 1M. Aion direct is prepaid token billing; exact direct-model rate not independently pinned.",
+    "sentiment": {
+      "summary": "September 24 small thread is mixed: lower refusal and acceptable basic RP, but concerns about long-chat personality depth and price. OpenRouter lists SillyTavern, JanitorAI and ISEKAI ZERO usage; application traffic is adoption evidence, not quality proof.",
+      "provenance": "original users plus provider usage telemetry",
+      "date": "2026-09-24; catalog retrieved 2026-10-23",
+      "urls": [
+        "https://www.reddit.com/r/SillyTavernAI/comments/1wovzj1/aion_35_thoughts/",
+        "https://openrouter.ai/aion-labs/aion-3.5"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found. Inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Hosted freedom, AUP permission and no-refusal checkpoint behavior are separate questions.",
+      "Exact internal components may change without a downloadable pinned artifact."
+    ],
+    "related_variants": [],
+    "id": "RP31",
+    "url": "https://openrouter.ai/aion-labs/aion-3.5",
+    "sources": [
+      "https://openrouter.ai/aion-labs/aion-3.5",
+      "https://www.aionlabs.ai/",
+      "https://www.aionlabs.ai/pricing/",
+      "https://www.aionlabs.ai/terms/",
+      "https://docs.venice.ai/models/text",
+      "https://docs.venice.ai/overview/pricing",
+      "https://www.reddit.com/r/SillyTavernAI/comments/1wovzj1/aion_35_thoughts/"
+    ],
+    "model_id": "aion-labs/aion-3.5",
+    "name": "Aion 3.5",
+    "parameters": {
+      "total_b": null,
+      "active_b": null,
+      "architecture": "proprietary multi-model collaborative system based on GLM; no disclosed exact parameter counts/checkpoints"
+    },
+    "content_freedom": {
+      "grade": "C + D: provider tag and firsthand reports",
+      "summary": "Venice labels it uncensored. September 24 users report less refusal than GLM 5.3, but evidence is anecdotal and provider terms still apply."
+    },
+    "character_fit": "Hosted narrative tension, conflict and roleplay system; useful large-model prose comparator without self-hosting.",
+    "deployment": "Aion API/OpenRouter/Venice; OpenAI-compatible streaming. No downloadable 3.5 checkpoint found; multi-model orchestration is opaque.",
+    "hardware": "Provider managed; local hardware irrelevant. Published live latency counters are time-varying, not a game SLA.",
+    "license": "API-only proprietary service. Aion terms effective 2026-10-17 permit commercial products and embedding service access, but no rights in model weights; AUP applies.",
+    "source_ids": [
+      "RPS063",
+      "RPS064",
+      "RPS065",
+      "RPS066",
+      "RPS009",
+      "RPS010",
+      "RPS067"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "hosted_roleplay_system",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "OpenRouter listing explicitly says released 2026-09-23.",
+    "context": "262K advertised.",
+    "modalities": "Text; other modalities only when explicitly documented below.",
+    "decision_fit": "No independent action/schema reliability evidence. Claims of lengthy chats do not establish invariant state or motives.",
+    "cost_semantics": "OpenRouter: $0.70 input/$1.40 output per 1M; cache-read $0.18. Venice: $0.875/$1.75 per 1M. Snapshot 2026-10-23; caching and prompt length materially change real session cost.",
+    "sentiment": {
+      "summary": "October 13 user describes sustained romantic/dark-fiction use and low refusal, with prompt/preset concerns. It is one uncontrolled positive account, not consensus; user's claimed per-response cost was not verified.",
+      "provenance": "original first-person user",
+      "date": "2026-10-13",
+      "urls": [
+        "https://www.reddit.com/r/SillyTavernAI/comments/1x4tit7/could_i_please_have_some_advice_on_preset_vs_model/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found. Inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Do not assume 3.0 Mini's DeepSeek lineage: current 3.5 Mini listing explicitly says GLM.",
+      "Published API model and exact provider must both be recorded."
+    ],
+    "related_variants": [],
+    "id": "RP32",
+    "url": "https://openrouter.ai/aion-labs/aion-3.5-mini",
+    "sources": [
+      "https://openrouter.ai/aion-labs/aion-3.5-mini",
+      "https://www.aionlabs.ai/terms/",
+      "https://www.aionlabs.ai/pricing/",
+      "https://docs.venice.ai/overview/pricing",
+      "https://docs.venice.ai/models/text",
+      "https://www.reddit.com/r/SillyTavernAI/comments/1x4tit7/could_i_please_have_some_advice_on_preset_vs_model/"
+    ],
+    "model_id": "aion-labs/aion-3.5-mini",
+    "name": "Aion 3.5 Mini",
+    "parameters": {
+      "total_b": null,
+      "active_b": null,
+      "architecture": "smaller proprietary multi-model GLM-family system; exact components undisclosed"
+    },
+    "content_freedom": {
+      "grade": "C + D: provider tag and user report",
+      "summary": "Venice uncensored tag and October 13 original user reports of dark-theme roleplay without resistance; not a representative refusal audit."
+    },
+    "character_fit": "Lower-cost hosted narrative/companion benchmark for sustained character sessions.",
+    "deployment": "Aion/OpenRouter/Venice API; no downloadable 3.5 Mini checkpoint found.",
+    "hardware": "Provider managed; no local sizing needed.",
+    "license": "Proprietary hosted system; same Aion commercial embedding permission and host AUP as 3.5. No weight-distribution rights.",
+    "source_ids": [
+      "RPS068",
+      "RPS066",
+      "RPS065",
+      "RPS010",
+      "RPS009",
+      "RPS069"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "Author model profile lists an update on 2026-08-21 (collection timestamp differs); exact launch not pinned. Independent exact-v2.1 deployment report dated October 14.",
+    "context": "Independent user reports 106,496 configured context; this is a personal setup, not proof of full-context fidelity.",
+    "modalities": "Text; other modalities only when explicitly documented below.",
+    "decision_fit": "Creator explicitly discourages thinking because creativity modifications hurt thinking coherence. Creative prose quality does not establish reliable action selection.",
+    "cost_semantics": "Downloadable weights have no per-token charge; hardware and operations are costs. Hosted exact-model price not verified.",
+    "sentiment": {
+      "summary": "October 14 original user reports a satisfactory fully local setup with SillyTavern/Marinara. Creator acknowledges rare misspellings/merged words and damaged thinking; recipe footer and introduction also disagree on base detail.",
+      "provenance": "exact-release firsthand use plus creator caveats",
+      "date": "2026-10-14; card retrieved 2026-10-23",
+      "urls": [
+        "https://www.reddit.com/r/SillyTavernAI/comments/1x670pt/my_fully_local_ai_setup_for_others_to_copy_and/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found. Inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "v2.1 fixes a failed v2.0 recipe; do not substitute v2.0.",
+      "Current card intro says stock Gemma 4 base while merge-details footer names an exotic base; actual merge config should resolve this before reproducibility claims."
+    ],
+    "related_variants": [],
+    "id": "RP33",
+    "url": "https://huggingface.co/sophosympatheia/Glistening-Gem-31B-v2.1",
+    "sources": [
+      "https://huggingface.co/sophosympatheia/Glistening-Gem-31B-v2.1",
+      "https://huggingface.co/sophosympatheia/Glistening-Gem-31B-v2.1?not-for-all-audiences=true",
+      "https://www.reddit.com/r/SillyTavernAI/comments/1x670pt/my_fully_local_ai_setup_for_others_to_copy_and/",
+      "https://huggingface.co/sophosympatheia/models"
+    ],
+    "model_id": "sophosympatheia/Glistening-Gem-31B-v2.1",
+    "name": "Glistening Gem 31B v2.1",
+    "parameters": {
+      "total_b": 31,
+      "active_b": 31,
+      "architecture": "dense Gemma 4 merge of Artemis, MeroMero v2 and Ortenzya-Heretic"
+    },
+    "content_freedom": {
+      "grade": "C: uncensored ingredient lineage",
+      "summary": "Includes Heretic-modified ingredient; no final refusal benchmark found."
+    },
+    "character_fit": "Strong inventory candidate for expressive creative prose and character voice.",
+    "deployment": "Safetensors/GGUF; card lists Featherless. SillyTavern preset import provided; no inference was run.",
+    "hardware": "October 14 user reports Q6_K with all layers on RTX 5090 and 64 GB system RAM via KoboldCpp. Anecdote, not guaranteed deployment sizing.",
+    "license": "Apache-2.0 card.",
+    "source_ids": [
+      "RPS070",
+      "RPS071",
+      "RPS072",
+      "RPS073"
+    ]
+  },
+  {
+    "as_of": "2026-10-23",
+    "category": "roleplay_llm",
+    "status": "candidate",
+    "priority": "P1",
+    "release_evidence": "Original creator announcement 2026-05-23.",
+    "context": "Exact derivative long-session ceiling not independently validated.",
+    "modalities": "Text; other modalities only when explicitly documented below.",
+    "decision_fit": "Publisher 7,021-question MMLU drops 82.01%→81.16%. This limited loss does not prove game-state invariants or character consistency.",
+    "cost_semantics": "Downloadable weights have no per-token charge; hardware and operations are costs. Hosted exact-model price not verified.",
+    "sentiment": {
+      "summary": "Creator announcement says it was released in response to requests for a faster/smaller alternative to dense 31B. No robust independent exact-derivative RP consensus found.",
+      "provenance": "original model creator",
+      "date": "2026-05-23",
+      "urls": [
+        "https://www.reddit.com/r/LocalLLaMA/comments/1tl1wpd/g4meromero26ba4bituncensoredheretic_is_out_now_a/"
+      ]
+    },
+    "published_outputs": {
+      "status": "not found",
+      "description": "No attributable published output from this exact release was found. Inference code is not an output sample.",
+      "url": null
+    },
+    "caveats": [
+      "Original MeroMero's personality/detail weaknesses cannot be presumed fixed by refusal ablation.",
+      "Publisher benchmarks are useful disclosures but not our evaluation."
+    ],
+    "related_variants": [
+      {
+        "model_id": "llmfan46/G4-MeroMero-31B-uncensored-heretic",
+        "url": "https://huggingface.co/llmfan46/G4-MeroMero-31B-uncensored-heretic",
+        "note": "Earlier dense 31B alternative announced May 16–17; publisher reports 15/100 refusals. It modifies earlier MeroMero, not automatically v2."
+      }
+    ],
+    "id": "RP34",
+    "url": "https://huggingface.co/llmfan46/G4-MeroMero-26B-A4B-it-uncensored-heretic",
+    "sources": [
+      "https://huggingface.co/llmfan46/G4-MeroMero-26B-A4B-it-uncensored-heretic",
+      "https://www.reddit.com/r/LocalLLaMA/comments/1tl1wpd/g4meromero26ba4bituncensoredheretic_is_out_now_a/",
+      "https://www.reddit.com/r/SillyTavernAI/comments/1tf68fx/g4meromero31buncensoredheretic_is_out_now_a/"
+    ],
+    "model_id": "llmfan46/G4-MeroMero-26B-A4B-it-uncensored-heretic",
+    "name": "MeroMero 26B-A4B Heretic",
+    "parameters": {
+      "total_b": 26,
+      "active_b": 4,
+      "architecture": "Gemma 4 MoE; Heretic 1.2.0 ARA modification of MeroMero"
+    },
+    "content_freedom": {
+      "grade": "B: publisher benchmark",
+      "summary": "Publisher reports 12/100 refusals versus 99/100 original, KL 0.0152; fewer refusals does not mean none."
+    },
+    "character_fit": "Small-active-compute permissive counterpart to the original MeroMero 26B for a useful controlled future comparison.",
+    "deployment": "Safetensors plus separately linked GGUF; preserve Gemma 4 chat/reasoning format.",
+    "hardware": "Approximately 13 GB idealized 4-bit total weights before overhead; 4B active affects compute, not complete memory footprint.",
+    "license": "Apache-2.0 card.",
+    "source_ids": [
+      "RPS074",
+      "RPS075",
+      "RPS076"
+    ]
+  }
+]
