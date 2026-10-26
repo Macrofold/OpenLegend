@@ -14,8 +14,8 @@
     ],
     "verified_on": "2026-10-23",
     "release_update_provenance": "Public checkpoints dated 2026-01-22; open-weight family remains distinct from newer hosted Qwen-Audio 3.1.",
-    "properties": "1.7B and 0.6B variants; 10 languages; 24 kHz output. Base clones reference voices; CustomVoice uses preset speakers plus delivery instructions; 1.7B VoiceDesign creates a voice from a description. Streaming support depends on serving implementation.",
-    "deployment": "Own Python runtime; vLLM-Omni serving; community GGUF/MLX ports. Separate Base, CustomVoice and VoiceDesign checkpoints, not interchangeable modes on every weight file.",
+    "properties": "1.7B and 0.6B variants; 10 languages; 24 kHz output. Base clones reference voices. Both CustomVoice sizes provide nine preset speakers; the publisher lists delivery-instruction control for 1.7B CustomVoice, not 0.6B. 1.7B VoiceDesign creates a voice from a description. Streaming support depends on serving implementation.",
+    "deployment": "Own Python runtime; vLLM-Omni serving; community GGUF/MLX ports. For a reusable original character voice, the publisher documents VoiceDesign generating a synthetic reference, then Base using a reusable clone prompt. Base, CustomVoice and VoiceDesign are separate checkpoints, not interchangeable modes on every weight file.",
     "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
     "license_and_commercial_terms": "Apache-2.0 weights and repository; reference voice and upstream audio rights remain separate.",
     "cost_semantics": "No per-character/token license fee advertised for self-hosting under the stated license; compute, memory, storage and engineering remain costs. Hosted-provider prices, if any, are separate.",
@@ -25,15 +25,23 @@
       "summary": "A developer comparing models on his own voice preferred Qwen3-TTS quality; Chatterbox was simpler but shifted his accent. This is one voice and setup, not a representative ranking.",
       "confidence": "anecdotal",
       "date": "2026-10-04",
-      "urls": ["https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine"]
+      "urls": [
+        "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine"
+      ]
     },
     "published_examples": {
       "url": "https://huggingface.co/spaces/Qwen/Qwen3-TTS",
       "description": "Official interactive voice cloning, design and preset-voice demonstration. No synthesis requested.",
       "inspection": "Linked demo identified; no audio generated or auditioned."
     },
-    "caveats": "Do not transfer hosted-model latency to a local deployment. Base clone quality depends on the reference and transcript; hardware/latency are implementation-specific.",
-    "evidence_source_ids": ["VOICE-S001", "VOICE-S002", "VOICE-S003", "VOICE-S004", "VOICE-S005"],
+    "caveats": "Design-then-Base is a documented continuity workflow, not proof of consistent acting or inheritance of CustomVoice instruction controls. Do not transfer hosted-model latency to local deployment. Base clone quality depends on the reference and transcript; hardware/latency are implementation-specific.",
+    "evidence_source_ids": [
+      "VOICE-S001",
+      "VOICE-S002",
+      "VOICE-S003",
+      "VOICE-S004",
+      "VOICE-S005"
+    ],
     "tested_by_us": false,
     "evidence_urls": [
       "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
@@ -41,7 +49,9 @@
       "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
       "https://docs.vllm.ai/projects/vllm-omni/en/latest/serving/speech_api/",
       "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine"
-    ]
+    ],
+    "reviewed_on": "2026-10-24",
+    "review_scope": "Size-specific instruction control and the documented VoiceDesign-to-Base reusable synthetic-reference workflow; no model execution."
   },
   {
     "id": "voice-drama3",
@@ -136,14 +146,17 @@
     "category": "Hosted TTS",
     "priority": "P2-hosted",
     "model_url": "https://fish.audio/blog/s2-1-pro-free-api/",
-    "model_ids": ["s2.1-pro", "s2.1-pro-free"],
+    "model_ids": [
+      "s2.1-pro",
+      "s2.1-pro-free"
+    ],
     "verified_on": "2026-10-23",
-    "release_update_provenance": "Free API announced 2026-06-23; current pricing still lists paid and free variants; Drama 3 is newer.",
+    "release_update_provenance": "Free API announced 2026-06-23; an October 24 recheck of the updated article records free access through November 30, 2026. This is the current extension, not the original June announcement deadline. Current pricing lists paid and free variants; Drama 3 is newer.",
     "properties": "83 languages; cloning and expressive character delivery; streaming API. Exact public parameter count not verified.",
     "deployment": "Fish cloud API; s2.1-pro and s2.1-pro-free are service choices, not verified public S2.1 weights.",
     "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
     "license_and_commercial_terms": "Hosted terms grant commercial use to Paid Services users; free API marketing/fair use does not clearly resolve commercial entitlement under the generic terms. Confirm the applicable free-service agreement before commercial use.",
-    "cost_semantics": "$15 per million UTF-8 bytes for s2.1-pro; s2.1-pro-free listed at $0 subject to fair use. Concurrency and service guarantees differ; do not budget unlimited production use from the free label.",
+    "cost_semantics": "$15 per million UTF-8 bytes for s2.1-pro; s2.1-pro-free listed at $0 subject to fair use. The updated article, rechecked October 24, says free access lasts through November 30, 2026. Free service has no SLA or latency guarantee; do not budget unlimited or ongoing production use from the free label.",
     "open_legend_use_cases": "Lower-cost hosted comparison for lively multilingual NPC voices and narration.",
     "content_and_refusal_evidence": "Cloud terms broadly restrict harmful, threatening, abusive and otherwise objectionable content. No explicit fiction exception or dark-fiction acceptance test was located; API behavior remains untested.",
     "sentiment": {
@@ -156,11 +169,15 @@
       "description": "Published narrator, character and customer-support voice demonstrations attributed to S2.1-Pro.",
       "inspection": "Demo descriptions read; audio not auditioned."
     },
-    "caveats": "Provider advertising says free unlimited usage under fair use; capacity and terms still constrain it. No dark-fiction acceptance result.",
-    "evidence_source_ids": ["VOICE-S013", "VOICE-S008", "VOICE-S014"],
+    "caveats": "Free requests may be retained for model improvement. The updated article directs products above $1M ARR to contact Fish before free-tier use; it does not resolve all commercial entitlement under generic terms. Capacity, fair use and the November 30 free-window expiry remain constraints. No dark-fiction acceptance result.",
+    "evidence_source_ids": [
+      "VOICE-S013",
+      "VOICE-S008",
+      "VOICE-S014"
+    ],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
-    "review_scope": "Hosted terms; commercial entitlement of free API remains unresolved.",
+    "review_scope": "Hosted terms and unresolved free-API commercial entitlement; October 24 targeted recheck of the updated free-window expiry, best-effort service and retention notices.",
     "evidence_urls": [
       "https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits",
       "https://fish.audio/blog/s2-1-pro-free-api/",
@@ -169,20 +186,24 @@
   },
   {
     "id": "voice-chatterbox",
-    "model": "Chatterbox Turbo / Multilingual",
+    "model": "Chatterbox Turbo / Nano / Multilingual V3",
     "category": "Self-hosted TTS",
     "priority": "P1",
     "model_url": "https://huggingface.co/ResembleAI/chatterbox-turbo",
-    "model_ids": ["ResembleAI/chatterbox-turbo", "ResembleAI/chatterbox"],
+    "model_ids": [
+      "ResembleAI/chatterbox-turbo",
+      "ResembleAI/chatterbox-nano",
+      "ResembleAI/chatterbox"
+    ],
     "verified_on": "2026-10-23",
-    "release_update_provenance": "Turbo already public by Dec 2025; current repository offers Turbo 350M, Multilingual 500M and original English 500M.",
-    "properties": "Turbo: 350M English, one-step distilled speech decoder, native laugh/cough/chuckle tags, cloning. Multilingual: 500M, 23+ languages. Original supports exaggeration/CFG controls; do not assume every knob exists on Turbo.",
-    "deployment": "Local Python/PyTorch; CPU/MLX/ONNX community routes have separate limitations; Resemble hosted service is separate.",
-    "hardware_evidence": "No minimum hardware verified; parameter count is not a VRAM requirement.",
-    "license_and_commercial_terms": "MIT repository and Turbo weights. Generated audio includes PerTh watermark; model license does not license a reference speaker.",
-    "cost_semantics": "No per-character/token license fee advertised for self-hosting under the stated license; compute, memory, storage and engineering remain costs. Hosted-provider prices, if any, are separate.",
-    "open_legend_use_cases": "Compact self-hosted character acting, barks, laughter and emotion-controlled voice comparisons.",
-    "content_and_refusal_evidence": "No refusal benchmark or mature-fiction acceptance test was found for this exact checkpoint. Self-hosting avoids an external provider's request filter; it does not prove unrestricted behavior or remove license conditions.",
+    "release_update_provenance": "Turbo already public by Dec 2025. Targeted October 24 publisher-page recheck identifies Nano 110M and Multilingual V3 alongside Turbo 350M and original English 500M; Nano/V3 release dates were not established in this check.",
+    "properties": "Turbo: 350M English with one-step speech decoder, laugh/cough/chuckle tags and cloning. Nano: 110M English, same architecture and tag support, CPU-oriented. Multilingual V3: 500M, 23+ languages; publisher claims improved identity and stability. Original English supports exaggeration/CFG controls; do not assume every knob exists on Turbo/Nano.",
+    "deployment": "Local Python/PyTorch. Nano uses ChatterboxTurboTTS with nano=True. Select Multilingual V3 with t3_model=\"v3\"; omitting it selects legacy V2 in the documented loader. CPU/MLX/ONNX community routes have separate limitations; Resemble hosted service is separate.",
+    "hardware_evidence": "Publisher claims Nano runs about 3x realtime on eight CPU cores; processor, concurrent capacity and comparable Open Legend timing are not established. This was not measured by us. No minimum hardware verified for the other variants.",
+    "license_and_commercial_terms": "MIT code repository; Turbo, Nano and multilingual model cards declare MIT. Generated audio includes PerTh watermark. These permissions do not license a reference speaker or establish every upstream audio right.",
+    "cost_semantics": "Self-hosted Turbo/Nano/Multilingual have no advertised per-character/token license fee under the stated MIT terms; compute, memory, storage and engineering still cost money. Nano CPU throughput is a publisher claim, not a cost-per-session measurement. Hosted service pricing is separate.",
+    "open_legend_use_cases": "Compact self-hosted character acting, barks and laughter; Nano is a smaller CPU candidate, while V3 offers a distinct multilingual continuity comparison.",
+    "content_and_refusal_evidence": "No refusal benchmark or mature-fiction acceptance test was found for these exact variants. The model cards caution against harmful use; that wording is not a measured rejection policy. Self-hosting avoids an external request filter but does not establish unrestricted behavior or license reference voices.",
     "sentiment": {
       "summary": "In HF discussion 18, the original ONNX reporter later attributed his issue to playback starvation and said it worked with enough audio buffered. Another user reported similar non-ONNX multilingual symptoms without a separate resolution. Pardel's October 4 own-voice comparison preferred Qwen3-TTS and found Chatterbox simpler but less faithful to his accent. These are separate, setup-specific anecdotes.",
       "confidence": "anecdotal, implementation-specific",
@@ -194,20 +215,33 @@
     },
     "published_examples": {
       "url": "https://resemble-ai.github.io/chatterbox_demopage/",
-      "description": "Publisher speech and expressiveness examples; verify the Turbo/Multilingual label when comparing samples.",
-      "inspection": "Linked samples identified; audio not auditioned."
+      "description": "Publisher Turbo and original/Multilingual examples; the Nano and Multilingual V3 cards link their own demos. Older samples are not automatically evidence for Nano or V3.",
+      "inspection": "Linked samples identified; audio not auditioned.",
+      "additional_urls": [
+        "https://huggingface.co/spaces/ResembleAI/chatterbox-nano-demo",
+        "https://huggingface.co/spaces/ResembleAI/Chatterbox-Multilingual-TTS-V3"
+      ]
     },
-    "caveats": "A hosted sub-200 ms claim is not a local runtime guarantee. The cited original streaming issue was resolved through playback buffering; the thread does not establish an intrinsic Turbo defect or resolve the separate multilingual report.",
-    "evidence_source_ids": ["VOICE-S015", "VOICE-S016", "VOICE-S017", "VOICE-S005"],
+    "caveats": "A hosted sub-200 ms claim is not a local guarantee. The original streaming reporter resolved playback starvation with buffering; another multilingual report had no separate resolution. Existing anecdotes concern older or unspecified variants, not a Nano/V3 evaluation. Variant selection and controls must be kept distinct.",
+    "evidence_source_ids": [
+      "VOICE-S015",
+      "VOICE-S016",
+      "VOICE-S017",
+      "VOICE-S005",
+      "VOICE-S174",
+      "VOICE-S175"
+    ],
     "tested_by_us": false,
     "evidence_urls": [
       "https://www.pardel.dev/2026/10/04/cloning-your-voice-on-your-own-machine",
       "https://huggingface.co/ResembleAI/chatterbox-turbo",
       "https://github.com/resemble-ai/chatterbox",
-      "https://huggingface.co/ResembleAI/chatterbox-turbo/discussions/18"
+      "https://huggingface.co/ResembleAI/chatterbox-turbo/discussions/18",
+      "https://huggingface.co/ResembleAI/chatterbox-nano",
+      "https://huggingface.co/ResembleAI/chatterbox"
     ],
     "reviewed_on": "2026-10-24",
-    "review_scope": "Narrow correction of HF discussion 18 follow-up and separation from the Pardel comparison."
+    "review_scope": "October 24 targeted variant/control refresh adding Nano and V3/V2 loader distinction; preserved prior HF discussion 18 correction. No audio execution or listening."
   },
   {
     "id": "voice-cosy3",
@@ -682,9 +716,9 @@
     "open_legend_use_cases": "Offline/low-cost NPC speech, short reactions and a practical character-voice fallback.",
     "content_and_refusal_evidence": "No dark-fiction refusal test found. HF gated-access notice prohibits harmful, abusive, harassing and hateful content and unauthorized voice cloning. Fictional scope is not explicitly clarified; self-hosting and CC-BY metadata alone do not establish unrestricted content terms.",
     "sentiment": {
-      "summary": "Builders use Pocket for coding-assistant spoken updates and phone/CPU speech. Reports range from strong practical praise to distorted voices and slower-than-realtime server setups; these anecdotes concern older 100M implementations, not October tiny models.",
+      "summary": "One developer uses 100M Pocket for short coding-assistant updates. A separate CPU/phone discussion reports varied speed and voice quality. In issue #174, extra post-EOS frames partly improved Spanish truncation; by June 6 the reporter liked English after preprocessing but deferred Spanish. A June 16 report describes German/French 24-layer issues and a partial EOS workaround. These reports do not qualify October tiny variants.",
       "confidence": "mixed first-person anecdotes",
-      "date": "2026, relative dates vary",
+      "date": "Reddit relative dates only; GitHub issue opened 2026-04-30, with inspected follow-ups through 2026-06-16.",
       "urls": [
         "https://www.reddit.com/r/LocalLLaMA/comments/1r3kzz2/how_is_the_quality_of_recent_tts/",
         "https://www.reddit.com/r/TextToSpeech/comments/1vvzdbi/anybody_tried_pocket_tts_on_gpu_if_yes_how_much/",
@@ -697,10 +731,16 @@
       "inspection": "Demo identified; not executed."
     },
     "caveats": "Quality and speed vary widely by CPU/runtime, reference voice and language; tiny variants too recent for mature sentiment.",
-    "evidence_source_ids": ["VOICE-S047", "VOICE-S048", "VOICE-S049", "VOICE-S050", "VOICE-S051"],
+    "evidence_source_ids": [
+      "VOICE-S047",
+      "VOICE-S048",
+      "VOICE-S049",
+      "VOICE-S050",
+      "VOICE-S051"
+    ],
     "tested_by_us": false,
     "reviewed_on": "2026-10-24",
-    "review_scope": "HF weight license metadata and gated-access use notices.",
+    "review_scope": "HF weight license and gated-access notices; source-specific community attribution and dated follow-ups, including English preprocessing improvement and remaining multilingual reports.",
     "evidence_urls": [
       "https://huggingface.co/kyutai/pocket-tts",
       "https://github.com/kyutai-labs/pocket-tts",

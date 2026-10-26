@@ -13,7 +13,12 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Released variants and inference support"]
+    "supports": [
+      "Released variants and inference support; instruction control is listed for 1.7B CustomVoice and VoiceDesign, not 0.6B CustomVoice or Base.",
+      "Documented VoiceDesign synthetic-reference creation followed by Base with a reusable clone prompt for multiple character lines; no inherited instruction-control or measured continuity claim."
+    ],
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Narrow variant/control and reusable original-voice workflow check."
   },
   {
     "source_id": "VOICE-S003",
@@ -113,7 +118,13 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Fish Audio S2.1-Pro API: identity and published capabilities"]
+    "supports": [
+      "Fish Audio S2.1-Pro API identity and published capabilities.",
+      "Updated article rechecked October 24 states free access through November 30, 2026; this is a later extension rather than the original June 23 deadline.",
+      "Free-tier fair use, no SLA or latency guarantee, possible model-improvement retention and commercial restrictions; products above $1M ARR are asked to contact Fish."
+    ],
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Targeted recheck of the currently displayed free-window extension and associated limitations; extension publication date not established."
   },
   {
     "source_id": "VOICE-S014",
@@ -134,7 +145,11 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Chatterbox Turbo / Multilingual: identity and published capabilities"]
+    "supports": [
+      "Chatterbox Turbo identity and published capabilities; not evidence for every other family variant."
+    ],
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Attribution wording narrowed to the Turbo card; variant refresh uses the repository and added cards."
   },
   {
     "source_id": "VOICE-S016",
@@ -142,7 +157,12 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Model zoo, MIT license and watermark"]
+    "supports": [
+      "Current family model table: Turbo 350M, Nano 110M, Multilingual V3 500M and original English 500M; MIT code and watermark.",
+      "Nano loader selection and publisher CPU claim; explicit V3 selection versus legacy V2 when the documented multilingual selector is omitted."
+    ],
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Targeted family/loader refresh; Nano and V3 release dates not established."
   },
   {
     "source_id": "VOICE-S017",
@@ -415,32 +435,41 @@
     "source_id": "VOICE-S049",
     "url": "https://www.reddit.com/r/LocalLLaMA/comments/1r3kzz2/how_is_the_quality_of_recent_tts/",
     "source_type": "community_first_person",
-    "source_date": "2026, relative dates vary",
+    "source_date": null,
     "accessed_on": "2026-10-23",
     "supports": [
-      "Builders use Pocket for coding-assistant spoken updates and phone/CPU speech. Reports range from strong practical praise to distorted voices and slower-than-realtime server setups; these anecdotes concern older 100M implementations, not October tiny models.",
+      "One developer praises the English 100M Pocket model and uses it for short Claude Code spoken updates; a different commenter prefers Kokoro because of language coverage. This discussion does not establish the later multilingual or October tiny variants.",
       "In a community comparison some users continue to prefer Kokoro for practical multilingual output while others favor newer models. This reflects usability/coverage preferences, not a controlled quality ranking."
-    ]
+    ],
+    "date_evidence": "Reddit displays relative dates (8mo/7mo ago); exact publication dates not established in this recheck.",
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Source-specific attribution, displayed dates and relevant follow-up outcomes."
   },
   {
     "source_id": "VOICE-S050",
     "url": "https://www.reddit.com/r/TextToSpeech/comments/1vvzdbi/anybody_tried_pocket_tts_on_gpu_if_yes_how_much/",
     "source_type": "community_first_person",
-    "source_date": "2026, relative dates vary",
+    "source_date": null,
     "accessed_on": "2026-10-23",
     "supports": [
-      "Builders use Pocket for coding-assistant spoken updates and phone/CPU speech. Reports range from strong practical praise to distorted voices and slower-than-realtime server setups; these anecdotes concern older 100M implementations, not October tiny models."
-    ]
+      "Original poster reports slow CPU-server generation; another user compares Pocket and Qwen on an S24 Ultra and reports better Pocket speed but less clean voices. CPU/GPU comments diverge; setups and variants are not controlled. No coding-assistant use case is established by this thread."
+    ],
+    "date_evidence": "Reddit displays relative dates (2mo ago); exact publication dates not established in this recheck.",
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Source-specific attribution, displayed dates and relevant follow-up outcomes."
   },
   {
     "source_id": "VOICE-S051",
     "url": "https://github.com/kyutai-labs/pocket-tts/issues/174",
     "source_type": "community_first_person",
-    "source_date": "2026, relative dates vary",
+    "source_date": "2026-04-30; follow-ups through 2026-06-16",
     "accessed_on": "2026-10-23",
     "supports": [
-      "Builders use Pocket for coding-assistant spoken updates and phone/CPU speech. Reports range from strong practical praise to distorted voices and slower-than-realtime server setups; these anecdotes concern older 100M implementations, not October tiny models."
-    ]
+      "April 30 Spanish truncation/pronunciation report; May follow-ups describe partial improvement with post-EOS frames. June 6 reporter says English works well after preprocessing and defers Spanish. June 16 another user reports German/French 24-layer failures: an EOS-threshold workaround fixes silence, not onset mangling. These are setup/version-specific anecdotes, not October tiny-model evidence."
+    ],
+    "date_evidence": "Issue body and comments show explicit calendar dates; June 6 original-reporter follow-up and June 16 separate report inspected.",
+    "last_reviewed_on": "2026-10-24",
+    "review_scope": "Source-specific attribution, displayed dates and relevant follow-up outcomes."
   },
   {
     "source_id": "VOICE-S052",
@@ -1500,6 +1529,28 @@
     "accessed_on": "2026-10-24",
     "supports": [
       "General API filter configuration is separate from use policy; exact Live configuration must not be assumed"
+    ]
+  },
+  {
+    "source_id": "VOICE-S174",
+    "url": "https://huggingface.co/ResembleAI/chatterbox-nano",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-24",
+    "supports": [
+      "Nano exact checkpoint: 110M English, Turbo architecture, native paralinguistic tags, MIT model-card metadata and linked official demo.",
+      "Publisher claims roughly 3x realtime on eight CPU cores; no Open Legend measurement or concurrency guarantee."
+    ]
+  },
+  {
+    "source_id": "VOICE-S175",
+    "url": "https://huggingface.co/ResembleAI/chatterbox",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-24",
+    "supports": [
+      "Current Multilingual V3 card: 500M, 23+ languages, MIT metadata and linked V3 demo; quality improvements are publisher claims.",
+      "V3 requires t3_model=\"v3\" in the documented loader; omission selects legacy V2. Dedicated language packs are separate linked variants."
     ]
   }
 ]
