@@ -4,23 +4,27 @@ Use this procedure when the requested finish is **production**, or when **integr
 requires new or changed assets. Read the common steps and only the matching asset recipes.
 A study alone still stops at the [study boundary](README.md#request-and-stopping-point).
 
-The result is an editable, reproducible package with usable exports for a named consumer.
-These instructions do not establish that every representation has a working importer in
-OpenLegend. Confirm the current consumer before promising game-ready files; distinguish
-a package prepared for a proposed consumer from one verified for an existing consumer.
-Installing assets, changing game code and qualifying the running game remain integration.
+The result is a usable package for a named consumer, with retained sources and a repeatable
+export route where finishing is needed. Confirm current importer support before promising
+game-ready files; label a package for a proposed consumer accordingly. Installing assets,
+changing game code and qualifying the running game remain integration.
+
+Reuse compatible assets without reconstructing unavailable upstream authoring projects.
+Retain available original inputs and working sources for delivered assets. Require particular
+editable masters only when the agreed deliverable or revision depends on them. Record editing
+limits. A generated image may itself be the source; a prompt is not a substitute for its bytes.
 
 ## 1. Define the package before finishing
 
-Start from the selected candidate and exact retained source revision. Reuse accepted
-direction and existing usable parts. In the [owning study record](study-record.md), list
+Start from the task brief and any selected source revisions. Reuse established direction
+and usable parts. In the [owning study record](study-record.md), list
 the requested assets and their required parts, views, states, clips or variants. Mark which
 already exist, need finishing, or are blocked. A focused revision updates its affected
 exports and dependencies; it does not recreate an unrelated family.
 
-Identify the actual consuming component, renderer/importer, rig or audio system and its
-current contract. Read the relevant [production chapter](../README.md) and technical owner.
-Resolve these fields before producing dependent exports; omit fields that do not apply:
+Identify the consuming component, renderer/importer, rig or audio system and its current
+contract. Read the relevant [production chapter](../README.md) and technical owner. Reference
+settled requirements instead of copying them. Resolve only missing applicable fields:
 
 | Contract | Record for this package |
 | --- | --- |
@@ -74,8 +78,10 @@ variants are needed only when requested or necessary to resolve a real design qu
 
 ## 3. Finish the relevant asset types
 
-Use every applicable recipe for a mixed package, in dependency order: geometry before
-skinning, compatible rigs before clip export, and final textures before dependent assemblies.
+Use the applicable recipes and skip steps already satisfied by the selected asset.
+Finalize changed geometry, rigs, textures and other inputs before qualifying their dependent
+final exports. Preliminary assembly,
+lighting and motion previews may proceed with clearly identified unfinished inputs.
 Independent pieces can proceed in parallel under the [shared coordination rules](README.md#2-prepare-access-and-the-working-location).
 
 | Deliverable | Finishing recipe |
@@ -109,7 +115,7 @@ Independent pieces can proceed in parallel under the [shared coordination rules]
    and stroke scale across the family.
 4. **Export real pieces.** Deliver each required reusable part or supported frame sheet with
    its assembly metadata, actual alpha where needed and the selected density variants.
-   Retain editable sources and composition specifications; a labeled sheet of examples is
+   Retain the sources used and composition specifications; a labeled sheet of examples is
    a preview, not the individual exports.
 5. **Assemble and inspect.** Use the existing component specimen or a disposable preview
    reading the final exports and declared measurements. Check minimum, wide and tall sizes
@@ -126,7 +132,7 @@ Independent pieces can proceed in parallel under the [shared coordination rules]
 2. Separate requested items into usable files. Clean edges and unwanted backgrounds,
    reconstruct missing content only where needed, and preserve intended transparency.
    Normalize family scale and framing without erasing distinguishing features.
-3. Export at the declared dimensions and supported formats from retained editable masters.
+3. Export at the declared dimensions and supported formats from the retained working source.
    Produce only required crops, states and density variants; retain layered compositions
    when layers are needed for later editing.
 4. Inspect the exported files at normal and smallest intended sizes and against their
@@ -144,7 +150,7 @@ Independent pieces can proceed in parallel under the [shared coordination rules]
    markers. Test contact and start/end poses before packing.
 4. Export individual frames or the consumer's supported atlas. For an atlas, record frame
    rectangles, padding/extrusion, original sizes, trim offsets and pivots; check filtering
-   and mip behavior where used. Retain editable/unpacked sources.
+   and mip behavior where used. Keep authored frame sources and supplied unpacked originals.
 5. Play the exact delivered sequence at normal speed and inspect frame stepping, loop seams,
    direction changes and required transitions. Deliver animation metadata with the images;
    a contact sheet or preview video does not replace either.
@@ -178,7 +184,7 @@ for the source and its native object relationship.
    settings; bake unsupported authoring features only when the result meets the contract.
 4. Reimport the final model and its dependencies. Check scale beside a known reference,
    materials, openings, pivots and attachments, and inspect actual geometry/material counts
-   against relevant budgets. Deliver the editable model, textures, exports and assembly data.
+   against relevant budgets. Deliver the sources used, textures, exports and assembly data.
 
 ### 3D characters and creatures
 
@@ -208,8 +214,8 @@ and the selected body's compatibility owner.
    then repair foot sliding, hand/grip contact, joint limits and unintended root drift.
 3. Review required loops, transitions, interruption/recovery poses and attachments. Include
    presentation markers only as supported metadata tied to existing action semantics.
-4. Bake/export supported channels with the required sampling and compression. Retain editable
-   motion and any retarget/bake settings needed to reproduce it.
+4. Bake/export supported channels with the required sampling and compression. Retain the
+   source motion and any retarget/bake settings needed to reproduce the export.
 5. Load the exported clips on the exported rig and check normal-speed motion plus critical
    contact frames, seams and transitions. Record clip coverage and dependencies. Generated
    video may be motion reference; it is not a substitute for playable rig data. Integration
@@ -283,7 +289,7 @@ and the selected body's compatibility owner.
    a sound's presence does not grant hearing evidence or implement an optional speech system.
 
 For an unlisted asset type, use the [custom profile](profiles.md#custom): define its actual
-consumer, editable source, conversion steps, required exports and inspection conditions.
+consumer, source/editability needs, conversion steps, required exports and inspection conditions.
 Reuse the nearest recipes and add only the missing type-specific requirements.
 
 ## 4. Validate the exported package
@@ -309,18 +315,19 @@ check stays unverified; do not label its dependent deliverable production-ready.
 ## 5. Package, preserve and hand off
 
 Use the existing asset catalog/manifest and storage workflow; the study record links those
-records rather than creating a competing schema. Separate editable sources, consumer exports
+records rather than creating a competing schema. Separate retained sources, consumer exports
 and inspection material in the external workspace so a delivery package includes only its
 needed files. Use the existing layout where one is established.
 
 A complete package contains, as applicable:
 
-- **Editable sources:** the actual source artwork/scenes/rigs/graphs/audio and their required
-  licensed inputs; truthful labels for originals versus reconstructed sources.
+- **Sources:** available original inputs, working sources for delivered assets and required
+  licensed dependencies; label reconstructed sources and unavailable upstream files.
 - **Consumer exports:** every requested member with its exact dependencies and required
   assembly/playback metadata. No missing texture, font, rig or clip is hidden behind a preview.
-- **Reproduction instructions:** source-to-export mapping, relevant tool versions, saved
-  settings/presets, and the commands or authoring steps needed to rebuild the delivered files.
+- **Export instructions:** retained input-to-export mapping and, for transformations performed,
+  relevant tool versions, settings/presets and commands or authoring steps. Reusing an unchanged
+  asset requires its exact source reference, not a new recipe or identical regeneration.
 - **Inventory and provenance:** logical asset/part IDs mapped to exact exports, dimensions or
   units, compatibility data, source revisions, rights/attribution and current completion state.
   Use current manifest fields for hashes, byte lengths, media types and dependencies.
@@ -335,7 +342,7 @@ runtime selection retain their separate permissions.
 
 Report readiness precisely: **exported**, **technically checked for the named consumer**,
 **archived**, **selected**, and **integrated** are separate facts. Production is complete
-when requested exports, editable/reproducible sources, applicable checks and preservation
+when requested exports, agreed source/editability requirements, applicable checks and preservation
 are complete, with any later integration work explicitly identified. A partial package may
 be preserved and handed off as partial; recording its gaps does not complete it.
 

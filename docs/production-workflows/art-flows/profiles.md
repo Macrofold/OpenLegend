@@ -6,8 +6,9 @@ result useful; they do not prescribe one model or repeat the tool routes. Scale 
 coverage to the requested scope: a broad study may need the whole relevant family, while
 a focused revision delivers only the requested pieces and checks affected dependents.
 Preserve accepted unrelated work instead of rebuilding a full kit for a single texture edit.
-For production, execute the common [package procedure](production.md) and the matching
-finishing recipes linked below; these profiles retain the brief and visual acceptance criteria.
+These profiles own the brief and visual coverage. Production reuses any selected inputs and
+follows the common [package procedure](production.md) plus the matching recipes below; it
+does not require a new contender study.
 
 ## Profile map
 
@@ -52,14 +53,8 @@ content or imply relationships that the game does not have.
 outputs. A rendering can propose tiling, alpha or nine-slice construction (fixed corners with
 resizable edges and fill), but does not prove those properties.
 
-**Production additions:** follow the [UI artwork recipe](production.md#ui-artwork) for decomposition,
-source cleanup, assembly measurements, export and resize inspection. Deliver real separate
-files for required fills/edges/corners/ornaments;
-actual alpha; seamless repetition where needed; consistent texture scale; corner and
-join behavior at varied dimensions; meaningful safe-content insets and export sizes.
-Verify transparent pixels rather than a painted checkerboard. Keep text, counters and live
-controls separate. Record the exact source/export relationship and concrete remaining gaps.
-Do not produce dozens of every possible control unless requested.
+**Production additions:** execute the [UI artwork recipe](production.md#ui-artwork) for the
+requested pieces, assembly measurements and export/resize checks.
 
 **Integration additions:** map the selected kit to existing tokens and semantic components,
 keep decorative layers out of hit testing where appropriate, and exercise real content,
@@ -87,13 +82,9 @@ Establish actual identity/use, silhouette, view angle, lighting, padding and tar
 size. For a family, create an anchor and show enough varied members to test its common rules.
 Keep recognized distinguishing features at the smallest intended size.
 
-A study can use a concept sheet and family comparisons. Production follows the
+A study can use a concept sheet and family comparisons. For production, use the
 [static 2D](production.md#static-2d-artwork), [sprite](production.md#sprites-and-frame-animation)
-or [rigid 3D](production.md#rigid-3d-assets) recipe and requires individual usable files and
-actual export checks. For icons/sprites, inspect alpha, edges, padding,
-consistent dimensions and small-size recognition. For 3D output, use the existing
-[rigid/articulated pipeline](../assets-and-animation.md) for scale, geometry, materials,
-attachments and exports; a rendered turntable is not the model source.
+or [rigid 3D](production.md#rigid-3d-assets) recipe for the actual representation.
 Native object behavior and equipment compatibility come from their existing world owners.
 
 ## Character appearance
@@ -110,8 +101,6 @@ one portrait. Do not change backstory, personality or supported behavior to expl
 Production branches by the actual consumer: [portrait](production.md#static-2d-artwork) or
 [sprite family](production.md#sprites-and-frame-animation), [2D rig](production.md#2d-rigs),
 or [3D character](production.md#3d-characters-and-creatures). Follow that finishing recipe.
-A model-and-animation request continues through editable geometry, required rig/weights,
-motion and export checks in [assets and animation](../assets-and-animation.md).
 Generated views may disagree; identify the accepted construction instead of pretending
 all of them form an internally consistent modeling sheet.
 
@@ -126,11 +115,8 @@ readable value groups and the requested atmosphere. Compare relevant views and l
 conditions. A promotional still does not establish moving-camera stability.
 
 Production requests follow the [material](production.md#materials-and-textures) or
-[environment/scene](production.md#environment-and-scene-packages) finishing recipe and preserve
-editable graphs or scenes, parameters, actual texture maps, units and export settings.
-Use [scene/material/lighting production](../scenes-and-interfaces.md)
-for the exact requested stage. Do not reconstruct geometry or build an engine for a lighting
-concept study.
+[environment/scene](production.md#environment-and-scene-packages) finishing recipe.
+A lighting concept study does not require reconstructing geometry or building an engine.
 
 ## Motion and feedback
 
@@ -140,11 +126,8 @@ labeled accurately. Review timing, readability, continuity and restraint.
 
 Production follows the [animation](production.md#animation-clips),
 [sprite](production.md#sprites-and-frame-animation), [VFX](production.md#visual-effects)
-or [audio](production.md#audio) finishing recipe. Deliver the requested artifact: actual
-rig clips and required bones/events, a playable sprite sequence, a reusable VFX setup, or audio with the needed format/loop/
-variation. A generated movie does not provide skeleton animation, attachment correctness
-or an interruptible in-game action. Use [animation](../assets-and-animation.md) or
-[audio and feedback](../audio-and-feedback.md) for production and integration.
+or [audio](production.md#audio) finishing recipe. Integration follows
+[animation](../assets-and-animation.md) or [audio and feedback](../audio-and-feedback.md).
 
 ## UI system
 
