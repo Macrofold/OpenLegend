@@ -1,15 +1,21 @@
 import { expect, it } from 'vitest';
 import { freeze } from 'immer';
 import { createWorld, NPC_ID, PLAYER_ID } from './data.js';
-import { entityGet } from './entity-collection.js';
-import { initializePerception, executeCommand } from './kernel.js';
+import { entityGet, entitySet } from './entity-collection.js';
+import { initializePerception, executeCommand, advanceWorld } from './kernel.js';
 import { setSpatialPosition, worldSupport } from './spatial-state.js';
-import { setAttentionFocus } from './attention.js';
+import {
+  setAttentionFocus,
+  captureAttentionPresentation,
+  acknowledgeAttention,
+  currentDetailedAttention,
+} from './attention.js';
 import {
   currentBodyObservation,
   currentObservedFacets,
   captureEvidenceCut,
   validatePerceptionEvidenceState,
+  validateObservationContribution,
 } from './perception-evidence.js';
 import { invalidateExperience } from './experience.js';
 import { validateTemporalEvidenceState } from './temporal-validation.js';
@@ -288,6 +294,150 @@ it('retains received speech independently of optional detailed attention and rev
   });
   expect(after.entries.some(({ receipt }) => receipt.sourceIds.includes(event.id))).toBe(false);
   expect(after.entries.some(({ receipt }) => !receipt.sourceIds.includes(event.id))).toBe(true);
+});
+
+it('records an actually attended target even when its visible performer is unattended', () => {
+  const world = scene(53);
+  const player = entityGet(world.entities, PLAYER_ID)!;
+  player.actor!.attentionCapacity = 3;
+  const branches = entityGet(world.entities, 'branches')!;
+  setSpatialPosition(world, branches, { x: 4, y: 0, z: 2 }, 'terrain');
+  const preferred = [branches.id];
+  for (const [id, z] of [
+    ['context-marker-a', 1],
+    ['context-marker-b', 3],
+  ] as const) {
+    const marker = structuredClone(branches);
+    marker.id = id;
+    marker.kind = 'landmark';
+    delete marker.resource;
+    entitySet(world.entities, id, marker);
+    setSpatialPosition(world, marker, { x: 2, y: 0, z }, 'terrain');
+    preferred.push(id);
+  }
+  initializePerception(world, []);
+  const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
+  acknowledgeAttention(
+    world,
+    PLAYER_ID,
+    captureAttentionPresentation(world, PLAYER_ID, Object.keys(attention.candidates)),
+  );
+  const keys = preferred.map(
+    (id) => Object.entries(attention.candidates).find(([, value]) => value.sourceId === id)![0],
+  );
+  expect(setAttentionFocus(world, PLAYER_ID, keys)).toBe(true);
+  world.simTime = 10;
+  for (const id of preferred.slice(1))
+    entityGet(world.entities, id)!.description = 'A newly changed visible marker.';
+  initializePerception(world, []);
+  expect(
+    currentDetailedAttention(world, PLAYER_ID).some((entry) => entry.sourceId === branches.id),
+  ).toBe(true);
+  expect(
+    currentDetailedAttention(world, PLAYER_ID).some((entry) => entry.sourceId === NPC_ID),
+    JSON.stringify(currentDetailedAttention(world, PLAYER_ID).map(entry => ({ source: entry.sourceId, basis: entry.basis, score: attention.candidates[entry.key]?.score, urgency: attention.candidates[entry.key]?.urgency }))),
+  ).toBe(false);
+  const exposure = currentBodyObservation(world, PLAYER_ID, branches.id)!.exposure.episodeId;
+  const started = executeCommand(world, {
+    id: 'attended-target-gather',
+    actorId: NPC_ID,
+    type: 'gather',
+    targetId: branches.id,
+  });
+  expect(started.outcome.ok, started.outcome.message).toBe(true);
+  const result = advanceWorld(started.world, branches.resource!.workSeconds + 1);
+  const event = result.events.find(
+    (event) => event.type === 'gathered' && event.actorId === NPC_ID,
+  )!;
+  expect(event.data).toMatchObject({ definitionId: 'wood', quantity: 2 });
+  const selected = selectTemporalHistory(result.world.experience!.temporal, PLAYER_ID, {
+    subjects: [exposure],
+    bytes: 1024 * 1024,
+    limit: 1000,
+  });
+  const received = selected.entries.find(({ receipt }) => receipt.sourceIds.includes(event.id))!;
+  expect(received).toBeDefined();
+  expect(received.receipt.contextSubjects).toContain(exposure);
+  const original = result.world.perceptionEvidence![PLAYER_ID]!.received.find(
+    (observation) =>
+      observation.origin.kind === 'occurrence' && observation.origin.eventId === event.id,
+  )!;
+  expect(original.context?.attended).toBe(true);
+  const invalid = structuredClone(original);
+  invalid.context!.subjects[0]!.observer.physicalLife++;
+  expect(() => validateObservationContribution(invalid)).toThrow(
+    'Invalid received occurrence context',
+  );
+  const forgotten = structuredClone(result.world);
+  invalidateExperience(forgotten, PLAYER_ID, [event.id], true);
+  expect(
+    selectTemporalHistory(forgotten.experience!.temporal, PLAYER_ID, {
+      subjects: [exposure],
+      bytes: 1024 * 1024,
+      limit: 1000,
+    }).entries.some(({ receipt }) => receipt.sourceIds.includes(event.id)),
+  ).toBe(false);
+});
+
+it('keeps an actually heard unseen voice separate from a previously seen body', () => {
+  let world = scene(54);
+  const exposure = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.episodeId;
+  entityGet(world.entities, NPC_ID)!.appearance = entityGet(world.entities, 'branches')!.appearance;
+  initializePerception(world, []);
+  const visible = executeCommand(world, {
+    id: 'changed-appearance-context',
+    actorId: NPC_ID,
+    type: 'say',
+    text: 'Still visibly speaking here.',
+  });
+  expect(visible.outcome.ok).toBe(true);
+  const visibleEvent = visible.events.find((event) => event.type === 'speech')!;
+  expect(
+    visible.world
+      .experience!.awareness[PLAYER_ID]!.find((entry) => entry.eventId === visibleEvent.id)!
+      .observation!.context!.subjects.map((subject) => subject.episodeId),
+  ).toContain(exposure);
+  world = structuredClone(visible.world);
+  world.map.spatial.blockers.push({
+    id: 'voice-without-body',
+    bounds: { min: { x: 1.9, y: 0, z: 1 }, max: { x: 2.1, y: 3, z: 3 } },
+    movement: false,
+    sight: true,
+    acousticTransmission: 1,
+    material: 'cloth',
+  });
+  world.map.spatial.revision++;
+  world.simTime = 1;
+  initializePerception(world, []);
+  expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
+  const result = executeCommand(world, {
+    id: 'unseen-context-words',
+    actorId: NPC_ID,
+    type: 'say',
+    text: 'These words are audible behind the screen.',
+  });
+  expect(result.outcome.ok).toBe(true);
+  world = result.world;
+  const event = result.events.find((event) => event.type === 'speech')!;
+  const heard = world.experience!.awareness[PLAYER_ID]!.find(
+    (entry) => entry.eventId === event.id,
+  )!;
+  expect(heard.speech!.segments.some((segment) => segment.kind === 'heard')).toBe(true);
+  expect(heard.sourceBody).toBeUndefined();
+  expect(heard.observation!.context).toBeUndefined();
+  expect(
+    selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+      bytes: 1024 * 1024,
+      limit: 1000,
+    }).entries.some(({ receipt }) => receipt.sourceIds.includes(event.id)),
+  ).toBe(true);
+  expect(
+    selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+      subjects: [exposure],
+      bytes: 1024 * 1024,
+      limit: 1000,
+    }).entries.some(({ receipt }) => receipt.sourceIds.includes(event.id)),
+  ).toBe(false);
 });
 
 it('retains only the exact qualifying contact capsule when familiarity uses a temporal source', () => {

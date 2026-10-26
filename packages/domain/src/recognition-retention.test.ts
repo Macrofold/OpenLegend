@@ -4,7 +4,11 @@ import { entityGet } from './entity-collection.js';
 import { initializePerception, executeCommand } from './kernel.js';
 import { setSpatialPosition, worldSupport } from './spatial-state.js';
 import { expireExperience, invalidateExperience } from './experience.js';
-import { validateRecognition,recognitionMaintenanceDue,expireRecognitionSeeds } from './worlds/base/recognition.js';
+import {
+  validateRecognition,
+  recognitionMaintenanceDue,
+  expireRecognitionSeeds,
+} from './worlds/base/recognition.js';
 
 it('retains exact learned name and voice proof after ordinary speech retirement, revokes only supported learning, and restores through actual words', () => {
   let world = createWorld(167);
@@ -98,22 +102,54 @@ it('retains exact learned name and voice proof after ordinary speech retirement,
   validateRecognition(world);
 });
 
-it('expires a provisional unheard-identity introduction and its sparse proof without requiring another utterance',()=>{
-  let world=createWorld(168);world.observerIdentities![PLAYER_ID]={};
-  for(const [id,x]of [[PLAYER_ID,1],[NPC_ID,3]]as const){const entity=entityGet(world.entities,id)!;setSpatialPosition(world,entity,{x,y:0,z:2},worldSupport(entity));}
-  world.map.spatial.blockers.push({id:'unseen-introduction-fixture',bounds:{min:{x:1.9,y:0,z:1},max:{x:2.1,y:3,z:3}},movement:false,sight:true,acousticTransmission:1,material:'cloth'});
-  world.map.spatial.revision++;initializePerception(world,[]);
-  const transition=executeCommand(world,{id:'provisional-unseen-name',actorId:NPC_ID,type:'say',targetId:PLAYER_ID,text:'My name is Orin.',selfIntroduction:'Orin'});
-  expect(transition.outcome.ok).toBe(true);world=structuredClone(transition.world);
-  const source=transition.events.find((event)=>event.type==='speech')!.id;
-  const seed=world.observerIdentities![PLAYER_ID]![`voice-seed-${source}`]!;
-  expect(seed).toMatchObject({seedOnly:true,givenName:'Orin'});
-  expect(recognitionMaintenanceDue(world,PLAYER_ID)).toBe(1800);
-  const before=world.experience!.temporal!.actors[PLAYER_ID]!.accounts!.optional.count;
-  world.simTime=1800;expect(expireRecognitionSeeds(world,PLAYER_ID)).toBe(1);
-  expect(recognitionMaintenanceDue(world,PLAYER_ID)).toBeNull();
+it('expires a provisional unheard-identity introduction and its sparse proof without requiring another utterance', () => {
+  let world = createWorld(168);
+  world.observerIdentities![PLAYER_ID] = {};
+  for (const [id, x] of [
+    [PLAYER_ID, 1],
+    [NPC_ID, 3],
+  ] as const) {
+    const entity = entityGet(world.entities, id)!;
+    setSpatialPosition(world, entity, { x, y: 0, z: 2 }, worldSupport(entity));
+  }
+  world.map.spatial.blockers.push({
+    id: 'unseen-introduction-fixture',
+    bounds: { min: { x: 1.9, y: 0, z: 1 }, max: { x: 2.1, y: 3, z: 3 } },
+    movement: false,
+    sight: true,
+    acousticTransmission: 1,
+    material: 'cloth',
+  });
+  world.map.spatial.revision++;
+  initializePerception(world, []);
+  const transition = executeCommand(world, {
+    id: 'provisional-unseen-name',
+    actorId: NPC_ID,
+    type: 'say',
+    targetId: PLAYER_ID,
+    text: 'My name is Orin.',
+    selfIntroduction: 'Orin',
+  });
+  expect(transition.outcome.ok).toBe(true);
+  world = structuredClone(transition.world);
+  const source = transition.events.find((event) => event.type === 'speech')!.id;
+  const seed = world.observerIdentities![PLAYER_ID]![`voice-seed-${source}`]!;
+  expect(seed).toMatchObject({ seedOnly: true, givenName: 'Orin' });
+  expect(recognitionMaintenanceDue(world, PLAYER_ID)).toBe(1800);
+  const before = world.experience!.temporal!.actors[PLAYER_ID]!.accounts!.optional.count;
+  world.simTime = 1800;
+  expect(expireRecognitionSeeds(world, PLAYER_ID)).toBe(1);
+  expect(recognitionMaintenanceDue(world, PLAYER_ID)).toBeNull();
   expect(world.observerIdentities![PLAYER_ID]![`voice-seed-${source}`]).toBeUndefined();
-  expect(Object.values(world.experience!.temporal!.actors[PLAYER_ID]!.supports!).some((capsule)=>capsule.receipt.sourceIds.includes(source))).toBe(false);
-  expect(world.experience!.temporal!.actors[PLAYER_ID]!.accounts!.optional.count).toBeLessThan(before);
-  expect(world.experience!.awareness[PLAYER_ID]!.some((entry)=>entry.eventId===source)).toBe(true);
+  expect(
+    Object.values(world.experience!.temporal!.actors[PLAYER_ID]!.supports!).some((capsule) =>
+      capsule.receipt.sourceIds.includes(source),
+    ),
+  ).toBe(false);
+  expect(world.experience!.temporal!.actors[PLAYER_ID]!.accounts!.optional.count).toBeLessThan(
+    before,
+  );
+  expect(world.experience!.awareness[PLAYER_ID]!.some((entry) => entry.eventId === source)).toBe(
+    true,
+  );
 });

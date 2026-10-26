@@ -166,8 +166,23 @@ export function surfacesInBounds(map: SpatialMap, bounds: Bounds3): WalkableSurf
 }
 /** Bounded preparation for physical-source producers. Exhaustion is an unfinished
  * candidate search, never a claim that the remaining surfaces are absent. */
-export function querySurfacesInBounds(map: SpatialMap, bounds: Bounds3, allowance: number, cursor?: BoundsQueryCursor) {
-  const result = preparedShapes(map).supportIndex.query((b) => b.min.x <= bounds.max.x + EPS && b.max.x >= bounds.min.x - EPS && b.min.y <= bounds.max.y + EPS && b.max.y >= bounds.min.y - EPS && b.min.z <= bounds.max.z + EPS && b.max.z >= bounds.min.z - EPS, allowance, cursor);
+export function querySurfacesInBounds(
+  map: SpatialMap,
+  bounds: Bounds3,
+  allowance: number,
+  cursor?: BoundsQueryCursor,
+) {
+  const result = preparedShapes(map).supportIndex.query(
+    (b) =>
+      b.min.x <= bounds.max.x + EPS &&
+      b.max.x >= bounds.min.x - EPS &&
+      b.min.y <= bounds.max.y + EPS &&
+      b.max.y >= bounds.min.y - EPS &&
+      b.min.z <= bounds.max.z + EPS &&
+      b.max.z >= bounds.min.z - EPS,
+    allowance,
+    cursor,
+  );
   return { ...result, values: result.values.map((entry) => entry.surface) };
 }
 // Halfspaces ax + by + cz <= d allow the same finite slabs/wedges to serve rays and body sweeps.
@@ -682,8 +697,18 @@ function sightObstacles(map: SpatialMap, points: readonly WorldPoint[]): readonl
  * intersection inside the receptor/target hull conservatively rejects it. Shapes
  * behind the target are outside this hull. Producers may split a rejected region;
  * rejection itself supplies no boundary or negative spatial fact. */
-export function clearConvexView(map: SpatialMap, from: WorldPoint, target: readonly WorldPoint[]): boolean {
-  if (!finitePoint(from) || target.length < 1 || target.length > 4 || target.some((point) => !finitePoint(point))) throw new Error('Invalid convex sight target.');
+export function clearConvexView(
+  map: SpatialMap,
+  from: WorldPoint,
+  target: readonly WorldPoint[],
+): boolean {
+  if (
+    !finitePoint(from) ||
+    target.length < 1 ||
+    target.length > 4 ||
+    target.some((point) => !finitePoint(point))
+  )
+    throw new Error('Invalid convex sight target.');
   return sightObstacles(map, [from, ...target]).length === 0;
 }
 /** clearSegment for a segment inside the hull its obstacles were gathered from. */

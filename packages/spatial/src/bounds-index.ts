@@ -61,7 +61,11 @@ export class BoundsIndex<T> {
         (a, b) => a.bounds.min[axis] + a.bounds.max[axis] - b.bounds.min[axis] - b.bounds.max[axis],
       );
       const middle = items.length >>> 1;
-      return { bounds, count: items.length, children: [build(items.slice(0, middle)), build(items.slice(middle))] };
+      return {
+        bounds,
+        count: items.length,
+        children: [build(items.slice(0, middle)), build(items.slice(middle))],
+      };
     };
     if (entries.length) this.root = build([...entries]);
   }
@@ -89,26 +93,42 @@ export class BoundsIndex<T> {
     for (let i = 0; i < frontier.length && frontier.length < maxRows; i++) {
       const entry = frontier[i]!;
       if (!entry.node.children || visited + 2 > maxVisits) continue;
-      frontier.splice(i, 1,
+      frontier.splice(
+        i,
+        1,
         { node: entry.node.children[0], key: `${entry.key}0` },
-        { node: entry.node.children[1], key: `${entry.key}1` });
+        { node: entry.node.children[1], key: `${entry.key}1` },
+      );
       visited += 2;
       i--;
     }
     return {
-      rows: frontier.map(({ node, key }) => ({ key, bounds: node.bounds, count: node.count,
-        ...(node.entries ? { values: node.entries.map((entry) => entry.value) } : {}) })),
+      rows: frontier.map(({ node, key }) => ({
+        key,
+        bounds: node.bounds,
+        count: node.count,
+        ...(node.entries ? { values: node.entries.map((entry) => entry.value) } : {}),
+      })),
       visited,
     };
   }
 
   /** Bound tree visits AND entries examined. A partial answer never proves absence.
    * A cursor is tied to this exact immutable tree by its owning caller. */
-  query(intersects: (bounds: Bounds3) => boolean, allowance: number, cursor?: BoundsQueryCursor): {
-    values: T[]; visited: number; status: 'complete' | 'partial'; cursor?: BoundsQueryCursor;
+  query(
+    intersects: (bounds: Bounds3) => boolean,
+    allowance: number,
+    cursor?: BoundsQueryCursor,
+  ): {
+    values: T[];
+    visited: number;
+    status: 'complete' | 'partial';
+    cursor?: BoundsQueryCursor;
   } {
-    const pending = cursor ? cursor.pending.map((path) => [...path]) : (this.root ? [[]] : []);
-    let offset = cursor?.offset ?? 0, visited = 0, enteredLeaf = cursor?.leaf ?? false;
+    const pending = cursor ? cursor.pending.map((path) => [...path]) : this.root ? [[]] : [];
+    let offset = cursor?.offset ?? 0,
+      visited = 0,
+      enteredLeaf = cursor?.leaf ?? false;
     const values: T[] = [];
     while (pending.length && visited < allowance) {
       const path = pending.pop()!;
@@ -116,7 +136,10 @@ export class BoundsIndex<T> {
       for (const part of path) node = node?.children?.[part as 0 | 1];
       if (!node) throw new Error('A spatial cursor does not belong to this index.');
       if (!enteredLeaf) visited++;
-      if (!enteredLeaf && !intersects(node.bounds)) { offset = 0; continue; }
+      if (!enteredLeaf && !intersects(node.bounds)) {
+        offset = 0;
+        continue;
+      }
       if (node.children) {
         pending.push([...path, 1], [...path, 0]);
         enteredLeaf = false;
@@ -128,17 +151,30 @@ export class BoundsIndex<T> {
         visited++;
         if (intersects(entry.bounds)) values.push(entry.value);
       }
-      if (offset < entries.length) { pending.push(path); enteredLeaf = true; break; }
+      if (offset < entries.length) {
+        pending.push(path);
+        enteredLeaf = true;
+        break;
+      }
       offset = 0;
       enteredLeaf = false;
     }
     return pending.length
-      ? { values, visited, status: 'partial', cursor: { pending, offset, ...(enteredLeaf ? { leaf: true } : {}) } }
+      ? {
+          values,
+          visited,
+          status: 'partial',
+          cursor: { pending, offset, ...(enteredLeaf ? { leaf: true } : {}) },
+        }
       : { values, visited, status: 'complete' };
   }
 
   region(key: string, allowance: number, cursor?: BoundsQueryCursor) {
     if (!/^[01]*$/.test(key) || key.length > 64) throw new Error('Invalid spatial region.');
-    return this.query(() => true, allowance, cursor ?? { pending: [[...key].map(Number)], offset: 0 });
+    return this.query(
+      () => true,
+      allowance,
+      cursor ?? { pending: [[...key].map(Number)], offset: 0 },
+    );
   }
 }

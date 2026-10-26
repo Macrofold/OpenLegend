@@ -242,6 +242,8 @@ export interface ObservationContribution {
   acquiredAt: number;
   modality: 'sight' | 'hearing' | 'touch';
   detector: { id: string; version: number };
+  /** Event-time body roles; routing context grants no later body access. */
+  context?: { subjects: ObservationExposure[]; attended: boolean };
   facets: ObservationFacet[];
 }
 export interface LiveFacetSupport {
@@ -498,6 +500,7 @@ export function acquireObservation(
     acquiredAt: world.simTime,
     modality: input.modality,
     detector: { ...input.detector },
+    ...(input.context ? { context: cloneValue(input.context) } : {}),
     facets: input.facets.map((facet, ordinal) => ({
       ...cloneValue({ ...facet, value: undefined }),
       value: copyFacetValue(facet.value),
@@ -1006,6 +1009,24 @@ function attributeMeanings(value: Extract<SensoryFacet, { kind: 'public-attribut
     ...(detail.display === 'category' ? { value: sample } : {}),
   }));
 }
+/** Movement proves inequality without encoding a complete body/frame. Equal
+ * points still need the full comparison, including uncertainty and new fields. */
+function facetPointChanged(before: SensoryFacet, after: SensoryFacet): boolean {
+  const earlier =
+    before.kind === 'body'
+      ? before.body.position
+      : before.kind === 'location' && before.location.kind === 'point'
+        ? before.location.point
+        : undefined;
+  const later =
+    after.kind === 'body'
+      ? after.body.position
+      : after.kind === 'location' && after.location.kind === 'point'
+        ? after.location.point
+        : undefined;
+  return !!earlier && !!later &&
+    (earlier.x !== later.x || earlier.y !== later.y || earlier.z !== later.z);
+}
 /** Called only after the complete received value changed. */
 function semanticFacetChanged(before: SensoryFacet, after: SensoryFacet): boolean {
   if (before.kind === 'body' && after.kind === 'body') {
@@ -1169,7 +1190,10 @@ export function reconcileVisualEvidence(
       // Drafting every unchanged nested body here makes later native previews copy it.
       const previous = prior && effectiveCurrentFacetSupport(world, observer.id, prior),
         previousValue = previous && readOnlyDraftView(previous.value);
-      const changed = !previousValue || jsonText(previousValue) !== jsonText(facet);
+      const changed =
+        !previousValue ||
+        facetPointChanged(previousValue, facet) ||
+        jsonText(previousValue) !== jsonText(facet);
       if (changed) attentionChanges.add(subject.id);
       if (
         prior &&
@@ -1723,6 +1747,65 @@ export function endCurrentEvidence(
   reconcileAttendedTemporalEvidence(world, observerId);
 }
 
+function awarenessBodyContext(
+  world: WorldState,
+  awareness: Awareness,
+): ObservationContribution['context'] {
+  const state = world.perceptionEvidence?.[awareness.actorId];
+  if (
+    !state ||
+    !awareness.entityEpisodes ||
+    state.life !== (entityGet(world.entities, awareness.actorId)?.actor?.physicalLife ?? 0)
+  )
+    return;
+  const result: ObservationExposure[] = [];
+  let attended = false;
+  for (const [id, episode] of Object.entries(awareness.entityEpisodes)) {
+    const lease = state.current[`${id}:body`],
+      detected = state.current[`${id}:detected`];
+    if (
+      !episode ||
+      !lease ||
+      !detected ||
+      lease.value.kind !== 'body' ||
+      detected.original.origin.kind !== 'exposure' ||
+      detected.original.origin.episodeId !== episode ||
+      detected.exposure.episodeId !== lease.exposure.episodeId ||
+      detected.observer.actorId !== lease.observer.actorId ||
+      detected.observer.physicalLife !== lease.observer.physicalLife ||
+      lease.observer.actorId !== awareness.actorId ||
+      lease.observer.physicalLife !== state.life ||
+      lease.original.acquiredAt > awareness.at
+    )
+      continue;
+    const subject = entityGet(world.entities, id);
+    if (
+      !subject ||
+      lease.subjectPhysicalLife !== (subject.actor ? (subject.actor.physicalLife ?? 0) : null)
+    )
+      continue;
+    if (awareness.speech) {
+      // A known unseen voice names no visible body. Only the actual received
+      // speaker/body grant or independently perceived addressee can join this view.
+      if (id === awareness.sourceId) {
+        if (
+          awareness.sourceBody?.entityId !== id ||
+          awareness.sourceBody.leaseId !== lease.id ||
+          awareness.sourceBody.physicalLife !== lease.subjectPhysicalLife
+        )
+          continue;
+      } else if (id !== awareness.targetId || !awareness.speech.addressee) continue;
+    } else if (!awareness.references?.some((reference) => reference.id === id)) continue;
+    if (!result.some((context) => context.episodeId === lease.exposure.episodeId))
+      result.push(cloneValue(lease.exposure));
+    attended ||=
+      state.attention?.entries.some(
+        (entry) => entry.sourceId === id && entry.exposure.episodeId === lease.exposure.episodeId,
+      ) === true;
+  }
+  return result.length ? { subjects: result, attended } : undefined;
+}
+
 export function acquireAwarenessObservation(
   world: WorldState,
   event: WorldEvent,
@@ -1737,6 +1820,7 @@ export function acquireAwarenessObservation(
   if (awareness.modality === 'internal') return;
   const observer = entityGet(world.entities, awareness.actorId);
   if (!observer?.actor) return;
+  const context = awarenessBodyContext(world, awareness);
   // An encounter is the existing story wrapper for this native sight input. It
   // retains the received original; recording its prose does not sample sight again.
   if (
@@ -1928,6 +2012,7 @@ export function acquireAwarenessObservation(
       strength: awareness.recognized ? 'supported' : 'possible',
     });
   const contribution = acquireObservation(world, observer, {
+    ...(context ? { context } : {}),
     origin: {
       kind: 'occurrence',
       eventId: event.id,
@@ -2082,6 +2167,7 @@ export function acquireOrdinaryWarning(
     ],
   };
   return acquireObservation(world, observer, {
+    ...(source.context ? { context: source.context } : {}),
     origin: {
       kind: 'occurrence',
       eventId: event.id,
@@ -2393,6 +2479,25 @@ export function validateObservationContribution(
     )
   )
     throw new Error('Invalid acquired perception evidence.');
+  const context = observation.context;
+  if (
+    context !== undefined &&
+    (!hasRecordFields(context, ['subjects', 'attended']) ||
+      typeof context.attended !== 'boolean' ||
+      !Array.isArray(context.subjects) ||
+      !context.subjects.length ||
+      new Set(context.subjects.map((subject) => subject?.episodeId)).size !==
+        context.subjects.length ||
+      context.subjects.some(
+        (subject) =>
+          !hasRecordFields(subject, ['observer', 'episodeId']) ||
+          !hasRecordFields(subject.observer, ['actorId', 'physicalLife']) ||
+          !isSafeRecordId(subject.episodeId) ||
+          subject.observer.actorId !== observation.observer.actorId ||
+          subject.observer.physicalLife !== observation.observer.physicalLife,
+      ))
+  )
+    throw new Error('Invalid received occurrence context.');
   if (observation.origin.kind === 'occurrence') {
     if (
       typeof observation.origin.eventId !== 'string' ||

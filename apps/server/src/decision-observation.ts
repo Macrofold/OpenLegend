@@ -12,10 +12,17 @@ import { RETRIEVAL_ROWS } from './memory-repository.js';
 /** Preserve an inspection route when optional inventory would exhaust preparation.
  * Required action references remain explicit; this is a disclosed page, not semantic search.
  * docs/limits/cognition.md#cg04 */
-export function decisionObservation(world: WorldState, actorId: string, expanded: readonly string[] = []) {
+export function decisionObservation(
+  world: WorldState,
+  actorId: string,
+  expanded: readonly string[] = [],
+) {
   // Broad surroundings are prepared separately from received bounds. Copy private
   // authority records only for subjects actually expanded for this decision.
-  const visibleEntityIds = new Set([...currentDetailedAttention(world, actorId).map((entry) => entry.sourceId), ...expanded]);
+  const visibleEntityIds = new Set([
+    ...currentDetailedAttention(world, actorId).map((entry) => entry.sourceId),
+    ...expanded,
+  ]);
   const observed = observeActor(world, actorId, { includeMemories: false, visibleEntityIds });
   if (!observed) return null;
   const available = observed.inventory.length;

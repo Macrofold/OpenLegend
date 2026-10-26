@@ -208,17 +208,28 @@ export function temporalKnownPlaceCapsules(
     if (value.kind !== 'encounter-exposure' || value.exposure.kind !== 'place') return;
     const exposure = value.exposure;
     const exposureSource = receipt.facets[index]?.original?.source;
-    const locationIndex = support.values.findIndex((candidate, ordinal) => candidate.kind === 'location' &&
-      candidate.location.kind === 'point' && JSON.stringify(candidate.location.point) === JSON.stringify(exposure.point) &&
-      JSON.stringify(receipt.facets[ordinal]?.original?.source) === JSON.stringify(exposureSource));
+    const locationIndex = support.values.findIndex(
+      (candidate, ordinal) =>
+        candidate.kind === 'location' &&
+        candidate.location.kind === 'point' &&
+        JSON.stringify(candidate.location.point) === JSON.stringify(exposure.point) &&
+        JSON.stringify(receipt.facets[ordinal]?.original?.source) ===
+          JSON.stringify(exposureSource),
+    );
     const location = support.values[locationIndex];
     const fact = receipt.facets[locationIndex];
-    if (!location || location.kind !== 'location' || !fact?.original ||
+    if (
+      !location ||
+      location.kind !== 'location' ||
+      !fact?.original ||
       fact.original.source.observer.actorId !== actorId ||
-      fact.original.source.observer.physicalLife !== receipt.physicalLife)
+      fact.original.source.observer.physicalLife !== receipt.physicalLife
+    )
       throw new KnownPlacePreparationError();
     places.push({
-      placeId: exposure.id, label: exposure.label, location: copyLocation(location.location),
+      placeId: exposure.id,
+      label: exposure.label,
+      location: copyLocation(location.location),
       source: { ...fact.original.source, observer: { ...fact.original.source.observer } },
       facetOrdinal: fact.original.ordinal,
       sourceEventId: receipt.origin!.kind === 'occurrence' ? receipt.origin!.eventId : undefined,

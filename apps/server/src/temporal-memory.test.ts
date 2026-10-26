@@ -22,6 +22,12 @@ import {
   selectedRecognitionSupportSourceIds,
   selectedRecognitionMaintenanceDue,
   adjustRetainedKnowledgeAccounting,
+  entityValues,
+  createItemLot,
+  seedAgency,
+  advanceWorld,
+  currentBodyObservation,
+  type Command,
 } from '@open-legend/domain';
 import { appendMemory, acquireExposure } from '../../../packages/domain/src/events.js';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
@@ -32,6 +38,8 @@ import { personalAccountRevision } from './personal-accounts.js';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { temporalHistoryForModel } from './situation-context.js';
+import { memoryHistory } from './memory-history.js';
 
 const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
@@ -51,6 +59,211 @@ async function setup() {
 }
 
 describe('bounded personal temporal storage', () => {
+  it('keeps an unknown person’s actual move, work, meal and words in order without inventing a destination', async () => {
+    const { store, service } = await setup();
+    await useNearCampSight(service);
+    const strangerId = 'sequence-stranger';
+    const hiddenName = 'Confidential Rowan';
+    const foodId = await editWorld(service, (world) => {
+      for (const entity of entityValues(world.entities))
+        if (entity.actor && entity.id !== PLAYER_ID && entity.id !== NPC_ID) {
+          entity.actor.controller = 'player';
+          entity.actor.senses = [];
+          setSpatialPosition(world, entity, { x: 90, y: 0, z: 90 }, 'terrain');
+        }
+      const player = entityGet(world.entities, PLAYER_ID)!,
+        witness = entityGet(world.entities, NPC_ID)!;
+      witness.actor!.controller = 'player';
+      setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, 'terrain');
+      setSpatialPosition(world, witness, { x: 1, y: 0, z: 3 }, 'terrain');
+      const stranger = structuredClone(witness);
+      stranger.id = strangerId;
+      stranger.name = hiddenName;
+      stranger.actor!.agency = seedAgency([]);
+      delete stranger.actor!.voiceProfile;
+      entitySet(world.entities, stranger.id, stranger);
+      setSpatialPosition(world, stranger, { x: 3, y: 0, z: 2 }, 'terrain');
+      const branches = entityGet(world.entities, 'branches')!;
+      setSpatialPosition(world, branches, { x: 6, y: 0, z: 2 }, 'terrain');
+      const anvil = structuredClone(branches);
+      anvil.id = 'ambiguous-anvil';
+      anvil.name = 'Anvil';
+      anvil.kind = 'landmark';
+      anvil.description = 'An ironworking block beside the plant.';
+      delete anvil.resource;
+      entitySet(world.entities, anvil.id, anvil);
+      setSpatialPosition(world, anvil, { x: 5.5, y: 0, z: 3 }, 'terrain');
+      const plant = entityGet(world.entities, 'berries-west')!;
+      setSpatialPosition(world, plant, { x: 6, y: 0, z: 1 }, 'terrain');
+      const food = createItemLot(world, strangerId, 'berries', 1, 'sequence-food');
+      initializePerception(world, []);
+      for (const observerId of [PLAYER_ID, NPC_ID]) {
+        const key = Object.entries(
+          world.perceptionEvidence![observerId]!.attention!.candidates,
+        ).find(([, candidate]) => candidate.sourceId === strangerId)![0];
+        expect(setAttentionFocus(world, observerId, [key])).toBe(true);
+      }
+      return food;
+    });
+    const exposure = currentBodyObservation(service.world, PLAYER_ID, strangerId)!.exposure
+      .episodeId;
+    const npcExposure = currentBodyObservation(service.world, NPC_ID, strangerId)!.exposure
+      .episodeId;
+    const command = async (input: Command, seconds = 0) => {
+      const result = await service.transition((world) => {
+        const started = executeCommand(world, input);
+        expect(started.outcome.ok, started.outcome.message).toBe(true);
+        if (!seconds) return started;
+        const completed = advanceWorld(started.world, seconds);
+        return { ...completed, events: [...started.events, ...completed.events] };
+      });
+      expect(result.ok, result.message).toBe(true);
+    };
+    const points: number[] = [];
+    expect(
+      (
+        await service.transition((world) => {
+          const started = executeCommand(world, {
+            id: 'sequence-walk',
+            actorId: strangerId,
+            type: 'move',
+            destination: { x: 5, y: 0, z: 2, surfaceId: 'terrain' },
+          });
+          expect(started.outcome.ok, started.outcome.message).toBe(true);
+          let next = started.world;
+          const events = [...started.events];
+          for (
+            let step = 0;
+            step < 30 && entityGet(next.entities, strangerId)!.actor!.action;
+            step++
+          ) {
+            const moved = advanceWorld(next, 4);
+            next = moved.world;
+            events.push(...moved.events);
+            points.push(worldPosition(entityGet(next.entities, strangerId)!).x);
+          }
+          expect(entityGet(next.entities, strangerId)!.actor!.action).toBeNull();
+          return { ...started, world: next, events };
+        })
+      ).ok,
+    ).toBe(true);
+    expect(new Set(points).size).toBeGreaterThan(2);
+    const scope = {
+      worldId: service.world.id,
+      actorId: PLAYER_ID,
+      generation: (await store.records.head())!.generation,
+    };
+    const walking = await store.memories.temporalHistory(
+      scope,
+      { subjects: [exposure], bytes: 262144, limit: 128 },
+      service.world,
+    );
+    const walkingText = JSON.stringify(temporalHistoryForModel(service.world, PLAYER_ID, walking));
+    expect(walkingText).not.toContain(hiddenName);
+    expect(walkingText).not.toContain('Anvil');
+    expect(walkingText).not.toContain('Berry bush');
+    expect(walkingText).not.toMatch(/going to|intends to|destinationLabel/);
+    const receivedPoints = walking.entries.flatMap(({ values }) =>
+      values.flatMap((value) => (value.kind === 'body' ? [value.body.position.x] : [])),
+    );
+    expect(new Set(receivedPoints).size).toBeGreaterThan(2);
+    const workAt = service.world.simTime;
+    await command(
+      { id: 'sequence-work', actorId: strangerId, type: 'gather', targetId: 'branches' },
+      entityGet(service.world.entities, 'branches')!.resource!.workSeconds + 1,
+    );
+    const mealAt = service.world.simTime;
+    await command({ id: 'sequence-meal', actorId: strangerId, type: 'eat', itemId: foodId });
+    const words = 'The wood is ready. I ate the berries.';
+    await command({
+      id: 'sequence-words',
+      actorId: strangerId,
+      type: 'say',
+      volume: 'normal',
+      text: words,
+    });
+    expect(
+      service.world.events.find(
+        (event) => event.type === 'gathered' && event.actorId === strangerId,
+      )?.data,
+    ).toMatchObject({ definitionId: 'wood', quantity: 2 });
+    const page = await memoryHistory(service, PLAYER_ID, service.localScope, { recent: true });
+    expect(JSON.stringify(page)).toContain(words);
+    expect(JSON.stringify(page)).not.toContain(hiddenName);
+    for (const [observerId, subject] of [
+      [PLAYER_ID, exposure],
+      [NPC_ID, npcExposure],
+    ] as const) {
+      const allReceived = await store.memories.temporalHistory(
+        { ...scope, actorId: observerId },
+        { bytes: 262144, limit: 128 },
+        service.world,
+      );
+      expect(
+        allReceived.entries.some(({ values }) =>
+          values.some((value) => value.kind === 'event' && value.eventType === 'gathered'),
+        ),
+      ).toBe(true);
+      const history = await store.memories.temporalHistory(
+        { ...scope, actorId: observerId },
+        { subjects: [subject], bytes: 262144, limit: 128 },
+        service.world,
+      );
+      const events = history.entries.flatMap(({ receipt, values }) =>
+        values.flatMap((value) =>
+          value.kind === 'event' ? [{ at: receipt.at, type: value.eventType }] : [],
+        ),
+      );
+      expect(events.some((event) => event.type === 'gathered' && event.at > workAt)).toBe(true);
+      expect(events.some((event) => event.type === 'ate' && event.at >= mealAt)).toBe(true);
+      expect(
+        history.entries.some(({ values }) =>
+          values.some(
+            (value) => value.kind === 'speech' && JSON.stringify(value.speech).includes(words),
+          ),
+        ),
+      ).toBe(true);
+      const projected = JSON.stringify(temporalHistoryForModel(service.world, observerId, history));
+      expect(projected).not.toContain(hiddenName);
+      expect(projected).not.toContain(strangerId);
+      expect(history.entries.map((entry) => entry.receipt.at)).toEqual(
+        [...history.entries.map((entry) => entry.receipt.at)].sort((a, b) => a - b),
+      );
+    }
+    await command(
+      {
+        id: 'sequence-leave',
+        actorId: strangerId,
+        type: 'move',
+        destination: { x: 30, y: 0, z: 2, surfaceId: 'terrain' },
+      },
+      600,
+    );
+    expect(currentBodyObservation(service.world, PLAYER_ID, strangerId)).toBeUndefined();
+    const lost = await store.memories.temporalHistory(
+      scope,
+      { subjects: [exposure], from: mealAt, bytes: 262144, limit: 128 },
+      service.world,
+    );
+    expect(lost.incomplete).toBe(true);
+    const loss = lost.entries.find(({ receipt }) => receipt.change === 'loss');
+    expect(loss).toBeDefined();
+    expect(loss!.receipt.facets.some((fact) => fact.measuredThrough < loss!.receipt.at)).toBe(true);
+    expect(JSON.stringify(temporalHistoryForModel(service.world, PLAYER_ID, lost))).not.toMatch(
+      /stopped|arrived at|destinationLabel/,
+    );
+    const cold = (await store.records.load(true))!.state.world;
+    validateTemporalEvidenceState(cold);
+    expect(
+      (
+        await store.memories.temporalHistory(
+          scope,
+          { subjects: [exposure], from: mealAt, bytes: 262144, limit: 128 },
+          cold,
+        )
+      ).entries,
+    ).toEqual(lost.entries);
+  });
   it('refuses an incompatible development database before changing its marker or tables', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'ol-current-format-'));
     const first = await testRepository(directory);

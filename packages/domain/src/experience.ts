@@ -481,12 +481,7 @@ export function admitAutomaticExperience(
       ...(memory?.observation ? [memory.observation] : []),
       ...(memory?.observations ?? []),
     ];
-    const directSubject = awareness?.sourceId ?? awareness?.targetId;
-    const attended =
-      directSubject &&
-      world.perceptionEvidence?.[actorId]?.attention?.entries.some(
-        (selection) => selection.sourceId === directSubject,
-      );
+    const attended = observations.some((observation) => observation.context?.attended === true);
     if (reason !== 'none' || attended) {
       const id = entry.source === 'awareness' ? entry.value.eventId : entry.value.id;
       let locator: import('./temporal-evidence.js').TemporalReceiptLocator | undefined;
@@ -499,6 +494,11 @@ export function admitAutomaticExperience(
             [id, observation.id],
             reason === 'required',
             policy,
+            observation.context
+              ? {
+                  contextSubjects: observation.context.subjects.map((subject) => subject.episodeId),
+                }
+              : {},
           );
           locator ??= captured;
         }
@@ -512,6 +512,18 @@ export function admitAutomaticExperience(
             change: 'occurrence',
             required: reason === 'required',
             sourceIds: [id, ...(memory?.eventId ? [memory.eventId] : [])],
+            ...(observations.some((observation) => observation.context?.subjects.length)
+              ? {
+                  contextSubjects: [
+                    ...new Set(
+                      observations.flatMap(
+                        (observation) =>
+                          observation.context?.subjects.map((subject) => subject.episodeId) ?? [],
+                      ),
+                    ),
+                  ],
+                }
+              : {}),
             facets: [
               {
                 role: 'direct',

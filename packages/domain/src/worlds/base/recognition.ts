@@ -292,7 +292,10 @@ export function associateIndividualFamiliarity(
   // Previously protected points already support actual recognition results.
   // Reconcile new optional contacts around those points; an overlapping earlier
   // local account cannot displace them and demand another protected six.
-  for (const root of [...chronological.filter((value)=>value.required),...chronological.filter((value)=>!value.required)]) {
+  for (const root of [
+    ...chronological.filter((value) => value.required),
+    ...chronological.filter((value) => !value.required),
+  ]) {
     const quantum =
       count < 6
         ? normalSpeedSeconds(world, BASE_PERCEPTION_POLICY.creditSeconds)
@@ -1160,7 +1163,10 @@ export function validateRecognition(world: WorldState): void {
         throw new Error('Invalid local individual.');
       if (identity.familiarity !== undefined) {
         validateFamiliarityState(identity.familiarity);
-        if(identity.familiarity.roots.some((root)=>root.at>world.simTime)||(identity.familiarity.lastCreditAt??0)>world.simTime)
+        if (
+          identity.familiarity.roots.some((root) => root.at > world.simTime) ||
+          (identity.familiarity.lastCreditAt ?? 0) > world.simTime
+        )
           throw new Error('Familiarity contact occurs after the saved world time.');
       }
       for (const modality of ['voice', 'sight'] as const) {
@@ -1337,7 +1343,7 @@ export function validateFamiliarityState(value: unknown): asserts value is Famil
       root.order < 0 ||
       typeof root.required !== 'boolean' ||
       typeof root.credited !== 'boolean' ||
-      (root.required&&!root.credited) ||
+      (root.required && !root.credited) ||
       !Array.isArray(root.support) ||
       !root.support.includes(root.sourceKey) ||
       root.support.length > 10 ||

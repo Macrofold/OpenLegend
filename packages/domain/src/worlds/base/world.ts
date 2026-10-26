@@ -170,7 +170,8 @@ export function createActor(
     (definition) =>
       definition.id === 'wilderness:fullness' ||
       definition.id === 'wilderness:energy' ||
-      definition.id === PERCEPTION.id || definition.id === FOCUS.id ||
+      definition.id === PERCEPTION.id ||
+      definition.id === FOCUS.id ||
       definition.implementation === 'finite-practice-v1',
   );
   const food = meters.find((definition) => definition.id === 'wilderness:fullness');
