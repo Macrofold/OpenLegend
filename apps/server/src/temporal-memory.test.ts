@@ -15,34 +15,56 @@ import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { WorldService } from './world-service.js';
 import { randomUUID } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
   for (const close of cleanup.splice(0)) await close();
 });
 async function setup() {
-  const started = performance.now();
-  const trace = (stage: string) => {
-    if (process.env['OL_DEBUG_MEMORY_EDIT'] === '1')
-      console.error('memory-setup-stage', stage, Math.round(performance.now() - started));
-  };
-  trace('start');
   const store = await testRepository();
-  trace('database-created');
   await store.ready;
-  trace('schema-ready');
   const service = new WorldService(store, readConfig({ OPEN_LEGEND_GOD_MODE: 'true' }));
   cleanup.push(async () => {
     service.releaseHostWork();
     await store.close();
   });
   await enterLocalWorld(service);
-  trace('entered');
   await service.setPresence('temporal-memory-fixture', true);
   return { store, service };
 }
 
 describe('bounded personal temporal storage', () => {
+  it('refuses an incompatible development database before changing its marker or tables', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'ol-current-format-'));
+    const first = await testRepository(directory);
+    await first.ready;
+    const before = await first.db
+      .prepare(
+        "SELECT COUNT(*) AS count FROM information_schema.tables WHERE table_schema='open_legend'",
+      )
+      .get();
+    await first.db.prepare("UPDATE meta SET value='20' WHERE key='schema'").run();
+    await first.close();
+    const refused = await testRepository(directory);
+    cleanup.push(async () => {
+      await refused.close();
+      rmSync(directory, { recursive: true, force: true });
+    });
+    await expect(refused.ready).rejects.toThrow('Unsupported database schema');
+    expect(
+      (await refused.db.prepare("SELECT value FROM meta WHERE key='schema'").get())!['value'],
+    ).toBe('20');
+    expect(
+      (await refused.db
+        .prepare(
+          "SELECT COUNT(*) AS count FROM information_schema.tables WHERE table_schema='open_legend'",
+        )
+        .get())!['count'],
+    ).toBe(before!['count']);
+  });
   it('reclaims retired exact summary leaves when only a fallible impression remains', async () => {
     const { store, service } = await setup();
     const ids = await editWorld(service, (world) =>
@@ -95,6 +117,13 @@ describe('bounded personal temporal storage', () => {
           .get(service.world.id, PLAYER_ID, ids))!['count'],
       ),
     ).toBe(2);
+    expect(
+      (await store.records.load(true))!.state.world.experience!.temporal!.actors[PLAYER_ID]!
+        .accounts!.archives!.required.count,
+    ).toBe(2);
+    const saveId = randomUUID();
+    await service.createSave('Exact source closure', saveId);
+    const saved = await store.saves.read(service.world.id, saveId);
     await editWorld(service, (world) => {
       world.simTime += selectedTemporalPolicy(world).aftermathSeconds + 1;
     });
@@ -106,6 +135,21 @@ describe('bounded personal temporal storage', () => {
           )
           .get(service.world.id, PLAYER_ID, ids))!['count'],
       ),
+    ).toBe(0);
+    expect((await service.forgetMemory(PLAYER_ID, ids[0]!)).ok).toBe(true);
+    await service.restoreSave(saveId, randomUUID(), saved);
+    expect(
+      Number(
+        (await store.db
+          .prepare(
+            'SELECT COUNT(*)AS count FROM mind_source_versions WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
+          )
+          .get(service.world.id, PLAYER_ID, ids))!['count'],
+      ),
+    ).toBe(0);
+    expect(
+      (await store.records.load(true))!.state.world.experience!.temporal!.actors[PLAYER_ID]!
+        .accounts!.archives!.required.count,
     ).toBe(0);
   });
   it('keeps minimum exact learned-place support after its account expires and revokes it on forgetting', async () => {
@@ -338,6 +382,12 @@ describe('bounded personal temporal storage', () => {
     const saveId = randomUUID();
     await service.createSave('Exact recent observations', saveId);
     const saved = await store.saves.read(service.world.id, saveId);
+    expect(() =>
+      store.saves.validatePayload({
+        ...saved,
+        format: 'development-2026-10-25-personal-evidence-closure',
+      }),
+    ).toThrow('Unsupported save format');
     const oldNamespace = service.world.experience!.temporal!.namespace;
     await service.restoreSave(saveId, randomUUID(), saved);
     expect(service.world.experience!.temporal!.namespace).not.toBe(oldNamespace);

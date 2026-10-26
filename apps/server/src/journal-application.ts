@@ -122,7 +122,8 @@ export async function applyRecordSources(
 ): Promise<void> {
   if (state) memories.configureWorld(state.world);
   else if (prepared) memories.configureAllowance(prepared.allowance);
-  const affected = await memories.project(worldId, revision, changes, archive, writes);
+  if (!prepared && state) prepared = memories.prepareSources(worldId, changes, state.world);
+  const affected = await memories.project(worldId, changes, archive, writes, prepared?.versions);
   await records.write(worldId, revision, changes, writes);
   await memories.writeSources(worldId, changes, affected, prepared);
   if (records.needsHotPrune) {
@@ -130,6 +131,8 @@ export async function applyRecordSources(
     await records.pruneActiveEvents(state);
   }
   await memories.reconcile(worldId, affected);
+  if (prepared?.versions)
+    await memories.applySourceVersionPlan(worldId, revision, prepared.versions);
 }
 
 /** No initialization, optional search scheduler, jobs or gameplay live in this owner. */

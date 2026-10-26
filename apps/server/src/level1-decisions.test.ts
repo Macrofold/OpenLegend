@@ -1,3 +1,4 @@
+import { decisionFixtureResult } from '../../../tests/fixtures/actor-response.js';
 import { entityGet, entityValues } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { randomUUID } from 'node:crypto';
@@ -197,8 +198,18 @@ const defaultRate = (description: string) =>
 function addressees(schema: unknown): string[] {
   if (!schema || typeof schema !== 'object') return [];
   const record = schema as Record<string, unknown>;
-  const field = record['addresseeEntityId'] as { enum?: string[] } | undefined;
-  if (field?.enum) return field.enum;
+  const field = record['addresseeEntityId'];
+  if (field) {
+    const values = (node: unknown): string[] => {
+      if (!node || typeof node !== 'object') return [];
+      const definition = node as Record<string, unknown>;
+      if (Array.isArray(definition['enum']))
+        return definition['enum'].filter((value): value is string => typeof value === 'string');
+      if (typeof definition['const'] === 'string') return [definition['const']];
+      return Object.values(definition).flatMap(values);
+    };
+    return values(field);
+  }
   for (const child of Object.values(record)) {
     const found = addressees(child);
     if (found.length) return found;
@@ -265,11 +276,12 @@ async function harness(
     },
     async generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
       calls.generations.push(request);
-      return (
-        options.generate
+      return decisionFixtureResult(
+        request,
+        (options.generate
           ? await options.generate(request)
-          : value(request.requestId, 'openai', { operations: [] })
-      ) as AiResult<T>;
+          : value(request.requestId, 'openai', { operations: [] })) as AiResult<T>,
+      );
     },
   };
   const director = new AiDirector(service, client, () => now);
@@ -379,7 +391,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(decisionJudges(h.calls.judges)).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
 
-    expect(job.status).toBe('completed');
+    expect(job.status, JSON.stringify(job)).toBe('completed');
     expect(job.result).toMatchObject({
       disposition: 'responded',
       components: { action: { ok: true, code: 'queued' } },
@@ -745,6 +757,8 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
               note: null,
               name: null,
               appraise: null,
+              observe: null,
+              remember: null,
             },
           ],
         }),

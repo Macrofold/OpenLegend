@@ -1,5 +1,9 @@
 import { entityHandle } from './entity-references.js';
-import { expandSituation, situationQuerySchema } from './situation-context.js';
+import {
+  expandSituation,
+  situationQuerySchema,
+  situationProposalBinding,
+} from './situation-context.js';
 import { entityGet, currentBodyObservation, currentBodySubject } from '@open-legend/domain';
 import {
   discoveryInterval,
@@ -3391,9 +3395,38 @@ export class AiDirector {
           `attempt:${attempt}:generate`,
           { category: 'level', level },
         );
-        const queried = querySchema.parse(value);
+        // The first answer may ask for reads, but ordinary operations still use the
+        // existing logged parser below. Do not validate them twice or bypass the
+        // visible-output refusal by parsing a large provider value first.
+        if (
+          textBytes(
+            value && typeof value === 'object' && 'operations' in value
+              ? { operations: (value as { operations: unknown }).operations }
+              : value,
+          ) > levelLimit.visibleOutputBytes
+        )
+          throw new StopJob(
+            'failed',
+            `The level ${level} response exceeded its ${levelLimit.visibleOutputBytes}-byte visible-output allowance. No paid repair was attempted.`,
+            'invalid',
+          );
+        const queryEnvelope = z
+          .object({ queries: querySchema.shape.queries })
+          .passthrough()
+          .safeParse(value);
+        if (!queryEnvelope.success)
+          throw new StopJob(
+            'failed',
+            'The response did not match the decision contract. No paid repair was attempted.',
+            'invalid',
+          );
+        const queried = queryEnvelope.data;
         if (queried.queries?.length) {
-          if (queried.operations.length || ('invention' in queried && queried.invention))
+          if (
+            !Array.isArray(queried['operations']) ||
+            queried['operations'].length ||
+            queried['invention']
+          )
             throw new StopJob(
               'failed',
               'A situation query cannot execute response operations.',
@@ -3413,8 +3446,11 @@ export class AiDirector {
             prepared.entityReferences[handle] = id;
             prepared.binding.physicalEntityReferences![handle] = id;
             prepared.binding.entityLeases![id] = body.id;
-            const subject = currentBodySubject(prepared.situation.world, actorId, id) ??
-              (!entityGet(prepared.situation.world.entities, id)?.actor ? { kind: 'entity' as const, entityId: id } : undefined);
+            const subject =
+              currentBodySubject(prepared.situation.world, actorId, id) ??
+              (!entityGet(prepared.situation.world.entities, id)?.actor
+                ? { kind: 'entity' as const, entityId: id }
+                : undefined);
             if (subject) (prepared.binding.identityReferences ??= {})[handle] = subject;
             if (!prepared.binding.entityIds.includes(id)) prepared.binding.entityIds.push(id);
             const episode = prepared.situation.world.perceptionEpisodes?.[actorId]?.[id];
@@ -3647,7 +3683,7 @@ export class AiDirector {
             appraisals?.bindings,
             prepared.binding.identityReferences,
             prepared.binding.entityLeases,
-            { ...prepared.situation, semanticCauses: run.job.semanticCauses },
+            situationProposalBinding(prepared.situation, run.job.semanticCauses),
           );
         },
         undefined,

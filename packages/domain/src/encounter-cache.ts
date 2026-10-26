@@ -287,7 +287,8 @@ export function* prepareExposure(
     orderPeople: (ids: readonly string[]) => string[];
     maximumBodyHeight: number;
     maximumBodyRadius: number;
-    /** Identity changes only when this prepared source's relevant input changes. */
+    /** Complete common outward-value token. This callback and its source inputs
+     * belong to the finite prepared phase; receivers still sample their own frame. */
     sourceToken: (id: string) => string | undefined;
     publicAttributes: (id: string) => readonly AttributeView[];
   }

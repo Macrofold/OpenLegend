@@ -1,3 +1,4 @@
+import { decisionFixtureResult } from '../../../tests/fixtures/actor-response.js';
 import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
@@ -155,11 +156,12 @@ async function harness(
     },
     async generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
       calls.generations.push(request);
-      return (
-        options.generate
+      return decisionFixtureResult(
+        request,
+        (options.generate
           ? await options.generate(request)
-          : value(request.requestId, 'openai', slingFixture())
-      ) as AiResult<T>;
+          : value(request.requestId, 'openai', slingFixture())) as AiResult<T>,
+      );
     },
   };
   const director = new AiDirector(service, client, () => now);

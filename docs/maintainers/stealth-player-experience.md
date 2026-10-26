@@ -37,7 +37,8 @@ Dependencies: integrated shared schema; A current/history/reference families; B 
 - [x] Stop retained fire records from emitting current light; current sources require an acquired body facet.
 - [ ] Qualify historical art and source-free current glow with their actual B/G producers.
 - [ ] Apply facet removals and scope invalidation before rendering; fence async reads/asset loads/receipts and stale patches.
-- [ ] Integrate PS04-A broad current context, shared-receipt recent history and remembered-impression fidelity through ordinary World/Character/Events readers. Preserve human visibility/choice beyond detailed-attention capacity and actor-first cold hydration; AI noticing is not a rendering gate.
+- [ ] Complete integrated PS04-A qualification for broad current context, shared-receipt recent history and remembered-impression fidelity through ordinary World/Character/Events readers. Preserve human visibility/choice beyond detailed-attention capacity and actor-first cold hydration; AI noticing is not a rendering gate.
+      The Character reader now includes searchable recent observations; its native/PostgreSQL and narrow-screen browser checks pass. [Core evidence](../verification/attention-and-memory-core.md) tracks the remaining combined acceptance.
 - [ ] Qualify G-AC01–12 and all applicable lifecycle/projection cases in the technical acceptance table.
 
 **Exit:** ordinary clients cannot receive or reconstruct prohibited current facts through any changed endpoint or presentation surface. Hiding sprites alone is not an exit. No claim of penetration testing is made by this design.

@@ -172,9 +172,11 @@ export function readableDecisionContext(
       ? [`## Activities I chose to inspect\n${list(context['inspectedMethods'])}`]
       : []),
     `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
-    ...(context['receivedSituation'] ? [
-      `## Received situation\n${JSON.stringify(context['receivedSituation'])}\nThese are personally received measurements and retained changes, not other people's intentions. Original times and gaps matter. Unexpanded or missing detail does not prove absence. Use only the supplied references for optional situation queries, further attention or a fallible remembered interpretation.`,
-    ] : []),
+    ...(context['receivedSituation']
+      ? [
+          `## Received situation\n${JSON.stringify(context['receivedSituation'])}\nThese are personally received measurements and retained changes, not other people's intentions. Original times and gaps matter. Unexpanded or missing detail does not prove absence. Use only the supplied references for optional situation queries, further attention or a fallible remembered interpretation.`,
+        ]
+      : []),
     `## Nearby actors and objects\n${list(context['surroundings'])}${Array.isArray(context['contacts']) && context['contacts'].length ? `\nContact evidence:\n${list(context['contacts'])}` : ''}`,
     `## Inventory\n${list(context['possessions'])}${context['inventoryCoverage'] ? `\nPartial inventory preparation: ${JSON.stringify(context['inventoryCoverage'])}. Only this page and bound tools were considered. Other possessions may be useful; explicitly inspect another page when needed. Omission is not absence.` : ''}`,
     `## General knowledge notepad\n${JSON.stringify(context['notepad'] ?? {})}`,

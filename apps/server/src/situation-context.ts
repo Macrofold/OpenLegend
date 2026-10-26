@@ -15,6 +15,7 @@ import {
   type TemporalHistorySelection,
   type TemporalValue,
   type TemporalReceiptLocator,
+  type SituationProposalBinding,
 } from '@open-legend/domain';
 import {
   entityHandle,
@@ -30,7 +31,9 @@ import {
 import type { BoundsQueryCursor } from '@open-legend/spatial';
 
 const reference = z.string().min(1).max(120);
-export const situationQuerySchema = z.discriminatedUnion('kind', [
+// Each branch already has an exclusive literal kind. The ordinary union emits
+// provider-supported anyOf while retaining the same strict native validation.
+export const situationQuerySchema = z.union([
   z
     .object({
       kind: z.literal('near'),
@@ -148,6 +151,7 @@ export function captureSituation(
   );
   const frames: unknown[] = [];
   const frameIds = new Map<string, number>();
+  const frameIndexOwners = new WeakSet<object>();
   const frameReference = (frame: unknown) => {
     const key = JSON.stringify(frame);
     let id = frameIds.get(key);
@@ -157,6 +161,11 @@ export function captureSituation(
       frames.push(frame);
     }
     return id;
+  };
+  const indexedFrame = (value: object, frame: unknown) => {
+    const result: Record<string, unknown> = { ...value, frame: frameReference(frame) };
+    frameIndexOwners.add(result);
+    return result;
   };
   // Only frames referenced by emitted facts occupy the packet. Later expansion
   // appends frames to this table; omitted rows cannot consume its byte allowance.
@@ -169,7 +178,12 @@ export function captureSituation(
       }
       if (!node || typeof node !== 'object') return;
       for (const [key, child] of Object.entries(node)) {
-        if (key === 'frame' && typeof child === 'number' && child >= start) {
+        if (
+          key === 'frame' &&
+          frameIndexOwners.has(node) &&
+          typeof child === 'number' &&
+          child >= start
+        ) {
           if (rewrite) (node as Record<string, unknown>)[key] = rewrite.get(child)!;
           else used.add(child);
         } else visit(child, rewrite);
@@ -196,21 +210,28 @@ export function captureSituation(
             ? {
                 kind: facet.value.kind,
                 correspondence: facet.value.correspondence,
-                earlier: {
-                  location: facet.value.earlier.value.location,
-                  frame: frameReference(facet.value.earlier.value.frame),
-                  measuredFrom: facet.value.earlier.valueMeasuredFrom,
-                  measuredThrough: facet.value.earlier.valueMeasuredThrough,
-                },
-                later: {
-                  location: facet.value.later.value.location,
-                  frame: frameReference(facet.value.later.value.frame),
-                  measuredFrom: facet.value.later.valueMeasuredFrom,
-                  measuredThrough: facet.value.later.valueMeasuredThrough,
-                },
+                earlier: indexedFrame(
+                  {
+                    location: facet.value.earlier.value.location,
+                    measuredFrom: facet.value.earlier.valueMeasuredFrom,
+                    measuredThrough: facet.value.earlier.valueMeasuredThrough,
+                  },
+                  facet.value.earlier.value.frame,
+                ),
+                later: indexedFrame(
+                  {
+                    location: facet.value.later.value.location,
+                    measuredFrom: facet.value.later.valueMeasuredFrom,
+                    measuredThrough: facet.value.later.valueMeasuredThrough,
+                  },
+                  facet.value.later.value.frame,
+                ),
               }
             : facet.value.kind === 'location'
-              ? { ...facet.value, frame: frameReference(facet.value.frame) }
+              ? indexedFrame(
+                  { kind: facet.value.kind, location: facet.value.location },
+                  facet.value.frame,
+                )
               : facetValueForModel(world, actorId, facet.value, facet.original.id);
         return {
           reference: permittedSourceHandle(world, actorId, [
@@ -393,7 +414,7 @@ export function captureSituation(
     measuredAt: world.simTime,
     frames,
     frameEncoding:
-      'Location/motion frame is an index into frames; coordinates remain received world positions.',
+      'Detailed body location/motion frames are indices into frames; other observations retain their captured frame objects. Coordinates remain received world positions.',
     units: { space: 'metres', time: 'simulation-seconds', frame: 'received-world-Y-up' },
     broad: cover.rows.map((row) => ({
       reference: permittedSourceHandle(world, actorId, ['region', jobId, row.key]),
@@ -605,6 +626,31 @@ export function captureSituation(
   };
 }
 export type CapturedSituation = ReturnType<typeof captureSituation>;
+
+/** Domain admission receives only finite granted references, never the server's
+ * captured world, spatial query objects or read closures. */
+export function situationProposalBinding(
+  captured: Pick<
+    CapturedSituation,
+    | 'privacyRevision'
+    | 'attentionReferences'
+    | 'retentionReferences'
+    | 'receiptDetails'
+    | 'observationReferences'
+    | 'presented'
+  >,
+  semanticCauses?: SituationProposalBinding['semanticCauses'],
+): SituationProposalBinding {
+  return {
+    privacyRevision: captured.privacyRevision,
+    attentionReferences: captured.attentionReferences,
+    retentionReferences: captured.retentionReferences,
+    receiptDetails: captured.receiptDetails,
+    observationReferences: captured.observationReferences,
+    presented: captured.presented,
+    ...(semanticCauses ? { semanticCauses } : {}),
+  };
+}
 
 /** One finite read-only query batch over this decision's captured permitted inputs.
  * This grants neither additional sensing nor a repeating interpretation loop. */

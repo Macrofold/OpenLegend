@@ -1,6 +1,7 @@
 import { entityKeys } from '@open-legend/domain';
 import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
+import { restoredSourceVersions } from './source-version-retention.js';
 import { HISTORY_TABLES, validateHistoryEvidence } from './history.js';
 import { digest, type SavedWorld, type SqlDatabase } from './store.js';
 import type { AutosaveSettings, CheckpointFailure, GameSaveSummary } from '@open-legend/protocol';
@@ -62,7 +63,7 @@ export function recoveryFile(payload: unknown, checksum: unknown): string {
     throw new GameSaveError('Recovery pointer integrity check failed.');
   return pointer.data.file;
 }
-export const SAVE_FORMAT = 'development-2026-10-26-shared-temporal-memory';
+export const SAVE_FORMAT = 'development-2026-10-26-bounded-temporal-memory';
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
   format: string;
@@ -657,7 +658,7 @@ export class GameSaves {
         'The saved runtime asset release is unavailable under current permissions.',
       );
   }
-  async install(current: SavedWorld, restore: RestoreSave) {
+  async install(current: SavedWorld, restore: RestoreSave, restored: SavedWorld) {
     this.validatePayload(restore.payload);
     await this.assertAssetDependencies(
       restore.payload,
@@ -692,12 +693,27 @@ export class GameSaves {
         digest(pointer),
         JSON.stringify(pointer),
       );
+    const privateVersions = restoredSourceVersions(
+      restored,
+      restore.payload.memory?.mind_source_versions ?? [],
+    );
     for (const table of [...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES]) {
       await this.db.prepare(`DELETE FROM ${table} WHERE world_id=?`).run(current.world.id);
-      const rows =
+      const originalRows =
         table in restore.payload.history
           ? restore.payload.history[table as keyof SavePayload['history']]
           : (restore.payload.memory?.[table as keyof NonNullable<SavePayload['memory']>] ?? []);
+      const rows =
+        table === 'mind_source_versions'
+          ? privateVersions.rows
+          : table === 'mind_source_annotations'
+            ? originalRows.filter(
+                (row) =>
+                  !restored.world.experience?.forgotten[String(row['actor_id'])]?.includes(
+                    String(row['source_id']),
+                  ),
+              )
+            : originalRows;
       const columns = Object.keys(rows[0] ?? {});
       if (columns.some((key) => !/^[a-z_]+$/.test(key)))
         throw new GameSaveError('Invalid save history.');

@@ -5,6 +5,11 @@ import {
 } from './memory-derivatives.js';
 import { prepareAccountRetention } from './account-retention.js';
 import { cleanupRetiredIndividuals } from './retention-cleanup.js';
+import {
+  prepareSourceVersions,
+  applySourceVersions,
+  type SourceVersionPlan,
+} from './source-version-retention.js';
 import { tableRows } from './record-pages.js';
 import {
   readTemporalHistory,
@@ -37,7 +42,6 @@ import type {
   ExperienceEntry,
   ExperienceSummary,
   MemoryRecord,
-  ImpressionDependency,
 } from '@open-legend/domain';
 import {
   EXPERIENCE_LIMITS,
@@ -82,7 +86,6 @@ const sourceTables = MEMORY_SOURCE_TABLES;
 export type MemoryChanges = Map<string, Set<string> | null> & {
   /** Transaction-local canonical creations, never a reusable eligibility cache. */
   newSources?: Map<string, Map<string, SourceKind>>;
-  retiredClosure?: Array<{ actorId: string; source: PersonalSourceRef }>;
 };
 type SourceKind = keyof typeof sourceTables;
 const sourceKey = (kind: string, id: string) => JSON.stringify([kind, id]);
@@ -121,6 +124,7 @@ export interface PreparedMemorySources {
   readonly changes: RecordChanges;
   readonly groups: ReadonlyMap<SourceKind, readonly PreparedSource[]>;
   readonly allowance: DerivedMemoryAllowance;
+  readonly versions?: SourceVersionPlan;
 }
 // Bound parameters are parsed as full-text values, never as SQL or locale-dependent text.
 const quotedLexeme = (word: string) => `'${word.replace(/['\\]/g, '\\$&')}'`;
@@ -245,6 +249,16 @@ export interface MemoryModel {
  * interpretation remains with domain/AI owners; this repository invents no semantics.
  */
 export class MemoryRepository {
+  private readonly versionPlans = new WeakMap<WorldState, SourceVersionPlan>();
+  stageSourceVersions(world: WorldState, plan: SourceVersionPlan | undefined) {
+    if (plan) this.versionPlans.set(world, plan);
+  }
+  applySourceVersionPlan(worldId: string, revision: number, plan: SourceVersionPlan) {
+    return applySourceVersions(this.db, worldId, revision, plan);
+  }
+  prepareSourceVersionRetention(state: SavedWorld, changes: RecordChanges) {
+    return this.snapshot(() => prepareSourceVersions(this.db, state, changes));
+  }
   /** Establish the committed SQL source cut before a caller captures a read fence. */
   async synchronizeSources(): Promise<void> {
     await this.db.synchronizeProjection?.();
@@ -516,7 +530,7 @@ export class MemoryRepository {
       CREATE INDEX IF NOT EXISTS mind_dependency_world_alias ON mind_source_dependencies(world_id,alias_id,actor_id,derived_id);
       CREATE TABLE IF NOT EXISTS mind_source_versions (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,
-        revision TEXT NOT NULL,payload TEXT NOT NULL,retired_revision BIGINT NOT NULL,
+        revision TEXT NOT NULL,payload TEXT NOT NULL,retired_revision BIGINT NOT NULL,retention_class TEXT NOT NULL,logical_bytes BIGINT NOT NULL,
         PRIMARY KEY(world_id,actor_id,source_kind,source_id,revision));
       CREATE TABLE IF NOT EXISTS mind_source_annotations (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,
@@ -566,9 +580,13 @@ export class MemoryRepository {
   ): Promise<TemporalHistoryPage> {
     return this.snapshot(() => readTemporalHistory(this.db, scope, world, query));
   }
-  prepareRetention(state: SavedWorld, complete = false): Promise<PreparedMemoryRetention> {
+  prepareRetention(
+    state: SavedWorld,
+    complete = false,
+    pending?: RecordChanges,
+  ): Promise<PreparedMemoryRetention> {
     return this.snapshot(async () => {
-      const accounts = await prepareAccountRetention(this.db, state, complete);
+      const accounts = await prepareAccountRetention(this.db, state, complete, pending?.deletes);
       const recent = await prepareTemporalRetention(this.db, accounts.state, complete);
       const rows = new Map(accounts.rows);
       for (const [table, ids] of recent.rows) rows.set(table, [...(rows.get(table) ?? []), ...ids]);
@@ -611,11 +629,25 @@ export class MemoryRepository {
    */
   async project(
     worldId: string,
-    revision: number,
     changes: RecordChanges,
     archive = true,
     sharedWrites?: SqlWriteBatch,
+    versions?: SourceVersionPlan,
   ): Promise<MemoryChanges> {
+    if (
+      archive &&
+      !versions &&
+      ['mind_summaries', 'mind_memories'].some((table) =>
+        (changes.writes.get(table) ?? []).some((row) => {
+          const value = JSON.parse(row.payload) as {
+            sources?: unknown[];
+            manifest?: { coverage?: unknown[] };
+          };
+          return !!(value.sources?.length || value.manifest?.coverage?.length);
+        }),
+      )
+    )
+      throw new Error('Exact source closure must be prepared before retaining a derivation.');
     const affected: MemoryChanges = new Map();
     affected.newSources = new Map();
     const erased = (changes.writes.get('mind_forgotten') ?? []).map((row) => ({
@@ -681,7 +713,6 @@ export class MemoryRepository {
         for (const row of rows) ids.add(String(row['id']));
       }
       const expired = new Set(changes.expired?.get(table) ?? []);
-      const next = new Map(writes.map((row) => [row.id, row.payload]));
       const allIds = [...ids];
       if (allIds.length) await sharedWrites?.flush();
       for (let offset = 0; offset < allIds.length; offset += 800) {
@@ -699,40 +730,23 @@ export class MemoryRepository {
           touch(String(row['actor_id']), String(row['source_id']));
           if (kind === 'awareness') invalidateConversations.add(String(row['actor_id']));
         }
-        await insertRows(
-          this.db,
-          'mind_source_versions',
-          (archive ? old : [])
-            .filter(
-              (row) =>
-                !expired.has(String(row['id'])) && row['payload'] !== next.get(String(row['id'])),
+        if (archive && !versions && old.length) {
+          const candidates = old.map((row) => ({
+            actor_id: String(row['actor_id']),
+            id: String(row['source_id']),
+            revision: personalAccountRevision(String(row['payload'])),
+          }));
+          const required = await this.db
+            .prepare(
+              `SELECT 1 AS required FROM jsonb_to_recordset(?::jsonb)q(actor_id text,id text,revision text) JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=q.actor_id AND d.source_kind=? AND d.source_id=q.id AND d.source_revision=q.revision LIMIT 1`,
             )
-            .map((row) => [
-              worldId,
-              row['actor_id'],
-              kind,
-              row['source_id'],
-              personalAccountRevision(String(row['payload'])),
-              row['payload'],
-              revision,
-            ]),
-          'ON CONFLICT DO NOTHING',
-        );
-        const released = old.filter((row) => expired.has(String(row['id'])));
-        for (const row of released) {
-          const value = JSON.parse(String(row['payload'])) as {
-            sources?: PersonalSourceRef[];
-            manifest?: { coverage: PersonalSourceRef[] };
-            impression?: { dependencies: ImpressionDependency[] };
-          };
-          for (const source of [
-            ...(value.sources ?? []),
-            ...(value.manifest?.coverage ?? []),
-            ...(value.impression?.dependencies ?? []),
-          ])
-            if (validPersonalSourceRef(source))
-              (affected.retiredClosure ??= []).push({ actorId: String(row['actor_id']), source });
+            .get(JSON.stringify(candidates), worldId, kind);
+          if (required)
+            throw new Error(
+              'Exact source closure must be prepared before replacing retained evidence.',
+            );
         }
+        const released = old.filter((row) => expired.has(String(row['id'])));
         if (released.length) {
           const keys = JSON.stringify(
             released.map((row) => ({
@@ -740,7 +754,10 @@ export class MemoryRepository {
               source_id: String(row['source_id']),
             })),
           );
-          for (const dependent of ['mind_source_versions', 'mind_source_annotations'])
+          for (const dependent of [
+            ...(versions ? [] : ['mind_source_versions']),
+            'mind_source_annotations',
+          ])
             await this.db
               .prepare(
                 `DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
@@ -814,13 +831,23 @@ export class MemoryRepository {
   /** Prepare the exact changed source rows once. No world/history enumeration or SQL,
    * and no eligibility/index mutation before the transaction actually applies them.
    * docs/projects/performance-overhaul/journal-contract.md */
-  prepareSources(worldId: string, changes: RecordChanges): PreparedMemorySources {
+  prepareSources(
+    worldId: string,
+    changes: RecordChanges,
+    world: WorldState,
+  ): PreparedMemorySources {
     const groups = new Map<SourceKind, readonly PreparedSource[]>();
     for (const kind of Object.keys(sourceTables) as SourceKind[])
       groups.set(kind, [...this.sourceRows(worldId, kind, changes)]);
     if (!this.derivedAllowance || this.derivedAllowance.worldId !== worldId)
       throw new Error('Selected memory retention policy is unavailable.');
-    return { worldId, changes, groups, allowance: this.derivedAllowance };
+    return {
+      worldId,
+      changes,
+      groups,
+      allowance: this.derivedAllowance,
+      versions: this.versionPlans.get(world),
+    };
   }
   private *sourceRows(
     worldId: string,
@@ -1373,25 +1400,6 @@ export class MemoryRepository {
           IS DISTINCT FROM (excluded.source_revision,excluded.importance,excluded.at)`,
         )
         .run(...params, worldId, worldId);
-    }
-    if (changes.retiredClosure?.length) {
-      const unique = [
-        ...new Map(
-          changes.retiredClosure.map(({ actorId, source }) => [
-            JSON.stringify([actorId, source]),
-            { actor_id: actorId, kind: source.kind, id: source.id, revision: source.revision },
-          ]),
-        ).values(),
-      ];
-      for (let offset = 0; offset < unique.length; offset += 800)
-        await this.db
-          .prepare(
-            `DELETE FROM mind_source_versions v USING jsonb_to_recordset(?::jsonb) q(actor_id text,kind text,id text,revision text)
-        WHERE v.world_id=? AND v.actor_id=q.actor_id AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision
-        AND NOT EXISTS(SELECT 1 FROM mind_source_dependencies d JOIN recall_sources r ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id
-          WHERE d.world_id=v.world_id AND d.actor_id=v.actor_id AND d.source_kind=v.source_kind AND d.source_id=v.source_id AND d.source_revision=v.revision AND r.memory_kind IS DISTINCT FROM 'impression')`,
-          )
-          .run(JSON.stringify(unique.slice(offset, offset + 800)), worldId);
     }
     await this.trimDerived(worldId, changes.keys());
   }

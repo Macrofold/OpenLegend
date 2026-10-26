@@ -1,4 +1,8 @@
 import { retentionNeedsPreparation } from './temporal-storage.js';
+import {
+  sourceVersionPreparationNeeded,
+  restoredSourceVersions,
+} from './source-version-retention.js';
 import { historyPositions } from './history-residency.js';
 import {
   resolveCommandContactReferences,
@@ -1558,6 +1562,7 @@ export class WorldService {
       const retention = await this.prepareRetention(saved, !!restore);
       const prepared = this.prepareSnapshot(retention.state);
       this.store.records?.stageRetirements(prepared.snapshot, retention.rows, retention.positions);
+      this.store.memories?.stageSourceVersions(prepared.snapshot.world, retention.versions);
       const { historyWorld, appendEventCount, currentAppendCount } = prepared;
       saved = prepared.snapshot;
       const revision = await timed('world.commit', () =>
@@ -1775,6 +1780,7 @@ export class WorldService {
       const retention = await this.prepareRetention(saved);
       const prepared = this.prepareSnapshot(retention.state);
       store.records?.stageRetirements(prepared.snapshot, retention.rows, retention.positions);
+      store.memories?.stageSourceVersions(prepared.snapshot.world, retention.versions);
       // Preparation assigns canonical record positions; release reuses them.
       const changes = store.prepareCommit(this.persistedRevision, prepared.snapshot, {
         after: prepared.historyWorld,
@@ -1932,9 +1938,20 @@ export class WorldService {
   }
 
   private async prepareRetention(saved: SavedWorld, complete = false) {
-    if (!this.store.memories || !retentionNeedsPreparation(saved.world))
-      return { state: saved, rows: new Map<string, string[]>(), positions: undefined };
+    const versions = sourceVersionPreparationNeeded(this.persistedMemorySources, saved.world);
+    if (!this.store.memories || (!retentionNeedsPreparation(saved.world) && !versions))
+      return {
+        state: saved,
+        rows: new Map<string, string[]>(),
+        positions: undefined,
+        versions: undefined,
+      };
     await this.backgroundSave?.done;
+    if (!complete) {
+      if (!this.store.prepareRetainedSourceClosure)
+        throw new Error('Exact retained source preparation is unavailable.');
+      return this.store.prepareRetainedSourceClosure(saved);
+    }
     return this.store.memories.prepareRetention(saved, complete);
   }
 
@@ -2168,22 +2185,13 @@ export class WorldService {
     selection: HistoryEditSelection,
     operation: (prepared?: PreparedHistoryEdit) => Promise<T>,
   ): Promise<T | (ApiResult & { revision: number })> {
-    const measured = performance.now();
-    const trace = (stage: string) => {
-      if (process.env['OL_DEBUG_MEMORY_EDIT'] === '1')
-        console.error('memory-edit-stage', stage, Math.round(performance.now() - measured));
-    };
-    trace('enter');
     await this.flush();
-    trace('flushed');
     if (!this.store.records || !this.store.adoptHistory) return this.mutate(() => operation());
     const original = this.saved;
     const generation = this.generation;
     const revision = this.persistedRevision;
     const prepared = await prepareHistoryEdit(this.store.records.db, original, selection);
-    trace('prepared');
     return this.mutate(async () => {
-      trace('mutation');
       await this.flush();
       // A newer world may have added a dependency or changed authority while the read
       // snapshot was open. Refuse stale preparation instead of dropping that dependency.
@@ -2200,12 +2208,9 @@ export class WorldService {
         };
       this.store.adoptHistory!(original, prepared.state);
       this.saved = prepared.state;
-      trace('adopted');
       freezeWorld(this.saved.world);
       try {
-        trace('operation');
         const result = await operation(prepared);
-        trace('completed');
         return result;
       } finally {
         if (this.store.releaseHistory && !this.storageError)
@@ -2797,6 +2802,19 @@ export class WorldService {
         for (const [actorId, ids] of Object.entries(ledger ?? {}))
           for (const sourceId of ids)
             restored.world = forgetExperience(restored.world, actorId, sourceId).world;
+        restored.world = restoredSourceVersions(
+          restored,
+          payload.memory?.mind_source_versions ?? [],
+        ).state.world;
+        restored.world = updateWorld(restored.world, (world) => {
+          for (const [actorId, revision] of Object.entries(
+            this.world.experience?.privacyRevisions ?? {},
+          ))
+            (world.experience!.privacyRevisions ??= {})[actorId] = Math.max(
+              revision,
+              world.experience!.privacyRevisions?.[actorId] ?? 0,
+            );
+        });
         await this.prepareNativeKnownPlaces(restored.world, true);
         restored.manuallyPaused = true;
         restored.world.paused = true;

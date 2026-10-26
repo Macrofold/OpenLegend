@@ -39,7 +39,7 @@ import {
 import { hasMemory } from './living.js';
 import { knownPlaceEvidence } from './known-place-evidence.js';
 import { validEncounterExposure, type EncounterExposure } from './places.js';
-import { hasRecordFields, isSafeRecordId } from './records.js';
+import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
 import {
   selectedBodyIndividual,
   selectedPruneObserverIndividuals,
@@ -299,6 +299,39 @@ const observerLife = (entity: Entity): ObserverLife => ({
 const evidenceEncoder = new TextEncoder();
 /** Prepared native source identity is a dependency token, never saved authority. */
 const measuredSources = new WeakMap<ObservationContribution, { leaseId: string; token: string }>();
+interface VisualSourceValues {
+  location:Extract<ObservedLocation,{kind:'point'}>;
+  facets:readonly SensoryFacet[];
+}
+/** The native frame owns this finite cache. Its complete source token covers only
+ * common outward values; each admitted receiver still supplies its own frame,
+ * detector, time, exposure, association and evidence envelope. */
+const visualSourceValues=new WeakMap<(id:string)=>string|undefined,Map<string,{token:string;values:VisualSourceValues}>>();
+function prepareVisualSourceValues(world:WorldState,subject:Entity,sourceToken:((id:string)=>string|undefined)|undefined,
+  token:string|undefined,publicAttributes:readonly AttributeView[]):VisualSourceValues {
+  let prepared=sourceToken&&visualSourceValues.get(sourceToken);
+  const prior=prepared?.get(subject.id);
+  if(token&&prior?.token===token)return prior.values;
+  const profile=bodyProfile(subject),placement=subject.placement!;
+  const body:ObservedBody={kind:subject.kind,position:{...readOnlyDraftView(worldPosition(subject))},heading:subject.spatial.heading,
+    appearance:subject.appearance??'sprite',radius:profile.radius,height:profile.height,supportSurfaceId:worldSupport(subject),
+    outward:outwardStates(subject),label:selectedOutwardBodyName(world,subject),
+    ...(!subject.actor&&subject.description?{description:subject.description}:{}),
+    ...(subject.resource?{quantity:subject.resource.quantity}:{}),...(subject.heat?{heatLit:subject.heat.lit}:{}),
+    ...(subject.remains?{remainsPhase:subject.remains.phase}:{}),
+    ...(subject.container||subject.kind==='item-pile'||subject.remains?{storage:{placementRevision:placement.revision}}:{})};
+  const facets:SensoryFacet[]=[{kind:'detected',detected:subject.actor?'body':'surface',limits:[]},{kind:'body',body},
+    {kind:'carried',items:equippedItems(world,subject.id).flatMap((item)=>{
+      const definition=world.itemDefinitions[item.definitionId];return definition?[{itemKindAsObserved:definition.name}]:[];
+    })}];
+  if(subject.kind==='item-pile'||subject.remains)facets.push({kind:'pile-contents',items:itemsForOwner(world,subject.id).flatMap((item)=>{
+    const definition=world.itemDefinitions[item.definitionId];return definition?[{id:item.id,definitionId:item.definitionId,name:definition.name,quantity:item.quantity,portable:definition.portable===true}]:[];
+  })});
+  if(publicAttributes.length)facets.push({kind:'public-attributes',attributes:[...cloneValue(publicAttributes)]});
+  const values=freeze({location:{kind:'point' as const,point:body.position,errorRadius:0},facets},true);
+  if(sourceToken&&token){if(!prepared)visualSourceValues.set(sourceToken,(prepared=new Map()));prepared.set(subject.id,{token,values});}
+  return values;
+}
 const acquisitionKey = (
   input: Pick<ObservationContribution, 'modality' | 'detector' | 'origin'>,
 ): string =>
@@ -505,6 +538,7 @@ function immutableSnapshot(value: CapturedCurrentFacet): CapturedCurrentFacet {
 }
 function copyFacetValue(value: SensoryFacet): SensoryFacet {
   const source = readOnlyDraftView(value);
+  if(isImmutableData(source))return source;
   if (source.kind === 'confirmation')
     return { kind: 'confirmation', snapshot: immutableSnapshot(source.snapshot) };
   if (source.kind === 'observed-motion')
@@ -994,71 +1028,10 @@ export function reconcileVisualEvidence(
       }
       continue;
     }
-    const body = bodyProfile(subject);
-    const value: ObservedBody = {
-      kind: subject.kind,
-      position: { ...readOnlyDraftView(worldPosition(subject)) },
-      heading: subject.spatial.heading,
-      appearance: subject.appearance ?? 'sprite',
-      radius: body.radius,
-      height: body.height,
-      supportSurfaceId: worldSupport(subject),
-      outward: outwardStates(subject),
-      label: selectedOutwardBodyName(world, subject),
-      ...(!subject.actor
-        ? {
-            ...(subject.description ? { description: subject.description } : {}),
-          }
-        : {}),
-      ...(subject.resource ? { quantity: subject.resource.quantity } : {}),
-      ...(subject.heat ? { heatLit: subject.heat.lit } : {}),
-      ...(subject.remains ? { remainsPhase: subject.remains.phase } : {}),
-      ...(subject.container || subject.kind === 'item-pile' || subject.remains
-        ? { storage: { placementRevision: placement.revision } }
-        : {}),
-    };
-    const frame: ObservationFrame = {
-      positionAtObservation: { ...readOnlyDraftView(worldPosition(observer)) },
-      forwardAtObservation: observer.spatial.heading,
-    };
-    const values: SensoryFacet[] = [
-      { kind: 'detected', detected: subject.actor ? 'body' : 'surface', limits: [] },
-      {
-        kind: 'location',
-        location: { kind: 'point', point: value.position, errorRadius: 0 },
-        frame,
-      },
-      { kind: 'body', body: value },
-      {
-        kind: 'carried',
-        items: equippedItems(world, subject.id).flatMap((item) => {
-          const definition = world.itemDefinitions[item.definitionId];
-          return definition ? [{ itemKindAsObserved: definition.name }] : [];
-        }),
-      },
-    ];
-    if (subject.kind === 'item-pile' || subject.remains)
-      values.push({
-        kind: 'pile-contents',
-        items: itemsForOwner(world, subject.id).flatMap((item) => {
-          const definition = world.itemDefinitions[item.definitionId];
-          return definition
-            ? [
-                {
-                  id: item.id,
-                  definitionId: item.definitionId,
-                  name: definition.name,
-                  quantity: item.quantity,
-                  portable: definition.portable === true,
-                },
-              ]
-            : [];
-        }),
-      });
-    const publicAttributes =
-      sourcePublicAttributes?.(subject.id) ?? projectAttributes(world, subject, 'public');
-    if (publicAttributes.length)
-      values.push({ kind: 'public-attributes', attributes: [...publicAttributes] });
+    const prepared=prepareVisualSourceValues(world,subject,sourceToken,token,
+      sourcePublicAttributes?.(subject.id)??projectAttributes(world,subject,'public'));
+    const frame:ObservationFrame={positionAtObservation:{...readOnlyDraftView(worldPosition(observer))},forwardAtObservation:observer.spatial.heading};
+    const values:SensoryFacet[]=[prepared.facets[0]!,{kind:'location',location:prepared.location,frame},...prepared.facets.slice(1)];
     const detected = state.current[`${subject.id}:detected`];
     let original = detected && readOnlyDraftView(detected).original;
     if (!original)
@@ -1184,7 +1157,7 @@ export function reconcileVisualEvidence(
           original: facetOriginal!,
           originalOrdinal: facetOriginal!.facets.length === 1 ? 0 : ordinal,
           modality: 'sight',
-          value: cloneValue(facet),
+          value: copyFacetValue(facet),
           valueMeasuredFrom: world.simTime,
           valueMeasuredThrough: world.simTime,
           valueAcquiredAt: world.simTime,
@@ -1194,7 +1167,7 @@ export function reconcileVisualEvidence(
       } else if (changed) {
         prior.revision++;
         prior.confirmedThrough = world.simTime;
-        prior.value = cloneValue(facet);
+        prior.value = copyFacetValue(facet);
         prior.valueMeasuredFrom = world.simTime;
         prior.valueMeasuredThrough = world.simTime;
         prior.valueAcquiredAt = world.simTime;

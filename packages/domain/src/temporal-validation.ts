@@ -173,7 +173,7 @@ export function validateTemporalEvidenceState(
       if (
         !record(actor.accounts) ||
         Object.keys(actor.accounts).some(
-          (key) => !['nextDue', 'optional', 'required', 'speech'].includes(key),
+          (key) => !['nextDue', 'optional', 'required', 'speech', 'archives'].includes(key),
         )
       )
         throw new Error('Invalid retained account counters.');
@@ -182,10 +182,29 @@ export function validateTemporalEvidenceState(
         (!finite(actor.accounts.nextDue) || actor.accounts.nextDue < 0)
       )
         throw new Error('Invalid account retention deadline.');
+      if (
+        actor.accounts.archives !== undefined &&
+        (!record(actor.accounts.archives) ||
+          Object.keys(actor.accounts.archives).length !== 3 ||
+          ['optional', 'required', 'speech'].some(
+            (key) => !Object.hasOwn(actor.accounts!.archives!, key),
+          ))
+      )
+        throw new Error('Invalid exact source closure counters.');
       for (const key of ['optional', 'required', 'speech'] as const) {
         const counter = actor.accounts[key];
         if (!record(counter) || !ordinal(counter.bytes) || !ordinal(counter.count))
           throw new Error('Invalid retained account counter.');
+        const archive = actor.accounts.archives?.[key];
+        if (
+          archive &&
+          (!record(archive) ||
+            !ordinal(archive.bytes) ||
+            !ordinal(archive.count) ||
+            archive.bytes > counter.bytes ||
+            archive.count > counter.count)
+        )
+          throw new Error('Invalid exact source closure charge.');
       }
     }
     const validateReceipt = (receipt: TemporalReceipt, values?: TemporalValue[]) => {

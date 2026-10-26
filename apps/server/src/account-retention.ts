@@ -75,6 +75,7 @@ export async function prepareAccountRetention(
   db: SqlDatabase,
   state: SavedWorld,
   complete = false,
+  pendingDeletes?: ReadonlyMap<string, readonly string[]>,
 ): Promise<PreparedMemoryRetention> {
   const policy = selectedTemporalPolicy(state.world),
     now = state.world.simTime;
@@ -98,6 +99,7 @@ export async function prepareAccountRetention(
         UNION ALL SELECT CASE WHEN required=1 THEN 'required' ELSE 'optional' END AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_temporal_supports WHERE world_id=? AND actor_id=? GROUP BY required
         UNION ALL SELECT 'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_knowledge_documents WHERE world_id=? AND actor_id=? AND payload::jsonb->>'origin'='actor-edit'
         UNION ALL SELECT 'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_recognition WHERE world_id=? AND parent_id=? AND payload::jsonb->>'retained'='true' AND payload::jsonb->>'authored'<>'true'
+        UNION ALL SELECT retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') AND actor_id=? GROUP BY retention_class
       ) totals GROUP BY category`,
             )
             .all(
@@ -108,6 +110,8 @@ export async function prepareAccountRetention(
               actorId,
               world.id,
               JSON.stringify(['world', 'observerIdentities', actorId]),
+              world.id,
+              actorId,
             );
       world = updateWorld(world, (draft) => {
         ensureExperienceAccounting(draft, actorId);
@@ -174,6 +178,7 @@ export async function prepareAccountRetention(
     for (const row of metadata) {
       const kind = row['source_kind'] as Kind,
         id = String(row['source_id']);
+      if (pendingDeletes?.get(tables[kind])?.includes(String(row['id']))) continue;
       candidates.set(JSON.stringify([kind, id]), {
         kind,
         id,

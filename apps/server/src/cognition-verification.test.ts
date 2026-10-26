@@ -1,3 +1,4 @@
+import { decisionFixtureResult } from '../../../tests/fixtures/actor-response.js';
 import { entityGet, entityValues } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import {
@@ -167,6 +168,8 @@ function talk(context: string, text: string) {
         note: null,
         name: null,
         appraise: null,
+        observe: null,
+        remember: null,
         talk: {
           text,
           addresseeEntityId: speaker(context),
@@ -210,7 +213,17 @@ function fixtureTransport(
       // Only NPC responses are under test; any other generation is rejected before a result.
       if ((body['text'] as { format?: { name?: string } }).format?.name !== 'npc_response')
         return new Response('{}', { status: 400 });
-      outputs.push(JSON.stringify(reply(body)));
+      const output = reply(body);
+      const properties = (
+        body['text'] as { format?: { schema?: { properties?: Record<string, unknown> } } }
+      ).format?.schema?.properties;
+      outputs.push(
+        JSON.stringify(
+          output && typeof output === 'object' && !Array.isArray(output) && properties?.['queries']
+            ? { queries: null, ...output }
+            : output,
+        ),
+      );
       return json({
         id: `resp_fixture_${outputs.length}`,
         model: body['model'],
@@ -325,13 +338,14 @@ async function harness(
       calls.generations.push(request);
       // Only NPC decisions are under test; background work (for example private narration)
       // receives no fixture content.
-      return (
-        request.task !== 'npc_response'
+      return decisionFixtureResult(
+        request,
+        (request.task !== 'npc_response'
           ? failure(request.requestId, 'openai', 'unavailable')
           : state.generate
             ? await state.generate(request)
-            : value(request.requestId, 'openai', { operations: [] })
-      ) as AiResult<T>;
+            : value(request.requestId, 'openai', { operations: [] })) as AiResult<T>,
+      );
     },
   };
   // Injected direct adapters are recorded like the fake so request IDs stay inspectable.

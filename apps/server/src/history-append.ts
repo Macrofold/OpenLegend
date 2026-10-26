@@ -84,8 +84,9 @@ export class HistoryAppendWriter extends HistoryBatch {
         ...perspectiveColumns(source, actorId),
         event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
       ]);
+    const body=account.body;
     const pending =
-      account.body === undefined
+      body === undefined
         ? append()
         : (async () => {
             if (this.accountRevision === undefined) {
@@ -101,8 +102,10 @@ export class HistoryAppendWriter extends HistoryBatch {
               account.account.kind,
               event.id,
               account.account.revision,
-              account.body,
+              body,
               this.accountRevision,
+              'external-story',
+              Buffer.byteLength(body),
             ]);
             if (retained) await retained;
             await append();

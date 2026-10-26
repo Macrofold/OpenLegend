@@ -583,6 +583,8 @@ describe('enabled character decision reconsideration', () => {
                         note: null,
                         name: null,
                         appraise: null,
+                        observe: null,
+                        remember: null,
                       },
                     ],
                   },
@@ -1271,6 +1273,8 @@ describe('durable reader publication and bounded scheduling', () => {
       note: null,
       name: null,
       appraise: null,
+      observe: null,
+      remember: null,
     };
     await h.service.transition(
       (world) =>
@@ -1445,6 +1449,8 @@ describe('durable reader publication and bounded scheduling', () => {
                   note: null,
                   name: null,
                   appraise: null,
+                  observe: null,
+                  remember: null,
                   think: { text: 'I want a quiet break.', aboutEntityIds: [] },
                 },
               ],

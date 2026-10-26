@@ -359,12 +359,40 @@ export async function prepareDecision(
   const evidenceScope = head
     ? { worldId: world.id, actorId, generation: head.generation }
     : undefined;
-  const recentHistory = service.store.memories && evidenceScope
-    ? await service.store.memories.temporalHistory(evidenceScope, {
-        subjects: currentDetailedAttention(world, actorId).map((entry) => entry.exposure.episodeId),
-        through: world.simTime,
-      }, world)
-    : selectTemporalHistory(world.experience?.temporal, actorId);
+  const recentHistory =
+    service.store.memories && evidenceScope
+      ? await service.store.memories.temporalHistory(
+          evidenceScope,
+          {
+            subjects: currentDetailedAttention(world, actorId).map(
+              (entry) => entry.exposure.episodeId,
+            ),
+            through: world.simTime,
+          },
+          world,
+        )
+      : selectTemporalHistory(world.experience?.temporal, actorId);
+  // Size the same received measurements that this decision will actually use,
+  // before optional paid selection. Later waits cannot replace them with a new
+  // scene or make older retained changes newly observed.
+  const capturedSituation = captureSituation(world, actorId, jobId, recentHistory);
+  const validateSituation = async () => {
+    if (generation !== service.generation || !capturedSituation.valid(service.world))
+      throw new Error('Received situation evidence changed during this decision.');
+    if (evidenceScope && service.store.memories) {
+      const locators = Object.values(capturedSituation.retentionReferences);
+      for (let offset = 0; offset < locators.length; offset += 128)
+        if (
+          !(await service.store.memories.temporalReceiptsCurrent(
+            evidenceScope,
+            locators.slice(offset, offset + 128),
+          ))
+        )
+          throw new Error('Recent personal evidence expired during this decision.');
+    }
+    if (generation !== service.generation || !capturedSituation.valid(service.world))
+      throw new Error('Personal evidence changed during context validation.');
+  };
   const bodies = new MemoryReadCache();
   const retainedEvidence =
     service.store.memories && evidenceScope
@@ -499,6 +527,7 @@ export async function prepareDecision(
   const snapshotActor = observed.actor.actor!;
   const requiredActivity = activityDecisionFacts(world, actorId, observed);
   const requiredContext: Record<string, unknown> = {
+    receivedSituation: capturedSituation.packet,
     ...requiredActivity,
     capabilities: {
       speech: canSpeak(observed.actor),
@@ -689,6 +718,7 @@ export async function prepareDecision(
         ]),
       ),
   );
+  await validateSituation();
   const selection = await recall
     .select(
       world,
@@ -741,7 +771,6 @@ export async function prepareDecision(
   const rememberedEpisodes = new Map(
     [...rememberedSubjects].map((id) => [id, world.perceptionEpisodes?.[actorId]?.[id] ?? null]),
   );
-  let capturedSituation: ReturnType<typeof captureSituation> | undefined;
   const validatePrepared = async (flush = true) => {
     await conversation.validate(flush, sources);
     // Attention/generation can outlive an unnamed person's observation. Historical
@@ -756,16 +785,7 @@ export async function prepareDecision(
       throw new Error(
         'Action outcomes changed during the decision; reconsider with current memories.',
       );
-    if (capturedSituation && !capturedSituation.valid(service.world))
-      throw new Error('Received situation evidence changed during this decision.');
-    if(evidenceScope && service.store.memories && capturedSituation) {
-      const locators=Object.values(capturedSituation.retentionReferences);
-      for(let offset=0;offset<locators.length;offset+=128)
-        if(!(await service.store.memories.temporalReceiptsCurrent(evidenceScope,locators.slice(offset,offset+128))))
-          throw new Error('Recent personal evidence expired during this decision.');
-    }
-    if(generation!==service.generation || (capturedSituation && !capturedSituation.valid(service.world)))
-      throw new Error('Personal evidence changed during context validation.');
+    await validateSituation();
   };
   await validatePrepared(false);
   const currentWorld = service.world;
@@ -804,7 +824,6 @@ export async function prepareDecision(
     ).values(),
   ];
   const currentActivity = activityDecisionFacts(currentWorld, actorId, currentObserved);
-  capturedSituation = captureSituation(currentWorld, actorId, jobId, recentHistory);
   const context: Record<string, unknown> = {
     receivedSituation: capturedSituation.packet,
     ...currentActivity,
@@ -864,7 +883,11 @@ export async function prepareDecision(
   context['conversation'] = conversation.lines;
   Object.assign(
     context,
-    contextSections(currentSelection.filter((candidate) => candidate.kind !== 'conversation' && candidate.kind !== 'entity')),
+    contextSections(
+      currentSelection.filter(
+        (candidate) => candidate.kind !== 'conversation' && candidate.kind !== 'entity',
+      ),
+    ),
   );
   if (currentWorld.innerWorlds?.[actorId]?.reconsiderationRequired)
     context['reconsideration'] =
@@ -1028,9 +1051,10 @@ export async function prepareDecision(
     situation: capturedSituation,
     readSituationHistory: async (query: import('./temporal-storage.js').TemporalHistoryQuery) => {
       await validatePrepared();
-      const result = service.store.memories && evidenceScope
-        ? await service.store.memories.temporalHistory(evidenceScope, query, currentWorld)
-        : selectTemporalHistory(currentWorld.experience?.temporal, actorId, query);
+      const result =
+        service.store.memories && evidenceScope
+          ? await service.store.memories.temporalHistory(evidenceScope, query, currentWorld)
+          : selectTemporalHistory(currentWorld.experience?.temporal, actorId, query);
       await validatePrepared(false);
       return result;
     },

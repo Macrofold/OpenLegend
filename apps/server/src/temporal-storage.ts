@@ -3,6 +3,7 @@ import {
   selectedAttentionPolicy,
   temporalFacetEligible,
   retireTemporalChunks,
+  clearTemporalCaptureReferences,
   updateWorld,
   type WorldState,
   type TemporalChunk,
@@ -12,6 +13,7 @@ import {
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { MemoryScope } from './memory-repository.js';
+import type { SourceVersionPlan } from './source-version-retention.js';
 
 const maximumPreparation = 4 * 1024 * 1024;
 const maximumRows = 8192;
@@ -21,6 +23,7 @@ export interface PreparedMemoryRetention {
   state: SavedWorld;
   rows: Map<string, string[]>;
   positions?: Map<string, Map<string, number>>;
+  versions?: SourceVersionPlan;
 }
 export interface TemporalHistoryPage extends TemporalHistorySelection {
   hasMore: boolean;
@@ -377,7 +380,6 @@ export async function prepareTemporalRetention(
   });
   const keep = new Set<string>();
   for (const actor of Object.values(world.experience?.temporal?.actors ?? {})) {
-    for (const reference of Object.values(actor.captures)) keep.add(reference.blockId);
     for (const chunk of actor.chunks) for (const source of chunk.sourceRefs) keep.add(source);
   }
   const candidates = [...possibleSources].filter((id) => !keep.has(id));
@@ -406,6 +408,10 @@ export async function prepareTemporalRetention(
           ...state,
           world: updateWorld(world, (draft) => {
             const temporal = draft.experience!.temporal!;
+            clearTemporalCaptureReferences(
+              draft,
+              new Set(unused.map((row) => String(row['source_id']))),
+            );
             for (const row of unused) delete temporal.sources[String(row['source_id'])];
             if (temporal.activeSource && !temporal.sources[temporal.activeSource]) {
               delete temporal.activeSource;

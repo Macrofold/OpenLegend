@@ -28,7 +28,9 @@ export interface TemporalReceiptLocator {
   epoch: string;
   ordinal: number;
 }
-export function temporalReceiptId(locator: Pick<TemporalReceiptLocator, 'epoch' | 'ordinal'>): string {
+export function temporalReceiptId(
+  locator: Pick<TemporalReceiptLocator, 'epoch' | 'ordinal'>,
+): string {
   return `temporal-receipt-${locator.epoch}-${locator.ordinal}`;
 }
 export interface TemporalValueReference {
@@ -134,7 +136,7 @@ export interface TemporalActorHistory {
     optional: { bytes: number; count: number };
     required: { bytes: number; count: number };
     speech: { bytes: number; count: number };
-    archives?:Record<'optional'|'required'|'speech',{bytes:number;count:number}>;
+    archives?: Record<'optional' | 'required' | 'speech', { bytes: number; count: number }>;
   };
 }
 export interface TemporalSupportCapsule {
@@ -655,6 +657,18 @@ export function captureTemporalObservation(
   );
 }
 
+/** A deduplication watermark grants no retention of a mixed shared source block.
+ * The repository calls this only after proving no retained receipt owns the block. */
+export function clearTemporalCaptureReferences(
+  world: WorldState,
+  blockIds: ReadonlySet<string>,
+): void {
+  if (!blockIds.size) return;
+  for (const actor of Object.values(world.experience?.temporal?.actors ?? {}))
+    for (const [key, reference] of Object.entries(actor.captures))
+      if (blockIds.has(reference.blockId)) delete actor.captures[key];
+}
+
 /** Server-selected cold retirement totals are applied by this same native semantic owner. */
 export function retireTemporalChunks(
   world: WorldState,
@@ -773,7 +787,8 @@ export function invalidateTemporalEvidence(
   for (const chunk of actor.chunks) {
     const removed = chunk.receipts.filter(
       (receipt) =>
-        sourceIds.has(receipt.id) || receipt.sourceIds.some((id) => sourceIds.has(id)) ||
+        sourceIds.has(receipt.id) ||
+        receipt.sourceIds.some((id) => sourceIds.has(id)) ||
         receipt.facets.some((facet) => facet.original && sourceIds.has(facet.original.source.id)),
     );
     if (!removed.length) continue;

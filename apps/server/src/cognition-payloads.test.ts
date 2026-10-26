@@ -11,6 +11,13 @@ import {
   flattenFiles,
   quantityOf,
   wordCount,
+  entitySet,
+  initializePerception,
+  setSpatialPosition,
+  worldPosition,
+  worldSupport,
+  currentBodySubject,
+  knowledgeDocument,
 } from '@open-legend/domain';
 import {
   validateJudgmentSize,
@@ -35,6 +42,7 @@ import { traceDetails } from './cognition-inspection.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import type { JobRecord } from './store.js';
 import { WorldService } from './world-service.js';
+import { entityHandle } from './entity-references.js';
 
 // CR01 deterministic payload inspection: the actual requests the director sends for a greeting,
 // a resource task, a promise and a hazard, measured against the per-level limits, plus output
@@ -558,9 +566,13 @@ async function harness(
       // Only NPC decisions are inspected; background work receives no fixture content.
       const result = request.task === 'npc_response' ? state.reply(request) : undefined;
       const properties = request.schema['properties'] as Record<string, unknown> | undefined;
-      const output = result && typeof result === 'object' && !Array.isArray(result)
-        ? { ...(properties && Object.hasOwn(properties, 'queries') ? { queries: null } : {}), ...result }
-        : result;
+      const output =
+        result && typeof result === 'object' && !Array.isArray(result)
+          ? {
+              ...(properties && Object.hasOwn(properties, 'queries') ? { queries: null } : {}),
+              ...result,
+            }
+          : result;
       return (
         request.task === 'npc_response'
           ? value(request.requestId, 'openai', output)
@@ -1496,51 +1508,197 @@ describe(
   },
 );
 
-
 describe('actual director situation query continuation', () => {
+  it('keeps an unknown person disclosed by expansion as the same observer-local subject when taking a note', async () => {
+    let h: Harness;
+    let generation = 0;
+    let initialHandles = new Set<string>();
+    let crowdHandles = new Set<string>();
+    let selectedHandle = '';
+    h = await harness({
+      script: { route: { level2: 0.99 } },
+      reply(request) {
+        if (++generation === 1) {
+          initialHandles = new Set(
+            references(String(request.context)).map((entry) => entry.entityId),
+          );
+          return {
+            operations: [],
+            queries: [{ kind: 'near', anchor: speakerHandle(request), radius: 14, cursor: null }],
+          };
+        }
+        const expansion = JSON.parse(
+          String(request.context).split('Requested received evidence: ')[1]!,
+        ) as {
+          results: Array<{ result: { bodies: Array<{ reference: string }> } }>;
+        };
+        selectedHandle = expansion.results
+          .flatMap((row) => row.result.bodies)
+          .find(
+            (row) => crowdHandles.has(row.reference) && !initialHandles.has(row.reference),
+          )!.reference;
+        return {
+          operations: [
+            operation('note_new_person', {
+              note: {
+                subjectId: selectedHandle,
+                expectedRevision: 0,
+                text: 'A person I just noticed in the crowd.',
+              },
+            }),
+          ],
+        };
+      },
+    });
+    const crowdIds = await editWorld(h.service, (world) => {
+      const prototype = entityGet(world.entities, NPC_ID)!,
+        point = worldPosition(prototype);
+      return Array.from({ length: 16 }, (_, index) => {
+        const entity = structuredClone(prototype),
+          id = `query-crowd-${index}`;
+        entity.id = id;
+        entity.name = `Undisclosed fixture identity ${index}`;
+        entitySet(world.entities, id, entity);
+        setSpatialPosition(
+          world,
+          entity,
+          {
+            x: point.x + 1 + (index % 4) * 0.7,
+            y: point.y,
+            z: point.z + 1 + Math.floor(index / 4) * 0.7,
+          },
+          worldSupport(prototype),
+        );
+        return id;
+      });
+    });
+    await editWorld(h.service, (world) => initializePerception(world, []));
+    const subjects = new Map(
+      crowdIds.map((id) => [id, currentBodySubject(h.service.world, NPC_ID, id)!]),
+    );
+    crowdHandles = new Set(crowdIds.map((id) => entityHandle(h.service.world, NPC_ID, id)));
+    const job = await h.chat('fixture-expanded-local-subject', 'Who else can you see here?');
+    expect(job.status, job.message).toBe('completed');
+    expect(generation).toBe(2);
+    const noted = crowdIds.filter((id) =>
+      knowledgeDocument(h.service.world, NPC_ID, subjects.get(id)!)?.text.includes(
+        'A person I just noticed',
+      ),
+    );
+    expect(noted).toHaveLength(1);
+    const subject = subjects.get(noted[0]!)!;
+    expect(subject.kind).toBe('individual');
+    if (subject.kind === 'individual')
+      expect(
+        h.service.world.observerIdentities![NPC_ID]![subject.individualId]!.canonicalId,
+      ).toBeUndefined();
+    expect(selectedHandle).not.toBe('');
+  });
   it('keeps a query-only first answer effect-free and streams only its one funded final answer', async () => {
     let h: Harness;
     let generations = 0;
     const previews: string[] = [];
     let firstSpeechCount = 0;
-    h = await harness({ preview: true, script: { route: { level2: 0.99 } }, reply(request) {
-      generations++;
-      expect(h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID)).toHaveLength(firstSpeechCount);
-      const jobId = request.requestId.split(':attempt:')[0]!;
-      const result = generations === 1
-        ? { operations: [], queries: [{ kind: 'history', subject: null, from: 0, through: h.service.world.simTime, cursor: null }] }
-        : { operations: [operation('reply', { talk: talk('I can answer after considering what I noticed.', speakerHandle(request)) })] };
-      if (generations === 2) {
-        expect(request.context).toContain('Requested received evidence:');
-        expect((request.schema['properties'] as Record<string, unknown>)['queries']).toBeUndefined();
-      } else {
-        expect((request.schema['required'] as string[])).toContain('queries');
-        expect(request.context).toContain('## Received situation');
-      }
-      request.onProgress?.({ kind: 'text', text: JSON.stringify(result), sequence: 1 });
-      const preview = h.director.replyPreviews.snapshot(h.service.localScope, jobId);
-      previews.push(preview?.text ?? '');
-      return result;
-    } });
-    firstSpeechCount = h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID).length;
+    h = await harness({
+      preview: true,
+      script: { route: { level2: 0.99 } },
+      reply(request) {
+        generations++;
+        expect(
+          h.service.world.events.filter(
+            (event) => event.type === 'speech' && event.actorId === NPC_ID,
+          ),
+        ).toHaveLength(firstSpeechCount);
+        const jobId = request.requestId.split(':attempt:')[0]!;
+        const result =
+          generations === 1
+            ? {
+                operations: [],
+                queries: [
+                  {
+                    kind: 'history',
+                    subject: null,
+                    from: 0,
+                    through: h.service.world.simTime,
+                    cursor: null,
+                  },
+                ],
+              }
+            : {
+                operations: [
+                  operation('reply', {
+                    talk: talk(
+                      'I can answer after considering what I noticed.',
+                      speakerHandle(request),
+                    ),
+                  }),
+                ],
+              };
+        if (generations === 2) {
+          expect(request.context).toContain('Requested received evidence:');
+          expect(
+            (request.schema['properties'] as Record<string, unknown>)['queries'],
+          ).toBeUndefined();
+        } else {
+          expect(request.schema['required'] as string[]).toContain('queries');
+          expect(request.context).toContain('## Received situation');
+        }
+        request.onProgress?.({ kind: 'text', text: JSON.stringify(result), sequence: 1 });
+        const preview = h.director.replyPreviews.snapshot(h.service.localScope, jobId);
+        previews.push(preview?.text ?? '');
+        return result;
+      },
+    });
+    firstSpeechCount = h.service.world.events.filter(
+      (event) => event.type === 'speech' && event.actorId === NPC_ID,
+    ).length;
     const job = await h.chat('fixture-query-final', 'What did you notice?');
     expect(job.status, job.message).toBe('completed');
     expect(h.jobCalls(job.id).generations).toHaveLength(2);
     expect(previews).toEqual(['', 'I can answer after considering what I noticed.']);
-    expect(h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID && event.data?.['text'] === 'I can answer after considering what I noticed.')).toHaveLength(1);
+    expect(
+      h.service.world.events.filter(
+        (event) =>
+          event.type === 'speech' &&
+          event.actorId === NPC_ID &&
+          event.data?.['text'] === 'I can answer after considering what I noticed.',
+      ),
+    ).toHaveLength(1);
   });
 
   it('refuses the final call before dispatch when its funding is no longer available', async () => {
     let h: Harness;
-    h = await harness({ script: { route: { level2: 0.99 } }, reply() {
-      h.config.budgetUsd = 0;
-      return { operations: [], queries: [{ kind: 'history', subject: null, from: 0, through: h.service.world.simTime, cursor: null }] };
-    } });
-    const before = h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID).length;
+    h = await harness({
+      script: { route: { level2: 0.99 } },
+      reply() {
+        h.config.budgetUsd = 0;
+        return {
+          operations: [],
+          queries: [
+            {
+              kind: 'history',
+              subject: null,
+              from: 0,
+              through: h.service.world.simTime,
+              cursor: null,
+            },
+          ],
+        };
+      },
+    });
+    const before = h.service.world.events.filter(
+      (event) => event.type === 'speech' && event.actorId === NPC_ID,
+    ).length;
     const job = await h.chat('fixture-query-unfunded', 'Please consider what you noticed.');
     expect(h.jobCalls(job.id).generations).toHaveLength(1);
     expect(job.status).not.toBe('running');
-    expect(h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID)).toHaveLength(before);
-    expect(Object.values(h.service.world.responseReceipts ?? {}).some((receipt) => receipt.outcome.code === 'interpretation-remembered')).toBe(false);
+    expect(
+      h.service.world.events.filter((event) => event.type === 'speech' && event.actorId === NPC_ID),
+    ).toHaveLength(before);
+    expect(
+      Object.values(h.service.world.responseReceipts ?? {}).some(
+        (receipt) => receipt.outcome.code === 'interpretation-remembered',
+      ),
+    ).toBe(false);
   });
 });

@@ -17,6 +17,7 @@ import {
   retainedTemporalSupport,
   retainTemporalSupport,
   beginTemporalReceiptEpoch,
+  clearTemporalCaptureReferences,
 } from './temporal-evidence.js';
 
 function scene(seed = 41) {
@@ -32,6 +33,20 @@ function scene(seed = 41) {
   expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
   return world;
 }
+
+it('releases stale deduplication references without changing current sensory support', () => {
+  const world = scene(),
+    actor = world.experience!.temporal!.actors[PLAYER_ID]!;
+  const current = currentBodyObservation(world, PLAYER_ID, NPC_ID)!;
+  const references = Object.values(actor.captures);
+  expect(references.length).toBeGreaterThan(0);
+  const retired = new Set([references[0]!.blockId]);
+  clearTemporalCaptureReferences(world, retired);
+  expect(Object.values(actor.captures).every((reference) => !retired.has(reference.blockId))).toBe(
+    true,
+  );
+  expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)!.id).toBe(current.id);
+});
 
 it('retains intermediate actually received movement and its exact last sample on loss', () => {
   const world = scene();
@@ -340,23 +355,46 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   validatePerceptionEvidenceState(JSON.parse(JSON.stringify(world)));
 });
 
-
 it('keeps same-time receipt chronology ordered across independently named restore epochs', () => {
   let world = scene(48);
   beginTemporalReceiptEpoch(world, 'zzz-restored-timeline');
-  const first = executeCommand(world, { id: 'epoch-first', type: 'say', actorId: NPC_ID, volume: 'normal', text: 'First actual words.' });
+  const first = executeCommand(world, {
+    id: 'epoch-first',
+    type: 'say',
+    actorId: NPC_ID,
+    volume: 'normal',
+    text: 'First actual words.',
+  });
   world = JSON.parse(JSON.stringify(first.world));
   beginTemporalReceiptEpoch(world, 'aaa-newer-timeline');
-  const second = executeCommand(world, { id: 'epoch-second', type: 'say', actorId: NPC_ID, volume: 'normal', text: 'Second actual words.' });
+  const second = executeCommand(world, {
+    id: 'epoch-second',
+    type: 'say',
+    actorId: NPC_ID,
+    volume: 'normal',
+    text: 'Second actual words.',
+  });
   const event = second.events.find((value) => value.type === 'speech')!;
-  const latest = selectTemporalHistory(second.world.experience!.temporal, PLAYER_ID, { limit: 1, bytes: 1024 * 1024 });
+  const latest = selectTemporalHistory(second.world.experience!.temporal, PLAYER_ID, {
+    limit: 1,
+    bytes: 1024 * 1024,
+  });
   expect(latest.entries).toHaveLength(1);
   const receipt = latest.entries[0]!.receipt;
   expect(receipt.sourceIds).toContain(event.id);
   expect(receipt.epoch.startsWith('aaa-newer-timeline')).toBe(true);
   const preceding = selectTemporalHistory(second.world.experience!.temporal, PLAYER_ID, {
-    before: { at: receipt.at, order: receipt.order, epoch: receipt.epoch, ordinal: receipt.ordinal }, limit: 1000, bytes: 1024 * 1024,
+    before: {
+      at: receipt.at,
+      order: receipt.order,
+      epoch: receipt.epoch,
+      ordinal: receipt.ordinal,
+    },
+    limit: 1000,
+    bytes: 1024 * 1024,
   });
-  expect(preceding.entries.some(({ receipt }) => receipt.epoch.startsWith('zzz-restored-timeline'))).toBe(true);
+  expect(
+    preceding.entries.some(({ receipt }) => receipt.epoch.startsWith('zzz-restored-timeline')),
+  ).toBe(true);
   expect(preceding.entries.every((entry) => entry.receipt.id !== receipt.id)).toBe(true);
 });

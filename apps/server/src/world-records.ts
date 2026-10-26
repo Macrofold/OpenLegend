@@ -908,12 +908,40 @@ export class WorldRecords {
       UNION ALL SELECT actor_id,CASE WHEN required=1 THEN 'required' ELSE 'optional' END AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_temporal_supports WHERE world_id=? GROUP BY actor_id,required
       UNION ALL SELECT actor_id,'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_knowledge_documents WHERE world_id=? AND payload::jsonb->>'origin'='actor-edit' GROUP BY actor_id
       UNION ALL SELECT parent_id::jsonb->>2 AS actor_id,'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_recognition WHERE world_id=? AND payload::jsonb->>'retained'='true' AND COALESCE(payload::jsonb->>'authored','false')<>'true' GROUP BY parent_id
+      UNION ALL SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') GROUP BY actor_id,retention_class
     ) canonical GROUP BY actor_id,category`,
       )
-      .all(...Array(7).fill(state.world.id));
+      .all(...Array(8).fill(state.world.id));
     const indexed = new Map(
       totals.map((row) => [JSON.stringify([row['actor_id'], row['category']]), row]),
     );
+    const versionTotals = await this.db
+      .prepare(
+        "SELECT actor_id,retention_class,SUM(logical_bytes) AS bytes,COUNT(*) AS count,COUNT(*) FILTER(WHERE logical_bytes<>octet_length(payload))AS invalid FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') GROUP BY actor_id,retention_class",
+      )
+      .all(state.world.id);
+    const versionsByActor = new Map(
+      versionTotals.map((row) => [JSON.stringify([row['actor_id'], row['retention_class']]), row]),
+    );
+    if (
+      versionTotals.some(
+        (row) =>
+          !['optional', 'required', 'speech'].includes(String(row['retention_class'])) ||
+          !actors[String(row['actor_id'])],
+      )
+    )
+      throw new Error('Invalid exact archived source owner.');
+    for (const [actorId, actor] of Object.entries(actors))
+      for (const category of ['optional', 'required', 'speech'] as const) {
+        const found = versionsByActor.get(JSON.stringify([actorId, category])),
+          counter = actor.accounts?.archives?.[category];
+        if (
+          Number(found?.['invalid'] ?? 0) ||
+          Number(found?.['bytes'] ?? 0) !== (counter?.bytes ?? 0) ||
+          Number(found?.['count'] ?? 0) !== (counter?.count ?? 0)
+        )
+          throw new Error('Exact archived source charges disagree with their retained bodies.');
+      }
     for (const [actorId, actor] of Object.entries(actors))
       for (const category of ['recent', 'optional', 'required', 'speech'] as const) {
         const counter = category === 'recent' ? actor : actor.accounts?.[category];

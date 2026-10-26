@@ -603,7 +603,7 @@ export function commitActorResponse(
           ? outcome(
               true,
               'attention-selected',
-              'Attention selected from the supplied observations.',
+              'Focus preferences updated from the supplied observations; detailed tracking remains limited and can be interrupted.',
             )
           : outcome(
               false,

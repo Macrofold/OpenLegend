@@ -100,7 +100,7 @@ function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: s
 }
 import { digest } from './content-digest.js';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '20';
+export const DATABASE_SCHEMA = '21';
 
 export interface AttemptBudget {
   id: string;
@@ -285,6 +285,10 @@ export interface WorldStore {
 
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
+  prepareRetainedSourceClosure?(
+    state: SavedWorld,
+    complete?: boolean,
+  ): Promise<import('./temporal-storage.js').PreparedMemoryRetention>;
   releaseHistory?(state: SavedWorld): SavedWorld;
   /** Same residency compaction as releaseHistory, without changing the durable baseline. */
   releasedHistory?(state: SavedWorld): SavedWorld;
@@ -374,6 +378,30 @@ export interface GameRepository extends WorldStore {
  * simulated timeline, so reopening a save cannot repeat or erase provider usage.
  */
 export class SqlGameRepository implements GameRepository {
+  async prepareRetainedSourceClosure(
+    initial: SavedWorld,
+    complete = false,
+  ): Promise<import('./temporal-storage.js').PreparedMemoryRetention> {
+    let state = initial;
+    const rows = new Map<string, string[]>(),
+      positions = new Map<string, Map<string, number>>();
+    for (let round = 0; round < 4; round++) {
+      this.records.stageRetirements(state, rows, positions);
+      const changes = this.records.prepare(this.acceptedState ?? undefined, state);
+      const planned = await this.memories.prepareSourceVersionRetention(state, changes);
+      const retained = await this.memories.prepareRetention(planned.state, complete, changes);
+      for (const [table, ids] of retained.rows)
+        rows.set(table, [...new Set([...(rows.get(table) ?? []), ...ids])]);
+      for (const [table, values] of retained.positions ?? []) {
+        const target = positions.get(table) ?? new Map();
+        for (const [id, value] of values) target.set(id, value);
+        positions.set(table, target);
+      }
+      state = retained.state;
+      if (state === planned.state) return { state, rows, positions, versions: planned.plan };
+    }
+    throw new Error('Exact source closure cannot fit its complete retained account allowance.');
+  }
   private readonly settlementListeners = new Set<() => void>();
   onSettlement(listener: () => void): () => void {
     this.settlementListeners.add(listener);
@@ -612,12 +640,6 @@ export class SqlGameRepository implements GameRepository {
 
   readonly ready: Promise<void>;
   private async initialize() {
-    const started = performance.now();
-    const trace = (stage: string) => {
-      if (process.env['OL_DEBUG_MEMORY_EDIT'] === '1')
-        console.error('memory-schema-stage', stage, Math.round(performance.now() - started));
-    };
-    trace('start');
     await this.db.transaction(async () => {
       // Reject old layouts before any table/index initialization can modify them.
       // AGENTS.md#development-save-policy: no conversion, reset or deletion.
@@ -685,12 +707,9 @@ export class SqlGameRepository implements GameRepository {
 
       this.vectors = new VectorStore(this.db);
       await this.vectors.initialize();
-      trace('vectors');
 
       await this.records.initialize();
-      trace('records');
       await this.memories.initialize();
-      trace('memory');
       await new WorldAgentStore(this.db).initialize();
       await this.history.initialize();
       // An awaiting target must refuse retained files before ordinary startup cleanup.
@@ -701,12 +720,10 @@ export class SqlGameRepository implements GameRepository {
       await this.invites.initialize();
       await this.maintenance.initialize();
       await this.creationTargets.initialize();
-      trace('other-owners');
       await this.db
         .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
         .run('schema', DATABASE_SCHEMA);
     });
-    trace('committed');
     if (this.rawDb.materializationTransaction) {
       await this.journal.initialize();
       await this.journal.flush();
@@ -958,7 +975,7 @@ export class SqlGameRepository implements GameRepository {
       if (constraints && encoded) {
         // Prepare only changed source fields through their actual writer. Full current
         // validation remains at load/recovery; it is not a per-command history scan.
-        write.preparedSources = this.memories.prepareSources(state.world.id, changes);
+        write.preparedSources = this.memories.prepareSources(state.world.id, changes, state.world);
         write.deferred = true;
         const appended = await timed('persistence.journalAppend', () =>
           this.journal.append(state.world.id, expectedRevision, encoded, write, async () => {
@@ -1023,7 +1040,7 @@ export class SqlGameRepository implements GameRepository {
           this.integrationValues.clear();
           this.db.afterCommit?.(() => this.integrationValues.clear());
           this.db.afterRollback?.(() => this.integrationValues.clear());
-          await this.saves.install(this.acceptedState, historyProjection.restore);
+          await this.saves.install(this.acceptedState, historyProjection.restore, state);
           await this.memories.invalidateConversationCompactions(state.world.id);
         }
         if (historyProjection?.receipt)
