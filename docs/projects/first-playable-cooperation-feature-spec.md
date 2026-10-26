@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                          | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Four residents, finite cooperation, exact compacts and ordinary controls are connected; remaining disclosure, integration and independent/player qualification stay open. | 2026-10-22   |
+| In progress | Four residents, finite cooperation, exact compacts and ordinary controls are connected; remaining disclosure, integration and independent/player qualification stay open. | 2026-10-26   |
 
 ## Purpose and scope
 
@@ -98,9 +98,13 @@ Native checks must demonstrate a successful bounded episode, changed terms, a me
 
 Player observation asks whether the four people are distinguishable through conduct, whether helping reduces or enriches a real problem enough to justify coordination, whether refusal is intelligible, whether players remember a particular shared event, and whether it changes a later choice. Record confusion, inactivity, repeated begging, unwanted micromanagement, provider waits and expense alongside successful episodes. Balance remains an explicit hypothesis until these observations exist.
 
+For the camp journey, follow an actual contribution beyond its completion: can someone use the changed place or permitted supplies after the helper leaves, recognize what made the difference through legitimate observation or communication, and choose a worthwhile continuation? A resident may visit, use the place, decline or prefer another activity. Compare the benefit and coordination burden with the capable solo route, including whether both people retain a contribution they want to make. Use CP/CE/FPV's existing independent-choice and player evidence; a scripted grateful reply, assigned service role or task receipt alone cannot establish this value.
+
 ## Research and decisions
 
 The [commercial research synthesis](../../archive/02-research/indie-launch-commercials/learnings.md#the-recommendation) calls for useful invention and independent characters with repeatable consequences, and separates enjoyment from novelty or a market metric. This design therefore measures real joint work and later choices, not dialogue volume. The research is a basis for hypotheses, not proof that this design is fun.
+
+The [Enshrouded recruitment and inhabited-building study](../../archive/02-research/game-inspiration/dossiers/enshrouded/01-building-and-creation.md#9-npcs-make-a-base-inhabited-with-a-clear-simulation-ceiling) suggests a useful connection between meeting people and caring about a place. OpenLegend's selected application is actual voluntary participation in the camp journey above. Rescue, invitation, residence, employment and ongoing service remain distinct arrangements; this research does not select collectible crafting residents, compulsory labor or a new hiring institution. The [shelter benefit comparison](editable-shelters-feature-spec.md#184-research-and-complete-benefit-comparison) owns the building-side evaluation.
 
 [Durable-agreement research DA-R03–DA-R05](durable-agreements-feature-spec.md#da-r03--completion-needs-an-actual-result-and-suitable-access) motivates actual delivery and narrowly scoped rights, while the gameplay-priority decision avoids importing employment, currency, escrow or institutions into the first camp. That later project's existing proposals remain useful and separate. [Compelling-character authorship](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) and the recorded missing-belonging/rivals experiences require source-linked memory, personally distinct knowledge and actual independent choices.
 

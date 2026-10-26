@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                    | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Player preference, measured delivery economics and adopted commercial terms remain open under CO01. | 2026-10-17   |
+| In progress | Player preference, measured delivery economics and adopted commercial terms remain open under CO01. | 2026-10-26   |
 
 **Work owner:** [CO01](../maintainers/commercial-offers.md), linked through ND22 and ND26. **Inputs:** [business assumptions](../../archive/06-marketing/business-plan.md), [required experience](../worlds/base/playable-openings.md#first-playable-game-target), [player-learning plan](first-playable-playtest-plan.md) and [customer-offer specification](customer-and-supporter-offers-feature-spec.md).
 
@@ -26,6 +26,8 @@ Use the named build and scope from first-playable preparation. Explain available
 
 Keep ordinary access, hosting, authoring and invention allowances distinct. Preserve accepted entitlement directions without requiring every customer to buy every product. The [offer owner](../maintainers/commercial-offers.md) retains those product commitments.
 
+For a group-hosting candidate, state whether an authorized member can play and contribute while the payer is offline. That can be attended play by another member; it is a different promise from simulation continuing while nobody is present. Describe and cost only the continuation actually offered, including its funding and retention boundaries.
+
 ### 3. Compare at least two credible arrangements
 
 | Dimension     | Required comparison                                                                                                             |
@@ -41,9 +43,13 @@ Keep ordinary access, hosting, authoring and invention allowances distinct. Pres
 
 Cost every candidate's actual promise. A finite purchase can still create continuing service costs; a recurring charge does not guarantee sufficient margin. Use existing PD/INV/billing owners to assess feasibility rather than create another ledger or buy infrastructure for an unselected offer.
 
+One reason-to-pay hypothesis is **a shared project that friends can continue on different schedules, with understandable control over the place and their contributions**. The [hosted-world idea](../game-ideas/hosted-worlds-and-rule-profiles.md) and [Enshrouded hosting research](../../archive/02-research/game-inspiration/dossiers/enshrouded/04-hosting-and-world-governance.md) make that hypothesis concrete. Compare the owner-funded candidate with a credible browser offer for the same activities, such as individual access to an operated shared world. Identify which continuity and control benefits actually differ, who bears setup and payment obligations, and why a group would prefer either arrangement. The research does not select a subscription, provider or price.
+
 ### 4. Gather appropriate evidence
 
 Start with clearly labeled offer proposals and plausible players. Ask what they believe payment buys, which limits obstruct play, what they would choose instead and why they would decline. Interviews can expose misunderstanding or reject assumptions; they do not establish paid conversion.
+
+Use the [proposed shared-project journey](participants-and-world-travel-feature-spec.md#proposed-continuation-contribute-while-a-friend-is-away) to make continuity observable: can one participant complete a wanted contribution, can another return to use it, and do both understand the relevant rights and service boundary? Compare that value with the alternative offer's actual experience. Keep a reported rental motive, observed useful play, stated preference and an eventual paid choice as distinct evidence.
 
 Measure costs for the same quality and scope of play being evaluated. Retain the boundaries of provider usage, infrastructure receipts and support observations. Apply existing authorization and cost controls to any live experiment. Compare conservative, expected and stronger scenarios with explicit assumptions; historical illustrations are not measured economics.
 

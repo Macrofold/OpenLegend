@@ -30,7 +30,7 @@ At the October 25 cutoff:
 
 [Launch release and platform limits](https://www.terminals.io/games/enshrouded/news/5100) · [Launch FAQ](https://enshrouded.com/en-US/news/enshrouded-launch-faq-early-access-reward-world) · [PS5 store](https://store.playstation.com/en-us/product/EP4137-PPSA32539_00-0013250200429445) · [Hotfix 1.0.0.3](https://enshrouded.com/en-US/news/changelog-for-hotfix-1003).
 
-Eight major Early Access updates established the systems below. **Wake of the Water** (November 10, 2025) introduced simulated water and aquatic play; **Forging the Path** (April 21, 2026) rebuilt physical combat/skills and introduced Adventure Sharing v1. The [development chronology](enshrouded/02-development-and-commercial-history.md) covers every major update and distinguishes changing release targets from actual releases. The [building supplement's current boundary](enshrouded/01-building-and-creation.md) owns the concise account of 1.0's construction and progression changes.
+Eight major Early Access updates established the systems below. The [development chronology](enshrouded/02-development-and-commercial-history.md) covers every major update and distinguishes changing release targets from actual releases. The [building supplement's current boundary](enshrouded/01-building-and-creation.md) owns the concise account of 1.0's construction and progression changes.
 
 The player's promise is intentionally more action-RPG/adventure-heavy than punishing-survival-heavy. You awaken as a **Flameborn** in the ruined kingdom of Embervale, explore a handcrafted fantasy continent swallowed in places by the deadly Shroud, rescue survivors, improve the Flame, fight bosses, acquire RPG builds/equipment, build elaborate settlements and reshape terrain—alone or cooperatively.
 
@@ -109,7 +109,7 @@ The same voxel world enables:
 - creating stairs/paths with picks/explosives;
 - physically changing a base's landscape.
 
-The authored world prevents this from simply becoming Minecraft procedural emptiness: terrain editing is a tool for interacting with designed locations.
+Terrain editing operates on deliberately placed locations and routes, so players can change how they approach authored content.
 
 ### Combat: melee, ranged and magic
 
@@ -161,7 +161,7 @@ This creates a strong loop:
 
 The NPC is simultaneously a character, progression key and reason the base feels repopulated.
 
-Later updates made this much more concrete than the initial dossier implied. Current survivors are divided into **Craftspeople, Assistants and Villagers**. They can roam a player-defined base radius, inspect points of interest, talk, take breaks, and follow a day/night cycle that includes sleeping in assigned sheltered beds; updates have repeatedly fixed their pathfinding and bed use. The documented roles are crafting/services, quests and residential behavior; an autonomous system for mining, harvesting or constructing the settlement is not established. The [recruitment and residence study](enshrouded/01-building-and-creation.md#9-npcs-make-a-base-inhabited-with-a-clear-simulation-ceiling) explains rescue, the Summoning Staff, conditional sheltered-bed requirements, assistants and player-operated farming. It also qualifies the earlier happiness/Flame wording: extracted tutorial text alone does not establish a working human feeding system. [Survivors](https://enshrouded.wiki.gg/wiki/NPCs) · [Souls of the Frozen Frontier](https://enshrouded.wiki.gg/wiki/Souls_Of_The_Frozen_Frontier_Update).
+The [recruitment and residence study](enshrouded/01-building-and-creation.md#9-npcs-make-a-base-inhabited-with-a-clear-simulation-ceiling) owns the current NPC categories, Summoning Staff placement, conditional bed requirements and residential routines. It distinguishes crafting access from autonomous labor and qualifies the unresolved human-feeding tutorial wording.
 
 ### Crafting stations and distributed recipes
 
@@ -194,24 +194,9 @@ The combination is important:
 
 ### Dynamically simulated water (Wake of the Water)
 
-Update 7 materially changed the simulation:
+Update 7 links aquatic exploration, landscaping and production. Its additional systems include fillable containers, irrigation, rain collection and aquatic creature navigation. [Keen Update 7](https://enshrouded.com/en-US/news/enshrouded-wake-of-the-water-update).
 
-- lakes/ponds/open water;
-- swimming and diving;
-- underwater interactions;
-- new Veilwater Basin;
-- fishing;
-- water containers with fill state;
-- player-added/removed/redirection of water in bases;
-- water gates;
-- irrigation;
-- water wheels powering crafting factories;
-- rain collection;
-- aquatic/amphibious AI/pathfinding.
-
-[Keen Update 7](https://enshrouded.com/en-US/news/enshrouded-wake-of-the-water-update).
-
-Keen documents persistence for player-created or redirected water inside bases; the authored overworld maintains stronger reset semantics. The [building study](enshrouded/01-building-and-creation.md) distinguishes these intended rules from documented water/migration failures.
+The [water study](enshrouded/01-building-and-creation.md#10-water-gives-landscaping-functional-consequences) owns the flow, base-persistence and flooding rules; Case 7 below illustrates their combination in a construction project. Intended persistence remains distinct from documented water/migration failures.
 
 Wake of the Water also added a full **fishing interaction**. Rods/bait have fishing-specific stats; hooked fish require the player to counter their movement while managing both fish and player stamina, and catches can include fish or other items. [Fishing](https://enshrouded.wiki.gg/wiki/Fishing).
 
@@ -351,7 +336,7 @@ The meaningful economy is:
 - travel/risk;
 - base storage and production.
 
-**Runes** act as an important enhancement/respec resource. **1.0 adds gold coins for limited survivor purchases, mainly vanity**; this is not evidence of a player-run auction economy. [Current economy correction and source](enshrouded/01-building-and-creation.md). Materials, loot and world-owned crafting access remain central. Distinguish a coin sink at an NPC from freely priced player trade, automated settlement commerce or real-money purchases.
+**Runes** act as an important enhancement/respec resource. **Version 1.0 uses gold coins for vanity-item recipes at Mei-Yin Chen.** [Official 1.0 changelog](https://enshrouded.com/en-US/news/release-trailer-changelog-everything-you-need-to-wait-for-tomorrow). This does not establish a player-run auction economy. Materials, loot and world-owned crafting access remain central. Distinguish a coin sink at an NPC from freely priced player trade, automated settlement commerce or real-money purchases.
 
 ### Early Access itself is a progression layer
 
@@ -435,9 +420,7 @@ Unless attributed otherwise, these are constructed rules-based illustrations pre
 
 ### Survivors make a dead world feel recoverable
 
-The Flameborn rescues named survivors and places them in settlements. Current NPCs include **Craftspeople, Assistants and Townsfolk/Villagers**. They offer services/quests/crafting and now physically roam within configured areas, inspect props, talk, take breaks and sleep on a simple day/night schedule. [Survivors](https://enshrouded.wiki.gg/wiki/NPCs) · [Souls of the Frozen Frontier](https://enshrouded.wiki.gg/wiki/Souls_Of_The_Frozen_Frontier_Update).
-
-This is lighter than simulation-heavy colony NPCs because they do not independently run production chains, choose strategic jobs or form deep relationship webs, but it is stronger than static menu stations because progression is embodied in people.
+Rescued survivors give services and quests a recognizable presence at home. Their documented residential routines do not establish independent production chains, strategic job selection or deep relationship webs. The [residence study](enshrouded/01-building-and-creation.md#9-npcs-make-a-base-inhabited-with-a-clear-simulation-ceiling) separates these evidence boundaries and explains how useful occupants can make construction matter.
 
 The transferable pattern is **capability as relationship/place**: "we found the blacksmith" is more memorable than "crafting tier 2 unlocked."
 
@@ -558,7 +541,7 @@ The risk of those comparisons is "derivative survival game"; reviews often say i
 
 Keen created a public feature-feedback board soon after launch where players could submit/upvote ideas, while explicitly stating ranking was not a development promise. [GameSpot feedback coverage](https://www.gamespot.com/articles/enshrouded-lets-players-upvote-potential-new-features/1100-6520892/).
 
-Construction is inherently viral:
+Construction gives players several kinds of shareable creative output:
 
 - detailed castles/towns;
 - renovation of ruins;
@@ -566,7 +549,7 @@ Construction is inherently viral:
 - water machinery;
 - Adventure Sharing worlds and, from 1.0, supported Sparkworks interactions.
 
-The game can circulate an artifact players **made**, not only gameplay clips.
+The game can circulate an artifact players **made**. The [development study](enshrouded/02-development-and-commercial-history.md#distribution-promotion-and-community-loops) explains these sharing routes; their incremental effect on sales or retention has not been quantified.
 
 ## R11 — commercial and participation context
 
@@ -661,6 +644,8 @@ These were qualitative samples, not prevalence estimates. They show how the Sept
 
 ## R13 — transferable inspiration and limits for OpenLegend
 
+These are research hypotheses and comparative lessons, not new implementation requirements or priorities. The linked studies own the detailed evidence and its limits.
+
 ### 1. An authored world can still be physically editable
 
 Enshrouded's most important lesson is that **handcrafted narrative geography and voxel agency are not mutually exclusive**. Preserve authored POIs/topology at the world layer while letting player-owned areas accept deep edits.
@@ -682,13 +667,13 @@ This is directly relevant to large agent worlds: persist **meaningful human/agen
 
 ### 3. People make unlocks memorable
 
-Rescuing a blacksmith/alchemist and bringing them home is stronger fiction than unlocking a crafting menu node. OpenLegend can attach capability to **actors, institutions and places** so progression also changes the social world.
+The [recruitment and residence lessons](enshrouded/01-building-and-creation.md#positive-lessons-and-limits-for-openlegend) suggest a useful sequence: **recruit → place → use → return**. Finding a particular person can motivate a room or workshop; a recognizable occupant and useful service can give the player a reason to visit again. OpenLegend could attach capability to **actors, institutions and places**, with residents' actual use of a space making construction socially meaningful. This is an opportunity to investigate, not evidence that Enshrouded runs an autonomous workforce.
 
 ### 4. Remove survival chores that do not support the fantasy
 
-Enshrouded keeps food but makes it a preparation buff system. The question is not "does a survival game need hunger?" but "what decisions does hunger create?"
+Under Enshrouded's **Default** rules, food primarily prepares the character for an expedition. The transferable question is what a need lets the player plan, choose or contribute. World-authored needs in OpenLegend could create relationships and consequences when they serve the intended experience.
 
-OpenLegend should require needs only when they generate relationships, planning or consequences—not because the genre expects bars.
+Gathering can itself be a chosen pleasure. The [Dragonwilds comparison](enshrouded/05-comparison-with-dragonwilds.md#3-when-magical-gathering-is-play-and-when-efficiency-is-insufficient) distinguishes **throughput**, **a new method of acting**, and **social usefulness**. Examine the whole resource cycle—inputs, travel, collection, carrying, processing, storage and use—when judging whether an improvement gives someone more enjoyable choices. A satisfying action and a worthwhile destination both matter; faster collection alone does not establish a better overall experience.
 
 ### 5. Let mastery convert geography into infrastructure
 
@@ -708,13 +693,15 @@ For a future OpenLegend or Macrofold-backed hosting design, the research suggest
 - portable knowledge;
 - non-portable world consequences.
 
+The [asynchronous building case](enshrouded/04-hosting-and-world-governance.md#a-players-reported-rental-motive-asynchronous-building) supplies a positive purpose for availability: friends can contribute at different times and return to discover each other's work. For OpenLegend, recognizable contributions and a legible next shared goal could make returning worthwhile. The account does not establish a retention effect or an ownership contract.
+
 ### 7. User-created worlds are a natural extension of expressive systems
 
 Adventure Sharing is only possible because the game's build/terrain tools already produce meaningful artifacts. OpenLegend's extensibility should similarly aim for systems where player invention can become **content other people inhabit**, not only configuration files.
 
 ### 8. Released-game continuity can preserve intent when systems change
 
-Forging the Path refunded/reset skill points when the tree changed. Keeping old node IDs merely to avoid touching saves would have preserved data but broken meaning.
+Forging the Path refunded/reset skill points when the tree changed. The documented reset shows that continued save access can coexist with asking players to choose their build again after the rules change. [Development chronology](enshrouded/02-development-and-commercial-history.md#chronology-content-structural-changes-and-commitments).
 
 For a released game with supported customer saves, a useful question is whether an old decision's **intent** can survive a changed rule; refunding and rechoosing is one documented alternative. This is comparative research. OpenLegend's [development save policy](../../../../AGENTS.md#development-save-policy) currently forbids legacy readers, migrations, adapters and compatibility-only paths. Nothing in this dossier authorizes them, or makes unrestricted cross-world transfer an accepted OpenLegend contract.
 
@@ -733,7 +720,7 @@ For a released game with supported customer saves, a useful question is whether 
 
 ### Prior-owner / preservation check
 
-The September 27 pass originally added G145 after finding no earlier dedicated chapter or mechanics study. The October refresh compared this existing dossier in full, preserved its eight worked interactions, source history and useful examples, and corrected current facts in place. The current boundary is **1.0 released October 15; Hotfix 1.0.0.3 October 21**. Xbox remains announced for spring 2027. The four linked supplements extend the same owner with building, production/economics, reception and hosting evidence; they do not certify unrelated dossiers or the packet-wide reconciliation.
+The September 27 pass originally added G145 after finding no earlier dedicated chapter or mechanics study. The October refresh compared this existing dossier in full, preserved its eight worked interactions, source history and useful examples, and corrected current facts in place. The current boundary is **1.0 released October 15; Hotfix 1.0.0.3 October 21**. Xbox remains announced for spring 2027. The five linked supplements extend the same owner with building, production/economics, reception, hosting and Dragonwilds-comparison evidence; they do not certify unrelated dossiers or the packet-wide reconciliation.
 
 No embedded video/trailer is represented as watched. Text transcripts/pages were used where available.
 
@@ -748,7 +735,7 @@ https://enshrouded.com/en-US/news/enshrouded-roadmap-2025-anniversary-trailer
 **S03 — Keen, Update 6 Thralls of Twilight, May 13, 2025.** Primary Shroud overhaul, weapon gems, new POIs/enemies, survivor/base changes.  
 https://enshrouded.com/en-US/news/enshrouded-thralls-of-twilight-update
 
-**S04 — Keen, Wake of the Water, Nov. 10, 2025.** Primary simulated-water, Veilwater, swimming/diving, fishing, water-power/crafting and level-cap expansion.  
+**S04 — Keen, Wake of the Water, Nov. 10, 2025.** Primary Update 7 release notes; the building study owns operational detail.  
 https://enshrouded.com/en-US/news/enshrouded-wake-of-the-water-update
 
 **S05 — Keen, Forging the Path, Apr. 21, 2026.** Primary historical final Early Access major update, physical combat/skill-tree/gear overhaul and Adventure Sharing v1.  
@@ -821,7 +808,7 @@ https://enshrouded.wiki.gg/wiki/Attributes
 https://enshrouded.wiki.gg/wiki/Skills  
 https://enshrouded.wiki.gg/wiki/Death
 
-**S25 — Official Enshrouded Wiki: Quests, Survivors and Souls of the Frozen Frontier.** Community quest/reward/NPC categories and simple day/night survivor behaviors.  
+**S25 — Official Enshrouded Wiki: Quests, Survivors and Souls of the Frozen Frontier.** Community references; the building study owns current NPC behavior and access limits.  
 https://enshrouded.wiki.gg/wiki/Quests  
 https://enshrouded.wiki.gg/wiki/NPCs  
 https://enshrouded.wiki.gg/wiki/Souls_Of_The_Frozen_Frontier_Update
@@ -868,7 +855,7 @@ https://www.cgmagonline.com/review/game/enshrouded-1-0-pc-review/
 3. Read the [reception study](enshrouded/03-player-reception.md) for 1.0 criticism and dated player accounts. Use S16–S20 and the preserved September sample as history, with their access/version limits.
 4. Read the [hosting study](enshrouded/04-hosting-and-world-governance.md) for rental, membership and rules. S10 explains the early quest-progression failure and developer response.
 5. Read the [development/commercial chronology](enshrouded/02-development-and-commercial-history.md) for all eight updates, scope growth, production evidence and bounded estimates. S07–S09 record former promises, not today's release status.
-6. Use R13 for OpenLegend interpretation; all such lessons remain proposals subject to current project policy.
+6. Use R13 for OpenLegend interpretation, including [chosen gathering and the whole resource cycle](enshrouded/05-comparison-with-dragonwilds.md#3-when-magical-gathering-is-play-and-when-efficiency-is-insufficient), [recruitment and repeated visits](enshrouded/01-building-and-creation.md#positive-lessons-and-limits-for-openlegend), and [asynchronous contributions](enshrouded/04-hosting-and-world-governance.md#a-players-reported-rental-motive-asynchronous-building). These remain proposals subject to current project policy.
 
 ### Requirement-to-section map
 
@@ -883,7 +870,7 @@ https://www.cgmagonline.com/review/game/enshrouded-1-0-pc-review/
 | R07                  | art/UI/accessibility/control/performance                                                                                                                                         |
 | R08                  | authored world + player authorship                                                                                                                                               |
 | R09                  | Holistic Engine, Portal Knights lineage, team; complete update chronology in development supplement                                                                              |
-| R10                  | Next Fest, feedback board, build virality                                                                                                                                        |
+| R10                  | Next Fest, feedback board, creative sharing                                                                                                                                      |
 | R11                  | dated milestones/current commercial structure; scoped estimates, costs and uncertainty in development supplement                                                                 |
 | R12                  | preserved historical reviews; five freshly read review bodies and identified October/historical player sample in reception supplement                                            |
 | R13                  | transferable patterns/limits                                                                                                                                                     |

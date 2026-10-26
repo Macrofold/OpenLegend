@@ -134,6 +134,8 @@ The user supplied a transcript for [this Enshrouded walkthrough](https://www.you
 
 The narrator also explains a useful practical effect of lore-appropriate placement: remembering a person's place in the town makes the required crafting service easier to find. **Interpretation:** the group has converted a collection of interfaces into a mental map of people and places. The house has a nameable occupant; the route has a purpose; decoration expresses who belongs there. These benefits can exist even before sophisticated social simulation is present.
 
+The account connects construction to the next adventure as well. The narrator describes exploring to unlock more building materials, then wanting to improve the castle with what the group finds. An unfinished residential tower has a proposed upper library that would also serve as a departure point for gliding into future outings. The library remains a plan in the transcript. **Interpretation:** improving home can give an expedition a purpose, while designing home around departure can make the next expedition more inviting.
+
 #### Positive lessons and limits for OpenLegend
 
 1. **Recruitment can produce a reason to build.** Finding a particular person can prompt preparation of a room, workshop or refuge. OpenLegend can choose world-appropriate routes such as rescue, invitation, friendship, migration or paid work; Enshrouded's rescue-and-summon structure is one reference, not a universal recruitment rule.

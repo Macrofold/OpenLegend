@@ -1,5 +1,11 @@
 # Enshrouded G145 — October 25, 2026 research refresh
 
+## October 26 UTC review and design integration — in progress
+
+Mike requested a whole-branch critique, preservation of useful conversation recommendations, positive design opportunities and actionable integration with existing gameplay principles, designs and the needs-design register. The review covers the full research/hosting branch, including both supplied transcripts and the earlier follow-up; it does not recertify the wider research corpus or change runtime behavior.
+
+The review found existing shelter, cooperation, participation and commercial designs sufficient to own the useful applications. Current work strengthens those owners and their qualification scenarios instead of creating another hosting specification or a generalized NPC staffing project. The broad building/homes cross-game synthesis remains separately unassessed. Claim corrections, conversation coverage and final documentary verification will be recorded here before completion.
+
 ## October 26 UTC follow-up — complete
 
 Mike requested a complete placement/coverage check of the hosting and world-owner ideas, analysis of the supplied Fort Armco building/server transcript, a precise account of Enshrouded NPC recruitment and residence, and a comparison with RuneScape: Dragonwilds using the supplied written, Steam, Reddit and video sources. This focused follow-up extends the original completed pass below without recertifying all of G50 or reopening the whole research corpus.
