@@ -158,12 +158,20 @@ describe('actor-scoped native decision candidates', () => {
         (action) => action.command?.targetId === 'hare-1' && action.command.itemId === tool!.id,
       ),
     );
-    await service.transition((world) => advanceWorld(world, 18));
+    const shotStart = service.world.simTime;
+    const advancedShot = await service.transition((world) => advanceWorld(world, 18));
     expect(
       service.world.events.some(
         (event) =>
           event.type === 'shot-released' && event.actorId === NPC_ID && event.targetId === 'hare-1',
       ),
+      JSON.stringify({
+        advancedShot,
+        shotStart,
+        at: service.world.simTime,
+        action: entityGet(service.world.entities, NPC_ID)!.actor!.action,
+        events: service.world.events.slice(-8),
+      }),
     ).toBe(true);
     // Releasing the shot does not resolve its flight or guarantee an impact.
     expect(entityGet(service.world.entities, 'hare-1')!.actor!.alive).toBe(true);

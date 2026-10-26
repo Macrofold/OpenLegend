@@ -8,6 +8,10 @@ import type {
 import { validateEvidenceSource, validateSensoryFacet } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
 import { isSafeRecordId } from './records.js';
+import { temporalReceiptAliases, temporalReceiptIndividualIds } from './temporal-evidence.js';
+
+const encoder = new TextEncoder();
+const encodedBytes = (value: unknown) => encoder.encode(JSON.stringify(value)).byteLength;
 
 const record = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value);
@@ -117,6 +121,7 @@ export function validateTemporalEvidenceState(
       !ordinal(block.sequence) ||
       block.sequence > world.sequence ||
       !ordinal(block.bytes) ||
+      block.bytes !== encodedBytes(block) ||
       !Array.isArray(block.values) ||
       !block.values.length
     )
@@ -202,6 +207,40 @@ export function validateTemporalEvidenceState(
         !receipt.facets.length
       )
         throw new Error('Invalid personal temporal receipt.');
+      if (receipt.origin) {
+        const origin = receipt.origin;
+        if (!record(origin)) throw new Error('Invalid temporal receipt origin.');
+        if (origin.kind === 'occurrence') {
+          if (
+            !isSafeRecordId(origin.eventId) ||
+            !finite(origin.at) ||
+            origin.at < 0 ||
+            origin.at > receipt.at ||
+            !ordinal(origin.order)
+          )
+            throw new Error('Invalid temporal occurrence origin.');
+        } else if (
+          origin.kind !== 'exposure' ||
+          typeof origin.episodeId !== 'string' ||
+          !origin.episodeId ||
+          typeof origin.detectorId !== 'string' ||
+          !origin.detectorId ||
+          !finite(origin.measuredFrom) ||
+          !finite(origin.measuredThrough) ||
+          origin.measuredFrom < 0 ||
+          origin.measuredFrom > origin.measuredThrough ||
+          origin.measuredThrough > receipt.at
+        )
+          throw new Error('Invalid temporal exposure origin.');
+        if (origin.kind === 'exposure' && origin.source) {
+          validateEvidenceSource(origin.source);
+          if (
+            origin.source.observer.actorId !== actorId ||
+            origin.source.observer.physicalLife !== receipt.physicalLife
+          )
+            throw new Error('Foreign temporal origin source.');
+        }
+      }
       const ordinals = new Set<number>();
       receipt.facets.forEach((facet: TemporalFacetReference, index: number) => {
         if (!ordinal(facet.ordinal) || ordinals.has(facet.ordinal))
@@ -243,6 +282,7 @@ export function validateTemporalEvidenceState(
           !record(capsule) ||
           capsule.receipt.id !== id ||
           !ordinal(capsule.bytes) ||
+          capsule.bytes !== encodedBytes(capsule) ||
           typeof capsule.required !== 'boolean' ||
           !Array.isArray(capsule.values) ||
           capsule.values.length !== capsule.receipt.facets.length
@@ -284,7 +324,10 @@ export function validateTemporalEvidenceState(
       bytes += chunk.bytes;
       count += chunk.count;
       const subjects = new Set<string>(),
-        references = new Set<string>();
+        references = new Set<string>(),
+        aliases = new Set<string>(),
+        individuals = new Set<string>();
+      let supportBytes = 0;
       let lastOrdinal = chunk.fromOrdinal - 1,
         lastAt = chunk.fromAt;
       for (const receipt of chunk.receipts) {
@@ -319,9 +362,14 @@ export function validateTemporalEvidenceState(
         lastOrdinal = receipt.ordinal;
         lastAt = receipt.at;
         subjects.add(receipt.subject);
+        for (const alias of temporalReceiptAliases(receipt, temporal.sources, world))
+          aliases.add(alias);
+        for (const id of temporalReceiptIndividualIds(receipt, temporal.sources))
+          individuals.add(id);
         for (const facet of receipt.facets) {
           validateReference(facet);
           references.add(facet.blockId);
+          supportBytes += encodedBytes(temporal.sources[facet.blockId]!.values[facet.valueOrdinal]);
         }
       }
       if (
@@ -332,7 +380,12 @@ export function validateTemporalEvidenceState(
         subjects.size !== chunk.subjects.length ||
         chunk.subjects.some((subject) => !subjects.has(subject)) ||
         references.size !== chunk.sourceRefs.length ||
-        chunk.sourceRefs.some((id) => !references.has(id))
+        chunk.sourceRefs.some((id) => !references.has(id)) ||
+        aliases.size !== chunk.sourceIds.length ||
+        chunk.sourceIds.some((id) => !aliases.has(id)) ||
+        individuals.size !== chunk.individualIds.length ||
+        chunk.individualIds.some((id) => !individuals.has(id)) ||
+        chunk.bytes !== encodedBytes(chunk) + supportBytes
       )
         throw new Error('Inconsistent temporal chunk metadata.');
       if (

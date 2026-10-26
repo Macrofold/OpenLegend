@@ -86,7 +86,12 @@ import { resolveSemanticCause } from './semantic-opportunities.js';
 
 export interface SituationProposalBinding {
   /** Trusted server-captured native conditions, never supplied by model output. */
-  semanticCauses?: readonly { key:string; qualitativeRevision:string; severity:number; generation:number }[];
+  semanticCauses?: readonly {
+    key: string;
+    qualitativeRevision: string;
+    severity: number;
+    generation: number;
+  }[];
   privacyRevision: number;
   attentionReferences: Record<string, string>;
   retentionReferences: Record<string, TemporalReceiptLocator>;
@@ -478,7 +483,7 @@ export function commitActorResponse(
               ),
             ),
             presented: situationBinding.presented,
-            semanticCauses:situationBinding.semanticCauses,
+            semanticCauses: situationBinding.semanticCauses,
           },
         }
       : {}),
@@ -1394,13 +1399,18 @@ export function commitActorResponse(
     situationBinding.privacyRevision === (world.experience?.privacyRevisions?.[actorId] ?? 0)
   ) {
     acknowledgeAttention(world, actorId, situationBinding.presented ?? []);
-    for(const cause of situationBinding.semanticCauses??[]){
-      const attention=world.perceptionEvidence?.[actorId]?.attention;
-      const latch=attention?.latches[cause.key];
-      const candidate=latch&&attention?.candidates[latch.anchorKey];
-      if(latch?.active&&latch.generation===cause.generation&&candidate&&
-        cause.qualitativeRevision===JSON.stringify([candidate.descriptionRevision,latch.generation]))
-        resolveSemanticCause(world,actorId,cause.key,cause.qualitativeRevision,cause.severity);
+    for (const cause of situationBinding.semanticCauses ?? []) {
+      const attention = world.perceptionEvidence?.[actorId]?.attention;
+      const latch = attention?.latches[cause.key];
+      const candidate = latch && attention?.candidates[latch.anchorKey];
+      if (
+        latch?.active &&
+        latch.generation === cause.generation &&
+        candidate &&
+        cause.qualitativeRevision ===
+          JSON.stringify([candidate.descriptionRevision, latch.generation])
+      )
+        resolveSemanticCause(world, actorId, cause.key, cause.qualitativeRevision, cause.severity);
     }
     reinforceExperience(world, actorId, evidenceIds);
   }

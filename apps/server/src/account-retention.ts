@@ -12,6 +12,8 @@ import {
   updateWorld,
   expireExperience,
   observationDependencies,
+  selectedRecognitionMaintenanceDue,
+  selectedExpireRecognitionSeeds,
   type ImpressionDependency,
   type ExperienceEntry,
   type MemoryRecord,
@@ -20,6 +22,7 @@ import {
 import type { SavedWorld, SqlDatabase } from './store.js';
 import { historyKey, historyPositions } from './history-residency.js';
 import { MemoryRetentionError, type PreparedMemoryRetention } from './temporal-storage.js';
+import { releaseUnusedTemporalSupports } from './retention-cleanup.js';
 
 const tables = {
   awareness: 'mind_awareness',
@@ -130,6 +133,25 @@ export async function prepareAccountRetention(
       )
     )
       continue;
+    const priorSupportIds = Object.keys(
+      world.experience!.temporal!.actors[actorId]!.supports ?? {},
+    );
+    world = updateWorld(world, (draft) => {
+      selectedExpireRecognitionSeeds(draft, actorId);
+    });
+    const released = await releaseUnusedTemporalSupports(
+      db,
+      { ...state, world },
+      actorId,
+      complete,
+    );
+    world = released.state.world;
+    if (released.ids.length)
+      rows.set('mind_temporal_supports', [
+        ...(rows.get('mind_temporal_supports') ?? []),
+        ...released.ids,
+      ]);
+    accounts = world.experience!.temporal!.actors[actorId]!.accounts!;
     const metadata = complete
       ? []
       : await db
@@ -205,7 +227,7 @@ export async function prepareAccountRetention(
       (a, b) =>
         a.rank - b.rank || a.at - b.at || a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id),
     );
-    let nextDue: number | null = null;
+    let nextDue: number | null = selectedRecognitionMaintenanceDue(world, actorId);
     for (const candidate of ordered) {
       const budget = policy[candidate.category],
         pressure =
@@ -420,6 +442,28 @@ export async function prepareAccountRetention(
         throw new MemoryRetentionError('Personal memory changed before retention installation.');
       draft.experience!.temporal!.actors[actorId]!.accounts!.nextDue = nextDue;
     });
+    const finalSupports = await releaseUnusedTemporalSupports(
+      db,
+      { ...state, world },
+      actorId,
+      complete,
+      Object.values(tables).flatMap((table) => rows.get(table) ?? []),
+    );
+    world = finalSupports.state.world;
+    const remaining = world.experience!.temporal!.actors[actorId]!.supports ?? {};
+    const removed = priorSupportIds
+      .filter((id) => !remaining[id])
+      .map((id) =>
+        JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'supports', id]),
+      );
+    if (removed.length)
+      rows.set('mind_temporal_supports', [
+        ...new Set([
+          ...(rows.get('mind_temporal_supports') ?? []),
+          ...removed,
+          ...finalSupports.ids,
+        ]),
+      ]);
   }
   return { state: world === state.world ? state : { ...state, world }, rows, positions };
 }

@@ -20,7 +20,13 @@ import {
 import { isSafeRecordId } from '../../records.js';
 import { cloneValue } from '../../draft.js';
 import { adjustRetainedKnowledgeAccounting } from '../../remembered-impressions.js';
-import { captureTemporalObservation, retainTemporalSupport, releaseTemporalSupport, temporalReceiptForSource, temporalReceiptSource } from '../../temporal-evidence.js';
+import {
+  captureTemporalObservation,
+  retainTemporalSupport,
+  releaseTemporalSupport,
+  temporalReceiptForSource,
+  temporalReceiptSource,
+} from '../../temporal-evidence.js';
 import { BASE_ATTENTION_POLICY } from './attention.js';
 import config from './config/knowledge.generated.json' with { type: 'json' };
 import { learnRecipe, sameSubject, type ObserverSubject } from '../../knowledge.js';
@@ -28,6 +34,7 @@ import {
   installAuthoredVoice,
   associateIndividualFamiliarity,
   revokeRecognitionEvidence,
+  recognitionSeedDeadline,
   validateRecognition,
   type RecognitionKnowledge,
 } from './recognition.js';
@@ -61,32 +68,83 @@ export interface ObserverIdentity {
 }
 /** The existing identity owner installs lasting learning only after its complete
  * encoded record fits the same personal-knowledge pool as notes and accounts. */
-export function commitObserverIdentity(world: WorldState, actorId: string, key: string, candidate: ObserverIdentity): boolean {
+export function commitObserverIdentity(
+  world: WorldState,
+  actorId: string,
+  key: string,
+  candidate: ObserverIdentity,
+): boolean {
   const records = ((world.observerIdentities ??= {})[actorId] ??= {});
   const previous = records[key];
   const next: ObserverIdentity = candidate.authored ? candidate : { ...candidate, retained: true };
-  if (!adjustRetainedKnowledgeAccounting(world, actorId, previous?.retained && !previous.authored ? previous : undefined, next.authored ? undefined : next)) return false;
+  if (
+    !adjustRetainedKnowledgeAccounting(
+      world,
+      actorId,
+      previous?.retained && !previous.authored ? previous : undefined,
+      next.authored ? undefined : next,
+    )
+  )
+    return false;
   records[key] = next;
+  const due = recognitionSeedDeadline(world, next),
+    accounts = world.experience?.temporal?.actors[actorId]?.accounts;
+  if (due !== null && accounts) accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, due);
+  if(previous&&accounts){
+    const nextRoots=new Set(next.familiarity?.roots.map((root)=>root.key));
+    const dropped=(previous.familiarity?.roots.some((root)=>!nextRoots.has(root.key))??false)||
+      (previous.nameEvidenceIds?.some((id)=>!next.nameEvidenceIds?.includes(id))??false)||
+      (['voice','sight']as const).some((modality)=>{
+        const retained=new Set(next[modality]?.samples.map((sample)=>sample.key));
+        return previous[modality]?.samples.some((sample)=>!retained.has(sample.key));
+      });
+    // The common retention owner checks the complete name/note/place/work closure;
+    // one identity alone cannot safely delete a capsule another owner still needs.
+    if(dropped)accounts.nextDue=Math.min(accounts.nextDue??Infinity,world.simTime);
+  }
   return true;
 }
 /** A name learned from actual words keeps those exact words and their permitted
  * participant proof, rather than pinning the whole speech log indefinitely. */
-function retainNameEvidence(world:WorldState,observerId:string,evidenceIds:readonly string[],actual?:import('../../experience.js').Awareness):{ids:string[];created:string[]}|undefined {
-  const ids=[...evidenceIds],created:string[]=[];
-  for(const reference of evidenceIds){
-    if(!reference.startsWith('awareness:')) continue;
-    const eventId=reference.slice('awareness:'.length);
-    const supports=world.experience?.temporal?.actors[observerId]?.supports??{};
-    const prior=Object.values(supports).find((value)=>value.receipt.sourceIds.includes(eventId));
-    if(prior){ids.push(JSON.stringify(temporalReceiptSource(prior.receipt)));continue;}
-    const awareness=actual?.eventId===eventId?actual:world.experience?.awareness[observerId]?.find((entry)=>entry.eventId===eventId);
-    let receipt=temporalReceiptForSource(world,observerId,eventId);
-    if(!receipt&&awareness?.observation) receipt=captureTemporalObservation(world,observerId,awareness.observation,[eventId],true,BASE_ATTENTION_POLICY.retention.recent);
-    const held=receipt&&retainTemporalSupport(world,receipt,BASE_ATTENTION_POLICY.retention.optional);
-    if(!held){for(const id of created)releaseTemporalSupport(world,observerId,id);return;}
-    created.push(held.receipt.id);ids.push(JSON.stringify(temporalReceiptSource(held.receipt)));
+function retainNameEvidence(
+  world: WorldState,
+  observerId: string,
+  evidenceIds: readonly string[],
+  actual?: import('../../experience.js').Awareness,
+): { ids: string[]; created: string[] } | undefined {
+  const ids = [...evidenceIds],
+    created: string[] = [];
+  for (const reference of evidenceIds) {
+    if (!reference.startsWith('awareness:')) continue;
+    const eventId = reference.slice('awareness:'.length);
+    const supports = world.experience?.temporal?.actors[observerId]?.supports ?? {};
+    const prior = Object.values(supports).find((value) =>
+      value.receipt.sourceIds.includes(eventId),
+    );
+    const awareness =
+      actual?.eventId === eventId
+        ? actual
+        : world.experience?.awareness[observerId]?.find((entry) => entry.eventId === eventId);
+    let receipt = prior?.receipt ?? temporalReceiptForSource(world, observerId, eventId);
+    if (!receipt && awareness?.observation)
+      receipt = captureTemporalObservation(
+        world,
+        observerId,
+        awareness.observation,
+        [eventId],
+        true,
+        BASE_ATTENTION_POLICY.retention.recent,
+      );
+    const held =
+      receipt && retainTemporalSupport(world, receipt, BASE_ATTENTION_POLICY.retention.optional);
+    if (!held) {
+      for (const id of created) releaseTemporalSupport(world, observerId, id);
+      return;
+    }
+    if (!prior) created.push(held.receipt.id);
+    ids.push(JSON.stringify(temporalReceiptSource(held.receipt)));
   }
-  return {ids:[...new Set(ids)],created};
+  return { ids: [...new Set(ids)], created };
 }
 export interface GivenNameEdit {
   subjectId: string;
@@ -153,27 +211,60 @@ export function associateBodyFamiliarity(
       ordinal: association.originalOrdinal,
     }),
   );
-  if (candidate.individualId) commitObserverIdentity(world, observerId, candidate.individualId, candidate);
+  if (candidate.individualId)
+    commitObserverIdentity(world, observerId, candidate.individualId, candidate);
 }
 /** Retention calls once for an actual retirement batch; native loss can supply
  * only its exact old local IDs. Ordinary unseen people do not become a lifetime
  * identity catalogue merely because the observer once received their bodies. */
-export function pruneObserverIndividuals(world: WorldState, actorId: string, input: { releasedSourceIds: readonly string[]; retainedIndividualIds?: ReadonlySet<string>; candidates?: readonly string[] }): number {
+export function pruneObserverIndividuals(
+  world: WorldState,
+  actorId: string,
+  input: {
+    releasedSourceIds: readonly string[];
+    retainedIndividualIds?: ReadonlySet<string>;
+    candidates?: readonly string[];
+  },
+): number {
   const identities = world.observerIdentities?.[actorId];
   if (!identities) return 0;
-  if (input.releasedSourceIds.length) revokeRecognitionEvidence(world, actorId, new Set(input.releasedSourceIds));
+  if (input.releasedSourceIds.length)
+    revokeRecognitionEvidence(world, actorId, new Set(input.releasedSourceIds));
   const pinned = new Set(input.retainedIndividualIds);
   for (const lease of Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})) {
     if (lease.localSubject?.kind === 'individual') pinned.add(lease.localSubject.individualId);
-    if (lease.value.kind === 'association' && lease.value.subject.kind === 'individual') pinned.add(lease.value.subject.individualId);
+    if (lease.value.kind === 'association' && lease.value.subject.kind === 'individual')
+      pinned.add(lease.value.subject.individualId);
   }
-  for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {})) if (document.subjectId?.kind === 'individual' && document.text.trim()) pinned.add(document.subjectId.individualId);
+  for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
+    if (document.subjectId?.kind === 'individual' && document.text.trim())
+      pinned.add(document.subjectId.individualId);
+  for(const record of world.minds[actorId]?.records??[])
+    if(record.subjectId?.kind==='individual')pinned.add(record.subjectId.individualId);
   let removed = 0;
   for (const key of input.candidates ?? Object.keys(identities)) {
     const identity = identities[key];
-    if (!identity || identity.authored || pinned.has(key) || (input.candidates && identity.retained) || identity.givenName || identity.voice?.authored || identity.sight?.authored || identity.familiarity?.authored || identity.voice?.samples.length || identity.sight?.samples.length || identity.familiarity?.roots.length) continue;
-    if (identity.retained && !adjustRetainedKnowledgeAccounting(world, actorId, identity, undefined)) throw new Error('Retired identity accounting was not released.');
-    delete identities[key]; removed++;
+    if (
+      !identity ||
+      identity.authored ||
+      pinned.has(key) ||
+      (input.candidates && identity.retained) ||
+      identity.givenName ||
+      identity.voice?.authored ||
+      identity.sight?.authored ||
+      identity.familiarity?.authored ||
+      identity.voice?.samples.length ||
+      identity.sight?.samples.length ||
+      identity.familiarity?.roots.length
+    )
+      continue;
+    if (
+      identity.retained &&
+      !adjustRetainedKnowledgeAccounting(world, actorId, identity, undefined)
+    )
+      throw new Error('Retired identity accounting was not released.');
+    delete identities[key];
+    removed++;
   }
   return removed;
 }
@@ -375,8 +466,13 @@ export function assignGivenName(
     return outcome(true, 'given-name-unchanged', 'Preferred name is already current.');
   const identities = ((world.observerIdentities ??= {})[observerId] ??= {});
   const individualId = current?.individualId ?? allocateObserverIndividual(world, observerId);
-  const held=retainNameEvidence(world,observerId,evidenceIds);
-  if(!held)return outcome(false,'knowledge-capacity','The exact introduction could not be retained; the previous name was retained.');
+  const held = retainNameEvidence(world, observerId, evidenceIds);
+  if (!held)
+    return outcome(
+      false,
+      'knowledge-capacity',
+      'The exact introduction could not be retained; the previous name was retained.',
+    );
   const assigned: ObserverIdentity = {
     ...current,
     individualId,
@@ -385,13 +481,17 @@ export function assignGivenName(
     revision: (current?.revision ?? 0) + 1,
     encounterId,
     authored: authored || current?.authored === true,
-    nameEvidenceIds:held.ids,
+    nameEvidenceIds: held.ids,
   };
   if (authored && !assigned.voice?.authored)
     installAuthoredVoice(world, observerId, assigned, edit.subjectId);
   if (!commitObserverIdentity(world, observerId, individualId, assigned)) {
-    for(const id of held.created)releaseTemporalSupport(world,observerId,id);
-    return outcome(false, 'knowledge-capacity', 'Personal knowledge is full; the previous name was retained.');
+    for (const id of held.created) releaseTemporalSupport(world, observerId, id);
+    return outcome(
+      false,
+      'knowledge-capacity',
+      'Personal knowledge is full; the previous name was retained.',
+    );
   }
   advanceKnowledgeRevision(world, observerId);
   return outcome(true, 'given-name-edited', 'Observer-specific given name updated.');
@@ -426,16 +526,24 @@ export function rememberSubject(
       : undefined;
   if (existing) {
     if (authored && !existing.authored) {
-      if(!existing.individualId||!commitObserverIdentity(world,observerId,existing.individualId,{...existing,authored:true,revision:existing.revision+1}))return;
+      if (
+        !existing.individualId ||
+        !commitObserverIdentity(world, observerId, existing.individualId, {
+          ...existing,
+          authored: true,
+          revision: existing.revision + 1,
+        })
+      )
+        return;
       advanceKnowledgeRevision(world, observerId);
     }
     return;
   }
   // A subject pad already owns its typed remembered reference. Writing one does
   // not manufacture an identification/profile from a private body routing ID.
-  if(!authored)return;
+  if (!authored) return;
   const individualId = allocateObserverIndividual(world, observerId);
-  commitObserverIdentity(world,observerId,individualId,{
+  commitObserverIdentity(world, observerId, individualId, {
     individualId,
     canonicalId: subjectId,
     givenName: '',
@@ -518,9 +626,14 @@ export function assignSubjectName(
   if (!permittedSubjects.some((subject) => sameSubject(subject, edit.subjectId)))
     return outcome(false, 'unpermitted-subject', 'The identity subject was not supplied.');
   if (edit.subjectId.kind === 'entity')
-    return assignGivenName(world, observerId, { ...edit, subjectId: edit.subjectId.entityId }, [
-      edit.subjectId.entityId,
-    ],false,evidenceIds);
+    return assignGivenName(
+      world,
+      observerId,
+      { ...edit, subjectId: edit.subjectId.entityId },
+      [edit.subjectId.entityId],
+      false,
+      evidenceIds,
+    );
   const identity = observerIndividual(world, observerId, edit.subjectId);
   const currentBody =
     identity?.encounterId &&
@@ -549,12 +662,26 @@ export function assignSubjectName(
     return outcome(false, 'stale-identity', 'The preferred name changed.');
   if (!edit.givenName.trim() || characterCount(edit.givenName) > 120)
     return outcome(false, 'invalid-given-name', 'A preferred name must contain 1–120 characters.');
-  const held=retainNameEvidence(world,observerId,evidenceIds);
-  if(!held)return outcome(false,'knowledge-capacity','The exact introduction could not be retained; the previous name was retained.');
-  const candidate = { ...identity, givenName: edit.givenName.trim(), revision: identity.revision + 1, nameEvidenceIds: held.ids };
+  const held = retainNameEvidence(world, observerId, evidenceIds);
+  if (!held)
+    return outcome(
+      false,
+      'knowledge-capacity',
+      'The exact introduction could not be retained; the previous name was retained.',
+    );
+  const candidate = {
+    ...identity,
+    givenName: edit.givenName.trim(),
+    revision: identity.revision + 1,
+    nameEvidenceIds: held.ids,
+  };
   if (!commitObserverIdentity(world, observerId, identity.individualId, candidate)) {
-    for(const id of held.created)releaseTemporalSupport(world,observerId,id);
-    return outcome(false, 'knowledge-capacity', 'Personal knowledge is full; the previous name was retained.');
+    for (const id of held.created) releaseTemporalSupport(world, observerId, id);
+    return outcome(
+      false,
+      'knowledge-capacity',
+      'Personal knowledge is full; the previous name was retained.',
+    );
   }
   advanceKnowledgeRevision(world, observerId);
   return outcome(true, 'given-name-edited', 'Observer-specific given name updated.');
@@ -622,10 +749,16 @@ export function learnSpeechIntroduction(
     if (!subject) {
       const seed = world.observerIdentities?.[observerId]?.[`voice-seed-${event.id}`];
       if (seed?.seedOnly) {
-        const held=retainNameEvidence(world,observerId,[`awareness:${event.id}`],evidence);
-        if(!held)continue;
-        if(!commitObserverIdentity(world,observerId,`voice-seed-${event.id}`,{...seed,givenName:proposed.trim(),nameEvidenceIds:held.ids}))
-          for(const id of held.created)releaseTemporalSupport(world,observerId,id);
+        const held = retainNameEvidence(world, observerId, [`awareness:${event.id}`], evidence);
+        if (!held) continue;
+        if (
+          !commitObserverIdentity(world, observerId, `voice-seed-${event.id}`, {
+            ...seed,
+            givenName: proposed.trim(),
+            nameEvidenceIds: held.ids,
+          })
+        )
+          for (const id of held.created) releaseTemporalSupport(world, observerId, id);
       }
       continue;
     }

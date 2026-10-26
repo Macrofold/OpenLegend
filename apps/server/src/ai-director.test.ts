@@ -220,6 +220,59 @@ async function harness(
 }
 
 describe('AI director with explicit fixtures, no live calls', () => {
+  it('releases a restored discovery reservation proven not dispatched without losing its free-interval opportunity', async () => {
+    const h = await harness();
+    const reservation = 'fixture-unsent-discovery',
+      key = `semantic-schedule:${h.service.world.id}:${NPC_ID}`;
+    await h.change((world) => {
+      const semantic = entityGet(world.entities, NPC_ID)!.actor!.agency.semantic!;
+      semantic.discovery = 'reserved';
+      semantic.reservation = reservation;
+    });
+    await h.store.putIntegration(key, {
+      fingerprint: 'fixture',
+      at: 10000,
+      attemptedOpportunity: 'fixture-opportunity',
+      attemptedJobId: reservation,
+    });
+    await h.service.control({ paused: true });
+    await h.director.considerThought();
+    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic).toMatchObject({
+      discovery: 'available',
+      interval: 0,
+    });
+    expect((await h.store.getIntegration(key)) as object).not.toHaveProperty(
+      'attemptedOpportunity',
+    );
+    expect(h.calls.judges).toHaveLength(0);
+  });
+  it('keeps a restored uncertain dispatched discovery spent rather than buying a replacement thought', async () => {
+    const h = await harness();
+    const reservation = 'fixture-dispatched-discovery',
+      attempt = 'fixture-dispatched-attempt';
+    await h.change((world) => {
+      const semantic = entityGet(world.entities, NPC_ID)!.actor!.agency.semantic!;
+      semantic.discovery = 'reserved';
+      semantic.reservation = reservation;
+    });
+    expect(
+      await h.store.reserve(attempt, 'jev', 0.01, 1, NPC_ID, undefined, undefined, {
+        rootJobId: reservation,
+        category: 'level',
+        level: 1,
+        stage: 'fixture',
+        executionClass: 'primary',
+      }),
+    ).toBe(true);
+    expect(await h.store.markDecisionDispatch(attempt)).toBe(true);
+    await h.service.control({ paused: true });
+    await h.director.considerThought();
+    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic).toMatchObject({
+      discovery: 'spent',
+      interval: 0,
+    });
+    expect(h.calls.judges).toHaveLength(0);
+  });
   it('admits a generated declaration with fixture provenance and private ownership', async () => {
     const h = await harness({
       judge: (request) => judgment(request, 'base:swing'),

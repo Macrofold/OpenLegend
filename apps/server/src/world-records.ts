@@ -711,10 +711,7 @@ export class WorldRecords {
     // Startup recovery loads the simulation working set. Ordinary feature reads use
     // scoped repositories below, not this complete reconstruction path.
     for (const table of RECORD_NODES.keys()) {
-      if (
-        active &&
-        ['mind_temporal_chunks', 'mind_temporal_sources', 'mind_temporal_supports'].includes(table)
-      ) {
+      if (active && ['mind_temporal_chunks', 'mind_temporal_sources'].includes(table)) {
         groups.set(table, new Map());
         continue;
       }
@@ -895,7 +892,39 @@ export class WorldRecords {
       if (removed) state.world.archivedEventCount = (state.world.archivedEventCount ?? 0) + removed;
       this.needsHotPrune ||= removed > 0;
     }
+    await this.auditRetentionTotals(state);
     return { revision: applied ? head.appliedRevision : head.revision, state };
+  }
+  /** Cold bodies stay cold: independently sum canonical metadata in the same
+   * snapshot so a damaged header cannot evade age/space maintenance after load. */
+  private async auditRetentionTotals(state: SavedWorld): Promise<void> {
+    const actors = state.world.experience?.temporal?.actors;
+    if (!actors || !Object.keys(actors).length) return;
+    const totals = await this.db
+      .prepare(
+        `SELECT actor_id,category,SUM(bytes) AS bytes,SUM(count) AS count FROM (
+      SELECT actor_id,'recent' AS category,SUM(logical_bytes) AS bytes,SUM(receipt_count) AS count FROM mind_temporal_chunks WHERE world_id=? GROUP BY actor_id
+      ${['mind_awareness', 'mind_memories', 'mind_summaries'].map((table) => `UNION ALL SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM ${table} WHERE world_id=? GROUP BY actor_id,retention_class`).join('\n')}
+      UNION ALL SELECT actor_id,CASE WHEN required=1 THEN 'required' ELSE 'optional' END AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_temporal_supports WHERE world_id=? GROUP BY actor_id,required
+      UNION ALL SELECT actor_id,'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_knowledge_documents WHERE world_id=? AND payload::jsonb->>'origin'='actor-edit' GROUP BY actor_id
+      UNION ALL SELECT parent_id::jsonb->>2 AS actor_id,'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_recognition WHERE world_id=? AND payload::jsonb->>'retained'='true' AND COALESCE(payload::jsonb->>'authored','false')<>'true' GROUP BY parent_id
+    ) canonical GROUP BY actor_id,category`,
+      )
+      .all(...Array(7).fill(state.world.id));
+    const indexed = new Map(
+      totals.map((row) => [JSON.stringify([row['actor_id'], row['category']]), row]),
+    );
+    for (const [actorId, actor] of Object.entries(actors))
+      for (const category of ['recent', 'optional', 'required', 'speech'] as const) {
+        const counter = category === 'recent' ? actor : actor.accounts?.[category];
+        if (!counter) continue;
+        const total = indexed.get(JSON.stringify([actorId, category]));
+        if (
+          counter.bytes !== Number(total?.['bytes'] ?? 0) ||
+          counter.count !== Number(total?.['count'] ?? 0)
+        )
+          throw new Error('Retained personal counters disagree with their canonical records.');
+      }
   }
   async pruneActiveEvents(state: SavedWorld): Promise<void> {
     const selector = 'SELECT value FROM jsonb_array_elements_text(?::jsonb)';

@@ -7,10 +7,10 @@ import {
 } from '@open-legend/spatial';
 import { createWorld, PLAYER_ID, NPC_ID } from './worlds/base/world.js';
 import { BASE_TERRAIN } from './worlds/base/spatial-definitions.js';
-import { entityGet,entitySet,emptyEntities } from './entity-collection.js';
-import { worldPlacement,setSpatialPosition } from './spatial-state.js';
+import { entityGet, entitySet, emptyEntities } from './entity-collection.js';
+import { worldPlacement, setSpatialPosition } from './spatial-state.js';
 import { initializePerception } from './kernel.js';
-import { currentAttentionCues,currentDetailedAttention,setAttentionFocus } from './attention.js';
+import { currentAttentionCues, currentDetailedAttention, setAttentionFocus } from './attention.js';
 import { perceptionEvidenceOwner } from './perception-evidence.js';
 import {
   currentReceivedGeometry,
@@ -136,6 +136,10 @@ describe('certified received planar geometry', () => {
           boundary.nearSurface.support.source.id !== boundary.farSurface.support.source.id,
       ),
     ).toBe(true);
+    const corrupt=structuredClone(world);
+    const edge=corrupt.perceptionEvidence![PLAYER_ID]!.geometry!.boundaries[0]!.facets[0]!.value;
+    if(edge.kind==='physical-boundary')edge.boundary.farSurface.support.source.observer.actorId='someone-else';
+    expect(()=>validateReceivedGeometryState(corrupt,PLAYER_ID,corrupt.perceptionEvidence![PLAYER_ID]!.geometry!)).toThrow('owned received surface');
     const hidden = map([surface('high', 0, 2, 2)]);
     const other = worldWithGeometry(hidden, { x: 3.5, y: 2, z: 2 });
     refreshReceivedGeometry(other.world, PLAYER_ID);
@@ -185,52 +189,98 @@ describe('certified received planar geometry', () => {
   });
 });
 
-function nativeScene(count:number,value:SpatialMap,observerPoint={x:1,y:0,z:2}){
-  const world=createWorld(117),player=entityGet(world.entities,PLAYER_ID)!,prototype=entityGet(world.entities,NPC_ID)!;
-  world.map=value;world.entities=emptyEntities();entitySet(world.entities,PLAYER_ID,player);
-  setSpatialPosition(world,player,observerPoint,null);
-  const people=[];
-  for(let i=0;i<count;i++){
-    const person=structuredClone(prototype);person.id=`received-person-${i}`;person.name=`Secret person ${i}`;
-    person.placement=worldPlacement({x:5+i/2,y:observerPoint.y,z:2},null);entitySet(world.entities,person.id,person);people.push(person);
+function nativeScene(count: number, value: SpatialMap, observerPoint = { x: 1, y: 0, z: 2 }) {
+  const world = createWorld(117),
+    player = entityGet(world.entities, PLAYER_ID)!,
+    prototype = entityGet(world.entities, NPC_ID)!;
+  world.map = value;
+  world.entities = emptyEntities();
+  entitySet(world.entities, PLAYER_ID, player);
+  setSpatialPosition(world, player, observerPoint, null);
+  const people = [];
+  for (let i = 0; i < count; i++) {
+    const person = structuredClone(prototype);
+    person.id = `received-person-${i}`;
+    person.name = `Secret person ${i}`;
+    person.placement = worldPlacement({ x: 5 + i / 2, y: observerPoint.y, z: 2 }, null);
+    entitySet(world.entities, person.id, person);
+    people.push(person);
   }
-  initializePerception(world,[]);
-  return {world,player,people};
+  initializePerception(world, []);
+  return { world, player, people };
 }
 
-describe('native received relation producers',()=>{
-  it('keeps fifteen unfamiliar people present while an attended person approaches an actually received drop',()=>{
-    const value=map([surface('high',-5,20,2),surface('low',20,40,0)]);
-    value.width=42;value.tiles=Array.from({length:5},()=>Array(42).fill('grass'));
+describe('native received relation producers', () => {
+  it('keeps fifteen unfamiliar people present while an attended person approaches an actually received drop', () => {
+    const value = map([surface('high', -5, 20, 2), surface('low', 20, 40, 0)]);
+    value.width = 42;
+    value.tiles = Array.from({ length: 5 }, () => Array(42).fill('grass'));
     // A supported airborne observation from the far side sees both actual surfaces;
     // no authored cliff label or private destination is supplied to the observer.
-    const {world,people}=nativeScene(16,value,{x:25,y:2,z:2});
-    const daughter=people[0]!;
-    setSpatialPosition(world,daughter,{x:15,y:2,z:2},null,'physical');initializePerception(world,[]);
-    const owner=world.perceptionEvidence![PLAYER_ID]!;
-    const anchor=Object.entries(owner.attention!.candidates).find(([,candidate])=>candidate.sourceId===daughter.id)!;
-    expect(setAttentionFocus(world,PLAYER_ID,[anchor[0]])).toBe(true);
-    expect(Object.values(owner.current).filter((lease)=>lease.value.kind==='body')).toHaveLength(16);
-    expect(currentDetailedAttention(world,PLAYER_ID)).toHaveLength(10);
-    expect(currentReceivedGeometry(world,PLAYER_ID).observations.some((observation)=>observation.facets.some((facet)=>facet.value.kind==='physical-boundary'))).toBe(true);
-    world.simTime=15;setSpatialPosition(world,daughter,{x:16,y:2,z:2},null,'physical');initializePerception(world,[]);
-    const cue=currentAttentionCues(world,PLAYER_ID).find((entry)=>entry.sourceId===daughter.id&&entry.family==='closing-drop');
+    const { world, people } = nativeScene(16, value, { x: 25, y: 2, z: 2 });
+    const daughter = people[0]!;
+    setSpatialPosition(world, daughter, { x: 15, y: 2, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    const owner = world.perceptionEvidence![PLAYER_ID]!;
+    const anchor = Object.entries(owner.attention!.candidates).find(
+      ([, candidate]) => candidate.sourceId === daughter.id,
+    )!;
+    expect(setAttentionFocus(world, PLAYER_ID, [anchor[0]])).toBe(true);
+    expect(
+      Object.values(owner.current).filter((lease) => lease.value.kind === 'body'),
+    ).toHaveLength(16);
+    expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(10);
+    expect(
+      currentReceivedGeometry(world, PLAYER_ID).observations.some((observation) =>
+        observation.facets.some((facet) => facet.value.kind === 'physical-boundary'),
+      ),
+    ).toBe(true);
+    world.simTime = 15;
+    setSpatialPosition(world, daughter, { x: 16, y: 2, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    const cue = currentAttentionCues(world, PLAYER_ID).find(
+      (entry) => entry.sourceId === daughter.id && entry.family === 'closing-drop',
+    );
     expect(cue).toBeDefined();
-    expect(cue!.proof.some((fact)=>currentReceivedGeometry(world,PLAYER_ID).observations.some((observation)=>observation.id===fact.source.id))).toBe(true);
+    expect(
+      cue!.proof.some((fact) =>
+        currentReceivedGeometry(world, PLAYER_ID).observations.some(
+          (observation) => observation.id === fact.source.id,
+        ),
+      ),
+    ).toBe(true);
     expect(JSON.stringify(owner.attention)).not.toContain('Secret person');
-    expect(world.experience!.temporal!.actors[PLAYER_ID]!.chunks.some((chunk)=>chunk.receipts.some((receipt)=>receipt.at===15))).toBe(true);
+    expect(
+      world.experience!.temporal!.actors[PLAYER_ID]!.chunks.some((chunk) =>
+        chunk.receipts.some((receipt) => receipt.at === 15),
+      ),
+    ).toBe(true);
   });
-  it('evaluates a stationary attended person when a received neighbor moves, without treating loss as clear evidence',()=>{
-    const {world,people}=nativeScene(2,map([surface('ground',-5,25,0)]));
-    const anchor=people[0]!,neighbor=people[1]!;
-    setSpatialPosition(world,anchor,{x:5,y:0,z:2},null,'physical');setSpatialPosition(world,neighbor,{x:11,y:0,z:2},null,'physical');initializePerception(world,[]);
-    const key=Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.candidates).find(([,candidate])=>candidate.sourceId===anchor.id)![0];
-    setAttentionFocus(world,PLAYER_ID,[key]);
-    world.simTime=15;setSpatialPosition(world,neighbor,{x:7,y:0,z:2},null,'physical');initializePerception(world,[]);
-    const cue=currentAttentionCues(world,PLAYER_ID).find((entry)=>entry.sourceId===anchor.id&&entry.family==='closing-body');
+  it('evaluates a stationary attended person when a received neighbor moves, without treating loss as clear evidence', () => {
+    const { world, people } = nativeScene(2, map([surface('ground', -5, 25, 0)]));
+    const anchor = people[0]!,
+      neighbor = people[1]!;
+    setSpatialPosition(world, anchor, { x: 5, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, neighbor, { x: 11, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    const key = Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.candidates).find(
+      ([, candidate]) => candidate.sourceId === anchor.id,
+    )![0];
+    setAttentionFocus(world, PLAYER_ID, [key]);
+    world.simTime = 15;
+    setSpatialPosition(world, neighbor, { x: 7, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    const cue = currentAttentionCues(world, PLAYER_ID).find(
+      (entry) => entry.sourceId === anchor.id && entry.family === 'closing-body',
+    );
     expect(cue).toBeDefined();
-    world.simTime=30;setSpatialPosition(world,neighbor,{x:100,y:0,z:2},null,'physical');initializePerception(world,[]);
-    world.simTime=180;initializePerception(world,[]);
-    expect(currentAttentionCues(world,PLAYER_ID).find((entry)=>entry.id===cue!.id)).toBeDefined();
+    world.simTime = 30;
+    setSpatialPosition(world, neighbor, { x: 100, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    world.simTime = 180;
+    initializePerception(world, []);
+    expect(
+      currentAttentionCues(world, PLAYER_ID).find((entry) => entry.id === cue!.id),
+    ).toBeDefined();
   });
 });

@@ -1,6 +1,6 @@
 import { entityGet } from '../../entity-collection.js';
 import { namePhrase, type Named } from '@open-legend/language';
-import { seesEntity } from '../../perception.js';
+import { currentBodyObservation, currentObservedFacets } from '../../perception-evidence.js';
 import { projectAttributes } from '../../world-modules.js';
 import type { WorldState } from '../../types.js';
 import type { RangedPolicy } from '../../ranged-policy.js';
@@ -59,14 +59,16 @@ export function observedBodyHealth(
   observerId: string,
   targetId: string,
 ): string {
-  const target = entityGet(world.entities, targetId);
-  const observer = entityGet(world.entities, observerId);
-  if (!observer || !target?.actor || !seesEntity(world, observer, target)) return '';
-  const health = projectAttributes(
-    world,
-    target,
-    observer.id === target.id ? 'owner' : 'public',
-  ).find((attribute) => attribute.bodyHealth);
+  const own = observerId === targetId,
+    target = own ? entityGet(world.entities, targetId) : undefined;
+  if (own && !target?.actor) return '';
+  if (!own && !currentBodyObservation(world, observerId, targetId)) return '';
+  const attributes = own
+    ? projectAttributes(world, target!, 'owner')
+    : currentObservedFacets(world, observerId, targetId).flatMap((facet) =>
+        facet.value.kind === 'public-attributes' ? facet.value.attributes : [],
+      );
+  const health = attributes.find((attribute) => attribute.bodyHealth);
   if (!health || typeof health.value !== 'number') return '';
   const range =
     health.max === undefined

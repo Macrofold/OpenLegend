@@ -1,5 +1,5 @@
 import { BoundsIndex, bodySurfaceDistance, type Bounds3, type BoundsQueryCursor } from '@open-legend/spatial';
-import { captureCurrentFacet, currentBodyObservation, type CapturedCurrentFacet, type CapturedLocationSample, type ObservedBody } from './perception-evidence.js';
+import { captureCurrentFacet, currentBodyObservation, effectiveCurrentFacetSupport, type CapturedCurrentFacet, type CapturedLocationSample, type ObservedBody } from './perception-evidence.js';
 import { cloneValue } from './draft.js';
 import type { Position, WorldState } from './types.js';
 
@@ -42,8 +42,8 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
     const motion = key?.[`${lease.subjectId}:observed-motion`]?.value;
     bodies.set(lease.subjectId, {
       sourceId: lease.subjectId, exposure: lease.exposure.episodeId, body,
-      sample: captureCurrentFacet(lease),
-      ...(location?.value.kind === 'location' ? { location: captureCurrentFacet(location) as CapturedLocationSample } : {}),
+      sample: admitted,
+      ...(location?.value.kind === 'location' ? { location: captureCurrentFacet(effectiveCurrentFacetSupport(world,observerId,location)) as CapturedLocationSample } : {}),
       ...(motion?.kind === 'observed-motion' ? { motion: cloneValue(motion) } : {}),
       bounds: {
         min: { x: point.x - body.radius - error, y: point.y - error, z: point.z - body.radius - error },

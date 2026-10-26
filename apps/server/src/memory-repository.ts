@@ -4,6 +4,7 @@ import {
   type DerivedMemoryAllowance,
 } from './memory-derivatives.js';
 import { prepareAccountRetention } from './account-retention.js';
+import { cleanupRetiredIndividuals } from './retention-cleanup.js';
 import { tableRows } from './record-pages.js';
 import {
   readTemporalHistory,
@@ -565,7 +566,8 @@ export class MemoryRepository {
       const recent = await prepareTemporalRetention(this.db, accounts.state, complete);
       const rows = new Map(accounts.rows);
       for (const [table, ids] of recent.rows) rows.set(table, [...(rows.get(table) ?? []), ...ids]);
-      return { state: recent.state, rows, positions: accounts.positions };
+      const cleaned = await cleanupRetiredIndividuals(this.db, state, recent.state, rows, complete);
+      return { state: cleaned, rows, positions: accounts.positions };
     });
   }
   async temporalReceiptsCurrent(
@@ -1942,32 +1944,34 @@ export class MemoryRepository {
     )
       throw new Error('Invalid annotation identity.');
     const payload = JSON.stringify(z.json().parse(value));
-    const row = await this.db
-      .prepare(
-        `INSERT INTO mind_source_annotations
+    return this.db.transaction(async () => {
+      const row = await this.db
+        .prepare(
+          `INSERT INTO mind_source_annotations
       SELECT r.world_id,r.actor_id,r.source_kind,r.id,r.revision,?,1,? FROM recall_sources r
       WHERE r.world_id=? AND r.actor_id=? AND r.source_kind=? AND r.id=? AND r.revision=?
       AND (SELECT generation FROM world_head WHERE id=1)=?
       AND (?=0 OR EXISTS (SELECT 1 FROM mind_source_annotations a WHERE a.world_id=r.world_id AND a.actor_id=r.actor_id AND a.source_kind=r.source_kind AND a.source_id=r.id AND a.source_revision=r.revision AND a.namespace=?))
       ON CONFLICT(world_id,actor_id,source_kind,source_id,source_revision,namespace)
       DO UPDATE SET revision=mind_source_annotations.revision+1,payload=excluded.payload WHERE mind_source_annotations.revision=? RETURNING revision`,
-      )
-      .get(
-        namespace,
-        payload,
-        scope.worldId,
-        scope.actorId,
-        source.kind,
-        source.id,
-        source.revision,
-        scope.generation,
-        expectedRevision,
-        namespace,
-        expectedRevision,
-      );
-    if (!row) throw new Error('Source or annotation changed; refresh before editing.');
-    await this.trimDerived(scope.worldId, [scope.actorId]);
-    return Number(row['revision']);
+        )
+        .get(
+          namespace,
+          payload,
+          scope.worldId,
+          scope.actorId,
+          source.kind,
+          source.id,
+          source.revision,
+          scope.generation,
+          expectedRevision,
+          namespace,
+          expectedRevision,
+        );
+      if (!row) throw new Error('Source or annotation changed; refresh before editing.');
+      await this.trimDerived(scope.worldId, [scope.actorId]);
+      return Number(row['revision']);
+    });
   }
   async annotations(
     scope: MemoryScope,

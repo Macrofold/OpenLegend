@@ -1,12 +1,21 @@
 import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
-import { enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { commitCognition, mindFor, type MindProposal } from '@open-legend/domain';
+import {
+  commitCognition,
+  mindFor,
+  initializePerception,
+  setAttentionFocus,
+  setSpatialPosition,
+  worldSupport,
+  worldPosition,
+  type MindProposal,
+} from '@open-legend/domain';
 import { validateMacrofoldValue } from '@open-legend/ai';
 import { readConfig } from '../../../tests/fixtures/database.js';
 import { SqlGameRepository } from './store.js';
@@ -23,6 +32,8 @@ import {
 import { MacrofoldBackend } from './macrofold.js';
 import { inspectGodMind } from './god-mind.js';
 import { projectView } from './view.js';
+import { entityHandle } from './entity-references.js';
+import { starterGroundAt } from '../../../packages/domain/src/worlds/base/landscape.js';
 const opened: SqlGameRepository[] = [];
 const dirs: string[] = [];
 afterEach(async () => {
@@ -52,6 +63,7 @@ async function service(path: string | undefined = undefined, god = true) {
 function proposal(s: WorldService, id = 'fixture-decision') {
   const prepared = cognitionContext(s, NPC_ID, id, 'thought', 'full');
   const e = prepared.context.recall.entries[0]!.id;
+  const subject = entityHandle(s.world, NPC_ID, PLAYER_ID);
   const p: MindProposal = {
     policy: 'mind-v1',
     decisionId: id,
@@ -74,7 +86,7 @@ function proposal(s: WorldService, id = 'fixture-decision') {
         expectedRevision: 0,
         documentId: 'newcomer',
         kind: 'relationship',
-        subjectId: PLAYER_ID,
+        subjectId: subject,
         source: 'inferred',
         confidence: 0.6,
         trust: 0.2,
@@ -86,7 +98,7 @@ function proposal(s: WorldService, id = 'fixture-decision') {
         expectedRevision: 0,
         documentId: 'newcomer',
         kind: 'belief',
-        subjectId: PLAYER_ID,
+        subjectId: subject,
         source: 'inferred',
         confidence: 0.5,
         trust: null,
@@ -117,6 +129,49 @@ describe('fixture: cognition vertical slice', () => {
     );
     expect(next.context.acceptedMind.documents.some((d) => d.text.includes('helpful'))).toBe(true);
     expect(JSON.stringify(next.context)).not.toContain('I am cautiously interested.');
+  });
+
+  it('keeps a remembered local person separate from a silently reacquired body in full model input', async () => {
+    const s = await service();
+    const { prepared, p } = proposal(s, 'local-relationship');
+    expect(prepared.context.current.nearby.every((entry) => entry.id !== PLAYER_ID)).toBe(true);
+    expect(
+      prepared.context.recall.entries.every((entry) => !entry.entityIds.includes(PLAYER_ID)),
+    ).toBe(true);
+    expect((await s.transition((world) => commitCognition(world, prepared.binding, p))).ok).toBe(
+      true,
+    );
+    const record = mindFor(s.world, NPC_ID).records.find((entry) => entry.kind === 'relationship')!;
+    expect(record.subjectId?.kind).toBe('individual');
+    const oldBody = entityHandle(s.world, NPC_ID, PLAYER_ID);
+    const player = entityGet(s.world.entities, PLAYER_ID)!;
+    const origin = { ...worldPosition(player) };
+    await editWorld(s, (world) => {
+      world.simTime += 1;
+      const moved = entityGet(world.entities, PLAYER_ID)!;
+      const away = starterGroundAt(world.map.spatial!, 60, 50);
+      setSpatialPosition(world, moved, away, away.surfaceId, 'physical');
+      initializePerception(world, []);
+    });
+    await editWorld(s, (world) => {
+      world.simTime += 40;
+      const moved = entityGet(world.entities, PLAYER_ID)!;
+      setSpatialPosition(world, moved, origin, worldSupport(moved), 'physical');
+      initializePerception(world, []);
+      const key = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates).find(
+        ([, candidate]) => candidate.sourceId === PLAYER_ID,
+      )![0];
+      expect(setAttentionFocus(world, NPC_ID, [key])).toBe(true);
+    });
+    const next = cognitionContext(s, NPC_ID, 'reacquired-person', 'thought', 'full');
+    const newBody = entityHandle(s.world, NPC_ID, PLAYER_ID);
+    expect(newBody).not.toBe(oldBody);
+    const remembered = next.context.acceptedMind.records.find(
+      (entry) => entry.kind === 'relationship',
+    )!;
+    expect(remembered.subjectId).not.toBe(newBody);
+    expect(next.context.current.nearby.some((entry) => entry.id === newBody)).toBe(true);
+    expect(JSON.stringify(next.context)).not.toContain(`"entityId":"${PLAYER_ID}"`);
   });
 
   it('offers reflection after evidence and suppresses it after accepted consolidation', async () => {

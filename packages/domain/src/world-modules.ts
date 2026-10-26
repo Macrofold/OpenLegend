@@ -44,7 +44,8 @@ import { validateWorkState } from './work-budget.js';
 import { validateParticipation } from './participation.js';
 import { current, isDraft, original, freeze } from 'immer';
 import { validateObserverIdentities } from './worlds/base/knowledge.js';
-import { validateKnowledge } from './knowledge.js';
+import { validateKnowledge, validObserverSubject } from './knowledge.js';
+import { MIND_LIMITS } from './mind.js';
 import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 export { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 import { validateStatusEffects } from './status-effect-validation.js';
@@ -1210,6 +1211,28 @@ export function validateWorldModules(world: WorldState): void {
   validateResourceReservations(world);
   validateParticipation(world);
   validateKnowledge(world);
+  for (const [actorId, mind] of Object.entries(world.minds ?? {})) {
+    if (
+      !entityGet(world.entities, actorId)?.actor ||
+      !mind ||
+      !Array.isArray(mind.documents) ||
+      !Array.isArray(mind.records) ||
+      mind.documents.length > MIND_LIMITS.documents ||
+      mind.records.length > MIND_LIMITS.records
+    )
+      throw new Error('Invalid saved personal mind owner.');
+    const documents = new Set(mind.documents.map((document) => document.id));
+    for (const record of mind.records)
+      if (
+        !record ||
+        !isSafeRecordId(record.id) ||
+        !Number.isSafeInteger(record.revision) ||
+        record.revision < 0 ||
+        !documents.has(record.documentId) ||
+        (record.subjectId !== null && !validObserverSubject(record.subjectId))
+      )
+        throw new Error('Invalid saved personal interpretation subject.');
+  }
   validateObserverIdentities(world);
   // Disposable development saves use current-state validation, not per-feature version gates.
   // docs/save-and-load.md#active-development-policy

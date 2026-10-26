@@ -3,6 +3,8 @@ import { dreamStatus, dreamPolicy } from './cognition-policy.js';
 import { bodyThinkingBlocked, bodyEligibilityRevision } from './body-policy.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
+import { validObserverSubject, type ObserverSubject } from './knowledge.js';
+import { getOwn } from './records.js';
 import type { MemoryRecord, Transition, WorldState } from './types.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { commitActorResponse } from './response.js';
@@ -45,7 +47,7 @@ export interface InnerRecord {
     | 'reflection'
     | 'dream'
     | 'identity';
-  subjectId: string | null;
+  subjectId: ObserverSubject | null;
   source: 'inferred' | 'imagined' | 'authored';
   confidence: number;
   trust: number | null;
@@ -83,10 +85,18 @@ export interface MindProposal {
     evidence: EvidenceLink[];
   }>;
   removeDocuments: Array<{ id: string; expectedRevision: number }>;
-  records: Array<Omit<InnerRecord, 'revision'> & { expectedRevision: number }>;
+  records: Array<
+    Omit<InnerRecord, 'revision' | 'subjectId'> & {
+      subjectId: string | null;
+      expectedRevision: number;
+    }
+  >;
   removeRecords: Array<{ id: string; expectedRevision: number }>;
 }
 export interface CognitionBinding {
+  privacyRevision: number;
+  /** Model callers bind opaque references; native callers can already supply owned IDs. */
+  evidenceReferences?: Record<string, string>;
   physicalEntityReferences?: Record<string, string>;
   /** Exact current body support, distinct from retained recognition/communication. */
   entityLeases?: Record<string, string>;
@@ -145,7 +155,7 @@ export function mindFor(world: WorldState, actorId: string): ActorMind {
         revision: 1,
         documentId: 'identity',
         kind: 'identity',
-        subjectId: actorId,
+        subjectId: { kind: 'entity', entityId: actorId },
         source: 'authored',
         confidence: 1,
         trust: null,
@@ -186,6 +196,8 @@ export function commitCognition(
   const actor = entityGet(input.entities, binding.actorId)?.actor;
   if (!actor?.alive || actor.incapacitated || input.paused)
     return reject('Actor cannot deliberate now.');
+  if (binding.privacyRevision !== (input.experience?.privacyRevisions?.[binding.actorId] ?? 0))
+    return reject('The supplied personal evidence was corrected or forgotten.');
   const mind = mindFor(input, binding.actorId);
   const fingerprint = canonicalJson({ binding, proposal });
   if (Object.hasOwn(mind.receipts, binding.decisionId))
@@ -234,9 +246,16 @@ export function commitCognition(
   const currentExperiences = experiences(input, binding.actorId, true);
   const currentEvidence = new Set(currentExperiences.map((memory) => memory.id));
   const allowed = new Set(binding.evidenceIds);
+  const evidenceId = (id: string) =>
+    binding.evidenceReferences ? getOwn(binding.evidenceReferences, id) : id;
+  const resolvedEvidence = (links: EvidenceLink[]) =>
+    links.map((link) => ({ ...link, id: evidenceId(link.id)! }));
   const checkEvidence = (links: EvidenceLink[]) =>
     links.length <= 16 &&
-    links.every((link) => allowed.has(link.id) && currentEvidence.has(link.id));
+    links.every((link) => {
+      const id = evidenceId(link.id);
+      return id !== undefined && allowed.has(id) && currentEvidence.has(id);
+    });
   const identifier = (id: string) =>
     /^[a-zA-Z0-9_-]{1,64}$/.test(id) && !['__proto__', 'constructor', 'prototype'].includes(id);
   const changed = [...proposal.documents, ...proposal.removeDocuments];
@@ -273,7 +292,7 @@ export function commitCognition(
       title: patch.title,
       text: patch.text,
       revision: (prior?.revision ?? 0) + 1,
-      evidence: patch.evidence,
+      evidence: resolvedEvidence(patch.evidence),
       protected: prior?.protected ?? false,
     };
     mind.documents = mind.documents.filter((d) => d.id !== patch.id);
@@ -311,9 +330,21 @@ export function commitCognition(
       return reject(
         "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.",
       );
-    if (patch.subjectId && !binding.entityIds.includes(patch.subjectId))
+    const subject = patch.subjectId
+      ? getOwn(binding.identityReferences ?? {}, patch.subjectId)
+      : null;
+    if (
+      patch.subjectId &&
+      (!subject ||
+        !validObserverSubject(subject) ||
+        (subject.kind === 'individual' &&
+          !getOwn(input.observerIdentities?.[binding.actorId] ?? {}, subject.individualId)))
+    )
       return reject('Unknown relationship subject.');
-    if (patch.kind === 'relationship' && (!patch.subjectId || patch.subjectId === binding.actorId))
+    if (
+      patch.kind === 'relationship' &&
+      (!subject || (subject.kind === 'entity' && subject.entityId === binding.actorId))
+    )
       return reject('Relationship requires another known subject.');
     if ((patch.kind === 'dream' || binding.purpose === 'dream') && patch.source !== 'imagined')
       return reject('Dream proposals must remain imagined.');
@@ -325,7 +356,7 @@ export function commitCognition(
       const promised = patch.evidence.some((link) =>
         currentExperiences.some(
           (memory) =>
-            memory.id === link.id &&
+            memory.id === evidenceId(link.id) &&
             memory.eventType === 'speech' &&
             memory.speakerId === binding.actorId &&
             /\bI (?:will|promise|agree to)\b/i.test(memory.summary),
@@ -338,7 +369,12 @@ export function commitCognition(
       return reject('Active obligation cannot be rewritten.');
     const { expectedRevision, ...rest } = patch;
     mind.records = mind.records.filter((r) => r.id !== patch.id);
-    mind.records.push({ ...rest, revision: expectedRevision + 1 });
+    mind.records.push({
+      ...rest,
+      evidence: resolvedEvidence(patch.evidence),
+      subjectId: subject ? cloneValue(subject) : null,
+      revision: expectedRevision + 1,
+    });
   }
   if (
     mind.documents.length > MIND_LIMITS.documents ||

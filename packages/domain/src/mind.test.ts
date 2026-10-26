@@ -18,6 +18,8 @@ import {
   type MindProposal,
 } from './index.js';
 import { appendMemory } from './events.js';
+import { currentBodySubject } from './worlds/base/knowledge.js';
+import { initializePerception } from './kernel.js';
 
 function encounter() {
   let world = createWorld(42);
@@ -28,6 +30,7 @@ function encounter() {
     { ...worldPosition(entityGet(world.entities, NPC_ID)!) },
     worldSupport(entityGet(world.entities, PLAYER_ID)!),
   );
+  initializePerception(world, []);
   world = executeCommand(world, {
     id: 'encounter',
     actorId: PLAYER_ID,
@@ -42,6 +45,7 @@ function setup() {
   const recall = get_memories(world, NPC_ID, { limit: 300 });
   const evidence = recall.entries[0]!.id;
   const binding: CognitionBinding = {
+    privacyRevision: world.experience?.privacyRevisions?.[NPC_ID] ?? 0,
     actorId: NPC_ID,
     decisionId: 'fixture-decision',
     policy: MIND_POLICY,
@@ -50,6 +54,7 @@ function setup() {
     watermark: recall.observationWatermark,
     evidenceIds: recall.entries.map((e) => e.id),
     entityIds: [NPC_ID, PLAYER_ID],
+    identityReferences: { newcomer: currentBodySubject(world, NPC_ID, PLAYER_ID)! },
     expectedPlan: entityGet(world.entities, NPC_ID)!.actor!.planGeneration,
     actions: { continue: bindNativeChoice(world, NPC_ID, null, 'continue') },
     restEpisode: null,
@@ -77,7 +82,7 @@ function setup() {
         expectedRevision: 0,
         documentId: 'newcomer',
         kind: 'relationship',
-        subjectId: PLAYER_ID,
+        subjectId: 'newcomer',
         source: 'inferred',
         confidence: 0.6,
         trust: 0.2,
@@ -89,7 +94,7 @@ function setup() {
         expectedRevision: 0,
         documentId: 'newcomer',
         kind: 'belief',
-        subjectId: PLAYER_ID,
+        subjectId: 'newcomer',
         source: 'inferred',
         confidence: 0.5,
         trust: null,

@@ -1183,7 +1183,7 @@ export interface GodMindView {
     revision: number;
     documentId: string;
     kind: string;
-    subjectId: string | null;
+    subjectId: ObserverSubject | null;
     source: string;
     confidence: number;
     trust: number | null;

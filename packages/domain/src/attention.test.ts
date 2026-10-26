@@ -18,6 +18,7 @@ import {
   markAttentionRelationsDirty,
   updateAttention,
   validateAttentionState,
+  revokeAttentionEvidence,
 } from './attention.js';
 import {
   creditSubjectFamiliarity,
@@ -26,9 +27,14 @@ import {
   revokeRecognitionEvidence,
   validateFamiliarityState,
   validateRecognition,
+  associateIndividualFamiliarity,
 } from './worlds/base/recognition.js';
 import type { ObserverIdentity } from './worlds/base/knowledge.js';
 import type { WorldState } from './types.js';
+import { commitActorResponse } from './response.js';
+import { semanticCauseResolved } from './semantic-opportunities.js';
+import { ensureExperienceAccounting } from './remembered-impressions.js';
+import { commitObserverIdentity, pruneObserverIndividuals } from './worlds/base/knowledge.js';
 
 function scene(count: number, capacity = 10) {
   const world = createWorld();
@@ -123,6 +129,62 @@ function scene(count: number, capacity = 10) {
 }
 
 describe('received detailed attention', () => {
+  it('resolves only the actually accepted native condition generation and withdraws corrected proof', () => {
+    let { world, owner } = scene(2, 2);
+    const anchor = currentDetailedAttention(world, PLAYER_ID)[0]!,
+      lease = owner.current[`${anchor.sourceId}:body`]!;
+    applyAttentionRelationEvaluations(world, PLAYER_ID, [
+      {
+        anchorKey: anchor.key,
+        family: 'closing-body',
+        revision: 'received',
+        complete: true,
+        clearSupported: false,
+        witnesses: [
+          {
+            id: 'other-current-body',
+            distanceLower: 1,
+            distanceUpper: 1.1,
+            decreaseLower: 1,
+            proof: [observationFactKey(lease.original, lease.originalOrdinal)],
+          },
+        ],
+      },
+    ]);
+    const cue = currentAttentionCues(world, PLAYER_ID)[0]!,
+      key = JSON.stringify([cue.anchorKey, cue.family]),
+      qualitativeRevision = JSON.stringify([anchor.descriptionRevision, cue.generation]);
+    const result = commitActorResponse(
+      world,
+      'fixture-cue-choice',
+      PLAYER_ID,
+      { operations: [] },
+      {},
+      [PLAYER_ID],
+      0,
+      [],
+      undefined,
+      [],
+      {},
+      undefined,
+      {},
+      {},
+      {
+        privacyRevision: 0,
+        attentionReferences: {},
+        retentionReferences: {},
+        semanticCauses: [{ key, qualitativeRevision, severity: 8, generation: cue.generation }],
+      },
+    );
+    expect(result.outcome.ok).toBe(true);
+    world = result.world;
+    expect(semanticCauseResolved(world, PLAYER_ID, key, qualitativeRevision, 8)).toBe(true);
+    // Correction withdraws the source-supported condition, rather than recording
+    // an invented negative observation or retaining a free-standing alarm.
+    const draft = structuredClone(world);
+    revokeAttentionEvidence(draft, PLAYER_ID, new Set([lease.original.id]));
+    expect(currentAttentionCues(draft, PLAYER_ID)).toHaveLength(0);
+  });
   it('bounds detail without hiding the other current sources or learning private identities', () => {
     const { world, owner } = scene(15);
     expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(10);
@@ -212,7 +274,8 @@ describe('received detailed attention', () => {
       anchorKey: anchor.key,
       family: 'closing-drop' as const,
       revision: 'first',
-      complete: true, clearSupported: true,
+      complete: true,
+      clearSupported: true,
       witnesses: [
         {
           id: 'received-edge',
@@ -232,11 +295,29 @@ describe('received detailed attention', () => {
     ]);
     expect(currentAttentionCues(world, PLAYER_ID)).toHaveLength(1);
     applyAttentionRelationEvaluations(world, PLAYER_ID, [
-      { ...evaluation, revision: 'clear', witnesses: evaluation.witnesses.map(value=>({...value,distanceLower:7,distanceUpper:7,decreaseLower:0})) },
+      {
+        ...evaluation,
+        revision: 'clear',
+        witnesses: evaluation.witnesses.map((value) => ({
+          ...value,
+          distanceLower: 7,
+          distanceUpper: 7,
+          decreaseLower: 0,
+        })),
+      },
     ]);
     world.simTime += 120;
     applyAttentionRelationEvaluations(world, PLAYER_ID, [
-      { ...evaluation, revision: 'clear-confirmed', witnesses: evaluation.witnesses.map(value=>({...value,distanceLower:7,distanceUpper:7,decreaseLower:0})) },
+      {
+        ...evaluation,
+        revision: 'clear-confirmed',
+        witnesses: evaluation.witnesses.map((value) => ({
+          ...value,
+          distanceLower: 7,
+          distanceUpper: 7,
+          decreaseLower: 0,
+        })),
+      },
     ]);
     expect(currentAttentionCues(world, PLAYER_ID)).toHaveLength(0);
     expect(
@@ -256,7 +337,8 @@ describe('received detailed attention', () => {
           anchorKey: anchor.key,
           family,
           revision: 'complete',
-          complete: true, clearSupported: true,
+          complete: true,
+          clearSupported: true,
           witnesses: [],
         })),
       ),
@@ -298,7 +380,37 @@ describe('one evidence-backed subject familiarity score', () => {
       support: [sourceKey],
     });
   }
-  const currentIdentity = (world: WorldState) => world.observerIdentities![PLAYER_ID]![subject.individualId]!;
+  const currentIdentity = (world: WorldState) =>
+    world.observerIdentities![PLAYER_ID]![subject.individualId]!;
+
+  it('declines optional learning at the shared retained-knowledge limit and removes unsupported ephemeral locals on loss', () => {
+    const world = createWorld();
+    acquaintance(world);
+    ensureExperienceAccounting(world, PLAYER_ID);
+    const account = world.experience!.temporal!.actors[PLAYER_ID]!.accounts!.optional;
+    account.count = 2048; // Existing cold retained records share this same allowance.
+    expect(contact(world, 1, 0)).toBe(false);
+    expect(currentIdentity(world).familiarity).toBeUndefined();
+    expect(account.count).toBe(2048);
+    expect(
+      commitObserverIdentity(world, PLAYER_ID, subject.individualId, {
+        ...currentIdentity(world),
+        givenName: 'A new retained name',
+      }),
+    ).toBe(false);
+    const local = 'unretained-current-local';
+    world.observerIdentities![PLAYER_ID]![local] = {
+      individualId: local,
+      givenName: '',
+      revision: 0,
+      encounterId: null,
+      authored: false,
+    };
+    expect(
+      pruneObserverIndividuals(world, PLAYER_ID, { releasedSourceIds: [], candidates: [local] }),
+    ).toBe(1);
+    expect(world.observerIdentities![PLAYER_ID]![local]).toBeUndefined();
+  });
 
   it('credits actual spaced contact across modalities and preserves the mature deadline after forgetting', () => {
     const world = createWorld(),
@@ -331,10 +443,14 @@ describe('one evidence-backed subject familiarity score', () => {
     expect(currentIdentity(world).familiarity!.roots).toHaveLength(120);
     expect(individualFamiliarity(currentIdentity(world))).toBe(100);
     expect(
-      currentIdentity(world).familiarity!.roots.some((root) => root.sourceKey === 'awareness:fixture-contact-1'),
+      currentIdentity(world).familiarity!.roots.some(
+        (root) => root.sourceKey === 'awareness:fixture-contact-1',
+      ),
     ).toBe(true);
     expect(
-      currentIdentity(world).familiarity!.roots.some((root) => root.sourceKey === 'awareness:fixture-contact-7'),
+      currentIdentity(world).familiarity!.roots.some(
+        (root) => root.sourceKey === 'awareness:fixture-contact-7',
+      ),
     ).toBe(false);
     revokeRecognitionEvidence(world, PLAYER_ID, new Set(['unrelated-place-source']));
     expect(currentIdentity(world).familiarity!.roots).toHaveLength(120);
@@ -379,5 +495,21 @@ describe('one evidence-backed subject familiarity score', () => {
     expect(result.recognized).toBe(false);
     expect(result.subject).toBeUndefined();
     expect(individualFamiliarity(identity)).toBe(100);
+  });
+  it('merges actual cross-sense contact without double credit or displacing protected recognition proof',()=>{
+    const world=createWorld(),from=acquaintance(world);
+    for(let index=1;index<=6;index++)contact(world,index,(index-1)*120);
+    const local=structuredClone(currentIdentity(world));
+    const target:ObserverIdentity={...structuredClone(local),individualId:'independent-known-voice',familiarity:{roots:local.familiarity!.roots.map((root,index)=>{
+      const sourceKey=`awareness:other-contact-${index}`,at=root.at+60;
+      return {...root,key:JSON.stringify(['contact',sourceKey,at]),sourceKey,support:[sourceKey],at,required:true};
+    }),fastCredits:6,lastCreditAt:660,nextCreditAt:2460}};
+    associateIndividualFamiliarity(world,local,target,'awareness:actual-visible-body-voice-association');
+    expect(individualFamiliarity(target)).toBe(6);
+    expect(target.familiarity!.roots.filter((root)=>root.required)).toHaveLength(6);
+    expect(target.familiarity!.roots.filter((root)=>root.required).every((root)=>root.credited)).toBe(true);
+    expect(target.familiarity!.nextCreditAt).toBeGreaterThanOrEqual(2460);
+    validateFamiliarityState(target.familiarity);
+    expect(from.individualId).toBe(subject.individualId);
   });
 });

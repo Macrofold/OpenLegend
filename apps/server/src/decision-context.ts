@@ -935,6 +935,7 @@ export async function prepareDecision(
     ...entityReferenceMap(currentWorld, planningTargetIds, actorId),
   };
   const binding: CognitionBinding = {
+    privacyRevision: currentWorld.experience?.privacyRevisions?.[actorId] ?? 0,
     bodyEligibility: bodyEligibilityRevision(
       currentWorld,
       entityGet(currentWorld.entities, actorId)!,

@@ -1,3 +1,6 @@
+import { entityHandle, permittedSourceHandle } from './entity-references.js';
+import { memoryForModel, acceptedMindForModel, eventFieldsForModel } from './experience-context.js';
+import { currentBodyObservation, currentObservedFacets, bodyContext } from '@open-legend/domain';
 import { captureSituation } from './situation-context.js';
 import { selectTemporalHistory } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
@@ -203,7 +206,7 @@ export function buildContext(
   query: string,
   retained?: ReturnType<typeof queryMemories>,
 ) {
-  const observed = decisionObservation(service.world,actorId);
+  const observed = decisionObservation(service.world, actorId);
   if (!observed) throw new Error('Actor unavailable');
   const words = [
     ...new Set(
@@ -236,47 +239,52 @@ export function buildContext(
     .slice(0, 24);
   const materials = inventionMaterials(service.world, observed);
   const inspected = inspectedContainer(service.world, actorId);
+  const situation = captureSituation(
+    service.world,
+    actorId,
+    `context:${service.world.sequence}`,
+    selectTemporalHistory(service.world.experience?.temporal, actorId),
+  );
   const context = {
-    receivedSituation:captureSituation(service.world,actorId,`context:${service.world.sequence}`,selectTemporalHistory(service.world.experience?.temporal,actorId)).packet,
+    receivedSituation: situation.packet,
     world: { id: observed.worldId, profile: service.world.profile, simulationSeconds: observed.at },
-    contacts: observed.contacts,
-    self: { ...observed.actor, name: excerpt(observed.actor.name, 40) },
-    nearby: observed.visibleEntities.map((entity) => ({
-      id: entity.id,
-      name: excerpt(entity.name, 40),
-      kind: entity.actor ? (entity.actor.species ?? 'human') : entity.kind,
-      position: worldPosition(entity),
-      ...(entity.resource
+    contacts: observed.contacts.map((contact) => ({ text: contact.text })),
+    self: {
+      id: entityHandle(service.world, actorId, actorId),
+      name: excerpt(observed.actor.name, 40),
+      kind: observed.actor.kind,
+      position: worldPosition(observed.actor),
+      body: bodyContext(service.world, observed.actor),
+      traits: observed.actor.actor?.traits ?? [],
+      currentActivity: observed.actor.actor?.action
         ? {
-            resource: entity.resource.cast
-              ? {
-                  definitionId: entity.resource.definitionId,
-                  available: entity.resource.quantity > 0,
-                  description:
-                    service.world.castDefinitions[entity.resource.cast.definitionId]?.description,
-                }
-              : entity.resource,
+            type: observed.actor.actor.action.type,
+            stage: observed.actor.actor.action.stage,
+            remainingSeconds: observed.actor.actor.action.remainingSeconds,
           }
-        : {}),
-      ...(entity.animal
-        ? {
-            animal: {
-              alive: entity.actor!.alive,
-              fleeing: entity.animal.episode?.mode === 'escaping',
-            },
-          }
-        : {}),
-      ...(entity.actor
-        ? {
-            activity: entity.actor.action?.type ?? 'idle',
-            alive: entity.actor.alive,
-            ...(() => {
-              const combat = observedCombatActivity(service.world, observed.actor, entity);
-              return combat ? { combat } : {};
-            })(),
-          }
-        : {}),
-    })),
+        : null,
+      goals:
+        observed.actor.actor?.agency.goals.map(({ id, objective, status, revision }) => ({
+          id,
+          objective,
+          status,
+          revision,
+        })) ?? [],
+    },
+    nearby: observed.visibleEntities.flatMap((entity) => {
+      const received = currentBodyObservation(service.world, actorId, entity.id);
+      if (!received) return [];
+      const body = received.value.body;
+      return [
+        {
+          id: entityHandle(service.world, actorId, entity.id),
+          name: excerpt(observerName(service.world, actorId, entity.id).name, 40),
+          kind: body.kind,
+          position: body.position,
+          facts: situation.bodyFacts(entity.id),
+        },
+      ];
+    }),
     // Ownership is implicit in this actor-scoped list; IDs and quantities are exact.
     inventory: observed.inventory.map(
       ({ id, definitionId, quantity, revision, placementRevision, individuality, container }) => ({
@@ -331,31 +339,36 @@ export function buildContext(
     })),
     memories: (retained ?? queryMemories(service.world, actorId, { text: query, limit: 12 })).map(
       (memory) => ({
-        ...memory,
+        ...memoryForModel(service.world, actorId, memory),
         summary: excerpt(memory.summary, 220),
       }),
     ),
     recentEvents: observed.recentEvents.slice(-12).map((event) => {
-      const data = Object.fromEntries(
-        Object.entries(event.data ?? {}).filter(([key]) => key !== 'text'),
+      const source = permittedSourceHandle(service.world, actorId, ['occurrence', event.id]);
+      const participant = (id: string) =>
+        id === actorId
+          ? entityHandle(service.world, actorId, actorId)
+          : permittedSourceHandle(service.world, actorId, ['historical-participant', event.id, id]);
+      const data = eventFieldsForModel(
+        service.world,
+        actorId,
+        Object.fromEntries(Object.entries(event.data ?? {}).filter(([key]) => key !== 'text')),
+        event.id,
       );
       return {
-        id: event.id,
+        id: source,
         at: event.at,
         type: event.type,
         text: excerpt(
           typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text,
           220,
         ),
-        ...(event.actorId ? { actorId: event.actorId } : {}),
-        ...(event.targetId ? { targetId: event.targetId } : {}),
-        ...(Object.keys(data).length ? { data } : {}),
+        ...(event.actorId ? { actorId: participant(event.actorId) } : {}),
+        ...(event.targetId ? { targetId: participant(event.targetId) } : {}),
+        ...(data && typeof data === 'object' && Object.keys(data).length ? { data } : {}),
       };
     }),
-    innerWorld: (() => {
-      const { thoughts, receipts, ...mind } = mindFor(service.world, actorId);
-      return mind;
-    })(),
+    innerWorld: acceptedMindForModel(service.world, actorId),
     request: query,
     coverage: {
       proseMayBeExcerpted: true,

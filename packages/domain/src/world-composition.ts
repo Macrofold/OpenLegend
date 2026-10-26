@@ -46,6 +46,8 @@ import {
   recognitionSupportSourceIds,
   validRecognitionSupportKey,
   retainRecognitionEvidence,
+  recognitionMaintenanceDue,
+  expireRecognitionSeeds,
 } from './worlds/base/recognition.js';
 import { hasMemory } from './living.js';
 import { currentBodyObservation, observationFactKey } from './perception-evidence.js';
@@ -127,7 +129,11 @@ export function selectedAssociateBodyFamiliarity(
   associateBodyFamiliarity(world, observerId, sourceId);
 }
 
-export function selectedPruneObserverIndividuals(world: WorldState, actorId: string, input: Parameters<typeof pruneObserverIndividuals>[2]): number {
+export function selectedPruneObserverIndividuals(
+  world: WorldState,
+  actorId: string,
+  input: Parameters<typeof pruneObserverIndividuals>[2],
+): number {
   selectedCreationProfileForWorld(world);
   return pruneObserverIndividuals(world, actorId, input);
 }
@@ -152,9 +158,20 @@ export function selectedRecognitionSupportSourceIds(
 }
 /** Closed source-key grammar for the currently linked recognition family. */
 export const validReceivedRecognitionSupportKey = validRecognitionSupportKey;
-export function selectedRetainRecognitionEvidence(world:WorldState,evidence:Awareness):void {
+export function selectedRetainRecognitionEvidence(world: WorldState, evidence: Awareness): void {
   selectedCreationProfileForWorld(world);
-  retainRecognitionEvidence(world,evidence);
+  retainRecognitionEvidence(world, evidence);
+}
+export function selectedRecognitionMaintenanceDue(
+  world: WorldState,
+  actorId: string,
+): number | null {
+  selectedCreationProfileForWorld(world);
+  return recognitionMaintenanceDue(world, actorId);
+}
+export function selectedExpireRecognitionSeeds(world: WorldState, actorId: string): number {
+  selectedCreationProfileForWorld(world);
+  return expireRecognitionSeeds(world, actorId);
 }
 
 /** Current direct-path voice interpretation is selected world behavior. Future

@@ -262,9 +262,11 @@ function point(location: ObservedLocation, at: number): AttentionPoint | undefin
 function currentPoint(
   owner: PerceptionEvidenceOwner,
   sourceId: string,
+  world:WorldState,observerId:string,
 ): AttentionPoint | undefined {
   const source = readOnlyDraftView(owner.current)[`${sourceId}:location`];
-  const lease = source && readOnlyDraftView(source), value = lease && readOnlyDraftView(lease.value);
+  const lease = source && readOnlyDraftView(source),
+    value = lease && readOnlyDraftView(lease.value);
   return value?.kind === 'location'
     ? point(readOnlyDraftView(value.location), lease!.valueMeasuredThrough)
     : undefined;
@@ -273,30 +275,37 @@ function descriptions(owner: PerceptionEvidenceOwner, id: string): string {
   // A new receipt can measure the same appearance at another position. Receipt
   // identity is provenance; it must not invent new descriptive novelty.
   const current = readOnlyDraftView(owner.current);
-  const facet = (kind: string) => { const lease = current[`${id}:${kind}`]; return lease ? readOnlyDraftView(readOnlyDraftView(lease).value) : undefined; };
-  const body = facet('body'), appearance = body?.kind === 'body' ? readOnlyDraftView(body.body) : undefined;
+  const facet = (kind: string) => {
+    const lease = current[`${id}:${kind}`];
+    return lease ? readOnlyDraftView(readOnlyDraftView(lease).value) : undefined;
+  };
+  const body = facet('body'),
+    appearance = body?.kind === 'body' ? readOnlyDraftView(body.body) : undefined;
   const association = facet('association');
-  return JSON.stringify([
-    body?.kind === 'body'
-      ? {
-          kind: appearance!.kind,
-          appearance: appearance!.appearance,
-          label: appearance!.label,
-          description: appearance!.description,
-          radius: appearance!.radius,
-          height: appearance!.height,
-          outward: appearance!.outward,
-          heatLit: appearance!.heatLit,
-          remainsPhase: appearance!.remainsPhase,
-          storage: !!appearance!.storage,
-        }
-      : null,
-    facet('carried') ?? null,
-    facet('public-attributes') ?? null,
-    association?.kind === 'association'
-      ? { subject: association.subject, strength: association.strength }
-      : null,
-  ], (_key, value) => value && typeof value === 'object' ? readOnlyDraftView(value) : value);
+  return JSON.stringify(
+    [
+      body?.kind === 'body'
+        ? {
+            kind: appearance!.kind,
+            appearance: appearance!.appearance,
+            label: appearance!.label,
+            description: appearance!.description,
+            radius: appearance!.radius,
+            height: appearance!.height,
+            outward: appearance!.outward,
+            heatLit: appearance!.heatLit,
+            remainsPhase: appearance!.remainsPhase,
+            storage: !!appearance!.storage,
+          }
+        : null,
+      facet('carried') ?? null,
+      facet('public-attributes') ?? null,
+      association?.kind === 'association'
+        ? { subject: association.subject, strength: association.strength }
+        : null,
+    ],
+    (_key, value) => (value && typeof value === 'object' ? readOnlyDraftView(value) : value),
+  );
 }
 function rank(a: AttentionCandidate, b: AttentionCandidate) {
   return b.score - a.score || a.order - b.order;
@@ -318,19 +327,24 @@ export function updateAttention(
   state.policy = policyKey(policy);
   const changed = update.changedSourceIds ?? [
     ...new Set([
-      ...Object.values(readOnlyDraftView(owner.current)).map((lease) => readOnlyDraftView(lease))
+      ...Object.values(readOnlyDraftView(owner.current))
+        .map((lease) => readOnlyDraftView(lease))
         .filter((lease) => lease.value.kind === 'body')
         .map((lease) => lease.subjectId),
       ...Object.values(readOnlyDraftView(state.candidates)).map((candidate) => candidate.sourceId),
     ]),
   ];
   const existingBySource = new Map(
-    Object.entries(readOnlyDraftView(state.candidates)).map(([key, candidate]) => [candidate.sourceId, key]),
+    Object.entries(readOnlyDraftView(state.candidates)).map(([key, candidate]) => [
+      candidate.sourceId,
+      key,
+    ]),
   );
   let geometryChanged = false;
   for (const sourceId of changed) {
     const bodySource = readOnlyDraftView(owner.current)[`${sourceId}:body`];
-    const body = bodySource && readOnlyDraftView(bodySource), bodyValue = body && readOnlyDraftView(body.value);
+    const body = bodySource && readOnlyDraftView(bodySource),
+      bodyValue = body && readOnlyDraftView(body.value);
     const previousKey = existingBySource.get(sourceId);
     if (!body || bodyValue?.kind !== 'body') {
       if (previousKey) {
@@ -345,29 +359,35 @@ export function updateAttention(
     const old = originalCandidate && readOnlyDraftView(originalCandidate);
     const locationSource = readOnlyDraftView(owner.current)[`${sourceId}:location`];
     const location = locationSource && readOnlyDraftView(locationSource);
-    const measured = currentPoint(owner, sourceId);
+    const measured = currentPoint(owner, sourceId,world,observerId);
     const subject =
       currentBodyAssociation(world, observerId, sourceId) ??
       currentBodyLocalSubject(world, observerId, sourceId);
-    const candidate: AttentionCandidate = old ? { ...old } : {
-      sourceId,
-      leaseId: body.id,
-      exposure: cloneValue(body.exposure),
-      order: state.nextOrder++,
-      acquiredAt: body.valueAcquiredAt,
-      urgency: 0,
-      direct: false,
-      score: 0,
-      descriptionRevision: '',
-      changeRevision: '',
-      geometryRevision: '',
-    };
+    const candidate: AttentionCandidate = old
+      ? { ...old }
+      : {
+          sourceId,
+          leaseId: body.id,
+          exposure: cloneValue(body.exposure),
+          order: state.nextOrder++,
+          acquiredAt: body.valueAcquiredAt,
+          urgency: 0,
+          direct: false,
+          score: 0,
+          descriptionRevision: '',
+          changeRevision: '',
+          geometryRevision: '',
+        };
     candidate.leaseId = body.id;
     candidate.subject = subject ? cloneValue(subject) : undefined;
     candidate.descriptionRevision = descriptions(owner, sourceId);
     candidate.changeRevision = JSON.stringify([
-      readOnlyDraftView(body.original).id, body.originalOrdinal, body.valueAcquiredAt,
-      location ? readOnlyDraftView(location.original).id : null, location?.originalOrdinal ?? null, location?.valueAcquiredAt ?? null,
+      readOnlyDraftView(body.original).id,
+      body.originalOrdinal,
+      body.valueAcquiredAt,
+      location ? readOnlyDraftView(location.original).id : null,
+      location?.originalOrdinal ?? null,
+      location?.valueAcquiredAt ?? null,
     ]);
     const geometryRevision = JSON.stringify([
       measured?.point,
@@ -420,7 +440,9 @@ export function updateAttention(
   const capacity = selectedAttentionCapacity(world, observer);
   if (!Number.isSafeInteger(capacity) || capacity < 1 || capacity > policy.maximumCapacity)
     throw new Error('Attention capacity exceeds the installed profile.');
-  const candidates = Object.entries(readOnlyDraftView(state.candidates)).map(([key, value]) => [key, readOnlyDraftView(value)] as const);
+  const candidates = Object.entries(readOnlyDraftView(state.candidates)).map(
+    ([key, value]) => [key, readOnlyDraftView(value)] as const,
+  );
   const candidateMap = new Map(candidates);
   const current = new Map(
     entriesBefore.filter((entry) => live.has(entry.key)).map((entry) => [entry.key, entry]),
@@ -515,7 +537,15 @@ export function updateAttention(
   const nextEntries = selected.map(({ key, basis }) => {
     const candidate = candidateMap.get(key)!,
       old = current.get(key);
-    if (old && old.basis === basis && old.leaseId === candidate.leaseId && old.descriptionRevision === candidate.descriptionRevision && old.changeRevision === candidate.changeRevision && JSON.stringify(old.subject) === JSON.stringify(candidate.subject)) return old;
+    if (
+      old &&
+      old.basis === basis &&
+      old.leaseId === candidate.leaseId &&
+      old.descriptionRevision === candidate.descriptionRevision &&
+      old.changeRevision === candidate.changeRevision &&
+      JSON.stringify(old.subject) === JSON.stringify(candidate.subject)
+    )
+      return old;
     return {
       key,
       sourceId: candidate.sourceId,
@@ -529,7 +559,11 @@ export function updateAttention(
       stableUntil: old?.stableUntil ?? world.simTime + policy.stabilitySeconds,
     };
   });
-  if (nextEntries.length !== entriesBefore.length || nextEntries.some((entry, index) => entry !== entriesBefore[index])) state.entries = nextEntries;
+  if (
+    nextEntries.length !== entriesBefore.length ||
+    nextEntries.some((entry, index) => entry !== entriesBefore[index])
+  )
+    state.entries = nextEntries;
   for (const key of Object.keys(state.relationDirty)) {
     const [anchorKey] = JSON.parse(key) as [string, AttentionRelationFamily];
     if (!live.has(anchorKey)) delete state.relationDirty[key];
@@ -592,7 +626,7 @@ export function captureAttentionPresentation(
             key,
             descriptionRevision: candidate.descriptionRevision,
             changeRevision: candidate.changeRevision,
-            point: currentPoint(owner, candidate.sourceId),
+            point: currentPoint(owner, candidate.sourceId,world,observerId),
           },
         ]
       : [];
@@ -619,11 +653,16 @@ export function acknowledgeAttention(
       candidate.direct = false;
     }
   }
-  reconcileAttendedTemporalEvidence(world, observerId, before, [],
+  reconcileAttendedTemporalEvidence(
+    world,
+    observerId,
+    before,
+    [],
     presented.flatMap((value) =>
       state.candidates[value.key] ? [state.candidates[value.key]!.sourceId] : [],
     ),
-    false);
+    false,
+  );
 }
 
 export function markAttentionRelationsDirty(world: WorldState, observerId: string): void {
@@ -641,14 +680,22 @@ export function attentionRelationOpportunity(
   const state = owned(world, observerId)?.attention;
   if (!state || !state.entries.length || world.simTime < state.nextRelationAt) return undefined;
   const policy = selectedAttentionPolicy(world);
-  const clearDue=new Set(Object.values(readOnlyDraftView(state.latches)).map((value)=>readOnlyDraftView(value)).filter((latch)=>
-    latch.active&&latch.clearSince!==undefined&&world.simTime>=latch.clearSince+policy.relation.clearSeconds).map((latch)=>latch.anchorKey));
+  const clearDue = new Set(
+    Object.values(readOnlyDraftView(state.latches))
+      .map((value) => readOnlyDraftView(value))
+      .filter(
+        (latch) =>
+          latch.active &&
+          latch.clearSince !== undefined &&
+          world.simTime >= latch.clearSince + policy.relation.clearSeconds,
+      )
+      .map((latch) => latch.anchorKey),
+  );
   const due = state.entries.filter(
     (entry) =>
       (['closing-body', 'closing-drop'] as const).some(
         (family) => state.relationDirty[relationKey(entry.key, family)] !== undefined,
-      ) ||
-      clearDue.has(entry.key),
+      ) || clearDue.has(entry.key),
   );
   if (!due.length) return undefined;
   state.nextRelationAt = world.simTime + policy.relation.intervalSeconds;
@@ -747,9 +794,10 @@ export function currentAttentionCues(
 }> {
   const state = owned(world, observerId)?.attention;
   if (!state) return [];
-  const candidates=readOnlyDraftView(state.candidates);
+  const candidates = readOnlyDraftView(state.candidates);
   return Object.entries(readOnlyDraftView(state.latches)).flatMap(([key, value]) => {
-    const latch=readOnlyDraftView(value),candidate = candidates[latch.anchorKey];
+    const latch = readOnlyDraftView(value),
+      candidate = candidates[latch.anchorKey];
     return latch.active && candidate && latch.entryProof && latch.enteredAt !== undefined
       ? [
           {
@@ -768,13 +816,31 @@ export function currentAttentionCues(
 }
 /** Correcting a measurement withdraws only conditions supported by that fact.
  * It does not fabricate the complete negative measurement needed for rearming. */
-export function revokeAttentionEvidence(world:WorldState,observerId:string,affected:ReadonlySet<string>):void {
-  const state=owned(world,observerId)?.attention;if(!state)return;
-  for(const [key,latch] of Object.entries(state.latches)){
-    if(![...(latch.entryProof??[]),...(latch.newestProof??[])].some((fact)=>
-      affected.has(fact.source.id)||affected.has(personalFactAlias(fact.source.id,fact.ordinal))||affected.has(JSON.stringify(fact))||affected.has(JSON.stringify(fact.source))))continue;
-    latch.active=false;delete latch.entryProof;delete latch.newestProof;delete latch.enteredAt;delete latch.witnessId;delete latch.clearSince;
-    state.relationDirty[key]=++state.relationRevision;
+export function revokeAttentionEvidence(
+  world: WorldState,
+  observerId: string,
+  affected: ReadonlySet<string>,
+): void {
+  const state = owned(world, observerId)?.attention;
+  if (!state) return;
+  for (const [key, latch] of Object.entries(state.latches)) {
+    if (
+      ![...(latch.entryProof ?? []), ...(latch.newestProof ?? [])].some(
+        (fact) =>
+          affected.has(fact.source.id) ||
+          affected.has(personalFactAlias(fact.source.id, fact.ordinal)) ||
+          affected.has(JSON.stringify(fact)) ||
+          affected.has(JSON.stringify(fact.source)),
+      )
+    )
+      continue;
+    latch.active = false;
+    delete latch.entryProof;
+    delete latch.newestProof;
+    delete latch.enteredAt;
+    delete latch.witnessId;
+    delete latch.clearSince;
+    state.relationDirty[key] = ++state.relationRevision;
     delete state.relationScans[key];
   }
 }
@@ -811,7 +877,9 @@ export function validateAttentionState(value: unknown): asserts value is Attenti
     !state.relationDirty ||
     typeof state.relationDirty !== 'object' ||
     Array.isArray(state.relationDirty) ||
-    !state.relationScans || typeof state.relationScans !== 'object' || Array.isArray(state.relationScans)
+    !state.relationScans ||
+    typeof state.relationScans !== 'object' ||
+    Array.isArray(state.relationScans)
   )
     throw new Error('Invalid attention continuation.');
   const validPoint = (value: AttentionPoint | undefined) =>
@@ -914,12 +982,17 @@ export function validateAttentionState(value: unknown): asserts value is Attenti
         (!Number.isFinite(latch.clearSince) || latch.clearSince < 0)) ||
       (latch.enteredAt !== undefined &&
         (!Number.isFinite(latch.enteredAt) || latch.enteredAt < 0)) ||
-      (latch.witnessId !== undefined && (typeof latch.witnessId !== 'string' || !latch.witnessId)) ||
+      (latch.witnessId !== undefined &&
+        (typeof latch.witnessId !== 'string' || !latch.witnessId)) ||
       (latch.active && (!latch.entryProof || latch.enteredAt === undefined || !latch.witnessId))
     )
       throw new Error('Invalid attention relation latch.');
     validProof(latch.entryProof);
     validProof(latch.newestProof);
+    const observer=state.candidates[latch.anchorKey]!.exposure.observer;
+    if([...(latch.entryProof??[]),...(latch.newestProof??[])].some((fact)=>
+      fact.source.observer.actorId!==observer.actorId||fact.source.observer.physicalLife!==observer.physicalLife))
+      throw new Error('Attention relation proof belongs to another observer life.');
   }
   for (const [key, revision] of Object.entries(state.relationDirty)) {
     let tuple: unknown;
@@ -940,10 +1013,25 @@ export function validateAttentionState(value: unknown): asserts value is Attenti
       throw new Error('Invalid attention relation continuation.');
   }
   for (const [key, scan] of Object.entries(state.relationScans)) {
-    let tuple:unknown;
-    try { tuple=JSON.parse(key); } catch { throw new Error('Invalid attention relation scan.'); }
-    if(!Array.isArray(tuple)||tuple.length!==2||!state.candidates[tuple[0]]||!['closing-body','closing-drop'].includes(tuple[1])||
-      !scan||!Number.isSafeInteger(scan.cursor)||scan.cursor<0||!Number.isSafeInteger(scan.remaining)||scan.remaining<0||
-      typeof scan.revision!=='string'||typeof scan.clearSupported!=='boolean') throw new Error('Invalid attention relation scan.');
+    let tuple: unknown;
+    try {
+      tuple = JSON.parse(key);
+    } catch {
+      throw new Error('Invalid attention relation scan.');
+    }
+    if (
+      !Array.isArray(tuple) ||
+      tuple.length !== 2 ||
+      !state.candidates[tuple[0]] ||
+      !['closing-body', 'closing-drop'].includes(tuple[1]) ||
+      !scan ||
+      !Number.isSafeInteger(scan.cursor) ||
+      scan.cursor < 0 ||
+      !Number.isSafeInteger(scan.remaining) ||
+      scan.remaining < 0 ||
+      typeof scan.revision !== 'string' ||
+      typeof scan.clearSupported !== 'boolean'
+    )
+      throw new Error('Invalid attention relation scan.');
   }
 }

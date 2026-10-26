@@ -246,7 +246,12 @@ function adjustHeaderBytes<T extends { bytes: number }>(
 
 function state(world: WorldState): TemporalEvidenceState | undefined {
   if (!world.experience) return;
-  return (world.experience.temporal ??= { version: 1, namespace: nextId(world, 'receipt-timeline'), sources: {}, actors: {} });
+  return (world.experience.temporal ??= {
+    version: 1,
+    namespace: nextId(world, 'receipt-timeline'),
+    sources: {},
+    actors: {},
+  });
 }
 function actorHistory(
   world: WorldState,
@@ -288,7 +293,8 @@ export function temporalActorHistory(
 export function beginTemporalReceiptEpoch(world: WorldState, namespace: string): void {
   const temporal = world.experience?.temporal;
   if (!temporal) return;
-  if (!namespace.trim() || namespace.length > 64) throw new Error('A receipt timeline requires its admitted namespace.');
+  if (!namespace.trim() || namespace.length > 64)
+    throw new Error('A receipt timeline requires its admitted namespace.');
   temporal.namespace = namespace;
   for (const actor of Object.values(temporal.actors)) {
     actor.epoch = `${temporal.namespace}-${nextId(world, 'receipt-epoch')}`;
@@ -678,7 +684,7 @@ export interface TemporalHistoryQuery {
   subjects?: readonly string[];
   physicalLife?: number;
   epoch?: string;
-  before?: { epoch: string; ordinal: number; at: number };
+  before?: { epoch: string; ordinal: number; at: number; order: number };
   limit?: number;
   bytes?: number;
 }
@@ -712,12 +718,18 @@ export function selectTemporalHistory(
         (!query.before ||
           receipt.at < query.before.at ||
           (receipt.at === query.before.at &&
-            (receipt.epoch < query.before.epoch ||
-              (receipt.epoch === query.before.epoch && receipt.ordinal < query.before.ordinal)))),
+            (receipt.order < query.before.order ||
+              (receipt.order === query.before.order &&
+                (receipt.epoch < query.before.epoch ||
+                  (receipt.epoch === query.before.epoch &&
+                    receipt.ordinal < query.before.ordinal)))))),
     )
     .sort(
       (left, right) =>
-        right.at - left.at || right.epoch.localeCompare(left.epoch) || right.ordinal - left.ordinal,
+        right.at - left.at ||
+        right.order - left.order ||
+        right.epoch.localeCompare(left.epoch) ||
+        right.ordinal - left.ordinal,
     );
   for (const receipt of receipts) {
     const values: TemporalValue[] = [];

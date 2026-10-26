@@ -8,6 +8,7 @@ import {
   type EvidenceParticipant,
   type ObservationFactKey,
   type ExperienceManifest,
+  mindFor,
   type MemoryRecord,
   type SensoryFacet,
   type CapturedCurrentFacet,
@@ -55,7 +56,7 @@ function participantForModel(world: WorldState, actorId: string, participant: Ev
 /** Only already-permitted event fields reach this adapter. Native physical routing
  * positions still need occurrence-scoped references; authored definition/recipe IDs
  * remain literal facts even when their spelling happens to match an entity ID. */
-function eventFieldsForModel(
+export function eventFieldsForModel(
   world: WorldState,
   actorId: string,
   value: unknown,
@@ -84,19 +85,55 @@ export function facetValueForModel(
 ): unknown {
   switch (value.kind) {
     case 'body':
-      return { kind: value.kind, body: { label: value.body.label, position: value.body.position,
-        heading: value.body.heading, radius: value.body.radius, height: value.body.height,
-        outward: value.body.outward,description:value.body.description,quantity:value.body.quantity,heatLit:value.body.heatLit,remainsPhase:value.body.remainsPhase,storage:value.body.storage ? {present:true}:undefined } };
+      return {
+        kind: value.kind,
+        body: {
+          label: value.body.label,
+          position: value.body.position,
+          heading: value.body.heading,
+          radius: value.body.radius,
+          height: value.body.height,
+          outward: value.body.outward,
+          description: value.body.description,
+          quantity: value.body.quantity,
+          heatLit: value.body.heatLit,
+          remainsPhase: value.body.remainsPhase,
+          storage: value.body.storage ? { present: true } : undefined,
+        },
+      };
     case 'public-attributes':
-      return { kind: value.kind, attributes: value.attributes.map(({id,name,value,status,min,max,unit,critical}) =>
-        ({id,name,value,status,min,max,unit,critical})) };
+      return {
+        kind: value.kind,
+        attributes: value.attributes.map(
+          ({ id, name, value, status, min, max, unit, critical }) => ({
+            id,
+            name,
+            value,
+            status,
+            min,
+            max,
+            unit,
+            critical,
+          }),
+        ),
+      };
     case 'surface-patch':
       return { kind: value.kind, patch: value.patch };
     case 'physical-boundary':
-      return { kind: value.kind, boundary: { ...value.boundary,
-        nearSurface: { ...value.boundary.nearSurface, support: supportForModel(world, actorId, value.boundary.nearSurface.support) },
-        farSurface: { ...value.boundary.farSurface, support: supportForModel(world, actorId, value.boundary.farSurface.support) },
-      } };
+      return {
+        kind: value.kind,
+        boundary: {
+          ...value.boundary,
+          nearSurface: {
+            ...value.boundary.nearSurface,
+            support: supportForModel(world, actorId, value.boundary.nearSurface.support),
+          },
+          farSurface: {
+            ...value.boundary.farSurface,
+            support: supportForModel(world, actorId, value.boundary.farSurface.support),
+          },
+        },
+      };
     case 'association':
       return {
         kind: value.kind,
@@ -207,7 +244,11 @@ function factSupportStatus(world: WorldState, actorId: string, id: string, ordin
       ? 'disputed'
       : 'retained';
 }
-export function currentFacetForModel(world: WorldState, actorId: string, snapshot: CapturedCurrentFacet) {
+export function currentFacetForModel(
+  world: WorldState,
+  actorId: string,
+  snapshot: CapturedCurrentFacet,
+) {
   return {
     source: evidenceSourceHandle(world, actorId, {
       family: 'native-exposure',
@@ -442,7 +483,12 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
             weakened: memory.impression.weakened,
             claims: memory.impression.claims.map((claim) =>
               claim.kind === 'occurrence'
-                ? { ...claim, ...(claim.subject ? { subject: subjectForModel(world, actorId, claim.subject) } : {}) }
+                ? {
+                    ...claim,
+                    ...(claim.subject
+                      ? { subject: subjectForModel(world, actorId, claim.subject) }
+                      : {}),
+                  }
                 : claim,
             ),
           },
@@ -497,5 +543,55 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
     ...(memory.manifest
       ? { retained: experienceManifestForModel(world, actorId, memory.manifest) }
       : {}),
+  };
+}
+
+/** A remembered occurrence keeps its own participant references. A later sighting
+ * cannot turn an old unknown participant into today's body by native ID equality. */
+export function memoryForModel(world: WorldState, actorId: string, memory: MemoryRecord) {
+  const source = permittedSourceHandle(world, actorId, ['experience', memory.id]);
+  const participant = (id: string) =>
+    id === actorId
+      ? entityHandle(world, actorId, actorId)
+      : permittedSourceHandle(world, actorId, [
+          'historical-participant',
+          memory.observation?.id ?? memory.id,
+          id,
+        ]);
+  return {
+    id: source,
+    at: memory.at,
+    kind: memory.kind,
+    source: memory.source,
+    summary: memory.summary,
+    entityIds: memory.entityIds.map(participant),
+    ...(memory.speakerId ? { speakerId: participant(memory.speakerId) } : {}),
+    ...(memory.eventType ? { eventType: memory.eventType } : {}),
+    ...(memory.resolved !== undefined ? { resolved: memory.resolved } : {}),
+    ...memoryMeaningForModel(world, actorId, memory),
+  };
+}
+
+/** Accepted prose is private to its author. Its structured subject and evidence
+ * references are still scoped before another reasoning request receives them. */
+export function acceptedMindForModel(world: WorldState, actorId: string) {
+  const mind = mindFor(world, actorId);
+  const evidence = (links: (typeof mind.documents)[number]['evidence']) =>
+    links.map((link) => ({
+      ...link,
+      id: permittedSourceHandle(world, actorId, ['experience', link.id]),
+    }));
+  return {
+    revision: mind.revision,
+    documents: mind.documents.map((document) => ({
+      ...document,
+      evidence: evidence(document.evidence),
+    })),
+    records: mind.records.map((record) => ({
+      ...record,
+      subjectId: record.subjectId ? subjectHandle(world, actorId, record.subjectId) : null,
+      ...(record.subjectId ? { subject: subjectForModel(world, actorId, record.subjectId) } : {}),
+      evidence: evidence(record.evidence),
+    })),
   };
 }

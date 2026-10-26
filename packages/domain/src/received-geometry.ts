@@ -31,11 +31,7 @@ import {
   type AttentionRelationEvaluation,
   type AttentionRelationWitness,
 } from './attention.js';
-import {
-  receivedScene,
-  receivedSeparation,
-  type ReceivedSceneBody,
-} from './received-scene.js';
+import { receivedScene, receivedSeparation, type ReceivedSceneBody } from './received-scene.js';
 import { selectedAttentionPolicy } from './world-composition.js';
 import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
 import { cloneValue } from './draft.js';
@@ -259,8 +255,7 @@ function actualEdges(
             edge: 0,
             a: p[0],
             b: p[1],
-            outside: (far: GeometryFragment) =>
-              Math.abs(far.maxZ - fragment.minZ) <= epsilon,
+            outside: (far: GeometryFragment) => Math.abs(far.maxZ - fragment.minZ) <= epsilon,
           },
         ]
       : []),
@@ -270,8 +265,7 @@ function actualEdges(
             edge: 1,
             a: p[1],
             b: p[2],
-            outside: (far: GeometryFragment) =>
-              Math.abs(far.minX - fragment.maxX) <= epsilon,
+            outside: (far: GeometryFragment) => Math.abs(far.minX - fragment.maxX) <= epsilon,
           },
         ]
       : []),
@@ -281,8 +275,7 @@ function actualEdges(
             edge: 2,
             a: p[2],
             b: p[3],
-            outside: (far: GeometryFragment) =>
-              Math.abs(far.minZ - fragment.maxZ) <= epsilon,
+            outside: (far: GeometryFragment) => Math.abs(far.minZ - fragment.maxZ) <= epsilon,
           },
         ]
       : []),
@@ -292,19 +285,29 @@ function actualEdges(
             edge: 3,
             a: p[3],
             b: p[0],
-            outside: (far: GeometryFragment) =>
-              Math.abs(far.maxX - fragment.minX) <= epsilon,
+            outside: (far: GeometryFragment) => Math.abs(far.maxX - fragment.minX) <= epsilon,
           },
         ]
       : []),
   ];
 }
-function sharedEdge(a: Position, b: Position, far: GeometryFragment): [Position, Position] | undefined {
+function sharedEdge(
+  a: Position,
+  b: Position,
+  far: GeometryFragment,
+): [Position, Position] | undefined {
   const axis = Math.abs(a.x - b.x) > epsilon ? 'x' : 'z';
   const low = Math.max(Math.min(a[axis], b[axis]), axis === 'x' ? far.minX : far.minZ);
   const high = Math.min(Math.max(a[axis], b[axis]), axis === 'x' ? far.maxX : far.maxZ);
   if (high - low <= epsilon) return;
-  const at = (value: number): Position => { const fraction = (value - a[axis]) / (b[axis] - a[axis]); return { x: a.x + (b.x - a.x) * fraction, y: a.y + (b.y - a.y) * fraction, z: a.z + (b.z - a.z) * fraction }; };
+  const at = (value: number): Position => {
+    const fraction = (value - a[axis]) / (b[axis] - a[axis]);
+    return {
+      x: a.x + (b.x - a.x) * fraction,
+      y: a.y + (b.y - a.y) * fraction,
+      z: a.z + (b.z - a.z) * fraction,
+    };
+  };
   return [at(low), at(high)];
 }
 
@@ -409,14 +412,18 @@ export function refreshReceivedGeometry(
       depth = rectangle!.maxZ - rectangle!.minZ;
     const points = vertices(surface, rectangle!);
     const facing = input.eye.y - surfaceHeight(surface, input.eye.x, input.eye.z) > epsilon;
-    if (!facing) { state.unrepresented = true; continue; }
+    if (!facing) {
+      state.unrepresented = true;
+      continue;
+    }
     const inRange = points.every((point) => distance3D(input.eye, point) <= input.radius);
     const visible =
       inRange &&
       surfaceSupportsRectangle(input.map, surface, rectangle!) &&
       clearConvexView(input.map, input.eye, points);
     if (!visible) {
-      if (Math.max(width, depth) > (inRange ? policy.errorMetres * 2 : policy.patchMetres)) enqueue(split(rectangle!));
+      if (Math.max(width, depth) > (inRange ? policy.errorMetres * 2 : policy.patchMetres))
+        enqueue(split(rectangle!));
       else state.unrepresented = true;
       continue;
     }
@@ -709,8 +716,14 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
     ),
   );
   const bodies = [...scene.bodies.values()];
-  const bodyRevision = JSON.stringify(bodies.map((body) => [body.exposure, body.sample.original.id,
-    body.sample.valueAcquiredAt, body.motion?.earlier.valueAcquiredAt]));
+  const bodyRevision = JSON.stringify(
+    bodies.map((body) => [
+      body.exposure,
+      body.sample.original.id,
+      body.sample.valueAcquiredAt,
+      body.motion?.earlier.valueAcquiredAt,
+    ]),
+  );
   const geometryRevision = JSON.stringify(boundaries.map((value) => value.observation.id));
   const bodiesByExposure = new Map(bodies.map((body) => [body.exposure, body]));
   const boundariesById = new Map(boundaries.map((value) => [value.observation.id, value]));
@@ -719,61 +732,158 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
   // A tree continuation cannot survive moving members. Rotating received rows
   // instead gives every member finite visits without pretending partial absence
   // is a negative answer. Only a complete unchanged-cut pass can clear a latch.
-  const page = <T>(entry: {key:string;changeRevision:string}, family:'closing-body'|'closing-drop',
-    values: readonly T[], revision: string, allowance:number, measure:(value:T)=>AttentionRelationWitness|undefined,
-    prior: AttentionRelationWitness | undefined, priorRequired:boolean, knownComplete:boolean) => {
-    const key=JSON.stringify([entry.key,family]);
-    const scan=(state.relationScans[key]??={cursor:0,remaining:values.length,revision:'',clearSupported:true});
-    const cut=JSON.stringify([entry.changeRevision,revision]);
-    if(scan.revision!==cut){scan.revision=cut;scan.remaining=values.length;scan.clearSupported=true;}
-    const reserved = priorRequired && allowance > 0 ? 1 : 0;
-    const count=Math.min(Math.max(0,allowance-reserved),values.length,scan.remaining);
-    const witnesses:AttentionRelationWitness[]=[];
-    const bounds=family==='closing-body'?policy.body:policy.drop;
-    for(let i=0;i<count;i++){
-      const value=values[(scan.cursor+i)%values.length]!;
-      const witness=measure(value);
-      if(!witness){scan.clearSupported=false;continue;}
-      witnesses.push(witness);
-      if(!(witness.distanceLower>bounds.clear||witness.decreaseLower<policy.minimumDecrease||
-        (family==='closing-drop'&&(witness.dropLower??-Infinity)<policy.drop.minimumDrop))) scan.clearSupported=false;
+  const page = <T>(
+    entry: { key: string; changeRevision: string },
+    family: 'closing-body' | 'closing-drop',
+    values: readonly T[],
+    revision: string,
+    allowance: number,
+    measure: (value: T) => AttentionRelationWitness | undefined,
+    prior: AttentionRelationWitness | undefined,
+    priorRequired: boolean,
+    knownComplete: boolean,
+  ) => {
+    const key = JSON.stringify([entry.key, family]);
+    const scan = (state.relationScans[key] ??= {
+      cursor: 0,
+      remaining: values.length,
+      revision: '',
+      clearSupported: true,
+    });
+    const cut = JSON.stringify([entry.changeRevision, revision]);
+    if (scan.revision !== cut) {
+      scan.revision = cut;
+      scan.remaining = values.length;
+      scan.clearSupported = true;
     }
-    scan.cursor=values.length?(scan.cursor+count)%values.length:0;
-    scan.remaining-=count;
-    if(prior&&!witnesses.some((value)=>value.id===prior.id)) witnesses.push(prior);
-    const complete=scan.remaining===0&&knownComplete;
-    const clearSupported=scan.clearSupported&&(!priorRequired||!!prior);
-    if(scan.remaining===0){scan.remaining=values.length;scan.clearSupported=true;}
-    return {evaluation:{anchorKey:entry.key,family,revision:cut,complete,clearSupported,witnesses},visited:count+reserved};
+    const reserved = priorRequired && allowance > 0 ? 1 : 0;
+    const count = Math.min(Math.max(0, allowance - reserved), values.length, scan.remaining);
+    const witnesses: AttentionRelationWitness[] = [];
+    const bounds = family === 'closing-body' ? policy.body : policy.drop;
+    for (let i = 0; i < count; i++) {
+      const value = values[(scan.cursor + i) % values.length]!;
+      const witness = measure(value);
+      if (!witness) {
+        scan.clearSupported = false;
+        continue;
+      }
+      witnesses.push(witness);
+      if (
+        !(
+          witness.distanceLower > bounds.clear ||
+          witness.decreaseLower < policy.minimumDecrease ||
+          (family === 'closing-drop' && (witness.dropLower ?? -Infinity) < policy.drop.minimumDrop)
+        )
+      )
+        scan.clearSupported = false;
+    }
+    scan.cursor = values.length ? (scan.cursor + count) % values.length : 0;
+    scan.remaining -= count;
+    if (prior && !witnesses.some((value) => value.id === prior.id)) witnesses.push(prior);
+    const complete = scan.remaining === 0 && knownComplete;
+    const clearSupported = scan.clearSupported && (!priorRequired || !!prior);
+    if (scan.remaining === 0) {
+      scan.remaining = values.length;
+      scan.clearSupported = true;
+    }
+    return {
+      evaluation: {
+        anchorKey: entry.key,
+        family,
+        revision: cut,
+        complete,
+        clearSupported,
+        witnesses,
+      },
+      visited: count + reserved,
+    };
   };
   let remaining = opportunity.candidates;
   for (let ordinal = 0; ordinal < opportunity.anchors.length; ordinal++) {
-    const entry = opportunity.anchors[ordinal]!, anchor = scene.bodies.get(entry.sourceId);
+    const entry = opportunity.anchors[ordinal]!,
+      anchor = scene.bodies.get(entry.sourceId);
     if (!anchor) continue;
-    const share=Math.floor(remaining/(opportunity.anchors.length-ordinal));
-    const bodyKey=JSON.stringify([entry.key,'closing-body']), bodyLatch=state.latches[bodyKey];
-    const bodyMeasure=(neighbor:ReceivedSceneBody):AttentionRelationWitness|undefined=>{
-      if(neighbor.sourceId===anchor.sourceId) return {id:neighbor.exposure,distanceLower:Infinity,distanceUpper:Infinity,decreaseLower:0,proof:[]};
-      const relation=receivedSeparation(anchor,neighbor);
-      if(relation.status!=='complete'||(relation.decreaseLower===undefined&&relation.lower!<=policy.body.clear))return undefined;
-      return {id:neighbor.exposure,distanceLower:relation.lower!,distanceUpper:relation.upper!,decreaseLower:relation.decreaseLower??0,
-        proof:[...bodyProof(anchor),...bodyProof(neighbor)].slice(0,8)};
+    const share = Math.floor(remaining / (opportunity.anchors.length - ordinal));
+    const bodyKey = JSON.stringify([entry.key, 'closing-body']),
+      bodyLatch = state.latches[bodyKey];
+    const bodyMeasure = (neighbor: ReceivedSceneBody): AttentionRelationWitness | undefined => {
+      if (neighbor.sourceId === anchor.sourceId)
+        return {
+          id: neighbor.exposure,
+          distanceLower: Infinity,
+          distanceUpper: Infinity,
+          decreaseLower: 0,
+          proof: [],
+        };
+      const relation = receivedSeparation(anchor, neighbor);
+      if (
+        relation.status !== 'complete' ||
+        (relation.decreaseLower === undefined && relation.lower! <= policy.body.clear)
+      )
+        return undefined;
+      return {
+        id: neighbor.exposure,
+        distanceLower: relation.lower!,
+        distanceUpper: relation.upper!,
+        decreaseLower: relation.decreaseLower ?? 0,
+        proof: [...bodyProof(anchor), ...bodyProof(neighbor)].slice(0, 8),
+      };
     };
-    const priorBody=bodyLatch?.witnessId?bodiesByExposure.get(bodyLatch.witnessId):undefined;
-    const body=page(entry,'closing-body',bodies,bodyRevision,Math.ceil(share/2),bodyMeasure,
-      share>0&&priorBody?bodyMeasure(priorBody):undefined,!!bodyLatch?.active,true);
-    remaining-=body.visited; evaluations.push(body.evaluation);
-    const dropLatch=state.latches[JSON.stringify([entry.key,'closing-drop'])];
-    const dropMeasure=(value:typeof boundaries[number]):AttentionRelationWitness|undefined=>{
-      const measured=receivedBoundarySeparation(anchor,value.boundary,{from:value.observation.acquiredAt,through:geometry.supportedThrough});
-      if(measured.status!=='complete'||(measured.decreaseLower===undefined&&measured.lower!<=policy.drop.clear))return undefined;
-      return {id:value.observation.id,distanceLower:measured.lower!,distanceUpper:measured.upper!,decreaseLower:measured.decreaseLower??0,
-        dropLower:measured.dropLower,proof:[...bodyProof(anchor),observationFactKey(value.observation,value.ordinal)].slice(0,8)};
+    const priorBody = bodyLatch?.witnessId ? bodiesByExposure.get(bodyLatch.witnessId) : undefined;
+    const body = page(
+      entry,
+      'closing-body',
+      bodies,
+      bodyRevision,
+      Math.ceil(share / 2),
+      bodyMeasure,
+      share > 0 && priorBody ? bodyMeasure(priorBody) : undefined,
+      !!bodyLatch?.active,
+      true,
+    );
+    remaining -= body.visited;
+    evaluations.push(body.evaluation);
+    const dropLatch = state.latches[JSON.stringify([entry.key, 'closing-drop'])];
+    const dropMeasure = (
+      value: (typeof boundaries)[number],
+    ): AttentionRelationWitness | undefined => {
+      const measured = receivedBoundarySeparation(anchor, value.boundary, {
+        from: value.observation.acquiredAt,
+        through: geometry.supportedThrough,
+      });
+      if (
+        measured.status !== 'complete' ||
+        (measured.decreaseLower === undefined && measured.lower! <= policy.drop.clear)
+      )
+        return undefined;
+      return {
+        id: value.observation.id,
+        distanceLower: measured.lower!,
+        distanceUpper: measured.upper!,
+        decreaseLower: measured.decreaseLower ?? 0,
+        dropLower: measured.dropLower,
+        proof: [...bodyProof(anchor), observationFactKey(value.observation, value.ordinal)].slice(
+          0,
+          8,
+        ),
+      };
     };
-    const priorBoundary=dropLatch?.witnessId?boundariesById.get(dropLatch.witnessId):undefined;
-    const drop=page(entry,'closing-drop',boundaries,geometryRevision,Math.max(0,share-body.visited),dropMeasure,
-      share-body.visited>0&&priorBoundary?dropMeasure(priorBoundary):undefined,!!dropLatch?.active,geometry.complete);
-    remaining-=drop.visited; evaluations.push(drop.evaluation);
+    const priorBoundary = dropLatch?.witnessId
+      ? boundariesById.get(dropLatch.witnessId)
+      : undefined;
+    const drop = page(
+      entry,
+      'closing-drop',
+      boundaries,
+      geometryRevision,
+      Math.max(0, share - body.visited),
+      dropMeasure,
+      share - body.visited > 0 && priorBoundary ? dropMeasure(priorBoundary) : undefined,
+      !!dropLatch?.active,
+      geometry.complete,
+    );
+    remaining -= drop.visited;
+    evaluations.push(drop.evaluation);
   }
   applyAttentionRelationEvaluations(world, observerId, evaluations);
 }
@@ -843,7 +953,9 @@ export function validateReceivedGeometryState(
     state.radius <= 0 ||
     !Number.isSafeInteger(state.geometryRevision) ||
     state.geometryRevision < 0 ||
-    !Number.isFinite(state.supportedThrough) || state.supportedThrough < 0 || state.supportedThrough > world.simTime ||
+    !Number.isFinite(state.supportedThrough) ||
+    state.supportedThrough < 0 ||
+    state.supportedThrough > world.simTime ||
     !Number.isSafeInteger(state.generation) ||
     state.generation < 0 ||
     !Number.isSafeInteger(state.boundaryChecked) ||
@@ -899,6 +1011,7 @@ export function validateReceivedGeometryState(
     ...state.fragments.map((fragment) => fragment.observation),
     ...state.boundaries,
   ];
+  const patches=new Map(state.fragments.map((fragment)=>[JSON.stringify([fragment.observation.id,fragment.observation.revision]),fragment.observation]));
   if (
     new Set(observations.map((value) => value.id)).size !== observations.length ||
     new Set(state.fragments.map((value) => value.key)).size !== state.fragments.length
@@ -922,5 +1035,13 @@ export function validateReceivedGeometryState(
       !['surface-patch', 'physical-boundary'].includes(observation.facets[0]!.value.kind)
     )
       throw new Error('Invalid received geometry owner.');
+    const value=observation.facets[0]!.value;
+    if(value.kind==='physical-boundary')for(const surface of [value.boundary.nearSurface,value.boundary.farSurface]){
+      const source=surface.support.source;
+      const patch=patches.get(JSON.stringify([source.id,source.revision]));
+      if(source.family!=='native-exposure'||source.observer.actorId!==observerId||source.observer.physicalLife!==life||
+        surface.support.ordinal!==0||patch?.facets[0]?.value.kind!=='surface-patch')
+        throw new Error('Received boundary support is not an owned received surface.');
+    }
   }
 }

@@ -165,6 +165,8 @@ export function editKnowledge(
     return outcome(false, 'forgotten-evidence', 'Knowledge cannot retain forgotten evidence.');
   if (current?.text === edit.text)
     return outcome(true, 'knowledge-unchanged', 'Knowledge is already current.');
+  if(current?.revision===Number.MAX_SAFE_INTEGER)
+    return outcome(false,'knowledge-revision-exhausted','The knowledge document cannot accept another revision; its previous text was retained.');
   const documents = ((world.actorKnowledge ??= {})[actorId] ??= {});
   // Keep empty documents as revisioned tombstones: an old create cannot undo a later deletion.
   const next: KnowledgeDocument = {
@@ -177,8 +179,19 @@ export function editKnowledge(
       ? [...new Set(evidenceIds.length ? evidenceIds : (current?.evidenceIds ?? []))]
       : [],
   };
-  if (!adjustRetainedKnowledgeAccounting(world, actorId, current?.origin==='actor-edit'?current:undefined, next))
-    return outcome(false, 'knowledge-capacity', 'Personal knowledge is full; the previous document was retained.');
+  if (
+    !adjustRetainedKnowledgeAccounting(
+      world,
+      actorId,
+      current?.origin === 'actor-edit' ? current : undefined,
+      next,
+    )
+  )
+    return outcome(
+      false,
+      'knowledge-capacity',
+      'Personal knowledge is full; the previous document was retained.',
+    );
   documents[knowledgeKey(edit.subjectId)] = next;
   advanceKnowledgeRevision(world, actorId);
   return outcome(true, 'knowledge-edited', 'Knowledge updated.');

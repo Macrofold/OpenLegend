@@ -458,8 +458,18 @@ export class ThoughtIntakeInputs {
         world.experience?.summaries[id],
         world.innerWorlds?.[id],
         world.cognitionPolicy,
-        JSON.stringify(currentAttentionCues(world,id).map((cue)=>[cue.id,world.perceptionEvidence?.[id]?.attention?.candidates[cue.anchorKey]?.descriptionRevision])),
-        JSON.stringify([actor.agency.semantic?.interval,actor.agency.semantic?.discovery,actor.agency.semantic?.occupiedPurpose]),
+        JSON.stringify(
+          currentAttentionCues(world, id).map((cue) => [
+            cue.id,
+            world.perceptionEvidence?.[id]?.attention?.candidates[cue.anchorKey]
+              ?.descriptionRevision,
+          ]),
+        ),
+        JSON.stringify([
+          actor.agency.semantic?.interval,
+          actor.agency.semantic?.discovery,
+          actor.agency.semantic?.occupiedPurpose,
+        ]),
       ],
       reasons: THOUGHT_INPUT_REASONS,
       urgency,
