@@ -13,6 +13,7 @@ import { initializePerception } from './kernel.js';
 import { currentAttentionCues, currentDetailedAttention, setAttentionFocus } from './attention.js';
 import { observationDependencies, observationLearningSources } from './experience-manifest.js';
 import { perceptionEvidenceOwner } from './perception-evidence.js';
+import type { WorldState } from './types.js';
 import {
   currentReceivedGeometry,
   refreshReceivedGeometry,
@@ -103,10 +104,10 @@ describe('certified received planar geometry', () => {
     expect(JSON.stringify(measured.acquired)).not.toContain('Private map label');
     expect(owner.geometry!.visited).toBeLessThanOrEqual(128);
     validateReceivedGeometryState(world, PLAYER_ID, owner.geometry!);
-    const restored = structuredClone(world);
-    expect(
-      currentReceivedGeometry(restored, PLAYER_ID).observations.map((value) => value.id),
-    ).toEqual(currentReceivedGeometry(world, PLAYER_ID).observations.map((value) => value.id));
+    const restored = JSON.parse(JSON.stringify(world)) as WorldState;
+    expect(currentReceivedGeometry(restored, PLAYER_ID)).toEqual(
+      currentReceivedGeometry(world, PLAYER_ID),
+    );
     world.map.spatial.revision++;
     expect(currentReceivedGeometry(world, PLAYER_ID).observations).toHaveLength(0);
     world.simTime = 15;
@@ -130,14 +131,18 @@ describe('certified received planar geometry', () => {
         ),
     );
     expect(boundaries.length).toBeGreaterThan(0);
-    const observations = currentReceivedGeometry(world, PLAYER_ID).observations.filter((observation) =>
-      observation.facets.some((facet) => facet.value.kind === 'physical-boundary'));
+    const observations = currentReceivedGeometry(world, PLAYER_ID).observations.filter(
+      (observation) => observation.facets.some((facet) => facet.value.kind === 'physical-boundary'),
+    );
     const dependencies = observationDependencies(observations);
     const sources = observationLearningSources(observations);
     for (const boundary of boundaries)
       for (const support of [boundary.nearSurface.support, boundary.farSurface.support]) {
-        expect(dependencies).toContainEqual({ source: support.source, ordinal: support.ordinal,
-          aliases: [JSON.stringify(['perception-fact', support.source.id, support.ordinal])] });
+        expect(dependencies).toContainEqual({
+          source: support.source,
+          ordinal: support.ordinal,
+          aliases: [JSON.stringify(['perception-fact', support.source.id, support.ordinal])],
+        });
         expect(sources).toContainEqual(support.source);
       }
 
@@ -148,10 +153,17 @@ describe('certified received planar geometry', () => {
           boundary.nearSurface.support.source.id !== boundary.farSurface.support.source.id,
       ),
     ).toBe(true);
-    const corrupt=structuredClone(world);
-    const edge=corrupt.perceptionEvidence![PLAYER_ID]!.geometry!.boundaries[0]!.facets[0]!.value;
-    if(edge.kind==='physical-boundary')edge.boundary.farSurface.support.source.observer.actorId='someone-else';
-    expect(()=>validateReceivedGeometryState(corrupt,PLAYER_ID,corrupt.perceptionEvidence![PLAYER_ID]!.geometry!)).toThrow('owned received surface');
+    const corrupt = structuredClone(world);
+    const edge = corrupt.perceptionEvidence![PLAYER_ID]!.geometry!.boundaries[0]!.facets[0]!.value;
+    if (edge.kind === 'physical-boundary')
+      edge.boundary.farSurface.support.source.observer.actorId = 'someone-else';
+    expect(() =>
+      validateReceivedGeometryState(
+        corrupt,
+        PLAYER_ID,
+        corrupt.perceptionEvidence![PLAYER_ID]!.geometry!,
+      ),
+    ).toThrow('owned received surface');
     const hidden = map([surface('high', 0, 2, 2)]);
     const other = worldWithGeometry(hidden, { x: 3.5, y: 2, z: 2 });
     refreshReceivedGeometry(other.world, PLAYER_ID);

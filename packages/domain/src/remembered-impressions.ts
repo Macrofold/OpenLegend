@@ -126,6 +126,11 @@ export function ensureExperienceAccounting(world: WorldState, actorId: string): 
       actor.accounts.optional.bytes += encoder.encode(JSON.stringify(value)).byteLength;
       actor.accounts.optional.count++;
     }
+  for (const value of world.knowledge[actorId] ?? [])
+    if (value.source !== 'authored') {
+      actor.accounts.required.bytes += encoder.encode(JSON.stringify(value)).byteLength;
+      actor.accounts.required.count++;
+    }
 }
 
 export function adjustExperienceAccounting(
@@ -147,25 +152,26 @@ export function adjustExperienceAccounting(
   if (due !== null) accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, due);
 }
 
-/** Lasting knowledge shares the optional closure allowance with accounts and exact
- * proof. Refusal leaves the old owned record and counters untouched. */
+/** Lasting notes and identities share the optional allowance; executable grants
+ * explicitly reserve the required allowance. Refusal preserves the old record. */
 export function adjustRetainedKnowledgeAccounting(
   world: WorldState,
   actorId: string,
   before: unknown | undefined,
   after: unknown | undefined,
-  options?: { revocation: true },
+  options?: { revocation?: true; required?: true },
 ): boolean {
   if (before === after) return true;
   ensureExperienceAccounting(world, actorId);
-  const account = world.experience?.temporal?.actors[actorId]?.accounts?.optional;
+  const pool = options?.required ? 'required' : 'optional';
+  const account = world.experience?.temporal?.actors[actorId]?.accounts?.[pool];
   if (!account) return false;
   const bytes =
     account.bytes +
     (after === undefined ? 0 : encoder.encode(JSON.stringify(after)).byteLength) -
     (before === undefined ? 0 : encoder.encode(JSON.stringify(before)).byteLength);
   const count = account.count + Number(after !== undefined) - Number(before !== undefined),
-    limit = selectedTemporalPolicy(world).optional;
+    limit = selectedTemporalPolicy(world)[pool];
   if (bytes < 0 || count < 0) throw new Error('Retained knowledge accounting underflowed.');
   if (
     !options?.revocation &&

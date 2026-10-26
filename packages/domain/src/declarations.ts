@@ -155,7 +155,14 @@ export function admitDeclaration(
     attribution,
     source: provenance.source,
   };
-  learnRecipe(world, provenance.actorId, recipeId, 'invented', provenance.requestId);
+  if (
+    learnRecipe(world, provenance.actorId, recipeId, 'invented', provenance.requestId) ===
+    'capacity'
+  )
+    return reject(
+      'knowledge-capacity',
+      'There is no room to retain this method and its exact learning proof.',
+    );
   const actor = entityGet(world.entities, provenance.actorId)!;
   emit(
     world,

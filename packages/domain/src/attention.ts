@@ -343,6 +343,13 @@ export function updateAttention(
     ]),
   );
   let geometryChanged = false;
+  const lostWitness = (key: string) => {
+    const previous = readOnlyDraftView(state.candidates)[key];
+    if (!previous) return;
+    for (const [latchKey, latch] of Object.entries(readOnlyDraftView(state.latches)))
+      if (latch.witnessId === previous.exposure.episodeId && latch.clearSince !== undefined)
+        delete state.latches[latchKey]!.clearSince;
+  };
   for (const sourceId of changed) {
     const bodySource = readOnlyDraftView(owner.current)[`${sourceId}:body`];
     const body = bodySource && readOnlyDraftView(bodySource),
@@ -350,12 +357,15 @@ export function updateAttention(
     const previousKey = existingBySource.get(sourceId);
     if (!body || bodyValue?.kind !== 'body') {
       if (previousKey) {
+        lostWitness(previousKey);
         delete state.candidates[previousKey];
         geometryChanged = true;
       }
       continue;
     }
     const key = attentionSubjectKey(sourceId, body.exposure);
+    if (previousKey && readOnlyDraftView(state.candidates)[previousKey]?.leaseId !== body.id)
+      lostWitness(previousKey);
     if (previousKey && previousKey !== key) delete state.candidates[previousKey];
     const originalCandidate = readOnlyDraftView(state.candidates)[key];
     const old = originalCandidate && readOnlyDraftView(originalCandidate);
@@ -826,6 +836,9 @@ export function revokeAttentionEvidence(
   const state = owned(world, observerId)?.attention;
   if (!state) return;
   for (const [key, latch] of Object.entries(state.latches)) {
+    // A pending all-clear interval is optional derived evidence. A correction
+    // cannot preserve it by omission merely because its original alarm survived.
+    if (affected.size) delete latch.clearSince;
     if (
       ![...(latch.entryProof ?? []), ...(latch.newestProof ?? [])].some(
         (fact) =>

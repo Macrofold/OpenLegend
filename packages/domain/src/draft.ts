@@ -456,7 +456,13 @@ function immutableDraftSnapshot<T>(value: T, memo = new WeakMap<object, object>(
   memo.set(latest, result);
   for (const key of Object.keys(latest)) {
     const child = immutableDraftSnapshot((latest as Record<string, unknown>)[key], memo);
-    if (key === '__proto__') Object.defineProperty(result,key,{value:child,enumerable:true,writable:true,configurable:true});
+    if (key === '__proto__')
+      Object.defineProperty(result, key, {
+        value: child,
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
     else result[key] = child;
   }
   return Object.freeze(result) as T;

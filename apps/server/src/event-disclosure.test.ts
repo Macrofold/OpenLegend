@@ -11,6 +11,8 @@ import {
   projectEventEvidence,
   type WorldState,
   type WorldEvent,
+  initializePerception,
+  setAttentionFocus,
 } from '@open-legend/domain';
 import { canStand, supportBelow } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition } from '../../../packages/domain/src/spatial-state.js';
@@ -25,6 +27,7 @@ import { WorldService } from './world-service.js';
 import { readPerceivedEvents } from './perceived-events.js';
 import { responseTriggerContext } from './response-context.js';
 import { storyAccountSql, storySourceRow } from './personal-accounts.js';
+import { receivedEventAccounts } from './received-event-accounts.js';
 
 function place(world: WorldState, id: string, x: number, z = 2) {
   const entity = entityGet(world.entities, id)!;
@@ -47,6 +50,12 @@ function arrange(world: WorldState, targetId: string, visible: boolean) {
   expect(
     seesEntity(world, entityGet(world.entities, NPC_ID)!, entityGet(world.entities, targetId)!),
   ).toBe(visible);
+  initializePerception(world, []);
+  const key = Object.entries(world.perceptionEvidence?.[NPC_ID]?.attention?.candidates ?? {}).find(
+    ([, candidate]) => candidate.sourceId === PLAYER_ID,
+  )?.[0];
+  expect(key).toBeDefined();
+  expect(setAttentionFocus(world, NPC_ID, [key!])).toBe(true);
 }
 function perform(world: WorldState, family: 'gather' | 'strike', visible: boolean) {
   const targetId = family === 'gather' ? 'branches' : 'mara';
@@ -78,7 +87,10 @@ function perform(world: WorldState, family: 'gather' | 'strike', visible: boolea
   return { ...completed, event, targetId, events: [...admitted.events, ...completed.events] };
 }
 function evidence(world: WorldState, event: WorldEvent, actorId = NPC_ID) {
-  return world.experience!.awareness[actorId]!.find((entry) => entry.eventId === event.id)!;
+  const account = receivedEventAccounts(world, actorId, new Set([event.id]), { current: true }).get(
+    event.id,
+  );
+  return (account?.awareness ?? account?.projected)!;
 }
 const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
@@ -328,13 +340,21 @@ describe('event-time observer facts', () => {
     await service.createSave('Observer facts', saveId);
     const payload = await store.saves.read(service.world.id, saveId);
     expect(() => store.saves.validatePayload(payload)).not.toThrow();
-    const missingAwarenessFacts = structuredClone(payload);
-    const savedAwareness = missingAwarenessFacts.state.world.experience!.awareness[NPC_ID]!.find(
-      (entry) => entry.eventId === event.id,
+    const missingReceivedFacts = structuredClone(payload);
+    expect(
+      missingReceivedFacts.state.world.experience!.awareness[NPC_ID]!.some(
+        (entry) => entry.eventId === event.id,
+      ),
+    ).toBe(false);
+    const temporal = missingReceivedFacts.state.world.experience!.temporal!;
+    const receipt = temporal.actors[NPC_ID]!.chunks.flatMap((chunk) => chunk.receipts).find(
+      (entry) => entry.origin?.kind === 'occurrence' && entry.origin.eventId === event.id,
     )!;
-    expect(savedAwareness).toBeDefined();
-    delete savedAwareness.eventData;
-    expect(() => store.saves.validatePayload(missingAwarenessFacts)).toThrow('observer facts');
+    const eventValue = receipt.facets
+      .map((reference) => temporal.sources[reference.blockId]!.values[reference.valueOrdinal]!)
+      .find((value) => value.kind === 'event')!;
+    delete (eventValue as unknown as Record<string, unknown>)['data'];
+    expect(() => store.saves.validatePayload(missingReceivedFacts)).toThrow('temporal source');
     const missingHistoryFacts = structuredClone(payload);
     const savedRow = missingHistoryFacts.history.history_perspectives.find(
       (entry) => entry['event_id'] === event.id && entry['actor_id'] === NPC_ID,

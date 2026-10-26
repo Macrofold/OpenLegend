@@ -917,7 +917,12 @@ export class RecallService {
       sources: new Map(
         sources.map((source) => [
           source.memory.id,
-          { id: source.memory.id, sourceKind: source.sourceKind, revision: source.revision },
+          {
+            id: source.memory.id,
+            sourceKind: source.sourceKind,
+            revision: source.revision,
+            ...(source.receipt ? { receipt: source.receipt } : {}),
+          },
         ]),
       ),
     });

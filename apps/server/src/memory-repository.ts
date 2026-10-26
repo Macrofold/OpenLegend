@@ -4,7 +4,7 @@ import {
   type DerivedMemoryAllowance,
 } from './memory-derivatives.js';
 import { prepareAccountRetention } from './account-retention.js';
-import { cleanupRetiredIndividuals } from './retention-cleanup.js';
+import { cleanupRetiredIndividuals, releaseUnusedTemporalSupports } from './retention-cleanup.js';
 import {
   prepareSourceVersions,
   applySourceVersions,
@@ -36,7 +36,13 @@ export class MemoryPreparationError extends Error {
 export const MAINTENANCE_SOURCES = 128;
 export const MAINTENANCE_BYTES = 512 * 1024;
 import { digest } from './content-digest.js';
-import { personalAccountRevision } from './personal-accounts.js';
+import {
+  personalAccountRevision,
+  storyAccountSql,
+  temporalStoryAwareness,
+  storyTemporalReceipt,
+  storyTemporalBytes,
+} from './personal-accounts.js';
 import type {
   Awareness,
   ExperienceEntry,
@@ -212,6 +218,8 @@ export const conversationCompactionKey = (
   conversationId: string,
 ) => `conversation-compaction:${JSON.stringify([worldId, actorId, conversationId])}`;
 export interface RetrievedMemory {
+  /** Read proof for an event retained in recent chronology, not a recall_sources row. */
+  receipt?: TemporalReceiptLocator;
   /** Authoritative source; memory is only its shared readable projection. */
   entry: ExperienceEntry;
   sourceKind: SourceKind;
@@ -221,6 +229,7 @@ export interface RetrievedMemory {
   score?: number;
 }
 export interface CurrentMemorySource {
+  receipt?: TemporalReceiptLocator;
   id: string;
   sourceKind: SourceKind;
   revision: string;
@@ -590,7 +599,32 @@ export class MemoryRepository {
       const recent = await prepareTemporalRetention(this.db, accounts.state, complete);
       const rows = new Map(accounts.rows);
       for (const [table, ids] of recent.rows) rows.set(table, [...(rows.get(table) ?? []), ...ids]);
-      const cleaned = await cleanupRetiredIndividuals(this.db, state, recent.state, rows, complete);
+      let retained = recent.state;
+      // A familiarity proof cannot make its own first encounter permanent. An actual
+      // recent-history retirement is also the boundary for releasing unowned sparse proof.
+      const retiredActors = new Set(
+        (recent.rows.get('mind_temporal_chunks') ?? []).map(
+          (id) => (JSON.parse(id) as string[])[4]!,
+        ),
+      );
+      const removedAccounts = ['mind_awareness', 'mind_memories', 'mind_summaries'].flatMap(
+        (table) => rows.get(table) ?? [],
+      );
+      for (const actorId of retiredActors) {
+        const released = await releaseUnusedTemporalSupports(
+          this.db,
+          retained,
+          actorId,
+          complete,
+          removedAccounts,
+        );
+        retained = released.state;
+        if (released.ids.length)
+          rows.set('mind_temporal_supports', [
+            ...new Set([...(rows.get('mind_temporal_supports') ?? []), ...released.ids]),
+          ]);
+      }
+      const cleaned = await cleanupRetiredIndividuals(this.db, state, retained, rows, complete);
       return { state: cleaned, rows, positions: accounts.positions };
     });
   }
@@ -2405,6 +2439,7 @@ export class MemoryRepository {
   private async hydrate(
     rows: Record<string, unknown>[],
     cache?: MemoryReadCache,
+    reservedBytes = 0,
   ): Promise<RetrievedMemory[]> {
     if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     // Check serialized source bytes in SQL before bringing bodies into the host. One
@@ -2413,7 +2448,7 @@ export class MemoryRepository {
       const cached = cache?.get(row);
       return cached ? [{ row, ...cached }] : [];
     });
-    let bytes = reused.reduce((sum, entry) => sum + entry.bytes, 0);
+    let bytes = reused.reduce((sum, entry) => sum + entry.bytes, reservedBytes);
     if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
     const missing = rows.filter((row) => !cache?.get(row));
     for (const kind of Object.keys(sourceTables) as SourceKind[]) {
@@ -2498,8 +2533,35 @@ export class MemoryRepository {
   }
   async current(scope: MemoryScope, sources: CurrentMemorySource[]): Promise<boolean> {
     const read = async () => {
-      for (let offset = 0; offset < sources.length; offset += 500) {
-        const batch = sources.slice(offset, offset + 500);
+      const receipts = sources.filter((source) => source.receipt);
+      if (receipts.length) {
+        if (
+          !(await this.temporalReceiptsCurrent(
+            scope,
+            receipts.map((source) => source.receipt!),
+          ))
+        )
+          return false;
+        const selected = await this.evidence(
+          scope,
+          receipts.map((source) => source.id),
+        );
+        const byId = new Map(selected.map((entry) => [entry.memory.id, entry]));
+        if (
+          receipts.some((source) => {
+            const now = byId.get(source.id);
+            return (
+              !now?.receipt ||
+              now.revision !== source.revision ||
+              JSON.stringify(now.receipt) !== JSON.stringify(source.receipt)
+            );
+          })
+        )
+          return false;
+      }
+      const canonical = sources.filter((source) => !source.receipt);
+      for (let offset = 0; offset < canonical.length; offset += 500) {
+        const batch = canonical.slice(offset, offset + 500);
         const rows = await this.db
           .prepare(
             `SELECT r.id,r.source_kind,r.revision FROM recall_sources r WHERE ${this.eligible} AND (r.id,r.source_kind) IN (${batch.map(() => '(?,?)').join(',')})`,
@@ -2520,7 +2582,9 @@ export class MemoryRepository {
       }
       return true;
     };
-    return sources.length > 500 ? this.snapshot(read) : read();
+    return sources.length > 500 || sources.some((source) => source.receipt)
+      ? this.snapshot(read)
+      : read();
   }
   /** One fresh SQL snapshot validates conversation membership/corrections and all
    * other selected evidence. Covered sources need no duplicate revision query. */
@@ -2634,7 +2698,56 @@ export class MemoryRepository {
             .all(...this.params(scope), ...batch)),
         );
       }
-      return this.hydrate(rows, cache);
+      const found = new Set(rows.map((row) => String(row['id']))),
+        missing = unique.filter((id) => !found.has(id));
+      const temporalRows: Record<string, unknown>[] = [];
+      for (let offset = 0; offset < missing.length; offset += 500) {
+        const batch = missing.slice(offset, offset + 500);
+        temporalRows.push(
+          ...(await this.db
+            .prepare(
+              `SELECT p.event_id,p.payload FROM history_perspectives p
+          WHERE p.world_id=? AND p.actor_id=? AND p.temporal_chunk_id IS NOT NULL
+            AND p.event_id=ANY(?::text[]) AND (SELECT generation FROM world_head WHERE world_id=?)=?
+            AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=p.world_id AND f.actor_id=p.actor_id AND f.source_id=p.event_id)`,
+            )
+            .all(scope.worldId, scope.actorId, batch, scope.worldId, scope.generation)),
+        );
+      }
+      const temporalBytes = temporalRows.reduce(
+        (sum, row) => sum + (storyTemporalBytes(String(row['payload'])) ?? RETRIEVAL_BYTES + 1),
+        0,
+      );
+      if (temporalBytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
+      const result = await this.hydrate(rows, cache, temporalBytes);
+      for (let offset = 0; offset < temporalRows.length; offset += 500) {
+        const batch = temporalRows.slice(offset, offset + 500);
+        const bodies = await this.db
+          .prepare(
+            `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p
+          WHERE p.world_id=? AND p.actor_id=? AND p.event_id=ANY(?::text[])`,
+          )
+          .all(
+            scope.worldId,
+            scope.actorId,
+            batch.map((row) => String(row['event_id'])),
+          );
+        for (const row of bodies) {
+          const payload = String(row['payload']),
+            awareness = temporalStoryAwareness(payload, row['account_payload']),
+            receipt = storyTemporalReceipt(payload);
+          if (awareness && receipt)
+            result.push({
+              entry: { source: 'awareness', value: awareness },
+              sourceKind: 'awareness',
+              awareness,
+              memory: awarenessMemory(awareness),
+              revision: personalAccountRevision(JSON.stringify(awareness)),
+              receipt,
+            });
+        }
+      }
+      return result;
     });
   }
   /** Exact, bounded sources already selected into one appraisal/reflection context.

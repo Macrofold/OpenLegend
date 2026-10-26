@@ -157,7 +157,12 @@ function vertices(surface: WalkableSurface, rectangle: Rectangle): Quad<Position
 }
 function normal(surface: WalkableSurface): Position {
   const length = Math.hypot(surface.slopeX, 1, surface.slopeZ);
-  return { x: -surface.slopeX / length, y: 1 / length, z: -surface.slopeZ / length };
+  // Signed zero has no geometric meaning and JSON restores it as positive zero.
+  return {
+    x: surface.slopeX === 0 ? 0 : -surface.slopeX / length,
+    y: 1 / length,
+    z: surface.slopeZ === 0 ? 0 : -surface.slopeZ / length,
+  };
 }
 function priority(patch: Rectangle, eye: Position): number {
   return (
@@ -452,7 +457,9 @@ export function refreshReceivedGeometry(
   // Pair only received adjacent patches. A clipped/occluded edge never invents a
   // drop; an unseen far side remains unknown even if the physical map knows it.
   state.pending = pending;
-  const ordered = readOnlyDraftView(state.fragments).map(readOnlyDraftView).sort((a, b) => a.key.localeCompare(b.key));
+  const ordered = readOnlyDraftView(state.fragments)
+    .map(readOnlyDraftView)
+    .sort((a, b) => a.key.localeCompare(b.key));
   const edges = ordered.flatMap((fragment) => {
     const surface = surfaceById(input.map, fragment.surfaceId);
     return surface ? actualEdges(fragment, surface).map((edge) => ({ fragment, edge })) : [];
@@ -688,13 +695,15 @@ export function receivedBoundarySeparation(
     });
   const d = distance(current.point),
     error = current.error + boundary.errorRadius;
-  const constantFrom=Math.max(anchor.sample.valueMeasuredFrom,measurement.from);
+  const constantFrom = Math.max(anchor.sample.valueMeasuredFrom, measurement.from);
   const earlier = anchor.motion?.earlier;
-  const before = constantFrom<at?sampleAt(constantFrom):
-    earlier &&
-    earlier.valueMeasuredThrough >= measurement.from &&
-    earlier.valueMeasuredThrough < at &&
-    sampleAt(earlier.valueMeasuredThrough);
+  const before =
+    constantFrom < at
+      ? sampleAt(constantFrom)
+      : earlier &&
+        earlier.valueMeasuredThrough >= measurement.from &&
+        earlier.valueMeasuredThrough < at &&
+        sampleAt(earlier.valueMeasuredThrough);
   return {
     status: 'complete',
     asOf: at,
@@ -1017,7 +1026,12 @@ export function validateReceivedGeometryState(
     ...state.fragments.map((fragment) => fragment.observation),
     ...state.boundaries,
   ];
-  const patches=new Map(state.fragments.map((fragment)=>[JSON.stringify([fragment.observation.id,fragment.observation.revision]),fragment.observation]));
+  const patches = new Map(
+    state.fragments.map((fragment) => [
+      JSON.stringify([fragment.observation.id, fragment.observation.revision]),
+      fragment.observation,
+    ]),
+  );
   if (
     new Set(observations.map((value) => value.id)).size !== observations.length ||
     new Set(state.fragments.map((value) => value.key)).size !== state.fragments.length
@@ -1041,13 +1055,19 @@ export function validateReceivedGeometryState(
       !['surface-patch', 'physical-boundary'].includes(observation.facets[0]!.value.kind)
     )
       throw new Error('Invalid received geometry owner.');
-    const value=observation.facets[0]!.value;
-    if(value.kind==='physical-boundary')for(const surface of [value.boundary.nearSurface,value.boundary.farSurface]){
-      const source=surface.support.source;
-      const patch=patches.get(JSON.stringify([source.id,source.revision]));
-      if(source.family!=='native-exposure'||source.observer.actorId!==observerId||source.observer.physicalLife!==life||
-        surface.support.ordinal!==0||patch?.facets[0]?.value.kind!=='surface-patch')
-        throw new Error('Received boundary support is not an owned received surface.');
-    }
+    const value = observation.facets[0]!.value;
+    if (value.kind === 'physical-boundary')
+      for (const surface of [value.boundary.nearSurface, value.boundary.farSurface]) {
+        const source = surface.support.source;
+        const patch = patches.get(JSON.stringify([source.id, source.revision]));
+        if (
+          source.family !== 'native-exposure' ||
+          source.observer.actorId !== observerId ||
+          source.observer.physicalLife !== life ||
+          surface.support.ordinal !== 0 ||
+          patch?.facets[0]?.value.kind !== 'surface-patch'
+        )
+          throw new Error('Received boundary support is not an owned received surface.');
+      }
   }
 }

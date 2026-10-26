@@ -90,17 +90,18 @@ export function commitObserverIdentity(
   const due = recognitionSeedDeadline(world, next),
     accounts = world.experience?.temporal?.actors[actorId]?.accounts;
   if (due !== null && accounts) accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, due);
-  if(previous&&accounts){
-    const nextRoots=new Set(next.familiarity?.roots.map((root)=>root.key));
-    const dropped=(previous.familiarity?.roots.some((root)=>!nextRoots.has(root.key))??false)||
-      (previous.nameEvidenceIds?.some((id)=>!next.nameEvidenceIds?.includes(id))??false)||
-      (['voice','sight']as const).some((modality)=>{
-        const retained=new Set(next[modality]?.samples.map((sample)=>sample.key));
-        return previous[modality]?.samples.some((sample)=>!retained.has(sample.key));
+  if (previous && accounts) {
+    const nextRoots = new Set(next.familiarity?.roots.map((root) => root.key));
+    const dropped =
+      (previous.familiarity?.roots.some((root) => !nextRoots.has(root.key)) ?? false) ||
+      (previous.nameEvidenceIds?.some((id) => !next.nameEvidenceIds?.includes(id)) ?? false) ||
+      (['voice', 'sight'] as const).some((modality) => {
+        const retained = new Set(next[modality]?.samples.map((sample) => sample.key));
+        return previous[modality]?.samples.some((sample) => !retained.has(sample.key));
       });
     // The common retention owner checks the complete name/note/place/work closure;
     // one identity alone cannot safely delete a capsule another owner still needs.
-    if(dropped)accounts.nextDue=Math.min(accounts.nextDue??Infinity,world.simTime);
+    if (dropped) accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, world.simTime);
   }
   return true;
 }
@@ -181,6 +182,44 @@ export function observerIndividual(
     ? world.observerIdentities?.[observerId]?.[subject.individualId]
     : identityForEntity(world, observerId, subject.entityId);
 }
+/** Incidental contact does not become its own everlasting proof owner. Ordinary
+ * recent receipts can support its first familiarity points until they retire;
+ * only independently useful personal knowledge retains sparse proof afterwards. */
+export function retainedIndividualEvidenceKeys(world: WorldState, actorId: string): string[] {
+  const pinned = new Set<string>();
+  for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
+    if (document.subjectId?.kind === 'individual' && document.text.trim())
+      pinned.add(document.subjectId.individualId);
+  for (const record of world.minds?.[actorId]?.records ?? [])
+    if (record.subjectId?.kind === 'individual') pinned.add(record.subjectId.individualId);
+  const workEpisodes = new Set(
+    entityGet(world.entities, actorId)
+      ?.actor?.agency.plan?.steps.flatMap((step) =>
+        step.status === 'running' || step.status === 'queued'
+          ? Object.values(step.targetEpisodes ?? {})
+          : [],
+      )
+      .filter((id): id is string => typeof id === 'string'),
+  );
+  const keys: string[] = [];
+  for (const [key, identity] of Object.entries(world.observerIdentities?.[actorId] ?? {})) {
+    keys.push(...(identity.nameEvidenceIds ?? []));
+    for (const profile of [identity.voice, identity.sight])
+      for (const sample of profile?.samples ?? []) keys.push(sample.sourceKey, ...sample.support);
+    const meaningful =
+      identity.authored ||
+      identity.givenName ||
+      identity.voice?.authored ||
+      identity.sight?.authored ||
+      (identity.voice?.samples.length ?? 0) >= 2 ||
+      (identity.sight?.samples.length ?? 0) >= 1 ||
+      pinned.has(key) ||
+      (!!identity.encounterId && workEpisodes.has(identity.encounterId));
+    for (const root of identity.familiarity?.roots ?? [])
+      if (meaningful || root.required) keys.push(root.sourceKey, ...root.support);
+  }
+  return keys;
+}
 /** Only the already acquired association for this exact current body authorizes
  * reconciling its old local contact history with a separately learned voice. */
 export function associateBodyFamiliarity(
@@ -234,8 +273,8 @@ export function pruneObserverIndividuals(
   for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
     if (document.subjectId?.kind === 'individual' && document.text.trim())
       retainedPins.add(document.subjectId.individualId);
-  for(const record of world.minds?.[actorId]?.records??[])
-    if(record.subjectId?.kind==='individual')retainedPins.add(record.subjectId.individualId);
+  for (const record of world.minds?.[actorId]?.records ?? [])
+    if (record.subjectId?.kind === 'individual') retainedPins.add(record.subjectId.individualId);
   const pinned = new Set(retainedPins);
   for (const lease of Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})) {
     if (lease.localSubject?.kind === 'individual') pinned.add(lease.localSubject.individualId);
@@ -245,16 +284,31 @@ export function pruneObserverIndividuals(
   let removed = 0;
   for (const key of input.candidates ?? Object.keys(identities)) {
     const identity = identities[key];
-    const learned = identity && (identity.authored || identity.givenName || identity.voice?.authored ||
-      identity.sight?.authored || identity.familiarity?.authored || identity.voice?.samples.length ||
-      identity.sight?.samples.length || identity.familiarity?.roots.length);
+    const learned =
+      identity &&
+      (identity.authored ||
+        identity.givenName ||
+        identity.voice?.authored ||
+        identity.sight?.authored ||
+        identity.familiarity?.authored ||
+        identity.voice?.samples.length ||
+        identity.sight?.samples.length ||
+        identity.familiarity?.roots.length);
     // A complete retirement batch can leave an otherwise empty identity alive
     // solely for its current body. Return it to current-only ownership so later
     // body loss does not mistake the obsolete retained flag for personal memory.
-    if (!input.candidates && identity?.retained && !learned && !retainedPins.has(key) && pinned.has(key)) {
+    if (
+      !input.candidates &&
+      identity?.retained &&
+      !learned &&
+      !retainedPins.has(key) &&
+      pinned.has(key)
+    ) {
       if (!adjustRetainedKnowledgeAccounting(world, actorId, identity, undefined))
         throw new Error('Retired identity accounting was not released.');
-      const currentOnly=cloneValue(identity);delete currentOnly.retained;identities[key]=currentOnly;
+      const currentOnly = cloneValue(identity);
+      delete currentOnly.retained;
+      identities[key] = currentOnly;
       continue;
     }
     if (

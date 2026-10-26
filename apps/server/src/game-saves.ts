@@ -63,7 +63,7 @@ export function recoveryFile(payload: unknown, checksum: unknown): string {
     throw new GameSaveError('Recovery pointer integrity check failed.');
   return pointer.data.file;
 }
-export const SAVE_FORMAT = 'development-2026-10-26-bounded-temporal-memory';
+export const SAVE_FORMAT = 'development-2026-10-26-receipt-backed-knowledge';
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
   format: string;

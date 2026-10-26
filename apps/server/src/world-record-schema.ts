@@ -324,6 +324,7 @@ const actorColumn = {
   sql: 'TEXT NOT NULL',
   value: (_value: JsonRecord, path: string[]) => (path[1] === 'experience' ? path[3] : path[2]),
 };
+columns('mind_learned_capabilities', { actor_id: actorColumn }, [['actor_id']]);
 for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
   columns(
     table,

@@ -9,11 +9,17 @@ export interface SemanticContinuation {
   reservation?: string;
   occupiedPurpose: string | null;
   /** One resolved choice per current cause family/anchor, pruned with exposure. */
-  resolved: Record<string, { interval: number; purpose:string|null; qualitativeRevision: string; severity: number }>;
+  resolved: Record<
+    string,
+    { interval: number; purpose: string | null; qualitativeRevision: string; severity: number }
+  >;
 }
 
 export const openingSemanticInterval = (): SemanticContinuation => ({
-  interval: 0, discovery: 'available', occupiedPurpose: null, resolved: {},
+  interval: 0,
+  discovery: 'available',
+  occupiedPurpose: null,
+  resolved: {},
 });
 
 function occupiedPurpose(entity: Entity): string | null {
@@ -29,7 +35,8 @@ function occupiedPurpose(entity: Entity): string | null {
 }
 
 function openInterval(continuation: SemanticContinuation): void {
-  if (!Number.isSafeInteger(continuation.interval + 1)) throw new Error('Semantic interval exhausted.');
+  if (!Number.isSafeInteger(continuation.interval + 1))
+    throw new Error('Semantic interval exhausted.');
   continuation.interval++;
   continuation.discovery = 'available';
   delete continuation.reservation;
@@ -39,15 +46,29 @@ function openInterval(continuation: SemanticContinuation): void {
 /** Trusted successful command admission; physical automatic work never calls it. */
 export function beginSemanticWork(world: WorldState, actorId: string, actionId: string): void {
   const actor = entityGet(world.entities, actorId)?.actor;
-  if (!actor || actor.capabilities?.cognition === false || actor.action?.id !== actionId || !actor.agency.semantic) return;
-  actor.agency.semantic.occupiedPurpose = actor.agency.plan && ['active','blocked'].includes(actor.agency.plan.status)
-    ? JSON.stringify(['plan',actor.agency.plan.id]) : JSON.stringify(['action',actionId]);
+  if (
+    !actor ||
+    actor.capabilities?.cognition === false ||
+    actor.action?.id !== actionId ||
+    !actor.agency.semantic
+  )
+    return;
+  actor.agency.semantic.occupiedPurpose =
+    actor.agency.plan && ['active', 'blocked'].includes(actor.agency.plan.status)
+      ? JSON.stringify(['plan', actor.agency.plan.id])
+      : JSON.stringify(['action', actionId]);
 }
 
 /** Completion is recorded where it happens, including start/end within one advance. */
 export function finishSemanticWork(world: WorldState, actorId: string, actionId: string): void {
-  const actor = entityGet(world.entities, actorId)?.actor, continuation = actor?.agency.semantic;
-  if (!actor || !continuation || continuation.occupiedPurpose !== JSON.stringify(['action',actionId])) return;
+  const actor = entityGet(world.entities, actorId)?.actor,
+    continuation = actor?.agency.semantic;
+  if (
+    !actor ||
+    !continuation ||
+    continuation.occupiedPurpose !== JSON.stringify(['action', actionId])
+  )
+    return;
   openInterval(continuation);
   continuation.occupiedPurpose = null;
 }
@@ -67,12 +88,19 @@ export function reconcileSemanticInterval(world: WorldState, actorId: string): v
 }
 
 export function discoveryInterval(world: WorldState, actorId: string): number | undefined {
-  const entity = entityGet(world.entities, actorId), state = entity?.actor?.agency.semantic;
+  const entity = entityGet(world.entities, actorId),
+    state = entity?.actor?.agency.semantic;
   return entity?.actor?.alive && state?.occupiedPurpose === null && state.discovery === 'available'
-    ? state.interval : undefined;
+    ? state.interval
+    : undefined;
 }
 
-export function reserveDiscovery(world: WorldState, actorId: string, interval: number, reservation: string): boolean {
+export function reserveDiscovery(
+  world: WorldState,
+  actorId: string,
+  interval: number,
+  reservation: string,
+): boolean {
   const state = entityGet(world.entities, actorId)?.actor?.agency.semantic;
   if (!state || discoveryInterval(world, actorId) !== interval) return false;
   state.discovery = 'reserved';
@@ -81,7 +109,12 @@ export function reserveDiscovery(world: WorldState, actorId: string, interval: n
 }
 
 /** A pre-dispatch refusal releases permission; actual dispatch consumes it, even on failure. */
-export function settleDiscovery(world: WorldState, actorId: string, reservation: string, dispatched: boolean): boolean {
+export function settleDiscovery(
+  world: WorldState,
+  actorId: string,
+  reservation: string,
+  dispatched: boolean,
+): boolean {
   const state = entityGet(world.entities, actorId)?.actor?.agency.semantic;
   if (!state || state.discovery !== 'reserved' || state.reservation !== reservation) return false;
   state.discovery = dispatched ? 'spent' : 'available';
@@ -89,9 +122,16 @@ export function settleDiscovery(world: WorldState, actorId: string, reservation:
   return true;
 }
 
-export function resolveSemanticCause(world: WorldState, actorId: string, key: string, qualitativeRevision: string, severity: number): void {
-  const actor=entityGet(world.entities,actorId),state = actor?.actor?.agency.semantic;
-  if (!state||!actor) return;
+export function resolveSemanticCause(
+  world: WorldState,
+  actorId: string,
+  key: string,
+  qualitativeRevision: string,
+  severity: number,
+): void {
+  const actor = entityGet(world.entities, actorId),
+    state = actor?.actor?.agency.semantic;
+  if (!state || !actor) return;
   const live = world.perceptionEvidence?.[actorId]?.attention?.candidates ?? {};
   for (const existing of Object.keys(state.resolved)) {
     const anchor = JSON.parse(existing) as [string, string];
@@ -99,31 +139,73 @@ export function resolveSemanticCause(world: WorldState, actorId: string, key: st
   }
   // A native choice can start work before finishWorld reconciles occupiedPurpose.
   // Pin the actual chosen work, never that preceding publication's cached label.
-  state.resolved[key] = { interval: state.interval, purpose:occupiedPurpose(actor), qualitativeRevision, severity };
+  state.resolved[key] = {
+    interval: state.interval,
+    purpose: occupiedPurpose(actor),
+    qualitativeRevision,
+    severity,
+  };
 }
 
-export function semanticCauseResolved(world: WorldState, actorId: string, key: string, qualitativeRevision: string, severity: number): boolean {
-  const actor=entityGet(world.entities,actorId),state = actor?.actor?.agency.semantic, resolved = state?.resolved[key];
-  return !!actor&&!!state && !!resolved && resolved.interval === state.interval && resolved.purpose===occupiedPurpose(actor)&&
-    resolved.qualitativeRevision === qualitativeRevision && resolved.severity >= severity;
+export function semanticCauseResolved(
+  world: WorldState,
+  actorId: string,
+  key: string,
+  qualitativeRevision: string,
+  severity: number,
+): boolean {
+  const actor = entityGet(world.entities, actorId),
+    state = actor?.actor?.agency.semantic,
+    resolved = state?.resolved[key];
+  return (
+    !!actor &&
+    !!state &&
+    !!resolved &&
+    resolved.interval === state.interval &&
+    resolved.purpose === occupiedPurpose(actor) &&
+    resolved.qualitativeRevision === qualitativeRevision &&
+    resolved.severity >= severity
+  );
 }
 
-export function validateSemanticContinuation(value: unknown): asserts value is SemanticContinuation {
+export function validateSemanticContinuation(
+  value: unknown,
+): asserts value is SemanticContinuation {
   if (!value || typeof value !== 'object') throw new Error('Invalid semantic continuation.');
   const state = value as SemanticContinuation;
-  if (!Number.isSafeInteger(state.interval) || state.interval < 0 ||
+  if (
+    !Number.isSafeInteger(state.interval) ||
+    state.interval < 0 ||
     !['available', 'reserved', 'spent'].includes(state.discovery) ||
-    (state.discovery === 'reserved') !== (typeof state.reservation === 'string' && state.reservation.length > 0) ||
+    (state.discovery === 'reserved') !==
+      (typeof state.reservation === 'string' && state.reservation.length > 0) ||
     (state.occupiedPurpose !== null && typeof state.occupiedPurpose !== 'string') ||
-    !state.resolved || typeof state.resolved !== 'object' || Array.isArray(state.resolved))
+    !state.resolved ||
+    typeof state.resolved !== 'object' ||
+    Array.isArray(state.resolved)
+  )
     throw new Error('Invalid semantic continuation.');
   for (const [key, resolved] of Object.entries(state.resolved)) {
     let anchor: unknown;
-    try { anchor = JSON.parse(key); } catch { throw new Error('Invalid resolved attention cause.'); }
-    if (!Array.isArray(anchor) || anchor.length !== 2 || anchor.some((part) => typeof part !== 'string') ||
-      !resolved || !Number.isSafeInteger(resolved.interval) || resolved.interval < 0 || resolved.interval > state.interval ||
-      (resolved.purpose!==null&&typeof resolved.purpose!=='string') ||
-      typeof resolved.qualitativeRevision !== 'string' || !Number.isFinite(resolved.severity) || resolved.severity < 0 || resolved.severity > 10)
+    try {
+      anchor = JSON.parse(key);
+    } catch {
+      throw new Error('Invalid resolved attention cause.');
+    }
+    if (
+      !Array.isArray(anchor) ||
+      anchor.length !== 2 ||
+      anchor.some((part) => typeof part !== 'string') ||
+      !resolved ||
+      !Number.isSafeInteger(resolved.interval) ||
+      resolved.interval < 0 ||
+      resolved.interval > state.interval ||
+      (resolved.purpose !== null && typeof resolved.purpose !== 'string') ||
+      typeof resolved.qualitativeRevision !== 'string' ||
+      !Number.isFinite(resolved.severity) ||
+      resolved.severity < 0 ||
+      resolved.severity > 10
+    )
       throw new Error('Invalid resolved attention cause.');
   }
 }

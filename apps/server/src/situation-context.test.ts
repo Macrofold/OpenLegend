@@ -83,10 +83,12 @@ describe('bounded received situation', () => {
         'receiptDetails',
         'observationReferences',
         'presented',
+        'currentReferences',
       ].sort(),
     );
     expect(binding).not.toHaveProperty('world');
     expect(binding).not.toHaveProperty('queryBodies');
+    expect(Object.keys(binding.currentReferences ?? {}).length).toBeGreaterThan(0);
   });
   it('keeps broad crowd presence when only ten subjects receive detail', () => {
     const world = crowded(),

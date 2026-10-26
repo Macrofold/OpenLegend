@@ -760,6 +760,7 @@ export async function prepareDecision(
       id: entry.memory.id,
       sourceKind: entry.sourceKind,
       revision: entry.revision,
+      ...(entry.receipt ? { receipt: entry.receipt } : {}),
     })),
   ];
   const outcomeBinding = JSON.stringify(outcomeIds);

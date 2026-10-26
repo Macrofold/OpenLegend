@@ -124,6 +124,10 @@ export async function applyRecordSources(
   else if (prepared) memories.configureAllowance(prepared.allowance);
   if (!prepared && state) prepared = memories.prepareSources(worldId, changes, state.world);
   const affected = await memories.project(worldId, changes, archive, writes, prepared?.versions);
+  // Dependent source projection can need an original already removed by a flushed
+  // canonical batch. Install its prepared, charged closure inside this transaction first.
+  if (prepared?.versions)
+    await memories.applySourceVersionPlan(worldId, revision, prepared.versions);
   await records.write(worldId, revision, changes, writes);
   await memories.writeSources(worldId, changes, affected, prepared);
   if (records.needsHotPrune) {
@@ -131,8 +135,6 @@ export async function applyRecordSources(
     await records.pruneActiveEvents(state);
   }
   await memories.reconcile(worldId, affected);
-  if (prepared?.versions)
-    await memories.applySourceVersionPlan(worldId, revision, prepared.versions);
 }
 
 /** No initialization, optional search scheduler, jobs or gameplay live in this owner. */

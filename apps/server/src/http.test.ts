@@ -177,10 +177,12 @@ describe('local HTTP boundary', () => {
     const { post, game, initial } = await start();
     await post('/api/control', { paused: false, clientId: 'catalogue-test' });
     const original = JSON.stringify(game.service.world);
-    const campfire=initial.entities.find(entity=>entity.name===entityGet(game.service.world.entities,'campfire')!.name)!;
+    const campfire = initial.entities.find(
+      (entity) => entity.name === entityGet(game.service.world.entities, 'campfire')!.name,
+    )!;
     const response = await post('/api/actions', { targetId: campfire.id });
     const report = await response.json();
-    expect(response.status,JSON.stringify(report)).toBe(200);
+    expect(response.status, JSON.stringify(report)).toBe(200);
 
     // Evasive destinations belong to ground/self, not a selected campfire.
     expect(report.catalogue.actions.map((action: { label: string }) => action.label)).toEqual([
@@ -190,7 +192,9 @@ describe('local HTTP boundary', () => {
       'Cook meat at Banked campfire',
       'Cook river fish at Banked campfire',
     ]);
-    expect(report.catalogue.actions.every((action: {id:string}) => action.id.startsWith('action-'))).toBe(true);
+    expect(
+      report.catalogue.actions.every((action: { id: string }) => action.id.startsWith('action-')),
+    ).toBe(true);
     expect(JSON.stringify(game.service.world)).toBe(original);
     expect(await game.service.store.recentJobs()).toEqual([]);
     expect((await post('/api/actions', { actorId: NPC_ID })).status).toBe(400);

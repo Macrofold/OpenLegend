@@ -914,12 +914,13 @@ export class WorldRecords {
       SELECT actor_id,'recent' AS category,SUM(logical_bytes) AS bytes,SUM(receipt_count) AS count FROM mind_temporal_chunks WHERE world_id=? GROUP BY actor_id
       ${['mind_awareness', 'mind_memories', 'mind_summaries'].map((table) => `UNION ALL SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM ${table} WHERE world_id=? GROUP BY actor_id,retention_class`).join('\n')}
       UNION ALL SELECT actor_id,CASE WHEN required=1 THEN 'required' ELSE 'optional' END AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_temporal_supports WHERE world_id=? GROUP BY actor_id,required
+      UNION ALL SELECT actor_id,'required' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_learned_capabilities WHERE world_id=? AND payload::jsonb->>'source'<>'authored' GROUP BY actor_id
       UNION ALL SELECT actor_id,'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_knowledge_documents WHERE world_id=? AND payload::jsonb->>'origin'='actor-edit' GROUP BY actor_id
       UNION ALL SELECT parent_id::jsonb->>2 AS actor_id,'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_recognition WHERE world_id=? AND payload::jsonb->>'retained'='true' AND COALESCE(payload::jsonb->>'authored','false')<>'true' GROUP BY parent_id
       UNION ALL SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') GROUP BY actor_id,retention_class
     ) canonical GROUP BY actor_id,category`,
       )
-      .all(...Array(8).fill(state.world.id));
+      .all(...Array(9).fill(state.world.id));
     const indexed = new Map(
       totals.map((row) => [JSON.stringify([row['actor_id'], row['category']]), row]),
     );

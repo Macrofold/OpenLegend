@@ -120,6 +120,9 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     if (!actor) continue;
     // This is new-world composition, not conversion of an existing saved world.
     actor.attributes = {};
+    // This authored world does not install an individual-recognition attribute.
+    // Keeping the human family's binding would require a removed world rule.
+    delete actor.individualRecognition;
     delete actor.conditions;
     delete entity.statusEffects;
     if (actor.action?.type === 'status-effect') actor.action = null;

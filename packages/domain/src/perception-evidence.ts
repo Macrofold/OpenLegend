@@ -173,6 +173,12 @@ export type SensoryFacet =
       text: string;
       modality: Awareness['modality'];
       importance: number;
+      sequence: number;
+      recognized: boolean;
+      intelligible: boolean;
+      entityEpisodes?: Awareness['entityEpisodes'];
+      triggerKind?: Awareness['triggerKind'];
+      sourceSubject?: Awareness['sourceSubject'];
       urgency?: number;
       content?: string;
       data: NonNullable<WorldEvent['data']>;
@@ -1668,6 +1674,12 @@ export function acquireAwarenessObservation(
       text: awareness.text,
       modality: awareness.modality,
       importance: awareness.importance,
+      sequence: awareness.sequence,
+      recognized: awareness.recognized,
+      intelligible: awareness.intelligible,
+      ...(awareness.entityEpisodes ? { entityEpisodes: cloneValue(awareness.entityEpisodes) } : {}),
+      ...(awareness.triggerKind ? { triggerKind: awareness.triggerKind } : {}),
+      ...(awareness.sourceSubject ? { sourceSubject: cloneValue(awareness.sourceSubject) } : {}),
       ...(awareness.urgency !== undefined ? { urgency: awareness.urgency } : {}),
       ...(awareness.content !== undefined ? { content: awareness.content } : {}),
       data: cloneValue(awareness.eventData ?? {}),
@@ -2414,6 +2426,29 @@ export function validateSensoryFacet(
         !Number.isFinite(value.importance) ||
         value.importance < 0 ||
         value.importance > 10 ||
+        !Number.isSafeInteger(value.sequence) ||
+        value.sequence < 0 ||
+        typeof value.recognized !== 'boolean' ||
+        typeof value.intelligible !== 'boolean' ||
+        (value.triggerKind !== undefined &&
+          ![
+            'addressed_speech',
+            'overheard_speech',
+            'self_event',
+            'directed_action',
+            'observed_event',
+          ].includes(value.triggerKind)) ||
+        (value.sourceSubject !== undefined && !validObserverSubject(value.sourceSubject)) ||
+        (value.entityEpisodes !== undefined &&
+          (!value.entityEpisodes ||
+            typeof value.entityEpisodes !== 'object' ||
+            Array.isArray(value.entityEpisodes) ||
+            Object.entries(value.entityEpisodes).some(
+              ([id, episode]) =>
+                !value.references.some((reference) => reference.id === id) ||
+                typeof episode !== 'string' ||
+                !episode,
+            ))) ||
         (value.urgency !== undefined &&
           (!Number.isFinite(value.urgency) || value.urgency < 0 || value.urgency > 10)) ||
         (value.content !== undefined && typeof value.content !== 'string') ||

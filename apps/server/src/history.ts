@@ -46,7 +46,11 @@ import {
   storyAccountSql,
   storySourceRow,
   storedStoryAccount,
+  storyTemporalReceipt,
+  storyTemporalBytes,
 } from './personal-accounts.js';
+import { temporalChunkSourceId } from './temporal-storage.js';
+import type { ReceivedEventAccount } from './received-event-accounts.js';
 import type {
   TranscriptPage,
   TranscriptItem,
@@ -523,6 +527,7 @@ export class HistoryRepository {
       const encoded = JSON.stringify(event);
       const eventRevision = revisionOf(encoded);
       const retainedPerspectives = new Map<string, StorySource>();
+      const retainedTemporal = new Map<string, NonNullable<ReceivedEventAccount['temporal']>>();
       if (!fastAppend) {
         const retained = await this.db
           .prepare('SELECT payload FROM history_events WHERE world_id=? AND id=?')
@@ -531,10 +536,21 @@ export class HistoryRepository {
         if (retained)
           for (const row of await this.db
             .prepare(
-              `SELECT p.actor_id,p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.event_id=?`,
+              `SELECT p.actor_id,p.payload,p.temporal_chunk_id,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.event_id=?`,
             )
-            .all(world.id, event.id))
-            retainedPerspectives.set(String(row['actor_id']), storySourceRow(row));
+            .all(world.id, event.id)) {
+            const actorId = String(row['actor_id']),
+              payload = String(row['payload']);
+            retainedPerspectives.set(actorId, storySourceRow(row));
+            const receipt = storyTemporalReceipt(payload),
+              bytes = storyTemporalBytes(payload);
+            const chunkId =
+              typeof row['temporal_chunk_id'] === 'string'
+                ? temporalChunkSourceId(actorId, row['temporal_chunk_id'])
+                : undefined;
+            if (receipt && bytes !== undefined && chunkId)
+              retainedTemporal.set(actorId, { receipt, bytes, chunkId });
+          }
         removedEvents += await this.removeEvent(world.id, event.id);
       }
       const perspectives = new Map<string, StorySource>();
@@ -569,7 +585,7 @@ export class HistoryRepository {
           awareness,
           position,
           eventRevision,
-          account?.temporal,
+          account?.temporal ?? retainedTemporal.get(actorId),
         );
         perspectives.set(actorId, source);
         if (!fastAppend) {

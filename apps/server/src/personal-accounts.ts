@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   receivedEventEvidence,
+  receivedEventAwareness,
   temporalReceiptId,
   type Awareness,
   type EventEvidence,
@@ -69,6 +70,7 @@ interface TemporalAccountReference {
   kind: 'temporal';
   revision: string;
   receipt: TemporalReceiptLocator;
+  bytes: number;
 }
 type AccountReference = PersonalAccountReference | TemporalAccountReference;
 type StoredStorySource = Pick<StorySource, 'id' | 'revision' | 'time' | 'order' | 'type'> & {
@@ -99,12 +101,13 @@ export function encodeStoryAccount(source: StorySource, awareness?: Awareness) {
 
 export function encodeTemporalStoryAccount(
   source: StorySource,
-  temporal: { chunkId: string; receipt: TemporalReceiptLocator },
+  temporal: { chunkId: string; receipt: TemporalReceiptLocator; bytes: number },
 ) {
   const account: TemporalAccountReference = {
     kind: 'temporal',
     revision: personalAccountRevision(JSON.stringify(source.evidence)),
     receipt: temporal.receipt,
+    bytes: temporal.bytes,
   };
   const stored: StoredStorySource = {
     id: source.id,
@@ -137,12 +140,13 @@ export function storyAccountSql(alias = 'p'): string {
       AND v.actor_id=${alias}.actor_id AND v.source_kind=${kind}
       AND v.source_id=${alias}.event_id AND v.revision=${revision}
     UNION ALL
-    SELECT jsonb_build_object('receipt',r.receipt,'values',(
-      SELECT jsonb_agg(s.payload::jsonb->'values'->(f.value->>'valueOrdinal')::int ORDER BY f.ordinal)
-      FROM jsonb_array_elements(r.receipt->'facets') WITH ORDINALITY f(value,ordinal)
+    SELECT '{"receipt":'||r.receipt::text||',"values":['||(
+      SELECT string_agg((s.payload::json->'values'->(f.value->>'valueOrdinal')::int)::text,',' ORDER BY f.ordinal)
+      FROM json_array_elements(r.receipt->'facets') WITH ORDINALITY f(value,ordinal)
       JOIN mind_temporal_sources s ON s.world_id=${alias}.world_id AND s.source_id=f.value->>'blockId'
-    ))::text FROM mind_temporal_chunks c
-      CROSS JOIN LATERAL jsonb_array_elements(c.payload::jsonb->'receipts') r(receipt)
+      WHERE s.payload::json->'values'->(f.value->>'valueOrdinal')::int->>'kind'='event'
+    )||']}' FROM mind_temporal_chunks c
+      CROSS JOIN LATERAL json_array_elements(c.payload::json->'receipts') r(receipt)
       WHERE ${kind}='temporal' AND c.world_id=${alias}.world_id AND c.id=${alias}.temporal_chunk_id
       AND c.actor_id=${alias}.actor_id
       AND c.physical_life=(${alias}.payload::jsonb#>>'{account,receipt,physicalLife}')::int
@@ -156,6 +160,12 @@ export function decodeStoryAccount(payload: string, body: unknown): StorySource 
   const stored = JSON.parse(payload) as StoredStorySource;
   if (stored.account?.kind === 'temporal') {
     if (typeof body !== 'string') throw new Error('Recent personal receipt is unavailable.');
+    if (
+      !Number.isSafeInteger(stored.account.bytes) ||
+      stored.account.bytes < 1 ||
+      Buffer.byteLength(body) !== stored.account.bytes
+    )
+      throw new Error('Recent personal receipt byte accounting disagrees with its source.');
     const selected = JSON.parse(body) as { receipt: TemporalReceipt; values: TemporalValue[] };
     const receipt = selected.receipt,
       locator = stored.account.receipt;
@@ -204,6 +214,35 @@ export function decodeStoryAccount(payload: string, body: unknown): StorySource 
   };
 }
 
+/** The same receipt-backed occurrence can feed a semantic trigger without being
+ * inserted into autobiographical memory or a second recall source table. */
+export function temporalStoryAwareness(payload: string, body: unknown): Awareness | undefined {
+  const stored = JSON.parse(payload) as StoredStorySource;
+  if (stored.account?.kind !== 'temporal') return;
+  decodeStoryAccount(payload, body);
+  const selected = JSON.parse(body as string) as {
+    receipt: TemporalReceipt;
+    values: TemporalValue[];
+  };
+  if (selected.receipt.origin?.kind !== 'occurrence') return;
+  return receivedEventAwareness(
+    stored.account.receipt.actorId,
+    selected.receipt.origin,
+    selected.values,
+    stored.account.receipt,
+  );
+}
+
+export function storyTemporalReceipt(payload: string): TemporalReceiptLocator | undefined {
+  const stored = JSON.parse(payload) as StoredStorySource;
+  return stored.account?.kind === 'temporal' ? stored.account.receipt : undefined;
+}
+
+export function storyTemporalBytes(payload: string): number | undefined {
+  const stored = JSON.parse(payload) as StoredStorySource;
+  return stored.account?.kind === 'temporal' ? stored.account.bytes : undefined;
+}
+
 export function storySourceRow(row: Record<string, unknown>, field = 'payload'): StorySource {
   return decodeStoryAccount(String(row[field]), row['account_payload']);
 }
@@ -237,9 +276,9 @@ export function storedStoryAccount(
       receipt
         ? JSON.stringify({
             receipt,
-            values: receipt.facets.map(
-              (ref) => temporal!.sources[ref.blockId]?.values[ref.valueOrdinal],
-            ),
+            values: receipt.facets
+              .map((ref) => temporal!.sources[ref.blockId]?.values[ref.valueOrdinal])
+              .filter((value) => value?.kind === 'event'),
           })
         : undefined,
     );

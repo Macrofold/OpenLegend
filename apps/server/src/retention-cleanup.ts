@@ -1,6 +1,8 @@
 import {
   experienceIndividualIds,
   selectedPruneObserverIndividuals,
+  selectedRetainedIndividualEvidenceKeys,
+  temporalReceiptId,
   selectedRecognitionSupportSourceIds,
   releaseTemporalSupport,
   temporalReceiptAliases,
@@ -22,16 +24,13 @@ export async function releaseUnusedTemporalSupports(
   const supports = state.world.experience?.temporal?.actors[actorId]?.supports;
   if (!supports || !Object.keys(supports).length) return { state, ids: [] };
   const keys: string[] = [];
-  for (const identity of Object.values(state.world.observerIdentities?.[actorId] ?? {})) {
-    keys.push(...(identity.nameEvidenceIds ?? []));
-    for (const profile of [identity.voice, identity.sight])
-      for (const sample of profile?.samples ?? []) keys.push(sample.sourceKey, ...sample.support);
-    for (const root of identity.familiarity?.roots ?? [])
-      keys.push(root.sourceKey, ...root.support);
-  }
+  keys.push(...selectedRetainedIndividualEvidenceKeys(state.world, actorId));
   for (const document of Object.values(state.world.actorKnowledge?.[actorId] ?? {}))
     keys.push(...document.evidenceIds);
-  for (const record of state.world.knowledge[actorId] ?? []) keys.push(record.evidenceId);
+  for (const record of state.world.knowledge[actorId] ?? []) {
+    keys.push(record.evidenceId);
+    if (record.sourceReceipt) keys.push(temporalReceiptId(record.sourceReceipt));
+  }
   const held = new Set([...keys, ...selectedRecognitionSupportSourceIds(state.world, keys)]);
   const candidates = Object.values(supports).filter(
     (capsule) =>

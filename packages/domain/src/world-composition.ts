@@ -56,6 +56,7 @@ import {
   outwardBodyName,
   associateBodyFamiliarity,
   pruneObserverIndividuals,
+  retainedIndividualEvidenceKeys,
 } from './worlds/base/knowledge.js';
 import { DETECTION_SUPPORT_POLICY } from './worlds/base/senses.js';
 import { normalSpeedSeconds } from './simulation-time.js';
@@ -155,6 +156,13 @@ export function selectedRecognitionSupportSourceIds(
 ): string[] {
   selectedCreationProfileForWorld(world);
   return recognitionSupportSourceIds(keys);
+}
+export function selectedRetainedIndividualEvidenceKeys(
+  world: WorldState,
+  actorId: string,
+): string[] {
+  selectedCreationProfileForWorld(world);
+  return retainedIndividualEvidenceKeys(world, actorId);
 }
 /** Closed source-key grammar for the currently linked recognition family. */
 export const validReceivedRecognitionSupportKey = validRecognitionSupportKey;

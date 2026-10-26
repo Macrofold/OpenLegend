@@ -1,3 +1,4 @@
+import { receivedEventAccounts } from './received-event-accounts.js';
 import {
   currentBodyObservation,
   currentObservedFacets,
@@ -534,16 +535,30 @@ export async function projectView(
   });
   const events = memo(
     'visibleEvents',
-    [world.events, world.experience?.awareness[scope.actorId]],
+    [
+      world.events,
+      world.experience?.awareness[scope.actorId],
+      world.experience?.temporal?.actors[scope.actorId]?.chunks,
+      world.perceptionEvidence?.[scope.actorId]?.received,
+      world.experience?.forgotten[scope.actorId],
+      world.experience?.corrections?.[scope.actorId],
+    ],
     () => {
-      const awareness = world.experience?.awareness[scope.actorId];
-      const visible = (awareness ?? [])
-        .slice(-512)
-        .reverse()
-        .flatMap((entry) => {
-          const event = service.worldEvent(entry.eventId);
-          return event ? [projectEventEvidence(event, entry)] : [];
-        });
+      // Current reception may be displayed without becoming a lasting memory.
+      // Actor-owned receipts authorize the recent sequence; global events supply
+      // metadata only after that personal selection, never missing observations.
+      const wanted = new Set([
+        ...world.events.slice(-512).map((event) => event.id),
+        ...(world.experience?.awareness[scope.actorId] ?? [])
+          .slice(-512)
+          .map((entry) => entry.eventId),
+      ]);
+      const visible = [...receivedEventAccounts(world, scope.actorId, wanted, { current: true })]
+        .flatMap(([id, account]) => {
+          const event = service.worldEvent(id);
+          return event ? [projectEventEvidence(event, account.evidence)] : [];
+        })
+        .sort((a, b) => (b.order ?? b.sequence) - (a.order ?? a.sequence));
       const bounded: ActorEvent[] = [];
       let journal = 0;
       let conversation = 0;

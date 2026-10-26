@@ -3273,6 +3273,7 @@ export class AiDirector {
           retention: [
             ...Object.keys(prepared.situation.retentionReferences),
             ...Object.keys(prepared.situation.observationReferences),
+            ...Object.keys(prepared.situation.currentReferences),
           ],
         },
       );

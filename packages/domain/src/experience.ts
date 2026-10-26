@@ -15,6 +15,7 @@ import {
   knowledgeDocument,
   advanceKnowledgeRevision,
   subjectKey,
+  revokeLearnedRecipeSupport,
   type ObserverSubject,
   type KnowledgeEdit,
 } from './knowledge.js';
@@ -1598,6 +1599,7 @@ export function invalidateExperience(
         expanded = true;
       }
   }
+  revokeLearnedRecipeSupport(world, actorId, affected);
   invalidateTemporalEvidence(world, actorId, affected);
   revokeReceivedGeometryEvidence(world, actorId, affected);
   revokeAttentionEvidence(world, actorId, affected);

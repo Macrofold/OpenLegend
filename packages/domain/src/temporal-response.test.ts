@@ -4,7 +4,11 @@ import { entityGet } from './entity-collection.js';
 import { initializePerception } from './kernel.js';
 import { setSpatialPosition, worldSupport } from './spatial-state.js';
 import { captureAttentionPresentation } from './attention.js';
-import { captureEvidenceCut, evidenceCutEligible } from './perception-evidence.js';
+import {
+  captureEvidenceCut,
+  evidenceCutEligible,
+  currentObservedFacets,
+} from './perception-evidence.js';
 import { invalidateExperience } from './experience.js';
 import {
   commitActorResponse,
@@ -124,6 +128,57 @@ it('remembers a fallible source-linked interpretation and revokes it with its ac
   expect(changed.memories[NPC_ID].some((record: { id: string }) => record.id === memory.id)).toBe(
     false,
   );
+});
+
+it('retains a supplied current measurement even when recent history omits it and the subject later moves', () => {
+  const { world, binding, commit } = setup();
+  const player = entityGet(world.entities, PLAYER_ID)!;
+  world.simTime = 5;
+  setSpatialPosition(world, player, { x: 4, y: 0, z: 2 }, worldSupport(player), 'physical');
+  initializePerception(world, []);
+  const snapshot = currentObservedFacets(world, NPC_ID, PLAYER_ID).find(
+    (facet) => facet.value.kind === 'location',
+  )!;
+  expect(
+    snapshot.value.kind === 'location' &&
+      snapshot.value.location.kind === 'point' &&
+      snapshot.value.location.point.x,
+  ).toBe(4);
+  binding.retentionReferences = {};
+  binding.currentReferences = { 'supplied-current-point': snapshot };
+  // No new sensory sample follows this movement during the character's pending interpretation.
+  world.simTime = 10;
+  setSpatialPosition(world, player, { x: 7, y: 0, z: 2 }, worldSupport(player), 'physical');
+  const result = commit(
+    [
+      {
+        ...empty,
+        localId: 'keep',
+        requiresAccepted: [],
+        remember: {
+          sources: ['supplied-current-point'],
+          text: 'That person appeared to be closer.',
+        },
+      },
+    ],
+    'response-current-point',
+  );
+  expect(result.outcome.ok, result.outcome.message).toBe(true);
+  const retained = selectTemporalHistory(result.world.experience!.temporal, NPC_ID, {
+    bytes: 1024 * 1024,
+    limit: 1000,
+  }).entries.at(-1)!;
+  expect(retained.values[0]).toMatchObject({
+    kind: 'location',
+    location: { kind: 'point', point: { x: 4 } },
+  });
+  expect(retained.receipt.facets[0]).toMatchObject({
+    measuredFrom: 5,
+    measuredThrough: 5,
+    acquiredAt: 5,
+    receivedFrom: snapshot.confirmation,
+  });
+  expect(result.world.memories[NPC_ID]!.some((memory) => memory.kind === 'impression')).toBe(true);
 });
 
 it('acknowledges only supplied attention on accepted interpretation and fences privacy edits', () => {

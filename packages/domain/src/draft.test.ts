@@ -60,47 +60,57 @@ describe('independent domain data copies', () => {
   });
 });
 
-import { createWorld,PLAYER_ID,NPC_ID } from './data.js';
+import { createWorld, PLAYER_ID, NPC_ID } from './data.js';
 import { entityGet } from './entity-collection.js';
-import { freezeWorld,updateWorld,draftWorld,finishWorld,readOnlyDraftView } from './draft.js';
+import { freezeWorld, updateWorld, draftWorld, finishWorld, readOnlyDraftView } from './draft.js';
 import { initializePerception } from './kernel.js';
-import { setSpatialPosition,worldSupport } from './spatial-state.js';
-it('seals recent observations before nested native preparation and isolates both continuations',()=>{
-  const initial=createWorld(74);initializePerception(initial,[]);freezeWorld(initial);
-  const before=JSON.stringify(initial.experience!.temporal);
-  const outer=draftWorld(initial);
-  outer.simTime=1;
-  const npc=entityGet(outer.entities,NPC_ID)!;
-  setSpatialPosition(outer,npc,{x:14,y:0,z:15},worldSupport(npc),'physical');
-  initializePerception(outer,[]);
-  const nested=draftWorld(outer);
-  const sealed=readOnlyDraftView(outer.experience!.temporal!);
+import { setSpatialPosition, worldSupport } from './spatial-state.js';
+it('seals recent observations before nested native preparation and isolates both continuations', () => {
+  const initial = createWorld(74);
+  initializePerception(initial, []);
+  freezeWorld(initial);
+  const before = JSON.stringify(initial.experience!.temporal);
+  const outer = draftWorld(initial);
+  outer.simTime = 1;
+  const npc = entityGet(outer.entities, NPC_ID)!;
+  setSpatialPosition(outer, npc, { x: 14, y: 0, z: 15 }, worldSupport(npc), 'physical');
+  initializePerception(outer, []);
+  const nested = draftWorld(outer);
+  const sealed = readOnlyDraftView(outer.experience!.temporal!);
   expect(Object.isFrozen(sealed)).toBe(true);
-  const captured=JSON.stringify(sealed);
-  nested.simTime=2;
-  setSpatialPosition(nested,entityGet(nested.entities,NPC_ID)!,{x:15,y:0,z:15},worldSupport(npc),'physical');
-  initializePerception(nested,[]);
+  const captured = JSON.stringify(sealed);
+  nested.simTime = 2;
+  setSpatialPosition(
+    nested,
+    entityGet(nested.entities, NPC_ID)!,
+    { x: 15, y: 0, z: 15 },
+    worldSupport(npc),
+    'physical',
+  );
+  initializePerception(nested, []);
   finishWorld(nested);
   expect(JSON.stringify(sealed)).toBe(captured);
   expect(JSON.stringify(initial.experience!.temporal)).toBe(before);
   expect(JSON.stringify(finishWorld(outer).experience!.temporal)).toBe(captured);
 });
-it('seals shared received evidence once while preserving earlier immutable snapshots',()=>{
-  const initial=createWorld(73);initializePerception(initial,[]);freezeWorld(initial);
-  const before=JSON.stringify(initial.perceptionEvidence);
-  const changed=updateWorld(initial,world=>{
-    const owner=world.perceptionEvidence![PLAYER_ID]!;
-    const lease=Object.values(owner.current).find(value=>value.subjectId===NPC_ID)!;
-    lease.confirmedThrough+=1;
+it('seals shared received evidence once while preserving earlier immutable snapshots', () => {
+  const initial = createWorld(73);
+  initializePerception(initial, []);
+  freezeWorld(initial);
+  const before = JSON.stringify(initial.perceptionEvidence);
+  const changed = updateWorld(initial, (world) => {
+    const owner = world.perceptionEvidence![PLAYER_ID]!;
+    const lease = Object.values(owner.current).find((value) => value.subjectId === NPC_ID)!;
+    lease.confirmedThrough += 1;
   });
   expect(JSON.stringify(initial.perceptionEvidence)).toBe(before);
   expect(changed.perceptionEvidence).not.toBe(initial.perceptionEvidence);
-  const owner=changed.perceptionEvidence![PLAYER_ID]!;
+  const owner = changed.perceptionEvidence![PLAYER_ID]!;
   expect(Object.isFrozen(owner)).toBe(true);
-  const leases=Object.values(owner.current).filter(value=>value.subjectId===NPC_ID);
+  const leases = Object.values(owner.current).filter((value) => value.subjectId === NPC_ID);
   expect(leases.length).toBeGreaterThan(1);
   expect(leases[0]!.original).toBe(leases[1]!.original);
-  const nested=draftWorld(changed);
-  entityGet(nested.entities,PLAYER_ID)!.actor!.agency.revision++;
+  const nested = draftWorld(changed);
+  entityGet(nested.entities, PLAYER_ID)!.actor!.agency.revision++;
   expect(finishWorld(nested).perceptionEvidence).toBe(changed.perceptionEvidence);
 });

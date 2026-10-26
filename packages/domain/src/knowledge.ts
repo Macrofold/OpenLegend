@@ -4,7 +4,18 @@ import { recordSemanticChange } from './dependencies.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { nextId } from './data.js';
 import { outcome } from './events.js';
-import { adjustRetainedKnowledgeAccounting } from './remembered-impressions.js';
+import {
+  adjustRetainedKnowledgeAccounting,
+  validatePersonalReceiptLocator,
+} from './remembered-impressions.js';
+import {
+  appendTemporalReceipt,
+  retainTemporalSupport,
+  releaseTemporalSupport,
+  temporalReceiptId,
+} from './temporal-evidence.js';
+import { selectedTemporalPolicy } from './world-composition.js';
+import { updateWorld, cloneValue } from './draft.js';
 import type { KnowledgeRecord } from './types.js';
 
 export type ObserverSubject =
@@ -63,19 +74,122 @@ export function allocateObserverIndividual(world: WorldState, observerId: string
   while (records && Object.hasOwn(records, id)) id = nextId(world, 'individual');
   return id;
 }
-/** Callers own admission; this is the single mutation for exact learned recipe knowledge. */
+/** One exact admission proof supports a learned capability independently of routine
+ * autobiographical expiry. Re-reading a known method never creates another grant. */
 export function learnRecipe(
   world: WorldState,
   actorId: string,
   recipeId: string,
   source: KnowledgeRecord['source'],
   evidenceId: string,
-): 'acquired' | 'already-known' {
-  const records = (world.knowledge[actorId] ??= []);
-  if (records.some((record) => record.recipeId === recipeId)) return 'already-known';
-  records.push({ recipeId, source, evidenceId, learnedAt: world.simTime });
+): 'acquired' | 'already-known' | 'capacity' {
+  if (world.knowledge[actorId]?.some((record) => record.recipeId === recipeId))
+    return 'already-known';
+  let record: KnowledgeRecord = { recipeId, source, evidenceId, learnedAt: world.simTime };
+  if (source !== 'authored') {
+    const recipe = world.recipes[recipeId];
+    if (!recipe) return 'capacity';
+    let accepted = false;
+    // This rare grant boundary reserves both proof and knowledge before installing either.
+    // A failed reservation must not leave an invented receipt or spend a saved identity.
+    const prepared = updateWorld(world, (draft) => {
+      const policy = selectedTemporalPolicy(draft);
+      const locator = appendTemporalReceipt(
+        draft,
+        actorId,
+        {
+          subject: `method:${recipeId}`,
+          change: 'occurrence',
+          required: true,
+          sourceIds: [evidenceId],
+          facets: [
+            {
+              role: 'direct',
+              asOf: draft.simTime,
+              measuredFrom: draft.simTime,
+              measuredThrough: draft.simTime,
+              acquiredAt: draft.simTime,
+              value: {
+                kind: 'personal-account',
+                source: 'memory',
+                id: evidenceId,
+                text: 'I acquired a validated method.',
+                eventType: 'method-learned',
+                data: {
+                  recipeId,
+                  methodVersion: recipe.version,
+                  methodDigest: recipe.digest,
+                  provenance: source,
+                },
+              },
+            },
+          ],
+        },
+        policy.recent,
+      );
+      if (
+        !locator ||
+        !retainTemporalSupport(draft, locator, {
+          required: true,
+          maxBytes: policy.required.maxBytes,
+          maxRecords: policy.required.maxRecords,
+        })
+      )
+        return;
+      record = { ...record, sourceReceipt: locator };
+      accepted = adjustRetainedKnowledgeAccounting(draft, actorId, undefined, record, {
+        required: true,
+      });
+    });
+    if (!accepted) return 'capacity';
+    const received = prepared.experience!.temporal!;
+    const temporal = world.experience!.temporal;
+    if (!temporal) world.experience!.temporal = cloneValue(received);
+    else {
+      // Re-enter the caller's mutable owner; a finalized nested draft is frozen.
+      // Only this actor and the one new value fragment belong to this admission.
+      temporal.actors[actorId] = cloneValue(received.actors[actorId]!);
+      const capsule =
+        received.actors[actorId]!.supports![temporalReceiptId(record.sourceReceipt!)]!;
+      for (const facet of capsule.receipt.facets)
+        temporal.sources[facet.blockId] = cloneValue(received.sources[facet.blockId]!);
+      temporal.activeSource = received.activeSource;
+      temporal.activeBoundary = received.activeBoundary;
+    }
+    world.nextId = prepared.nextId;
+  }
+  (world.knowledge[actorId] ??= []).push(record);
   advanceKnowledgeRevision(world, actorId);
   return 'acquired';
+}
+
+/** Explicitly removing the sole learned support suppresses that capability;
+ * authored starting capabilities do not depend on a character's later memories. */
+export function revokeLearnedRecipeSupport(
+  world: WorldState,
+  actorId: string,
+  affected: ReadonlySet<string>,
+): void {
+  const records = world.knowledge[actorId];
+  if (!records) return;
+  const removed = records.filter(
+    (record) =>
+      record.source !== 'authored' &&
+      (affected.has(record.evidenceId) ||
+        (record.sourceReceipt && affected.has(temporalReceiptId(record.sourceReceipt)))),
+  );
+  if (!removed.length) return;
+  for (const record of removed) {
+    adjustRetainedKnowledgeAccounting(world, actorId, record, undefined, {
+      required: true,
+      revocation: true,
+    });
+    if (record.sourceReceipt)
+      releaseTemporalSupport(world, actorId, temporalReceiptId(record.sourceReceipt));
+  }
+  const ids = new Set(removed.map((record) => record.recipeId));
+  world.knowledge[actorId] = records.filter((record) => !ids.has(record.recipeId));
+  advanceKnowledgeRevision(world, actorId);
 }
 export function advanceKnowledgeRevision(world: WorldState, actorId: string): void {
   if (!Number.isSafeInteger((world.knowledgeRevisions?.[actorId] ?? 0) + 1))
@@ -165,8 +279,12 @@ export function editKnowledge(
     return outcome(false, 'forgotten-evidence', 'Knowledge cannot retain forgotten evidence.');
   if (current?.text === edit.text)
     return outcome(true, 'knowledge-unchanged', 'Knowledge is already current.');
-  if(current?.revision===Number.MAX_SAFE_INTEGER)
-    return outcome(false,'knowledge-revision-exhausted','The knowledge document cannot accept another revision; its previous text was retained.');
+  if (current?.revision === Number.MAX_SAFE_INTEGER)
+    return outcome(
+      false,
+      'knowledge-revision-exhausted',
+      'The knowledge document cannot accept another revision; its previous text was retained.',
+    );
   const documents = ((world.actorKnowledge ??= {})[actorId] ??= {});
   // Keep empty documents as revisioned tombstones: an old create cannot undo a later deletion.
   const next: KnowledgeDocument = {
@@ -198,6 +316,56 @@ export function editKnowledge(
 }
 
 export function validateKnowledge(world: WorldState): void {
+  for (const [actorId, records] of Object.entries(world.knowledge)) {
+    if (!entityGet(world.entities, actorId)?.actor || !Array.isArray(records))
+      throw new Error('Invalid learned capability owner.');
+    const seen = new Set<string>();
+    for (const record of records) {
+      const recipe = world.recipes[record.recipeId];
+      if (
+        !recipe ||
+        seen.has(record.recipeId) ||
+        !isSafeRecordId(record.evidenceId) ||
+        !['authored', 'record', 'taught', 'invented', 'practiced'].includes(record.source) ||
+        !Number.isFinite(record.learnedAt) ||
+        record.learnedAt < 0 ||
+        record.learnedAt > world.simTime ||
+        Object.keys(record).some(
+          (key) =>
+            !['recipeId', 'source', 'evidenceId', 'learnedAt', 'sourceReceipt'].includes(key),
+        )
+      )
+        throw new Error('Invalid learned capability.');
+      seen.add(record.recipeId);
+      if (record.source === 'authored') {
+        if (record.sourceReceipt)
+          throw new Error('Authored knowledge cannot claim a sensory receipt.');
+        continue;
+      }
+      validatePersonalReceiptLocator(record.sourceReceipt, actorId);
+      const capsule =
+        world.experience?.temporal?.actors[actorId]?.supports?.[
+          temporalReceiptId(record.sourceReceipt!)
+        ];
+      if (
+        !capsule?.required ||
+        !capsule.receipt.sourceIds.includes(record.evidenceId) ||
+        capsule.receipt.at !== record.learnedAt ||
+        !capsule.values.some(
+          (value) =>
+            value.kind === 'personal-account' &&
+            value.id === record.evidenceId &&
+            value.eventType === 'method-learned' &&
+            value.data?.['recipeId'] === record.recipeId &&
+            value.data?.['methodVersion'] === recipe.version &&
+            value.data?.['methodDigest'] === recipe.digest &&
+            value.data?.['provenance'] === record.source,
+        )
+      )
+        throw new Error('Learned capability has no exact retained admission proof.');
+    }
+  }
+
   if (!world.knowledgePolicy && !world.actorKnowledge) return;
   for (const limit of [
     world.knowledgePolicy?.maxCharacters?.general,

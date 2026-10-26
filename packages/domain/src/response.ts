@@ -2,6 +2,7 @@ import {
   currentBodyObservation,
   evidenceCutEligible,
   type ObservationContribution,
+  type CapturedCurrentFacet,
 } from './perception-evidence.js';
 import {
   acknowledgeAttention,
@@ -11,6 +12,7 @@ import {
 import { rememberInterpretation, reinforceExperience } from './experience.js';
 import {
   captureTemporalObservation,
+  captureTemporalSnapshot,
   retainedTemporalReceipt,
   type TemporalReceiptLocator,
   type TemporalReceipt,
@@ -98,6 +100,7 @@ export interface SituationProposalBinding {
   /** Exact already selected cold bodies; the server fences membership after awaits. */
   receiptDetails?: Record<string, { receipt: TemporalReceipt; values: TemporalValue[] }>;
   observationReferences?: Record<string, ObservationContribution>;
+  currentReferences?: Record<string, CapturedCurrentFacet>;
   presented?: readonly AttentionPresentation[];
 }
 
@@ -482,6 +485,18 @@ export function commitActorResponse(
                 ([key, observation]) => [key, [observation.id, observation.revision]],
               ),
             ),
+            currentReferences: Object.fromEntries(
+              Object.entries(situationBinding.currentReferences ?? {}).map(([key, snapshot]) => [
+                key,
+                [
+                  snapshot.confirmation,
+                  snapshot.valueMeasuredFrom,
+                  snapshot.valueMeasuredThrough,
+                  snapshot.valueAcquiredAt,
+                  snapshot.value,
+                ],
+              ]),
+            ),
             presented: situationBinding.presented,
             semanticCauses: situationBinding.semanticCauses,
           },
@@ -627,6 +642,36 @@ export function commitActorResponse(
               locator.epoch !== captured.receipt.epoch ||
               locator.ordinal !== captured.receipt.ordinal
             ) {
+              available = false;
+              break;
+            }
+            received.push(captured);
+            continue;
+          }
+          const snapshot = getOwn(binding.currentReferences ?? {}, reference);
+          if (snapshot) {
+            if (
+              snapshot.observer.actorId !== actorId ||
+              !evidenceCutEligible(world, {
+                observer: snapshot.observer,
+                at: world.simTime,
+                privacyRevision: binding.privacyRevision,
+                lastIncludedOrder: 0,
+                acquired: [snapshot.original],
+                current: [snapshot],
+              })
+            ) {
+              available = false;
+              break;
+            }
+            const issued = captureTemporalSnapshot(
+              world,
+              actorId,
+              snapshot,
+              selectedTemporalPolicy(world).recent,
+            );
+            const captured = issued && retainedTemporalReceipt(world, issued);
+            if (!captured) {
               available = false;
               break;
             }

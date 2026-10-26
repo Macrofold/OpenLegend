@@ -8,10 +8,21 @@ import {
   entityGet,
   experiences,
   acceptConsolidation,
+  learnRecipe,
+  executeCommand,
+  temporalReceiptId,
+  entitySet,
+  initializePerception,
+  setAttentionFocus,
+  currentBodyLocalSubject,
+  setSpatialPosition,
+  worldPosition,
+  worldSupport,
+  selectedRecognitionSupportSourceIds,
 } from '@open-legend/domain';
 import { appendMemory, acquireExposure } from '../../../packages/domain/src/events.js';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
-import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { editWorld, enterLocalWorld, useNearCampSight } from '../../../tests/fixtures/service.js';
 import { WorldService } from './world-service.js';
 import { randomUUID } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
@@ -46,7 +57,7 @@ describe('bounded personal temporal storage', () => {
         "SELECT COUNT(*) AS count FROM information_schema.tables WHERE table_schema='open_legend'",
       )
       .get();
-    await first.db.prepare("UPDATE meta SET value='20' WHERE key='schema'").run();
+    await first.db.prepare("UPDATE meta SET value='21' WHERE key='schema'").run();
     await first.close();
     const refused = await testRepository(directory);
     cleanup.push(async () => {
@@ -56,7 +67,7 @@ describe('bounded personal temporal storage', () => {
     await expect(refused.ready).rejects.toThrow('Unsupported database schema');
     expect(
       (await refused.db.prepare("SELECT value FROM meta WHERE key='schema'").get())!['value'],
-    ).toBe('20');
+    ).toBe('21');
     expect(
       (await refused.db
         .prepare(
@@ -572,5 +583,115 @@ describe('bounded personal temporal storage', () => {
         .get(service.world.id, PLAYER_ID, id),
     ).toBeUndefined();
     expect(service.world.experience!.forgotten[PLAYER_ID] ?? []).not.toContain(id);
+  });
+  it('retains an exactly supported taught method through ordinary expiry and removes it when its sole proof is explicitly forgotten', async () => {
+    const { store, service } = await setup();
+    const recipeId = service.world.itemDefinitions['field-sling-record']!.recipeRecord!.method.id;
+    await editWorld(service, (world) => {
+      expect(learnRecipe(world, NPC_ID, recipeId, 'record', 'fixture-teacher-method')).toBe(
+        'acquired',
+      );
+    });
+    expect(
+      (
+        await service.transition((world) =>
+          executeCommand(world, {
+            id: 'fixture-taught-method',
+            type: 'teach',
+            actorId: NPC_ID,
+            targetId: PLAYER_ID,
+            recipeId,
+          }),
+        )
+      ).ok,
+    ).toBe(true);
+    const learned = service.world.knowledge[PLAYER_ID]!.find(
+      (record) => record.recipeId === recipeId,
+    )!;
+    const receiptId = temporalReceiptId(learned.sourceReceipt!);
+    await editWorld(service, (world) => {
+      world.simTime += selectedTemporalPolicy(world).aftermathSeconds + 1;
+    });
+    expect(service.world.knowledge[PLAYER_ID]!.some((record) => record.recipeId === recipeId)).toBe(
+      true,
+    );
+    expect(
+      service.world.experience!.temporal!.actors[PLAYER_ID]!.supports![receiptId]!.required,
+    ).toBe(true);
+    const cold = (await store.records.load(true))!.state.world;
+    expect(
+      cold.knowledge[PLAYER_ID]!.find((record) => record.recipeId === recipeId)!.sourceReceipt,
+    ).toEqual(learned.sourceReceipt);
+    expect((await service.forgetRecentObservation(learned.sourceReceipt!)).ok).toBe(true);
+    expect(service.world.knowledge[PLAYER_ID]!.some((record) => record.recipeId === recipeId)).toBe(
+      false,
+    );
+    expect(
+      await store.db
+        .prepare(
+          'SELECT id FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=?',
+        )
+        .get(service.world.id, PLAYER_ID, receiptId),
+    ).toBeUndefined();
+    expect(service.world.knowledge[PLAYER_ID]!.some((record) => record.source === 'authored')).toBe(
+      true,
+    );
+  });
+  it('expires a lone unnamed body encounter without letting its familiarity proof pin itself forever', async () => {
+    const { store, service } = await setup();
+    await useNearCampSight(service);
+    const contact = await editWorld(service, (world) => {
+      const visitor = structuredClone(entityGet(world.entities, NPC_ID)!);
+      visitor.id = 'fixture-brief-visitor';
+      entitySet(world.entities, visitor.id, visitor);
+      const player = entityGet(world.entities, PLAYER_ID)!;
+      const at = worldPosition(player);
+      setSpatialPosition(world, visitor, { ...at, x: at.x + 2 }, worldSupport(player));
+      initializePerception(world, []);
+      const subject = currentBodyLocalSubject(world, PLAYER_ID, visitor.id)!;
+      expect(subject.kind).toBe('individual');
+      const [key] = Object.entries(
+        world.perceptionEvidence![PLAYER_ID]!.attention!.candidates,
+      ).find(([, candidate]) => candidate.sourceId === visitor.id)!;
+      expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
+      world.simTime += 1;
+      initializePerception(world, []);
+      if (subject.kind !== 'individual') throw new Error('Expected encounter-local person.');
+      const identity = world.observerIdentities![PLAYER_ID]![subject.individualId]!;
+      expect(identity.givenName).toBe('');
+      expect(identity.familiarity?.roots.length).toBeGreaterThan(0);
+      return {
+        individualId: subject.individualId,
+        proofs: selectedRecognitionSupportSourceIds(
+          world,
+          identity.familiarity!.roots.flatMap((root) => [root.sourceKey, ...root.support]),
+        ),
+      };
+    });
+    await editWorld(service, (world) => {
+      world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 2;
+    });
+    const after = service.world.observerIdentities?.[PLAYER_ID]?.[contact.individualId];
+    expect(after?.familiarity?.roots ?? []).toHaveLength(0);
+    for (const proof of contact.proofs)
+      expect(
+        service.world.experience!.temporal!.actors[PLAYER_ID]!.supports?.[proof],
+      ).toBeUndefined();
+    expect(
+      Number(
+        (await store.db
+          .prepare(
+            'SELECT COUNT(*)AS count FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
+          )
+          .get(service.world.id, PLAYER_ID, contact.proofs))!['count'],
+      ),
+    ).toBe(0);
+    await editWorld(service, (world) => {
+      const visitor = entityGet(world.entities, 'fixture-brief-visitor')!;
+      const destination = entityGet(world.entities, 'riverside-workshop')!;
+      setSpatialPosition(world, visitor, worldPosition(destination), worldSupport(destination));
+      initializePerception(world, []);
+    });
+    expect(service.world.observerIdentities?.[PLAYER_ID]?.[contact.individualId]).toBeUndefined();
   });
 });

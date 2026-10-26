@@ -3195,6 +3195,11 @@ function executeCommandNative(
         const read = prepareRecipeLearning(world, command);
         if (!('recipe' in read)) return reject(read.code, read.message);
         const learned = learnRecipe(world, actor.id, read.recipe.id, 'record', command.id);
+        if (learned === 'capacity')
+          return reject(
+            'knowledge-capacity',
+            'There is no room to retain this method and its exact learning proof.',
+          );
         emit(
           world,
           events,
@@ -3240,7 +3245,11 @@ function executeCommandNative(
           return reject('not-heard', 'Teaching needs a nearby listener.');
         if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
           return reject('not-learned', 'You cannot teach a technique you do not know.');
-        learnRecipe(world, target.id, recipe.id, 'taught', command.id);
+        if (learnRecipe(world, target.id, recipe.id, 'taught', command.id) === 'capacity')
+          return reject(
+            'knowledge-capacity',
+            'The listener cannot retain this method and its exact learning proof.',
+          );
         emit(
           world,
           events,
@@ -3379,8 +3388,12 @@ function executeCommandNative(
       );
   }
   if (options.preview) return { world: original, events: [], outcome: result };
-  if (result.ok && component.action && !options.nativeController &&
-      component.action.id !== entityGet(original.entities, actor.id)?.actor?.action?.id)
+  if (
+    result.ok &&
+    component.action &&
+    !options.nativeController &&
+    component.action.id !== entityGet(original.entities, actor.id)?.actor?.action?.id
+  )
     beginSemanticWork(world, actor.id, component.action.id);
   if (!action && experience) endActivity(world, actor.id, command.id, result);
   if (!options.nativeController)
@@ -6408,8 +6421,12 @@ export function observeActor(
   // transforms come only from already acquired current evidence; downstream model
   // and player projections consume facets rather than these authority records.
   const visibleEntities = Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})
-    .filter((lease) => lease.value.kind === 'body' && lease.subjectId !== actorId &&
-      (!options.visibleEntityIds || options.visibleEntityIds.has(lease.subjectId)))
+    .filter(
+      (lease) =>
+        lease.value.kind === 'body' &&
+        lease.subjectId !== actorId &&
+        (!options.visibleEntityIds || options.visibleEntityIds.has(lease.subjectId)),
+    )
     .flatMap((lease) => {
       const received = currentBodyObservation(world, actorId, lease.subjectId);
       const entity = entityGet(world.entities, lease.subjectId);

@@ -19,6 +19,12 @@ const maximumPreparation = 4 * 1024 * 1024;
 const maximumRows = 8192;
 export const temporalChunkRecordId = (actorId: string, id: string) =>
   JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'chunks', id]);
+export function temporalChunkSourceId(actorId: string, recordId: string): string | undefined {
+  const path = JSON.parse(recordId) as unknown;
+  if (!Array.isArray(path) || typeof path.at(-1) !== 'string') return;
+  const id = path.at(-1) as string;
+  return temporalChunkRecordId(actorId, id) === recordId ? id : undefined;
+}
 export interface PreparedMemoryRetention {
   state: SavedWorld;
   rows: Map<string, string[]>;

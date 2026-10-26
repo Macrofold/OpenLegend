@@ -367,6 +367,31 @@ export function perceiveSpeech(
           : 'overheard_speech',
   };
 }
+
+/** Read projection of one actual received occurrence. This does not install an
+ * autobiographical account or grant a current body for a historical participant. */
+export function receivedEventAwareness(
+  actorId: string,
+  origin: Extract<import('./perception-evidence.js').ObservationOrigin, { kind: 'occurrence' }>,
+  values: readonly import('./temporal-evidence.js').TemporalValue[],
+  sourceReceipt?: import('./temporal-evidence.js').TemporalReceiptLocator,
+): Awareness | undefined {
+  const fact = values.find((value) => value.kind === 'event'),
+    evidence = receivedEventEvidence(actorId, values);
+  if (!fact || fact.kind !== 'event' || !evidence) return;
+  return {
+    ...evidence,
+    eventId: origin.eventId,
+    at: origin.at,
+    sequence: fact.sequence,
+    recognized: fact.recognized,
+    intelligible: fact.intelligible,
+    entityIds: [...new Set(fact.references.map((reference) => reference.id))],
+    ...(fact.entityEpisodes ? { entityEpisodes: fact.entityEpisodes } : {}),
+    ...(fact.triggerKind ? { triggerKind: fact.triggerKind } : {}),
+    ...(sourceReceipt ? { sourceReceipt } : {}),
+  };
+}
 /** Durable perspectives keep the same evidence used by hot observation and model context. */
 export type EventEvidence = Pick<
   Awareness,
@@ -412,6 +437,7 @@ export function receivedEventEvidence(
     ...(fact.content !== undefined ? { content: fact.content } : {}),
     ...(sourceId ? { sourceId } : {}),
     ...(targetId ? { targetId } : {}),
+    ...(fact.sourceSubject ? { sourceSubject: fact.sourceSubject } : {}),
     eventData: fact.data,
     references: fact.references,
   };

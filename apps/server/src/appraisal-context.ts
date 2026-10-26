@@ -170,6 +170,7 @@ async function bindAppraisals(
     id: entry.memory.id,
     sourceKind: entry.sourceKind,
     revision: entry.revision,
+    ...(entry.receipt ? { receipt: entry.receipt } : {}),
   }));
   const sourceCurrent = async () =>
     generation === service.generation &&

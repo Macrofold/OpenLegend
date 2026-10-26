@@ -16,6 +16,7 @@ import {
   type TemporalValue,
   type TemporalReceiptLocator,
   type SituationProposalBinding,
+  type CapturedCurrentFacet,
 } from '@open-legend/domain';
 import {
   entityHandle,
@@ -152,6 +153,7 @@ export function captureSituation(
   const frames: unknown[] = [];
   const frameIds = new Map<string, number>();
   const frameIndexOwners = new WeakSet<object>();
+  const allCurrentReferences: Record<string, CapturedCurrentFacet> = {};
   const frameReference = (frame: unknown) => {
     const key = JSON.stringify(frame);
     let id = frameIds.get(key);
@@ -204,6 +206,12 @@ export function captureSituation(
     const rendered = facets
       .filter((facet) => facet.value.kind !== 'perceived-feature')
       .map((facet) => {
+        const reference = permittedSourceHandle(world, actorId, [
+          'current-fact',
+          facet.original.id,
+          facet.originalOrdinal,
+        ]);
+        allCurrentReferences[reference] = facet;
         // Current motion carries exact received endpoints, not two recursively repeated accounts.
         const value =
           facet.value.kind === 'observed-motion'
@@ -234,11 +242,7 @@ export function captureSituation(
                 )
               : facetValueForModel(world, actorId, facet.value, facet.original.id);
         return {
-          reference: permittedSourceHandle(world, actorId, [
-            'current-fact',
-            facet.original.id,
-            facet.originalOrdinal,
-          ]),
+          reference,
           value,
           measuredFrom: facet.valueMeasuredFrom,
           measuredThrough: facet.valueMeasuredThrough,
@@ -523,6 +527,17 @@ export function captureSituation(
   packet.coverage.broadRows = cover.rows.length;
   packet.coverage.hierarchyVisits = cover.visited;
   const presented = captureAttentionPresentation(world, actorId, presentedKeys);
+  const currentReferences = Object.fromEntries(
+    packet.detailed.flatMap((row) =>
+      row.facts.facts.map(
+        (fact) =>
+          [
+            fact['reference'] as string,
+            allCurrentReferences[fact['reference'] as string]!,
+          ] as const,
+      ),
+    ),
+  );
   const expansionCursors = new Map<
     string,
     {
@@ -622,6 +637,8 @@ export function captureSituation(
     queryBodies,
     expansionCursors,
     allAttentionReferences,
+    allCurrentReferences,
+    currentReferences,
     valid: (current: WorldState) => evidenceCutEligible(current, cut),
   };
 }
@@ -638,6 +655,7 @@ export function situationProposalBinding(
     | 'receiptDetails'
     | 'observationReferences'
     | 'presented'
+    | 'currentReferences'
   >,
   semanticCauses?: SituationProposalBinding['semanticCauses'],
 ): SituationProposalBinding {
@@ -648,6 +666,7 @@ export function situationProposalBinding(
     receiptDetails: captured.receiptDetails,
     observationReferences: captured.observationReferences,
     presented: captured.presented,
+    currentReferences: captured.currentReferences,
     ...(semanticCauses ? { semanticCauses } : {}),
   };
 }
@@ -842,6 +861,8 @@ export async function expandSituation(
     else if (value && typeof value === 'object') Object.values(value).forEach(visit);
   };
   visit(results);
+  for (const [key, snapshot] of Object.entries(captured.allCurrentReferences))
+    if (disclosed.has(key)) captured.currentReferences[key] = snapshot;
   for (const key of Object.keys(captured.retentionReferences))
     if (!originalRetention.has(key) && !disclosed.has(key)) {
       delete captured.retentionReferences[key];

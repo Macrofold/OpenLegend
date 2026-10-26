@@ -2240,6 +2240,7 @@ export class WorldService {
           id: entry.memory.id,
           sourceKind: entry.sourceKind,
           revision: entry.revision,
+          ...(entry.receipt ? { receipt: entry.receipt } : {}),
         })),
       )) ||
       generation !== this.generation ||
@@ -2282,6 +2283,7 @@ export class WorldService {
           id: entry.memory.id,
           sourceKind: entry.sourceKind,
           revision: entry.revision,
+          ...(entry.receipt ? { receipt: entry.receipt } : {}),
         })),
       )) ||
       generation !== this.generation ||
@@ -2338,6 +2340,7 @@ export class WorldService {
           id: entry.memory.id,
           sourceKind: entry.sourceKind,
           revision: entry.revision,
+          ...(entry.receipt ? { receipt: entry.receipt } : {}),
         })),
       ));
     if (!current || !stillPrivate()) throw new Error('Private mind changed during inspection.');
@@ -2817,14 +2820,16 @@ export class WorldService {
         });
         await this.prepareNativeKnownPlaces(restored.world, true);
         restored.manuallyPaused = true;
-        restored.world.paused = true;
         const epoch = {
           generation: this.epoch.generation + 1,
           openedAt: this.now(),
           token: randomUUID(),
         };
         const timeline = randomUUID();
-        beginTemporalReceiptEpoch(restored.world, timeline);
+        restored.world = updateWorld(restored.world, (world) => {
+          world.paused = true;
+          beginTemporalReceiptEpoch(world, timeline);
+        });
         // Preserve the current world before any database write, pinned to the revision this load
         // replaces. If it cannot be written (full disk, capture limits), the load is refused and
         // the current world stays active, without a storage latch. No bypass (SB13, SL09-A).

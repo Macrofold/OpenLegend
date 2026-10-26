@@ -19,6 +19,7 @@ import type {
   ObservationExposure,
   ObservationOrigin,
   SensoryFacet,
+  CapturedCurrentFacet,
 } from './perception-evidence.js';
 
 /** An address proves neither reception nor access. Readers first select the actor's receipt. */
@@ -524,6 +525,49 @@ export function temporalFacetInput(
   };
 }
 
+/** Retain an already supplied current measurement without sensing again or
+ * replacing its value with the older exposure that supports its provenance. */
+export function captureTemporalSnapshot(
+  world: WorldState,
+  actorId: string,
+  snapshot: CapturedCurrentFacet,
+  policy: TemporalRetentionPolicy,
+): TemporalReceiptLocator | undefined {
+  if (snapshot.observer.actorId !== actorId) return;
+  return appendTemporalReceipt(
+    world,
+    actorId,
+    {
+      subject: snapshot.exposure.episodeId,
+      ...(snapshot.localSubject ? { subjectIdentity: snapshot.localSubject } : {}),
+      change: 'baseline',
+      required: false,
+      sourceIds: [snapshot.original.id, snapshot.confirmation.id],
+      facets: [
+        {
+          value: snapshot.value,
+          role: snapshot.original.facets[snapshot.originalOrdinal]?.role ?? 'direct',
+          asOf: snapshot.valueMeasuredThrough,
+          measuredFrom: snapshot.valueMeasuredFrom,
+          measuredThrough: snapshot.valueMeasuredThrough,
+          acquiredAt: snapshot.valueAcquiredAt,
+          original: {
+            source: {
+              family: 'native-exposure',
+              id: snapshot.original.id,
+              revision: snapshot.original.revision,
+              observer: snapshot.observer,
+            },
+            ordinal: snapshot.originalOrdinal,
+          },
+          receivedFrom: snapshot.confirmation,
+        },
+      ],
+    },
+    policy,
+  );
+}
+
 /** Watermarks hold references only; they do not become another writable current-fact graph. */
 export function captureTemporalCurrent(
   world: WorldState,
@@ -937,6 +981,8 @@ export function temporalReceiptIndividualIds(
     const value = sources[reference.blockId]?.values[reference.valueOrdinal];
     if (value?.kind === 'association' && value.subject.kind === 'individual')
       ids.add(value.subject.individualId);
+    if (value?.kind === 'event' && value.sourceSubject?.kind === 'individual')
+      ids.add(value.sourceSubject.individualId);
   }
   return [...ids];
 }

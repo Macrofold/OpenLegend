@@ -432,11 +432,21 @@ describe('public projection', () => {
       result: { reflection: 'secret-result' },
     });
     await store.putJob({
-      id:'owned-job', kind:'chat',status:'completed',fingerprint:'owned-job',createdAt:Date.now(),
-      authority:service.localScope,request:{text:'A visible question.',npcId:NPC_ID},message:'Visible status.',
+      id: 'owned-job',
+      kind: 'chat',
+      status: 'completed',
+      fingerprint: 'owned-job',
+      createdAt: Date.now(),
+      authority: service.localScope,
+      request: { text: 'A visible question.', npcId: NPC_ID },
+      message: 'Visible status.',
     });
-    await expect.poll(async () => (await projectView(service)).ai.jobs.some(job=>job.id==='owned-job')).toBe(true);
-    expect((await projectView(service)).ai.jobs.some(job=>job.id==='private-job')).toBe(false);
+    await expect
+      .poll(async () => (await projectView(service)).ai.jobs.some((job) => job.id === 'owned-job'))
+      .toBe(true);
+    expect((await projectView(service)).ai.jobs.some((job) => job.id === 'private-job')).toBe(
+      false,
+    );
     const view = await projectView(service);
     const serialized = JSON.stringify(view);
     for (const secret of [

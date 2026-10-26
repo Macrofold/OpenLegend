@@ -383,6 +383,7 @@ export interface KnowledgeRecord {
   learnedAt: number;
   source: 'authored' | 'invented' | 'taught' | 'practiced' | 'record';
   evidenceId: string;
+  sourceReceipt?: import('./temporal-evidence.js').TemporalReceiptLocator;
 }
 /** Closed, trusted occurrence scope; only native/server code assigns it.
  * - external: exposed through senses to the audience resolved at occurrence time.

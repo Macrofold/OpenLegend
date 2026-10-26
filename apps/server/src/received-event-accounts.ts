@@ -1,6 +1,8 @@
 import {
   receivedEventEvidence,
+  receivedEventAwareness,
   temporalFacetEligible,
+  appendedRecordCount,
   type Awareness,
   type EventEvidence,
   type TemporalReceiptLocator,
@@ -11,7 +13,8 @@ import { personalEventEvidence } from './personal-accounts.js';
 export interface ReceivedEventAccount {
   evidence: EventEvidence;
   awareness?: Awareness;
-  temporal?: { chunkId: string; receipt: TemporalReceiptLocator };
+  projected?: Awareness;
+  temporal?: { chunkId: string; receipt: TemporalReceiptLocator; bytes:number };
 }
 
 /** Select only this actor's already received account. Current reception can feed
@@ -24,7 +27,14 @@ export function receivedEventAccounts(
 ): Map<string, ReceivedEventAccount> {
   const result = new Map<string, ReceivedEventAccount>();
   const forgotten = new Set(world.experience?.forgotten[actorId] ?? []);
-  for (const awareness of world.experience?.awareness[actorId] ?? [])
+  const awarenessEntries = world.experience?.awareness[actorId] ?? [];
+  const priorAwareness = options.previous?.experience?.awareness[actorId] ?? [];
+  const awarenessAppend = options.append
+    ? appendedRecordCount(priorAwareness, awarenessEntries)
+    : undefined;
+  for (const awareness of awarenessEntries.slice(
+    awarenessAppend === undefined ? 0 : priorAwareness.length,
+  ))
     if (wanted.has(awareness.eventId) && !forgotten.has(awareness.eventId))
       result.set(awareness.eventId, { evidence: personalEventEvidence(awareness), awareness });
   const temporal = world.experience?.temporal;
@@ -47,8 +57,20 @@ export function receivedEventAccounts(
       if (evidence)
         result.set(eventId, {
           evidence,
+          projected: receivedEventAwareness(
+            actorId,
+            receipt.origin as Extract<NonNullable<typeof receipt.origin>, { kind: 'occurrence' }>,
+            values,
+            {
+              actorId,
+              physicalLife: receipt.physicalLife,
+              epoch: receipt.epoch,
+              ordinal: receipt.ordinal,
+            },
+          ),
           temporal: {
             chunkId: chunk.id,
+            bytes:Buffer.byteLength(JSON.stringify({receipt,values:values.filter((value)=>value.kind==='event')})),
             receipt: {
               actorId,
               physicalLife: receipt.physicalLife,
@@ -65,36 +87,43 @@ export function receivedEventAccounts(
         observation.origin.kind === 'occurrence' ? observation.origin.eventId : undefined;
       if (!eventId || !wanted.has(eventId) || result.has(eventId) || forgotten.has(eventId))
         continue;
-      const values = observation.facets.flatMap((facet) =>
-        temporalFacetEligible(
-          world,
-          actorId,
-          {
-            blockId: '',
-            valueOrdinal: facet.ordinal,
-            ordinal: facet.ordinal,
-            role: facet.role,
-            asOf: facet.asOf,
-            measuredFrom: facet.measuredFrom,
-            measuredThrough: facet.measuredThrough,
-            acquiredAt: observation.acquiredAt,
-            original: {
-              source: {
-                family: 'native-exposure',
-                observer: observation.observer,
-                id: observation.id,
-                revision: observation.revision,
-              },
+      const values = observation.facets
+        .filter((facet) => facet.value.kind === 'event')
+        .flatMap((facet) =>
+          facet.value.kind === 'event' &&
+          temporalFacetEligible(
+            world,
+            actorId,
+            {
+              blockId: '',
+              valueOrdinal: facet.ordinal,
               ordinal: facet.ordinal,
+              role: facet.role,
+              asOf: facet.asOf,
+              measuredFrom: facet.measuredFrom,
+              measuredThrough: facet.measuredThrough,
+              acquiredAt: observation.acquiredAt,
+              original: {
+                source: {
+                  family: 'native-exposure',
+                  observer: observation.observer,
+                  id: observation.id,
+                  revision: observation.revision,
+                },
+                ordinal: facet.ordinal,
+              },
             },
-          },
-          facet.value,
-        )
-          ? [facet.value]
-          : [],
-      );
+            facet.value,
+          )
+            ? [facet.value]
+            : [],
+        );
       const evidence = receivedEventEvidence(actorId, values);
-      if (evidence) result.set(eventId, { evidence });
+      if (evidence && observation.origin.kind === 'occurrence')
+        result.set(eventId, {
+          evidence,
+          projected: receivedEventAwareness(actorId, observation.origin, values),
+        });
     }
   return result;
 }
