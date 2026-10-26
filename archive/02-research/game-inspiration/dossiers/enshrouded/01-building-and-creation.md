@@ -1,12 +1,12 @@
 # Enshrouded — building, inhabitation, lore and creator research
 
-Evidence cutoff: **October 25, 2026**. Contribution to the existing G145 dossier, based on its September 27 text at OpenLegend commit `3a2a025ed4addd0cde1f86a1966d576123c35271`. This is research, with proposed OpenLegend applications explicitly identified as analysis. No game, dedicated server, mod or editing tool was installed or executed; no video is represented as watched.
+Evidence cutoff: **October 25, 2026**. Companion to the [Enshrouded dossier (G145)](../enshrouded.md), covering construction, inhabited bases, setting history and native and external creation tools. Proposed OpenLegend applications are design analysis. This is a documentary study: no game, dedicated server, mod or editing tool was executed, and embedded videos were not viewed.
 
-## Current-version corrections that affect this study
+## Release scope
 
-Enshrouded 1.0 shipped on October 15. Building now includes **Sparkworks**, a graph-based system for connecting interactive props, and **Airborne Architect**, a free-flight building skill. Flame level 11 permits **16 altars** and pushing back the Shroud; a world setting can lower the latter requirement. Most former no-build zones opened. Chest upgrades can happen in place, and late-game bases can house a Gem Forge. Gold coins now fund limited, mainly vanity, survivor purchases. These supersede the earlier dossier's future-release boundary and some absolute statements about Shroud recovery and crafting access. [Official 1.0 changelog, October 14](https://enshrouded.com/en-US/news/release-trailer-changelog-everything-you-need-to-wait-for-tomorrow) · [Official launch confirmation, October 15](https://enshrouded.com/en-US/news/enshrouded-10-is-live-check-out-our-highlights-video)
+Enshrouded 1.0 shipped on October 15, 2026. [Official launch confirmation](https://enshrouded.com/en-US/news/enshrouded-10-is-live-check-out-our-highlights-video) Its new **Sparkworks** logic system connects interactive inputs and outputs; the native-creation section below examines the resulting authoring possibilities. [Dedicated Sparkworks introduction](https://enshrouded.com/en-US/news/turn-your-build-into-an-adventure-with-sparkworks)
 
-The detailed changelog states 16 altars at Flame level 11; its introductory paragraph describes the preceding step reaching 15. These are different progression points, not interchangeable final caps.
+Version 1.0 adds Airborne Architect free-flight building, permits 16 altars at Flame level 11, opens most former no-build zones, and allows in-place chest upgrades and a late-game base Gem Forge. Flame 11's Shroud-reduction requirement can be lowered through world settings. [Official 1.0 changelog, October 14](https://enshrouded.com/en-US/news/release-trailer-changelog-everything-you-need-to-wait-for-tomorrow)
 
 ## Building is several cooperating systems
 
@@ -18,7 +18,7 @@ The community-maintained official wiki documents a construction palette with hal
 
 **Interpretation:** a large placement should be understood as an efficient way to express many small editable decisions. This addresses two audiences simultaneously: the player who wants a recognizable shelter quickly and the enthusiast who wants to reshape a window, stair or parapet. It avoids making expert patience the price of entry. The important comparison for OpenLegend is the quality and speed of this coarse-to-fine workflow; adopting a voxel representation alone would not provide it.
 
-Developers explicitly describe their original problem as combining props, terrain and smaller building blocks while avoiding a requirement that everyone build voxel by voxel. Antony Christoulakis says the team tried multiple interfaces before settling on its hybrid approach. This is developer testimony about intention, not evidence that every player finds the final controls intuitive. The interview was indexed with substantial text, but the current direct page returned a category page during this pass; preserve that access qualification. [GINX developer interview](https://www.ginx.tv/en/enshrouded/interview-creative-director-antony-christoulakis)
+Developers explicitly describe their original problem as combining props, terrain and smaller building blocks while avoiding a requirement that everyone build voxel by voxel. Antony Christoulakis says the team tried multiple interfaces before settling on its hybrid approach. This is developer testimony about intention, not evidence that every player finds the final controls intuitive. Substantial interview text was available through the search index; direct retrieval returned a category page. [GINX developer interview](https://www.ginx.tv/en/enshrouded/interview-creative-director-antony-christoulakis)
 
 ### 2. Material unlocks make expedition rewards visibly useful at home
 
@@ -30,13 +30,13 @@ Building-material recipes can unlock when resources are collected or through que
 
 Keen's original building description explicitly supports reshaping land and constructing fortresses, villages and underground complexes. This remains a useful statement of the game's creative premise; the linked video was not viewed in this research. [Building & Terraforming, July 13, 2023; working localized page with English body](https://enshrouded.com/pt-br/news/building-terraforming-in-enshrouded)
 
-The important player activity is more than placing architecture on empty ground. It includes carving into a hillside, embedding rooms in terrain, making a cellar, adapting an existing ruin, exposing resources or changing an approach route. The earlier dossier already documents mining and terrain destruction; the additional design implication is that **site selection and adaptation can themselves be creative play**. Preserving a ruin's recognizable tower while adding a kitchen and garden produces a different kind of authorship from erasing the entire site.
+The important player activity is more than placing architecture on empty ground. It includes carving into a hillside, embedding rooms in terrain, making a cellar, adapting an existing ruin, exposing resources or changing an approach route. The design implication is that **site selection and adaptation can themselves be creative play**. Preserving a ruin's recognizable tower while adding a kitchen and garden produces a different kind of authorship from erasing the entire site.
 
-**Boundary:** this is not proof that arbitrary geometry, every landmark or every world edit is persistently editable. Altar coverage, protected areas and resets still matter. The complete game expands formerly restricted locations but does not establish unlimited permanent global terraforming.
+**Boundary:** this is not proof that arbitrary geometry, every landmark or every world edit is persistently editable. Altar coverage, protected areas and resets still matter; unlimited permanent global terraforming is not established.
 
 ### 4. Persistent building territory is a distinct progression system
 
-The Flame Altar marks the persistent base area. The wiki distinguishes enlarging an individual build area from strengthening the Flame to improve broader access and the number of permitted bases. It lists the initial build volume as 40 × 40 × 40 and the next as 80 × 80 × 80; these dimensions describe a volume, not a circular land radius. Avoid conflating the local area upgrade with all Flame progression. [Flame Altar](https://enshrouded.wiki.gg/wiki/Flame_Altar) · [Base-area improvement quest](https://enshrouded.wiki.gg/wiki/Quests/Flame_Altar_And_Base_Improvements_%282%29) · [Flame-strengthening quest](https://enshrouded.wiki.gg/wiki/Quests/Flame_Altar_And_Base_Improvements_%281%29)
+The Flame Altar marks the persistent base area. The wiki distinguishes enlarging an individual base's three-dimensional build volume from strengthening the Flame to improve broader access and the number of permitted bases. The local area upgrade and wider Flame progression are separate choices. [Flame Altar](https://enshrouded.wiki.gg/wiki/Flame_Altar) · [Base-area improvement quest](https://enshrouded.wiki.gg/wiki/Quests/Flame_Altar_And_Base_Improvements_%282%29) · [Flame-strengthening quest](https://enshrouded.wiki.gg/wiki/Quests/Flame_Altar_And_Base_Improvements_%281%29)
 
 **Interpretation:** bounded permanence makes construction legible and limits how much of the adventure map a group can permanently consume. It also creates a painful mismatch if players assume all their roads, mines and landscaping persist. In a much larger shared OpenLegend world, resetting a road that other people use would erase social history, while making every edit permanent could gradually consume the exploration space. This is a design choice about the world's history and renewal, not a hidden storage optimization to copy unchanged.
 
@@ -58,7 +58,7 @@ Enshrouded does not require Valheim-style structural support to keep ordinary bu
 
 Forging the Path added a material catalog and sampling the material under the cursor, strengthened building directly from magic chests, and introduced a Quick Stack station for depositing matching materials into nearby magical storage. It also moved recipes into additional crafting tables to reduce long lists. This is a significant part of the building story: later convenience removed searching and inventory transfers from the creative loop. [Forging the Path, April 21, 2026](https://enshrouded.com/en-US/news/enshrouded-forging-the-path-is-live)
 
-Undo exists, but should not be described as a general restoration system. Hollow Halls explicitly extended its availability while the hammer is selected and the building menu closed. Subsequent patches fixed particular undo cases. A building-action undo is not equivalent to restoring a world after an unrestricted guest destroys it. [Hollow Halls update](https://enshrouded.com/uk-UA/news/enshrouded-hollow-halls-update)
+Undo exists, but should not be described as a general restoration system. Hollow Halls explicitly extended its availability while the hammer is selected and the building menu closed. A building-action undo is not equivalent to restoring a world after an unrestricted guest destroys it. [Hollow Halls update](https://enshrouded.com/uk-UA/news/enshrouded-hollow-halls-update)
 
 Relocation also has concrete conveniences: Patch 12 allowed running factories to be stopped and emptied with their current inputs refunded, and slightly increased prop dismantling distance. These are bounded documented behaviors, not a claim that every removal action always returns every resource. [Patch 12 v0.9.0.3](https://enshrouded.com/zh-Hant/news/changelog-for-patch-12-v0903)
 
@@ -74,7 +74,7 @@ Comfort, warmth, shelter and an absence of nearby threats contribute to rest. Th
 
 Souls of the Frozen Frontier introduced townsfolk, pets and farm animals and made survivors more physically present. It added assistants so crafting services could be available across more locations, while survivors gained roaming and beds. [Souls of the Frozen Frontier, November 5, 2024](https://enshrouded.com/en-US/news/enshrouded-souls-of-the-frozen-frontier-update)
 
-The earlier dossier correctly distinguishes craftspeople/services, assistants and villagers from an autonomous colony workforce. A saved NPC walking, sleeping and offering recipes does not demonstrate independent harvesting, job planning, relationship development or political agency. That difference matters to OpenLegend's ambitions: adding people who can meaningfully use a player-built inn, workshop, refuge or shrine could make the place socially consequential, but requires more than decorative schedules.
+Craftspeople/services, assistants and villagers are distinct from an autonomous colony workforce. A saved NPC walking, sleeping and offering recipes does not demonstrate independent harvesting, job planning, relationship development or political agency. That difference matters to OpenLegend's ambitions: adding people who can meaningfully use a player-built inn, workshop, refuge or shrine could make the place socially consequential, but requires more than decorative schedules.
 
 ### 10. Water gives landscaping functional consequences
 
@@ -123,7 +123,7 @@ The original use of “blueprints” for larger construction shapes must not be 
 
 ## Lore: why restoring a place can mean something
 
-**Spoilers for setting history and named characters; this section avoids inventing the full 1.0 ending.** The original dossier's premise paragraph does not satisfy the later deep-lore requirement on its own. The following additions use in-game text transcribed by the community wiki and distinguish characters' testimony from uncontested history.
+**Spoilers for setting history and named characters.** This section examines the history that gives ruins and reconstruction meaning. It uses in-game text transcribed by the community wiki and distinguishes characters' testimony from uncontested history; it does not provide a complete account of the campaign ending.
 
 ### A historical sequence with deliberately incomplete evidence
 
@@ -131,7 +131,7 @@ The original use of “blueprints” for larger construction shapes must not be 
 2. **Elixir and political ambition.** Lord Vorgoth's notes depict a northern ruler suspicious of the Ancients. A mysterious wanderer offers him Elixir, presented as concealed power; the notes describe the ruler's altered perception and the construction of an Elixir Well from the wanderer's plans. The text is valuable partly because its author is paranoid and compromised. [Notes By Lord Vorgoth](https://enshrouded.wiki.gg/wiki/Lore/Notes_By_Lord_Vorgoth)
 3. **War and divided loyalties.** Athalan's letters to her brother Talion reject Vorgoth's claim that King Gormander is the enemy, describe Shroud-struck fighting near a bridge, and turn personal loss into a vow against the ruler. A survivor who offers services in the present can therefore connect to a specific past relationship and place. [Lost In The Shroud](https://enshrouded.wiki.gg/wiki/Lore/Lost_In_The_Shroud)
 4. **Uneven collapse and failed refuge.** Fort Kelvin first presents itself as a refuge for people displaced by the Elixir Wars, then records pressure from below and its fall to Vukah. A ruined settlement can communicate a sequence of hopes and failures rather than serving as a generic loot container. [Welcome To Fort Kelvin](https://enshrouded.wiki.gg/wiki/Lore/Welcome_To_Fort_Kelvin)
-5. **Survival and reclamation.** The player awakens as a Flameborn and makes selected sites livable again. Version 1.0 provides a campaign conclusion, but that should not be interpreted as deleting all Shroud or making every saved settlement a simulated civilization. The dossier's current release section owns the shipped narrative boundary.
+5. **Survival and reclamation.** The Flameborn's restoration of selected sites lets the player act on the preceding history. A repaired settlement can express an answer to that history without establishing that its inhabitants now form an autonomous simulated civilization. The [main dossier](../enshrouded.md) covers the current campaign scope.
 
 ### People, institutions and conflicting accounts
 
@@ -149,9 +149,11 @@ A player's reconstruction becomes more meaningful when the place already has a k
 
 OpenLegend's additional opportunity is that the people connected to the site can continue responding. A rescued person might recognize a restored room, object to what was demolished, tell a conflicting account, or use the building for a new purpose. That would make the base part of an ongoing world rather than only the player's trophy. It would require evidence-bearing perception and memory and world-owned norms; construction should not instantly grant every NPC knowledge of what happened.
 
-## R15 — unofficial PC modding: applicable, with bounded adoption evidence
+## R15 assessment — unofficial PC tools; popularity remains uncertain
 
-**Gate: yes for a focused PC ecosystem study, October 25, 2026.** Nexus's directly opened game page showed **176 entries**; cached search results showed smaller earlier counts. That total includes saved worlds, visual changes and tools, so it is not 176 independently maintained gameplay mods or a count of users. Distinct loader projects, current author-maintained releases and gameplay/editor examples demonstrate a sustained ecosystem beyond built-in construction. The evidence supports studying it, not calling it Skyrim-scale or quantifying the fraction of all Enshrouded players who mod. [Nexus game catalog](https://www.nexusmods.com/games/enshrouded)
+**Popularity gate: uncertain, October 25, 2026.** Nexus's directly opened game page showed **176 entries**; cached search results showed smaller earlier counts. That total includes saved worlds, visual changes and tools. It measures available entries, not active users or sustained adoption of maintained gameplay mods. [Nexus game catalog](https://www.nexusmods.com/games/enshrouded)
+
+The sources below establish that external creation tools exist and that some maintainers publish current compatibility claims. They do not establish a popular modding culture, its audience size or sustained uptake of particular maintained mods. This chapter therefore retains a bounded external-tool study and does **not** mark the full R15 popular-modding-ecosystem requirement complete. Adoption evidence and a fully verified creation, packaging and update workflow remain gaps.
 
 ### Tool layers and ownership
 
@@ -167,9 +169,11 @@ The catalog contains visibly different kinds of user work: prepared resource/bui
 
 The previously promoted **Builder's Utilities** Nexus entry (mod 66) was hidden on October 23, 2025; the accessible page says the authors no longer supported it or could not fix its issues. Its historical creator announcement remains evidence that the tool was made, but not that it can now be installed successfully. This is a concrete example of discoverable guides outliving the artifact they describe. [Current hidden-mod page](https://www.nexusmods.com/enshrouded/mods/66) · [Historical author announcement](https://www.reddit.com/r/Enshrouded/comments/1nndr2m/enshrouded_modding_has_begun/)
 
-### Documented creation-to-use workflow, not executed here
+### Partially documented creation-to-use workflow
 
-For ShroudForge, an author begins with its mod template, declares metadata and settings, and connects Lua to the exposed settings API. The published README points to a first-mod lesson, API reference and diagnostics; its web guide returned only a loading shell in this research, so detailed internal API semantics were not independently read. A user installs the tool and the separate mod, enables the mod in its in-game interface, and restarts where required. Effects handled by a dedicated server need the appropriate server-side installation; a client displaying changed data is not proof the server accepted or saved it.
+For ShroudForge, an author begins with its mod template, declares metadata and settings, and connects Lua to the exposed settings API. The published README points to a first-mod lesson, API reference and diagnostics; its web guide returned only a loading shell in this research, so detailed internal API semantics were not independently read. A user installs the tool and the separate mod, enables the mod in its in-game interface, and restarts where required. Effects handled by a dedicated server need the appropriate server-side installation; a client displaying changed data is not proof the server accepted or saved it. [Maintainer README](https://github.com/bonsaibauer/shroudforge)
+
+These sources describe parts of creation and installation. They do not close the evidence gap for a complete, independently checked packaging and maintenance workflow across game and loader updates.
 
 **Practical evaluation sequence (researcher recommendation):** reproduce one small change on a disposable world; check the displayed effect and persistence after restart; test with another client if multiplayer is claimed; isolate other mods that touch the same data; package only files that may be redistributed; document the tested game/loader versions, dependencies, how to disable it and who owns bug reports. This is a reasonable workflow derived from the declared tooling boundaries, not a report of checks performed in this pass.
 
@@ -195,11 +199,10 @@ These are research hypotheses, not newly accepted implementation contracts.
 
 The larger OpenLegend world is an opportunity, not evidence that more players automatically improve Enshrouded's formula. Larger groups also increase conflicting schedules, resource competition, land claims, permissions, moderation and simulation costs. The creative promise becomes stronger when other people can use and remember what someone built; it becomes weaker when they merely obstruct or erase it.
 
-## Evidence limits and handoff notes
+## Evidence limits
 
 - Most wiki pages denied direct retrieval with HTTP 403. The observations above use the search engine's substantive indexed text and identify the community-maintained reference as such. No blocked page was represented as fully read.
 - The GINX developer interview was available as indexed text, but direct retrieval returned a category page.
-- The official 1.0 changelog is a large single source. When integrating this contribution with the other research, avoid reproducing its feature inventory repeatedly; keep a single concise current-version owner and link to the primary text.
 - The official December 2024 AMA contains technical and setting testimony; the voxel details, timeline and infection description are dated author statements, not measurements of the current engine or proof that lore processes are simulated.
 - Current mod compatibility is stated by maintainers. The study performed no installation, performance test, security audit, multiplayer verification or save compatibility test.
 - Qualitative examples identify actual tensions and opportunities. They do not establish population prevalence, average time saved, retention uplift or that any proposed OpenLegend direction is already implemented.

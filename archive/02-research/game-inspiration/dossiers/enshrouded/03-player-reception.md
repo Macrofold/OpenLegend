@@ -1,6 +1,6 @@
 # Enshrouded reception and enjoyment — evidence refresh
 
-Research cutoff: **October 25, 2026**. Contribution for the existing G145 dossier; research, not an approved OpenLegend design. No game installation, playtest, hardware benchmark or population survey was performed. Review bodies were read through the public web retrieval tools. Findings concern the versions identified below.
+Research cutoff: **October 25, 2026**. Part of the [G145 dossier](../enshrouded.md); research, not an approved OpenLegend design. No game installation, playtest, hardware benchmark or population survey was performed. The listed substantive review bodies were retrieved and read. Findings concern the versions identified below.
 
 ## Reception conclusion
 
@@ -112,10 +112,8 @@ An authored continent provides deliberate discoveries, but revisiting it does no
 
 These implications combine the specific reactions above with OpenLegend's stated ambition. They do not prove demand for a particular paid world tier, validate many-player scale, or authorize implementation.
 
-## Source and reuse notes for integration
+## Source and access notes
 
 All links above were retrieved October 25, 2026. Critical review bodies: GamingBolt publication October 14, 2026; CGMagazine October 15, 2026; RPG Site January 25, 2024; GameSkinny and But Why Tho January 24, 2024. Steam dates/hours refer to individual cards or linked reviews as specified. Official hotfix publication October 21, 2026. No embedded video was watched.
 
-Public-source summaries here are deliberately short and original. Keep each source's combined paraphrase across the integrated dossier and handoff within the retrieval word limit; do not duplicate entire rows into multiple sections. Long public-review quotes are unnecessary. The seven October Steam reviews are recent-date helpful evidence, not the unavailable Most Recent feed.
-
-For chat citations, useful retrieved references are: Steam storefront `turn13view7`; GamingBolt full body across `turn10view0`, `turn13view0`, `turn20view0`, `turn25view0`; CGMagazine `turn10view1`, `turn13view1`, `turn20view1`, `turn25view1`; RPG Site `turn10view2`/`turn13view2`; GameSkinny `turn10view3`/`turn13view3`/`turn20view2`; But Why Tho `turn10view4`/`turn13view4`; ApolloXI `turn56view2`; Woopidoo `turn56view0`; Poppy Bruce `turn56view1`; Blinky Dorf `turn46view0`; Aunt Rhody `turn46view2`; current negatives `turn25view3`/`turn40view2`/`turn53view2`; current positives `turn25view2`/`turn40view3`; historical positive surface `turn40view0`; historical negative surface `turn53view3`; official hotfix `turn53view4`. Root must open/search the desired source itself before using a subagent ref in final chat. Remove this integration-only paragraph from the committed dossier.
+The seven October Steam reviews are recent-date helpful evidence, not the unavailable Most Recent feed.

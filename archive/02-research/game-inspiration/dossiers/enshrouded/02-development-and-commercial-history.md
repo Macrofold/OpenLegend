@@ -1,10 +1,10 @@
 # Enshrouded — development, release boundary and commercial research
 
-Research cutoff: **October 25, 2026 (America/New_York)**. Contribution to the existing G145 dossier, based on `Macrofold/OpenLegend` main commit `3a2a025ed4addd0cde1f86a1966d576123c35271`. This is sourced research and interpretation, not an approved Open Legend design or a runtime verification report.
+Research cutoff: **October 25, 2026 (America/New_York)**. Part of the [G145 dossier](../enshrouded.md). This is sourced research and interpretation, not an approved Open Legend design or a runtime verification report.
 
 ## Current release boundary
 
-**Enshrouded is now a released 1.0 game, not Early Access.** Keen announced 1.0 live on October 15, 2026; the Steam and PlayStation stores independently list that release date. The September dossier's future-tense 1.0 boundary must be replaced, while its dated Early Access review evidence should remain explicitly historical. [D01][D02][D03]
+**Enshrouded is now a released 1.0 game, not Early Access.** Keen announced 1.0 live on October 15, 2026; the Steam and PlayStation stores independently list that release date. Earlier Early Access reviews remain historical evidence of those builds. [D01][D02][D03]
 
 | Surface | Verified position at cutoff | Qualification |
 | --- | --- | --- |
@@ -175,13 +175,3 @@ All accessed October 25, 2026. No video or game execution is claimed. The URLs b
 | D33 | [Gamalytic Enshrouded model](https://gamalytic.com/game/1203620) | Indexed estimate retrieved; live page body JS-limited. |
 | D34 | [Gamalytic methodology and definitions](https://gamalytic.com/about) | Model methodology/scope, not validation of one title's exact estimate. |
 | D35 | [VG Insights model](https://vginsights.com/game/enshrouded) | Indexed estimate only; current destination requires JavaScript. |
-
-## Integration cautions for the primary editor
-
-- Keep historical launch reviews and September observations; label them by version instead of pretending they describe 1.0.
-- Update future-tense references to October 15 throughout the existing dossier, reading route and evidence-limit bullets.
-- Do not continue saying the game has no gold currency: 1.0's changelog adds gold coins to general loot and survivor vanity exchanges. It still is not evidence of an MMO-style market.
-- Do not describe water, the entire skill tree or present combat exclusively through January 2024 reviews.
-- Relevant mechanics owners should inspect the current 1.0 changelog before making current-state claims.
-- Distinguish official feature announcements from measured hardware performance. New rendering names do not reveal implementation details.
-- The commercial model is optional evidence for market scale, with explicit model/access caveats. It is not a suitable forecast for Open Legend or evidence of server-rental conversion.
