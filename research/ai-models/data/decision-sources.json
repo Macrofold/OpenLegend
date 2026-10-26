@@ -1807,5 +1807,77 @@
     "published_or_updated": "Page current when retrieved; publication date not established",
     "retrieved_at": "2026-10-26",
     "supported_claims": "Public file metadata, rounded artifact sizes and observed repository revision; no weights downloaded."
+  },
+  {
+    "id": "D196",
+    "url": "https://huggingface.co/jaredpalmer/kev-0.8b",
+    "title": "Canonical Kev0.8B model card",
+    "type": "official model card",
+    "published_or_updated": "Weights released2026-09-24; Kev1.0 card current at retrieval",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Kev1.0 adapter/base identity; BF16 native serving; state training/validation; L4 resident memory versus MLX long-state observations; publisher warns against tool-call routing."
+  },
+  {
+    "id": "D197",
+    "url": "https://huggingface.co/jaredpalmer/kev-0.8b/tree/main",
+    "title": "Kev0.8B public file inventory",
+    "type": "official model metadata",
+    "published_or_updated": "Current when retrieved",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "65.6MB repository:43.3MB adapter,2.1MB head,20MB tokenizer and small config files; current card commit bf75a6a leaves weights unchanged."
+  },
+  {
+    "id": "D198",
+    "url": "https://huggingface.co/Qwen/Qwen3.5-0.8B-Base/tree/main",
+    "title": "Qwen3.5-0.8B-Base file inventory",
+    "type": "official model metadata",
+    "published_or_updated": "Current when retrieved",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Pinned base repository roughly1.77GB,including1.75GB model.safetensors and tokenization/config files. No weights downloaded."
+  },
+  {
+    "id": "D199",
+    "url": "https://huggingface.co/jaredpalmer/kev-0.8b/blob/main/provenance.json",
+    "title": "Kev0.8B provenance metadata",
+    "type": "official model metadata",
+    "published_or_updated": "Current when retrieved",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Exact base revision dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68 and adapter hash. Head hash/inference_temperature1.0 differ from current calibrated head metadata; not treated as final calibration authority."
+  },
+  {
+    "id": "D200",
+    "url": "https://huggingface.co/jaredpalmer/kev-0.8b/blob/main/adapter_config.json",
+    "title": "Kev0.8B adapter configuration",
+    "type": "official model metadata",
+    "published_or_updated": "Current when retrieved",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "LoRA rank16,alpha32,base_model_name_or_path; revision field itself is null,so base pin comes from provenance/card."
+  },
+  {
+    "id": "D201",
+    "url": "https://huggingface.co/jaredpalmer/kev-0.8b/blob/main/head.pt",
+    "title": "Kev0.8B head public blob metadata",
+    "type": "official model metadata",
+    "published_or_updated": "Current when retrieved",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Current2.1MB head SHA256 f400bd12802b2b105ae45d6b03774a158a3db4fccff42413734ddca2e5c920b6; commit9a45d25. Only public metadata read; binary not downloaded."
+  },
+  {
+    "id": "D202",
+    "url": "https://huggingface.co/jaredpalmer/kev-0.8b/blob/main/adapter_model.safetensors",
+    "title": "Kev0.8B adapter public blob metadata",
+    "type": "official model metadata",
+    "published_or_updated": "Current when retrieved",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Current43.3MB adapter SHA256 9b908623acb162118575f4e7a94524f9c139c335be4bfb74d6cfceca01e1885a. Public metadata only."
+  },
+  {
+    "id": "D203",
+    "url": "https://huggingface.co/jaredpalmer/kev-0.8b/commit/9a45d25eb2ab761841196625383fa1dff0e56c1e",
+    "title": "Kev0.8B exact weight release commit",
+    "type": "official model revision",
+    "published_or_updated": "2026-09-24",
+    "retrieved_at": "2026-10-26",
+    "supported_claims": "Immutable full revision for the September24 documents-and-skills checkpoint included unchanged in Kev1.0."
   }
 ]

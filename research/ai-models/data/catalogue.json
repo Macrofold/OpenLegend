@@ -1225,7 +1225,8 @@
         "self_host"
       ],
       "availability": [
-        "downloadable_weights"
+        "downloadable_weights",
+        "gated_weights"
       ],
       "commercial_terms": [
         "standard_weight_license"
@@ -1239,7 +1240,7 @@
       "cost_basis": [
         "self_host_compute"
       ],
-      "selection_caveat": "Huge specialist runtime; benchmark grading may inspect reasoning before a final answer.",
+      "selection_caveat": "Exact DeepSeek derivative requires manual gate approval; total weights and Engram host-table memory need separate sizing.",
       "qualification_status": "not_evaluated",
       "source_ledger": "data/character-sources.json",
       "source_ids": [
@@ -1919,7 +1920,7 @@
         "self_host_compute",
         "input_tokens"
       ],
-      "selection_caveat": "Custom Open RAIL-M terms; local serving requires the documented forks.",
+      "selection_caveat": "Custom Open RAIL-M terms; use the publisher native Python runtime or a documented compatible fork.",
       "qualification_status": "not_evaluated",
       "source_ledger": "data/decision-sources.json",
       "source_ids": [
@@ -2686,11 +2687,11 @@
     },
     {
       "id": "planner-deepseek41-flash",
-      "name": "DeepSeek V4.1 Flash / 1017 API",
+      "name": "DeepSeek V4.1 Flash /1017",
       "group": "Decision/general",
       "category": "general planner/dialogue",
       "priority": "high",
-      "model_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+      "model_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017",
       "detail_file": "decision-models.md#planner-deepseek41-flash",
       "structured_detail_file": "data/decision-models.json",
       "tested_by_us": false,
@@ -2723,7 +2724,7 @@
         "self_host_compute",
         "text_tokens"
       ],
-      "selection_caveat": "Positive RP report is a derivative; API 1017 and unversioned weights are not proven identical.",
+      "selection_caveat": "Official Flash-1017 weights are documented; published hardware evidence belongs to0909, and derivative RP reports are separate.",
       "qualification_status": "not_evaluated",
       "source_ledger": "data/decision-sources.json",
       "source_ids": [
@@ -2744,7 +2745,7 @@
       "group": "Decision/general",
       "category": "general planner/dialogue",
       "priority": "medium",
-      "model_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro",
+      "model_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813",
       "detail_file": "decision-models.md#planner-deepseek4-pro",
       "structured_detail_file": "data/decision-models.json",
       "tested_by_us": false,
@@ -3508,7 +3509,8 @@
         "on_device"
       ],
       "availability": [
-        "downloadable_weights"
+        "downloadable_weights",
+        "gated_weights"
       ],
       "commercial_terms": [
         "custom_weight_terms"
@@ -3647,7 +3649,8 @@
         "self_host"
       ],
       "availability": [
-        "downloadable_weights"
+        "downloadable_weights",
+        "gated_weights"
       ],
       "commercial_terms": [
         "custom_weight_terms"
@@ -3966,7 +3969,7 @@
     },
     {
       "id": "decision-kev-canonical",
-      "name": "Canonical Kev (Jared Palmer): 4B, 9B v2, 27B v2 and native conversions",
+      "name": "Canonical Kev (Jared Palmer): 0.8B, 4B, 9B v2, 27B v2 and native conversions",
       "group": "Decision/general",
       "category": "dedicated decision",
       "priority": "high",
@@ -3976,7 +3979,7 @@
       "tested_by_us": false,
       "research_interest": "reference",
       "comparison_role": [
-        "supplied_choice_selection"
+        "supplied_choice"
       ],
       "comparison_purpose": "baseline",
       "deployment_modes": [
@@ -4015,10 +4018,18 @@
         "D193",
         "D194",
         "D195",
-        "D106"
+        "D106",
+        "D196",
+        "D197",
+        "D198",
+        "D199",
+        "D200",
+        "D201",
+        "D202",
+        "D203"
       ],
       "runpod_disposition": "self_host_candidate",
-      "hosting_profile_count": 5,
+      "hosting_profile_count": 6,
       "hosting_reviewed_on": "2026-10-25"
     },
     {
@@ -6520,10 +6531,12 @@
       ],
       "comparison_purpose": "candidate",
       "deployment_modes": [
-        "hosted_api"
+        "hosted_api",
+        "contract_deployment"
       ],
       "availability": [
-        "documented_api"
+        "documented_api",
+        "contract_required"
       ],
       "commercial_terms": [
         "hosted_service_terms"
@@ -6535,9 +6548,10 @@
         "documentation_only"
       ],
       "cost_basis": [
-        "input_audio_duration"
+        "input_audio_duration",
+        "contract_quote"
       ],
-      "selection_caveat": "Batch/realtime and add-on meters differ; vendor accuracy is not fantasy-name evidence.",
+      "selection_caveat": "Scribe V2 private AWS/GCP deployment is documented; portable Runpod and v2 Realtime private availability remain unverified.",
       "qualification_status": "not_evaluated",
       "source_ledger": "data/voice-sources.json",
       "source_ids": [
@@ -6757,7 +6771,8 @@
         "self_host"
       ],
       "availability": [
-        "downloadable_weights"
+        "downloadable_weights",
+        "gated_weights"
       ],
       "commercial_terms": [
         "standard_weight_license"
@@ -6771,7 +6786,7 @@
       "cost_basis": [
         "self_host_compute"
       ],
-      "selection_caveat": "Public base generator is not the model behind Sesame's celebrated interactive demo.",
+      "selection_caveat": "Gated CSM and required Llama/tokenizer access; conversational generation and stage dependencies differ from literal TTS.",
       "qualification_status": "not_evaluated",
       "source_ledger": "data/voice-sources.json",
       "source_ids": [
@@ -7180,6 +7195,6 @@
   "paths_relative_to": "research/ai-models/ (repository-relative inventory root; not the directory containing this JSON file)",
   "facets_reviewed_at": "2026-10-25",
   "facet_scope": "Editorial index of existing detailed evidence. No new specifications, callable model IDs, commercial clearance or performance results. Lists can describe different variants/routes within a family; selection_caveat and the owning detail record govern interpretation.",
-  "hosting_profile_count": 169,
+  "hosting_profile_count": 170,
   "hosting_scope": "Published artifact/runtime requirements and explicitly labeled estimates; no Runpod deployment or inference performed. Unknown configuration and measurements remain null."
 }

@@ -27,6 +27,8 @@ The [current operator guide](../../docs/live-ai-setup.md#discover-and-authorize-
 
 A model repository commit, container image digest and Macrofold serving-revision UUID identify different things. Preserve all three when available. Earlier upstream inference or a qualified native image does not establish current game-key access, a qualified managed chat image, the full scenario's fit, or useful character behavior.
 
+For the pinned Huihui 4B specifically, its [exact config](https://huggingface.co/huihui-ai/Huihui-Qwen3-4B-abliterated-v2/blob/a494c65b10bf8fdc56c0ff11d36987c1d018f162/config.json) contains **40,960 positions**, while the [official Qwen3-4B parent card](https://huggingface.co/Qwen/Qwen3-4B) states **32,768 native tokens** and **131,072 with YaRN extension**. Those three numbers have different scopes. None recovers the prior endpoint's actual configured limit, and the parent extension is not a demonstrated long-context result for this derivative.
+
 ## Count the request that actually reaches the model
 
 For an ordinary autoregressive chat route, use:
@@ -37,6 +39,8 @@ reserved generation tokens <= endpoint output cap and caller output allowance
 ```
 
 The serialized input includes system instructions, character identity, permitted memories, perceived surroundings, available actions, tool/schema definitions, history, chat-template markers and any inserted generation prefix. Count using the exact tokenizer and template used by that serving revision. Counting only the player's sentence, using a generic characters-per-token ratio, or counting an earlier prompt version does not establish fit. Hugging Face documents model-specific chat templates and warns that adding special tokens again can duplicate them. [RPH029](https://huggingface.co/docs/transformers/chat_templating)
+
+Also pin the model's generation configuration and the engine's policy for loading or overriding it. Current vLLM documentation says `--generation-config auto` loads the model configuration, where `max_new_tokens` can impose a server-wide output ceiling. `--generation-config vllm` and explicit overrides have different behavior. A surprisingly small output allowance can therefore come from generation configuration even when the total context is large. [RPH027](https://docs.vllm.ai/en/latest/configuration/engine_args/)
 
 **Illustration, not a recovered scenario:** a configured 8,192-token window with a 1,024-token response reservation permits at most 7,168 input tokens before any additional caller margin. A 7,600-token input fails that reservation even though it is below 8,192. If reasoning consumes the same generation allowance, a short visible answer can still exhaust it. Record the selected model's reasoning semantics; do not assume all APIs account identically.
 
@@ -110,6 +114,7 @@ Record these observations separately when an authorized qualification occurs:
 - Startup: image/weight transfer, host loading, GPU loading, graph compilation and readiness time; peak RAM/VRAM and free disk.
 - Representative full request: caller serialization, exact token/audio counts, response reservation, admission result and any truncation. A preflight failure is a useful result, but not a generated answer.
 - Warm service: time to first useful token/audio and completion; native head timing separately; successful work and failures at the stated concurrency, including queue time.
+- Audible speech: reference encoding, first generated PCM, resampling/codec work, transport buffering and first audible player playback are separate timings. Preserve cancellation and interruption cleanup; model-side first audio is not the player's complete wait.
 - Recovery: deadline/cancellation, stale or unavailable service, worker replacement and exact accepted-operation identity. No automatic paid retry is authorized by this document.
 - Economics: active/idle/startup seconds, replica count, storage duration, actual receipts and useful completed work. Keep unknown usage and outstanding charges explicit.
 

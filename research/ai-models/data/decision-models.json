@@ -203,9 +203,10 @@
               "native_tokens": 16384,
               "runtime_default_tokens": null,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "publisher family; exact current Elephant files not retrievable in this pass",
-              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context."
+              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -337,9 +338,10 @@
               "native_tokens": 16384,
               "runtime_default_tokens": 16384,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context."
+              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -559,9 +561,10 @@
               "native_tokens": 131072,
               "runtime_default_tokens": 16384,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "KEV_CONTEXT controls Python budget; 128k maximum is not measured GPU fit."
+              "notes": "KEV_CONTEXT controls Python budget; 128k maximum is not measured GPU fit.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -610,9 +613,10 @@
               "native_tokens": 131072,
               "runtime_default_tokens": 16384,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Published -np2 -c32768 shares context between two slots:16,384/request.128k needs SYSTEMONE_CONTEXT=131072 and -c262144."
+              "notes": "Published -np2 -c32768 shares context between two slots:16,384/request.128k needs SYSTEMONE_CONTEXT=131072 and -c262144.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -661,9 +665,10 @@
               "native_tokens": 131072,
               "runtime_default_tokens": 16384,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "SYSTEMONE_CONTEXT is independently required for 128k; increasing Ollama num_ctx alone does not change decision limit."
+              "notes": "SYSTEMONE_CONTEXT is independently required for 128k; increasing Ollama num_ctx alone does not change decision limit.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -816,9 +821,10 @@
               "native_tokens": null,
               "runtime_default_tokens": 16384,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "encode_record max_length default 16,384. Backbone maximum is not a demonstrated decision-service budget."
+              "notes": "encode_record max_length default 16,384. Backbone maximum is not a demonstrated decision-service budget.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -869,9 +875,10 @@
               "native_tokens": null,
               "runtime_default_tokens": null,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "conversion; reference16,384 budget does not establish converted runtime default",
-              "notes": "Native context/default and option limits need exact converted build verification."
+              "notes": "Native context/default and option limits need exact converted build verification.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -1013,9 +1020,10 @@
               "native_tokens": null,
               "runtime_default_tokens": 16384,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "encode_record max_length default 16,384. Backbone maximum is not a demonstrated decision-service budget."
+              "notes": "encode_record max_length default 16,384. Backbone maximum is not a demonstrated decision-service budget.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -1066,9 +1074,10 @@
               "native_tokens": null,
               "runtime_default_tokens": 16384,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "State truncates to 16,384 or lower max_model_len; schema alone exceeding bound returns400."
+              "notes": "State truncates to 16,384 or lower max_model_len; schema alone exceeding bound returns400.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -1222,9 +1231,10 @@
               "native_tokens": 32768,
               "runtime_default_tokens": null,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context."
+              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -1273,9 +1283,10 @@
               "native_tokens": 32768,
               "runtime_default_tokens": null,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "official conversion; default runtime allocation unresolved",
-              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context."
+              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -1416,9 +1427,10 @@
               "native_tokens": 16384,
               "runtime_default_tokens": null,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Positions combine text and media. Image-mode state+question text trained at 896 tokens, much lower than positional ceiling."
+              "notes": "Positions combine text and media. Image-mode state+question text trained at 896 tokens, much lower than positional ceiling.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -1468,9 +1480,10 @@
               "native_tokens": 16384,
               "runtime_default_tokens": null,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context."
+              "notes": "Published model/context limit only. Runtime default and configured request/output caps were not measured; output must fit the remaining allocated context.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -1675,9 +1688,10 @@
               "native_tokens": null,
               "runtime_default_tokens": 262144,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Trained around 32k; 262,144 positional/default max_length limit.243k only spot-checked. Split overlong question batches; one question still too long raises LengthError."
+              "notes": "Trained around 32k; 262,144 positional/default max_length limit.243k only spot-checked. Split overlong question batches; one question still too long raises LengthError.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -1795,9 +1809,10 @@
               "native_tokens": null,
               "runtime_default_tokens": 262144,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Trained around 32k; 262,144 positional/default max_length limit.243k only spot-checked. Split overlong question batches; one question still too long raises LengthError."
+              "notes": "Trained around 32k; 262,144 positional/default max_length limit.243k only spot-checked. Split overlong question batches; one question still too long raises LengthError.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -1930,9 +1945,10 @@
               "native_tokens": null,
               "runtime_default_tokens": null,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Config 262,144; authored launch caps32,768. Published warning:262k startup does not fit80 GB even with FP8. Exact launch cap remains unconfigured here."
+              "notes": "Config 262,144; authored launch caps32,768. Published warning:262k startup does not fit80 GB even with FP8. Exact launch cap remains unconfigured here.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Serialized answer token accounting is protocol-specific."
             },
             "request_limits": {
               "input_characters": null,
@@ -2076,7 +2092,8 @@
               "extended_tokens": null,
               "max_output_tokens": 1,
               "scope": "exact artifact",
-              "notes": "131,072 backbone context. One generated label read is the decision operation, not a universal dialogue output cap."
+              "notes": "131,072 backbone context. One generated label read is the decision operation, not a universal dialogue output cap.",
+              "output_semantics": "The decision operation reads one generated label token and its explicit logprobs; this is not a universal chat-output ceiling."
             },
             "request_limits": {
               "input_characters": null,
@@ -2129,7 +2146,8 @@
               "extended_tokens": null,
               "max_output_tokens": 1,
               "scope": "exact artifact",
-              "notes": "131,072 backbone context. One generated label read is the decision operation, not a universal dialogue output cap."
+              "notes": "131,072 backbone context. One generated label read is the decision operation, not a universal dialogue output cap.",
+              "output_semantics": "The decision operation reads one generated label token and its explicit logprobs; this is not a universal chat-output ceiling."
             },
             "request_limits": {
               "input_characters": null,
@@ -5682,7 +5700,7 @@
             "precision": "BF16",
             "runtime": "Transformers AutoProcessor + AutoModelForCausalLM",
             "runtime_version": "Exact minimum release not established in retrieved card",
-            "api_protocol": "OpenAI-compatible chat; model-specific tokenizer, chat template and parsers required",
+            "api_protocol": "Publisher Transformers Python function/tool generation; an HTTP serving wrapper was not established in this profile.",
             "context": {
               "native_tokens": 32768,
               "runtime_default_tokens": null,
@@ -6834,9 +6852,10 @@
     },
     {
       "id": "decision-kev-canonical",
-      "name": "Canonical Kev (Jared Palmer): 4B, 9B v2, 27B v2 and native conversions",
+      "name": "Canonical Kev (Jared Palmer): 0.8B, 4B, 9B v2, 27B v2 and native conversions",
       "category": "dedicated decision",
       "exact_model_ids": [
+        "jaredpalmer/kev-0.8b",
         "jaredpalmer/kev-4b",
         "jaredpalmer/kev-9b",
         "jaredpalmer/kev-27b",
@@ -6846,8 +6865,8 @@
       "checked_at": "2026-10-25",
       "release_date": null,
       "version_status": "Kev 1.0 upstream model set; operator-selected4B artifact is separately pinned. Independent project, not TypeSafe Jev weights.",
-      "parameters": "4B and 9B adapters plus pointer heads require exact Qwen3.5 Base checkpoints; 27B v2 has a 25.6B loaded backbone plus a 2.6M pointer head.",
-      "context": "Server supports state up to 65,536 plus question budget; trained/validated state span differs by size:4B/9B trained 7,552, validated 8,192; 27B trained 32,768, validated 65,536.",
+      "parameters": "0.8B, 4B and 9B adapters plus pointer heads require exact Qwen3.5 Base checkpoints; 27B v2 has a 25.6B loaded backbone plus a 2.6M pointer head.",
+      "context": "Canonical server state allowance: 65,536 plus a separate 8,192-token question budget. The 0.8B/4B/9B models trained on states up to 7,552 and are validated at 8,192; 27B trained at 32,768 and is validated at 65,536. These are separate from the unknown deployed operator caps.",
       "modalities": "Text/JSON decision state for canonical profiles; do not infer base vision support.",
       "decision_and_tool_capabilities": "Native choice/noul/score probability head. Questions share state but do not see each other; 1–255 options. Not an autoregressive character-dialogue generator.",
       "low_refusal_evidence": "No dark-fiction behavior audit found. A typed pointer head guarantees offered-answer structure, not willingness to favor an unsavory choice or calibrated probabilities for Open Legend.",
@@ -6862,7 +6881,7 @@
       },
       "openlegend_fit": "High-relevance native selector alternative and exact continuation of the documented Kev 4B operator workflow.",
       "research_priority": "high",
-      "caveats": "Canonical Kev, TypeSafe Jev, Nace Drex head files and generic decoder label reads are distinct. The older kev-4b@qwen3 uses another base. Do not map an ambiguous quoted preflight to a checkpoint.",
+      "caveats": "Canonical Kev, TypeSafe Jev, Nace Drex head files and generic decoder label reads are distinct. The older kev-4b@qwen3 uses another base. Do not map an ambiguous quoted preflight to a checkpoint. The new 0.8B profile is a compact comparison, not a selected game baseline; the publisher advises against using it for tool-call routing.",
       "sentiment": "Publisher benchmarks and demos show the intended typed-decision use. No independent current Open Legend-specific sentiment or dark-fiction evaluation was verified in this hosting pass.",
       "published_example": {
         "kind": "publisher code/API examples",
@@ -6883,7 +6902,15 @@
         "D193",
         "D194",
         "D195",
-        "D106"
+        "D106",
+        "D196",
+        "D197",
+        "D198",
+        "D199",
+        "D200",
+        "D201",
+        "D202",
+        "D203"
       ],
       "tested_by_us": false,
       "sources": [
@@ -6942,6 +6969,38 @@
         {
           "id": "D106",
           "url": "https://huggingface.co/blog/ggml-org/decision-models-in-llamacpp"
+        },
+        {
+          "id": "D196",
+          "url": "https://huggingface.co/jaredpalmer/kev-0.8b"
+        },
+        {
+          "id": "D197",
+          "url": "https://huggingface.co/jaredpalmer/kev-0.8b/tree/main"
+        },
+        {
+          "id": "D198",
+          "url": "https://huggingface.co/Qwen/Qwen3.5-0.8B-Base/tree/main"
+        },
+        {
+          "id": "D199",
+          "url": "https://huggingface.co/jaredpalmer/kev-0.8b/blob/main/provenance.json"
+        },
+        {
+          "id": "D200",
+          "url": "https://huggingface.co/jaredpalmer/kev-0.8b/blob/main/adapter_config.json"
+        },
+        {
+          "id": "D201",
+          "url": "https://huggingface.co/jaredpalmer/kev-0.8b/blob/main/head.pt"
+        },
+        {
+          "id": "D202",
+          "url": "https://huggingface.co/jaredpalmer/kev-0.8b/blob/main/adapter_model.safetensors"
+        },
+        {
+          "id": "D203",
+          "url": "https://huggingface.co/jaredpalmer/kev-0.8b/commit/9a45d25eb2ab761841196625383fa1dff0e56c1e"
         }
       ],
       "hosting": {
@@ -6949,6 +7008,71 @@
         "runpod_disposition": "self_host_candidate",
         "reason": "Canonical author checkpoints and exact operator-selected native profile added; native decision protocol preserved.",
         "profiles": [
+          {
+            "label": "Canonical Kev 0.8B adapter + exact base",
+            "artifact_id": "jaredpalmer/kev-0.8b",
+            "artifact_revision": "9a45d25eb2ab761841196625383fa1dff0e56c1e",
+            "format": "LoRA safetensors + head.pt + pinned Qwen3.5 base safetensors",
+            "precision": "BF16 CUDA serving; adapter merged at load; FP32 reference path",
+            "runtime": "Canonical Kev Python server",
+            "runtime_version": "Kev 1.0 model set; current documented Python 3.12/3.13 and dependency bounds; exact serving container unqualified",
+            "api_protocol": "POST /v1/systemone; native choice/noul/score probability head; no autoregressive text",
+            "context": {
+              "native_tokens": null,
+              "runtime_default_tokens": 65536,
+              "extended_tokens": null,
+              "max_output_tokens": null,
+              "scope": "exact canonical 0.8B artifact and upstream native server; not the selected Macrofold 4B image",
+              "notes": "65,536 is the canonical server state allowance, with a separate 8,192-token question budget; it is not a validated accuracy window. Training states reached 7,552 tokens; validated state length is 8,192. MLX served 65,000 on an Apple M5, which does not establish NVIDIA 4GB capacity or long-state quality. Native output is probabilities; usage.output_tokens counts serialized answers.",
+              "output_semantics": "Native pointer-head probabilities/scores; no autoregressive generation budget. Canonical usage.output_tokens counts serialized answer tokens."
+            },
+            "request_limits": {
+              "input_characters": null,
+              "input_audio_seconds": null,
+              "output_audio_seconds": null,
+              "reference_audio_seconds": null,
+              "other": "Text/JSON state; no base-model vision capability inferred. Choice and Score allow 1–255 options. Questions cannot read one another. Upstream allows any question count and splits work into bounded batches; overlong state/question input returns 422. HTTP byte ceiling not established."
+            },
+            "memory": {
+              "parameters_total_b": 0.8,
+              "raw_weights_gb": 1.6,
+              "raw_weight_basis": "Arithmetic only: nominal 0.8B backbone×2 bytes≈1.6GB BF16, before head/runtime allocations. Exact loaded tensor count is not established. The 11.3M-parameter LoRA merges into the base; adapter-only download size is not full model memory.",
+              "published_vram_gb": 3.8,
+              "published_hardware": "Publisher L4 BF16 native server with fused DeltaNet/CUDA graphs reports 3.8GB resident GPU memory for short/2,200-token-state examples. The card also claims a 4GB GPU can run the model, without establishing full-context peak fit. Apple MLX 65k measurements are separate.",
+              "gpu_candidate": "1× NVIDIA L4 24GB",
+              "gpu_candidate_basis": "Publisher-measured GPU class; later investigation could start with one request and at most 8,192 state tokens. Neither 4GB full-context fit nor 65k NVIDIA capacity is claimed.",
+              "host_ram_gb": null,
+              "host_ram_basis": "Linux host RAM minimum not published; Apple unified-memory/process figures are not Linux RAM requirements.",
+              "kv_cache_notes": "24-layer frozen backbone: 18 Gated DeltaNet layers and 6 full-attention layers. Native state cache, independent question reads, recurrent states and graph workspace require the canonical runtime; do not use an all-layer full-attention KV formula."
+            },
+            "storage": {
+              "artifact_bytes": null,
+              "artifact_size_gb": 1.8356,
+              "disk_gb": null,
+              "basis": "Rounded public inventories: 1.77GB pinned base plus 0.0656GB adapter/head/tokenizer repository≈1.8356GB. Final resident weights may exclude unused base components. Container, package cache, loading/merge temporaries and working reserve remain additional; full disk allocation unknown."
+            },
+            "requirements": [
+              "Exact base: Qwen/Qwen3.5-0.8B-Base@dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68. The adapter_config revision is null, so do not let it select a moving base.",
+              "Canonical repository installation with uv sync --extra serve; Python 3.12 or 3.13, torch>=2.6,<2.9, Transformers>=5.17,<6, PEFT>=0.21, accelerate>=1.15 and typesafe-sdk>=0.6 as currently documented.",
+              "Use the native encoder, tokenizer, pointer head and shipped calibration T≈2.35. HF automatic PeftModel snippets do not include the complete decision protocol.",
+              "Current head SHA256:f400bd12802b2b105ae45d6b03774a158a3db4fccff42413734ddca2e5c920b6; adapter SHA256:9b908623acb162118575f4e7a94524f9c139c335be4bfb74d6cfceca01e1885a. Verified from public blob metadata only.",
+              "provenance.json records another head hash and inference_temperature1.0; these differ from the current file/card. Do not override the shipped calibrated head from that metadata.",
+              "Apache 2.0 adapter/head and Apache 2.0 base. The publisher advises against tool-call routing because the small model performed poorly on that task."
+            ],
+            "source_ids": [
+              "D183",
+              "D184",
+              "D185",
+              "D196",
+              "D197",
+              "D198",
+              "D199",
+              "D200",
+              "D201",
+              "D202",
+              "D203"
+            ]
+          },
           {
             "label": "Canonical Kev 4B adapter + exact base",
             "artifact_id": "jaredpalmer/kev-4b",
@@ -6964,7 +7088,8 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "65,536 is server state capacity, not training length or total request cap. Trained 7,552/validated 8,192 state tokens; questions have separate 8,192-token budget each. No autoregressive output budget; usage.output_tokens counts serialized answers."
+              "notes": "65,536 is server state capacity, not training length or total request cap. Trained 7,552/validated 8,192 state tokens; questions have separate 8,192-token budget each. No autoregressive output budget; usage.output_tokens counts serialized answers.",
+              "output_semantics": "Native pointer-head probabilities/scores; no autoregressive generation budget. Canonical usage.output_tokens counts serialized answer tokens."
             },
             "request_limits": {
               "input_characters": null,
@@ -7023,7 +7148,8 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "65,536 is server state capacity, not training length or total request cap. Trained 7,552/validated 8,192 state tokens; questions have separate 8,192-token budget each. No autoregressive output budget; usage.output_tokens counts serialized answers."
+              "notes": "65,536 is server state capacity, not training length or total request cap. Trained 7,552/validated 8,192 state tokens; questions have separate 8,192-token budget each. No autoregressive output budget; usage.output_tokens counts serialized answers.",
+              "output_semantics": "Native pointer-head probabilities/scores; no autoregressive generation budget. Canonical usage.output_tokens counts serialized answer tokens."
             },
             "request_limits": {
               "input_characters": null,
@@ -7082,7 +7208,8 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Guide pins artifact/base/image; actual deployed context/output caps, caller settings and old quoted preflight request tokens remain unknown."
+              "notes": "Guide pins artifact/base/image; actual deployed context/output caps, caller settings and old quoted preflight request tokens remain unknown.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Exact image/conversion usage accounting remains unverified."
             },
             "request_limits": {
               "input_characters": null,
@@ -7136,7 +7263,8 @@
               "extended_tokens": null,
               "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Trained 32,768 and validated 65,536 state tokens; separate question budget. Server state cap is not total request length. No autoregressive output budget; usage.output_tokens counts serialized answers."
+              "notes": "Trained 32,768 and validated 65,536 state tokens; separate question budget. Server state cap is not total request length. No autoregressive output budget; usage.output_tokens counts serialized answers.",
+              "output_semantics": "Native pointer-head probabilities/scores; no autoregressive generation budget. Canonical usage.output_tokens counts serialized answer tokens."
             },
             "request_limits": {
               "input_characters": null,
@@ -7191,9 +7319,10 @@
               "native_tokens": null,
               "runtime_default_tokens": null,
               "extended_tokens": null,
-              "max_output_tokens": 0,
+              "max_output_tokens": null,
               "scope": "exact artifact",
-              "notes": "Exact converted context/default and source .src_sha not recovered; do not copy operator server caps."
+              "notes": "Exact converted context/default and source .src_sha not recovered; do not copy operator server caps.",
+              "output_semantics": "Native probability/score output; no autoregressive generation budget. Exact image/conversion usage accounting remains unverified."
             },
             "request_limits": {
               "input_characters": null,
@@ -7243,7 +7372,8 @@
         },
         "blocking_unknowns": [
           "Exact runtime git revisions for upstream and conversions; current operator caps and request tokens remain unknown.",
-          "No GPU allocation, inference, weight download or endpoint request performed; all actual deployment fields remain null."
+          "No GPU allocation, inference, weight download or endpoint request performed; all actual deployment fields remain null.",
+          "Kev 0.8B provenance.json calibration metadata differs from the current head/card; public blob hashes are recorded. No 4GB full-context fit or tool-routing quality is implied."
         ],
         "source_ids": [
           "D183",
@@ -7259,7 +7389,15 @@
           "D188",
           "D189",
           "D195",
-          "D106"
+          "D106",
+          "D196",
+          "D197",
+          "D198",
+          "D199",
+          "D200",
+          "D201",
+          "D202",
+          "D203"
         ]
       }
     }

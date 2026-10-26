@@ -14,7 +14,10 @@
     "tokenizer_revision": null,
     "chat_template_identity": null,
     "auxiliary_models": [],
-    "license_reference": null
+    "license_reference": null,
+    "generation_config_identity": null,
+    "remote_code_revision": null,
+    "cache_selected_revision_proof": null
   },
   "serving": {
     "container_digest": null,
@@ -29,7 +32,8 @@
     "protocol": null,
     "structured_output_mode": null,
     "tool_parser": null,
-    "reasoning_parser_and_budget": null
+    "reasoning_parser_and_budget": null,
+    "trust_remote_code": null
   },
   "hosting": {
     "owner": null,
@@ -77,7 +81,13 @@
     "min_workers": null,
     "max_workers": null,
     "health_path": null,
-    "secret_reference_names": []
+    "secret_reference_names": [],
+    "generation_config_load_policy": null,
+    "generation_config_overrides": null,
+    "native_state_token_limit": null,
+    "native_question_token_limit": null,
+    "native_question_batch_policy": null,
+    "native_max_options": null
   },
   "request_fit": {
     "request_artifact_reference": null,
@@ -88,7 +98,10 @@
     "observed_reference_audio_seconds": null,
     "admission_result": "unknown",
     "truncation": null,
-    "notes": null
+    "notes": null,
+    "native_state_tokens": null,
+    "native_question_token_counts": null,
+    "native_option_counts": null
   },
   "observations": {
     "startup_seconds": null,
@@ -104,7 +117,12 @@
     "queue_wait_ms": null,
     "throughput_units_and_value": null,
     "recovery_evidence_reference": null,
-    "full_game_path_exercised": false
+    "full_game_path_exercised": false,
+    "reference_encoding_ms": null,
+    "first_generated_pcm_ms": null,
+    "first_audible_player_playback_ms": null,
+    "audio_resampling_codec_buffering_notes": null,
+    "interruption_cleanup_evidence": null
   },
   "economics": {
     "quote_reference_and_time": null,

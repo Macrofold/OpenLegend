@@ -4002,7 +4002,7 @@
       "reason": "Exact NVFP4 artifact and publisher TP4Marlin/Hopper guidance exist; exact runtime pin, workload and memory fit remain open.",
       "profiles": [
         {
-          "label": "Original full-precision checkpoint; vLLM investigation",
+          "label": "Original mixed NVFP4/BF16 checkpoint; vLLM investigation",
           "artifact_id": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
           "artifact_revision": null,
           "format": "safetensors",
@@ -4173,8 +4173,8 @@
             "published_hardware": "Publisher reference is Ryzen AI Max+395 Strix Halo with 128 GB unified memory. This is one shared CPU/GPU pool, not128GBVRAM plus128GBhost RAM. NewerCUDAport reportsRTX 3090 tests for Qwen 27B/Flint, not this 320B GLM pack.",
             "gpu_candidate": null,
             "gpu_candidate_basis": "No exact GLM pack+hookNVIDIA deployment verified.99.73 GB exceeds a96 GB GPU before runtime overhead; H200-class memory is a possible future sizing lead only after CUDA GLM/hook support is established.",
-            "host_ram_gb": 128,
-            "host_ram_basis": "Published AMD unified-memory machine size, not Runpod host-RAM minimum; CPU/GPU share the same128 GB. No complete separate-hostNVIDIA RAM requirement published.",
+            "host_ram_gb": null,
+            "host_ram_basis": "Publisher AMD reference uses 128 GB unified CPU/GPU memory, not a separate host-RAM minimum. Runpod NVIDIA host RAM, transfer buffers and loader peak remain unknown.",
             "kv_cache_notes": "KDA/recurrent and sparseMLA cache is engine-specific. Kyojin's recurrent-session slots, draft heads, prefix state and image cache affect memory; single-userAMD long-context reports do not establish many NPC sessions."
           },
           "storage": {
