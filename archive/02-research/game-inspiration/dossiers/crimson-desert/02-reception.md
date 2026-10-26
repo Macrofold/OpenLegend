@@ -62,7 +62,7 @@ Destructoid and SteamDeckHQ found narrative or puzzle rewards that did not compe
 
 ### What the store says at the cutoff
 
-The retrieved Steam store page reports **86% positive among 63,353 English-language reviews** and **78% positive among 1,796 recent reviews**, with recent covering the preceding 30 days. Those are language-specific, overlapping windows, not all-platform sentiment or retention measures. A lower recent share does not by itself identify a decline, its cause, or how many purchasers stopped playing. [P19]
+The retrieved Steam store page reports **86% positive among 63,353 English-language reviews** and **78% positive among 1,796 recent reviews**, with recent covering the preceding 30 days. The first figure is explicitly English-language; the retrieved text does not establish that the recent-review figure uses the same language denominator. They are overlapping windows and cannot be treated as a controlled comparison, all-platform sentiment, or retention measures. A lower recent share does not by itself identify a decline, its cause, or how many purchasers stopped playing. [P19]
 
 ### Sampling procedure and limits
 

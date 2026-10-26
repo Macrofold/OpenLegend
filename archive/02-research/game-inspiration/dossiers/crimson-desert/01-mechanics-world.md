@@ -14,7 +14,7 @@ The free Enhanced upgrade arrived on 25 August with additional story scenes and 
 
 | System | Shipped change relevant to this study |
 |---|---|
-| Alternate protagonists | April's 1.03 gave Damiane and Oongka additional puzzle capabilities; June's 1.12 enabled Blackstar riding and memory reading; July's 1.13 opened the Abyss to them. [M07][M11][M12] |
+| Alternate protagonists | April's 1.03 gave Damiane and Oongka additional puzzle capabilities; June's 1.12 enabled Blackstar riding and memory reading; July's 1.13 opened the Abyss to them. [M07] [M11] [M12] |
 | Difficulty and preparation | April's 1.04 added Easy, Normal and Hard, expanded storage and improved inventory organization. [M08] |
 | A cleared world | May's 1.05 added boss rematches and optional reblockades after players had exhausted encounters. [M09] |
 | Input and comfort | The official update history records controller remapping in 1.09, alongside earlier control and UI work. [M14] |
@@ -27,30 +27,30 @@ The free Enhanced upgrade arrived on 25 August with additional story scenes and 
 
 ## 2. Who acts, and what can the player actually do?
 
-Kliff is the principal story protagonist and the flexible melee/ranged baseline. Damiane becomes available through Chapter 3 and emphasizes precise blade work and firearms; Oongka arrives later and emphasizes heavy weapons and a hand cannon. They are authored characters with different moves and equipment identities, not classes chosen during character creation. The March character guide is useful for those identities and unlock sequence, but its restrictions on Abyss access and separate investment were superseded by later official patches. [M16][M06][M12]
+Kliff is the principal story protagonist and the flexible melee/ranged baseline. Damiane becomes available through Chapter 3 and emphasizes precise blade work and firearms; Oongka arrives later and emphasizes heavy weapons and a hand cannon. They are authored characters with different moves and equipment identities, not classes chosen during character creation. The March character guide is useful for those identities and unlock sequence, but its restrictions on Abyss access and separate investment were superseded by later official patches. [M16] [M06] [M12]
 
-There is no native character creator established by this research. Appearance customization instead includes clothing, dyes, hair and tattoos. [M04][M44] The current single-player product does not offer native co-op, player guild governance or PvP. [M01] Those are important boundaries for Open Legend: an elaborate solo world can inspire interaction design without proving anything about persistent multiplayer relationships.
+There is no native character creator established by this research. Appearance customization instead includes clothing, dyes, hair and tattoos. [M04] [M44] The current single-player product does not offer native co-op, player guild governance or PvP. [M01] Those are important boundaries for Open Legend: an elaborate solo world can inspire interaction design without proving anything about persistent multiplayer relationships.
 
 ### Action inventory and what each family contributes
 
 | Family | Documented player actions | Function in the experience |
 |---|---|---|
 | Embodied fighting | Armed strings, kicks, throws, grapples, ranged attacks, blocking, evasions, counters and elemental attacks. [M03] | Repeated encounters offer several expressions of competence rather than only higher damage. |
-| Movement | Ride, climb, glide, use aerial abilities, find fast-travel points; later access powerful special mounts and machinery. [M02][M07] | The same landscape can change from obstacle to route to spectacle. |
-| Object manipulation | Pull, rotate and place compatible objects with Axiom Force; seat or strike mechanisms with Force Palm. [M19][M20] | A physical vocabulary bridges traversal, puzzles and combat. |
-| Perception | Observe techniques, reveal environmental clues, discover and replay memories. [M18][M21][M35] | Looking carefully can grant capability or understanding, not only scenery. |
-| Provisioning | Gather, fish, hunt, cook, use alchemy, mine and craft. [M04][M34] | Quiet outdoor activity feeds preparation and development. |
-| Equipment expression | Refine gear, install Abyss Gears, recover upgrade investment, dye clothing and make specialist Kuku devices. [M23][M25][M26] | Mechanical and visual identity can develop together. |
-| Social and unlawful action | Greet, give gifts, complete requests, recruit, steal and incur bounties. [M31][M32][M33] | Towns supply services and constraints, although this is not proof of open-ended social simulation. |
-| Home and organization | Rebuild camp, dispatch comrades, expand productive facilities and decorate. [M04][M31] | The adventure has a recurring place of attachment and accumulated practical benefit. |
+| Movement | Ride, climb, glide, use aerial abilities, find fast-travel points; later access powerful special mounts and machinery. [M02] [M07] | The same landscape can change from obstacle to route to spectacle. |
+| Object manipulation | Pull, rotate and place compatible objects with Axiom Force; seat or strike mechanisms with Force Palm. [M19] [M20] | A physical vocabulary bridges traversal, puzzles and combat. |
+| Perception | Observe techniques, reveal environmental clues, discover and replay memories. [M18] [M21] [M35] | Looking carefully can grant capability or understanding, not only scenery. |
+| Provisioning | Gather, fish, hunt, cook, use alchemy, mine and craft. [M04] [M34] | Quiet outdoor activity feeds preparation and development. |
+| Equipment expression | Refine gear, install Abyss Gears, recover upgrade investment, dye clothing and make specialist Kuku devices. [M23] [M25] [M26] | Mechanical and visual identity can develop together. |
+| Social and unlawful action | Greet, give gifts, complete requests, recruit, steal and incur bounties. [M31] [M32] [M33] | Towns supply services and constraints, although this is not proof of open-ended social simulation. |
+| Home and organization | Rebuild camp, dispatch comrades, expand productive facilities and decorate. [M04] [M31] | The adventure has a recurring place of attachment and accumulated practical benefit. |
 | Commerce | Carry and sell trade goods, compare prices, protect transport and invest at banks. [M13] | Resources can matter outside the immediate combat-upgrade loop. |
-| Leisure and collection | Fish keeping, pets, growing special mounts, Pinball and Orb Roll appear in the post-launch record. [M10][M14] | Low-pressure activities change pace and create personal preferences within a combat-led game. |
+| Leisure and collection | Fish keeping, pets, growing special mounts, Pinball and Orb Roll appear in the post-launch record. [M10] [M14] | Low-pressure activities change pace and create personal preferences within a combat-led game. |
 
 This inventory should not be mistaken for equal depth across all systems. A minigame, a combat style, a scripted quest branch and a transport economy require different levels of decision-making. The useful question is whether an activity produces a consequence elsewhere and whether repeating it remains enjoyable.
 
 ## 3. Combat: bodily expression, resources and readable pressure
 
-The official combat overview describes weapon styles, unarmed combinations, timed defenses and elemental enhancement. Weapons come from several activities, including shops, exploration, bosses and crafting. [M03] A practical guide identifies stamina as a shared constraint on guarding, attacking and sprinting, with timed guard inputs producing parries against suitable attacks. Spirit powers special techniques; Focus matters to replenishment, while Nature's Snare requires Spirit to remain active. [M17][M22]
+The official combat overview describes weapon styles, unarmed combinations, timed defenses and elemental enhancement. Weapons come from several activities, including shops, exploration, bosses and crafting. [M03] A practical guide identifies stamina as a shared constraint on guarding, attacking and sprinting, with timed guard inputs producing parries against suitable attacks. Spirit powers special techniques; Focus matters to replenishment, while Nature's Snare requires Spirit to remain active. [M17] [M22]
 
 The resulting decision structure is richer than an attack button followed by a dodge button. **Analytical reconstruction:** read an opponent, select a safe approach, spend resources on a commitment, interrupt or stagger where possible, defend through the return pressure, then decide whether to continue, recover or reposition. A grapple changes an enemy's location; a broad strike changes crowd spacing; a defensive interception can turn an incoming threat into ammunition. The enjoyment comes from producing a visible, physical consequence, not solely from watching health decrease.
 
@@ -63,6 +63,8 @@ Difficulty updates also changed the decision structure. Easy reduces enemy press
 **Constructed from documented rules; not a recorded play session.** A player facing a projectile-heavy encounter creates space, enters Focus, channels Nature's Snare while Spirit permits, then returns captured attacks. Closing enemies or explosive collisions can interrupt that plan. [M22] The satisfying part is recognizing an enemy's apparent advantage as a resource. The frustrating version is discovering an unexplained exception only after a long recovery. For Open Legend, the transferable requirement is readable compatibility: players need to understand what can be caught, what cannot and why an attempt failed.
 
 ## 4. Progression: distinguish learning, equipment and access
+
+There is no conventional numbered character-level ladder, but combat contributes to an artifact meter; filling it grants an Abyss Artifact for skill development. A launch-day original guide establishes that acquisition route. This study does not verify whether combat-earned artifacts have a current cap. [M59]
 
 Three similar names conceal different functions:
 
@@ -82,7 +84,7 @@ The 2.00 notes explicitly permit carrying currency and Abyss Links into a new ga
 
 ### Worked example 2 — make a discovery change a fighting style
 
-**Constructed.** A player finds a preferred weapon, equips a compatible attack-triggering Abyss Gear, and starts using the associated attack more deliberately. Later they recover eligible refinement materials to try an alternative instead of remaining locked to their first investment. [M23][M25] The effect is a small authored capability interacting with a player's chosen rhythm. The pleasure depends on clear feedback that the new attack is doing something distinctive. An unclear socket restriction or hidden loss during extraction would instead turn experimentation into anxiety.
+**Constructed.** A player finds a preferred weapon, equips a compatible attack-triggering Abyss Gear, and starts using the associated attack more deliberately. Later they recover eligible refinement materials to try an alternative instead of remaining locked to their first investment. [M23] [M25] The effect is a small authored capability interacting with a player's chosen rhythm. The pleasure depends on clear feedback that the new attack is doing something distinctive. An unclear socket restriction or hidden loss during extraction would instead turn experimentation into anxiety.
 
 ## 5. Traversal, dragons and changing one's relationship to scale
 
@@ -90,7 +92,7 @@ The official world feature promises ground riding, climbing, gliding and later a
 
 Ordinary horses already have a progression loop: tame, buy or steal one; ride and feed it to improve trust and unlock skills; equip it and select among breeds with different strengths. The guide describes a directional taming minigame and breed-level differences rather than a simulated genetic breeding system. [M28] The June update added growth from Baby Wyvern and Kuku Bird Chick into special mounts, tying another form of mobility to care and feeding. [M10]
 
-**The dragon is real, but the timing and constraints matter.** A May guide places the first Blackstar encounter in Chapter 9 and permanent summoning at the end of Chapter 11. It documents limited use, cooldown and two horn-based ways to reduce or reset the wait, using dispatch and crafting. [M29] Historical guides disagree about the exact duration and cooldown: one gives 10/70 minutes, another 15/50. [M29][M30] The 2.00 patch still fixes a bug that allowed riding without cooldown, confirming that a cooldown remained intentional. [M06] This research did not independently time the current version; it will not turn conflicting guide numbers into a confident current specification.
+**The dragon is real, but the timing and constraints matter.** A May guide places the first Blackstar encounter in Chapter 9 and permanent summoning at the end of Chapter 11. It documents limited use, cooldown and two horn-based ways to reduce or reset the wait, using dispatch and crafting. [M29] Historical guides disagree about the exact duration and cooldown: one gives 10/70 minutes, another 15/50. [M29] [M30] The 2.00 patch still fixes a bug that allowed riding without cooldown, confirming that a cooldown remained intentional. [M06] This research did not independently time the current version; it will not turn conflicting guide numbers into a confident current specification.
 
 Since 1.12, Damiane and Oongka can also ride Blackstar. [M11] The current game also has other special mounts, so “dragon unavailable” is not equivalent to “no interesting travel option.” The important production insight is that the headline fantasy is embedded in campaign progression, mount selection and resource preparation. It is not a promise of unrestricted dragon flight from the opening minute.
 
@@ -112,7 +114,7 @@ The interesting commonality is not that every power has ten uses. It is that a p
 
 ### Worked example 4 — solve a machine using familiar physical actions
 
-**Constructed.** A player locates a compatible power core, rotates and places it with Axiom Force, then uses Force Palm to seat the component. If the remaining mechanism is a rotatable fan, Nature's Snare may supply the relevant action. [M19][M20][M22] The reward is understanding a sequence of physical causes instead of choosing a menu answer. Frustration arises when positioning precision or an unmarked compatibility rule obscures an otherwise correct idea. The 1.03 patch's clearer attachment and puzzle hints show that discoverability required iteration. [M07]
+**Constructed.** A player locates a compatible power core, rotates and places it with Axiom Force, then uses Force Palm to seat the component. If the remaining mechanism is a rotatable fan, Nature's Snare may supply the relevant action. [M19] [M20] [M22] The reward is understanding a sequence of physical causes instead of choosing a menu answer. Frustration arises when positioning precision or an unmarked compatibility rule obscures an otherwise correct idea. The 1.03 patch's clearer attachment and puzzle hints show that discoverability required iteration. [M07]
 
 ### Worked example 5 — reuse light across perception, obstacle and provision
 
@@ -132,14 +134,14 @@ Research adds an organizational progression layer. The guide identifies six inst
 
 | Input or asset | Conversion or sink | Result |
 |---|---|---|
-| Ingredients | Cooking or alchemy | Recovery, preparation and specialist consumables. [M04][M34] |
-| Materials and recipes | Smiths, workshop crafting, refinement | Equipment and authored devices. [M03][M26] |
+| Ingredients | Cooking or alchemy | Recovery, preparation and specialist consumables. [M04] [M34] |
+| Materials and recipes | Smiths, workshop crafting, refinement | Equipment and authored devices. [M03] [M26] |
 | Knowledge and Camp Funds | Research requirements and project time | Capabilities and infrastructure unlocks. [M27] |
 | Camp supplies and available comrades | Dispatch and upgrades | Resources, home services and regional activity. [M31] |
-| Silver, gold bars and trade goods | Purchase, transport, sales or investment | Monetary return with route and investment risk. [M13][M34] |
+| Silver, gold bars and trade goods | Purchase, transport, sales or investment | Monetary return with route and investment risk. [M13] [M34] |
 | Regional Contribution | Special services, hires and purchases | Access that is distinct from personal wealth. [M34] |
 
-The August trade overhaul introduced 133 trading posts, more goods and workshops, route information and purchase-price tracking. Repeated selling affects local prices; wagon transport and destruction introduce losses. Banking supports investments with potential gains and losses. [M13] This establishes a more consequential trade loop than a universal vendor selling everything at one fixed price. It does **not** prove that every NPC consumes simulated goods or that a background supply chain continuously manufactures the stock.
+The August trade overhaul added 133 new trading posts, more goods and workshops, route information and purchase-price tracking. Repeated selling affects local prices; wagon transport and destruction introduce losses. Banking supports investments with potential gains and losses. [M13] This establishes a more consequential trade loop than a universal vendor selling everything at one fixed price. It does **not** prove that every NPC consumes simulated goods or that a background supply chain continuously manufactures the stock.
 
 ### Worked example 6 — make a road valuable for reasons beyond scenery
 
@@ -187,7 +189,7 @@ Kliff's effort to reassemble the Greymanes turns allegiance into something the p
 
 The missing political context matters. Nicholas Tan's original story analysis traces **Jian**, Pailune's unifying leader, attempting to hold the Greymanes, Black Bears and Jackals together against the rise of **Gabriel Caliburn** in Demeniss. Jian's death breaks that settlement; **Ludvig** and the Jackals participate in the oppression that follows. The article argues that much of this explanation arrives late or through menus, and distinguishes Jian's regional leadership from leadership of the Greymanes themselves. [M52] This is a useful example of substantial background material existing without being successfully communicated at the moment players need it.
 
-The five regions should not be reduced to biome labels. What the available sources establish more concretely is differentiated social function: the Greymanes' Pailune connection, Hernand's role in the early rebuilding, and Delesyia's named engineering institution. [M02][M31][M39] A full account of each region's religion, languages, succession law and cultural history remains beyond the verified sources in this chapter. A dossier should leave those gaps visible instead of dressing generic fantasy assumptions as established canon.
+The five regions should not be reduced to biome labels. What the available sources establish more concretely is differentiated social function: the Greymanes' Pailune connection, Hernand's role in the early rebuilding, and Delesyia's named engineering institution. [M02] [M31] [M39] A full account of each region's religion, languages, succession law and cultural history remains beyond the verified sources in this chapter. A dossier should leave those gaps visible instead of dressing generic fantasy assumptions as established canon.
 
 ### The Abyss and its custodians
 
@@ -207,13 +209,13 @@ In **Pororin**, shai and fadu inhabitants withdrew behind closed gates after an 
 
 ### Technology is part of the setting's imagination
 
-The **National Delesyian Institute** studies mechanical engineering and Marni's advanced work, struggling to understand it; its recovered description notes calls for more independent research. [M39] A separate knowledge entry introduces a sharper mystery: **Marni** has become a constructed consciousness, with **H.A.L.L.** implicated in knowledge of that transformation. [M40] These are more specific ideas than “medieval fantasy with a robot.” They introduce dependence on inherited expertise, the limits of institutions and uncertainty about human identity.
+The **National Delesyian Institute** studies mechanical engineering and Marni's advanced work, struggling to understand it; its recovered description notes calls for more independent research. [M39] A separate knowledge entry introduces a sharper mystery: the Marni known to the Delesyians had been replaced by a constructed consciousness, with **H.A.L.L.** implicated in the mystery. The recovered text leaves the circumstances and timing uncertain. [M40] These are more specific ideas than “medieval fantasy with a robot.” They introduce dependence on inherited expertise, the limits of institutions and uncertainty about human identity.
 
-The research and Kuku systems supply practical counterparts: institutions, blueprints, components and devices put unusual machinery inside a process of acquisition and learning. [M26][M27] **Reading:** this can make the collision of swords, mystical powers and machines feel like a world with competing kinds of knowledge. The counter-risk is tonal accumulation without sufficient explanation. The reception chapter should judge whether players experience this as delightful discovery or incoherence; the mere existence of lore entries cannot settle that question.
+The research and Kuku systems supply practical counterparts: institutions, blueprints, components and devices put unusual machinery inside a process of acquisition and learning. [M26] [M27] **Reading:** this can make the collision of swords, mystical powers and machines feel like a world with competing kinds of knowledge. The counter-risk is tonal accumulation without sufficient explanation. The reception chapter should judge whether players experience this as delightful discovery or incoherence; the mere existence of lore entries cannot settle that question.
 
 ### How the player encounters history
 
-The **Visione**, obtained early through the story, lets the player view Memory Fragments. Lantern use or Blinding Flash reveals fragments at relevant locations; the memories can then be accessed and replayed. [M35] This places historical information in a physical site and a perceptual action. It is more memorable than treating all history as a menu appendix, but the guide's multi-step interaction also demonstrates how storytelling can acquire interface friction.
+The **Visione**, obtained early through the story, lets the player view Memory Fragments. Lantern use or Blinding Flash reveals fragments at relevant locations; the memories can then be accessed and replayed. [M35] This places historical information in a physical site and a perceptual action. The March guide records a cumbersome launch-era interaction; patch 1.00.03 then automated initial Visione playback after reading a fragment with the Lantern. The historical example shows how removing interface steps can preserve discovery while making the story easier to encounter. [M58]
 
 Enhanced explicitly added boss knowledge, items, memories and dialogue to strengthen narrative flow. [M06] That is evidence that Pearl Abyss invested in the connective story after release. Whether the revised narrative now succeeds requires post-update reception or play evidence, not an inference from a patch note announcing the intention.
 
@@ -223,7 +225,7 @@ The official visual pitch spans woods, open plains, dry desert and severe mounta
 
 Audio adds material and regional specificity. Pearl Abyss's September account describes recordings of real spaces and environmental sounds, detailed Foley for Golden Star's moving joints, and music that responds to combat and regional context. [M46] **Interpretation:** these details help separate a place or creature from a generic asset. A heavy machine should sound unlike cloth, stone or an animal; changes in music can support pacing without requiring another interface instruction. This chapter read the production account; it does not claim to have audited the complete soundtrack or listened to every encounter.
 
-Input design is the cost of the broad verb set. Observation, equipment radials, object targeting, climbing, aerial actions and contextual interaction all compete for a limited physical controller. The official record of remapping, puzzle-hint work, font and inventory improvements makes usability an established area of iteration. [M07][M08][M14] The Visione guide's sequence illustrates a concrete case where the desired act—look into a memory—can be separated from the player by several selections. [M35]
+Input design is the cost of the broad verb set. Observation, equipment radials, object targeting, climbing, aerial actions and contextual interaction all compete for a limited physical controller. The official record of remapping, puzzle-hint work, font and inventory improvements makes usability an established area of iteration. [M07] [M08] [M14] The historical Visione sequence and its early automation provide a concrete example of shortening the path from discovering a memory to seeing it; the original manual sequence is not an assertion about October’s initial playback. [M35] [M58]
 
 The update that permits teleporting while mounted, climbing, swimming or falling is a particularly telling comfort change. [M07] It reduces the effort required to exit an unwanted state. Likewise, crafting from the expanded gatherable storage in 1.04 reduces inventory handling. [M08] **Analytical conclusion:** an enormous set of possible actions needs equally deliberate support for choosing, finding and abandoning an action. Mechanical richness and interaction friction should be measured separately; endurance through confusion is not the only evidence of mastery.
 
@@ -300,11 +302,14 @@ All sources were accessed **26 October 2026**. “Text read” means the substan
 | [M50] | **VULKK, Endonae, maximizing stats.** 17 Jun 2026. Original guide threshold section read; its uncertain damage-formula speculation is not adopted. |
 | [M51] | **Pearl Abyss, current main product page.** Current on access. Promotional text read; biome/visual intent, not a performance benchmark. |
 | [M52] | **PlayStation LifeStyle, Nicholas Tan, Greymane story analysis.** 31 Mar 2026. Full original article read; launch narrative interpretation, not post-Enhanced review. |
-| [M53] | **gaming.tools, Stjar Clan.** Version 2.0.0, page updated 25 Aug 2026. Fan-hosted recovered faction text read. |
-| [M54] | **gaming.tools, Titan faction knowledge.** Version 2.0.0, updated 25 Aug 2026. Fan-hosted recovered religious/contextual text read. |
+| [M53] | **gaming.tools, Stjar Clan.** Version 2.0.0, page updated 30 Sep 2026. Fan-hosted recovered faction text read. |
+| [M54] | **gaming.tools, Titan faction knowledge.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered religious/contextual text read. |
 | [M55] | **gaming.tools, Pororin Forest Guardians.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered faction text read. |
-| [M56] | **gaming.tools, Master Du.** Version 2.0.0, updated 25 Aug 2026. Fan-hosted recovered character text read. |
+| [M56] | **gaming.tools, Master Du.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered character text read. |
 | [M57] | **gaming.tools, Gabriel Caliburn knowledge.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered character text read; later-story spoiler. |
+
+| [M58] | **Pearl Abyss, patch 1.00.03.** March 2026. Primary update text read; automated initial Visione playback after Lantern discovery. |
+| [M59] | **Gamers Heroes, Blaine Smith, artifact meter guide.** 19 Mar 2026. Original guide body read; combat acquisition route, no verified current cap. |
 
 [M01]: https://store.steampowered.com/app/3321460/Crimson_Desert/
 [M02]: https://pressreleases.triplepointpr.com/2026/01/29/pearl-abyss-releases-new-crimson-desert-featurette-highlighting-story-world-and-gameplay/
@@ -363,3 +368,6 @@ All sources were accessed **26 October 2026**. “Text read” means the substan
 [M56]: https://crimsondesert.gaming.tools/people/ngm_unique_goblin_master
 [M57]: https://crimsondesert.gaming.tools/knowledge/caliburn
 
+
+[M58]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=73
+[M59]: https://www.gamersheroes.com/game-guides/what-is-the-bar-in-the-bottom-left-for-in-crimson-desert/

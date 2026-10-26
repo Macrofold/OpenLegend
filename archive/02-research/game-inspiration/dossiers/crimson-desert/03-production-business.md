@@ -4,9 +4,9 @@
 
 ## 1. The central finding
 
-Crimson Desert is a particularly useful case for Open Legend because its production philosophy addresses an attractive but difficult promise: a world should remain worth playing when the player stops following the main quest. Pearl Abyss’s own conference material describes a roughly 200-person development team organizing the world into separately adjustable environment, content, and metagame layers, supported by fast iteration, maintainable content, and parallel work. That is a more transferable explanation of its density than “they built an enormous map.” [B11, B12]
+Crimson Desert is a particularly useful case for Open Legend because its production philosophy addresses an attractive but difficult promise: a world should remain worth playing when the player stops following the main quest. Pearl Abyss’s own conference material describes a roughly 200-person development team organizing the world into separately adjustable environment, content, and metagame layers, supported by fast iteration, maintainable content, and parallel work. That is a more transferable explanation of its density than “they built an enormous map.” [B11] [B12]
 
-There is a real commercial achievement to explain: the publisher announced six million copies within 83 days. However, **“it made $500 million since March” is not a verified financial statement in this research.** The strongest available title-specific financial disclosure is in Korean won, covers the first half of 2026, and must be kept distinct from consumer spending estimates and future guidance. [B02, B04]
+There is a real commercial achievement to explain: the publisher announced six million copies within 83 days. However, **“it made $500 million since March” is not a verified financial statement in this research.** The strongest available title-specific financial disclosure is in Korean won, covers the first half of 2026, and must be kept distinct from consumer spending estimates and future guidance. [B02] [B04]
 
 The most valuable lesson is conditional. Giving players many meaningful possibilities can create discoveries that advertise the game for its creators. Doing so also increases the burden on controls, explanation, narrative coherence, compatibility, and production tooling. Commercial scale does not show that every decision was optimal, and later repairs do not establish that the launch experience already had those improvements.
 
@@ -16,7 +16,7 @@ The most valuable lesson is conditional. Giving players many meaningful possibil
 
 | Metric | Reported result or estimate | Interpretation |
 |---|---:|---|
-| Worldwide units, first day | 2 million | Publisher milestone; purchases, not revenue. [B04] |
+| Worldwide units, first day | 2 million | Publisher-reported copies sold; a unit metric, not revenue. [B04] |
 | Worldwide units, 15 April | 5 million | Press release body is dated 15 April; corporate archive labels its page 6 May. [B03] |
 | Worldwide units, 11 June | 6 million in 83 days | Dated publisher milestone; not a claim that sales stopped there. [B04] |
 | Crimson Desert Q1 revenue | KRW266.5 billion | Publisher-recognized title revenue. [B02] |
@@ -24,12 +24,12 @@ The most valuable lesson is conditional. Giving players many meaningful possibil
 | Crimson Desert H1 revenue | **KRW402.6 billion** | Explicit H1 actual and sum of the preceding quarters. [B02] |
 | Q2 units | Approximately 2.11 million | 1.72 million digital; 0.39 million physical. [B02] |
 | Original FY2026 title guidance | KRW644.1–734.8 billion | Forecast, subsequently revised. [B02] |
-| Revised FY2026 title guidance, 11 August | **KRW468.9–497.3 billion** | Forecast, not achieved revenue. [B01, B02] |
-| October third-party revenue estimate | Approximately US$426.7 million | Última Ficha attributes this to Alinea; the original graph was not readable in extraction. [B05, B06] |
+| Revised FY2026 title guidance, 11 August | **KRW468.9–497.3 billion** | Forecast, not achieved revenue. [B01] [B02] |
+| October third-party revenue estimate | Approximately US$426.7 million | Última Ficha attributes this to Alinea; the original graph was not readable in extraction. [B05] [B06] |
 
 The Q2 letter explains the accounting gap: channel mix, regional pricing, settlement timing, and a 20% physical-settlement deferral for refund guarantees affected revenue. Reported ASP fell from approximately KRW74,000 to KRW63,000. [B02]
 
-The direct official PDF endpoint failed in this run. The complete publisher earnings letter was read through InvestGame’s mirror, including its title table and guidance table; the official IR index verifies the document and publication date. This is a primary company document accessed through a third-party host. [B01, B02]
+The direct official PDF endpoint failed in this run. The complete publisher earnings letter was read through InvestGame’s mirror, including its title table and guidance table; the official IR index verifies the document and publication date. This is a primary company document accessed through a third-party host. [B01] [B02]
 
 ### 2.2 Why several impressive numbers can coexist
 
@@ -37,7 +37,7 @@ Four different questions are often compressed into the word “made.” **Consum
 
 Multiplying every copy by a US launch list price would silently assume one price, edition, exchange rate, territory, distribution arrangement, and refund outcome. Multiplying a consumer-spending estimate by a generic platform-fee percentage would introduce another unsupported assumption: the reported revenue might already use a different recognition basis for particular channels. Neither shortcut supplies a reliable project profit figure.
 
-The October estimate also needs a narrow label. Alinea’s original newsletter describes its tracked premium-game market across Steam, PlayStation, and Xbox. Its text was accessible, but the Crimson Desert figure was conveyed through a graphic that was not available as readable text. The secondary report supplies the approximately $426.7 million number. We therefore preserve the source chain rather than presenting that number as an independently reproduced Alinea calculation. It is not a Pearl Abyss disclosure. [B05, B06]
+The October estimate also needs a narrow label. Alinea’s original newsletter describes its tracked premium-game market across Steam, PlayStation, and Xbox. Its text was accessible, but the Crimson Desert figure was conveyed through a graphic that was not available as readable text. The secondary report supplies the approximately $426.7 million number. We therefore preserve the source chain rather than presenting that number as an independently reproduced Alinea calculation. It is not a Pearl Abyss disclosure. [B05] [B06]
 
 **Decision on the user’s claim:** preserve “major commercial success”; replace the unsupported exact $500 million assertion with the dated publisher revenue and sales evidence above. A later consumer-spending estimate might approach a different total, but this research cannot establish that total or silently relabel it as developer receipts. There is also no reason to manufacture a low/base/high revenue model when reported title revenue already exists for H1. An October model would need credible newer units, price mix, returns, and platform coverage; those inputs are missing.
 
@@ -45,7 +45,7 @@ The October estimate also needs a narrow label. Alinea’s original newsletter d
 
 Seoul Economic Daily reports roughly KRW200 billion in development costs and about seven years of development. That is reporting, not an audited title-cost schedule. Its English article is explicitly machine-translated and contains erroneous month names in the release chronology; the Korean-original link failed to open. Treat the cost as a **reported order of magnitude**, with reduced confidence, and do not derive an exact break-even point from it. [B07]
 
-The roughly 200-person core team has stronger support in Pearl Abyss’s CEDEC recap. It should not be confused with the entire company or every contractor and external service involved. Conference reporting says the lengthy project was also intended to improve the studio’s tools and workflows for subsequent games. That investment complicates any attempt to allocate all costs and benefits to one release. [B12, B15]
+The roughly 200-person core team has stronger support in Pearl Abyss’s CEDEC recap. It should not be confused with the entire company or every contractor and external service involved. Conference reporting says the lengthy project was also intended to improve the studio’s tools and workflows for subsequent games. That investment complicates any attempt to allocate all costs and benefits to one release. [B12] [B15]
 
 For Open Legend, the cost lesson is about measuring the right thing. A reusable content tool can be valuable even if it delays an early milestone, but “it will help future projects” is not a sufficient justification by itself. Evaluate it through time saved on the next repeated task, the number of people it unblocks, and the defects it prevents. That is a proposed management discipline, not a claim that Pearl Abyss published those measurements.
 
@@ -65,7 +65,7 @@ That reasoning has a failure condition. A feature can be spectacular in isolatio
 
 ### 4.1 What the developers actually disclosed
 
-CEDEC’s official session identifies Sungbin Doo with player actions/combat and Hyunkyum Kim with levels/quests. It expressly frames the presentation as production and management experience rather than an engine-implementation lecture. Pearl Abyss’s own recap confirms its main structure: fast iteration, maintainability, parallel workflows, layered world production, responsive objects, and phase switching that lets the same space reflect different progress states. [B11, B12]
+CEDEC’s official session identifies Sungbin Doo with player actions/combat and Hyunkyum Kim with levels/quests. It expressly frames the presentation as production and management experience rather than an engine-implementation lecture. Pearl Abyss’s own recap confirms its main structure: fast iteration, maintainability, parallel workflows, layered world production, responsive objects, and phase switching that lets the same space reflect different progress states. [B11] [B12]
 
 The following implementation details come from **the developers’ statements as reported at the conference**, not from independent inspection of the engine. Inven’s report describes XML-driven action, AI, object-interaction, and stage data; a reusable static Base Level with changing Gameplay Levels; designer-accessible parameters; and testing puzzle spaces at actual play scale before final art. It also records manual checking where automated placement can cause overlaps. These are concrete workflow disclosures, not evidence that all world behavior is generative or autonomous. [B14]
 
@@ -106,8 +106,8 @@ Havok’s own customer page lists Crimson Desert among titles using Havok Physic
 | Clothing and hair respond to movement | Developer describes GPU simulation. [B16] | Solver design, budgets, platform settings, authored exceptions. |
 | Water and fog respond around characters | Developer describes shallow-water and fluid/fog systems. [B16] | World coverage, simulation distance, persistence, resolution. |
 | An expansive world feels continuous | Publisher describes seamless exploration. [B17] | Streaming partitions, cache policy, predictive loading, transition exceptions. |
-| Strikes have physical consequences | Publisher describes destruction/hit-response systems; Havok confirms physics usage. [B17, B18] | Which interactions are scripted, simulated, approximated, or disabled at distance. |
-| Dense authored world content | Conference testimony describes production automation plus manual placement. [B14, B15] | Whole-project tool performance, actual authoring hours saved, asset provenance by item. |
+| Strikes have physical consequences | Publisher describes destruction/hit-response systems; Havok confirms physics usage. [B17] [B18] | Which interactions are scripted, simulated, approximated, or disabled at distance. |
+| Dense authored world content | Conference testimony describes production automation plus manual placement. [B14] [B15] | Whole-project tool performance, actual authoring hours saved, asset provenance by item. |
 
 Do not turn the visible result into unsupported engineering claims. “Every NPC is independently simulated across the whole map,” “all objects are fully destructible,” “there is no loading,” and “this was only possible with a custom engine” would each require much stronger evidence. A marketing demonstration is also not a reproducible performance benchmark.
 
@@ -146,7 +146,7 @@ The available material does **not** justify a detailed claim about Crimson Deser
 | March 2026 | Launch trailer highlights bosses, character combat, and dragon riding; publisher reports over three million wishlists across major platforms. [B27] | A concrete spectacle hook plus an anticipation signal; not Steam-only wishlists. |
 | March–April 2026 | Two-week launch Twitch Drops event. [B28] | An explicit incentive to watch participating streams. |
 | September 2026 | Crimson Desert appears in AWS’s Twitch instant-play demo pilot. [B29] | A lower-friction path from viewing to trying the actual game. |
-| August–October 2026 | Enhanced update and upcoming expansion communication. [B31–B34] | A new reason for prospective and existing players to reconsider the product. |
+| August–October 2026 | Enhanced update and upcoming expansion communication. [B31] [B32] [B33] [B34] | A new reason for prospective and existing players to reconsider the product. |
 
 This chronology does not prove that the long campaign was efficient. It establishes that the marketing had several distinct functions: attract attention, establish that gameplay exists, make the world legible, invite purchase, reward viewing, and prompt a return. The relative sales contribution of each step remains unreported.
 
@@ -160,9 +160,9 @@ The official 50-minute notice is also a useful disclosure example: it identifies
 
 ### 7.3 Creators, word of mouth, and what cannot be attributed
 
-There is evidence of organized creator marketing as well as organic interest. The official Drops campaign explicitly rewarded viewing. A sponsored message from Wehype inside The Game Business’s October newsletter says the vendor supported Pearl Abyss’s launch with creators and data. That is a commercial participant’s claim, not an independent campaign audit. [B28, B30]
+There is evidence of organized creator marketing as well as organic interest. The official Drops campaign explicitly rewarded viewing. A sponsored message from Wehype inside The Game Business’s October newsletter says the vendor supported Pearl Abyss’s launch with creators and data. That is a commercial participant’s claim, not an independent campaign audit. [B28] [B30]
 
-Our hypothesis is that varied, surprising actions provide many more subjects for community videos than a single polished cinematic. A creator can show an unexpected interaction, a traversal discovery, or an absurd combat result without reproducing the publisher’s trailer. Each clip can communicate a particular possibility quickly. The reception chapter should supply examples from actual players; this hypothesis does not establish how many purchases those clips caused.
+Our hypothesis is that varied, surprising actions provide many more subjects for community videos than a single polished cinematic. A creator can show an unexpected interaction, a traversal discovery, or an absurd combat result without reproducing the publisher’s trailer. Each clip can communicate a particular possibility quickly. Player accounts help identify interactions people choose to recount. This research does not measure those moments’ circulation as clips or their contribution to purchases.
 
 To evaluate the hypothesis properly, one would need exposure, creator sponsorship disclosure, wishlists or store visits, conversion timing, and comparable baseline periods. Viral clips and simultaneous sales growth are suggestive, not a clean causal estimate. “The game marketed itself” would also erase years of showcases, distribution, PR, and paid or supported creator work.
 
@@ -178,7 +178,7 @@ In The Game Business’s October interview, Pearl Abyss Europe CEO Lybee Park at
 
 Park’s explanation is relevant evidence of management’s thinking. It is not proof that reviewers were unfair, or that narrative, controls, and interface criticism disappears with enough hours. The player buys the opening experience too. If a design’s best qualities become legible only after a large time investment, onboarding and expectation-setting become part of the design problem.
 
-The January interview said the team was trying to provide substantial review time; that expressed aim should not be rewritten as a confirmed month-long window for every reviewer. [B09] The appropriate audit compares actual access dates, build versions, platforms, time played, and subsequent patches. The reception chapter handles that comparison. This chapter therefore avoids treating a review score as a laboratory measure of one unchanging build.
+The January interview said the team was trying to provide substantial review time; that expressed aim should not be rewritten as a confirmed month-long window for every reviewer. [B09] The appropriate audit compares actual access dates, build versions, platforms, time played, and subsequent patches. The [reception comparison](02-reception.md#3-professional-reviews-substantial-agreement-different-weighting) records publication dates, declared platforms and playtime, and subsequent patch context. Review-key delivery dates and exact build identifiers are generally undisclosed. Several launch reviewers reported roughly 60–100 hours of play while identifying substantive weaknesses; limited review time remains a possible contributor, not an established general explanation. This chapter therefore avoids treating a review score as a laboratory measure of one unchanging build.
 
 There is a useful managerial distinction between preserving character and preserving inconvenience. An unusual movement system or demanding fight might be central to identity. A confusing input prompt, poor inventory flow, or misleading prerequisite might simply obstruct it. That distinction should be tested with players attempting concrete tasks, rather than decided from whether criticism sounds positive or negative.
 
@@ -188,7 +188,7 @@ Pearl Abyss’s corporate retrospective says it used feedback on difficulty, con
 
 The official site presents Enhanced as a free upgrade for existing owners. [B31] **Enhanced has shipped:** the August 25 patch identifies version 2.00.00 as the Enhanced update and lists availability across platforms. Its narrative and language additions are post-launch changes. [B34] Use the mechanics chapter’s dated ledger for individual features; the homepage’s future-tense upgrade wording does not override the dated release record.
 
-**As of this dossier’s cut-off, Charting the Unknown is upcoming.** The September 30 notice delayed it two weeks to **29 October 2026 at 22:00 UTC**. Its October feature overview advertises additional stories, ocean exploration and ships, romance/marriage, expanded housing, claimable castles, businesses, and a boss challenge. These are announced expansion features, not evidence of what the March base game already contained. [B32, B33]
+**As of this dossier’s cut-off, Charting the Unknown is upcoming.** The September 30 notice delayed it two weeks to **29 October 2026 at 22:00 UTC**. Its October feature overview advertises additional stories, ocean exploration and ships, romance/marriage, expanded housing, claimable castles, businesses, and a boss challenge. These are announced expansion features, not evidence of what the March base game already contained. [B32] [B33]
 
 The distinction matters commercially. A free improvement can reduce uncertainty for a new buyer and demonstrate care to existing owners. A paid expansion can extend the value of the original world. Neither permits a retrospective claim that all promised content was delivered at launch. Clear packaging, prerequisites, and dates help an audience understand what it is being asked to buy or revisit.
 
@@ -261,3 +261,38 @@ All sources below were checked on **26 October 2026**. “Primary” means the c
 - Neither hardware/platform problems reported at launch nor later repairs should be generalized to every platform and patch; consult the versioned mechanics/reception record.
 - A Washington Post interview was inspected but is not summarized here because of its restrictive source allowance; no team-size, budget, or “no crunch” claim depends on it.
 
+
+[B01]: https://www.pearlabyss.com/en-US/IR/Data/Performance
+[B02]: https://investgame.net/news/pdf/2026-08-11-2q26_earnings_letter_eng_pearl_abyss_wp/
+[B03]: https://www.pearlabyss.com/en-US/Board/Detail?_boardNo=14780
+[B04]: https://www.gamespress.com/en-US/Crimson-Desert-Surpasses-6-Million-Copies-Sold-Worldwide
+[B05]: https://alineaanalytics.substack.com/p/fc-27-is-now-2026s-top-seller
+[B06]: https://ultimaficha.com.br/2026/10/07/crimson-desert-faturamento-2026/
+[B07]: https://en.sedaily.com/finance/2026/03/19/pearl-abyss-shares-plunge-29-percent-as-crimson-desert
+[B08]: https://www.pearlabyss.com/en-US/Board/Detail?_boardNo=442
+[B09]: https://playday.one/2026/01/29/1v1-will-powers-and-pearl-abyss-on-crimson-desert-interview/
+[B10]: https://store.epicgames.com/news/crimson-desert-interview-will-powers-transcend-genre-boundaries?lang=en-US
+[B11]: https://cedec.cesa.or.jp/2026/timetable/detail/s69a79f2191d94/
+[B12]: https://prtimes.jp/main/html/rd/p/000000546.000040769.html
+[B13]: https://www.pearlabyss.com/ko-KR/Board/Detail?_boardNo=15143
+[B14]: https://www.invenglobal.com/articles/24095/pearl-abyss-unveils-crimson-desert-development-process
+[B15]: https://www.4gamer.net/games/484/G048495/20260729039/
+[B16]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=40
+[B17]: https://www.gamespress.com/Pearl-Abyss-Showcases-BlackSpace-Engine-at-GDC-2025
+[B18]: https://www.havok.com/havok-physics/
+[B19]: https://www.pearlabyss.com/ko-kr/Board/Detail?_boardNo=15248
+[B20]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=22
+[B21]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=26
+[B22]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=27
+[B23]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=29
+[B24]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=50
+[B25]: https://www.pearlabyss.com/en-US/Board/Detail?_boardNo=14504
+[B26]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=57
+[B27]: https://www.mynewsdesk.com/uk/swipe-right/pressreleases/pearl-abyss-unveils-launch-trailer-for-crimson-desert-ahead-of-march-19-global-release-3437110
+[B28]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=66
+[B29]: https://aws.amazon.com/blogs/gametech/how-amazon-gamelift-streams-is-boosting-game-discoverability-on-twitch/
+[B30]: https://www.thegamebusiness.com/p/how-did-ps5-boxed-games-sell-in-september
+[B31]: https://crimsondesert.pearlabyss.com/en-US/Main
+[B32]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=134
+[B33]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=137
+[B34]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=123
