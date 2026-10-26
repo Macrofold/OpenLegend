@@ -106,7 +106,7 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
       alive: !!entity.actor?.alive,
       memory: hasMemory(entity),
       nativeResponse: entity.actor?.controller === 'native' && !!entity.animal?.episode,
-      object: !entity.actor && !entity.animal,
+      object: (!entity.actor && !entity.animal) || !!entity.remains,
       detailSignature: JSON.stringify([
         !entity.actor ? entity.description : null,
         !entity.actor ? entity.nameForm : null,

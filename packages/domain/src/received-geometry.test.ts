@@ -12,8 +12,16 @@ import { worldPlacement, setSpatialPosition } from './spatial-state.js';
 import { initializePerception } from './kernel.js';
 import { currentAttentionCues, currentDetailedAttention, setAttentionFocus } from './attention.js';
 import { observationDependencies, observationLearningSources } from './experience-manifest.js';
-import { perceptionEvidenceOwner, currentBodyObservation } from './perception-evidence.js';
-import { selectTemporalHistory, retireTemporalChunks } from './temporal-evidence.js';
+import {
+  perceptionEvidenceOwner,
+  currentBodyObservation,
+  captureCurrentGeometrySupport,
+} from './perception-evidence.js';
+import {
+  selectTemporalHistory,
+  retireTemporalChunks,
+  clearTemporalCaptureReferences,
+} from './temporal-evidence.js';
 import { validateTemporalEvidenceState } from './temporal-validation.js';
 import type { WorldState } from './types.js';
 import {
@@ -243,6 +251,98 @@ function nativeScene(
 }
 
 describe('native received relation producers', () => {
+  it('seals an actually held geometry interval at a cognition cut without sensing or duplicate confirmation', () => {
+    const { world, people } = nativeScene(1, map());
+    const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
+    const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.episodeId;
+    world.simTime = 2;
+    setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    const before = world.experience!.temporal!.actors[PLAYER_ID]!.count;
+    captureCurrentGeometrySupport(world, PLAYER_ID);
+    expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBeGreaterThan(before);
+    const sealed = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+      subject,
+      from: 2,
+      through: 2,
+      bytes: 1024 * 1024,
+      limit: 1000,
+    }).entries.find((entry) =>
+      entry.receipt.facets.some((facet) => facet.original?.source.id === original.id),
+    )!;
+    expect(sealed.receipt.facets[0]).toMatchObject({
+      measuredThrough: 0,
+      acquiredAt: 0,
+      confirmedThrough: 2,
+    });
+    expect(currentReceivedGeometry(world, PLAYER_ID).observations[0]!.id).toBe(original.id);
+    const count = world.experience!.temporal!.actors[PLAYER_ID]!.count;
+    captureCurrentGeometrySupport(world, PLAYER_ID);
+    expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBe(count);
+    validateTemporalEvidenceState(world);
+  });
+  it('rebaselines a still-attended unchanged view after its old recorded support is actually retired', () => {
+    const { world, player, people } = nativeScene(1, map());
+    people[0]!.actor!.capabilities!.memory = false;
+    world.simTime = 15;
+    setSpatialPosition(world, player, { x: 1.25, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
+    const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.episodeId;
+    const oldBlock = world.experience!.temporal!.actors[PLAYER_ID]!.captures[original.id]!.blockId;
+    world.simTime = 21610;
+    setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    world.simTime = 21616;
+    const temporal = world.experience!.temporal!;
+    for (const [actorId, history] of Object.entries(temporal.actors)) {
+      const old = history.chunks.filter((chunk) => chunk.throughAt <= 15);
+      retireTemporalChunks(
+        world,
+        actorId,
+        old.map((chunk) => chunk.id),
+        {
+          bytes: old.reduce((n, chunk) => n + chunk.bytes, 0),
+          count: old.reduce((n, chunk) => n + chunk.count, 0),
+        },
+        null,
+        15,
+      );
+    }
+    expect(
+      Object.values(temporal.actors)
+        .flatMap((actor) => actor.chunks.flatMap((chunk) => chunk.receipts))
+        .some((receipt) => receipt.facets.some((facet) => facet.blockId === oldBlock)),
+    ).toBe(false);
+    clearTemporalCaptureReferences(world, new Set([oldBlock]));
+    delete temporal.sources[oldBlock];
+    expect(temporal.actors[PLAYER_ID]!.capturesInvalidated).toBe(true);
+    initializePerception(world, []);
+    const recent = selectTemporalHistory(temporal, PLAYER_ID, {
+      subject,
+      from: 21600,
+      bytes: 1024 * 1024,
+      limit: 1000,
+    });
+    expect(
+      recent.entries.some(
+        (entry) =>
+          entry.receipt.at === 21610 && entry.values.some((value) => value.kind === 'body'),
+      ),
+    ).toBe(true);
+    const rebase = recent.entries.find((entry) =>
+      entry.receipt.facets.some((facet) => facet.original?.source.id === original.id),
+    )!;
+    expect(rebase.receipt.at).toBe(21616);
+    expect(rebase.receipt.facets[0]).toMatchObject({
+      acquiredAt: 15,
+      measuredThrough: 15,
+      confirmedThrough: 21616,
+    });
+    expect(currentReceivedGeometry(world, PLAYER_ID).observations[0]!.id).toBe(original.id);
+    expect(temporal.actors[PLAYER_ID]!.capturesInvalidated).toBeUndefined();
+    validateTemporalEvidenceState(world);
+  });
   it('retains contemporaneous received terrain without an alarm and never substitutes a later view', () => {
     const { world, player, people } = nativeScene(1, map());
     const person = people[0]!,

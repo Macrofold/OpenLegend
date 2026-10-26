@@ -96,6 +96,12 @@ it('reads historical native distances through cold actor receipts, including a l
         entry.receipt.facets.some((facet) => facet.measuredThrough === 2),
     ),
   ).toBe(true);
+  const residentIds = new Set(
+    service.world.experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
+      chunk.receipts.map((receipt) => receipt.id),
+    ),
+  );
+  expect(history.entries.some((entry) => !residentIds.has(entry.receipt.id))).toBe(true);
   const captured = captureSituation(service.world, PLAYER_ID, 'cold-historical-spatial', history);
   const response = await expandSituation(
     captured,
@@ -142,7 +148,10 @@ it('reads historical native distances through cold actor receipts, including a l
     }),
   ).toBeDefined();
   expect(atTwo.other?.status).toBe('complete');
-  expect(atTwo.other?.endpointChange?.decreaseLower).toBeGreaterThan(0.5);
+  // The finite cold page can omit an older endpoint. Exact distance remains
+  // useful, but a movement change requires both retained endpoint measurements.
+  if (atTwo.other?.endpointChange)
+    expect(atTwo.other.endpointChange.decreaseLower).toBeGreaterThan(0.5);
   expect(atTwo.support.every((support) => captured.receiptDetails[support.reference])).toBe(true);
   expect(
     await store.memories.temporalSelectionsCurrent(scope, Object.values(captured.receiptDetails)),

@@ -22,6 +22,7 @@ import {
   currentAttentionCues,
   updateAttention,
   type AttentionEntry,
+  type AttentionUpdate,
 } from './attention.js';
 import {
   validateReceivedSurfacePatch,
@@ -1492,7 +1493,8 @@ function captureAttendedGeometryContext(
   if (newContexts.length) for (const observation of available) include(observation, newContexts);
   if (confirmHeld) {
     const captures = world.experience?.temporal?.actors[observerId]?.captures;
-    for (const observation of available) if (!captures?.[observation.id]) include(observation, active);
+    for (const observation of available)
+      if (!captures?.[observation.id]) include(observation, active);
   }
   // A received edge needs its actual near/far patch facts even when those were
   // acquired before this recording scope began. Never consult today's terrain.
@@ -1538,8 +1540,15 @@ function captureAttendedGeometryContext(
 /** Seal the existing receiver's supported static interval before a cognition cut.
  * No sensing, contact credit or lasting account is created by this preparation. */
 export function captureCurrentGeometrySupport(world: WorldState, observerId: string): void {
-  if (!entityGet(world.entities, observerId) || !hasMemory(entityGet(world.entities, observerId)!)) return;
-  captureAttendedGeometryContext(world, observerId, currentDetailedAttention(world, observerId), [], true);
+  const observer = entityGet(world.entities, observerId);
+  if (!observer || !hasMemory(observer)) return;
+  captureAttendedGeometryContext(
+    world,
+    observerId,
+    currentDetailedAttention(world, observerId),
+    [],
+    true,
+  );
 }
 
 function pruneLostBodyIndividuals(
@@ -1574,6 +1583,7 @@ export function reconcileAttendedTemporalEvidence(
   changedSourceIds?: readonly string[],
   creditContacts = true,
   newGeometry: readonly ObservationContribution[] = [],
+  cues: Pick<AttentionUpdate, 'urgency' | 'proofs'> = {},
 ): ReadonlySet<string> | undefined {
   const observer = entityGet(world.entities, observerId);
   if (!observer || !hasMemory(observer)) return;
@@ -1582,7 +1592,7 @@ export function reconcileAttendedTemporalEvidence(
   const priorEntries = currentDetailedAttention(world, observerId).filter((entry) =>
     before.has(entry.sourceId),
   );
-  const result = updateAttention(world, observerId, { directSubjects, changedSourceIds });
+  const result = updateAttention(world, observerId, { directSubjects, changedSourceIds, ...cues });
   const after = new Set(result.after);
   const selected = new Set([...before, ...after]);
   const current = world.perceptionEvidence?.[observerId]?.current;
@@ -1594,9 +1604,10 @@ export function reconcileAttendedTemporalEvidence(
   );
   const entering = new Set([...after].filter((id) => !before.has(id))),
     exiting = new Set([...before].filter((id) => !after.has(id)));
-  const measured = changedSourceIds && !rebaseline
-    ? new Set([...changedSourceIds, ...entering, ...exiting])
-    : undefined;
+  const measured =
+    changedSourceIds && !rebaseline
+      ? new Set([...changedSourceIds, ...entering, ...exiting])
+      : undefined;
   const contacts = new Map<string, ObserverSubject>();
   if (creditContacts)
     for (const id of selected) {
@@ -1675,7 +1686,13 @@ export function reconcileAttendedTemporalEvidence(
       );
     }
   }
-  const geometry = captureAttendedGeometryContext(world, observerId, priorEntries, newGeometry, rebaseline);
+  const geometry = captureAttendedGeometryContext(
+    world,
+    observerId,
+    priorEntries,
+    newGeometry,
+    rebaseline,
+  );
   if (history) delete history.capturesInvalidated;
   return geometry;
 }
@@ -1936,13 +1953,18 @@ export function acquireAwarenessObservation(
   const binding = awareness.sourceBody;
   const bodyLease =
     binding && binding.leaseId !== null && eligibleBodyLease(world, observer.id, binding.entityId);
-  if (
+  const boundBody =
     bodyLease &&
     bodyLease.id === binding!.leaseId &&
-    bodyLease.subjectPhysicalLife === binding!.physicalLife &&
-    recognition?.subject &&
-    recognition.recognized
-  ) {
+    bodyLease.subjectPhysicalLife === binding!.physicalLife
+      ? bodyLease
+      : undefined;
+  const receivedBody =
+    boundBody ??
+    (!awareness.speech && modality === 'sight' && visualSubjectId
+      ? eligibleBodyLease(world, observer.id, visualSubjectId)
+      : undefined);
+  if (boundBody && recognition?.subject && recognition.recognized) {
     const ordinal = contribution.facets.findIndex(
       (facet) =>
         facet.value.kind === 'association' &&
@@ -1956,8 +1978,8 @@ export function acquireAwarenessObservation(
         observer: observerLife(observer),
         subjectId: binding!.entityId,
         subjectPhysicalLife: binding!.physicalLife,
-        bodyLeaseId: bodyLease.id,
-        exposure: cloneValue(bodyLease.exposure),
+        bodyLeaseId: boundBody.id,
+        exposure: cloneValue(boundBody.exposure),
         original: contribution,
         originalOrdinal: ordinal,
         modality: 'sight',
@@ -1969,14 +1991,24 @@ export function acquireAwarenessObservation(
         confirmedThrough: event.at,
       };
       selectedAssociateBodyFamiliarity(world, observer.id, binding!.entityId);
-      reconcileAttendedTemporalEvidence(
-        world,
-        observer.id,
-        undefined,
-        [binding!.entityId],
-        [binding!.entityId],
-      );
     }
+  }
+  if (receivedBody) {
+    const id = receivedBody.subjectId;
+    const ordinal = contribution.facets.findIndex(
+      (facet) => facet.value.kind === 'event' || facet.value.kind === 'speech',
+    );
+    const proof = observationFactKey(contribution, Math.max(0, ordinal));
+    reconcileAttendedTemporalEvidence(
+      world,
+      observer.id,
+      undefined,
+      awareness.targetId === observer.id ? [id] : [],
+      [id],
+      false,
+      [],
+      { urgency: { [id]: awareness.urgency ?? 0 }, proofs: { [id]: proof } },
+    );
   }
   return contribution;
 }

@@ -11,8 +11,10 @@ import {
   quantityOf,
   createItemLot,
   installNativeResponseProfile,
+  nativeResponseProfile,
   setAttentionFocus,
   initializePerception,
+  currentBodyObservation,
   type DeclarationDraft,
 } from '@open-legend/domain';
 import { readConfig } from '../../../tests/fixtures/database.js';
@@ -122,11 +124,11 @@ describe('actor-scoped native decision candidates', () => {
   it('executes a learned tool and food loop through scoped feasible candidates', async () => {
     const service = await setup();
     // This case checks a learned tool's command/food consumers, not whether a
-    // roaming animal can escape an aiming hunter. Keep its specimen stationary;
-    // ordinary native avoidance has its own independent gameplay checks.
+    // roaming animal can escape an aiming hunter. Its test-only movement profile
+    // remains native but very slow; avoidance has independent gameplay checks.
     await editWorld(service, (world) => {
       const specimen = entityGet(world.entities, 'hare-1')!;
-      const original = world.nativeResponseProfiles![specimen.animal!.profile.id]!;
+      const original = nativeResponseProfile(world, specimen.animal!.profile)!;
       specimen.animal!.profile = installNativeResponseProfile(world, {
         ...structuredClone(original),
         id: 'fixture:slow-target',
@@ -244,6 +246,7 @@ describe('actor-scoped native decision candidates', () => {
         .map(([key]) => key);
       expect(setAttentionFocus(world, NPC_ID, keys)).toBe(true);
     });
+    expect(currentBodyObservation(service.world, NPC_ID, 'hare-1')).toBeDefined();
     await perform(
       service,
       select(service, 'harvest', (action) => action.command?.targetId === 'hare-1'),

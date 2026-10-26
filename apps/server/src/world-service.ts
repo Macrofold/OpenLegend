@@ -209,6 +209,7 @@ import {
   createBaseStartingWorld,
   baseWorldInitialConstructionSeeds,
   updateWorld,
+  captureCurrentGeometrySupport,
   appendedEventCount,
   freezeWorld,
   forgetExperience,
@@ -2528,6 +2529,22 @@ export class WorldService {
     this.assertScope(scope, scope.actorId === actorId ? 'play' : 'inspect');
     if (!stillPrivate()) throw new Error('Private action history changed during inspection.');
     return result;
+  }
+
+  /** Close only already-received terrain support before a private decision read.
+   * This records the existing interval; it neither looks again nor advances time. */
+  async prepareCognitionEvidence(actorId: string): Promise<void> {
+    await this.mutate(async () => {
+      await this.ready;
+      const world = updateWorld(this.world, (draft) =>
+        captureCurrentGeometrySupport(draft, actorId),
+      );
+      if (
+        world !== this.world &&
+        !(await this.commit({ ...this.saved, world }, undefined, 'append'))
+      )
+        throw new Error(this.storageError ?? 'Received terrain support could not be saved.');
+    });
   }
 
   async prepareActivityLearning(actorId: string) {

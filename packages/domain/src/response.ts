@@ -100,7 +100,6 @@ export interface SituationProposalBinding {
   /** Exact already selected cold bodies; the server fences membership after awaits. */
   receiptDetails?: Record<string, { receipt: TemporalReceipt; values: TemporalValue[] }>;
   observationReferences?: Record<string, ObservationContribution>;
-  observationSupportThrough?: Record<string, number>;
   currentReferences?: Record<string, CapturedCurrentFacet>;
   presented?: readonly AttentionPresentation[];
 }
@@ -486,7 +485,6 @@ export function commitActorResponse(
                 ([key, observation]) => [key, [observation.id, observation.revision]],
               ),
             ),
-            observationSupportThrough: situationBinding.observationSupportThrough,
             currentReferences: Object.fromEntries(
               Object.entries(situationBinding.currentReferences ?? {}).map(([key, snapshot]) => [
                 key,
@@ -696,20 +694,6 @@ export function commitActorResponse(
             available = false;
             break;
           }
-          const heldThrough = getOwn(binding.observationSupportThrough ?? {}, reference);
-          if (
-            heldThrough !== undefined &&
-            (!Number.isFinite(heldThrough) ||
-              heldThrough > world.simTime ||
-              observation.facets.some(
-                (facet) =>
-                  heldThrough < facet.measuredThrough ||
-                  !['surface-patch', 'physical-boundary'].includes(facet.value.kind),
-              ))
-          ) {
-            available = false;
-            break;
-          }
           const issued = captureTemporalObservation(
             world,
             actorId,
@@ -717,7 +701,6 @@ export function commitActorResponse(
             [observation.id],
             false,
             selectedTemporalPolicy(world).recent,
-            heldThrough === undefined ? {} : { confirmedThrough: heldThrough },
           );
           const captured = issued && retainedTemporalReceipt(world, issued);
           if (!captured) {

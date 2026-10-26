@@ -6,6 +6,7 @@ import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
 import { ensureExperienceAccounting } from './remembered-impressions.js';
 import { personalFactAlias } from './experience-source.js';
+import { isImmutableData } from './records.js';
 import { selectedRecognitionSupportSourceIds } from './world-composition.js';
 import type { WorldState } from './types.js';
 import type { ObserverSubject } from './knowledge.js';
@@ -205,24 +206,7 @@ const blockIndexes = new WeakMap<
   { id: string; length: number; index: Map<string, number> }
 >();
 const motionValues = new WeakMap<object, TemporalMotionValue>();
-const immutableValues = new WeakSet<object>();
 const valueEncodings = new WeakMap<object, { json: string; bytes: number }>();
-function immutableJson(value: unknown): boolean {
-  if (value === null || typeof value !== 'object') return typeof value !== 'function';
-  if (immutableValues.has(value)) return true;
-  if (!Object.isFrozen(value) || 'toJSON' in value) return false;
-  const prototype = Object.getPrototypeOf(value);
-  if (prototype !== Object.prototype && prototype !== null && prototype !== Array.prototype)
-    return false;
-  for (const key of Object.keys(value)) {
-    const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    // A frozen accessor can still return changing data; only frozen data children
-    // establish that the exact received JSON can be reused.
-    if (!descriptor || !('value' in descriptor) || !immutableJson(descriptor.value)) return false;
-  }
-  immutableValues.add(value);
-  return true;
-}
 function valueEncoding(value: TemporalValue): { json: string; bytes: number } {
   const supplied = readOnlyDraftView(value);
   const held = valueEncodings.get(supplied);
@@ -231,7 +215,7 @@ function valueEncoding(value: TemporalValue): { json: string; bytes: number } {
   const encoded = { json, bytes: encoder.encode(json).byteLength };
   // These are derived bytes, not an evidence registry. Weak ownership follows the
   // actual immutable source, while builders and shallow-frozen data stay fresh.
-  if (immutableJson(supplied)) valueEncodings.set(supplied, encoded);
+  if (isImmutableData(supplied)) valueEncodings.set(supplied, encoded);
   return encoded;
 }
 const equalValue = (left: TemporalValue, right: TemporalValue) =>
@@ -897,7 +881,6 @@ export interface TemporalHistoryQuery {
   /** Support time differs from the later receipt that confirms a held interval. */
   measurements?: { from: number; through: number };
   kinds?: readonly TemporalValue['kind'][];
-  sourceIds?: readonly string[];
   limit?: number;
   bytes?: number;
 }
@@ -958,11 +941,6 @@ export function selectTemporalHistory(
       (receipt) =>
         receipt.actorId === actorId &&
         (!query.cut || temporalReceiptWithinPrefix(receipt, query.cut)) &&
-        (!query.sourceIds?.length ||
-          receipt.sourceIds.some((source) => query.sourceIds!.includes(source)) ||
-          receipt.facets.some(
-            (facet) => !!facet.original && query.sourceIds!.includes(facet.original.source.id),
-          )) &&
         (!query.measurements ||
           receipt.facets.some(
             (facet) =>

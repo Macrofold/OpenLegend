@@ -6,8 +6,6 @@ import {
   receivedSeparation,
   type ReceivedBodyGeometry,
 } from './received-scene.js';
-import { canonicalJson } from './events.js';
-import type { ObservationFactKey } from './perception-evidence.js';
 import type {
   TemporalFacetReference,
   TemporalHistorySelection,
@@ -20,11 +18,6 @@ export interface HistoricalSpatialRequest {
   from: number;
   through: number;
   radius: number;
-}
-export interface HistoricalGeometrySupport {
-  original: ObservationFactKey;
-  value: TemporalValue;
-  confirmedThrough: number;
 }
 interface EndpointChange {
   from: number;
@@ -101,31 +94,11 @@ export function historicalSpatialMeasurements(
   selection: TemporalHistorySelection,
   request: HistoricalSpatialRequest,
   allowance: number,
-  held: readonly HistoricalGeometrySupport[] = [],
 ) {
-  const certificates = new Map(
-    held.map((certificate) => [
-      canonicalJson(certificate.original),
-      { ...certificate, serialized: canonicalJson(certificate.value) },
-    ]),
-  );
   const facts: Fact[] = [];
   for (const [entry, selected] of selection.entries.entries())
     for (const [facet, value] of selected.values.entries()) {
-      const original = selected.receipt.facets[facet]!;
-      const certificate = original.original && certificates.get(canonicalJson(original.original));
-      const reference =
-        certificate &&
-        (value.kind === 'surface-patch' || value.kind === 'physical-boundary') &&
-        certificate.serialized === canonicalJson(value)
-          ? {
-              ...original,
-              confirmedThrough: Math.max(
-                original.confirmedThrough ?? original.measuredThrough,
-                certificate.confirmedThrough,
-              ),
-            }
-          : original;
+      const reference = selected.receipt.facets[facet]!;
       facts.push({
         entry,
         facet,
@@ -202,18 +175,40 @@ export function historicalSpatialMeasurements(
     const anchorGeometry = geometry(anchor, at, facts);
     if (request.other) {
       sample.other = { status: 'unavailable' };
+      let compatible: BodyFact | undefined;
+      let conflict = false;
       for (const other of others) {
         if (!remaining) {
           incomplete = true;
+          conflict = true;
           break;
         }
         remaining--;
         if (!supports(other, at)) continue;
-        sample.other = receivedSeparation(anchorGeometry, geometry(other, at, facts));
-        if (sample.other.status === 'complete') sample.support.push(proof(other));
-        break;
+        // Two different positions at one timestamp have no ordering relationship
+        // to this anchor measurement. Never pick whichever happened to sort first.
+        if (
+          compatible &&
+          JSON.stringify([
+            compatible.value.body.position,
+            compatible.value.body.radius,
+            compatible.value.body.height,
+          ]) !==
+            JSON.stringify([
+              other.value.body.position,
+              other.value.body.radius,
+              other.value.body.height,
+            ])
+        )
+          conflict = true;
+        compatible ??= other;
+      }
+      if (compatible && !conflict) {
+        sample.other = receivedSeparation(anchorGeometry, geometry(compatible, at, facts));
+        if (sample.other.status === 'complete') sample.support.push(proof(compatible));
       }
     }
+
     const bounds = receivedBodyBounds(
       anchor.value.body,
       anchorGeometry.location?.value.location.kind === 'point'

@@ -142,8 +142,11 @@ export interface AttentionCandidate {
   order: number;
   acquiredAt: number;
   urgency: number;
+  urgencyThrough?: number;
+  urgencySource?: ObservationFactKey;
   direct: boolean;
   directThrough?: number;
+  directSource?: ObservationFactKey;
   score: number;
 }
 export interface AttentionEntry {
@@ -224,6 +227,7 @@ export interface AttentionState {
 export interface AttentionUpdate {
   changedSourceIds?: readonly string[];
   urgency?: Readonly<Record<string, number>>;
+  proofs?: Readonly<Record<string, ObservationFactKey>>;
   directSubjects?: readonly string[];
 }
 const policyKey = (policy: AttentionPolicy) => JSON.stringify([policy.id, policy.version]);
@@ -327,15 +331,34 @@ export function updateAttention(
   const before = entriesBefore.map((entry) => entry.sourceId);
   const policy = selectedAttentionPolicy(world);
   state.policy = policyKey(policy);
-  const changed = update.changedSourceIds ?? [
-    ...new Set([
-      ...Object.values(readOnlyDraftView(owner.current))
-        .map((lease) => readOnlyDraftView(lease))
-        .filter((lease) => lease.value.kind === 'body')
-        .map((lease) => lease.subjectId),
-      ...Object.values(readOnlyDraftView(state.candidates)).map((candidate) => candidate.sourceId),
-    ]),
-  ];
+  const candidatesBefore = Object.values(readOnlyDraftView(state.candidates)).map(
+    readOnlyDraftView,
+  );
+  const expired = candidatesBefore.filter(
+    (candidate) =>
+      (candidate.urgencyThrough !== undefined && candidate.urgencyThrough <= world.simTime) ||
+      (candidate.directThrough !== undefined && candidate.directThrough <= world.simTime),
+  );
+  const changed = update.changedSourceIds
+    ? [
+        ...new Set([
+          ...update.changedSourceIds,
+          ...Object.keys(update.urgency ?? {}),
+          ...(update.directSubjects ?? []),
+          ...expired.map((candidate) => candidate.sourceId),
+        ]),
+      ]
+    : [
+        ...new Set([
+          ...Object.values(readOnlyDraftView(owner.current))
+            .map((lease) => readOnlyDraftView(lease))
+            .filter((lease) => lease.value.kind === 'body')
+            .map((lease) => lease.subjectId),
+          ...Object.values(readOnlyDraftView(state.candidates)).map(
+            (candidate) => candidate.sourceId,
+          ),
+        ]),
+      ];
   const existingBySource = new Map(
     Object.entries(readOnlyDraftView(state.candidates)).map(([key, candidate]) => [
       candidate.sourceId,
@@ -410,10 +433,32 @@ export function updateAttention(
     if (candidate.geometryRevision !== geometryRevision) geometryChanged = true;
     candidate.geometryRevision = geometryRevision;
     candidate.anchor ??= measured;
-    candidate.urgency = Math.max(candidate.urgency, update.urgency?.[sourceId] ?? 0);
-    candidate.direct = candidate.direct || !!update.directSubjects?.includes(sourceId);
-    if (update.directSubjects?.includes(sourceId))
+    if ((candidate.urgencyThrough ?? Infinity) <= world.simTime) {
+      candidate.urgency = 0;
+      delete candidate.urgencyThrough;
+      delete candidate.urgencySource;
+    }
+    if ((candidate.directThrough ?? Infinity) <= world.simTime) {
+      candidate.direct = false;
+      delete candidate.directThrough;
+      delete candidate.directSource;
+    }
+    const urgency = update.urgency?.[sourceId] ?? 0;
+    // A weaker new event cannot keep an earlier stronger cue alive indefinitely.
+    if (urgency > 0 && urgency >= candidate.urgency) {
+      candidate.urgency = urgency;
+      candidate.urgencyThrough = world.simTime + policy.stabilitySeconds;
+      candidate.urgencySource = update.proofs?.[sourceId]
+        ? cloneValue(update.proofs[sourceId])
+        : undefined;
+    }
+    if (update.directSubjects?.includes(sourceId)) {
+      candidate.direct = true;
       candidate.directThrough = world.simTime + policy.stabilitySeconds;
+      candidate.directSource = update.proofs?.[sourceId]
+        ? cloneValue(update.proofs[sourceId])
+        : undefined;
+    }
     const displacement =
       measured && candidate.anchor
         ? Math.max(
@@ -459,12 +504,32 @@ export function updateAttention(
   const current = new Map(
     entriesBefore.filter((entry) => live.has(entry.key)).map((entry) => [entry.key, entry]),
   );
+  const waiting = candidates.filter(
+    ([, candidate]) => candidate.presentedDescription !== candidate.descriptionRevision,
+  );
+  const previousDiscovery = entriesBefore.find(
+    (entry) =>
+      entry.basis === 'discovery' &&
+      entry.stableUntil > world.simTime &&
+      waiting.some(([key]) => key === entry.key),
+  );
+  const nextWaiting = waiting.filter(([, candidate]) => candidate.order > state.discoveryCursor);
+  const oldest = (nextWaiting.length ? nextWaiting : waiting).reduce<
+    readonly [string, AttentionCandidate] | undefined
+  >((value, entry) => (!value || entry[1].order < value[1].order ? entry : value), undefined);
+  const discoveryKey = previousDiscovery?.key ?? oldest?.[0];
+  if (discoveryKey && !previousDiscovery)
+    state.discoveryCursor = state.candidates[discoveryKey]!.order;
   const selected: Array<{ key: string; basis: AttentionBasis }> = [];
   const take = (key: string, basis: AttentionBasis) => {
-    if (selected.length < capacity && !selected.some((entry) => entry.key === key))
-      selected.push({ key, basis });
+    const reservation =
+      discoveryKey && key !== discoveryKey && !selected.some((entry) => entry.key === discoveryKey)
+        ? 1
+        : 0;
+    if (selected.length < capacity - reservation && !selected.some((entry) => entry.key === key))
+      selected.push({ key, basis: key === discoveryKey ? 'discovery' : basis });
   };
-  // A strong received cue can displace optional ongoing/discovery detail. Native
+  // A strong received cue can displace optional ongoing detail. Native
   // physical effects remain independent of whether this detail fits attention.
   const urgent: Array<readonly [string, AttentionCandidate]> = [];
   for (const item of candidates)
@@ -486,22 +551,6 @@ export function updateAttention(
   const workTarget = observer.actor.action?.targetId;
   for (const [key, candidate] of candidates)
     if (candidate.sourceId === workTarget && selected.length < ongoing) take(key, 'work');
-  const waiting = candidates.filter(
-    ([, candidate]) => candidate.presentedDescription !== candidate.descriptionRevision,
-  );
-  const previousDiscovery = entriesBefore.find(
-    (entry) =>
-      entry.basis === 'discovery' &&
-      entry.stableUntil > world.simTime &&
-      waiting.some(([key]) => key === entry.key),
-  );
-  const nextWaiting = waiting.filter(([, candidate]) => candidate.order > state.discoveryCursor);
-  const oldest = (nextWaiting.length ? nextWaiting : waiting).reduce<
-    readonly [string, AttentionCandidate] | undefined
-  >((value, entry) => (!value || entry[1].order < value[1].order ? entry : value), undefined);
-  const discoveryKey = previousDiscovery?.key ?? oldest?.[0];
-  if (discoveryKey && !previousDiscovery)
-    state.discoveryCursor = state.candidates[discoveryKey]!.order;
   const optionalCapacity =
     capacity -
     selected.length -
@@ -663,10 +712,8 @@ export function acknowledgeAttention(
     // A late successful presentation acknowledges only those supplied revisions;
     // newer received motion remains pending against the actually supplied point.
     candidate.anchor = value.point ? cloneValue(value.point) : candidate.anchor;
-    if (candidate.changeRevision === value.changeRevision) {
-      candidate.urgency = 0;
-      candidate.direct = false;
-    }
+    // Merely presenting this body does not acknowledge a later heard/seen event.
+    // Its finite native prominence expires independently of the body watermark.
   }
   reconcileAttendedTemporalEvidence(
     world,
@@ -838,19 +885,32 @@ export function revokeAttentionEvidence(
 ): void {
   const state = owned(world, observerId)?.attention;
   if (!state) return;
+  const revoked = (fact: ObservationFactKey | undefined) =>
+    !!fact &&
+    (affected.has(fact.source.id) ||
+      affected.has(personalFactAlias(fact.source.id, fact.ordinal)) ||
+      affected.has(JSON.stringify(fact)) ||
+      affected.has(JSON.stringify(fact.source)));
+  const changed: string[] = [];
+  for (const candidate of Object.values(state.candidates)) {
+    if (revoked(candidate.urgencySource)) {
+      candidate.urgency = 0;
+      delete candidate.urgencyThrough;
+      delete candidate.urgencySource;
+      changed.push(candidate.sourceId);
+    }
+    if (revoked(candidate.directSource)) {
+      candidate.direct = false;
+      delete candidate.directThrough;
+      delete candidate.directSource;
+      changed.push(candidate.sourceId);
+    }
+  }
   for (const [key, latch] of Object.entries(state.latches)) {
     // A pending all-clear interval is optional derived evidence. A correction
     // cannot preserve it by omission merely because its original alarm survived.
     if (affected.size) delete latch.clearSince;
-    if (
-      ![...(latch.entryProof ?? []), ...(latch.newestProof ?? [])].some(
-        (fact) =>
-          affected.has(fact.source.id) ||
-          affected.has(personalFactAlias(fact.source.id, fact.ordinal)) ||
-          affected.has(JSON.stringify(fact)) ||
-          affected.has(JSON.stringify(fact.source)),
-      )
-    )
+    if (![...(latch.entryProof ?? []), ...(latch.newestProof ?? [])].some((fact) => revoked(fact)))
       continue;
     latch.active = false;
     delete latch.entryProof;
@@ -861,6 +921,8 @@ export function revokeAttentionEvidence(
     state.relationDirty[key] = ++state.relationRevision;
     delete state.relationScans[key];
   }
+  if (changed.length)
+    reconcileAttendedTemporalEvidence(world, observerId, undefined, [], changed, false);
 }
 
 /** Current-save boundary: exact references are validated by the owning perception validator. */
@@ -952,6 +1014,9 @@ export function validateAttentionState(value: unknown): asserts value is Attenti
       !Number.isFinite(candidate.urgency) ||
       candidate.urgency < 0 ||
       candidate.urgency > 10 ||
+      (candidate.urgency > 0 && candidate.urgencyThrough === undefined) ||
+      (candidate.urgencyThrough !== undefined &&
+        (!Number.isFinite(candidate.urgencyThrough) || candidate.urgencyThrough < 0)) ||
       typeof candidate.direct !== 'boolean' ||
       (candidate.directThrough !== undefined &&
         (!Number.isFinite(candidate.directThrough) || candidate.directThrough < 0)) ||
@@ -962,6 +1027,12 @@ export function validateAttentionState(value: unknown): asserts value is Attenti
       (candidate.subject !== undefined && !validObserverSubject(candidate.subject))
     )
       throw new Error('Invalid attention candidate.');
+    for (const fact of [candidate.urgencySource, candidate.directSource])
+      if (fact) {
+        validateEvidenceSource(fact.source);
+        if (!Number.isSafeInteger(fact.ordinal) || fact.ordinal < 0)
+          throw new Error('Invalid received attention cue.');
+      }
   }
   if (
     new Set(state.entries.map((entry) => entry.key)).size !== state.entries.length ||

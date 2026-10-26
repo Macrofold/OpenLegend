@@ -1,8 +1,10 @@
 # Attention, crowds and scenes — product and behavior specification
 
-| Status      | Current progress                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native attention, familiarity and recent-memory paths are implemented; integrated semantic and scale qualification remain open. | 2026-10-26   |
+| Status      | Current progress                                                                                                                | Last updated            |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| In progress | Native attention, familiarity and recent-memory paths are implemented; integrated semantic and scale qualification remain open. | 2026-10-26 21:15:56 UTC |
+
+**Architecture consulted 2026-10-26 21:15:56 UTC.**
 
 **Supported attention/memory core implemented; broader scene proposals remain separate.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds, timed speech and voice-media delivery remain separate proposals outside the implemented core.
 
@@ -265,6 +267,8 @@ The situation presented to cognition includes current context **and selected rec
 An apparent enemy approaching a daughter requires separately supported beliefs about the two people and actual received closing motion. A daughter running toward a cliff requires received movement and actual evidence of the edge/drop. The static environment has its own context allowance, so people cannot consume all its representation. If the edge was never observed, or a crowded coarse view hides the important individual detail, danger can still be missed. Native supported physical reactions continue without waiting for optional understanding.
 
 General significance uses the existing cognition turn, with bounded native expansion queries when useful. A character can ask one batch of additional questions and then give one separately funded final interpretation. Incomplete results remain explicitly incomplete; they carry no unusable continuation token and do not start a repeating query loop. It can recognize a blacksmithing connection from a novel sufficiently understood portrait, without reflection prelisting portraits or weapons. The same turn may change detailed attention, propose a supported action, remember something or do nothing. No model call per object/sample, compulsory thought, universal hazard classifier or secret all-world context is introduced.
+
+An AI request holds only a bounded temporary copy of the supplied observations; it does not extend optional memory retention. If the exact supporting detail expires before the answer can be accepted, that answer may be declined as stale. Required knowledge and obligations retain their separately admitted minimum proof.
 
 The short world-selected noticing deadline applies to the initial autonomous request. Player conversations retain their existing interactive deadlines, and a separately funded higher-model reconsideration retains its existing useful-later contract. Neither a delayed answer nor an expired initial request authorizes another paid attempt.
 

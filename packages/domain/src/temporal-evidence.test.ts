@@ -173,7 +173,7 @@ it('keeps mutable nested received values fresh while reusing immutable values wi
       world,
       PLAYER_ID,
       {
-        subject: 'received-note',
+        subject: value.kind === 'personal-account' ? value.id : 'received-note',
         change: 'change',
         facets: [
           {
@@ -209,6 +209,26 @@ it('keeps mutable nested received values fresh while reusing immutable values wi
       values.map((value) => value.kind === 'personal-account' && value.data?.['nested']),
     ),
   ).toEqual([{ note: 'Before: café and 鹿.' }, { ...nested }, { ...nested }]);
+  const child = { note: 'Before an array edit.' };
+  const array = [child];
+  Object.defineProperty(array, '0', { enumerable: false });
+  Object.freeze(array);
+  const arrayValue = Object.freeze({
+    ...supplied,
+    id: 'received-array',
+    data: Object.freeze({ array }),
+  });
+  const arrayBefore = append(arrayValue);
+  child.note = 'After an array edit.';
+  expect(append(arrayValue, arrayBefore).valueOrdinal).not.toBe(arrayBefore.valueOrdinal);
+  expect(
+    selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+      ...query,
+      subject: 'received-array',
+    }).entries.flatMap(({ values }) =>
+      values.map((value) => value.kind === 'personal-account' && value.data?.['array']),
+    ),
+  ).toEqual([[{ note: 'Before an array edit.' }], [{ note: 'After an array edit.' }]]);
   validateTemporalEvidenceState(world);
   const restored = JSON.parse(JSON.stringify(world));
   validateTemporalEvidenceState(restored);

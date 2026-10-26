@@ -51,7 +51,6 @@ export interface TemporalHistoryQuery {
   cut?: TemporalReceiptPrefix;
   measurements?: { from: number; through: number };
   kinds?: readonly TemporalValue['kind'][];
-  sourceIds?: readonly string[];
 }
 
 export function retentionNeedsPreparation(world: WorldState): boolean {
@@ -118,7 +117,6 @@ export async function readTemporalHistory(
       octet_length(payload) AS encoded_bytes FROM mind_temporal_chunks
     WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=?
       ${subjects.length ? 'AND subjects && ?::text[]' : ''}
-      ${query.sourceIds?.length ? 'AND source_ids && ?::text[]' : ''}
       ${query.measurements ? 'AND last_supported_at>=? AND first_measured_at<=?' : ''}
       ${query.physicalLife === undefined ? '' : 'AND physical_life=?'}
       ${query.epoch === undefined ? '' : 'AND receipt_epoch=?'}
@@ -132,7 +130,6 @@ export async function readTemporalHistory(
       from,
       through,
       ...(subjects.length ? [subjects] : []),
-      ...(query.sourceIds?.length ? [query.sourceIds] : []),
       ...(query.measurements ? [query.measurements.from, query.measurements.through] : []),
       ...(query.physicalLife === undefined ? [] : [query.physicalLife]),
       ...(query.epoch === undefined ? [] : [query.epoch]),
@@ -219,11 +216,6 @@ export async function readTemporalHistory(
       (receipt) =>
         receipt.actorId === scope.actorId &&
         (!query.cut || temporalReceiptWithinPrefix(receipt, query.cut)) &&
-        (!query.sourceIds?.length ||
-          receipt.sourceIds.some((source) => query.sourceIds!.includes(source)) ||
-          receipt.facets.some(
-            (facet) => !!facet.original && query.sourceIds!.includes(facet.original.source.id),
-          )) &&
         (!query.measurements ||
           receipt.facets.some(
             (facet) =>

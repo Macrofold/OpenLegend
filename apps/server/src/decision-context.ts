@@ -335,6 +335,7 @@ export async function prepareDecision(
   mode: 'ordinary' | 'native-only' = 'ordinary',
   requiredChoices?: RequiredDecisionChoices,
 ) {
+  await service.prepareCognitionEvidence(actorId);
   await service.flushMemorySources(actorId);
   const world = service.world;
   const generation = service.generation;

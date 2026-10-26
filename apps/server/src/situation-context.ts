@@ -98,6 +98,9 @@ export function temporalHistoryForModel(
           measuredFrom: fact.measuredFrom,
           measuredThrough: fact.measuredThrough,
           acquiredAt: fact.acquiredAt,
+          ...(fact.confirmedThrough !== undefined
+            ? { confirmedThrough: fact.confirmedThrough }
+            : {}),
           value: temporalValueForModel(world, actorId, value, [receipt.epoch, receipt.ordinal]),
         };
       }),
