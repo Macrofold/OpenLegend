@@ -71,6 +71,8 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 **Exit:** mask, foliage, wall and partial-cover cases yield the specified physical evidence without a global hidden flag, seeing through collision geometry, or transferring visibility to concealed parts.
 
+**Attention redesign dependency, design only:** [PS04-A](product-scalability.md#ps04-a--core-attention-and-recording) additionally needs observer-received terrain patches and physical-boundary snippets under [its geometry contract](../projects/attention-and-scenes-tech-design.md#51-received-scene-and-geometry). Coordinate through A's existing evidence owner and VG03/VG05: certify received interiors, distinguish physical edges from visibility limits, preserve near/far-side uncertainty and invalidate live support without rewriting history. This source is not delivered by current body sight, public map geometry or Known-place anchors. The owning PS04-A item remains open; existing VG scope/checks below are unchanged.
+
 ### VG04 — Authoritative light and consistent appearance
 
 **Status: Not started.** Coordinate [base-world vision](../worlds/base/vision-and-gaze.md), [FPW03](first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness), and G's projection.
