@@ -1,12 +1,12 @@
 # Fun, engagement and reasons to stop
 
-**Topic: FUN. Status: routing and design-reference page; existing coverage not yet reconciled.** This page does not replace or copy the existing or parallel-branch synthesis.
+**Topic: FUN. Status: routing and design-reference page; existing coverage not yet reconciled.** The linked synthesis owns findings; this page connects them to existing design and player-evidence work.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md) · [Adaptable template](main-topic-template.md)
 
 ## Substantive research owners
 
-Read the [existing cross-case essay](../essays/what-actually-makes-these-worlds-fun.md) and the [registered fun/engagement branch's transcript study](https://github.com/Macrofold/OpenLegend/blob/research/game-fun-and-engagement/archive/02-research/game-inspiration/references/roblox-addictiveness-video.md). The map records the ongoing consolidation. Inspect its definitive owner before extending or migrating that work; do not infer completion from a branch name or this routing page.
+Use the [canonical fun and sustainable-engagement synthesis](../essays/fun-and-sustainable-engagement.md), its [roster evidence](../references/fun-and-engagement-dossier-evidence.md) and [continuation](../references/fun-and-engagement-dossier-evidence-g81-g148.md), and the [Roblox transcript study](../references/roblox-addictiveness-video.md). The [earlier enjoyment essay](../essays/what-actually-makes-these-worlds-fun.md) remains a precursor; the synthesis owns the general principles and their qualifications.
 
 ## Research subtopics to keep explicit
 
@@ -24,7 +24,7 @@ What creates another wanted decision rather than obligation, repetitive recovery
 
 ## Current OpenLegend baseline and existing design owners
 
-Use the [source and goal map](source-and-goal-map.md#topic-fun), [playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md) and the existing [design dispositions](../../../../docs/maintainers/needs-design.md#current-design-dispositions). Human enjoyment, simulated character satisfaction, correctness and retention are different claims.
+The [playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md) apply these principles to selection. The [first-playable learning plan](../../../../docs/projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys) and [FPV06–FPV09](../../../../docs/maintainers/first-playable-validation.md#fpv06--observe-survival-building-and-character-choice) carry them into observations of meaningful choices, complete effort/payoff, independent contribution, stopping and voluntary return. The [source and goal map](source-and-goal-map.md#topic-fun) and [design dispositions](../../../../docs/maintainers/needs-design.md#current-design-dispositions) retain conditional extensions. Human enjoyment, simulated character satisfaction, correctness and retention are different claims.
 
 ## Complete situations and cross-topic consequences
 
@@ -43,4 +43,4 @@ None registered yet. Research headings are not implementation tasks. Add scoped 
 
 ## Ownership and integration boundary
 
-Keep substantive findings with the research owners above until an explicit reconciliation chooses the maintained destination. This page supplies a consistent local entry and future design references, not a second account of their conclusions. Coverage remains X until actual source-to-lesson evidence is reconciled; no game was newly assessed here.
+The synthesis owns research findings; the linked design and work owners own selection, delivery and player evidence. Coverage remains X until source-by-topic incorporation is assessed under the [coverage rules](progress.md); merged research and existing design applications do not by themselves complete that separate assessment.
