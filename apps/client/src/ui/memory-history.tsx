@@ -224,7 +224,9 @@ export function MemoryHistory({
     <div className="ol-memory-history" hidden={!visible}>
       <p className="ol-caption">
         {recent
-          ? owned ? 'Your character’s recent observations.' : 'This character’s recent observations.'
+          ? owned
+            ? 'Your character’s recent observations.'
+            : 'This character’s recent observations.'
           : owned
             ? 'Your character’s retained memories.'
             : 'Permitted private records for this character.'}{' '}

@@ -406,7 +406,12 @@ export async function projectView(
     'attentionPreferences',
     [attention?.candidates, attention?.explicit],
     () => ({
-      keys: new Map(Object.entries(attention?.candidates ?? {}).map(([key, candidate]) => [candidate.sourceId, key])),
+      keys: new Map(
+        Object.entries(attention?.candidates ?? {}).map(([key, candidate]) => [
+          candidate.sourceId,
+          key,
+        ]),
+      ),
       preferences: new Set(attention?.explicit ?? []),
     }),
   );
@@ -458,7 +463,9 @@ export async function projectView(
 
     return {
       id: currentContactReference(world, scope, entity),
-      ...(attentionKeys.has(entity.id) ? {attentionPreference: attentionPreferences.has(attentionKeys.get(entity.id)!)} : {}),
+      ...(attentionKeys.has(entity.id)
+        ? { attentionPreference: attentionPreferences.has(attentionKeys.get(entity.id)!) }
+        : {}),
       ...display,
       observation: {
         kind: 'current',
@@ -551,37 +558,33 @@ export async function projectView(
     snapshot.experience?.corrections?.[scope.actorId],
   ];
   const capturedEventOwners = eventEvidenceOwners(world);
-  const events = memo(
-    'visibleEvents',
-    [world.events, ...capturedEventOwners],
-    () => {
-      // Current reception may be displayed without becoming a lasting memory.
-      // Actor-owned receipts authorize the recent sequence; global events supply
-      // metadata only after that personal selection, never missing observations.
-      const wanted = new Set([
-        ...world.events.slice(-512).map((event) => event.id),
-        ...(world.experience?.awareness[scope.actorId] ?? [])
-          .slice(-512)
-          .map((entry) => entry.eventId),
-      ]);
-      const visible = [...receivedEventAccounts(world, scope.actorId, wanted, { current: true })]
-        .flatMap(([id, account]) => {
-          const event = service.worldEvent(id);
-          return event ? [projectEventEvidence(event, account.evidence)] : [];
-        })
-        .sort((a, b) => (b.order ?? b.sequence) - (a.order ?? a.sequence));
-      const bounded: ActorEvent[] = [];
-      let journal = 0;
-      let conversation = 0;
-      for (const event of visible) {
-        bounded.push(event);
-        if (isJournalEvent(event)) journal++;
-        if (isConversationEvent(event)) conversation++;
-        if (journal >= 60 && conversation >= 30) break;
-      }
-      return bounded.reverse();
-    },
-  );
+  const events = memo('visibleEvents', [world.events, ...capturedEventOwners], () => {
+    // Current reception may be displayed without becoming a lasting memory.
+    // Actor-owned receipts authorize the recent sequence; global events supply
+    // metadata only after that personal selection, never missing observations.
+    const wanted = new Set([
+      ...world.events.slice(-512).map((event) => event.id),
+      ...(world.experience?.awareness[scope.actorId] ?? [])
+        .slice(-512)
+        .map((entry) => entry.eventId),
+    ]);
+    const visible = [...receivedEventAccounts(world, scope.actorId, wanted, { current: true })]
+      .flatMap(([id, account]) => {
+        const event = service.worldEvent(id);
+        return event ? [projectEventEvidence(event, account.evidence)] : [];
+      })
+      .sort((a, b) => (b.order ?? b.sequence) - (a.order ?? a.sequence));
+    const bounded: ActorEvent[] = [];
+    let journal = 0;
+    let conversation = 0;
+    for (const event of visible) {
+      bounded.push(event);
+      if (isJournalEvent(event)) journal++;
+      if (isConversationEvent(event)) conversation++;
+      if (journal >= 60 && conversation >= 30) break;
+    }
+    return bounded.reverse();
+  });
   const usage = optional(
     service,
     cache,
@@ -1197,7 +1200,13 @@ export async function projectView(
     const wanted = new Set(events.map((event) => event.id));
     const before = receivedEventAccounts(world, scope.actorId, wanted, { current: true });
     const after = receivedEventAccounts(service.world, scope.actorId, wanted, { current: true });
-    if (events.some((event) => !after.has(event.id) || !same(before.get(event.id)?.evidence, after.get(event.id)?.evidence)))
+    if (
+      events.some(
+        (event) =>
+          !after.has(event.id) ||
+          !same(before.get(event.id)?.evidence, after.get(event.id)?.evidence),
+      )
+    )
       throw new ViewChangedError();
   }
   return projected;

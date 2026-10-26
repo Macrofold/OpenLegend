@@ -140,6 +140,8 @@ export interface TemporalActorHistory {
       contextSubjects?: string[];
     }
   >;
+  /** Actual payload retirement requires a new baseline at the next receiver phase. */
+  capturesInvalidated?: true;
   /** Sparse exact qualifying contact support, not an autobiographical archive. */
   supports?: Record<string, TemporalSupportCapsule>;
   accounts?: {
@@ -203,8 +205,60 @@ const blockIndexes = new WeakMap<
   { id: string; length: number; index: Map<string, number> }
 >();
 const motionValues = new WeakMap<object, TemporalMotionValue>();
-const equalValue = (left: unknown, right: unknown) =>
-  JSON.stringify(left) === JSON.stringify(right);
+const immutableValues = new WeakSet<object>();
+const valueEncodings = new WeakMap<object, { json: string; bytes: number }>();
+function immutableJson(value: unknown): boolean {
+  if (value === null || typeof value !== 'object') return typeof value !== 'function';
+  if (immutableValues.has(value)) return true;
+  if (!Object.isFrozen(value) || 'toJSON' in value) return false;
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null && prototype !== Array.prototype)
+    return false;
+  for (const key of Object.keys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    // A frozen accessor can still return changing data; only frozen data children
+    // establish that the exact received JSON can be reused.
+    if (!descriptor || !('value' in descriptor) || !immutableJson(descriptor.value)) return false;
+  }
+  immutableValues.add(value);
+  return true;
+}
+function valueEncoding(value: TemporalValue): { json: string; bytes: number } {
+  const supplied = readOnlyDraftView(value);
+  const held = valueEncodings.get(supplied);
+  if (held) return held;
+  const json = JSON.stringify(supplied);
+  const encoded = { json, bytes: encoder.encode(json).byteLength };
+  // These are derived bytes, not an evidence registry. Weak ownership follows the
+  // actual immutable source, while builders and shallow-frozen data stay fresh.
+  if (immutableJson(supplied)) valueEncodings.set(supplied, encoded);
+  return encoded;
+}
+const equalValue = (left: TemporalValue, right: TemporalValue) =>
+  valueEncoding(left).json === valueEncoding(right).json;
+function sourceHeaderBytes(block: TemporalSourceBlock): number {
+  return byteLength({ ...readOnlyDraftView(block), values: [] });
+}
+function chunkHeaderBytes(chunk: TemporalChunk): number {
+  const held = readOnlyDraftView(chunk);
+  return byteLength({
+    ...held,
+    subjects: readOnlyDraftView(held.subjects),
+    sourceIds: readOnlyDraftView(held.sourceIds),
+    individualIds: readOnlyDraftView(held.individualIds),
+    sourceRefs: readOnlyDraftView(held.sourceRefs),
+    receipts: [],
+  });
+}
+function retainedValueAt(
+  sources: TemporalEvidenceState['sources'],
+  reference: TemporalValueReference,
+): TemporalValue | undefined {
+  const block = sources[reference.blockId];
+  if (!block) return;
+  const value = readOnlyDraftView(readOnlyDraftView(block).values)[reference.valueOrdinal];
+  return value && readOnlyDraftView(value);
+}
 function temporalValue(value: TemporalCaptureInput['facets'][number]['value']): TemporalValue {
   if (value.kind !== 'observed-motion') return value;
   const original = readOnlyDraftView(value);
@@ -329,20 +383,22 @@ function retainValue(
   maxBytes: number,
   retainedValue?: TemporalValueReference,
 ) {
+  const encoded = valueEncoding(value);
   const previous = retainedValue;
-  const existing = previous && temporal.sources[previous.blockId]?.values[previous.valueOrdinal];
+  const existing = previous && retainedValueAt(temporal.sources, previous);
   // Reuse never reads a hidden value into evidence: the actual receiver supplied
   // the complete value first, and equality is checked against that received body.
-  if (previous && existing && equalValue(existing, value))
+  if (previous && existing && valueEncoding(existing).json === encoded.json)
     return {
       reference: { blockId: previous.blockId, valueOrdinal: previous.valueOrdinal },
       addedBytes: 0,
+      valueBytes: encoded.bytes,
     };
   const atBoundary = boundary(world);
   let block = temporal.activeSource && temporal.sources[temporal.activeSource];
   let addedBytes = 0;
-  const key = JSON.stringify(value);
-  const valueBytes = encoder.encode(key).byteLength;
+  const key = encoded.json;
+  const valueBytes = encoded.bytes;
   if (
     !block ||
     temporal.activeBoundary !== atBoundary ||
@@ -367,7 +423,10 @@ function retainValue(
       id: block.id,
       length: block.values.length,
       index: new Map(
-        readOnlyDraftView(block).values.map((entry, ordinal) => [JSON.stringify(entry), ordinal]),
+        readOnlyDraftView(readOnlyDraftView(block).values).map((entry, ordinal) => [
+          valueEncoding(entry).json,
+          ordinal,
+        ]),
       ),
     };
     blockIndexes.set(world, prepared);
@@ -378,16 +437,16 @@ function retainValue(
     const before = block.bytes;
     ordinal = block.values.length;
     const copy = freeze(cloneValue(readOnlyDraftView(value)), true);
-    const previousHeader = byteLength({ ...block, values: [] });
+    const previousHeader = sourceHeaderBytes(block);
     block.values.push(copy);
     block.bytes += valueBytes + (block.values.length > 1 ? 1 : 0);
-    adjustHeaderBytes(block, previousHeader, () => byteLength({ ...block, values: [] }));
+    adjustHeaderBytes(block, previousHeader, () => sourceHeaderBytes(block));
     addedBytes += block.bytes - before;
     index.set(key, ordinal);
     prepared.length = block.values.length;
   }
   const reference = { blockId: block.id, valueOrdinal: ordinal };
-  return { reference, addedBytes };
+  return { reference, addedBytes, valueBytes };
 }
 
 /** Called only with already received values. Admission never reads a hidden source entity. */
@@ -402,6 +461,7 @@ export function appendTemporalReceipt(
   if (!owned) return;
   const { actor, state: temporal } = owned;
   let addedSourceBytes = 0;
+  let sourceBytes = 0;
   const ordinal = actor.nextOrdinal++;
   const receipt: TemporalReceipt = {
     id: temporalReceiptId({ epoch: actor.epoch, ordinal }),
@@ -429,15 +489,13 @@ export function appendTemporalReceipt(
         retainedValue,
       );
       addedSourceBytes += retained.addedBytes;
+      sourceBytes += retained.valueBytes;
       return { ...cloneValue(metadata), ...retained.reference, ordinal };
     }),
   };
-  const sourceBytes = input.facets.reduce(
-    (sum, facet) => sum + byteLength(temporalValue(facet.value)),
-    0,
-  );
   // Logical accounting charges each observer's full support even when storage shares it.
-  const bytes = byteLength(receipt) + sourceBytes;
+  const receiptBytes = byteLength(receipt);
+  const bytes = receiptBytes + sourceBytes;
   const atBoundary = boundary(world);
   let chunk = actor.chunks.at(-1);
   if (
@@ -468,7 +526,7 @@ export function appendTemporalReceipt(
     actor.bytes += chunk.bytes;
     actor.chunks.push(chunk);
   }
-  const previousHeader = byteLength({ ...chunk, receipts: [] });
+  const previousHeader = chunkHeaderBytes(chunk);
   chunk.receipts.push(receipt);
   chunk.count++;
   chunk.bytes += bytes + (chunk.receipts.length > 1 ? 1 : 0);
@@ -483,9 +541,7 @@ export function appendTemporalReceipt(
     if (!chunk.sourceIds.includes(id)) chunk.sourceIds.push(id);
   for (const facet of receipt.facets)
     if (!chunk.sourceRefs.includes(facet.blockId)) chunk.sourceRefs.push(facet.blockId);
-  const headerChange = adjustHeaderBytes(chunk, previousHeader, () =>
-    byteLength({ ...chunk, receipts: [] }),
-  );
+  const headerChange = adjustHeaderBytes(chunk, previousHeader, () => chunkHeaderBytes(chunk));
   actor.bytes += bytes + (chunk.receipts.length > 1 ? 1 : 0) + headerChange;
   actor.count++;
   const due = chunk.fromAt + policy.maxAgeSeconds;
@@ -497,7 +553,7 @@ export function appendTemporalReceipt(
   chargeWork({
     effects: 1,
     tests: input.facets.length,
-    outputBytes: byteLength(receipt) + addedSourceBytes,
+    outputBytes: receiptBytes + addedSourceBytes,
   });
   return {
     actorId,
@@ -797,7 +853,10 @@ export function clearTemporalCaptureReferences(
   if (!blockIds.size) return;
   for (const actor of Object.values(world.experience?.temporal?.actors ?? {}))
     for (const [key, reference] of Object.entries(actor.captures))
-      if (blockIds.has(reference.blockId)) delete actor.captures[key];
+      if (blockIds.has(reference.blockId)) {
+        delete actor.captures[key];
+        actor.capturesInvalidated = true;
+      }
 }
 
 /** Server-selected cold retirement totals are applied by this same native semantic owner. */
@@ -838,6 +897,7 @@ export interface TemporalHistoryQuery {
   /** Support time differs from the later receipt that confirms a held interval. */
   measurements?: { from: number; through: number };
   kinds?: readonly TemporalValue['kind'][];
+  sourceIds?: readonly string[];
   limit?: number;
   bytes?: number;
 }
@@ -898,6 +958,11 @@ export function selectTemporalHistory(
       (receipt) =>
         receipt.actorId === actorId &&
         (!query.cut || temporalReceiptWithinPrefix(receipt, query.cut)) &&
+        (!query.sourceIds?.length ||
+          receipt.sourceIds.some((source) => query.sourceIds!.includes(source)) ||
+          receipt.facets.some(
+            (facet) => !!facet.original && query.sourceIds!.includes(facet.original.source.id),
+          )) &&
         (!query.measurements ||
           receipt.facets.some(
             (facet) =>
@@ -1101,7 +1166,7 @@ export function temporalReceiptAliases(
     aliases.add(personalFactAlias(receipt.id, reference.ordinal));
     if (reference.original) fact(reference.original);
     if (reference.receivedFrom) aliases.add(reference.receivedFrom.id);
-    const value = sources[reference.blockId]?.values[reference.valueOrdinal];
+    const value = retainedValueAt(sources, reference);
     if (value?.kind === 'association')
       for (const id of selectedRecognitionSupportSourceIds(world, value.learningSupport ?? []))
         aliases.add(id);
@@ -1129,7 +1194,7 @@ export function temporalReceiptIndividualIds(
   const ids = new Set<string>();
   if (receipt.subjectIdentity?.kind === 'individual') ids.add(receipt.subjectIdentity.individualId);
   for (const reference of receipt.facets) {
-    const value = sources[reference.blockId]?.values[reference.valueOrdinal];
+    const value = retainedValueAt(sources, reference);
     if (value?.kind === 'association' && value.subject.kind === 'individual')
       ids.add(value.subject.individualId);
     if (value?.kind === 'event' && value.sourceSubject?.kind === 'individual')

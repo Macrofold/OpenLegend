@@ -9,6 +9,8 @@ import {
   inventoryFor,
   navigationBlocked,
   quantityOf,
+  createItemLot,
+  installNativeResponseProfile,
   setAttentionFocus,
   initializePerception,
   type DeclarationDraft,
@@ -124,8 +126,24 @@ describe('actor-scoped native decision candidates', () => {
     // ordinary native avoidance has its own independent gameplay checks.
     await editWorld(service, (world) => {
       const specimen = entityGet(world.entities, 'hare-1')!;
-      specimen.actor!.controller = 'npc';
+      const original = world.nativeResponseProfiles![specimen.animal!.profile.id]!;
+      specimen.animal!.profile = installNativeResponseProfile(world, {
+        ...structuredClone(original),
+        id: 'fixture:slow-target',
+        locomotion: Object.fromEntries(
+          Object.keys(original.locomotion).map((kind) => [
+            kind,
+            { travel: 0.000001, escape: 0.000001 },
+          ]),
+        ),
+      });
+      specimen.animal!.wander = { remainingSeconds: 1000000 };
+      delete specimen.animal!.episode;
       specimen.actor!.action = null;
+      // The loop explicitly supplies its harvesting prerequisite; starter
+      // characters are not a permanent fixture equipment contract.
+      if (!quantityOf(world, NPC_ID, 'knife'))
+        createItemLot(world, NPC_ID, 'knife', 1, 'loop-harvesting-tool');
     });
     const draft: DeclarationDraft = {
       family: { id: 'base:swing', version: 1 },

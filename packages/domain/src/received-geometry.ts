@@ -570,6 +570,18 @@ export function refreshReceivedGeometry(
   return { acquired, changed };
 }
 
+/** Originals are immutable. Do not turn their vertices/proofs into draft proxies
+ * merely to record or describe the already received geometry. */
+function geometryObservations(state: ReceivedGeometryState): ObservationContribution[] {
+  const held = readOnlyDraftView(state);
+  return [
+    ...readOnlyDraftView(held.fragments).map((fragment) =>
+      readOnlyDraftView(readOnlyDraftView(fragment).observation),
+    ),
+    ...readOnlyDraftView(held.boundaries).map(readOnlyDraftView),
+  ];
+}
+
 function finalizeGeometry(
   world: WorldState,
   observerId: string,
@@ -578,7 +590,7 @@ function finalizeGeometry(
   finalizeTemporalGeometrySupport(
     world,
     observerId,
-    [...state.fragments.map((fragment) => fragment.observation), ...state.boundaries],
+    geometryObservations(state),
     state.supportedThrough,
     selectedTemporalPolicy(world).recent,
   );
@@ -609,10 +621,7 @@ export function currentReceivedGeometry(
     state = world.perceptionEvidence?.[observerId]?.geometry;
   return input && state?.basis === input.basis
     ? {
-        observations: [
-          ...state.fragments.map((fragment) => fragment.observation),
-          ...state.boundaries,
-        ],
+        observations: geometryObservations(state),
         complete: state.complete,
         visited: state.visited,
         supportedThrough: state.supportedThrough,

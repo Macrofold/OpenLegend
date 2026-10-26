@@ -117,7 +117,9 @@ it('preserves elevated position and manual route snapshots while departure cance
       n++
     )
       await game.service.tick(1 / (config.baseRatio * game.service.speed), 0);
-    const snapshot = structuredClone(entityGet(materializeNativeValues(game.service.world).entities, actorId));
+    const snapshot = structuredClone(
+      entityGet(materializeNativeValues(game.service.world).entities, actorId),
+    );
     expect(worldSupport(snapshot!)).toBe('lookout-ramp');
     const id = randomUUID();
     await game.service.createSave('On the ramp', id);

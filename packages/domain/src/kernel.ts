@@ -6146,6 +6146,7 @@ function* updateEncounters(
       !frame.affected.has(actor.id) &&
       !movingContacts &&
       !placesChanged &&
+      !world.experience?.temporal?.actors[actor.id]?.capturesInvalidated &&
       !(encounterDue !== undefined && encounterDue <= world.simTime)
     ) {
       countDomainWork('observersSkipped');

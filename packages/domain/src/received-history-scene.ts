@@ -6,6 +6,8 @@ import {
   receivedSeparation,
   type ReceivedBodyGeometry,
 } from './received-scene.js';
+import { canonicalJson } from './events.js';
+import type { ObservationFactKey } from './perception-evidence.js';
 import type {
   TemporalFacetReference,
   TemporalHistorySelection,
@@ -18,6 +20,11 @@ export interface HistoricalSpatialRequest {
   from: number;
   through: number;
   radius: number;
+}
+export interface HistoricalGeometrySupport {
+  original: ObservationFactKey;
+  value: TemporalValue;
+  confirmedThrough: number;
 }
 interface EndpointChange {
   from: number;
@@ -94,17 +101,39 @@ export function historicalSpatialMeasurements(
   selection: TemporalHistorySelection,
   request: HistoricalSpatialRequest,
   allowance: number,
+  held: readonly HistoricalGeometrySupport[] = [],
 ) {
+  const certificates = new Map(
+    held.map((certificate) => [
+      canonicalJson(certificate.original),
+      { ...certificate, serialized: canonicalJson(certificate.value) },
+    ]),
+  );
   const facts: Fact[] = [];
   for (const [entry, selected] of selection.entries.entries())
-    for (const [facet, value] of selected.values.entries())
+    for (const [facet, value] of selected.values.entries()) {
+      const original = selected.receipt.facets[facet]!;
+      const certificate = original.original && certificates.get(canonicalJson(original.original));
+      const reference =
+        certificate &&
+        (value.kind === 'surface-patch' || value.kind === 'physical-boundary') &&
+        certificate.serialized === canonicalJson(value)
+          ? {
+              ...original,
+              confirmedThrough: Math.max(
+                original.confirmedThrough ?? original.measuredThrough,
+                certificate.confirmedThrough,
+              ),
+            }
+          : original;
       facts.push({
         entry,
         facet,
         subject: selected.receipt.subject,
-        reference: selected.receipt.facets[facet]!,
+        reference,
         value,
       });
+    }
   const bodies = facts.filter((fact): fact is BodyFact => fact.value.kind === 'body');
   const anchors = bodies
     .filter(
@@ -113,7 +142,12 @@ export function historicalSpatialMeasurements(
         through(fact) >= request.from &&
         fact.reference.measuredFrom <= request.through,
     )
-    .sort((a, b) => through(b) - through(a) || b.reference.acquiredAt - a.reference.acquiredAt);
+    .sort(
+      (a, b) =>
+        through(b) - through(a) ||
+        selection.entries[b.entry]!.receipt.order - selection.entries[a.entry]!.receipt.order ||
+        selection.entries[b.entry]!.receipt.ordinal - selection.entries[a.entry]!.receipt.ordinal,
+    );
   const others = request.other
     ? bodies
         .filter((fact) => fact.subject === request.other)
@@ -151,7 +185,12 @@ export function historicalSpatialMeasurements(
     }
     remaining--;
     const at = Math.min(through(anchor), request.through);
-    const sampleKey = JSON.stringify([at, originalKey(anchor)]);
+    const sampleKey = JSON.stringify([
+      at,
+      anchor.value.body.position,
+      anchor.value.body.radius,
+      anchor.value.body.height,
+    ]);
     if (seen.has(sampleKey)) continue;
     seen.add(sampleKey);
     const sample: (typeof samples)[number] = {
@@ -207,7 +246,14 @@ export function historicalSpatialMeasurements(
     }
     samples.push(sample);
   }
-  samples.sort((a, b) => a.at - b.at);
+  samples.sort(
+    (a, b) =>
+      a.at - b.at ||
+      selection.entries[a.support[0]!.entry]!.receipt.order -
+        selection.entries[b.support[0]!.entry]!.receipt.order ||
+      selection.entries[a.support[0]!.entry]!.receipt.ordinal -
+        selection.entries[b.support[0]!.entry]!.receipt.ordinal,
+  );
   let previousOther: { at: number; lower: number; support: HistoricalSpatialFact[] } | undefined;
   const previousEdges = new Map<
     string,

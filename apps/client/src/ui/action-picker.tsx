@@ -568,9 +568,22 @@ export function ActionPicker({
               <span>Speak</span>
             </AriaButton>
           )}
-          {!full && subject && !lostTarget && (!query || 'focus attention listen'.includes(query.toLowerCase())) && (
-            <AttentionFocus key={JSON.stringify([view.worldId,view.saveTimeline,view.access?.scope,subject.id])} subject={subject} view={view} connected={available} />
-          )}
+          {!full &&
+            subject &&
+            !lostTarget &&
+            (!query || 'focus attention listen'.includes(query.toLowerCase())) && (
+              <AttentionFocus
+                key={JSON.stringify([
+                  view.worldId,
+                  view.saveTimeline,
+                  view.access?.scope,
+                  subject.id,
+                ])}
+                subject={subject}
+                view={view}
+                connected={available}
+              />
+            )}
           {showAct && (
             <AriaButton data-picker-row className="ol-item" onPress={() => compose('act')}>
               <WorldIntentIcon mode="act" />

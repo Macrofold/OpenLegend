@@ -146,6 +146,7 @@ export function validateTemporalEvidenceState(
       !ordinal(actor.count) ||
       !Array.isArray(actor.chunks) ||
       !record(actor.captures) ||
+      (actor.capturesInvalidated !== undefined && actor.capturesInvalidated !== true) ||
       typeof actor.maintenanceDue !== 'boolean' ||
       (actor.nextDue !== null && (!finite(actor.nextDue) || actor.nextDue < 0))
     )

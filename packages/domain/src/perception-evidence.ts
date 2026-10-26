@@ -1460,6 +1460,7 @@ function captureAttendedGeometryContext(
   observerId: string,
   previous: readonly AttentionEntry[],
   acquired: readonly ObservationContribution[],
+  confirmHeld = false,
 ): ReadonlySet<string> | undefined {
   const entries = currentDetailedAttention(world, observerId);
   const oldContexts = new Set(previous.map((entry) => entry.exposure.episodeId));
@@ -1468,10 +1469,10 @@ function captureAttendedGeometryContext(
     .filter((id) => !oldContexts.has(id));
   const active = new Set([...oldContexts, ...entries.map((entry) => entry.exposure.episodeId)]);
   const changedScope = oldContexts.size !== entries.length || newContexts.length > 0;
-  if (!active.size || (!acquired.length && !changedScope)) return;
+  if (!active.size || (!acquired.length && !changedScope && !confirmHeld)) return;
   const geometry = currentReceivedGeometry(world, observerId);
   const available = geometry.observations;
-  if (changedScope)
+  if (changedScope || confirmHeld)
     finalizeTemporalGeometrySupport(
       world,
       observerId,
@@ -1489,6 +1490,10 @@ function captureAttendedGeometryContext(
   };
   for (const observation of acquired) include(observation, active);
   if (newContexts.length) for (const observation of available) include(observation, newContexts);
+  if (confirmHeld) {
+    const captures = world.experience?.temporal?.actors[observerId]?.captures;
+    for (const observation of available) if (!captures?.[observation.id]) include(observation, active);
+  }
   // A received edge needs its actual near/far patch facts even when those were
   // acquired before this recording scope began. Never consult today's terrain.
   for (const { observation, subjects } of scopes.values())
@@ -1530,6 +1535,13 @@ function captureAttendedGeometryContext(
   return captured;
 }
 
+/** Seal the existing receiver's supported static interval before a cognition cut.
+ * No sensing, contact credit or lasting account is created by this preparation. */
+export function captureCurrentGeometrySupport(world: WorldState, observerId: string): void {
+  if (!entityGet(world.entities, observerId) || !hasMemory(entityGet(world.entities, observerId)!)) return;
+  captureAttendedGeometryContext(world, observerId, currentDetailedAttention(world, observerId), [], true);
+}
+
 function pruneLostBodyIndividuals(
   world: WorldState,
   observerId: string,
@@ -1565,6 +1577,8 @@ export function reconcileAttendedTemporalEvidence(
 ): ReadonlySet<string> | undefined {
   const observer = entityGet(world.entities, observerId);
   if (!observer || !hasMemory(observer)) return;
+  const history = world.experience?.temporal?.actors[observerId];
+  const rebaseline = history?.capturesInvalidated === true;
   const priorEntries = currentDetailedAttention(world, observerId).filter((entry) =>
     before.has(entry.sourceId),
   );
@@ -1580,7 +1594,7 @@ export function reconcileAttendedTemporalEvidence(
   );
   const entering = new Set([...after].filter((id) => !before.has(id))),
     exiting = new Set([...before].filter((id) => !after.has(id)));
-  const measured = changedSourceIds
+  const measured = changedSourceIds && !rebaseline
     ? new Set([...changedSourceIds, ...entering, ...exiting])
     : undefined;
   const contacts = new Map<string, ObserverSubject>();
@@ -1608,7 +1622,7 @@ export function reconcileAttendedTemporalEvidence(
     selectedTemporalPolicy(world).recent,
     exiting,
     new Set(contacts.keys()),
-    changedSourceIds ? new Set(changedSourceIds) : undefined,
+    changedSourceIds && !rebaseline ? new Set(changedSourceIds) : undefined,
   );
   const creditedSources: string[] = [];
   for (const entry of captured) {
@@ -1661,7 +1675,9 @@ export function reconcileAttendedTemporalEvidence(
       );
     }
   }
-  return captureAttendedGeometryContext(world, observerId, priorEntries, newGeometry);
+  const geometry = captureAttendedGeometryContext(world, observerId, priorEntries, newGeometry, rebaseline);
+  if (history) delete history.capturesInvalidated;
+  return geometry;
 }
 
 /** Physical loss ends availability immediately; episode/familiarity continuity is separate. */

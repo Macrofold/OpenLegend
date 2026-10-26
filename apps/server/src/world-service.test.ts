@@ -485,7 +485,6 @@ describe('public projection', () => {
   });
 });
 
-
 it('withdraws a pending player view when its current-only heard sound disappears', async () => {
   const { service } = await setup();
   await activate(service);
@@ -494,17 +493,34 @@ it('withdraws a pending player view when its current-only heard sound disappears
     const player = entityGet(world.entities, PLAYER_ID)!;
     const other = entityGet(world.entities, NPC_ID)!;
     player.actor!.capabilities = {
-      cognition: true, innerWorld: true, speech: true, memory: false, comprehendsSpeech: true,
+      cognition: true,
+      innerWorld: true,
+      speech: true,
+      memory: false,
+      comprehendsSpeech: true,
     };
-    setSpatialPosition(world, player, {x:1,y:0,z:2}, worldSupport(player));
-    setSpatialPosition(world, other, {x:2,y:0,z:2}, worldSupport(other));
+    setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, worldSupport(player));
+    setSpatialPosition(world, other, { x: 2, y: 0, z: 2 }, worldSupport(other));
     initializePerception(world, []);
   });
-  expect((await service.say('temporary-heard-view', NPC_ID, 'An actually heard temporary sentence.', PLAYER_ID)).ok).toBe(true);
+  expect(
+    (
+      await service.say(
+        'temporary-heard-view',
+        NPC_ID,
+        'An actually heard temporary sentence.',
+        PLAYER_ID,
+      )
+    ).ok,
+  ).toBe(true);
   expect(JSON.stringify((await projectView(service)).events)).toContain('voice-like sound');
   let started!: () => void, release!: () => void;
-  const waiting = new Promise<void>((resolve) => { started = resolve; });
-  const gate = new Promise<void>((resolve) => { release = resolve; });
+  const waiting = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   const delayed = vi.spyOn(service, 'presentationReleaseFor').mockImplementationOnce(async () => {
     started();
     await gate;

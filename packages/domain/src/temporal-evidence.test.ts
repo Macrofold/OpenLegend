@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { freeze } from 'immer';
 import { createWorld, NPC_ID, PLAYER_ID } from './data.js';
 import { entityGet } from './entity-collection.js';
 import { initializePerception, executeCommand } from './kernel.js';
@@ -11,7 +12,10 @@ import {
   validatePerceptionEvidenceState,
 } from './perception-evidence.js';
 import { invalidateExperience } from './experience.js';
+import { validateTemporalEvidenceState } from './temporal-validation.js';
+import { selectedTemporalPolicy } from './world-composition.js';
 import {
+  appendTemporalReceipt,
   selectTemporalHistory,
   temporalReceiptSource,
   retainedTemporalSupport,
@@ -20,6 +24,8 @@ import {
   clearTemporalCaptureReferences,
   captureTemporalReceiptPrefix,
   temporalReceiptWithinPrefix,
+  type TemporalValue,
+  type TemporalValueReference,
 } from './temporal-evidence.js';
 
 function scene(seed = 41) {
@@ -150,6 +156,63 @@ it('keeps the original exact received sequence through current-format JSON resto
   ).toEqual(before);
   const count = restored.experience.temporal.actors[PLAYER_ID].count;
   expect(restored.experience.temporal.actors[PLAYER_ID].count).toBe(count);
+});
+
+it('keeps mutable nested received values fresh while reusing immutable values with exact byte charges', () => {
+  const world = scene(52);
+  const nested = { note: 'Before: café and 鹿.' };
+  const supplied = Object.freeze({
+    kind: 'personal-account' as const,
+    source: 'memory' as const,
+    id: 'received-note',
+    text: 'An actually received note.',
+    data: { nested },
+  });
+  const append = (value: TemporalValue, retainedValue?: TemporalValueReference) => {
+    appendTemporalReceipt(
+      world,
+      PLAYER_ID,
+      {
+        subject: 'received-note',
+        change: 'change',
+        facets: [
+          {
+            value,
+            role: 'direct',
+            asOf: world.simTime,
+            measuredFrom: world.simTime,
+            measuredThrough: world.simTime,
+            acquiredAt: world.simTime,
+            ...(retainedValue ? { retainedValue } : {}),
+          },
+        ],
+      },
+      selectedTemporalPolicy(world).recent,
+    );
+    return world.experience!.temporal!.actors[PLAYER_ID]!.chunks.at(-1)!.receipts.at(-1)!
+      .facets[0]!;
+  };
+  const before = append(supplied);
+  nested.note = 'After: a longer note about 鹿.';
+  const after = append(supplied, before);
+  expect(after.valueOrdinal).not.toBe(before.valueOrdinal);
+  const sealed = freeze({ ...supplied, data: { nested: { ...nested } } }, true);
+  const repeated = append(sealed, after);
+  expect(repeated).toMatchObject({
+    blockId: after.blockId,
+    valueOrdinal: after.valueOrdinal,
+  });
+  const query = { subject: 'received-note', bytes: 1024 * 1024, limit: 1000 };
+  const selected = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
+  expect(
+    selected.entries.flatMap(({ values }) =>
+      values.map((value) => value.kind === 'personal-account' && value.data?.['nested']),
+    ),
+  ).toEqual([{ note: 'Before: café and 鹿.' }, { ...nested }, { ...nested }]);
+  validateTemporalEvidenceState(world);
+  const restored = JSON.parse(JSON.stringify(world));
+  validateTemporalEvidenceState(restored);
+  expect(selectTemporalHistory(restored.experience.temporal, PLAYER_ID, query)).toEqual(selected);
 });
 
 it('does not turn ordinary lost object facets into autobiographical confirmations', () => {
@@ -308,6 +371,23 @@ it('shares equal received values without granting another observer the earlier h
   expect(bodyValue(bodyReference(promoted.entries))).toEqual(
     bodyValue(bodyReference(playerHistory.entries)),
   );
+  // Two actual recipients of the same changed value share this append's payload.
+  // A later attention entry still has its own recording time and no earlier route.
+  world.simTime = 3;
+  setSpatialPosition(world, branches, { x: 2.5, y: 0, z: 2 }, worldSupport(branches), 'physical');
+  initializePerception(world, []);
+  const currentBodyReference = (actorId: string, subject: string) =>
+    bodyReference(
+      selectTemporalHistory(world.experience!.temporal, actorId, {
+        subject,
+        from: 3,
+        bytes: 1024 * 1024,
+      }).entries,
+    );
+  expect(currentBodyReference(NPC_ID, exposure)).toMatchObject({
+    blockId: currentBodyReference(PLAYER_ID, playerExposure).blockId,
+    valueOrdinal: currentBodyReference(PLAYER_ID, playerExposure).valueOrdinal,
+  });
   const encoded = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
   for (const block of Object.values(world.experience!.temporal!.sources))
     expect(block.bytes).toBe(encoded(block));

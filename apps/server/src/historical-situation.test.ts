@@ -35,6 +35,7 @@ it('reads historical native distances through cold actor receipts, including a l
   await enterLocalWorld(service);
   await service.setPresence('historical-spatial-fixture', true);
   await editWorld(service, (world) => {
+    world.simTime = 1;
     const player = entityGet(world.entities, PLAYER_ID)!,
       anchor = entityGet(world.entities, NPC_ID)!,
       other = structuredClone(anchor);
@@ -81,7 +82,7 @@ it('reads historical native distances through cold actor receipts, including a l
   const query = {
     subjects: [anchor, other],
     kinds: ['body', 'location', 'physical-boundary', 'surface-patch'] as const,
-    measurements: { from: 0, through: 2 },
+    measurements: { from: 1, through: 2 },
     through: 3,
     bytes: 8192,
     limit: 128,
@@ -103,7 +104,7 @@ it('reads historical native distances through cold actor receipts, including a l
         kind: 'historical-spatial',
         anchor: permittedSourceHandle(service.world, PLAYER_ID, ['received-subject', anchor]),
         other: permittedSourceHandle(service.world, PLAYER_ID, ['received-subject', other]),
-        from: 0,
+        from: 1,
         through: 2,
         radius: 20,
       },

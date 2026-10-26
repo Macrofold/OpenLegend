@@ -350,14 +350,19 @@ describe('local HTTP boundary', () => {
   });
 });
 
-
 it('changes player attention through current contacts without speech, AI or body movement', async () => {
   const { game, post, initial } = await start();
-  expect((await (await post('/api/control', {paused:false,clientId:'attention-preference-test'})).json()).ok).toBe(true);
+  expect(
+    (
+      await (
+        await post('/api/control', { paused: false, clientId: 'attention-preference-test' })
+      ).json()
+    ).ok,
+  ).toBe(true);
   const subject = initial.entities.find((entry) => entry.attentionPreference !== undefined)!;
   expect(subject).toBeDefined();
   const before = game.service.world;
-  const focused = await post('/api/attention', {targetId: subject.id});
+  const focused = await post('/api/attention', { targetId: subject.id });
   expect(focused.status).toBe(200);
   expect((await focused.json()).ok).toBe(true);
   const attention = game.service.world.perceptionEvidence![PLAYER_ID]!.attention!;
@@ -366,8 +371,8 @@ it('changes player attention through current contacts without speech, AI or body
   expect(game.service.world.simTime).toBe(before.simTime);
   expect(game.service.world.events).toBe(before.events);
   expect(game.service.world.memories[PLAYER_ID]).toBe(before.memories[PLAYER_ID]);
-  expect((await post('/api/attention', {targetId: null, actorId: NPC_ID})).status).toBe(400);
-  expect((await post('/api/attention', {targetId: NPC_ID})).status).toBe(409);
-  expect((await (await post('/api/attention', {targetId: null})).json()).ok).toBe(true);
+  expect((await post('/api/attention', { targetId: null, actorId: NPC_ID })).status).toBe(400);
+  expect((await post('/api/attention', { targetId: NPC_ID })).status).toBe(409);
+  expect((await (await post('/api/attention', { targetId: null })).json()).ok).toBe(true);
   expect(game.service.world.perceptionEvidence![PLAYER_ID]!.attention!.explicit).toEqual([]);
 });
