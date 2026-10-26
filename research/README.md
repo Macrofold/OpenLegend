@@ -8,7 +8,7 @@
 
 The [current AI-model research collection](ai-models/README.md) inventories low-refusal character models, supplied-choice and general reasoning models, expressive speech, speech recognition and conversational voice. It includes exact model links, version evidence, use cases, community reports, published examples, deployment, rights and cost semantics, with complete structured records. Sources were inspected October 23–24, 2026; no models were tested or adopted.
 
-Start with its [shortlists](ai-models/README.md#which-candidates-deserve-attention-first) and [compact catalogue](ai-models/catalogue.md). The [existing NPC cognition research](../archive/02-research/npc-cognition/README.md), selected evaluation design and maintainer owners retain their authority.
+Start with its [shortlists](ai-models/README.md#a-small-starting-panel) and [compact catalogue](ai-models/catalogue.md). The [existing NPC cognition research](../archive/02-research/npc-cognition/README.md), selected evaluation design and maintainer owners retain their authority.
 
 ## Current Unreal and Unity runtime mechanisms
 
