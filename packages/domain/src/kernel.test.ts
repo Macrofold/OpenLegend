@@ -20,6 +20,8 @@ import {
   inventoryFor,
   isWalkable,
   observeActor,
+  initializePerception,
+  updateWorld,
   quantityOf,
   queryMemories,
   remember,
@@ -587,6 +589,9 @@ describe('perception, survival and continuity', () => {
       { y: 0, x: 12, z: 13 },
       worldSupport(entityGet(world.entities, NPC_ID)!),
     );
+    // Moving a fixture is not a sensory receipt. Actually see the returned body
+    // before checking its public projection; this cannot restore unheard words.
+    world = updateWorld(world, (draft) => initializePerception(draft, []));
     expect(
       queryMemories(world, NPC_ID).some((record) => record.summary.includes('moonflower')),
     ).toBe(false);

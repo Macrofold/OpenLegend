@@ -353,6 +353,7 @@ describe('local HTTP boundary', () => {
 
 it('changes player attention through current contacts without speech, AI or body movement', async () => {
   const { game, post, initial } = await start();
+  expect((await (await post('/api/control', {paused:false,clientId:'attention-preference-test'})).json()).ok).toBe(true);
   const subject = initial.entities.find((entry) => entry.attentionPreference !== undefined)!;
   expect(subject).toBeDefined();
   const before = game.service.world;

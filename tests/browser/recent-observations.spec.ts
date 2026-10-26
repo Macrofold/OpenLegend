@@ -42,7 +42,8 @@ test('the player can read and search actual recent observations on desktop and a
     });
     await page.getByRole('button', { name: 'In view', exact: true }).click();
     await page.locator('[data-entity]').first().getByRole('button').click();
-    await page.getByRole('button', { name: 'Focus here', exact: true }).click();
+    await page.getByRole('button', { name: 'Focus here', exact: true }).focus();
+    await page.getByRole('button', { name: 'Focus here', exact: true }).press('Enter');
     await expect(page.getByRole('button', { name: 'Stop focusing here', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Stop focusing here', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Focus here', exact: true })).toBeVisible();

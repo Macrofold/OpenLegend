@@ -8,6 +8,7 @@ import {
   createWorld,
   executeCommand,
   advanceWorld,
+  updateWorld,
   commitCognition,
   bodyEligibilityRevision,
   mindFor,
@@ -128,13 +129,15 @@ describe('fixture: bounded authored minds', () => {
     ).toBe(false);
   });
   it('preserves concurrent new experiences', () => {
-    const { world, binding, proposal } = setup();
-    appendMemory(world, NPC_ID, {
-      kind: 'episode',
-      source: 'observed',
-      summary: 'A later bird flew past.',
-      importance: 2,
-      entityIds: [],
+    const { world: initial, binding, proposal } = setup();
+    const world = updateWorld(initial, (draft) => {
+      appendMemory(draft, NPC_ID, {
+        kind: 'episode',
+        source: 'observed',
+        summary: 'A later bird flew past.',
+        importance: 2,
+        entityIds: [],
+      });
     });
     const result = commitCognition(world, binding, proposal);
     expect(
@@ -261,18 +264,18 @@ describe('fixture: bounded authored minds', () => {
 });
 describe('fixture: recall policy', () => {
   it('retains and retrieves 300 bounded episodes, exposes coverage and isolation', () => {
-    const world = encounter();
-    world.memories[NPC_ID] = [];
-    for (let i = 0; i < 320; i++) {
-      world.simTime = i;
-      appendMemory(world, NPC_ID, {
-        kind: 'episode',
-        source: 'observed',
-        summary: `Experience ${i}`,
-        importance: 3,
-        entityIds: [],
-      });
-    }
+    const world = updateWorld(encounter(), (draft) => {
+      for (let i = 0; i < 320; i++) {
+        draft.simTime = i;
+        appendMemory(draft, NPC_ID, {
+          kind: 'episode',
+          source: 'observed',
+          summary: `Experience ${i}`,
+          importance: 3,
+          entityIds: [],
+        });
+      }
+    });
     const recall = get_memories(world, NPC_ID, {
       limit: 300,
       maxBytes: 400000,
@@ -292,13 +295,14 @@ describe('fixture: recall policy', () => {
     ).toEqual([recall.entries[0]!.id]);
   });
   it('prioritizes entity/lexical memories and active commitments', () => {
-    const world = encounter();
-    appendMemory(world, NPC_ID, {
-      kind: 'commitment',
-      source: 'heard',
-      summary: 'An active promise',
-      importance: 8,
-      entityIds: [PLAYER_ID],
+    const world = updateWorld(encounter(), (draft) => {
+      appendMemory(draft, NPC_ID, {
+        kind: 'commitment',
+        source: 'heard',
+        summary: 'An active promise',
+        importance: 8,
+        entityIds: [PLAYER_ID],
+      });
     });
     const recall = get_memories(world, NPC_ID, {
       intent: 'berries',
@@ -310,19 +314,22 @@ describe('fixture: recall policy', () => {
 });
 
 describe('fixture: evidence and forgetting boundaries', () => {
-  it('excludes old model-authored prose from recall without deleting saved audit records', () => {
-    const world = encounter();
-    appendMemory(world, NPC_ID, {
-      kind: 'reflection',
-      source: 'inferred',
-      summary: 'Legacy private authored text',
-      importance: 10,
-      entityIds: [],
+  it('keeps unqualified generated prose out of recall while retaining its current audit record', () => {
+    const world = updateWorld(encounter(), (draft) => {
+      appendMemory(draft, NPC_ID, {
+        kind: 'reflection',
+        source: 'inferred',
+        summary: 'Unqualified generated text',
+        importance: 10,
+        entityIds: [],
+      });
     });
     expect(
-      get_memories(world, NPC_ID, { limit: 300 }).entries.some((m) => m.summary.includes('Legacy')),
+      get_memories(world, NPC_ID, { limit: 300 }).entries.some((m) =>
+        m.summary.includes('Unqualified'),
+      ),
     ).toBe(false);
-    expect(world.memories[NPC_ID]!.some((m) => m.summary.includes('Legacy'))).toBe(true);
+    expect(world.memories[NPC_ID]!.some((m) => m.summary.includes('Unqualified'))).toBe(true);
   });
   it('requires actual self-attributed promises and protects accepted obligations', () => {
     const { world, binding, proposal } = setup();

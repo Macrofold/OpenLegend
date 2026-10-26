@@ -402,8 +402,14 @@ export async function projectView(
   // The current-channel producer owns measured values. Publication consumes its
   // frozen facets and does not rerun sight or fill missing detail from an Entity.
   const attention = world.perceptionEvidence?.[player.id]?.attention;
-  const attentionKeys = new Map(Object.entries(attention?.candidates ?? {}).map(([key, candidate]) => [candidate.sourceId, key]));
-  const attentionPreferences = new Set(attention?.explicit ?? []);
+  const { keys: attentionKeys, preferences: attentionPreferences } = memo(
+    'attentionPreferences',
+    [attention?.candidates, attention?.explicit],
+    () => ({
+      keys: new Map(Object.entries(attention?.candidates ?? {}).map(([key, candidate]) => [candidate.sourceId, key])),
+      preferences: new Set(attention?.explicit ?? []),
+    }),
+  );
   const entities: EntityView[] = observation.visibleEntities.map((entity) => {
     const received = currentBodyObservation(world, player.id, entity.id);
     if (!received) throw new ViewChangedError();

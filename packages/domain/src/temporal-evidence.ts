@@ -837,6 +837,7 @@ export interface TemporalHistoryQuery {
   cut?: TemporalReceiptPrefix;
   /** Support time differs from the later receipt that confirms a held interval. */
   measurements?: { from: number; through: number };
+  kinds?: readonly TemporalValue['kind'][];
   limit?: number;
   bytes?: number;
 }
@@ -928,6 +929,8 @@ export function selectTemporalHistory(
     );
   for (const receipt of receipts) {
     const values: TemporalValue[] = [];
+    const references: TemporalFacetReference[] = [];
+    let missing = false;
     for (const reference of receipt.facets) {
       if (
         query.measurements &&
@@ -938,20 +941,25 @@ export function selectTemporalHistory(
       const value = temporal.sources[reference.blockId]?.values[reference.valueOrdinal];
       if (!value) {
         incomplete = true;
+        missing = true;
         continue;
       }
+      if (query.kinds && !query.kinds.includes(value.kind)) continue;
       values.push(value);
+      references.push(reference);
     }
-    const size = byteLength({ receipt, values });
+    if (missing || !values.length) continue;
+    const selectedReceipt =
+      references.length === receipt.facets.length ? receipt : { ...receipt, facets: references };
+    const size = byteLength({ receipt: selectedReceipt, values });
     if (entries.length >= limit || bytes + size > maxBytes) {
       incomplete = true;
       hasMore = true;
       break;
     }
-    if (values.length !== receipt.facets.length) continue;
     if (receipt.change === 'loss' || receipt.change === 'attention-exit') incomplete = true;
     bytes += size;
-    entries.push({ receipt: cloneValue(receipt), values: cloneValue(values) });
+    entries.push({ receipt: cloneValue(selectedReceipt), values: cloneValue(values) });
   }
   return { entries: entries.reverse(), incomplete: incomplete || entries.length === 0, hasMore };
 }

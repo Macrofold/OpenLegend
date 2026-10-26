@@ -213,30 +213,35 @@ it('refuses forbidden character memory edits before selecting their private depe
     actorId: prior.id,
     capabilities: ['play'],
   });
-  expect(
-    (
-      await h.service.rebindAccount(h.scope, {
-        id: 'fixture-private-edit-rebind',
-        accountId: 'private-edit-other',
-        actorId: NPC_ID,
-        expectedRevision: 1,
-      })
-    ).ok,
-  ).toBe(true);
-  expect(h.service.mayInspectPrivate(NPC_ID, h.scope)).toBe(false);
   const prepare = h.store.records.db.prepare.bind(h.store.records.db);
   vi.spyOn(h.store.records.db, 'prepare').mockImplementation((sql) => {
     if (sql.includes('WITH RECURSIVE affected'))
       throw new Error('Forbidden private history was selected before its scope check.');
     return prepare(sql);
   });
-  expect(await h.service.forgetMemory(NPC_ID, h.id, h.scope)).toMatchObject({
-    ok: false,
-    code: 'forbidden',
+  expect(h.service.mayInspectPrivate(NPC_ID, h.scope)).toBe(true);
+  const flush = h.service.flush.bind(h.service);
+  vi.spyOn(h.service, 'flush').mockImplementationOnce(async () => {
+    await flush();
+    expect(
+      (
+        await h.service.rebindAccount(h.scope, {
+          id: 'fixture-private-edit-rebind',
+          accountId: 'private-edit-other',
+          actorId: NPC_ID,
+          expectedRevision: 1,
+        })
+      ).ok,
+    ).toBe(true);
   });
   expect(
     await h.service.correctMemory(NPC_ID, h.id, 'fixture-private-correction', h.scope),
   ).toMatchObject({ ok: false, code: 'forbidden' });
+  expect(h.service.mayInspectPrivate(NPC_ID, h.scope)).toBe(false);
+  expect(await h.service.forgetMemory(NPC_ID, h.id, h.scope)).toMatchObject({
+    ok: false,
+    code: 'forbidden',
+  });
 });
 
 it('does not publish an old lasting-memory page after ordinary physical expiry during its SQL read', async () => {

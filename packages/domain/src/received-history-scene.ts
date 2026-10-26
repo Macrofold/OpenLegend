@@ -19,6 +19,12 @@ export interface HistoricalSpatialRequest {
   through: number;
   radius: number;
 }
+interface EndpointChange {
+  from: number;
+  through: number;
+  decreaseLower: number;
+  support: HistoricalSpatialFact[];
+}
 export interface HistoricalSpatialFact {
   entry: number;
   facet: number;
@@ -44,6 +50,9 @@ function geometry(fact: BodyFact, at: number, facts: Fact[]): ReceivedBodyGeomet
       candidate.entry === fact.entry &&
       candidate.value.kind === 'location' &&
       candidate.value.location.kind === 'point' &&
+      candidate.value.location.point.x === fact.value.body.position.x &&
+      candidate.value.location.point.y === fact.value.body.position.y &&
+      candidate.value.location.point.z === fact.value.body.position.z &&
       supports(candidate, at),
   );
   return {
@@ -124,10 +133,12 @@ export function historicalSpatialMeasurements(
   const samples: Array<{
     at: number;
     support: HistoricalSpatialFact[];
-    other?: ReturnType<typeof receivedSeparation>;
+    other?: ReturnType<typeof receivedSeparation> & { endpointChange?: EndpointChange };
     boundaries: Array<{
       support: HistoricalSpatialFact;
-      measurement: ReturnType<typeof receivedBoundarySeparation>;
+      measurement: ReturnType<typeof receivedBoundarySeparation> & {
+        endpointChange?: EndpointChange;
+      };
     }>;
     boundaryCoverage: 'selected-retained' | 'partial';
   }> = [];
@@ -197,6 +208,47 @@ export function historicalSpatialMeasurements(
     samples.push(sample);
   }
   samples.sort((a, b) => a.at - b.at);
+  let previousOther: { at: number; lower: number; support: HistoricalSpatialFact[] } | undefined;
+  const previousEdges = new Map<
+    string,
+    { at: number; lower: number; support: HistoricalSpatialFact[] }
+  >();
+  for (const sample of samples) {
+    const direct = [...sample.support];
+    if (
+      sample.other?.status === 'complete' &&
+      sample.other.lower !== undefined &&
+      sample.other.upper !== undefined
+    ) {
+      if (previousOther && previousOther.at < sample.at)
+        sample.other.endpointChange = {
+          from: previousOther.at,
+          through: sample.at,
+          decreaseLower: previousOther.lower - sample.other.upper,
+          support: previousOther.support,
+        };
+      previousOther = { at: sample.at, lower: sample.other.lower, support: direct };
+    }
+    for (const edge of sample.boundaries) {
+      const reference = selection.entries[edge.support.entry]!.receipt.facets[edge.support.facet]!;
+      const key = JSON.stringify(reference.original ?? [edge.support.entry, reference.ordinal]),
+        previous = previousEdges.get(key),
+        measurement = edge.measurement;
+      if (measurement.lower === undefined || measurement.upper === undefined) continue;
+      if (previous && previous.at < sample.at)
+        measurement.endpointChange = {
+          from: previous.at,
+          through: sample.at,
+          decreaseLower: previous.lower - measurement.upper,
+          support: previous.support,
+        };
+      previousEdges.set(key, {
+        at: sample.at,
+        lower: measurement.lower,
+        support: [direct[0]!, edge.support],
+      });
+    }
+  }
   return {
     status: samples.length ? ('partial' as const) : ('unavailable' as const),
     coverage: incomplete ? ('partial' as const) : ('selected-retained' as const),

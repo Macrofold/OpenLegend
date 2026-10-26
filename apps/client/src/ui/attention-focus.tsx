@@ -20,7 +20,7 @@ export function AttentionFocus({ subject, view, connected }: {
   current.current = identity;
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   async function choose() {
-    if (pending.current || !connected || !view.access?.controlling) return;
+    if (pending.current || !connected || !view.access?.controlling || view.clock.paused) return;
     pending.current = true;
     setBusy(true);
     setMessage('');
@@ -38,9 +38,10 @@ export function AttentionFocus({ subject, view, connected }: {
   }
   if (subject.attentionPreference === undefined) return null;
   return <>
-    <AriaButton data-picker-row className="ol-item" isDisabled={!connected || !view.access?.controlling || busy} onPress={() => void choose()}>
+    <AriaButton data-picker-row className="ol-item" isDisabled={!connected || !view.access?.controlling || view.clock.paused || busy} onPress={() => void choose()}>
       <span>{subject.attentionPreference ? 'Stop focusing here' : 'Focus here'}</span>
     </AriaButton>
+    {view.clock.paused && <p className="ol-meta">Resume the world to change focus.</p>}
     <LoadingIndicator active={busy} label="Changing focus" />
     {message && <p className="ol-meta" role="status">{message}</p>}
   </>;

@@ -224,12 +224,12 @@ export function MemoryHistory({
     <div className="ol-memory-history" hidden={!visible}>
       <p className="ol-caption">
         {recent
-          ? 'Your character’s recent observations.'
+          ? owned ? 'Your character’s recent observations.' : 'This character’s recent observations.'
           : owned
             ? 'Your character’s retained memories.'
             : 'Permitted private records for this character.'}{' '}
         {recent
-          ? 'These are things your character noticed recently. Details may fade; missing moments remain unknown.'
+          ? 'Details may fade; missing moments remain unknown.'
           : 'Search matches the remembered text shown here.'}
       </p>
       <label className="ol-memory-filter">

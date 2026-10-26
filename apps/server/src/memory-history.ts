@@ -96,6 +96,7 @@ export async function memoryHistory(
     )
       throw new HistoryCursorError('Memories changed. Browse or search again.');
   };
+  assertPermitted();
   const result = await memories.browse(memoryScope, {
     before,
     terms,

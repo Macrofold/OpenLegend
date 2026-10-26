@@ -1,6 +1,6 @@
 import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
-import { enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { NPC_ID } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
@@ -9,6 +9,8 @@ import {
   inventoryFor,
   navigationBlocked,
   quantityOf,
+  setAttentionFocus,
+  initializePerception,
   type DeclarationDraft,
 } from '@open-legend/domain';
 import { readConfig } from '../../../tests/fixtures/database.js';
@@ -117,6 +119,14 @@ describe('bounded actor context', () => {
 describe('actor-scoped native decision candidates', () => {
   it('executes a learned tool and food loop through scoped feasible candidates', async () => {
     const service = await setup();
+    // This case checks a learned tool's command/food consumers, not whether a
+    // roaming animal can escape an aiming hunter. Keep its specimen stationary;
+    // ordinary native avoidance has its own independent gameplay checks.
+    await editWorld(service, (world) => {
+      const specimen = entityGet(world.entities, 'hare-1')!;
+      specimen.actor!.controller = 'npc';
+      specimen.actor!.action = null;
+    });
     const draft: DeclarationDraft = {
       family: { id: 'base:swing', version: 1 },
       name: 'Fixture sling',
@@ -150,52 +160,72 @@ describe('actor-scoped native decision candidates', () => {
       service,
       select(service, 'equip', (action) => action.command?.itemId === tool!.id),
     );
-    await perform(
-      service,
-      select(
+    // Steadiness0.9 can legitimately miss. Follow the actual native outcome;
+    // the fixed-seed fixture has a finite retry envelope, not guaranteed contact.
+    for (
+      let shot = 0;
+      shot < 5 && entityGet(service.world.entities, 'hare-1')!.actor!.alive;
+      shot++
+    ) {
+      await perform(
         service,
-        'hunt',
-        (action) => action.command?.targetId === 'hare-1' && action.command.itemId === tool!.id,
-      ),
-    );
-    const shotStart = service.world.simTime;
-    const advancedShot = await service.transition((world) => advanceWorld(world, 18));
-    expect(
-      service.world.events.some(
-        (event) =>
-          event.type === 'shot-released' && event.actorId === NPC_ID && event.targetId === 'hare-1',
-      ),
-      JSON.stringify({
-        advancedShot,
-        shotStart,
-        at: service.world.simTime,
-        action: entityGet(service.world.entities, NPC_ID)!.actor!.action,
-        events: service.world.events.slice(-8),
-      }),
-    ).toBe(true);
-    // Releasing the shot does not resolve its flight or guarantee an impact.
-    expect(entityGet(service.world.entities, 'hare-1')!.actor!.alive).toBe(true);
-    const flight = Object.values(service.world.projectiles ?? {}).find(
-      (projectile) => projectile.sourceId === NPC_ID && projectile.targetId === 'hare-1',
-    );
-    expect(flight).toBeDefined();
-    const before = service.world.simTime;
-    const result = await service.transition((world) =>
-      advanceWorld(world, flight!.remainingRange / flight!.speed),
-    );
-    const evidence = JSON.stringify({
-      result,
-      before,
-      after: service.world.simTime,
-      navigationBlocked: navigationBlocked(service.world),
-      projectiles: service.world.projectiles,
-    });
-    expect(result.ok, evidence).toBe(true);
-    expect(service.world.simTime, evidence).toBeGreaterThan(before);
+        select(
+          service,
+          'hunt',
+          (action) => action.command?.targetId === 'hare-1' && action.command.itemId === tool!.id,
+        ),
+      );
+      const shotStart = service.world.simTime;
+      const advancedShot = await service.transition((world) => advanceWorld(world, 18));
+      expect(
+        service.world.events.some(
+          (event) =>
+            event.type === 'shot-released' &&
+            event.actorId === NPC_ID &&
+            event.targetId === 'hare-1',
+        ),
+        JSON.stringify({
+          advancedShot,
+          shotStart,
+          at: service.world.simTime,
+          action: entityGet(service.world.entities, NPC_ID)!.actor!.action,
+          events: service.world.events.slice(-8),
+        }),
+      ).toBe(true);
+      // Releasing the shot does not resolve its flight or guarantee an impact.
+      expect(entityGet(service.world.entities, 'hare-1')!.actor!.alive).toBe(true);
+      const flight = Object.values(service.world.projectiles ?? {}).find(
+        (projectile) => projectile.sourceId === NPC_ID && projectile.targetId === 'hare-1',
+      );
+      expect(flight).toBeDefined();
+      const before = service.world.simTime;
+      const result = await service.transition((world) =>
+        advanceWorld(world, flight!.remainingRange / flight!.speed),
+      );
+      const evidence = JSON.stringify({
+        result,
+        before,
+        after: service.world.simTime,
+        navigationBlocked: navigationBlocked(service.world),
+        projectiles: service.world.projectiles,
+      });
+      expect(result.ok, evidence).toBe(true);
+      expect(service.world.simTime, evidence).toBeGreaterThan(before);
+    }
     expect(
       entityGet(service.world.entities, 'hare-1')!.actor!.alive,
       JSON.stringify(service.world.events.slice(-10)),
     ).toBe(false);
+    await editWorld(service, (world) => {
+      initializePerception(world, []);
+      const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates)
+        .filter(
+          ([, candidate]) =>
+            candidate.sourceId === 'hare-1' || entityGet(world.entities, candidate.sourceId)?.heat,
+        )
+        .map(([key]) => key);
+      expect(setAttentionFocus(world, NPC_ID, keys)).toBe(true);
+    });
     await perform(
       service,
       select(service, 'harvest', (action) => action.command?.targetId === 'hare-1'),

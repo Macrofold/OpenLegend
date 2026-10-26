@@ -702,6 +702,7 @@ export async function expandSituation(
       else {
         const history = await readHistory({
           subjects: [...new Set([anchor, ...(other ? [other] : [])])],
+          kinds: ['body', 'location', 'physical-boundary', 'surface-patch'],
           measurements: { from: query.from, through: Math.min(world.simTime, query.through) },
           through: world.simTime,
           cut: captured.receiptPrefix,
@@ -741,6 +742,22 @@ export async function expandSituation(
               : {}),
           };
         };
+        const render = (value: unknown): unknown => {
+          if (Array.isArray(value)) return value.map(render);
+          if (!value || typeof value !== 'object') return value;
+          const record = value as Record<string, unknown>;
+          if (
+            Object.keys(record).length === 2 &&
+            typeof record['entry'] === 'number' &&
+            typeof record['facet'] === 'number'
+          )
+            return support(
+              record as unknown as import('@open-legend/domain').HistoricalSpatialFact,
+            );
+          return Object.fromEntries(
+            Object.entries(record).map(([key, child]) => [key, render(child)]),
+          );
+        };
         result = {
           status: native.status,
           coverage: native.coverage,
@@ -748,14 +765,7 @@ export async function expandSituation(
           distanceUnit: 'metres',
           scope: 'selected-retained-evidence',
           preparedFacts: native.preparedFacts,
-          samples: native.samples.map((sample) => ({
-            ...sample,
-            support: sample.support.map(support),
-            boundaries: sample.boundaries.map((edge) => ({
-              ...edge,
-              support: support(edge.support),
-            })),
-          })),
+          samples: render(native.samples),
         };
         keepNewest = true;
       }

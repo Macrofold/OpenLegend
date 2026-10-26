@@ -2221,8 +2221,18 @@ export class WorldService {
   private async withHistoryEdit<T extends ApiResult>(
     selection: HistoryEditSelection,
     operation: (prepared?: PreparedHistoryEdit) => Promise<T>,
+    privateActor?: { actorId: string; scope: RequestScope },
   ): Promise<T | (ApiResult & { revision: number })> {
     await this.flush();
+    // The flush can settle a queued control rebind. Private dependency preparation
+    // needs current permission before it hydrates any actor-owned body.
+    if (privateActor && !this.mayInspectPrivate(privateActor.actorId, privateActor.scope))
+      return {
+        ok: false,
+        code: 'forbidden',
+        message: 'Human-private character content is unavailable to this principal.',
+        revision: this.viewRevision,
+      };
     if (!this.store.records || !this.store.adoptHistory) return this.mutate(() => operation());
     const original = this.saved;
     const generation = this.generation;
@@ -4901,6 +4911,12 @@ export class WorldService {
         code: 'forbidden',
         message: 'Human-private character content is unavailable to this principal.',
       };
+    if (!this.config.godMode || !this.currentScope(scope, 'create'))
+      return {
+        ok: false,
+        code: 'forbidden',
+        message: 'Creator access is required to edit a person.',
+      };
     return this.withHistoryEdit(
       {
         sources: memoryChanges.map((change) => ({
@@ -4998,6 +5014,7 @@ export class WorldService {
           return { ok: false, code: 'storage', message: this.storageError! };
         return { ...result.outcome, revision: this.viewRevision };
       },
+      { actorId, scope },
     );
   }
 
@@ -6099,6 +6116,7 @@ export class WorldService {
           message: ok ? corrected.outcome.message : this.storageError!,
         };
       },
+      { actorId, scope },
     );
   }
 
@@ -6154,6 +6172,7 @@ export class WorldService {
             : this.storageError!,
         };
       },
+      { actorId, scope },
     );
   }
 

@@ -12,6 +12,7 @@ import {
   type TemporalHistorySelection,
   type TemporalSourceBlock,
   type TemporalReceiptPrefix,
+  type TemporalValue,
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { MemoryScope } from './memory-repository.js';
@@ -49,6 +50,7 @@ export interface TemporalHistoryQuery {
   bytes?: number;
   cut?: TemporalReceiptPrefix;
   measurements?: { from: number; through: number };
+  kinds?: readonly TemporalValue['kind'][];
 }
 
 export function retentionNeedsPreparation(world: WorldState): boolean {
@@ -239,7 +241,13 @@ export async function readTemporalHistory(
         b.at - a.at || b.order - a.order || b.epoch.localeCompare(a.epoch) || b.ordinal - a.ordinal,
     );
   for (const receipt of receipts)
-    for (const reference of receipt.facets) sourceIds.add(reference.blockId);
+    for (const reference of receipt.facets)
+      if (
+        !query.measurements ||
+        (reference.measuredFrom <= query.measurements.through &&
+          (reference.confirmedThrough ?? reference.measuredThrough) >= query.measurements.from)
+      )
+        sourceIds.add(reference.blockId);
   const sources: Record<string, TemporalSourceBlock> = {};
   const missing = [...sourceIds].filter((id) => !resident?.sources[id]);
   if (missing.length) {
@@ -292,7 +300,13 @@ export async function readTemporalHistory(
       examined = before;
       continue;
     }
-    const values = receipt.facets.map(
+    const references = receipt.facets.filter(
+      (facet) =>
+        !query.measurements ||
+        (facet.measuredFrom <= query.measurements.through &&
+          (facet.confirmedThrough ?? facet.measuredThrough) >= query.measurements.from),
+    );
+    const values = references.map(
       (reference) => sources[reference.blockId]?.values[reference.valueOrdinal],
     );
     if (values.some((value) => !value)) {
@@ -300,11 +314,12 @@ export async function readTemporalHistory(
       examined = before;
       continue;
     }
-    const kept = receipt.facets
+    const kept = references
       .map((facet, index) => ({ facet, value: values[index] }))
       .filter(
         ({ facet, value }) =>
           !!value &&
+          (!query.kinds || query.kinds.includes(value.kind)) &&
           (!query.measurements ||
             (facet.measuredFrom <= query.measurements.through &&
               (facet.confirmedThrough ?? facet.measuredThrough) >= query.measurements.from)) &&
@@ -315,7 +330,12 @@ export async function readTemporalHistory(
       examined = before;
       continue;
     }
-    if (kept.length !== receipt.facets.length) incomplete = true;
+    if (
+      kept.length !==
+      references.filter((_, index) => !query.kinds || query.kinds.includes(values[index]!.kind))
+        .length
+    )
+      incomplete = true;
     const entry = {
       receipt: { ...receipt, facets: kept.map(({ facet }) => facet) },
       values: kept.map(({ value }) => value!),

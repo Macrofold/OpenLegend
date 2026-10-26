@@ -159,6 +159,7 @@ export async function recentHistory(
       throw new HistoryCursorError('Recent observations changed. Browse again.');
     }
   }
+  if (!permitted()) throw new AuthorityError('forbidden');
   const selected = await memories.temporalHistory(
     { worldId: world.id, actorId, generation: head.generation },
     { before, limit: 128, bytes: 8192 },

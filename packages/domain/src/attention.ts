@@ -611,7 +611,10 @@ export function setAttentionFocus(
     keys.some((key) => !Object.hasOwn(state.candidates, key))
   )
     return false;
-  state.explicit = [...new Set(keys)];
+  const next = [...new Set(keys)];
+  if (next.length === state.explicit.length && next.every((key, i) => key === state.explicit[i]))
+    return true;
+  state.explicit = next;
   reconcileAttendedTemporalEvidence(
     world,
     observerId,
