@@ -424,10 +424,10 @@ export function commitCognition(
   return finish(world, events, outcome(true, 'cognition-committed', 'Cognition accepted.'));
 }
 
-/** Legacy model-authored notes remain in saved audit data, never an extra mind store.
- * Native commitments retain their separate protected allowance for old saves. */
+/** Fallible impressions are eligible optional recollections, never exact grant support. */
 export function isRecallableExperience(memory: MemoryRecord): boolean {
   return (
+    memory.kind === 'impression' ||
     (memory.kind === 'episode' && memory.source !== 'inferred') ||
     (memory.kind === 'commitment' && memory.source !== 'inferred')
   );

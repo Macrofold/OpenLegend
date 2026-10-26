@@ -1,3 +1,4 @@
+import { retentionNeedsPreparation } from './temporal-storage.js';
 import { historyPositions } from './history-residency.js';
 import {
   resolveCommandContactReferences,
@@ -1184,6 +1185,24 @@ export class WorldService {
   async publishRecall<T>(operation: () => Promise<T>): Promise<T> {
     return this.mutationContext.exit(() => this.mutate(operation));
   }
+
+  /** Native attention bookkeeping shares the same durable mutation lane as restore.
+   * This callback is server-owned; it never accepts client/model code or observations. */
+  async publishAttention(
+    actorId: string,
+    generation: string,
+    operation: (world: WorldState) => boolean,
+  ): Promise<boolean> {
+    return this.mutate(async () => {
+      await this.ready;
+      if (generation !== this.generation || !entityGet(this.world.entities, actorId)?.actor)
+        return false;
+      let accepted = false;
+      const next = updateWorld(this.world, (world) => { accepted = operation(world); });
+      if (!accepted) return false;
+      return next === this.world || this.commit({ ...this.saved, world: next }, undefined, 'unchanged');
+    });
+  }
   async setPreferences(
     preferences: PlayerPreferencePatch,
     scope = this.localScope,
@@ -1527,7 +1546,9 @@ export class WorldService {
         throw new Error(
           'A transition declared unchanged events but replaced the event collection.',
         );
-      const prepared = this.prepareSnapshot(saved);
+      const retention = await this.prepareRetention(saved);
+      const prepared = this.prepareSnapshot(retention.state);
+      this.store.records?.stageRetirements(prepared.snapshot, retention.rows);
       const { historyWorld, appendEventCount, currentAppendCount } = prepared;
       saved = prepared.snapshot;
       const revision = await timed('world.commit', () =>
@@ -1742,7 +1763,9 @@ export class WorldService {
     try {
       freezeWorld(saved.world);
       allocation = this.hostWork.reserve(saved.world);
-      const prepared = this.prepareSnapshot(saved);
+      const retention = await this.prepareRetention(saved);
+      const prepared = this.prepareSnapshot(retention.state);
+      store.records?.stageRetirements(prepared.snapshot, retention.rows);
       // Preparation assigns canonical record positions; release reuses them.
       const changes = store.prepareCommit(this.persistedRevision, prepared.snapshot, {
         after: prepared.historyWorld,
@@ -1765,14 +1788,14 @@ export class WorldService {
       write.snapshot.world,
       write.released.world,
     );
-    if (unsafe) {
+    if (unsafe || write.changes.changes.expired?.size) {
       // A record created or changed since the last durable save would leave memory before
       // SQL has it. Keep the invariant with today's order: write, then release (reusing the
       // same prepared change set and release, which are not idempotent to recompute).
       countMetric('persistence.synchronousProgressSaves');
       this.synchronousProgressSaves.set(
-        unsafe,
-        (this.synchronousProgressSaves.get(unsafe) ?? 0) + 1,
+        unsafe ?? 'personal-memory-expiry',
+        (this.synchronousProgressSaves.get(unsafe ?? 'personal-memory-expiry') ?? 0) + 1,
       );
       let revision: number;
       try {
@@ -1899,7 +1922,16 @@ export class WorldService {
     return false;
   }
 
-  private acceptProgress(saved: SavedWorld): boolean {
+  private async prepareRetention(saved:SavedWorld) {
+    if (!this.store.memories || !retentionNeedsPreparation(saved.world))
+      return {state:saved,rows:new Map<string,string[]>()};
+    await this.backgroundSave?.done;
+    return this.store.memories.prepareRetention(saved);
+  }
+
+  private async acceptProgress(saved: SavedWorld): Promise<boolean> {
+    if (this.store.memories && retentionNeedsPreparation(saved.world))
+      return this.commit(saved, undefined, 'append');
     let allocation: ReturnType<HostWork['reserve']> | undefined;
     try {
       allocation = this.hostWork.reserve(saved.world);
@@ -3512,7 +3544,7 @@ export class WorldService {
           ? await this.commit(saved, undefined, 'append')
           : due
             ? await this.saveProgress(saved)
-            : this.acceptProgress(saved)
+            : await this.acceptProgress(saved)
       )
         this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
       countMetric('clock.advancedSimSeconds', this.world.simTime - beforeSimTime);
@@ -4030,7 +4062,7 @@ export class WorldService {
       // saved in the next background save; restart can prepare it again from that request.
       // Avoid a synchronous save before the character takes its first step.
       // docs/performance.md#navigation-failure-and-shutdown
-      this.acceptProgress({ ...this.saved, world: transition.world });
+      await this.acceptProgress({ ...this.saved, world: transition.world });
     }, true);
   }
 

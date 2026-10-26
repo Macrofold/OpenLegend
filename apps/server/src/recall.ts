@@ -412,17 +412,6 @@ export function candidateSet(
       at: world.simTime,
       salience: 3,
     });
-  const nearest = [...observed.visibleEntities].sort(
-    (a, b) =>
-      Math.hypot(
-        worldPosition(a).x - worldPosition(observed.actor).x,
-        worldPosition(a).z - worldPosition(observed.actor).z,
-      ) -
-        Math.hypot(
-          worldPosition(b).x - worldPosition(observed.actor).x,
-          worldPosition(b).z - worldPosition(observed.actor).z,
-        ) || a.id.localeCompare(b.id),
-  );
   // An explicitly bound tool remains necessary even when a large inventory is ranked.
   const boundItems = new Set<string>();
   const actor = observed.actor.actor!;
@@ -445,14 +434,7 @@ export function candidateSet(
   )
     throw new Error('Required possession references exceed the decision allowance.');
   const hardIds = new Set([
-    ...nearest
-      .filter((e) => e.actor)
-      .slice(0, HARD_CONTEXT_LIMITS.actors)
-      .map((e) => `entity:${e.id}`),
-    ...nearest
-      .filter((e) => !e.actor)
-      .slice(0, HARD_CONTEXT_LIMITS.objects)
-      .map((e) => `entity:${e.id}`),
+    ...observed.visibleEntities.map((entity) => `entity:${entity.id}`),
     ...[...observed.inventory]
       .sort(
         (a, b) =>

@@ -235,6 +235,8 @@ export interface CharacterTrait {
 }
 
 export interface ActorComponent {
+  /** Authored detail-tracking capacity; selected-world admission supplies its bound. */
+  attentionCapacity?: number;
   /** Personally acquired short-lived danger and own offense; never public actor data. */
   encounters?: import('./combat-encounters.js').PersonalEncounters;
   practice?: Record<string, import('./practical-competence.js').PracticeProgress>;
@@ -363,7 +365,10 @@ export interface MemoryRecord {
   sequence?: number;
   id: string;
   actorId: string;
-  kind: 'episode' | 'belief' | 'commitment' | 'reflection';
+  kind: 'episode' | 'belief' | 'commitment' | 'reflection' | 'impression';
+  impression?: import('./remembered-impressions.js').RememberedImpression;
+  sourceReceipt?: import('./temporal-evidence.js').TemporalReceiptLocator;
+  retention?: import('./remembered-impressions.js').ExperienceRetention;
   source: 'observed' | 'heard' | 'felt' | 'internal' | 'inferred' | 'self_thought';
   responseId?: string;
   summary: string;

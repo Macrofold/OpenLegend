@@ -48,9 +48,45 @@ import {
 } from './worlds/base/recognition.js';
 import { hasMemory } from './living.js';
 import { currentBodyObservation, observationFactKey } from './perception-evidence.js';
-import { ensureBodyIndividual, outwardBodyName } from './worlds/base/knowledge.js';
+import { ensureBodyIndividual, outwardBodyName, associateBodyFamiliarity } from './worlds/base/knowledge.js';
 import { DETECTION_SUPPORT_POLICY } from './worlds/base/senses.js';
 import { normalSpeedSeconds } from './simulation-time.js';
+import { BASE_ATTENTION_POLICY, baseAttentionCapacity, baseRecordingReason } from './worlds/base/attention.js';
+import type { RecordingInput } from './attention.js';
+import type { ObserverSubject } from './knowledge.js';
+import { subjectFamiliarity, subjectFamiliarityContactDue, creditSubjectFamiliarity } from './worlds/base/recognition.js';
+
+export function selectedAttentionPolicy(world: WorldState) {
+  selectedCreationProfileForWorld(world);
+  return BASE_ATTENTION_POLICY;
+}
+export function selectedTemporalPolicy(world: WorldState) {
+  return selectedAttentionPolicy(world).retention;
+}
+export function selectedRecordingReason(world: WorldState, input: RecordingInput) {
+  selectedCreationProfileForWorld(world);
+  return baseRecordingReason(world, input);
+}
+export function selectedAttentionCapacity(world: WorldState, observer: import('./types.js').Entity) {
+  selectedCreationProfileForWorld(world);
+  return baseAttentionCapacity(world, observer);
+}
+export function selectedAttentionFamiliarity(world: WorldState, observerId: string, subject: ObserverSubject | undefined): number {
+  selectedCreationProfileForWorld(world);
+  return subject ? subjectFamiliarity(world, observerId, subject) : 0;
+}
+export function selectedCreditAttentionContact(world: WorldState, observerId: string, subject: ObserverSubject, input: { sourceKey: string; at: number; order: number; support?: readonly string[] }): boolean {
+  selectedCreationProfileForWorld(world);
+  return creditSubjectFamiliarity(world, observerId, subject, { ...input, key: JSON.stringify(['contact', input.sourceKey, input.at]), support: input.support ?? [] });
+}
+export function selectedAttentionContactDue(world: WorldState, observerId: string, subject: ObserverSubject, at: number): boolean {
+  selectedCreationProfileForWorld(world);
+  return subjectFamiliarityContactDue(world, observerId, subject, at);
+}
+export function selectedAssociateBodyFamiliarity(world: WorldState, observerId: string, sourceId: string): void {
+  selectedCreationProfileForWorld(world);
+  associateBodyFamiliarity(world, observerId, sourceId);
+}
 
 export function selectedDetectionSupportPolicy(world: WorldState) {
   selectedCreationProfileForWorld(world);

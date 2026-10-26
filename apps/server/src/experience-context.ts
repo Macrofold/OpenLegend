@@ -76,13 +76,27 @@ function eventFieldsForModel(
     ]),
   );
 }
-function facetValueForModel(
+export function facetValueForModel(
   world: WorldState,
   actorId: string,
   value: SensoryFacet,
   sourceScope: unknown,
 ): unknown {
   switch (value.kind) {
+    case 'body':
+      return { kind: value.kind, body: { label: value.body.label, position: value.body.position,
+        heading: value.body.heading, radius: value.body.radius, height: value.body.height,
+        outward: value.body.outward } };
+    case 'public-attributes':
+      return { kind: value.kind, attributes: value.attributes.map(({id,name,value,status,min,max,unit,critical}) =>
+        ({id,name,value,status,min,max,unit,critical})) };
+    case 'surface-patch':
+      return { kind: value.kind, patch: value.patch };
+    case 'physical-boundary':
+      return { kind: value.kind, boundary: { ...value.boundary,
+        nearSurface: { ...value.boundary.nearSurface, support: supportForModel(world, actorId, value.boundary.nearSurface.support) },
+        farSurface: { ...value.boundary.farSurface, support: supportForModel(world, actorId, value.boundary.farSurface.support) },
+      } };
     case 'association':
       return {
         kind: value.kind,
@@ -193,7 +207,7 @@ function factSupportStatus(world: WorldState, actorId: string, id: string, ordin
       ? 'disputed'
       : 'retained';
 }
-function currentFacetForModel(world: WorldState, actorId: string, snapshot: CapturedCurrentFacet) {
+export function currentFacetForModel(world: WorldState, actorId: string, snapshot: CapturedCurrentFacet) {
   return {
     source: evidenceSourceHandle(world, actorId, {
       family: 'native-exposure',
@@ -418,6 +432,22 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
         JSON.stringify(facet.value.exposure) === JSON.stringify(evidence.exposure),
     );
   return {
+    ...(memory.impression
+      ? {
+          rememberedImpression: {
+            precision: 'reduced',
+            epistemicStatus: 'fallible-recollection',
+            from: memory.impression.from,
+            through: memory.impression.through,
+            weakened: memory.impression.weakened,
+            claims: memory.impression.claims.map((claim) =>
+              claim.kind === 'occurrence'
+                ? { ...claim, ...(claim.subject ? { subject: subjectForModel(world, actorId, claim.subject) } : {}) }
+                : claim,
+            ),
+          },
+        }
+      : {}),
     ...(evidence
       ? {
           experience: {

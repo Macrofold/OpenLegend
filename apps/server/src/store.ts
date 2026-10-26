@@ -100,7 +100,7 @@ function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: s
 }
 import { digest } from './content-digest.js';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '19';
+export const DATABASE_SCHEMA = '20';
 
 export interface AttemptBudget {
   id: string;
@@ -1047,7 +1047,6 @@ export class SqlGameRepository implements GameRepository {
         for (const [actorId, ids] of Object.entries(invalidations)) {
           await this.vectors?.invalidate(`vectors:${state.world.id}:${actorId}`, ids);
           await this.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
-          await this.putIntegration(`interests:${state.world.id}:${actorId}`, null);
         }
         await this.applyWorldTables(write);
         // Nested importer/restore transactions may still roll back after this call.
@@ -1096,6 +1095,7 @@ export class SqlGameRepository implements GameRepository {
       !!preparedHistory &&
       this.readyHistoryWorlds.has(state.world.id) &&
       !projection?.restore &&
+      !write.changes.expired?.size &&
       !projection?.bindingChange &&
       !projection?.controlChange &&
       !projection?.participationChange &&

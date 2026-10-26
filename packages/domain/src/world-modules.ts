@@ -3,6 +3,9 @@ import {
   validatePerceptionEvidenceState,
 } from './perception-evidence.js';
 import { validateExperienceManifest, validPersonalSourceRef } from './experience-manifest.js';
+import { validateRememberedImpression, impressionFits } from './remembered-impressions.js';
+import { validateTemporalEvidenceState } from './temporal-validation.js';
+import { validateAttentionState } from './attention.js';
 import { validateNativeResponse } from './native-response.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { validateEntityCollection } from './entity-collection.js';
@@ -73,6 +76,8 @@ import { validateNativeResponseProfiles } from './native-response.js';
 import { validateReincarnation } from './reincarnation.js';
 import { validateTerritorialThreats } from './territorial-threat.js';
 import { validateCognitionPolicy } from './cognition-policy.js';
+import { validateSemanticContinuation } from './semantic-opportunities.js';
+import { selectedTemporalPolicy, selectedAttentionPolicy } from './world-composition.js';
 import { trustedRecipeImplementations } from './world-composition.js';
 import { validateRangedPolicy, validateRangedActions, type RangedPolicy } from './ranged-policy.js';
 import { validateInstalledRecipes, type RecipeFamilyDescriptor } from './invention-families.js';
@@ -1099,9 +1104,25 @@ export function validateWorldModules(world: WorldState): void {
   )
     throw new Error('Invalid selected normal-time rate.');
   validatePerceptionEvidenceState(world, originalObservations);
+  validateTemporalEvidenceState(world, originalObservations);
+  for (const entity of entityValues(world.entities))
+    if (entity.actor?.attentionCapacity !== undefined &&
+      (!Number.isSafeInteger(entity.actor.attentionCapacity) || entity.actor.attentionCapacity < 1 || entity.actor.attentionCapacity > selectedAttentionPolicy(world).maximumCapacity))
+      throw new Error('Invalid actor attention capacity.');
+  for (const owner of Object.values(world.perceptionEvidence ?? {}))
+    if (owner.attention !== undefined) validateAttentionState(owner.attention);
   for (const [actorId, entries] of Object.entries(world.memories))
     for (const memory of entries) {
       if (memory.actorId !== actorId) throw new Error('Foreign personal memory owner.');
+      if (!['episode', 'belief', 'commitment', 'reflection', 'impression'].includes(memory.kind) ||
+        (memory.kind === 'impression') !== (memory.impression !== undefined))
+        throw new Error('Invalid personal memory kind.');
+      if (memory.impression) {
+        validateRememberedImpression(memory.impression, actorId, world.simTime);
+        if (!impressionFits(memory, selectedTemporalPolicy(world).impression)) throw new Error('Remembered impression exceeds installed limits.');
+        if (memory.evidence || memory.observation || memory.observations || memory.manifest || memory.obligation)
+          throw new Error('A remembered impression cannot masquerade as exact evidence.');
+      }
       if (memory.evidence) {
         validateEventEvidence(memory.evidence);
         validatePersonalOriginals(memory.evidence, actorId);
@@ -1220,6 +1241,8 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Missing or invalid saved invention origin.');
   }
   validateAgency(world);
+  for (const entity of entityValues(world.entities))
+    if (entity.actor?.agency.semantic !== undefined) validateSemanticContinuation(entity.actor.agency.semantic);
   validateOutings(world);
   validateActionExperience(world);
   validatePractice(world);

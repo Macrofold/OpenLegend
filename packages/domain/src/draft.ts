@@ -22,6 +22,7 @@ import { captureReservationIndex } from './resource-claims.js';
 import { captureContributionSources } from './status-capabilities.js';
 import { captureContributionResidency } from './contribution-residency.js';
 import { Immer, current, isDraft, original, enablePatches, freeze, type Patch } from 'immer';
+import { reconcileSemanticInterval } from './semantic-opportunities.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { materializeNativeValuesInPlace } from './native-values.js';
@@ -451,6 +452,10 @@ export function finishWorld(
   world: WorldState,
   capturePatches?: (patches: readonly Patch[]) => void,
 ): WorldState {
+  if (isDraft(world)) {
+    const changed = changedDraftEntityIds(world);
+    for (const id of changed ?? entityKeys(world.entities)) reconcileSemanticInterval(world, id);
+  }
   sealAppends(world);
   sealNativeEvidence(world);
   if (!isDraft(world)) return world;

@@ -7,6 +7,7 @@ import type { EvidenceSource, ObservedLocation } from './perception-evidence.js'
 import type { ObservationContribution } from './perception-evidence.js';
 import type { EncounterExposure } from './places.js';
 import type { WorldState } from './types.js';
+import type { TemporalSupportCapsule } from './temporal-evidence.js';
 
 export interface RetainedPlaceObservation {
   capsule: KnownPlaceCapsule;
@@ -190,6 +191,44 @@ export function retainedPlaceObservations(
     }
   }
   return [...places.values()];
+}
+
+/** A sparse retained receipt keeps the same original place fact, not a new visit.
+ * No live place definition or forgotten account is consulted to reconstruct it. */
+export function temporalKnownPlaceCapsules(
+  actorId: string,
+  support: TemporalSupportCapsule,
+): KnownPlaceCapsule[] {
+  const receipt = support.receipt;
+  if (receipt.actorId !== actorId || receipt.facets.length !== support.values.length)
+    throw new KnownPlacePreparationError();
+  if (receipt.origin?.kind !== 'occurrence') return [];
+  const places: KnownPlaceCapsule[] = [];
+  support.values.forEach((value, index) => {
+    if (value.kind !== 'encounter-exposure' || value.exposure.kind !== 'place') return;
+    const exposure = value.exposure;
+    const exposureSource = receipt.facets[index]?.original?.source;
+    const locationIndex = support.values.findIndex((candidate, ordinal) => candidate.kind === 'location' &&
+      candidate.location.kind === 'point' && JSON.stringify(candidate.location.point) === JSON.stringify(exposure.point) &&
+      JSON.stringify(receipt.facets[ordinal]?.original?.source) === JSON.stringify(exposureSource));
+    const location = support.values[locationIndex];
+    const fact = receipt.facets[locationIndex];
+    if (!location || location.kind !== 'location' || !fact?.original ||
+      fact.original.source.observer.actorId !== actorId ||
+      fact.original.source.observer.physicalLife !== receipt.physicalLife)
+      throw new KnownPlacePreparationError();
+    places.push({
+      placeId: exposure.id, label: exposure.label, location: copyLocation(location.location),
+      source: { ...fact.original.source, observer: { ...fact.original.source.observer } },
+      facetOrdinal: fact.original.ordinal,
+      sourceEventId: receipt.origin!.kind === 'occurrence' ? receipt.origin!.eventId : undefined,
+      observedAt: fact.asOf,
+      observedOrder: receipt.origin!.kind === 'occurrence' ? receipt.origin!.order : receipt.order,
+      acquiredAt: fact.acquiredAt,
+      provenance: exposure.reportedBy ? 'testimony' : 'observed',
+    });
+  });
+  return places;
 }
 export function acquireKnownPlaceEvidence(world: WorldState, entry: Awareness): void {
   const exposure = entry.exposure;

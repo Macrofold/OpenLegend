@@ -22,6 +22,7 @@ import config from './config/knowledge.generated.json' with { type: 'json' };
 import { learnRecipe, sameSubject, type ObserverSubject } from '../../knowledge.js';
 import {
   installAuthoredVoice,
+  associateIndividualFamiliarity,
   validateRecognition,
   type RecognitionKnowledge,
 } from './recognition.js';
@@ -39,6 +40,7 @@ export function startingRecipeKnowledge(
 export const BASE_KNOWLEDGE_POLICY: KnowledgePolicy = config.knowledge;
 
 export interface ObserverIdentity {
+  familiarity?: import('../../attention.js').FamiliarityState;
   individualId?: string;
   canonicalId?: string;
   seedOnly?: boolean;
@@ -84,6 +86,18 @@ export function observerIndividual(
   return subject.kind === 'individual'
     ? world.observerIdentities?.[observerId]?.[subject.individualId]
     : identityForEntity(world, observerId, subject.entityId);
+}
+/** Only the already acquired association for this exact current body authorizes
+ * reconciling its old local contact history with a separately learned voice. */
+export function associateBodyFamiliarity(world: WorldState, observerId: string, sourceId: string): void {
+  const body = world.perceptionEvidence?.[observerId]?.current[`${sourceId}:body`];
+  const association = world.perceptionEvidence?.[observerId]?.current[`${sourceId}:association`];
+  const local = currentBodyLocalSubject(world, observerId, sourceId);
+  const matched = currentBodyAssociation(world, observerId, sourceId);
+  if (!body || !association || association.bodyLeaseId !== body.id || !local || !matched) return;
+  const from = observerIndividual(world, observerId, local), to = observerIndividual(world, observerId, matched);
+  if (!from || !to) return;
+  associateIndividualFamiliarity(world, from, to, JSON.stringify({ source: { family: 'native-exposure', observer: association.original.observer, id: association.original.id, revision: association.original.revision }, ordinal: association.originalOrdinal }));
 }
 /** The current body must itself supply the association. Authored voice familiarity
  * alone never identifies a body that has only been seen. A private name assigned
@@ -150,7 +164,6 @@ export function ensureBodyIndividual(
     encounterId,
     authored: false,
   };
-  advanceKnowledgeRevision(world, observerId);
   return { kind: 'individual', individualId };
 }
 /** Only an actually received recognition can connect this body to a remembered

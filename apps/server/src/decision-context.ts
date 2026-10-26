@@ -1,4 +1,6 @@
 import { currentBodyObservation } from '@open-legend/domain';
+import { currentDetailedAttention, selectTemporalHistory } from '@open-legend/domain';
+import { captureSituation } from './situation-context.js';
 import { entityGet } from '@open-legend/domain';
 import {
   bindNativeChoice,
@@ -46,7 +48,6 @@ import {
 } from '@open-legend/domain';
 import { activeAppraisals } from '@open-legend/domain';
 
-import { compileInterests } from './interests.js';
 import { type CognitionBinding, MIND_POLICY, mindFor } from '@open-legend/domain';
 import type { JudgeRequest, JudgeValue } from '@open-legend/ai';
 import {
@@ -358,6 +359,12 @@ export async function prepareDecision(
   const evidenceScope = head
     ? { worldId: world.id, actorId, generation: head.generation }
     : undefined;
+  const recentHistory = service.store.memories && evidenceScope
+    ? await service.store.memories.temporalHistory(evidenceScope, {
+        subjects: currentDetailedAttention(world, actorId).map((entry) => entry.exposure.episodeId),
+        through: world.simTime,
+      }, world)
+    : selectTemporalHistory(world.experience?.temporal, actorId);
   const bodies = new MemoryReadCache();
   const retainedEvidence =
     service.store.memories && evidenceScope
@@ -734,6 +741,7 @@ export async function prepareDecision(
   const rememberedEpisodes = new Map(
     [...rememberedSubjects].map((id) => [id, world.perceptionEpisodes?.[actorId]?.[id] ?? null]),
   );
+  let capturedSituation: ReturnType<typeof captureSituation> | undefined;
   const validatePrepared = async (flush = true) => {
     await conversation.validate(flush, sources);
     // Attention/generation can outlive an unnamed person's observation. Historical
@@ -748,6 +756,12 @@ export async function prepareDecision(
       throw new Error(
         'Action outcomes changed during the decision; reconsider with current memories.',
       );
+    if (capturedSituation && !capturedSituation.valid(service.world))
+      throw new Error('Received situation evidence changed during this decision.');
+    if (evidenceScope && service.store.memories && capturedSituation &&
+      !(await service.store.memories.temporalReceiptsCurrent(evidenceScope,
+        capturedSituation.history.entries.map(({ receipt }) => receipt))))
+      throw new Error('Recent personal evidence expired during this decision.');
   };
   await validatePrepared(false);
   const currentWorld = service.world;
@@ -785,12 +799,10 @@ export async function prepareDecision(
       ].map((candidate) => [candidate.id, candidate]),
     ).values(),
   ];
-  await service.store.putIntegration(
-    `interests:${currentWorld.id}:${actorId}`,
-    compileInterests(currentWorld, actorId, currentSelection),
-  );
   const currentActivity = activityDecisionFacts(currentWorld, actorId, currentObserved);
+  capturedSituation = captureSituation(currentWorld, actorId, jobId, recentHistory);
   const context: Record<string, unknown> = {
+    receivedSituation: capturedSituation.packet,
     ...currentActivity,
     ...(inspected
       ? {
@@ -848,7 +860,7 @@ export async function prepareDecision(
   context['conversation'] = conversation.lines;
   Object.assign(
     context,
-    contextSections(currentSelection.filter((candidate) => candidate.kind !== 'conversation')),
+    contextSections(currentSelection.filter((candidate) => candidate.kind !== 'conversation' && candidate.kind !== 'entity')),
   );
   if (currentWorld.innerWorlds?.[actorId]?.reconsiderationRequired)
     context['reconsideration'] =
@@ -1008,6 +1020,15 @@ export async function prepareDecision(
     attempts.set(JSON.stringify(binding), binding);
   }
   return {
+    situation: capturedSituation,
+    readSituationHistory: async (query: import('./temporal-storage.js').TemporalHistoryQuery) => {
+      await validatePrepared();
+      const result = service.store.memories && evidenceScope
+        ? await service.store.memories.temporalHistory(evidenceScope, query, currentWorld)
+        : selectTemporalHistory(currentWorld.experience?.temporal, actorId, query);
+      await validatePrepared(false);
+      return result;
+    },
     context,
     prompt,
     actionGuidance: structuredClone(currentWorld.cognitionPolicy.actionGuidance),

@@ -1,4 +1,7 @@
-import { entityGet } from '@open-legend/domain';
+import { entityHandle } from './entity-references.js';
+import { expandSituation, situationQuerySchema } from './situation-context.js';
+import { entityGet, currentBodyObservation } from '@open-legend/domain';
+import { discoveryInterval, reserveDiscovery, settleDiscovery, selectedAttentionPolicy } from '@open-legend/domain';
 import { resolveContactTarget } from './public-contact-references.js';
 import { undispatchedReceipt } from './decision-state.js';
 import { playerActionIdentity } from './action-request-recovery.js';
@@ -108,12 +111,7 @@ import {
   type Level1Resolution,
 } from './level1-selection.js';
 import { retrieveActions } from './action-retrieval.js';
-import {
-  interestMatches,
-  relevantPossessions,
-  ThoughtIntakeInputs,
-  type InterestSubscription,
-} from './interests.js';
+import { ThoughtIntakeInputs } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
 import {
@@ -199,6 +197,8 @@ const judgeMeter = (
   },
 });
 interface Running {
+  attentionDeadline?: { wall: number; monotonic: number };
+  discovery?: { actorId: string; reservation: string; spent: boolean };
   /** Admission lane, independent of later provider duration or outcome. */
   urgent: boolean;
   immediateTimer?: ReturnType<typeof setTimeout>;
@@ -235,6 +235,7 @@ const choice = (answer: JudgmentAnswer | undefined) =>
     ? answer.choice
     : null;
 interface ThoughtSchedule {
+  semanticRevision?: string;
   fingerprint: string;
   at: number;
   /** Highest evidence sequence a completed decision considered (consumed, not attempted). */
@@ -1448,6 +1449,8 @@ export class AiDirector {
   }
 
   private current(run: Running): string {
+    if (run.attentionDeadline && (this.now() >= run.attentionDeadline.wall || performance.now() >= run.attentionDeadline.monotonic))
+      throw new StopJob('stale', 'This attention decision exceeded its useful lifetime.', 'expired');
     const decision = run.job.decision;
     if (
       decision &&
@@ -1556,6 +1559,7 @@ export class AiDirector {
     onCompleted?: () => Promise<void>,
     cursor?: DecisionState['cursor'],
     urgent = false,
+    discovery?: { actorId: string; reservation: string },
   ): Promise<void> {
     // Invalid/busy requests cannot discard another mind's funded decision.
     // Reflection cleanup remains asynchronous once admission has actually succeeded.
@@ -1602,6 +1606,13 @@ export class AiDirector {
     }
     const run: Running = {
       urgent,
+      ...((job.kind === 'thought' || job.kind === 'chat') && actorId ? {
+        attentionDeadline: {
+          wall: this.now() + selectedAttentionPolicy(this.service.world).semantic.deadlineMs,
+          monotonic: performance.now() + selectedAttentionPolicy(this.service.world).semantic.deadlineMs,
+        },
+      } : {}),
+      ...(discovery ? { discovery: { ...discovery, spent: false } } : {}),
       job,
       controller: new AbortController(),
       generation: this.service.generation,
@@ -1648,10 +1659,15 @@ export class AiDirector {
           Math.min(
             job.decision.usefulUntilWall - this.now(),
             job.decision.usefulUntilMonotonic - performance.now(),
+            run.attentionDeadline ? run.attentionDeadline.monotonic - performance.now() : Infinity,
           ),
         ),
       );
       run.immediateTimer.unref();
+      run.expiryTimer.unref();
+    }
+    if (!run.expiryTimer && run.attentionDeadline) {
+      run.expiryTimer = setTimeout(() => run.controller.abort(), Math.max(1, run.attentionDeadline.monotonic - performance.now()));
       run.expiryTimer.unref();
     }
     await this.log.save({
@@ -1746,6 +1762,9 @@ export class AiDirector {
         if (run.expiryTimer) clearTimeout(run.expiryTimer);
         this.replyPreviews.end(run.job.id);
         try {
+          if (run.discovery && !run.discovery.spent)
+            await this.service.publishAttention(run.discovery.actorId, run.generation,
+              (world) => settleDiscovery(world, run.discovery!.actorId, run.discovery!.reservation, false));
           this.releaseImmediate(run);
 
           this.service.notify();
@@ -2014,6 +2033,13 @@ export class AiDirector {
       dispatchIntent = true;
       if (!(await this.service.store.markDecisionDispatch(id))) {
         throw new StopJob('failed', 'This model request already has dispatch intent.', 'uncertain');
+      }
+      if (run.discovery && !run.discovery.spent) {
+        const discovery = run.discovery;
+        if (!(await this.service.publishAttention(discovery.actorId, run.generation,
+          (world) => settleDiscovery(world, discovery.actorId, discovery.reservation, true))))
+          throw new StopJob('stale', 'The attention opportunity is no longer available.');
+        discovery.spent = true;
       }
       const result = await dispatch(id);
       const accountingStartedAt = new Date().toISOString();
@@ -2440,6 +2466,7 @@ export class AiDirector {
       async (id) =>
         await this.client.generate<T>({
           ...request,
+          ...(run.attentionDeadline ? { deadlineMs: Math.min(request.deadlineMs ?? Infinity, run.attentionDeadline.wall) } : {}),
           requestId: id,
           signal: run.controller.signal,
           maxOutputTokens:
@@ -3209,7 +3236,7 @@ export class AiDirector {
       ? baseSchema.extend({ invention: actorInvention.schema })
       : baseSchema;
     const instructions = `${RESPONSE_INSTRUCTIONS} ${actorInvention.instructions}`;
-    const context = `${prepared.prompt}\n${actorInvention.context}${appraisals ? '\nPermitted feeling proposals: ' + JSON.stringify(appraisals.context) : ''}`;
+    let context = `${prepared.prompt}\n${actorInvention.context}${appraisals ? '\nPermitted feeling proposals: ' + JSON.stringify(appraisals.context) : ''}`;
     // Private proposal context shares the existing total bound; it does not buy a larger prompt.
     if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
       throw new ContextBudgetError();
@@ -3224,6 +3251,7 @@ export class AiDirector {
     // Only the measured direct-inference route gets a disclosure grant. Other
     // generation callers and full harnesses keep their existing completed values.
     const preview =
+      !prepared.situation &&
       !run.job.decision &&
       !requestedActivity &&
       executedRoute !== 'level1' &&
@@ -3265,7 +3293,10 @@ export class AiDirector {
             },
           })
         : undefined;
-    const responseSchema = z.toJSONSchema(schema, { target: 'draft-7' });
+    const querySchema = schema.extend({
+      queries: z.array(situationQuerySchema).max(prepared.situation.policy.maximumQueries).nullable().optional(),
+    });
+    const responseSchema = z.toJSONSchema(querySchema, { target: 'draft-7' });
     let value: unknown;
     if (requestedActivity) value = requestedActivity;
     else if (executedRoute === 'level1') {
@@ -3295,7 +3326,7 @@ export class AiDirector {
             maxOutputTokens: actorInvention.enabled
               ? Math.max(1800, limits.outputTokens)
               : limits.outputTokens,
-            instructions,
+            instructions: instructions + ' You may make one batch of the supplied read-only situation queries when needed. For a query batch return an empty operations list, queries, and no invention. A final continuation follows only if funded; otherwise the character continues current behavior. For a complete decision set queries to null. Coordinates and geometry are received measurements, never inferred intent. Partial coverage does not prove absence.',
             context,
             schema: responseSchema,
             ...(preview ? { onProgress: preview.progress } : {}),
@@ -3303,6 +3334,37 @@ export class AiDirector {
           `attempt:${attempt}:generate`,
           { category: 'level', level },
         );
+        const queried = querySchema.parse(value);
+        if (queried.queries?.length) {
+          if (queried.operations.length || ('invention' in queried && queried.invention))
+            throw new StopJob('failed', 'A situation query cannot execute response operations.', 'invalid');
+          await prepared.validateConversation();
+          const expansion = await expandSituation(prepared.situation, queried.queries, prepared.readSituationHistory);
+          await prepared.validateConversation(false);
+          for (const id of expansion.expandedIds) {
+            const handle = entityHandle(prepared.situation.world, actorId, id);
+            const body = currentBodyObservation(prepared.situation.world, actorId, id);
+            if (!body) continue;
+            prepared.entityReferences[handle] = id;
+            prepared.binding.physicalEntityReferences![handle] = id;
+            prepared.binding.entityLeases![id] = body.id;
+            if (!prepared.binding.entityIds.includes(id)) prepared.binding.entityIds.push(id);
+            const episode = prepared.situation.world.perceptionEpisodes?.[actorId]?.[id];
+            if (episode) (prepared.binding.entityEpisodes ??= {})[id] = episode;
+          }
+          context += '\nRequested received evidence: ' + JSON.stringify(expansion);
+          if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
+            throw new ContextBudgetError('The bounded situation expansion exceeds the decision input allowance.');
+          value = await this.generate<unknown>(run, {
+            task: 'npc_response', actorScope: actorId, execution: level === 2 ? 'fast' : 'complex',
+            model: c.macrofoldKey ? (level === 2 ? c.macrofoldMiniModel : c.macrofoldComplexModel) : (level === 2 ? c.miniModel : c.complexModel),
+            reasoningEffort: limits.effort, maxOutputTokens: actorInvention.enabled ? Math.max(1800, limits.outputTokens) : limits.outputTokens,
+            instructions, context, schema: z.toJSONSchema(schema, {target:'draft-7'}),
+          }, `attempt:${attempt}:query-final`, {category:'level',level});
+        } else {
+          const {queries: _queries, ...response} = queried;
+          value = response;
+        }
         try {
           preview?.finish();
         } catch {
@@ -3880,17 +3942,11 @@ export class AiDirector {
           Math.max(last?.watermark ?? 0, maxSequence),
           this.service.durable.nextId,
         );
-        const subscription = (await this.service.store.getIntegration(
-          `interests:${world.id}:${entity.id}`,
-        )) as InterestSubscription | undefined;
         const review = this.thoughtInputs.stimulusReview(world, entity.id);
         if (
           !this.thoughtWork.inspected(
             entity.id,
             Math.min(
-              subscription && subscription.expiresAt > world.simTime
-                ? subscription.expiresAt
-                : Infinity,
               review.nextAt,
             ),
             generations.get(entity.id),
@@ -3899,24 +3955,16 @@ export class AiDirector {
           )
         )
           continue;
-        const matches = interestMatches(
-          world,
-          entity.id,
-          subscription,
-          this.thoughtInputs.visible(entity.id) ?? [],
-        );
         const nativeProtection = nativeProtectionReason(world, entity.id);
         // These descriptions share the same permitted world and character. No
         // await or mutation separates comparison from the initiating sentence.
         const attributes = projectAttributes(world, entity, 'owner');
         const fingerprint = digest({
-          matches,
           nativeProtection,
           // Relevant intent/knowledge changes create an ordinary opportunity, not mandatory generation.
           // docs/architecture.md#change-driven-exposure-and-reaction-intake
           goal: currentGoal(actor),
           techniques: (world.knowledge[entity.id] ?? []).map((record) => record.recipeId),
-          possessions: relevantPossessions(world, entity.id, subscription),
           bodyInputs: bodyReconsiderationInputs(world, entity, 'director'),
           bodyPolicyPin: world.moduleManifest.bodyPolicyPin,
           concerns: attributes
@@ -3932,27 +3980,36 @@ export class AiDirector {
           // A due review of an ongoing salient stimulus is a fresh opportunity (EPR06).
           reviews: review.key,
         });
-        const opportunity = digest({ fingerprint, evidence: latest.map((memory) => memory.id) });
-
-        if (
-          (last?.fingerprint === fingerprint && !unseen.length) ||
-          last?.attemptedOpportunity === opportunity
-        ) {
+        // Only explicit meaningful dependencies grant semantic reconsideration. Routine
+        // identity/profile reinforcement and coordinates remain native invalidations.
+        const semanticRevision = digest({
+          goals: actor.agency.goals.filter((goal) => goal.author !== 'actor').map((goal) => [goal.id, goal.revision, goal.status]),
+          techniques: (world.knowledge[entity.id] ?? []).map((record) => [record.recipeId, record.evidenceId]),
+          blocked: actor.agency.plan?.status === 'blocked'
+            ? [actor.agency.plan.id, actor.agency.plan.steps.filter((step) => step.status === 'blocked').map((step) => [step.id, step.outcome?.code])]
+            : null,
+          concerns: attributes.filter((value) => value.concern && world.moduleManifest.definitions.find((definition) => definition.id === value.id)?.concern?.reconsider).map((value) => [value.id, value.concern]),
+        });
+        const meaningfulChange = !!last?.semanticRevision && last.semanticRevision !== semanticRevision;
+        const newReview = !!review.key && review.key !== last?.reviewKey && !!review.due.length;
+        const discovery = !latest.length && !meaningfulChange && !newReview &&
+          selectedAttentionPolicy(world).semantic.discovery &&
+          Object.values(world.perceptionEvidence?.[entity.id]?.attention?.candidates ?? {}).some((candidate) => candidate.presentedDescription !== candidate.descriptionRevision)
+            ? discoveryInterval(world, entity.id) : undefined;
+        const opportunity = digest({ semanticRevision, evidence: latest.map((memory) => memory.id), review: newReview ? review.key : null, discovery });
+        if ((!latest.length && !meaningfulChange && !newReview && discovery === undefined) || last?.attemptedOpportunity === opportunity) {
           this.thoughtWork.recordOutcome('unchanged', all.length);
+          if (last?.semanticRevision !== semanticRevision)
+            await this.writeSchedule(key, { ...last, fingerprint, semanticRevision, at: this.now() }, generation);
           continue;
         }
         const sentence = [
           ...latest.map((m) => m.summary),
-          ...matches.map(
-            (id) =>
-              `I notice ${observerDescription(world, entity.id, id, 'indefinite')}, relevant to my current interest.`,
-          ),
           `My current goal is ${currentGoal(actor)}.`,
           ...attributes.flatMap((v) => (v.concern ? [v.concern] : [])),
           ...attributes.flatMap((v) => (v.condition ? [`${v.name}: ${v.condition}.`] : [])),
         ].join(' ');
         const urgentNeed = nativeProtection;
-        const newReview = !!review.key && review.key !== last?.reviewKey && !!review.due.length;
         const diagnosticTrigger = urgentNeed
           ? urgentNeed
           : latest.length
@@ -3962,20 +4019,22 @@ export class AiDirector {
                 latest[0]!.eventId ?? latest[0]!.id,
                 latest[0]!.summary,
               )
-            : matches.length
-              ? `A nearby interest became relevant: ${observerDescription(world, entity.id, matches[0]!)}.`
-              : newReview
-                ? `I am still aware of ${observerDescription(world, entity.id, review.due[0]!, 'definite')}.`
-                : 'A goal, surrounding, or internal state changed.';
+            : newReview
+              ? `I am still aware of ${observerDescription(world, entity.id, review.due[0]!, 'definite')}.`
+              : discovery !== undefined
+                ? 'I have a free moment to consider my surroundings.'
+                : actor.agency.plan?.status === 'blocked'
+                  ? 'My chosen work is blocked.'
+                  : 'A personally acquired goal, capability or bodily condition changed.';
         const diagnosticTriggerType = urgentNeed
           ? `Cognition skipped · ${urgentNeed}`
           : latest.length
             ? 'Autonomous cognition · New experience'
-            : matches.length
-              ? 'Autonomous cognition · Interest cue'
-              : newReview
-                ? 'Autonomous cognition · Review'
-                : 'Autonomous cognition · State change';
+            : newReview
+              ? 'Autonomous cognition · Review'
+              : discovery !== undefined
+                ? 'Autonomous cognition · Discovery'
+                : 'Autonomous cognition · Meaningful change';
         const id = `thought-${randomUUID()}`;
         if (urgentNeed) {
           this.thoughtWork.recordOutcome('deferred', all.length);
@@ -4006,6 +4065,7 @@ export class AiDirector {
             key,
             {
               fingerprint,
+              semanticRevision,
               at: this.now(),
               ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
               ...(last?.attemptedOpportunity
@@ -4027,6 +4087,7 @@ export class AiDirector {
             key,
             {
               fingerprint,
+              semanticRevision,
               at: this.now(),
               ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
               attemptedOpportunity: opportunity,
@@ -4045,6 +4106,7 @@ export class AiDirector {
         );
         if (significant) await this.maintenance.enqueue(entity.id, id, sentence, generation);
         if (generation !== this.service.generation || this.stopped || this.service.paused) return;
+        if (discovery !== undefined && !(await this.service.publishAttention(entity.id, generation, (current) => reserveDiscovery(current, entity.id, discovery, id)))) continue;
         await this.begin(
           {
             id,
@@ -4065,6 +4127,7 @@ export class AiDirector {
               key,
               {
                 fingerprint,
+                semanticRevision,
                 at: this.now(),
                 watermark: Math.min(
                   Math.max(current?.watermark ?? 0, snapshotWatermark),
@@ -4080,6 +4143,7 @@ export class AiDirector {
             key,
             value: {
               fingerprint,
+              semanticRevision,
               at: this.now(),
               watermark: Math.min(snapshotWatermark, this.service.durable.nextId),
               attemptedOpportunity: opportunity,
@@ -4087,6 +4151,7 @@ export class AiDirector {
             },
           },
           urgent,
+          discovery !== undefined ? { actorId: entity.id, reservation: id } : undefined,
         );
         const trace = this.log.get(id);
         if (trace)

@@ -13,8 +13,20 @@ export const PERCEPTION: AttributeDefinition = {
     'Perception supports noticing and recognizing the physical details this person can actually receive. It does not improve hearing range, memory or combat accuracy.',
 };
 
+export const FOCUS: AttributeDefinition = {
+  id: 'wilderness:focus',
+  version: 1,
+  implementation: 'number-v1',
+  name: 'Focus',
+  disclosure: 'owner',
+  presentation: { icon: 'ui.inview', color: 'accent' },
+  schema: { kind: 'number', min: 0, max: 100, initial: 50, unit: '' },
+  meaning: 'Focus supports sustaining detail about received surroundings. It does not change what the senses receive or guarantee understanding, safety or memory.',
+};
+
 export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
   PERCEPTION,
+  FOCUS,
   SLING_HANDLING,
   {
     id: 'wilderness:health',

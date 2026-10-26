@@ -9,6 +9,7 @@ import {
   terminalContributionOwners,
   updateWorld,
   projectWorldHistory,
+  selectedTemporalPolicy,
   type WorldState,
 } from '@open-legend/domain';
 
@@ -20,6 +21,7 @@ export const HISTORY_TABLES = new Set([
   'mind_awareness',
   'mind_summaries',
   'activity_occurrences',
+  'mind_temporal_chunks',
 ]);
 // Awareness consumers needing more than the presentation tail use SQL source IDs.
 // This is placement, not eligibility: important incidents remain fully recallable.
@@ -214,11 +216,50 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
     occurrences[actorId] = retained;
     changed = true;
   }
-  return changed
+  const projected = changed
     ? projectWorldHistory(world, {
         memories,
         occurrences,
         ...(world.experience ? { awareness, summaries } : {}),
       })
     : world;
+  return compactTemporalHistory(projected);
+}
+
+/** Placement only. Canonical chunks survive in SQL until the retention owner
+ * explicitly releases them, while native capture keeps only its bounded tail. */
+export function compactTemporalHistory(world: WorldState): WorldState {
+  const temporal = world.experience?.temporal;
+  if (!temporal) return world;
+  const maximum = selectedTemporalPolicy(world).recent.residentChunks;
+  let changed = false;
+  const actors = { ...temporal.actors };
+  const retainedSources = new Set<string>();
+  for (const [actorId, actor] of Object.entries(actors)) {
+    let chunks = actor.chunks;
+    if (chunks.length > maximum) {
+      const old = historyPositions.get(chunks);
+      const tail = chunks.slice(-maximum);
+      historyPositions.set(tail, {
+        positions: new Map(tail.map((chunk, index) => [chunk.id,
+          old?.positions.get(chunk.id) ?? chunks.length - tail.length + index])),
+        next: old?.next ?? chunks.length,
+      });
+      actors[actorId] = { ...actor, chunks: tail };
+      chunks = tail;
+      changed = true;
+    }
+    for (const chunk of chunks) for (const id of chunk.sourceRefs) retainedSources.add(id);
+    for (const reference of Object.values(actor.captures)) retainedSources.add(reference.blockId);
+  }
+  const entries = Object.entries(temporal.sources);
+  const sources = entries.filter(([id]) => retainedSources.has(id));
+  changed ||= sources.length !== entries.length;
+  if (!changed) return world;
+  const next = { ...temporal, actors, sources: Object.fromEntries(sources) };
+  if (next.activeSource && !retainedSources.has(next.activeSource)) {
+    delete next.activeSource;
+    delete next.activeBoundary;
+  }
+  return { ...world, experience: { ...world.experience!, temporal: next } };
 }

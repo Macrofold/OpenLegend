@@ -62,6 +62,14 @@ import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { personalText } from './narration.js';
 import type { ExperienceEntry, MemoryRecord, Transition, WorldState, WorldEvent } from './types.js';
+import { selectedRecordingReason, selectedTemporalPolicy } from './world-composition.js';
+import {
+  appendTemporalReceipt,
+  captureTemporalObservation,
+  invalidateTemporalEvidence,
+  invalidateTemporalFacets,
+} from './temporal-evidence.js';
+import { adjustExperienceAccounting, ensureExperienceAccounting, impressionFits } from './remembered-impressions.js';
 
 export const EXPERIENCE_LIMITS = {
   rawHours: 6,
@@ -73,6 +81,8 @@ export const EXPERIENCE_LIMITS = {
   historyDays: 30,
 } as const;
 export interface Awareness {
+  sourceReceipt?: import('./temporal-evidence.js').TemporalReceiptLocator;
+  retention?: import('./remembered-impressions.js').ExperienceRetention;
   observation?: import('./perception-evidence.js').ObservationContribution;
   observations?: import('./perception-evidence.js').ObservationContribution[];
   sourceSubject?: import('./knowledge.js').ObserverSubject;
@@ -121,6 +131,7 @@ export interface Awareness {
   change?: 'onset' | 'detail' | 'end';
 }
 export interface ExperienceSummary {
+  retention?: import('./remembered-impressions.js').ExperienceRetention;
   id: string;
   text: string;
   from: number;
@@ -134,6 +145,7 @@ export interface ExperienceSummary {
 }
 export interface ExperienceState {
   version: 1;
+  temporal?: import('./temporal-evidence.js').TemporalEvidenceState;
   perspectiveVersion?: 1;
   corrections?: Record<string, Record<string, string>>;
   awareness: Record<string, Awareness[]>;
@@ -297,6 +309,31 @@ function containsExperienceKey(world: WorldState, actorId: string, key: string):
   if (source === 'summary') return containsEntryId(world.experience?.summaries[actorId], id, 'id');
   return false;
 }
+function canAddExperience(world: WorldState, actorId: string, entries: readonly ExperienceEntry[], replacing: ReadonlySet<string> = new Set()): boolean {
+  const keys = entries.map((entry) => entry.source === 'awareness'
+    ? `awareness:${entry.value.eventId}` : `${entry.source}:${entry.value.id}`);
+  return new Set(keys).size === keys.length && !keys.some((key) =>
+    (containsExperienceKey(world, actorId, key) && !replacing.has(key)) ||
+    world.experience?.forgotten[actorId]?.includes(key.slice(key.indexOf(':') + 1))) &&
+    !entries.some((entry) => (entry.source === 'memory' && entry.value.eventId &&
+      world.experience?.forgotten[actorId]?.includes(entry.value.eventId)) ||
+      ('actorId' in entry.value && entry.value.actorId !== actorId));
+}
+function reconcileExperienceAccounting(
+  world: WorldState,
+  actorId: string,
+  before: ReadonlyMap<string, ExperienceEntry>,
+): void {
+  const after = experienceEntries(world, actorId);
+  for (const [key, entry] of before) {
+    const current = after.get(key);
+    if (current?.value === entry.value) continue;
+    adjustExperienceAccounting(world, actorId, entry, -1);
+    if (current) adjustExperienceAccounting(world, actorId, current, 1);
+  }
+  for (const [key, entry] of after)
+    if (!before.has(key)) adjustExperienceAccounting(world, actorId, entry, 1);
+}
 
 type ExperienceOperation =
   | ExperienceMutation
@@ -331,17 +368,110 @@ export function acquireEventAwareness(world: WorldState, entries: Awareness[]): 
   if (!world.experience) migrateCognition(world);
   for (const entry of entries) {
     if (!hasMemory(entityGet(world.entities, entry.actorId))) continue;
-    applyExperienceMutation(
-      world,
-      entry.actorId,
-      {
-        operation: 'add',
-        entry: { source: 'awareness', value: entry },
-      },
-      'transfer',
-    );
-    acquireKnownPlaceEvidence(world, entry);
+    admitAutomaticExperience(world, entry.actorId, { source: 'awareness', value: entry });
   }
+}
+
+/** Every native autobiographical writer enters here. Current reception and recent
+ * attention are independent of this selected world's lasting-record decision. */
+export function admitAutomaticExperience(
+  world: WorldState,
+  actorId: string,
+  input: ExperienceEntry | readonly ExperienceEntry[],
+): { retainedIds: string[]; invalidated: string[] } | null {
+  if (!world.experience) migrateCognition(world);
+  if (!hasMemory(entityGet(world.entities, actorId))) return null;
+  const entries = Array.isArray(input) ? input : [input as ExperienceEntry];
+  const admitted: ExperienceEntry[] = [];
+  const decisions = entries.map((entry) => {
+    const awareness = entry.source === 'awareness' ? entry.value : undefined;
+    const memory = entry.source === 'memory' ? entry.value : undefined;
+    const consequence = awareness
+      ? awareness.triggerKind === 'self_event' || awareness.triggerKind === 'directed_action'
+      : !!memory && (!!memory.activityId || !!memory.obligation || memory.source === 'felt' || memory.source === 'internal');
+    const reason = selectedRecordingReason(world, {
+      source: entry.source,
+      eventType: awareness?.eventType ?? memory?.eventType,
+      modality: awareness?.modality ?? memory?.source,
+      triggerKind: awareness?.triggerKind,
+      own: !!memory || awareness?.sourceId === actorId || awareness?.triggerKind === 'self_event',
+      hasExposure: !!awareness?.exposure,
+      ...(awareness?.exposure ? { exposureKind: awareness.exposure.kind } : {}),
+      consequence,
+    });
+    let admittedEntry: ExperienceEntry = entry.source === 'awareness'
+      ? { source: 'awareness', value: { ...entry.value } }
+      : entry.source === 'memory' ? { source: 'memory', value: { ...entry.value } } : entry;
+    if (reason !== 'none' && !(awareness?.speech || awareness?.sound)) {
+      const retention: import('./remembered-impressions.js').ExperienceRetention = {
+        reason: awareness?.exposure ? 'deliberate' : entry.source === 'summary' ||
+          memory?.kind === 'reflection' || memory?.source === 'inferred' || memory?.source === 'self_thought'
+          ? 'interpretation' : 'consequence',
+        ...(reason === 'required' ? { required: true } : {}),
+      };
+      if (entry.source === 'awareness') admittedEntry = { source: 'awareness', value: { ...entry.value, retention } };
+      else if (entry.source === 'memory') admittedEntry = { source: 'memory', value: { ...entry.value, retention } };
+    }
+    if (reason !== 'none') admitted.push(admittedEntry);
+    return { entry: admittedEntry, reason };
+  });
+  if (!canAddExperience(world, actorId, admitted)) return null;
+  const policy = selectedTemporalPolicy(world).recent;
+  for (const { entry, reason } of decisions) {
+    const awareness = entry.source === 'awareness' ? entry.value : undefined;
+    const memory = entry.source === 'memory' ? entry.value : undefined;
+    const observations = [
+      ...(awareness?.observation ? [awareness.observation] : []),
+      ...(awareness?.observations ?? []),
+      ...(memory?.observation ? [memory.observation] : []),
+      ...(memory?.observations ?? []),
+    ];
+    const directSubject = awareness?.sourceId ?? awareness?.targetId;
+    const attended = directSubject && world.perceptionEvidence?.[actorId]?.attention?.entries.some((selection) => selection.sourceId === directSubject);
+    if (reason !== 'none' || attended) {
+      const id = entry.source === 'awareness' ? entry.value.eventId : entry.value.id;
+      let locator: import('./temporal-evidence.js').TemporalReceiptLocator | undefined;
+      if (reason === 'required' || attended)
+        for (const observation of observations) {
+          const captured = captureTemporalObservation(world, actorId, observation, [id, observation.id], reason === 'required', policy);
+          locator ??= captured;
+        }
+      if (!locator && (awareness || memory)) {
+        const at = awareness?.at ?? memory!.at;
+        locator = appendTemporalReceipt(world, actorId, {
+          subject: id,
+          change: 'occurrence',
+          required: reason === 'required',
+          sourceIds: [id, ...(memory?.eventId ? [memory.eventId] : [])],
+          facets: [{
+            role: 'direct', asOf: at, measuredFrom: at, measuredThrough: at, acquiredAt: world.simTime,
+            value: {
+              kind: 'personal-account', source: awareness ? 'awareness' : 'memory', id,
+              text: awareness?.text ?? memory!.summary,
+              ...(awareness?.eventType ?? memory?.eventType ? { eventType: awareness?.eventType ?? memory?.eventType } : {}),
+              ...(awareness?.content ? { content: awareness.content } : {}),
+              ...(awareness?.eventData ? { data: cloneValue(awareness.eventData) } : {}),
+            },
+          }],
+        }, policy);
+      }
+      if (locator && (awareness?.retention || memory?.retention)) {
+        const retained = awareness ?? memory!;
+        retained.retention = { ...retained.retention!, receipt: locator };
+      }
+      if (locator && entry.source !== 'summary') entry.value.sourceReceipt = locator;
+    }
+  }
+  const invalidated = admitted.length
+    ? applyExperienceMutation(world, actorId, admitted.map((entry) => ({ operation: 'add' as const, entry })), 'transfer')
+    : [];
+  if (invalidated === null) return null;
+  for (const entry of admitted)
+    if (entry.source === 'awareness') acquireKnownPlaceEvidence(world, entry.value);
+  return {
+    retainedIds: admitted.map((entry) => entry.source === 'awareness' ? entry.value.eventId : entry.value.id),
+    invalidated,
+  };
 }
 /** Final direct confirmations remain historical evidence after their live support ends.
  * This records no invented event and grants no current body permission. */
@@ -354,6 +484,11 @@ export function retainObservationConfirmation(
 ): void {
   if (!world.experience) migrateCognition(world);
   if (!hasMemory(entityGet(world.entities, actorId))) return;
+  // A final sample has no intrinsic autobiographical significance. Necessary
+  // support is retained by its consumer; recent attention captures it separately.
+  if (selectedRecordingReason(world, {
+    source: 'confirmation', own: false, hasExposure: false, consequence: false,
+  }) === 'none') return;
   // This newly constructed native account owns its immutable contribution. Reusing
   // it avoids copying every nested original; editor/provider writes keep copy admission.
   applyExperienceMutation(
@@ -417,6 +552,8 @@ function applyExperienceMutation(
       )
     )
       return null;
+    ensureExperienceAccounting(world, actorId);
+    const accounting = experienceEntries(world, actorId);
     const state = world.experience!;
     state.summaries[actorId] = cloneValue(mutation.summaries);
     state.awareness[actorId] = (state.awareness[actorId] ?? []).filter((a) => !used.has(a.eventId));
@@ -425,6 +562,7 @@ function applyExperienceMutation(
     );
     state.consolidatedAt[actorId] = world.simTime;
     invalidateKnownPlaceEvidence(world, actorId);
+    reconcileExperienceAccounting(world, actorId, accounting);
     return [...used];
   }
   if (!Array.isArray(mutation) && mutation.operation === 'correct') {
@@ -463,6 +601,8 @@ function applyExperienceMutation(
       obligation: cloneValue(mutation.obligation),
       resolved: ['fulfilled', 'cancelled'].includes(mutation.obligation.status),
     };
+    adjustExperienceAccounting(world, actorId, { source: 'memory', value: memory }, -1);
+    adjustExperienceAccounting(world, actorId, { source: 'memory', value: replacement }, 1);
     world.memories[actorId] = world.memories[actorId]!.map((entry) =>
       entry === memory ? replacement : entry,
     );
@@ -503,31 +643,12 @@ function applyExperienceMutation(
       if (change.operation !== 'add') throw new Error('Mixed experience mutation batch.');
       return ownership === 'transfer' ? change.entry : cloneValue(change.entry);
     });
-    const keys = additions.map((entry) =>
-      entry.source === 'awareness'
-        ? `awareness:${entry.value.eventId}`
-        : `${entry.source}:${entry.value.id}`,
-    );
-    if (
-      new Set(keys).size !== keys.length ||
-      keys.some(
-        (key) =>
-          containsExperienceKey(world, actorId, key) ||
-          world.experience?.forgotten[actorId]?.includes(key.slice(key.indexOf(':') + 1)),
-      ) ||
-      additions.some(
-        (entry) =>
-          entry.source === 'memory' &&
-          entry.value.eventId &&
-          world.experience?.forgotten[actorId]?.includes(entry.value.eventId),
-      ) ||
-      additions.some((entry) => 'actorId' in entry.value && entry.value.actorId !== actorId)
-    )
-      return null;
+    if (!canAddExperience(world, actorId, additions)) return null;
     const awareness: Awareness[] = [],
       memories: MemoryRecord[] = [],
       summaries: ExperienceSummary[] = [];
     for (const entry of additions) {
+      adjustExperienceAccounting(world, actorId, entry, 1);
       trackDetachedRecord(world, entry.value);
       if (entry.source === 'awareness') awareness.push(entry.value);
       else if (entry.source === 'memory') memories.push(entry.value);
@@ -633,6 +754,12 @@ function applyExperienceMutation(
   // those records in the same turn. Unchanged rows keep identity and order.
   // docs/hearing-and-speech.md#performance-and-invalidation
   if (updatedValues.size) {
+    for (const { previous } of resolved) {
+      const replacement = previous && updatedValues.get(previous.value);
+      if (!previous || !replacement) continue;
+      adjustExperienceAccounting(world, actorId, previous, -1);
+      adjustExperienceAccounting(world, actorId, { source: previous.source, value: replacement } as ExperienceEntry, 1);
+    }
     const replace = <T extends ExperienceEntry['value']>(rows: T[]) =>
       rows.map((entry) => (updatedValues.get(entry) as T | undefined) ?? entry);
     const state = world.experience!;
@@ -723,6 +850,8 @@ export function awarenessMemory(entry: Awareness): MemoryRecord {
     eventType: entry.eventType,
     speakerId: entry.sourceId,
     evidence: entry,
+    ...(entry.retention ? { retention: entry.retention } : {}),
+    ...(entry.sourceReceipt ? { sourceReceipt: entry.sourceReceipt } : {}),
     observation: entry.observation,
     observations: entry.observations,
   };
@@ -944,11 +1073,14 @@ export function acceptConsolidation(
   const retained = [...previous.values()].filter((s) => !used.has(s.id));
   const replacements = groups.map((group, i): ExperienceSummary => {
     const entries = group.sourceIds.map((id) => expected.get(id)!);
+    const reasons = entries.flatMap((entry) => entry.retention ? [entry.retention] : []);
+    const retention = reasons.find((reason) => reason.required) ?? reasons[0];
     const existing = group.sourceIds
       .map((id) => previous.get(id))
       .filter((s): s is ExperienceSummary => !!s);
     // Keep an existing identity when revising a memory, instead of appending one per job.
     return {
+      ...(retention ? { retention: cloneValue(retention) } : {}),
       id: existing[0]?.id ?? `${id}:${i}`,
       revision: Math.max(0, ...existing.map((s) => s.revision ?? 0)) + 1,
       text: personalText(world, actorId, group.text),
@@ -1023,6 +1155,42 @@ export function forgetExperience(input: WorldState, actorId: string, sourceId: s
   };
 }
 
+/** Apply a repository-prepared expiry/weakening batch. Expiry releases access; it
+ * is neither a fictional correction nor a permanent privacy-forgetting ledger. */
+export function expireExperience(
+  world: WorldState,
+  actorId: string,
+  entries: readonly ExperienceEntry[],
+  replacements: readonly MemoryRecord[],
+): boolean {
+  if (!world.experience || !hasMemory(entityGet(world.entities, actorId))) return false;
+  const selected = new Set<string>();
+  for (const entry of entries) {
+    const id = entry.source === 'awareness' ? entry.value.eventId : entry.value.id;
+    const key = `${entry.source}:${id}`;
+    if (selected.has(key)) return false;
+    const current = experienceEntry(world, actorId, key);
+    if (!current || canonicalJson(current) !== canonicalJson(entry) ||
+      (entry.source === 'memory' && entry.value.kind === 'commitment' && !entry.value.resolved))
+      return false;
+    selected.add(key);
+  }
+  const limits = selectedTemporalPolicy(world).impression;
+  const additions: ExperienceEntry[] = replacements.map((value) => ({ source: 'memory', value }));
+  if (replacements.some((value) => value.actorId !== actorId || !impressionFits(value, limits)) ||
+    !canAddExperience(world, actorId, additions, selected)) return false;
+  ensureExperienceAccounting(world, actorId);
+  for (const entry of entries) adjustExperienceAccounting(world, actorId, entry, -1);
+  const state = world.experience;
+  state.awareness[actorId] = (state.awareness[actorId] ?? []).filter((entry) => !selected.has(`awareness:${entry.eventId}`));
+  world.memories[actorId] = (world.memories[actorId] ?? []).filter((entry) => !selected.has(`memory:${entry.id}`));
+  state.summaries[actorId] = (state.summaries[actorId] ?? []).filter((entry) => !selected.has(`summary:${entry.id}`));
+  invalidateKnownPlaceEvidence(world, actorId);
+  if (additions.length && applyExperienceMutation(world, actorId, additions.map((entry) => ({ operation: 'add' as const, entry })), 'transfer') === null)
+    throw new Error('Prepared experience expiry could not publish its recollection.');
+  return true;
+}
+
 /** Mutates a domain draft; callers commit cache invalidation with the resulting world. */
 export function invalidateExperience(
   world: WorldState,
@@ -1032,6 +1200,8 @@ export function invalidateExperience(
   correctionEventId?: string,
 ): string[] {
   const state = world.experience!;
+  ensureExperienceAccounting(world, actorId);
+  const accounting = experienceEntries(world, actorId);
   invalidateKnownPlaceEvidence(world, actorId);
   const affected = new Set(sourceIds);
   let expanded = true;
@@ -1043,6 +1213,9 @@ export function invalidateExperience(
   };
   while (expanded) {
     expanded = false;
+    for (const support of Object.values(state.temporal?.actors[actorId]?.supports ?? {}))
+      if (support.receipt.sourceIds.some((source) => affected.has(source)))
+        include(support.receipt.id);
     // Personal source IDs and native contributions are aliases of one received account.
     // Revoke descendants before pruning any body, including required native support that
     // is independent of the small resident autobiographical tail.
@@ -1111,6 +1284,7 @@ export function invalidateExperience(
         expanded = true;
       }
   }
+  invalidateTemporalEvidence(world, actorId, affected);
   revokeInventoryInspection(world, actorId, affected);
   // Learning depends on the actual selected earlier exemplar. Follow immediate
   // edges supplied by cold preparation without erasing later witnessed utterances.
@@ -1186,6 +1360,10 @@ export function invalidateExperience(
     for (const observation of summary.manifest.observations) markAssociationFacts(observation);
   for (const observation of world.perceptionEvidence?.[actorId]?.received ?? [])
     markAssociationFacts(observation);
+  invalidateTemporalFacets(world, actorId, (value, reference) => value.kind === 'association' && (
+    (!!reference.original && (recognitionAffected.has(reference.original.source.id) || revokedFacts.has(personalFactAlias(reference.original.source.id, reference.original.ordinal)))) ||
+    recognitionSupportSources(value.learningSupport ?? []).some((source) => recognitionAffected.has(source.id))
+  ));
   if (correctionEventId) {
     const corrections = ((state.corrections ??= {})[actorId] ??= {});
     for (const alias of revokedFacts) corrections[alias] = correctionEventId;
@@ -1309,6 +1487,7 @@ export function invalidateExperience(
     inner.reconsiderationRequired = true;
     mind.revision = inner.revision;
   }
+  reconcileExperienceAccounting(world, actorId, accounting);
   return [...affected];
 }
 

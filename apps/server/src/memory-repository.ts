@@ -1,4 +1,6 @@
+import { prepareAccountRetention } from './account-retention.js';
 import { tableRows } from './record-pages.js';
+import { readTemporalHistory, prepareTemporalRetention, type TemporalHistoryQuery, type PreparedMemoryRetention } from './temporal-storage.js';
 import { insertRows, sqlRecordBatches, type SqlWriteBatch } from './sql-rows.js';
 import { LexicalProjection } from './lexical-projection.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
@@ -47,9 +49,12 @@ import {
   canonicalJson,
   personalFactAlias,
   type EncounterExposure,
+  type WorldState,
+  type TemporalHistorySelection,
+  type TemporalReceiptLocator,
 } from '@open-legend/domain';
 import { z } from 'zod';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase, SavedWorld } from './store.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 
 export const MEMORY_SOURCE_TABLES = {
@@ -322,7 +327,8 @@ export class MemoryRepository {
       !/^mind_(exposure|visible_objects|visible_people|visible_places)(?:_owners)?$/.test(table);
     const mark = (id: string) => {
       const path = JSON.parse(id) as string[];
-      const actor = path[path[1] === 'experience' ? 3 : 2];
+      if (path[1] === 'experience' && path[2] === 'temporal' && path[3] === 'sources') return;
+      const actor = path[path[1] === 'experience' ? path[2] === 'temporal' ? 4 : 3 : 2];
       if (actor) actors.add(actor);
       else unknownScope = true;
     };
@@ -456,6 +462,39 @@ export class MemoryRepository {
       CREATE INDEX IF NOT EXISTS memory_vector_scope ON memory_vectors(world_id,actor_id,generation,model,dimensions,source_id,source_revision);
     `);
     await this.lexical.initialize();
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS temporal_chunk_subjects ON mind_temporal_chunks USING GIN(subjects);
+      CREATE INDEX IF NOT EXISTS temporal_chunk_sources ON mind_temporal_chunks USING GIN(source_refs);
+      CREATE INDEX IF NOT EXISTS temporal_chunk_aliases ON mind_temporal_chunks USING GIN(source_ids);`);
+  }
+  temporalHistory(scope: MemoryScope, query: TemporalHistoryQuery, world: WorldState): Promise<TemporalHistorySelection> {
+    return this.snapshot(() => readTemporalHistory(this.db, scope, world, query));
+  }
+  prepareRetention(state: SavedWorld): Promise<PreparedMemoryRetention> {
+    return this.snapshot(async () => {
+      const accounts = await prepareAccountRetention(this.db,state);
+      const recent = await prepareTemporalRetention(this.db,accounts.state);
+      const rows=new Map(accounts.rows);
+      for(const [table,ids] of recent.rows) rows.set(table,[...(rows.get(table)??[]),...ids]);
+      return {state:recent.state,rows};
+    });
+  }
+  async temporalReceiptsCurrent(scope: MemoryScope, locators: readonly TemporalReceiptLocator[]): Promise<boolean> {
+    if (!locators.length) return true;
+    if (locators.length > RETRIEVAL_ROWS || locators.some((locator) => locator.actorId !== scope.actorId)) return false;
+    const unique = [...new Map(locators.map((locator) => [JSON.stringify(locator), locator])).values()];
+    const row = await this.db.prepare(`SELECT COUNT(*) AS count FROM jsonb_to_recordset(?::jsonb)
+      q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint)
+      WHERE EXISTS (SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
+        EXISTS (SELECT 1 FROM LATERAL (
+          SELECT last_ordinal,receipt_ordinals FROM mind_temporal_chunks c
+          WHERE c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife"
+            AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
+          ORDER BY c.first_ordinal DESC LIMIT 1
+        ) current WHERE current.last_ordinal>=q.ordinal AND current.receipt_ordinals @> ARRAY[q.ordinal])
+        OR EXISTS (SELECT 1 FROM mind_temporal_supports s WHERE s.world_id=? AND s.actor_id=q."actorId"
+          AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal))`)
+      .get(JSON.stringify(unique), scope.worldId, scope.generation, scope.worldId, scope.worldId);
+    return Number(row?.['count'] ?? 0) === unique.length;
   }
   /** Called before current rows change, inside their transaction. Retired/corrected
    * source versions preserve provenance for future consolidation policies.
@@ -503,6 +542,7 @@ export class MemoryRepository {
           .all(worldId, ...(actorOwner ? [ancestor] : []));
         for (const row of rows) ids.add(String(row['id']));
       }
+      const expired = new Set(changes.expired?.get(table) ?? []);
       const next = new Map(writes.map((row) => [row.id, row.payload]));
       const allIds = [...ids];
       if (allIds.length) await sharedWrites?.flush();
@@ -522,7 +562,7 @@ export class MemoryRepository {
           this.db,
           'mind_source_versions',
           (archive ? old : [])
-            .filter((row) => row['payload'] !== next.get(String(row['id'])))
+            .filter((row) => !expired.has(String(row['id'])) && row['payload'] !== next.get(String(row['id'])))
             .map((row) => [
               worldId,
               row['actor_id'],
@@ -534,6 +574,22 @@ export class MemoryRepository {
             ]),
           'ON CONFLICT DO NOTHING',
         );
+        const released = old.filter((row) => expired.has(String(row['id'])));
+        if (released.length) {
+          const keys = JSON.stringify(released.map((row) => ({actor_id:String(row['actor_id']),source_id:String(row['source_id'])})));
+          for (const dependent of ['mind_source_versions','mind_source_annotations'])
+            await this.db.prepare(`DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+              WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id AND (t.source_kind=? OR (?='awareness' AND t.source_kind='perspective'))`).run(keys,worldId,kind,kind);
+          for (const dependent of ['memory_index_queue','memory_index_attempts','memory_vectors','memory_vector_cache'])
+            await this.db.prepare(`DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+              WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id`).run(keys,worldId);
+          await this.db.prepare(`DELETE FROM mind_source_dependencies t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+            WHERE t.world_id=? AND t.actor_id=q.actor_id AND
+              ((t.derived_kind=? AND t.derived_id=q.source_id) OR (t.source_kind=? AND t.source_id=q.source_id))`).run(keys,worldId,kind,kind);
+          if (kind === 'awareness')
+            await this.db.prepare(`DELETE FROM history_perspectives t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+              WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.event_id=q.source_id`).run(keys,worldId);
+        }
         {
           await this.db
             .prepare(
@@ -962,7 +1018,7 @@ export class MemoryRepository {
              OR alias_id IN (SELECT source_id FROM forgotten) OR alias_id IN (SELECT source_id FROM corrected)))
           UPDATE recall_sources AS r SET eligible=CASE WHEN
             r.id NOT IN (SELECT source_id FROM forgotten) AND (r.event_id IS NULL OR r.event_id NOT IN (SELECT source_id FROM forgotten))
-            AND (r.source_kind<>'memory' OR ((r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
+            AND (r.source_kind<>'memory' OR ((r.memory_kind='impression' OR r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
               AND (r.memory_kind<>'episode' OR r.event_id IS NULL OR r.event_id NOT IN (SELECT id FROM aware))))
             AND (r.source_kind<>'summary' OR r.id NOT IN (SELECT derived_id FROM invalid_summaries))
             THEN 1 ELSE 0 END WHERE r.world_id=? AND r.actor_id=? AND r.id>=? AND r.id<=?`,
@@ -1341,7 +1397,7 @@ export class MemoryRepository {
   }
   private eligible = `r.world_id=? AND r.actor_id=? AND (SELECT generation FROM world_head WHERE id=1)=? AND r.eligible=1`;
   private sourceEligibility = `NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=r.world_id AND f.actor_id=r.actor_id AND (f.source_id=r.id OR f.source_id=r.event_id))
-    AND (r.source_kind<>'memory' OR ((r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
+    AND (r.source_kind<>'memory' OR ((r.memory_kind='impression' OR r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
       AND NOT (r.memory_kind='episode' AND r.event_id IS NOT NULL AND EXISTS (SELECT 1 FROM recall_sources a WHERE a.world_id=r.world_id AND a.actor_id=r.actor_id AND a.source_kind='awareness' AND a.id=r.event_id))))
     AND (r.source_kind<>'summary' OR NOT EXISTS (
       SELECT 1 FROM mind_source_dependencies s WHERE s.world_id=r.world_id AND s.actor_id=r.actor_id AND s.derived_kind=r.source_kind AND s.derived_id=r.id AND

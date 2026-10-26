@@ -53,6 +53,7 @@ export interface ExperienceManifest {
   coverage: PersonalSourceRef[];
   observations: ObservationContribution[];
   speech: SpeechAttributionGroup[];
+  receipts?: import('./temporal-evidence.js').TemporalReceiptLocator[];
 }
 const refKey = (ref: PersonalSourceRef) => canonicalJson([ref.kind, ref.id, ref.revision]);
 export function manifestCoverageKey(refs: readonly PersonalSourceRef[]): string {
@@ -68,6 +69,8 @@ export function experienceManifest(
   const coverage = new Map<string, PersonalSourceRef>();
   const observations = new Map<string, ObservationContribution>();
   const speech = new Map<string, SpeechAttributionGroup>();
+  const receipts = new Map<string, import('./temporal-evidence.js').TemporalReceiptLocator>();
+  const addReceipt = (receipt: import('./temporal-evidence.js').TemporalReceiptLocator) => receipts.set(canonicalJson(receipt), receipt);
   const addObservation = (value: ObservationContribution) => {
     const key = canonicalJson([value.observer, value.id, value.revision]);
     const prior = observations.get(key);
@@ -121,6 +124,7 @@ export function experienceManifest(
     for (const source of child.coverage) coverage.set(refKey(source), source);
     for (const observation of child.observations) addObservation(observation);
     for (const group of child.speech) addGroup(group);
+    for (const receipt of child.receipts ?? []) addReceipt(receipt);
   }
   for (const { entry, ref } of inputs) {
     if (
@@ -138,6 +142,8 @@ export function experienceManifest(
           ? entry.value.manifest
           : undefined;
     if (child) validateExperienceManifest(child);
+    if (entry.source !== 'summary' && entry.value.sourceReceipt) addReceipt(entry.value.sourceReceipt);
+    for (const receipt of child?.receipts ?? []) addReceipt(receipt);
     // Keep the supplied intermediate account as well as its original leaves. After
     // another consolidation retires that account, its exact reference must still
     // revoke every dependent summary without replaying archived source bodies.
@@ -206,6 +212,7 @@ export function experienceManifest(
     coverage: refs,
     observations: [...observations.values()],
     speech: [...speech.values()],
+    ...(receipts.size ? { receipts: [...receipts.values()] } : {}),
   };
 }
 export function validateExperienceManifest(
@@ -225,6 +232,12 @@ export function validateExperienceManifest(
     !Array.isArray(manifest.speech)
   )
     throw new Error('Invalid structured memory coverage.');
+  if (manifest.receipts !== undefined && (!Array.isArray(manifest.receipts) ||
+    manifest.receipts.some((receipt) => !receipt || typeof receipt.actorId !== 'string' || !receipt.actorId ||
+      !Number.isSafeInteger(receipt.physicalLife) || receipt.physicalLife < 0 ||
+      typeof receipt.epoch !== 'string' || !receipt.epoch || !Number.isSafeInteger(receipt.ordinal) || receipt.ordinal < 0) ||
+    new Set(manifest.receipts.map((receipt) => canonicalJson(receipt))).size !== manifest.receipts.length))
+    throw new Error('Invalid memory receipt coverage.');
   for (const observation of manifest.observations)
     validateObservationContribution(observation, originals);
   const coverage = new Set(manifest.coverage.map(refKey));
@@ -393,5 +406,6 @@ export function summaryMemory(summary: ExperienceSummary, actorId: string): Memo
     importance: summary.importance,
     sequence: summary.sequence,
     manifest: summary.manifest,
+    ...(summary.retention ? { retention: summary.retention } : {}),
   };
 }

@@ -598,6 +598,7 @@ export interface OwnPromisePage {
 }
 /** One remembered experience as its owner is shown it. */
 export interface MemoryEntryView {
+  fidelity: 'exact' | 'impression';
   id: string;
   sourceKind: 'awareness' | 'memory' | 'summary';
   text: string;

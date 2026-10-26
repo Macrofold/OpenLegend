@@ -6386,7 +6386,7 @@ export function queryMemories(
 export function observeActor(
   world: WorldState,
   actorId: string,
-  options: { includeMemories?: boolean } = {},
+  options: { includeMemories?: boolean; visibleEntityIds?: ReadonlySet<string> } = {},
 ): ActorObservation | null {
   const actor = entityOwn(world.entities, actorId);
   if (!actor?.actor) return null;
@@ -6404,7 +6404,8 @@ export function observeActor(
   // transforms come only from already acquired current evidence; downstream model
   // and player projections consume facets rather than these authority records.
   const visibleEntities = Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})
-    .filter((lease) => lease.value.kind === 'body' && lease.subjectId !== actorId)
+    .filter((lease) => lease.value.kind === 'body' && lease.subjectId !== actorId &&
+      (!options.visibleEntityIds || options.visibleEntityIds.has(lease.subjectId)))
     .flatMap((lease) => {
       const received = currentBodyObservation(world, actorId, lease.subjectId);
       const entity = entityGet(world.entities, lease.subjectId);

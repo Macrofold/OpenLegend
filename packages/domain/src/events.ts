@@ -22,7 +22,7 @@ import { isSpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
 import { soundOrigin, speechObservers, seesEntity } from './perception.js';
 import { appraiseEvent } from './worlds/base/appraisals.js';
-import { mutateExperience, acquireEventAwareness, type ExperienceMutation } from './experience.js';
+import { admitAutomaticExperience, acquireEventAwareness, type ExperienceMutation } from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';
 import { finishWorld, cloneValue, appendEvents, readOnlyDraftView } from './draft.js';
@@ -87,14 +87,9 @@ export function appendMemory(
     entityIds: [...memory.entityIds],
     importance: Math.max(0, Math.min(10, memory.importance)),
   };
-  if (
-    mutateExperience(world, actorId, {
-      operation: 'add',
-      entry: { source: 'memory', value: record },
-    }) === null
-  )
-    throw new Error('Personal experience could not be recorded.');
-  return record.id;
+  const admission = admitAutomaticExperience(world, actorId, { source: 'memory', value: record });
+  if (admission === null) throw new Error('Personal experience could not be recorded.');
+  return admission.retainedIds.includes(record.id) ? record.id : undefined;
 }
 export function emit(
   world: WorldState,
@@ -235,8 +230,14 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
   let owner: string | undefined;
   let pending: ExperienceMutation[] = [];
   const flush = () => {
-    if (owner && pending.length && mutateExperience(world, owner, pending) === null)
-      throw new Error('Private perception evidence could not be admitted.');
+    if (owner && pending.length) {
+      const entries = pending.map((operation) => {
+        if (operation.operation !== 'add') throw new Error('Automatic evidence must be an acquisition.');
+        return operation.entry;
+      });
+      if (admitAutomaticExperience(world, owner, entries) === null)
+        throw new Error('Private perception evidence could not be admitted.');
+    }
     pending = [];
   };
   const acquire = (

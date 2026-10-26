@@ -1,3 +1,4 @@
+import { openingSemanticInterval } from './semantic-opportunities.js';
 import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { validResponsePurpose } from './action-capabilities.js';
 import {
@@ -145,6 +146,7 @@ export interface ActorPlan {
   steps: PlanStep[];
 }
 export interface ActorAgency {
+  semantic?: import('./semantic-opportunities.js').SemanticContinuation;
   lastResultMemoryId?: string;
   attempts: {
     id: string;
@@ -195,6 +197,7 @@ export function requiredOutcomeMemoryIds(world: WorldState, actorId: string): st
 
 export function seedAgency(objectives: string[] = []): ActorAgency {
   return {
+    semantic: openingSemanticInterval(),
     revision: 0,
     goals: objectives.map((objective, index) => ({
       id: `seed-goal:${index}`,

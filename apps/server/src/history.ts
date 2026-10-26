@@ -551,10 +551,9 @@ export class HistoryRepository {
                     typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text,
                 };
         }
-        if (!evidence) {
-          if (!hasMemory(entityGet(world.entities, actorId))) continue;
-          throw new Error('Committed event audience is missing its perspective.');
-        }
+        // Physical reception does not force a permanent autobiographical account.
+        // A missing retained personal source grants no historical perspective.
+        if (!evidence) continue;
         const { source, pending: perspectiveFlush } = batch.perspective(
           event,
           actorId,

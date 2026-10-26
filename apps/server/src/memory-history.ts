@@ -26,7 +26,8 @@ export function memoryEntryView({ memory, sourceKind }: RetrievedMemory): Memory
   return {
     id: memory.id,
     sourceKind,
-    text: `[${memory.source}] ${memory.summary}`,
+    text: `[${memory.kind === 'impression' ? 'remembered impression; ' : ''}${memory.source}] ${memory.summary}`,
+    fidelity: memory.kind === 'impression' ? 'impression' : 'exact',
     time: memory.at,
   };
 }

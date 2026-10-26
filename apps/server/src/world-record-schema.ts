@@ -1,3 +1,4 @@
+import { accountClass, type ExperienceEntry } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
@@ -199,6 +200,13 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         summaries: actorLists('mind_summaries', 'id'),
         consolidatedAt: map('mind_consolidation'),
         forgotten: actorLists('mind_forgotten'),
+        temporal: one('mind_temporal_state', {
+          sources: { ...map('mind_temporal_sources'), unordered: true },
+          actors: map('mind_temporal_actors', {
+            chunks: list('mind_temporal_chunks', 'id'),
+            supports: map('mind_temporal_supports'),
+          }),
+        }),
       }),
       innerWorlds: map('mind_inner_worlds', { files: list('mind_inner_files', 'path') }),
       events: list('world_hot_events', 'id'),
@@ -326,6 +334,10 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
       event_id: textColumn('eventId'),
       kind: textColumn('kind'),
       sequence: { ...numberColumn('sequence'), sql: 'BIGINT' },
+      logical_bytes: { sql: 'BIGINT NOT NULL', value: (value) => Buffer.byteLength(JSON.stringify(value)) },
+      retention_class: { sql: 'TEXT NOT NULL', value: (value) => accountClass({source: table === 'mind_awareness' ? 'awareness' : table === 'mind_summaries' ? 'summary' : 'memory', value} as unknown as ExperienceEntry) },
+      retention_reason: { sql: 'TEXT', value: (value) => (value['retention'] as JsonRecord | undefined)?.['reason'] ?? (value['impression'] as JsonRecord | undefined)?.['reason'] ?? null },
+      retention_required: { sql: 'BIGINT NOT NULL', value: (value) => Number((value['retention'] as JsonRecord | undefined)?.['required'] === true) },
       ...(table === 'mind_awareness'
         ? {
             account_revision: {
@@ -341,14 +353,21 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
               value: (value: JsonRecord) =>
                 Number(value['kind'] === 'commitment' && !value['resolved']),
             },
+            expires_at: { sql: 'DOUBLE PRECISION', value: (value) => (value['impression'] as JsonRecord | undefined)?.['expiresAt'] ?? null },
+            weaken_at: { sql: 'DOUBLE PRECISION', value: (value) => {
+              const impression = value['impression'] as JsonRecord | undefined;
+              return impression && !impression['weakened'] ? impression['weakenAt'] : null;
+            } },
           }
         : {}),
     },
     [
       ['actor_id', 'at', 'source_id'],
+      ['actor_id', 'retention_class', 'at', 'source_id'],
       ['actor_id', 'source_id'],
       ...(table === 'mind_memories' ? [['actor_id', 'event_id']] : []),
       ...(table === 'mind_awareness' ? [['actor_id', 'sequence']] : []),
+      ...(table === 'mind_memories' ? [['expires_at', 'actor_id'], ['weaken_at', 'actor_id']] : []),
       ['actor_id', 'position'],
     ],
   );
@@ -358,6 +377,51 @@ columns(
   { actor_id: actorColumn, subject_id: textColumn('subjectId') },
   [['actor_id', 'subject_id']],
 );
+columns(
+  'mind_temporal_chunks',
+  {
+    actor_id: { sql: 'TEXT NOT NULL', value: (value) => value['actorId'] },
+    source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' },
+    physical_life: { ...numberColumn('physicalLife'), sql: 'BIGINT NOT NULL' },
+    receipt_epoch: { ...textColumn('epoch'), sql: 'TEXT NOT NULL' },
+    first_ordinal: { ...numberColumn('fromOrdinal'), sql: 'BIGINT NOT NULL' },
+    last_ordinal: { ...numberColumn('throughOrdinal'), sql: 'BIGINT NOT NULL' },
+    first_at: { ...numberColumn('fromAt'), sql: 'DOUBLE PRECISION NOT NULL' },
+    last_at: { ...numberColumn('throughAt'), sql: 'DOUBLE PRECISION NOT NULL' },
+    logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
+    receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
+    subjects: { sql: 'TEXT[] NOT NULL', value: (value) => value['subjects'] },
+    source_refs: { sql: 'TEXT[] NOT NULL', value: (value) => value['sourceRefs'] },
+    source_ids: { sql: 'TEXT[] NOT NULL', value: (value) => value['sourceIds'] },
+    receipt_ordinals: { sql: 'BIGINT[] NOT NULL', value: (value) => (value['receipts'] as JsonRecord[]).map((receipt) => receipt['ordinal']) },
+  },
+  [['actor_id', 'first_at', 'first_ordinal'], ['actor_id', 'position'], ['actor_id', 'source_id'], ['actor_id', 'physical_life', 'receipt_epoch', 'first_ordinal']],
+);
+columns(
+  'mind_temporal_actors',
+  {
+    actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path.at(-1) },
+    next_due: numberColumn('nextDue'),
+    logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
+    receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
+  },
+  [['next_due', 'actor_id']],
+);
+columns(
+  'mind_temporal_sources',
+  { source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' }, at: numberColumn('at') },
+  [['source_id']],
+);
+columns('mind_temporal_supports', {
+  actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path[4] },
+  source_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path.at(-1) },
+  logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
+  required: { sql:'BIGINT NOT NULL',value:(value)=>Number(value['required']===true) },
+  account_revision: {sql:'TEXT NOT NULL',value:(value)=>personalAccountRevision(JSON.stringify(value))},
+  physical_life: { sql: 'BIGINT NOT NULL', value: (value) => (value['receipt'] as JsonRecord)['physicalLife'] },
+  receipt_epoch: { sql: 'TEXT NOT NULL', value: (value) => (value['receipt'] as JsonRecord)['epoch'] },
+  receipt_ordinal: { sql: 'BIGINT NOT NULL', value: (value) => (value['receipt'] as JsonRecord)['ordinal'] },
+}, [['actor_id', 'source_id'], ['actor_id', 'physical_life', 'receipt_epoch', 'receipt_ordinal']]);
 columns(
   'mind_forgotten',
   { actor_id: actorColumn, source_id: { sql: 'TEXT', value: (value) => value } },

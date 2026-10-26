@@ -357,3 +357,9 @@ export type {
 export * from './worlds/base/recognition.js';
 
 export { normalSpeedSeconds } from './simulation-time.js';
+export * from './temporal-evidence.js';
+export * from './remembered-impressions.js';
+export * from './attention.js';
+export * from './semantic-opportunities.js';
+export * from './received-scene.js';
+export * from './received-geometry.js';

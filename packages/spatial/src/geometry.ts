@@ -11,7 +11,7 @@ import {
   type SpatialBlocker,
 } from './types.js';
 import { panelGeometry } from './finite-panel.js';
-import { BoundsIndex } from './bounds-index.js';
+import { BoundsIndex, type BoundsQueryCursor } from './bounds-index.js';
 import { bodyIntersects, type CollisionSolid } from './body-query.js';
 import { segmentBoundsQuery } from './segment-bounds.js';
 const EPS = SPATIAL_LIMITS.epsilon;
@@ -163,6 +163,12 @@ export function surfacesInBounds(map: SpatialMap, bounds: Bounds3): WalkableSurf
     },
   );
   return found.sort((a, b) => a.order - b.order).map((entry) => entry.surface);
+}
+/** Bounded preparation for physical-source producers. Exhaustion is an unfinished
+ * candidate search, never a claim that the remaining surfaces are absent. */
+export function querySurfacesInBounds(map: SpatialMap, bounds: Bounds3, allowance: number, cursor?: BoundsQueryCursor) {
+  const result = preparedShapes(map).supportIndex.query((b) => b.min.x <= bounds.max.x + EPS && b.max.x >= bounds.min.x - EPS && b.min.y <= bounds.max.y + EPS && b.max.y >= bounds.min.y - EPS && b.min.z <= bounds.max.z + EPS && b.max.z >= bounds.min.z - EPS, allowance, cursor);
+  return { ...result, values: result.values.map((entry) => entry.surface) };
 }
 // Halfspaces ax + by + cz <= d allow the same finite slabs/wedges to serve rays and body sweeps.
 type Plane = readonly [number, number, number, number];
@@ -671,6 +677,14 @@ function sightObstacles(map: SpatialMap, points: readonly WorldPoint[]): readonl
     },
   );
   return shapes;
+}
+/** Certify the WHOLE convex target, not only its corner rays. Any possible opaque
+ * intersection inside the receptor/target hull conservatively rejects it. Shapes
+ * behind the target are outside this hull. Producers may split a rejected region;
+ * rejection itself supplies no boundary or negative spatial fact. */
+export function clearConvexView(map: SpatialMap, from: WorldPoint, target: readonly WorldPoint[]): boolean {
+  if (!finitePoint(from) || target.length < 1 || target.length > 4 || target.some((point) => !finitePoint(point))) throw new Error('Invalid convex sight target.');
+  return sightObstacles(map, [from, ...target]).length === 0;
 }
 /** clearSegment for a segment inside the hull its obstacles were gathered from. */
 export function clearOf(

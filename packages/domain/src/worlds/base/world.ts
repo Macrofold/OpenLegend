@@ -46,7 +46,7 @@ import { initialInventionPolicy } from '../../invention-policy.js';
 import { seedAgency } from '../../agency.js';
 import { BASE_RECIPE_FAMILIES } from './recipe-families.js';
 import { definitionPin } from '../../world-modules.js';
-import { DEFAULT_ATTRIBUTES, PERCEPTION } from './attributes.js';
+import { DEFAULT_ATTRIBUTES, PERCEPTION, FOCUS } from './attributes.js';
 import { DEFAULT_SENSES } from '../../perception.js';
 import { BASE_BODY_POLICY } from './body-policy.js';
 import { baseCognitionPolicy } from './cognition.js';
@@ -170,7 +170,7 @@ export function createActor(
     (definition) =>
       definition.id === 'wilderness:fullness' ||
       definition.id === 'wilderness:energy' ||
-      definition.id === PERCEPTION.id ||
+      definition.id === PERCEPTION.id || definition.id === FOCUS.id ||
       definition.implementation === 'finite-practice-v1',
   );
   const food = meters.find((definition) => definition.id === 'wilderness:fullness');
