@@ -1,0 +1,159 @@
+# Runpod hosting for Open Legend models
+
+**Research reviewed October 25, 2026.** Runpod is the selected hosting destination for this research. This reference covers how to prepare a deployment, choose resources, expose the correct protocol, understand billing and retain evidence. It does not provision infrastructure, qualify a runtime, or select new game defaults. No models, weights, audio or paid compute were run or downloaded for this research.
+
+Use the [hosting matrix](hosting-matrix.md) to find a candidate, its complete domain record for exact variants and sources, and [capacity planning](capacity-planning.md) to size a proposed configuration. Platform/runtime sources are indexed in [runpod-sources.json](data/runpod-sources.json); dated public prices are in [runpod-gpu-pricing.json](data/runpod-gpu-pricing.json).
+
+## Start with one exact deployable profile
+
+A family name is not a deployment recipe. Select a concrete checkpoint or licensed image, precision, required base/adapter, tokenizer, runtime version and protocol. The `hosting.runpod_disposition` field separates documented self-host candidates, conditional routes, external-API-only products and unresolved availability. A candidate label means a plausible research route, not an established GPU fit or production approval.
+
+The records distinguish several consequential cases: a model page without actual weight files; proprietary speech available only under a separate hosting contract; a new mixed-precision checkpoint requiring a recent engine; a native selector exposing prediction heads rather than chat; and an Apple-specific build that needs a different NVIDIA recipe on Runpod. Read the selected profile's blockers before selecting hardware.
+
+### Preserve the existing game integration
+
+OpenLegend's [custom-model design](../../docs/projects/custom-models-tech-design.md) and [operator setup](../../docs/live-ai-setup.md#use-existing-model-deployments-for-decisions-and-replies) remain authoritative. The hosting owner manages Runpod through Macrofold's supported managed deployment or imported endpoint route. The game uses trusted deployment references and its own granted backend key; it does not receive Runpod/Hugging Face credentials, create capacity or stop shared hosting when a session ends.
+
+Native judgments require the selected SystemOne interface; chat replies require the declared OpenAI-compatible capabilities. Voice media retains its [separate feature and release owner](../../docs/projects/voice-and-calls-feature-spec.md), so a TTS server is not automatically a completed game voice integration. Runtime qualification and current service access remain in [MX06](../../docs/maintainers/custom-models.md#mx06--production-contract-recovery-and-operating-acceptance). This research adds sizing and operating evidence inputs, not another provider adapter or hosting controller.
+
+### Hosting terms are part of fictional freedom
+
+Runpod's [March 24, 2026 terms](https://www.runpod.io/legal/terms-of-service) contain broad content restrictions, including wording about violent material in section 7 and graphic adult content in section 6. This review did **not** establish an explicit exception for private inference of lawful fictional game content. The applicability to OpenLegend's intended dark-fiction workload needs a documented answer from the host before treating it as a production policy fit. This is an unresolved contract-scope question, not evidence that Runpod filters an inference, that every fictional conflict is prohibited, or that a permissive model license overrides hosting terms. No outreach was sent. [RPH033]
+
+## Choose the serving mode for the workload
+
+The following recommendations are research judgments based on the documented modes, not measured deployment winners.
+
+| Mode | Suitable use | Operational implication |
+| --- | --- | --- |
+| Dedicated Pod | First qualification of custom/native/speech runtimes; continuous service; direct control of loading and logs. | Owner keeps the container serving, authenticates it, monitors it and pays for running capacity. A persistent model volume makes replacement easier. |
+| Serverless load balancer | An HTTP service that needs its own paths, low-latency routing or streaming. | Direct worker routing without a job backlog; overload and cold starts require bounded handling. Use an active worker when an unacceptable cold start would interrupt play. |
+| Serverless queue | Offline voice assets, asynchronous generation and other work whose delay is acceptable. | Wrap the model in the queue handler protocol, retain job IDs and retrieve results before expiry. Queue retries and game request ownership must be reconciled. |
+| External hosted API | A closed model or a contract route unavailable to this account. | A proxy hosted on Runpod does not turn the upstream model into self-hosted weights or remove its tariff, limits and terms. |
+| Multi-GPU Pod or supported cluster | A profile whose weights/state require sharding. | Verify engine parallelism, interconnect and host memory. Several independent workers do not combine VRAM into one model. |
+
+Pods offer a configurable container environment; Serverless load balancing and queue workers have different protocols and overload behavior. [RPH001](https://docs.runpod.io/pods/overview), [RPH016](https://docs.runpod.io/serverless/load-balancing/overview), [RPH019](https://docs.runpod.io/serverless/endpoints/send-requests)
+
+**Practical starting approach:** prepare one exact model on a Pod when a custom recipe or incomplete hardware evidence makes startup visibility valuable. After that route is qualified, use actual traffic and cold-start evidence to choose continuous Pods, warm Serverless capacity or scale-to-zero. There is no reason to move every model into Serverless before establishing that it serves the required request.
+
+## Prepare the artifact and container
+
+1. **Freeze identity.** Record the Hugging Face commit and selected files or licensed image. Pin the required base, adapter, tokenizer, template and auxiliary models separately. Retain license/access conditions. A mutable `main`, `latest` or reused GGUF filename is insufficient for a reproducible recipe.
+2. **Choose a supported engine.** Follow the exact profile: vLLM/SGLang for supported text models; llama.cpp for an appropriate GGUF build; the native decision runtime for prediction heads; the speech project's supported serving stack for its codec and audio pipeline. An autogenerated model-page deployment snippet is not compatibility evidence.
+3. **Pin the built environment.** Record image digest, CPU architecture, Python/PyTorch/Transformers/engine versions, CUDA build and required GPU architecture. A model config's `transformers_version` reports serialization metadata, not necessarily the minimum compatible library version. Do not replace an explicit required development build with an arbitrary stable release.
+4. **Resolve memory and storage.** Use the [capacity worksheet](capacity-planning.md), including model-load peaks and temporary conversion space. Select only the required quantization shards. Keep read-only model artifacts separate from mutable request outputs and temporary files.
+5. **Define readiness and shutdown.** The service must report ready only after its required model/components load. Match its listening address, port and health route to the hosting mode. Save deployment metadata and secret references outside the ephemeral container.
+
+Hugging Face documents exact-revision downloads and selected-file patterns. vLLM documents model- and kernel-specific quantization support; container architecture and CUDA compatibility must also match the host. CUDA 13.x's general driver floor is 580, with feature/PTX caveats; a model may require a newer specific build. Record the exact requirements rather than assuming any NVIDIA image runs on any NVIDIA offering. [RPH030](https://huggingface.co/docs/huggingface_hub/guides/download), [RPH028](https://docs.vllm.ai/en/latest/features/quantization/), [RPH036](https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html)
+
+### Text serving configuration to make explicit
+
+| Setting | Why it belongs in the deployment record |
+| --- | --- |
+| Model/revision and tokenizer/template | Establish which weights and exact input serialization are served. |
+| Total context and output cap | Prevent an advertised family limit from being mistaken for this server's allowance. |
+| Weight format/precision and cache precision | Different memory and kernel requirements; an FP8 cache is not FP8 model weights. |
+| Maximum sequences and batched tokens | Bound concurrent state and prefill work; not equivalent to total world population. |
+| GPU allocation and parallelism | Establish per-worker device count, partitions and replica count separately. |
+| GPU-memory budget and eager/graph settings | Preserve room for runtime allocations and co-resident components. |
+| Reasoning, tool and structured-output parser | Ensure the requested wire behavior is supported by that engine and template. |
+| Prefix caching, offload and modality limits | Preserve performance assumptions and avoid allocating unused modality components. |
+
+Runpod's packaged vLLM worker exposes variables including `MODEL_NAME`, `MODEL_REVISION`, `MAX_MODEL_LEN`, `MAX_NUM_SEQS`, `TENSOR_PARALLEL_SIZE`, `DTYPE`, `KV_CACHE_DTYPE` and `QUANTIZATION`. These are **wrapper-specific**; they are not automatically accepted by an arbitrary upstream container. Its documentation includes older decoder options alongside current upstream APIs. Check the pinned image's accepted settings; do not combine defaults from different releases. [RPH023](https://docs.runpod.io/serverless/vllm/environment-variables), [RPH024](https://docs.runpod.io/serverless/vllm/configuration)
+
+### Native decisions and speech need different recipes
+
+Official Kev's head/base/calibration recipe and SystemOne protocol are distinct from ordinary JSON-in-chat. Current native llama.cpp support is a separate documented option, not proof that a stock historical image or OpenLegend's protected managed recipe supports every new artifact. Preserve the [native decision profiles](decision-models.md) and current Macrofold capability contract.
+
+For speech, record the served stage(s), codec/vocoder, text normalization, reference encoder or ASR dependencies, source/output sample rates, chunk semantics and streaming transport. Separate voice-design, voice-cloning, fixed-voice TTS, recognition and full-duplex dialogue profiles. Quantizing one speech stage does not establish the full pipeline's memory, and a streaming architecture does not prove the repository ships a streaming server. The [voice inventory](voice-models.md) preserves those limits, including contract-gated images and metering dependencies.
+
+## Select a Runpod offer
+
+The [GPU catalogue](https://docs.runpod.io/references/gpu-types) lists memory tiers from small consumer cards through 48/80/96/141/180GB devices and larger Blackwell offerings. Memory alone is an incomplete selector: also inspect the actual offering's host RAM, vCPUs, GPU count, interconnect, storage, driver compatibility and location. A GPU model name does not promise an identical host configuration. Verify the current offer in the selected region before committing spend. [RPH006]
+
+Runpod distinguishes Secure Cloud data-center infrastructure from Community Cloud providers; its current guide recommends the former for production and reports that existing Community capacity remains available despite closure to new hosts. These are platform categories, not proof of a particular workload's service level. Select the cloud/location explicitly. [RPH007](https://docs.runpod.io/pods/choose-a-pod)
+
+A local 24–48GB candidate may be useful for a compact selector, a particular quantized dialogue model or some TTS systems, but it is not a promise that all such roles fit together on one GPU. Large mixed-precision MoEs and complete speech pipelines can require several high-memory cards. Use per-profile evidence, not a blanket “27B fits 24GB” rule. Establish co-residency separately if selected; otherwise budget independent services and their overlap.
+
+## Storage, model caching and durability
+
+| Storage | Persistence and placement | Appropriate contents / caveat |
+| --- | --- | --- |
+| Pod container disk | Ephemeral; lost on stop/reset/termination. | Image/runtime and disposable work. Do not put the only model manifest or output here. |
+| Pod volume disk | Survives stop; tied to the Pod's host and deleted on termination. | A temporary retained workspace. Restart can lack the original GPU. |
+| Network volume | Independent persistent storage in a selected data center; normally `/workspace` on Pods, `/runpod-volume` on Serverless. | Reusable exact model artifacts. Attach at Pod creation; its regional placement constrains worker availability. |
+| Global volume | Beta, region-independent, optimized for infrequent writes and repeated reads. | Optional shared model distribution across regions. It has separate request charges and should not be assumed equivalent to a write-heavy filesystem. |
+| Runpod cached model | Platform-managed Hugging Face model availability for Serverless hosts. | Reduces repeated download work; does not replace GPU loading, exact-revision verification or durable output storage. |
+
+The Pod storage guide distinguishes stop/terminate behavior and attachment rules. Regional volumes persist independently of compute; global volumes remove that regional storage constraint but remain beta. [RPH009](https://docs.runpod.io/pods/storage/types), [RPH008](https://docs.runpod.io/storage/network-volumes), [RPH011](https://docs.runpod.io/storage/globalvolume/overview), [RPH012](https://docs.runpod.io/storage/globalvolume/globalvolume-serverless)
+
+Global volumes mount at `/runpod-volume` for supported GPU Serverless endpoints; Pod mount defaults differ when another volume is present. A documented global-volume route is not evidence that every Runpod deployment SDK exposes it. High-performance network storage is available in selected data centers; its published speedups are vendor benchmarks, and exact premium pricing is location-specific. Start with the tier justified by the intended loading pattern. [RPH012], [RPH010](https://docs.runpod.io/storage/high-performance-storage)
+
+Cached-model downloads normally occur before a worker starts billing. A custom download inside a running handler has different timing. Pin and verify the selected artifact even when using the platform cache; retain outputs outside transient job storage. Shared volumes also need a deliberate writer: publish completed immutable model directories, rather than letting concurrent workers overwrite one another's partial downloads or generated audio. [RPH022](https://docs.runpod.io/serverless/endpoints/model-caching)
+
+Runpod warns that it is not a long-term backup service. Preserve irreplaceable outputs and manifests in the project's established durable asset/storage route. A zero balance is not a backup strategy: storage charges can continue, and uncovered persistent storage can eventually be deleted. [RPH002](https://docs.runpod.io/pods/pricing), [RPH008]
+
+## Endpoint contracts, network limits and secrets
+
+| Route | Address / contract | Documented limit or behavior to plan for |
+| --- | --- | --- |
+| Pod HTTP proxy | `https://POD_ID-PORT.proxy.runpod.net` | Public endpoint with HTTPS; documented 100-second proxy timeout. Authenticate the application. A running Pod does not prove the model is ready. |
+| Pod direct TCP | Current allocated host/port | Own transport/authentication requirements; suitable when the HTTP proxy's behavior is unsuitable. Pods do not support UDP. |
+| Serverless load balancer | `https://ENDPOINT_ID.api.runpod.ai/<custom-path>` | 2-minute no-worker wait, 5.5-minute processing timeout, 30MB request/response cap. No queue backlog or built-in retry. |
+| Serverless queue | `https://api.runpod.ai/v2/ENDPOINT_ID/run` or `/runsync`, with an `input` envelope | Handler contract, job IDs and result retrieval. Documented payload limits: 10MB `/run`, 20MB `/runsync`; streamed chunks at most 1MB. |
+
+These are transport limits, not token-context limits. Base64 audio adds byte overhead, so larger outputs should use the selected durable object route and return references when the client supports that contract. A queue envelope is not an OpenAI chat endpoint or native SystemOne endpoint merely because the model inside it can answer. [RPH015](https://docs.runpod.io/pods/configuration/expose-ports), [RPH016], [RPH021](https://docs.runpod.io/serverless/workers/handler-functions), [RPH020](https://docs.runpod.io/serverless/endpoints/operation-reference)
+
+For load balancing, configure the actual `PORT`, `PORT_HEALTH` and `HEALTH_CHECK_PATH`. The documented default health path is `/ping`; a model server's `/health` can be selected. Health codes distinguish ready (200), initializing (204) and unhealthy. WebSockets are supported, but handshake timeouts must allow worker startup; no continuous-session guarantee was established by this research. Retain session/cancellation behavior in the selected speech profile. [RPH016], [RPH017](https://docs.runpod.io/serverless/load-balancing/build-a-worker)
+
+Queue jobs default to a 600-second execution timeout and 24-hour total lifetime; both can be bounded up to seven days under the current API. Total lifetime includes waiting and can expire during execution. Completed results have separate retention: ordinarily 30 minutes for `/run`, one minute for `/runsync`. Record the selected request policy and retrieve results durably; raising TTL is not a latency strategy for NPC conversation. Platform retry facilities do not override OpenLegend's accepted-operation or spending ownership. [RPH019]
+
+Use separate secrets for account management, gated-model download and inference access. Runpod supports account secrets referenced as `{{ RUNPOD_SECRET_<name> }}` and substituted at worker boot. Registry credentials are also separate from model access. Keep secret values out of images, manifests, model prompts, URLs and logs; retain names/references only. A valid key can still lack the required resource permission. [RPH031](https://docs.runpod.io/pods/templates/secrets), [RPH032](https://docs.runpod.io/get-started/credentials), [RPH038](https://docs.runpod.io/api-reference-v2/account/create-a-secret)
+
+## Costs and capacity economics
+
+The [price snapshot](data/runpod-gpu-pricing.json) preserves the public page and its scope. It is a planning reference, not an available account quote. Published pages disagree on some rates: the endpoint-settings table differs from the dedicated public pricing page, and the GPU-models page advertises different starting offers. The Pod cloud toggle is not reliably exposed in retrieved text. **Do not silently select the cheapest number or claim a verified Secure/Community quote.** Confirm GPU, cloud, region, date and actual offer before provisioning. [RPH004](https://www.runpod.io/pricing), [RPH005](https://www.runpod.io/gpu-models), [RPH018]
+
+Pod compute is charged while provisioned/running under its selected tariff. Current documentation describes per-second billing, deprecated savings plans and no Pod ingress/egress charge; other storage/services can still contribute costs. Serverless bills worker start through full stop, rounded to seconds, including GPU model loading, work and the idle timeout. Active workers remain running; current active-worker discounts require a sales quote rather than an assumed fixed percentage. [RPH002], [RPH003](https://docs.runpod.io/serverless/pricing)
+
+| Cost component | How to account for it |
+| --- | --- |
+| Pod compute | Actual whole-Pod hourly offer × billable hours. If quoted per GPU, multiply by GPUs; do not multiply a whole-Pod quote twice. |
+| Serverless compute | Sum billable worker seconds × applicable worker rate, including startup, waiting, overlap and retries. Track GPUs per worker separately. |
+| Persistent storage | Allocated or consumed GB × tariff × duration under that storage product's billing convention. Stopped compute can still incur storage costs. |
+| Global-volume operations | Add read/metadata and write/list request charges; do not price it as storage bytes alone. |
+| Licensed models / external stages | Contract fees, usage metering, normalization APIs, ASR or other calls, where applicable. |
+| Useful game outcome | Divide complete serving cost by successful useful work, including failed/interrupted work and reserved capacity. |
+
+Standard network volumes list $0.07/GB-month for the first TB and $0.05 for capacity above it; Pod volume disk lists $0.10 while running and $0.20 while stopped, with container disk at $0.10 while running. Global volume request classes list $0.005/1,000 writes/creates/lists and $0.0005/1,000 reads/metadata operations; its storage rate was not reliably established here. High-performance storage has a public $0.14/GB-month headline but location-specific documentation; refresh the actual quote. [RPH002], [RPH008], [RPH011], [RPH010], [RPH004]
+
+**Illustrative arithmetic:** a $1/hour whole-Pod quote costs $720 for 30 continuously running days, before storage. A 100GB standard network volume at $0.07/GB-month adds $7 for a full month. If that service completes 36,000 useful decisions/hour, compute alone is about $0.0000278/decision; at 3,600 it is about $0.000278. Those request rates are assumptions, not measured OpenLegend throughput. A cheaper GPU can cost more per useful encounter if it creates long queues, extra failures or unnecessary replicas.
+
+Set an operator-owned spend ceiling and finite service schedule before a selected deployment. Serverless maximum workers limits replicas, not a complete account budget; storage and other endpoints remain separate. The game's `AI_BUDGET_USD` and per-request allowance do not stop an idle Pod. Runpod's documented default account ceiling is a platform setting, not authorization to spend that amount. [RPH018], [RPH003], [operator setup](../../docs/live-ai-setup.md#use-existing-model-deployments-for-decisions-and-replies)
+
+## Operate, recover and stop deliberately
+
+Before sending any selected workload, record the actual resources, image/revision, allowed limits, readiness and price in the [deployment worksheet](data/deployment-record-template.json). During an authorized qualification, retain startup/warm timings, peak VRAM/RAM, free disk, queue wait, input/output counts, completed work, failure reasons and billed duration. Inspect both application logs and host lifecycle events. None of these measurements was collected by this research.
+
+| Symptom | First distinction to establish | Relevant record or action |
+| --- | --- | --- |
+| Full scenario rejected before inference | Serialized request plus output reservation versus configured cap. | Preserve count, cap, template and rejection; use [capacity planning](capacity-planning.md). |
+| OOM during model load | Weights/host loader peak versus GPU/CPU RAM. | Check exact artifact, precision, loader copies and required auxiliary models. |
+| OOM only on long or concurrent work | Cache, activation, graphs and per-worker concurrency. | Compare the failing workload with the publisher recipe; avoid guessing from parameter count. |
+| Service healthy but empty/invalid response | Protocol, parser, reasoning allowance, stop tokens or structured-output support. | Preserve failure class; it is not automatically content refusal. |
+| No worker / cold-start timeout | Capacity, region, cached artifact, ports and model-ready state. | Do not retry paid work blindly or send it to another model without the existing owner. |
+| Pod restarts with zero GPUs | Original host capacity was released. | Use retained storage to recover or redeploy on an eligible offer; do not assume restart reserves a GPU. |
+| A completed queue result disappears | Retention or total lifetime expired. | Persist result/operation references through the existing caller before expiry. |
+| Unexpected bill after play ends | Active workers, idle Pods, retained disks or overlapping releases. | Inspect actual resource state and receipts; closing the game is not teardown. |
+
+Stopping a Pod releases its GPU, clears container disk and retains its volume disk; terminating removes Pod-local data. Network-volume data survives compute removal. Editing a running Pod can reset it and erase nonpersistent data. Exact restart availability is not guaranteed. [RPH013](https://docs.runpod.io/pods/manage-pods), [RPH014](https://docs.runpod.io/pods/troubleshooting/zero-gpus)
+
+Serverless updates roll workers progressively, allowing active work to finish and briefly mixing old/new images. Use immutable image identity and preserve the serving revision of each accepted request; use the owning service's selected cutover procedure when strict version consistency is required. Record retained storage and model artifacts intentionally during cleanup. Never delete a shared volume or stop another deployment merely because this research lists it. [RPH034](https://docs.runpod.io/serverless/endpoints/rolling-releases)
+
+## What is ready, and what still requires a real deployment
+
+Every catalogue record now has a hosting disposition and explicit evidence boundary. Profiles contain published context/request limits, exact runtime/artifact requirements, available memory/storage evidence and named unknowns. Some sources simply do not publish minimum RAM, a hard output cap, concurrency or full-pipeline peak memory. Null values preserve that absence; generic estimates cannot close it.
+
+The research is ready to support a small, deliberate selection and resource proposal. Current account offers, credentials/grants, Runpod's intended-content contract scope, exact managed-image qualification, full-request fit, warm latency, concurrent capacity, recovery and actual invoices still require their existing owner and an authorized operating task. No new feature-design project is needed to record them: MX06 already owns operating acceptance; voice/media and character quality retain their existing owners.
+
+**Research cost:** no hosting was provisioned, no inference or audio was generated, and no weights were downloaded. Additional Jev cost is **$0**; total model/hosting charges incurred by this research task are **$0**.

@@ -5,7 +5,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Qwen3-TTS 12Hz — 1.7B / 0.6B family: identity and published capabilities"]
+    "supports": [
+      "Qwen3-TTS 12Hz — 1.7B / 0.6B family: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S002",
@@ -26,7 +28,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Voice design capability"]
+    "supports": [
+      "Voice design capability"
+    ]
   },
   {
     "source_id": "VOICE-S004",
@@ -34,7 +38,10 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Qwen3 TTS 24 kHz and serving", "S2-Pro sampling rate"]
+    "supports": [
+      "Qwen3 TTS 24 kHz and serving",
+      "S2-Pro sampling rate"
+    ]
   },
   {
     "source_id": "VOICE-S005",
@@ -55,7 +62,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Fish Audio Drama 3: identity and published capabilities"]
+    "supports": [
+      "Fish Audio Drama 3: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S007",
@@ -63,7 +72,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Community license and commercial threshold"]
+    "supports": [
+      "Community license and commercial threshold"
+    ]
   },
   {
     "source_id": "VOICE-S008",
@@ -83,7 +94,9 @@
     "source_type": "primary",
     "source_date": "2026-10-13",
     "accessed_on": "2026-10-23",
-    "supports": ["Drama 3 report and date"]
+    "supports": [
+      "Drama 3 report and date"
+    ]
   },
   {
     "source_id": "VOICE-S010",
@@ -91,7 +104,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Fish Audio S2-Pro (open weights): identity and published capabilities"]
+    "supports": [
+      "Fish Audio S2-Pro (open weights): identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S011",
@@ -99,7 +114,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["S2-Pro research license retained"]
+    "supports": [
+      "S2-Pro research license retained"
+    ]
   },
   {
     "source_id": "VOICE-S012",
@@ -182,7 +199,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Fun-CosyVoice3-0.5B-2512: identity and published capabilities"]
+    "supports": [
+      "Fun-CosyVoice3-0.5B-2512: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S019",
@@ -190,7 +209,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Current repository and release roadmap"]
+    "supports": [
+      "Current repository and release roadmap"
+    ]
   },
   {
     "source_id": "VOICE-S020",
@@ -198,7 +219,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Serving integration"]
+    "supports": [
+      "Serving integration"
+    ]
   },
   {
     "source_id": "VOICE-S021",
@@ -206,7 +229,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["IndexTTS-2.5: identity and published capabilities"]
+    "supports": [
+      "IndexTTS-2.5: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S022",
@@ -214,7 +239,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Custom terms and derivative/model-improvement restrictions"]
+    "supports": [
+      "Custom terms and derivative/model-improvement restrictions"
+    ]
   },
   {
     "source_id": "VOICE-S023",
@@ -222,7 +249,9 @@
     "source_type": "primary",
     "source_date": "2026-01-07",
     "accessed_on": "2026-10-23",
-    "supports": ["Technical report date"]
+    "supports": [
+      "Technical report date"
+    ]
   },
   {
     "source_id": "VOICE-S024",
@@ -230,7 +259,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["VoxCPM2: identity and published capabilities"]
+    "supports": [
+      "VoxCPM2: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S025",
@@ -238,7 +269,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["April release, Apache weights/code and deployment/performance table"]
+    "supports": [
+      "April release, Apache weights/code and deployment/performance table"
+    ]
   },
   {
     "source_id": "VOICE-S026",
@@ -246,7 +279,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["FireRedTTS3 Base / Instruct: identity and published capabilities"]
+    "supports": [
+      "FireRedTTS3 Base / Instruct: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S027",
@@ -254,7 +289,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Inference constraints, examples and editable attributes"]
+    "supports": [
+      "Inference constraints, examples and editable attributes"
+    ]
   },
   {
     "source_id": "VOICE-S028",
@@ -262,7 +299,9 @@
     "source_type": "primary",
     "source_date": "2026-08-18",
     "accessed_on": "2026-10-23",
-    "supports": ["Report"]
+    "supports": [
+      "Report"
+    ]
   },
   {
     "source_id": "VOICE-S029",
@@ -270,7 +309,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["MOSS-TTS v1.5 / Local-Transformer v1.5: identity and published capabilities"]
+    "supports": [
+      "MOSS-TTS v1.5 / Local-Transformer v1.5: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S030",
@@ -289,7 +330,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["8B sibling identity"]
+    "supports": [
+      "8B sibling identity"
+    ]
   },
   {
     "source_id": "VOICE-S032",
@@ -297,7 +340,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["MOSS-TTSD v1.0: identity and published capabilities"]
+    "supports": [
+      "MOSS-TTSD v1.0: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S033",
@@ -305,7 +350,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["MOSS-TTS-Nano 100M: identity and published capabilities"]
+    "supports": [
+      "MOSS-TTS-Nano 100M: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S034",
@@ -313,7 +360,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Release and runtime"]
+    "supports": [
+      "Release and runtime"
+    ]
   },
   {
     "source_id": "VOICE-S035",
@@ -321,7 +370,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Dia2 — 1B / 2B: identity and published capabilities"]
+    "supports": [
+      "Dia2 — 1B / 2B: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S036",
@@ -339,7 +390,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Higgs TTS 3 4B: identity and published capabilities"]
+    "supports": [
+      "Higgs TTS 3 4B: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S038",
@@ -347,7 +400,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Code/runtime and separate model licensing"]
+    "supports": [
+      "Code/runtime and separate model licensing"
+    ]
   },
   {
     "source_id": "VOICE-S039",
@@ -355,7 +410,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["GLM-TTS: identity and published capabilities"]
+    "supports": [
+      "GLM-TTS: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S040",
@@ -363,7 +420,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Runtime and examples"]
+    "supports": [
+      "Runtime and examples"
+    ]
   },
   {
     "source_id": "VOICE-S041",
@@ -371,7 +430,9 @@
     "source_type": "primary",
     "source_date": "2025-12-16",
     "accessed_on": "2026-10-23",
-    "supports": ["Report"]
+    "supports": [
+      "Report"
+    ]
   },
   {
     "source_id": "VOICE-S042",
@@ -379,7 +440,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Step-Audio-EditX: identity and published capabilities"]
+    "supports": [
+      "Step-Audio-EditX: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S043",
@@ -387,7 +450,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Runtime / code license"]
+    "supports": [
+      "Runtime / code license"
+    ]
   },
   {
     "source_id": "VOICE-S044",
@@ -395,7 +460,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Hume TADA — 1B / 3B-ML: identity and published capabilities"]
+    "supports": [
+      "Hume TADA — 1B / 3B-ML: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S045",
@@ -403,7 +470,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Model variants and runtime"]
+    "supports": [
+      "Model variants and runtime"
+    ]
   },
   {
     "source_id": "VOICE-S046",
@@ -411,7 +480,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Release announcement"]
+    "supports": [
+      "Release announcement"
+    ]
   },
   {
     "source_id": "VOICE-S047",
@@ -429,7 +500,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["October tiny variants, multilingual runtime and MIT code"]
+    "supports": [
+      "October tiny variants, multilingual runtime and MIT code"
+    ]
   },
   {
     "source_id": "VOICE-S049",
@@ -487,7 +560,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Separate licenses by variant"]
+    "supports": [
+      "Separate licenses by variant"
+    ]
   },
   {
     "source_id": "VOICE-S054",
@@ -495,7 +570,9 @@
     "source_type": "primary",
     "source_date": "2026-10-21",
     "accessed_on": "2026-10-23",
-    "supports": ["Launch date and hardware targets"]
+    "supports": [
+      "Launch date and hardware targets"
+    ]
   },
   {
     "source_id": "VOICE-S055",
@@ -503,7 +580,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["NeuTTS Nano / NeuTTS-2E (alpha): identity and published capabilities"]
+    "supports": [
+      "NeuTTS Nano / NeuTTS-2E (alpha): identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S056",
@@ -511,7 +590,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["2E alpha, emotion labels and gated terms"]
+    "supports": [
+      "2E alpha, emotion labels and gated terms"
+    ]
   },
   {
     "source_id": "VOICE-S057",
@@ -519,7 +600,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Nano and cloning"]
+    "supports": [
+      "Nano and cloning"
+    ]
   },
   {
     "source_id": "VOICE-S058",
@@ -527,7 +610,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["OmniVoice 0.6B: identity and published capabilities"]
+    "supports": [
+      "OmniVoice 0.6B: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S059",
@@ -535,7 +620,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Runtime and samples"]
+    "supports": [
+      "Runtime and samples"
+    ]
   },
   {
     "source_id": "VOICE-S060",
@@ -543,7 +630,9 @@
     "source_type": "primary",
     "source_date": "2026-04-01",
     "accessed_on": "2026-10-23",
-    "supports": ["Report"]
+    "supports": [
+      "Report"
+    ]
   },
   {
     "source_id": "VOICE-S061",
@@ -551,7 +640,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["TontaubeV1: identity and published capabilities"]
+    "supports": [
+      "TontaubeV1: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S062",
@@ -559,7 +650,9 @@
     "source_type": "primary",
     "source_date": "2026-09-08",
     "accessed_on": "2026-10-23",
-    "supports": ["Report date"]
+    "supports": [
+      "Report date"
+    ]
   },
   {
     "source_id": "VOICE-S063",
@@ -567,7 +660,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Runtime"]
+    "supports": [
+      "Runtime"
+    ]
   },
   {
     "source_id": "VOICE-S064",
@@ -575,7 +670,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["NVIDIA MagpieTTS Multilingual v2607: identity and published capabilities"]
+    "supports": [
+      "NVIDIA MagpieTTS Multilingual v2607: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S065",
@@ -583,7 +680,9 @@
     "source_type": "primary",
     "source_date": "2026-08-10",
     "accessed_on": "2026-10-23",
-    "supports": ["NIM and voice-agent use"]
+    "supports": [
+      "NIM and voice-agent use"
+    ]
   },
   {
     "source_id": "VOICE-S066",
@@ -591,7 +690,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Qwen-Audio-3.1-TTS Plus / Flash: identity and published capabilities"]
+    "supports": [
+      "Qwen-Audio-3.1-TTS Plus / Flash: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S067",
@@ -599,7 +700,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Flash capabilities and billing"]
+    "supports": [
+      "Flash capabilities and billing"
+    ]
   },
   {
     "source_id": "VOICE-S068",
@@ -619,7 +722,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Official voices and published preview files"]
+    "supports": [
+      "Official voices and published preview files"
+    ]
   },
   {
     "source_id": "VOICE-S070",
@@ -651,7 +756,9 @@
     "source_type": "primary",
     "source_date": "2026-10-09",
     "accessed_on": "2026-10-23",
-    "supports": ["Content restrictions"]
+    "supports": [
+      "Content restrictions"
+    ]
   },
   {
     "source_id": "VOICE-S073",
@@ -659,7 +766,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Cartesia Sonic 3.6: identity and published capabilities"]
+    "supports": [
+      "Cartesia Sonic 3.6: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S074",
@@ -667,7 +776,10 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Credits, plans and free commercial limitation", "Credit bundles"]
+    "supports": [
+      "Credits, plans and free commercial limitation",
+      "Credit bundles"
+    ]
   },
   {
     "source_id": "VOICE-S075",
@@ -675,7 +787,10 @@
     "source_type": "primary",
     "source_date": "2025-07-23",
     "accessed_on": "2026-10-23",
-    "supports": ["Violent-content AUP", "Provider content restrictions"]
+    "supports": [
+      "Violent-content AUP",
+      "Provider content restrictions"
+    ]
   },
   {
     "source_id": "VOICE-S076",
@@ -683,7 +798,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Enterprise deployment options"]
+    "supports": [
+      "Enterprise deployment options"
+    ]
   },
   {
     "source_id": "VOICE-S077",
@@ -691,7 +808,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Inworld Realtime TTS-2 / Flash: identity and published capabilities"]
+    "supports": [
+      "Inworld Realtime TTS-2 / Flash: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S078",
@@ -699,7 +818,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Current model rates and commitments"]
+    "supports": [
+      "Current model rates and commitments"
+    ]
   },
   {
     "source_id": "VOICE-S079",
@@ -707,7 +828,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Standard and customer-hosted conditions"]
+    "supports": [
+      "Standard and customer-hosted conditions"
+    ]
   },
   {
     "source_id": "VOICE-S080",
@@ -727,7 +850,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Published samples and game-relevant features"]
+    "supports": [
+      "Published samples and game-relevant features"
+    ]
   },
   {
     "source_id": "VOICE-S082",
@@ -735,7 +860,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Newer product-page language claim differs from model comparison docs"]
+    "supports": [
+      "Newer product-page language claim differs from model comparison docs"
+    ]
   },
   {
     "source_id": "VOICE-S083",
@@ -743,7 +870,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["MiniMax Speech 2.8 HD / Turbo: identity and published capabilities"]
+    "supports": [
+      "MiniMax Speech 2.8 HD / Turbo: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S084",
@@ -751,7 +880,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Official hosting-provider model/language support"]
+    "supports": [
+      "Official hosting-provider model/language support"
+    ]
   },
   {
     "source_id": "VOICE-S085",
@@ -759,7 +890,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Deepgram Flux TTS / Aura-2: identity and published capabilities"]
+    "supports": [
+      "Deepgram Flux TTS / Aura-2: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S086",
@@ -778,7 +911,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Flux voices and endpoint"]
+    "supports": [
+      "Flux voices and endpoint"
+    ]
   },
   {
     "source_id": "VOICE-S088",
@@ -786,7 +921,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Enterprise deployment"]
+    "supports": [
+      "Enterprise deployment"
+    ]
   },
   {
     "source_id": "VOICE-S089",
@@ -794,7 +931,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Rime Coda (pricing: Coda v2) / Mist v3: identity and published capabilities"]
+    "supports": [
+      "Rime Coda (pricing: Coda v2) / Mist v3: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S090",
@@ -802,7 +941,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Current minute billing and Coda v2 label"]
+    "supports": [
+      "Current minute billing and Coda v2 label"
+    ]
   },
   {
     "source_id": "VOICE-S091",
@@ -810,7 +951,9 @@
     "source_type": "primary",
     "source_date": "2026-04-06",
     "accessed_on": "2026-10-23",
-    "supports": ["Mist v3 announcement"]
+    "supports": [
+      "Mist v3 announcement"
+    ]
   },
   {
     "source_id": "VOICE-S092",
@@ -818,7 +961,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Gradium hosted TTS: identity and published capabilities"]
+    "supports": [
+      "Gradium hosted TTS: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S093",
@@ -826,7 +971,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Credits, plans and units"]
+    "supports": [
+      "Credits, plans and units"
+    ]
   },
   {
     "source_id": "VOICE-S094",
@@ -834,7 +981,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Content restrictions"]
+    "supports": [
+      "Content restrictions"
+    ]
   },
   {
     "source_id": "VOICE-S095",
@@ -842,7 +991,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["xAI / SpaceXSI Text-to-Speech API: identity and published capabilities"]
+    "supports": [
+      "xAI / SpaceXSI Text-to-Speech API: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S096",
@@ -861,7 +1012,10 @@
     "source_type": "primary",
     "source_date": "2026-08-14",
     "accessed_on": "2026-10-23",
-    "supports": ["Current AUP", "Current developer AUP"]
+    "supports": [
+      "Current AUP",
+      "Current developer AUP"
+    ]
   },
   {
     "source_id": "VOICE-S098",
@@ -869,7 +1023,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Mistral Voxtral TTS 3 / TTS Realtime 3: identity and published capabilities"]
+    "supports": [
+      "Mistral Voxtral TTS 3 / TTS Realtime 3: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S099",
@@ -877,7 +1033,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Mode-specific features and unavailable style instructions"]
+    "supports": [
+      "Mode-specific features and unavailable style instructions"
+    ]
   },
   {
     "source_id": "VOICE-S100",
@@ -896,7 +1054,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Microsoft VibeVoice-Realtime 0.5B: identity and published capabilities"]
+    "supports": [
+      "Microsoft VibeVoice-Realtime 0.5B: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S102",
@@ -915,7 +1075,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Hume Octave 2 / EVI (retiring API): identity and published capabilities"]
+    "supports": [
+      "Hume Octave 2 / EVI (retiring API): identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S104",
@@ -923,7 +1085,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Current product/pricing destination no longer supplies stable old-API comparison"]
+    "supports": [
+      "Current product/pricing destination no longer supplies stable old-API comparison"
+    ]
   },
   {
     "source_id": "VOICE-S105",
@@ -931,7 +1095,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["NVIDIA PersonaPlex-7B-v1: identity and published capabilities"]
+    "supports": [
+      "NVIDIA PersonaPlex-7B-v1: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S106",
@@ -939,7 +1105,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Runtime and code terms"]
+    "supports": [
+      "Runtime and code terms"
+    ]
   },
   {
     "source_id": "VOICE-S107",
@@ -947,7 +1115,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Published conversations and role/voice control"]
+    "supports": [
+      "Published conversations and role/voice control"
+    ]
   },
   {
     "source_id": "VOICE-S108",
@@ -955,7 +1125,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Qwen3-Omni-30B-A3B-Instruct: identity and published capabilities"]
+    "supports": [
+      "Qwen3-Omni-30B-A3B-Instruct: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S109",
@@ -963,7 +1135,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Runtime and published examples"]
+    "supports": [
+      "Runtime and published examples"
+    ]
   },
   {
     "source_id": "VOICE-S110",
@@ -971,7 +1145,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Modalities and model architecture"]
+    "supports": [
+      "Modalities and model architecture"
+    ]
   },
   {
     "source_id": "VOICE-S111",
@@ -979,7 +1155,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Grok Voice 3.0: identity and published capabilities"]
+    "supports": [
+      "Grok Voice 3.0: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S112",
@@ -987,7 +1165,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["dots.tts SOAR / MeanFlow streaming family: identity and published capabilities"]
+    "supports": [
+      "dots.tts SOAR / MeanFlow streaming family: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S113",
@@ -1006,7 +1186,9 @@
     "source_type": "primary",
     "source_date": "2026-06-05",
     "accessed_on": "2026-10-23",
-    "supports": ["Technical report"]
+    "supports": [
+      "Technical report"
+    ]
   },
   {
     "source_id": "VOICE-S115",
@@ -1027,7 +1209,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["dots.tts.edit: identity and published capabilities"]
+    "supports": [
+      "dots.tts.edit: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S117",
@@ -1035,7 +1219,9 @@
     "source_type": "primary",
     "source_date": "2026-08-02",
     "accessed_on": "2026-10-23",
-    "supports": ["Editing report"]
+    "supports": [
+      "Editing report"
+    ]
   },
   {
     "source_id": "VOICE-S118",
@@ -1043,7 +1229,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Qwen3-ASR 1.7B / 0.6B + ForcedAligner: identity and published capabilities"]
+    "supports": [
+      "Qwen3-ASR 1.7B / 0.6B + ForcedAligner: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S119",
@@ -1051,7 +1239,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Released inference toolkit and alignment"]
+    "supports": [
+      "Released inference toolkit and alignment"
+    ]
   },
   {
     "source_id": "VOICE-S120",
@@ -1079,7 +1269,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Unified architecture, license and latency configurations"]
+    "supports": [
+      "Unified architecture, license and latency configurations"
+    ]
   },
   {
     "source_id": "VOICE-S123",
@@ -1087,7 +1279,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["NVIDIA Canary-Qwen2.5B: identity and published capabilities"]
+    "supports": [
+      "NVIDIA Canary-Qwen2.5B: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S124",
@@ -1095,7 +1289,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Microsoft VibeVoice-ASR / streaming family: identity and published capabilities"]
+    "supports": [
+      "Microsoft VibeVoice-ASR / streaming family: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S125",
@@ -1103,7 +1299,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Long-form and speaker/timestamp guidance"]
+    "supports": [
+      "Long-form and speaker/timestamp guidance"
+    ]
   },
   {
     "source_id": "VOICE-S126",
@@ -1111,7 +1309,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Voxtral Transcribe 3 family: identity and published capabilities"]
+    "supports": [
+      "Voxtral Transcribe 3 family: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S127",
@@ -1119,7 +1319,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Small current pricing/features"]
+    "supports": [
+      "Small current pricing/features"
+    ]
   },
   {
     "source_id": "VOICE-S128",
@@ -1127,7 +1329,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Mini current pricing/features"]
+    "supports": [
+      "Mini current pricing/features"
+    ]
   },
   {
     "source_id": "VOICE-S129",
@@ -1145,7 +1349,9 @@
     "source_type": "primary",
     "source_date": "2026-07-13",
     "accessed_on": "2026-10-23",
-    "supports": ["Managed deployment availability"]
+    "supports": [
+      "Managed deployment availability"
+    ]
   },
   {
     "source_id": "VOICE-S131",
@@ -1153,7 +1359,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Whisper large-v3-turbo: identity and published capabilities"]
+    "supports": [
+      "Whisper large-v3-turbo: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S132",
@@ -1161,7 +1369,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Conversation recognition integration"]
+    "supports": [
+      "Conversation recognition integration"
+    ]
   },
   {
     "source_id": "VOICE-S133",
@@ -1169,7 +1379,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["OpenVoice v2: identity and published capabilities"]
+    "supports": [
+      "OpenVoice v2: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S134",
@@ -1177,7 +1389,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Seed-VC v2 / realtime conversion family: identity and published capabilities"]
+    "supports": [
+      "Seed-VC v2 / realtime conversion family: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S135",
@@ -1185,7 +1399,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Kokoro 82M v1.0: identity and published capabilities"]
+    "supports": [
+      "Kokoro 82M v1.0: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S136",
@@ -1193,7 +1409,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Runtime and release information"]
+    "supports": [
+      "Runtime and release information"
+    ]
   },
   {
     "source_id": "VOICE-S137",
@@ -1201,7 +1419,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["F5-TTS v1 Base / E2-TTS baseline: identity and published capabilities"]
+    "supports": [
+      "F5-TTS v1 Base / E2-TTS baseline: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S138",
@@ -1209,7 +1429,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Code and weight-license distinction"]
+    "supports": [
+      "Code and weight-license distinction"
+    ]
   },
   {
     "source_id": "VOICE-S139",
@@ -1217,7 +1439,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Sesame CSM 1B: identity and published capabilities"]
+    "supports": [
+      "Sesame CSM 1B: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S140",
@@ -1225,7 +1449,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Kyutai Moshi / Moshiko / Moshika: identity and published capabilities"]
+    "supports": [
+      "Kyutai Moshi / Moshiko / Moshika: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S141",
@@ -1233,7 +1459,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Piper (current OHF piper1-gpl): identity and published capabilities"]
+    "supports": [
+      "Piper (current OHF piper1-gpl): identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S142",
@@ -1241,7 +1469,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Parler-TTS Mini v1: identity and published capabilities"]
+    "supports": [
+      "Parler-TTS Mini v1: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S143",
@@ -1311,7 +1541,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-23",
-    "supports": ["Commercial thresholds and downstream/model-training/content clauses"],
+    "supports": [
+      "Commercial thresholds and downstream/model-training/content clauses"
+    ],
     "last_reviewed_on": "2026-10-24"
   },
   {
@@ -1332,7 +1564,9 @@
     "source_type": "primary",
     "source_date": "2026-10-14",
     "accessed_on": "2026-10-23",
-    "supports": ["Exact release date, deployment use claims and automatic mutable-alias update"],
+    "supports": [
+      "Exact release date, deployment use claims and automatic mutable-alias update"
+    ],
     "last_reviewed_on": "2026-10-24"
   },
   {
@@ -1341,7 +1575,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["Cartesia Ink-2: identity and published capabilities"]
+    "supports": [
+      "Cartesia Ink-2: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S152",
@@ -1349,7 +1585,9 @@
     "source_type": "primary",
     "source_date": "2026-07-09",
     "accessed_on": "2026-10-24",
-    "supports": ["Launch date and September language update"]
+    "supports": [
+      "Launch date and September language update"
+    ]
   },
   {
     "source_id": "VOICE-S153",
@@ -1357,7 +1595,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["Qwen-Audio-3.1-TTS-Next: identity and published capabilities"]
+    "supports": [
+      "Qwen-Audio-3.1-TTS-Next: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S154",
@@ -1365,7 +1605,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["Qwen-Audio-3.1-Realtime-Plus: identity and published capabilities"]
+    "supports": [
+      "Qwen-Audio-3.1-Realtime-Plus: identity and published capabilities"
+    ]
   },
   {
     "source_id": "VOICE-S155",
@@ -1373,7 +1615,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["GPT-Live 1 API identity, full-duplex role and duration billing"]
+    "supports": [
+      "GPT-Live 1 API identity, full-duplex role and duration billing"
+    ]
   },
   {
     "source_id": "VOICE-S156",
@@ -1381,7 +1625,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["Realtime 2.1 identity, limits, modalities, reasoning and tariff"]
+    "supports": [
+      "Realtime 2.1 identity, limits, modalities, reasoning and tariff"
+    ]
   },
   {
     "source_id": "VOICE-S157",
@@ -1389,7 +1635,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["Realtime 2.1 Mini identity, limits, modalities and tariff"]
+    "supports": [
+      "Realtime 2.1 Mini identity, limits, modalities and tariff"
+    ]
   },
   {
     "source_id": "VOICE-S158",
@@ -1397,7 +1645,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["Current Live duration and Realtime text/audio token tariffs"]
+    "supports": [
+      "Current Live duration and Realtime text/audio token tariffs"
+    ]
   },
   {
     "source_id": "VOICE-S159",
@@ -1405,7 +1655,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["Live transport options and separation of voice from delegated backend"]
+    "supports": [
+      "Live transport options and separation of voice from delegated backend"
+    ]
   },
   {
     "source_id": "VOICE-S160",
@@ -1413,7 +1665,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["Current Realtime 2.1 SDK example and streaming speech-to-speech deployment"]
+    "supports": [
+      "Current Realtime 2.1 SDK example and streaming speech-to-speech deployment"
+    ]
   },
   {
     "source_id": "VOICE-S161",
@@ -1441,7 +1695,9 @@
     "source_type": "primary",
     "source_date": "2026-09-23",
     "accessed_on": "2026-10-24",
-    "supports": ["Publisher first-person deployment account and embedded GPT-Live demo"]
+    "supports": [
+      "Publisher first-person deployment account and embedded GPT-Live demo"
+    ]
   },
   {
     "source_id": "VOICE-S164",
@@ -1449,7 +1705,9 @@
     "source_type": "primary",
     "source_date": "2025-10-29",
     "accessed_on": "2026-10-24",
-    "supports": ["Usage policy effective at October 24 research cutoff"]
+    "supports": [
+      "Usage policy effective at October 24 research cutoff"
+    ]
   },
   {
     "source_id": "VOICE-S165",
@@ -1467,7 +1725,9 @@
     "source_type": "primary",
     "source_date": "2026-09",
     "accessed_on": "2026-10-24",
-    "supports": ["Stable Live identity, context/output limits, async tools and migration behavior"]
+    "supports": [
+      "Stable Live identity, context/output limits, async tools and migration behavior"
+    ]
   },
   {
     "source_id": "VOICE-S167",
@@ -1475,7 +1735,9 @@
     "source_type": "primary",
     "source_date": "2026-09",
     "accessed_on": "2026-10-24",
-    "supports": ["Stable Extended Thinking identity, background reasoning and session behavior"]
+    "supports": [
+      "Stable Extended Thinking identity, background reasoning and session behavior"
+    ]
   },
   {
     "source_id": "VOICE-S168",
@@ -1483,7 +1745,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["Live API transport, audio formats, multilingual features and NPC use case"]
+    "supports": [
+      "Live API transport, audio formats, multilingual features and NPC use case"
+    ]
   },
   {
     "source_id": "VOICE-S169",
@@ -1491,7 +1755,9 @@
     "source_type": "primary",
     "source_date": null,
     "accessed_on": "2026-10-24",
-    "supports": ["Developer API modality-specific Live pricing and free/paid data distinction"]
+    "supports": [
+      "Developer API modality-specific Live pricing and free/paid data distinction"
+    ]
   },
   {
     "source_id": "VOICE-S170",
@@ -1509,7 +1775,9 @@
     "source_type": "primary",
     "source_date": "2024-12-17",
     "accessed_on": "2026-10-24",
-    "supports": ["Violence/harassment restrictions and discretionary artistic exceptions"]
+    "supports": [
+      "Violence/harassment restrictions and discretionary artistic exceptions"
+    ]
   },
   {
     "source_id": "VOICE-S172",
@@ -1551,6 +1819,1426 @@
     "supports": [
       "Current Multilingual V3 card: 500M, 23+ languages, MIT metadata and linked V3 demo; quality improvements are publisher claims.",
       "V3 requires t3_model=\"v3\" in the documented loader; omission selects legacy V2. Dedicated language packs are separate linked variants."
+    ]
+  },
+  {
+    "source_id": "VOICE-S176",
+    "url": "https://github.com/QwenLM/Qwen3-TTS/blob/main/pyproject.toml",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "qwen-tts 0.1.1 runtime dependencies: Python >=3.9, Transformers 4.57.3, Accelerate 1.12.0."
+    ]
+  },
+  {
+    "source_id": "VOICE-S177",
+    "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact 1.7B Base talker 32768 positions; code-predictor context is a separate axis."
+    ]
+  },
+  {
+    "source_id": "VOICE-S178",
+    "url": "https://recipes.vllm.ai/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "vLLM-Omni recipe version, two-stage allocations, speech API; not a measured minimum VRAM."
+    ]
+  },
+  {
+    "source_id": "VOICE-S179",
+    "url": "https://sgl-project.github.io/sglang-omni/cookbook/qwen3_tts.html",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "SGLang streaming route, codec-token generation default and audio format."
+    ]
+  },
+  {
+    "source_id": "VOICE-S180",
+    "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Selected variant repository/file-size listing; tokenizer included; rounded repository total is not a selected exact-byte disk requirement."
+    ]
+  },
+  {
+    "source_id": "VOICE-S181",
+    "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Selected variant repository/file-size listing; tokenizer included; rounded repository total is not a selected exact-byte disk requirement."
+    ]
+  },
+  {
+    "source_id": "VOICE-S182",
+    "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Selected variant repository/file-size listing; tokenizer included; rounded repository total is not a selected exact-byte disk requirement."
+    ]
+  },
+  {
+    "source_id": "VOICE-S183",
+    "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-Base/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Selected variant repository/file-size listing; tokenizer included; rounded repository total is not a selected exact-byte disk requirement."
+    ]
+  },
+  {
+    "source_id": "VOICE-S184",
+    "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Selected variant repository/file-size listing; tokenizer included; rounded repository total is not a selected exact-byte disk requirement."
+    ]
+  },
+  {
+    "source_id": "VOICE-S185",
+    "url": "https://recipes.vllm.ai/fishaudio/drama-3",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "vLLM >=0.31.0, >=48 GB CUDA GPU, H100 80 GB reference, staged 44.1 kHz synthesis; model versus pipeline memory."
+    ]
+  },
+  {
+    "source_id": "VOICE-S186",
+    "url": "https://sgl-project.github.io/sglang-omni/cookbook/fishaudio_drama3.html",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "FP8/BF16 and GPTQ-Marlin INT4 routes, 20.8 GB INT4 weight figure, compute capability, reference/prompt budgets."
+    ]
+  },
+  {
+    "source_id": "VOICE-S187",
+    "url": "https://huggingface.co/fishaudio/drama-3/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Repository includes codec.pth; approximately 41.5 GB total listing, not precise selected serving footprint."
+    ]
+  },
+  {
+    "source_id": "VOICE-S188",
+    "url": "https://recipes.vllm.ai/fishaudio/s2-pro",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "vLLM >=0.19.0 route; A800 80 GB reference loads 48.3 GiB and peaks 48.9 GiB with that allocation/configuration."
+    ]
+  },
+  {
+    "source_id": "VOICE-S189",
+    "url": "https://sgl-project.github.io/sglang-omni/cookbook/fishaudio_s2_pro.html",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Separate DAC codec and preprocessing; optional CPU offload; package versions."
+    ]
+  },
+  {
+    "source_id": "VOICE-S190",
+    "url": "https://huggingface.co/fishaudio/s2-pro/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "BF16 text max_seq_len 32768; audio-decoder sequence dimension is separate."
+    ]
+  },
+  {
+    "source_id": "VOICE-S191",
+    "url": "https://huggingface.co/fishaudio/s2-pro/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Approximately 11 GB repository listing; weights plus codec assets, not vLLM allocator memory."
+    ]
+  },
+  {
+    "source_id": "VOICE-S192",
+    "url": "https://github.com/resemble-ai/chatterbox",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Turbo/Nano/Multilingual v3 selection, tested Python 3.11 Debian 11 and CUDA/CPU/MPS support."
+    ]
+  },
+  {
+    "source_id": "VOICE-S193",
+    "url": "https://github.com/resemble-ai/chatterbox/blob/master/pyproject.toml",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Torch/Torchaudio versions by Python version, Transformers 5.2, Diffusers 0.29, S3Tokenizer and PerTh."
+    ]
+  },
+  {
+    "source_id": "VOICE-S194",
+    "url": "https://github.com/resemble-ai/chatterbox/blob/master/src/chatterbox/tts_turbo.py",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Reference must exceed 5 s; conditioning uses first 10 s decoder and 15 s encoder, not an upload-duration cap; Turbo/Nano parameter behavior."
+    ]
+  },
+  {
+    "source_id": "VOICE-S195",
+    "url": "https://huggingface.co/ResembleAI/chatterbox-turbo/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Turbo repository alternative S3Gen assets and T3/voice-encoder file listing."
+    ]
+  },
+  {
+    "source_id": "VOICE-S196",
+    "url": "https://huggingface.co/ResembleAI/chatterbox-nano/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Nano repository file listing and T3 asset."
+    ]
+  },
+  {
+    "source_id": "VOICE-S197",
+    "url": "https://github.com/QwenAudio/CosyVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Python/SoX runtime, FastAPI/gRPC, vLLM supported versions and optional text frontend."
+    ]
+  },
+  {
+    "source_id": "VOICE-S198",
+    "url": "https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "9.75 GB repository contains alternative LLM/RL/ONNX files plus flow, HiFT, speaker encoder and tokenizer; not all files necessarily required."
+    ]
+  },
+  {
+    "source_id": "VOICE-S199",
+    "url": "https://huggingface.co/IndexTeam/IndexTTS-2.5",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Publisher inference approximately 6 GB VRAM, Python 3.10–3.11, 0.8B GPT module and 22.05 kHz pipeline."
+    ]
+  },
+  {
+    "source_id": "VOICE-S200",
+    "url": "https://github.com/index-tts/index-tts/blob/main/pyproject.toml",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Torch 2.8, Transformers 4.52.1, CUDA 12.8 wheel route; optional DeepSpeed and FlashAttention versions."
+    ]
+  },
+  {
+    "source_id": "VOICE-S201",
+    "url": "https://huggingface.co/IndexTeam/IndexTTS-2.5/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Approximately 5.49 GB checkpoint repository listing."
+    ]
+  },
+  {
+    "source_id": "VOICE-S202",
+    "url": "https://github.com/OpenBMB/VoxCPM",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Native inference approximately 8 GB; Python 3.10–3.12, Torch >=2.5, CUDA >=12; AudioVAE V2 and optional denoiser."
+    ]
+  },
+  {
+    "source_id": "VOICE-S203",
+    "url": "https://recipes.vllm.ai/openbmb/VoxCPM2",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "VoxCPM2 vLLM >=0.21 route: RTX4090 24 GB reference, approximately 22 GiB configured footprint, 48 kHz audio."
+    ]
+  },
+  {
+    "source_id": "VOICE-S204",
+    "url": "https://huggingface.co/FireRedTeam/FireRedTTS3",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Base and Instruct subfolders, frontend/reference handling and optional LLM text normalization."
+    ]
+  },
+  {
+    "source_id": "VOICE-S205",
+    "url": "https://github.com/FireRedTeam/FireRedTTS3/blob/main/requirements.txt",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Torch/Torchaudio 2.8, TorchCodec 0.7, FlashAttention 2.8.3, Transformers 5.6.2 and other inference packages."
+    ]
+  },
+  {
+    "source_id": "VOICE-S206",
+    "url": "https://huggingface.co/FireRedTeam/FireRedTTS3/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Approximately 20.8 GB combined Base/Instruct/auxiliary repository; not one-variant disk usage."
+    ]
+  },
+  {
+    "source_id": "VOICE-S207",
+    "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Local-Transformer-v1.5",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "4B local-transformer route, 48 kHz stereo, Audio Tokenizer v2 and setup versions."
+    ]
+  },
+  {
+    "source_id": "VOICE-S208",
+    "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Flagship MOSS-TTS v1.5 native inference and distinct codec/runtime."
+    ]
+  },
+  {
+    "source_id": "VOICE-S209",
+    "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact flagship 40960 language positions, BF16, 24 kHz and 32 codebooks."
+    ]
+  },
+  {
+    "source_id": "VOICE-S210",
+    "url": "https://sgl-project.github.io/sglang-omni/cookbook/moss_tts_local.html",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Local model three-stage SGLang streaming, 4096 generated-frame default, CUDA MPS and prompt/cache behavior."
+    ]
+  },
+  {
+    "source_id": "VOICE-S211",
+    "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTSD-v1.0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Multi-speaker reference/text input, audio-token rate, example generation budget; not a total-duration cap."
+    ]
+  },
+  {
+    "source_id": "VOICE-S212",
+    "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTSD-v1.0/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "BF16 8B-derived language config 40960 positions and 24 kHz audio."
+    ]
+  },
+  {
+    "source_id": "VOICE-S213",
+    "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "100M CPU-oriented streaming, four-core CPU demonstration, Nano codec and long-text chunking."
+    ]
+  },
+  {
+    "source_id": "VOICE-S214",
+    "url": "https://github.com/nari-labs/dia2",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Dia2 1B/2B, CUDA setup, 1500 audio-context steps (~120 s), speaker prefixes and streaming-server roadmap."
+    ]
+  },
+  {
+    "source_id": "VOICE-S215",
+    "url": "https://github.com/nari-labs/dia2/blob/main/pyproject.toml",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Python >=3.10, Torch >=2.8, Transformers >=4.55.3, sphn and whisper-timestamped dependencies."
+    ]
+  },
+  {
+    "source_id": "VOICE-S216",
+    "url": "https://huggingface.co/nari-labs/Dia2-1B",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact 1B artifact card."
+    ]
+  },
+  {
+    "source_id": "VOICE-S217",
+    "url": "https://huggingface.co/nari-labs/Dia2-2B",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact 2B artifact card."
+    ]
+  },
+  {
+    "source_id": "VOICE-S218",
+    "url": "https://huggingface.co/bosonai/higgs-tts-3-4b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact 4B model, audio codec requirements and model-use grant."
+    ]
+  },
+  {
+    "source_id": "VOICE-S219",
+    "url": "https://github.com/vllm-project/vllm-omni/blob/main/recipes/BosonAI/Higgs-Audio-V3-TTS.md",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Higgs v3 recipe: Linux Python 3.12, CUDA 12.x, vLLM 0.22, pinned Omni commit, H100 80 GB and two stage allocations."
+    ]
+  },
+  {
+    "source_id": "VOICE-S220",
+    "url": "https://huggingface.co/bosonai/higgs-tts-3-4b/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Approximately 9.32 GB repo / 9.31 GB main weights; codec and serving working space separate."
+    ]
+  },
+  {
+    "source_id": "VOICE-S221",
+    "url": "https://github.com/zai-org/GLM-TTS",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Local streaming pipeline, 3–10 s reference recommendation, complete tokenizer/LLM/flow/vocoder/frontend assets."
+    ]
+  },
+  {
+    "source_id": "VOICE-S222",
+    "url": "https://github.com/zai-org/GLM-TTS/blob/main/requirements.txt",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Torch/Torchaudio 2.3.1, Transformers 4.57.3, NumPy 1.26.4, onnxruntime-gpu 1.19, Whisper/DeepSpeed dependencies."
+    ]
+  },
+  {
+    "source_id": "VOICE-S223",
+    "url": "https://github.com/stepfun-ai/Step-Audio-EditX",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Publisher 12 GB critical /16 GB safer memory guidance, 3072 runtime default, BF16/FP16 and optional quantization routes."
+    ]
+  },
+  {
+    "source_id": "VOICE-S224",
+    "url": "https://github.com/HumeAI/tada",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "TADA shared codec/encoder, ~9 GB 3B BF16 model figure, offloading encoder saves ~2.5 GB, prompt-cache reference conditions."
+    ]
+  },
+  {
+    "source_id": "VOICE-S225",
+    "url": "https://huggingface.co/HumeAI/tada-1b/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "1B 131072 position config; acoustic context_window=8 is distinct."
+    ]
+  },
+  {
+    "source_id": "VOICE-S226",
+    "url": "https://huggingface.co/HumeAI/tada-3b-ml/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "3B multilingual 131072 position config; Llama rope original context versus acoustic context distinguished."
+    ]
+  },
+  {
+    "source_id": "VOICE-S227",
+    "url": "https://github.com/kyutai-labs/pocket-tts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "CPU-first Python/Rust and CPU-only serving/container routes; October small configurations and component-inclusive sizes."
+    ]
+  },
+  {
+    "source_id": "VOICE-S228",
+    "url": "https://huggingface.co/gradium/phonon-31m-en",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "31M excludes tokenizer; 64.5 MB GGUF Q8 listing, 24 kHz/80 ms frame streaming and Apache terms."
+    ]
+  },
+  {
+    "source_id": "VOICE-S229",
+    "url": "https://huggingface.co/gradium/phonon-40m-multilingual",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Multilingual 40M Q8 74.6 MB listing and noncommercial weight terms."
+    ]
+  },
+  {
+    "source_id": "VOICE-S230",
+    "url": "https://github.com/gradium-ai/xn-ptts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Rust/Python/browser/CoreML/QNN runtimes and compatible speech API server."
+    ]
+  },
+  {
+    "source_id": "VOICE-S231",
+    "url": "https://github.com/neuphonic/neutts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Nano/2E total/active parameters, ~30 s /2048-token family context, GGUF-only streaming and codec choices."
+    ]
+  },
+  {
+    "source_id": "VOICE-S232",
+    "url": "https://github.com/k2-fsa/OmniVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "CUDA/XPU runtime, FlashInfer 0.6.15.post1 optional cu128 route, duration control and hardware observations."
+    ]
+  },
+  {
+    "source_id": "VOICE-S233",
+    "url": "https://huggingface.co/k2-fsa/OmniVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact 0.6B model card and pretrained-weight conditions."
+    ]
+  },
+  {
+    "source_id": "VOICE-S234",
+    "url": "https://huggingface.co/TontaubeAI/TontaubeV1",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "2,873,962,498 parameters across four codebook predictors; custom adapter and auxiliary components."
+    ]
+  },
+  {
+    "source_id": "VOICE-S235",
+    "url": "https://github.com/craitech/tontaube",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "v1.0.0 Linux/CUDA/Python3.12 custom vLLM serving; 5–60 s reference, extra codecs and future quantization status."
+    ]
+  },
+  {
+    "source_id": "VOICE-S236",
+    "url": "https://huggingface.co/nvidia/magpie_tts_multilingual_357m",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "v2607 actual364M, standard20s versus sliding longform, NanoCodec and NeMo/CPP routes; voice cloning removed."
+    ]
+  },
+  {
+    "source_id": "VOICE-S237",
+    "url": "https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "8192 training-context envelope, approximate 10-minute generation, 0.5B backbone plus separate decoder/head."
+    ]
+  },
+  {
+    "source_id": "VOICE-S238",
+    "url": "https://huggingface.co/nvidia/personaplex-7b-v1",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "7B full-duplex checkpoint, A10080 GB reference and licensing/access conditions."
+    ]
+  },
+  {
+    "source_id": "VOICE-S239",
+    "url": "https://github.com/NVIDIA/personaplex",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Moshi runtime, Linux/Opus, optional CPU offload and Blackwell CUDA13 torch guidance."
+    ]
+  },
+  {
+    "source_id": "VOICE-S240",
+    "url": "https://github.com/NVIDIA/personaplex/blob/main/moshi/moshi/models/loaders.py",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "LM context3000, codec context250 and depth8 are distinct architecture axes."
+    ]
+  },
+  {
+    "source_id": "VOICE-S241",
+    "url": "https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Full Thinker/Talker pipeline, disabling Talker saves memory but removes audio output; video-input BF16 memory reference table."
+    ]
+  },
+  {
+    "source_id": "VOICE-S242",
+    "url": "https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Thinker and Talker65536 position limits; codec and code-predictor contexts are distinct."
+    ]
+  },
+  {
+    "source_id": "VOICE-S243",
+    "url": "https://github.com/QwenLM/Qwen3-Omni",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Native and vLLM paths; example configured context/output limits and dependencies."
+    ]
+  },
+  {
+    "source_id": "VOICE-S244",
+    "url": "https://github.com/studio-dots-ai/dots.tts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Separate SOAR/MF/fixed-step/STTS/Edit runtimes, BF16 duration-bucket GPU-memory measurements and generation controls."
+    ]
+  },
+  {
+    "source_id": "VOICE-S245",
+    "url": "https://sgl-project.github.io/sglang-omni/cookbook/dots_tts.html",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "SGLang speech serving route and exact MF/STTS distinctions."
+    ]
+  },
+  {
+    "source_id": "VOICE-S246",
+    "url": "https://huggingface.co/dots-studio/dots.tts.edit",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact editing checkpoint and license-metadata mismatch."
+    ]
+  },
+  {
+    "source_id": "VOICE-S247",
+    "url": "https://github.com/QwenLM/Qwen3-ASR",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Python3.12 recommended, native qwen-asr and vLLM streaming backend; separate alignment model."
+    ]
+  },
+  {
+    "source_id": "VOICE-S248",
+    "url": "https://huggingface.co/Qwen/Qwen3-ASR-1.7B/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact1.7B language max_position_embeddings65536; encoder max_source_positions1500 distinct."
+    ]
+  },
+  {
+    "source_id": "VOICE-S249",
+    "url": "https://huggingface.co/Qwen/Qwen3-ASR-0.6B/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact0.6B language max_position_embeddings65536; encoder settings distinct from request duration."
+    ]
+  },
+  {
+    "source_id": "VOICE-S250",
+    "url": "https://huggingface.co/Qwen/Qwen3-ForcedAligner-0.6B",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Separate forced-aligner artifact; inputs/outputs differ from recognition."
+    ]
+  },
+  {
+    "source_id": "VOICE-S251",
+    "url": "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Cache-aware left context5.6 s,80/160/560/1120 ms chunk modes, Transformers>=5.13.0; max duration memory-dependent."
+    ]
+  },
+  {
+    "source_id": "VOICE-S252",
+    "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "16 kHz mono inputs; full attention24-minute A10080 GB reference, local attention long-input route; buffered streaming."
+    ]
+  },
+  {
+    "source_id": "VOICE-S253",
+    "url": "https://huggingface.co/nvidia/parakeet-unified-en-0.6b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Unified EN latency/lookback modes, non-cache-aware buffered streaming and NVIDIA model license."
+    ]
+  },
+  {
+    "source_id": "VOICE-S254",
+    "url": "https://huggingface.co/nvidia/canary-qwen-2.5b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Training envelope40 s/1024 combined tokens, NeMo>=2.5 and Torch2.6+ setup; separate ASR/text LLM modes."
+    ]
+  },
+  {
+    "source_id": "VOICE-S255",
+    "url": "https://huggingface.co/microsoft/VibeVoice-ASR",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Original model card60-minute/64K envelope; total stored parameter rounding differs from7B backbone."
+    ]
+  },
+  {
+    "source_id": "VOICE-S256",
+    "url": "https://github.com/microsoft/VibeVoice/blob/main/docs/vibevoice-asr.md",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Publisher tested NVIDIA PyTorch containers24.07–25.12, native ASR file route and audio dependencies."
+    ]
+  },
+  {
+    "source_id": "VOICE-S257",
+    "url": "https://huggingface.co/microsoft/VibeVoice-ASR-HF",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Separate native Transformers-compatible artifact and adjustable acoustic-tokenizer chunking."
+    ]
+  },
+  {
+    "source_id": "VOICE-S258",
+    "url": "https://github.com/microsoft/VibeVoice/blob/main/docs/vibevoice-vllm-asr.md",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "vLLM0.14.1 container/plugin, OpenAI-compatible chat streaming, TP/DP support."
+    ]
+  },
+  {
+    "source_id": "VOICE-S259",
+    "url": "https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "4B BF16 >=16 GB GPU recommendation; vLLM131072 default and native Transformers>=5.2.0 current route."
+    ]
+  },
+  {
+    "source_id": "VOICE-S260",
+    "url": "https://huggingface.co/openai/whisper-large-v3-turbo",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "809M Turbo,30 s encoder chunks, sequential/chunked long-form inference and precision choices."
+    ]
+  },
+  {
+    "source_id": "VOICE-S261",
+    "url": "https://huggingface.co/openai/whisper-large-v3-turbo/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "1500 source positions,448 decoder target positions, FP16 metadata."
+    ]
+  },
+  {
+    "source_id": "VOICE-S262",
+    "url": "https://github.com/SYSTRAN/faster-whisper",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Turbo support, CPU INT8/CUDA FP16/INT8_FLOAT16, CUDA12/cuDNN9 requirement and CTranslate2 compatibility caveats."
+    ]
+  },
+  {
+    "source_id": "VOICE-S263",
+    "url": "https://github.com/myshell-ai/OpenVoice/blob/main/docs/USAGE.md",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Linux Python3.9 installation, V2 converter checkpoint and separate MeloTTS/source speech dependency."
+    ]
+  },
+  {
+    "source_id": "VOICE-S264",
+    "url": "https://github.com/myshell-ai/OpenVoice",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "MIT V1/V2 commercial release and official usage link."
+    ]
+  },
+  {
+    "source_id": "VOICE-S265",
+    "url": "https://github.com/Plachtaa/seed-vc",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "V2 CFM+AR versus realtime-tiny variants, Python3.10 platform setup,1–30 s reference,3060 Laptop benchmark and archived status."
+    ]
+  },
+  {
+    "source_id": "VOICE-S266",
+    "url": "https://huggingface.co/hexgrad/Kokoro-82M",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "v1.0 82M Apache checkpoint,24 kHz, kokoro>=0.9.2 and misaki/eSpeak phonemization."
+    ]
+  },
+  {
+    "source_id": "VOICE-S267",
+    "url": "https://github.com/hexgrad/kokoro/blob/main/kokoro/pipeline.py",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "510 phoneme-character per model chunk limit; text chunking versus raw phoneme rejection/truncation."
+    ]
+  },
+  {
+    "source_id": "VOICE-S268",
+    "url": "https://github.com/SWivid/F5-TTS",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Python>=3.10, matched Torch/CUDA recipes, Vocos versus optional BigVGAN, Docker/inference and NC weight license."
+    ]
+  },
+  {
+    "source_id": "VOICE-S269",
+    "url": "https://github.com/SWivid/F5-TTS/blob/main/src/f5_tts/infer/utils_infer.py",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "12 s reference clipping and heuristic~22 s combined reference/output batching;24 kHz and UTF8 byte-based text batching."
+    ]
+  },
+  {
+    "source_id": "VOICE-S270",
+    "url": "https://huggingface.co/SWivid/F5-TTS/tree/main",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "F5 official checkpoints/folders; combined repo is not selected exact model footprint."
+    ]
+  },
+  {
+    "source_id": "VOICE-S271",
+    "url": "https://huggingface.co/SWivid/E2-TTS",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Separate official E2-TTS artifact family and directory layout."
+    ]
+  },
+  {
+    "source_id": "VOICE-S272",
+    "url": "https://huggingface.co/sesame/csm-1b",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Gated CSM1B weights; Transformers support since4.52.1 and required context/codec."
+    ]
+  },
+  {
+    "source_id": "VOICE-S273",
+    "url": "https://github.com/SesameAILabs/csm",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Python3.10, CUDA12.4/12.6 tested, model/base access, Mimi and watermark requirements."
+    ]
+  },
+  {
+    "source_id": "VOICE-S274",
+    "url": "https://github.com/SesameAILabs/csm/blob/main/generator.py",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "2048 combined timeline positions, default90 s generation reservation,80 ms frames and input-fit check."
+    ]
+  },
+  {
+    "source_id": "VOICE-S275",
+    "url": "https://github.com/SesameAILabs/csm/blob/main/requirements.txt",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Original runtime Torch2.4.0, Transformers4.49.0, Moshi0.2.2, Torchtune0.4.0; differs from native Transformers integration."
+    ]
+  },
+  {
+    "source_id": "VOICE-S276",
+    "url": "https://github.com/kyutai-labs/moshi",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "PyTorch24 GB GPU guidance, Python>=3.10, no PyTorch quantization, MLX Q4/Q8 distinct Apple route; Mimi/Rust backends."
+    ]
+  },
+  {
+    "source_id": "VOICE-S277",
+    "url": "https://github.com/OHF-Voice/piper1-gpl",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Current GPL3 engine, local CPU/ONNX paths and per-voice model choice."
+    ]
+  },
+  {
+    "source_id": "VOICE-S278",
+    "url": "https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/API_HTTP.md",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "piper-tts[http] server, voice-download/config pairing and HTTP endpoint."
+    ]
+  },
+  {
+    "source_id": "VOICE-S279",
+    "url": "https://huggingface.co/parler-tts/parler-tts-mini-v1",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Publisher Parler runtime and description/text inputs, CPU/CUDA route."
+    ]
+  },
+  {
+    "source_id": "VOICE-S280",
+    "url": "https://huggingface.co/parler-tts/parler-tts-mini-v1/blob/main/config.json",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Audio decoder4096 positions and DAC44 kHz codec; description/text encoder context is a different axis."
+    ]
+  },
+  {
+    "source_id": "VOICE-S281",
+    "url": "https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "S2.1 managed-model choices and account-tier concurrent-request limits; no public S2.1 weights established."
+    ]
+  },
+  {
+    "source_id": "VOICE-S282",
+    "url": "https://help.aliyun.com/en/model-studio/qwen-audio-3-1-tts-plus",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Managed Plus3.1; context/input/output limit table unspecified;180RPM Beijing/Singapore."
+    ]
+  },
+  {
+    "source_id": "VOICE-S283",
+    "url": "https://help.aliyun.com/en/model-studio/qwen-audio-3-1-tts-flash",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Managed Flash3.1; context/input/output limit table unspecified;180RPM Beijing/Singapore."
+    ]
+  },
+  {
+    "source_id": "VOICE-S284",
+    "url": "https://elevenlabs.io/docs/overview/models",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact v4 character cap, variant distinctions, Eleven Realtime route; not evidence of public weights."
+    ]
+  },
+  {
+    "source_id": "VOICE-S285",
+    "url": "https://elevenlabs.io/docs/overview/capabilities/private-deployment",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Private AWS/GCP offerings explicitly list TTSv2/v2.5 and ScribeV2; technical resources gated/NDA, not proof v4 or Realtime portable weights."
+    ]
+  },
+  {
+    "source_id": "VOICE-S286",
+    "url": "https://docs.cartesia.ai/api-reference/tts/bytes",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Sonic3.6 request/format API; complete transcript with streamed output."
+    ]
+  },
+  {
+    "source_id": "VOICE-S287",
+    "url": "https://www.cartesia.ai/sonic",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Enterprise VPC/on-prem/OEM offering; no public exact Sonic3.6 portable artifact."
+    ]
+  },
+  {
+    "source_id": "VOICE-S288",
+    "url": "https://docs.inworld.ai/api-reference/ttsAPI/texttospeech/synthesize-speech",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "2000 UTF16-unit unary,4000 streaming, synthesis history5 requests/2000 characters, output format and viseme semantics."
+    ]
+  },
+  {
+    "source_id": "VOICE-S289",
+    "url": "https://inworld.ai/tts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Managed and contracted customer-hosted voice offering; no public portable exact TTS2 image verified."
+    ]
+  },
+  {
+    "source_id": "VOICE-S290",
+    "url": "https://platform.minimax.io/docs/api-reference/speech-t2a-http",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Speech2.8 sync full-text input strictly less than10000 characters; streaming output recommended above3000."
+    ]
+  },
+  {
+    "source_id": "VOICE-S291",
+    "url": "https://platform.minimax.io/docs/api-reference/speech-t2a-async-create",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Separate asynchronous text-file route up to1000000 characters."
+    ]
+  },
+  {
+    "source_id": "VOICE-S292",
+    "url": "https://developers.deepgram.com/docs/deploy-tts-services",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Contract-gated Aura2 Docker/Podman, CUDA13/driver580+,32–48GiB RAM and4+cores per language, separate model files."
+    ]
+  },
+  {
+    "source_id": "VOICE-S293",
+    "url": "https://developers.deepgram.com/docs/deploy-flux-tts",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Flux TTS dedicated engine,64GB system RAM /60GB startup allocation, L4 reference, mandatory model+watermarker, image release261001+."
+    ]
+  },
+  {
+    "source_id": "VOICE-S294",
+    "url": "https://docs.rime.ai/docs/on-prem/quickstart",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Licensed Coda/Mist3 standalone image:50GB disk,8vCPU,32GiB RAM, NVIDIA requirements, driver versions and metering."
+    ]
+  },
+  {
+    "source_id": "VOICE-S295",
+    "url": "https://docs.rime.ai/docs/on-prem/performance",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Coda admission/KV allocation and batch defaults; configured limits are not measured usable concurrency."
+    ]
+  },
+  {
+    "source_id": "VOICE-S296",
+    "url": "https://docs.rime.ai/docs/models",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Coda/Mistv3 exact model IDs, features and cloud route distinctions."
+    ]
+  },
+  {
+    "source_id": "VOICE-S297",
+    "url": "https://gradium.ai/text-to-speech",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Five-minute stateful TTS sessions; AWSMarketplace/SageMaker private-VPC offer, not general portable weights."
+    ]
+  },
+  {
+    "source_id": "VOICE-S298",
+    "url": "https://docs.x.ai/developers/model-capabilities/audio/text-to-speech",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Managed /v1/tts with60000-character request cap and output/timestamp modes."
+    ]
+  },
+  {
+    "source_id": "VOICE-S299",
+    "url": "https://docs.mistral.ai/models/voxtral-mini-tts-3-0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact Premier preview model ID; no public weight artifact linked."
+    ]
+  },
+  {
+    "source_id": "VOICE-S300",
+    "url": "https://docs.mistral.ai/studio/audio/text-to-speech/overview",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Separate offline-complete-text/streamed-audio and realtime incremental-input model IDs and features."
+    ]
+  },
+  {
+    "source_id": "VOICE-S301",
+    "url": "https://mistral.ai/news/voxtral-3/",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Self-deployment advertised for Voxtral3 family; portable public artifact/weight license not established."
+    ]
+  },
+  {
+    "source_id": "VOICE-S302",
+    "url": "https://dev.hume.ai/voice/docs/text-to-speech-tts/overview",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "TTS5000-character utterance/1000-character description/5generations; TTS/EVI sunset2026-11-13 00:01EST."
+    ]
+  },
+  {
+    "source_id": "VOICE-S303",
+    "url": "https://docs.x.ai/developers/models/grok-voice-3.0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Hosted speech-to-speech model; no exact public context/runtime/weights specifications."
+    ]
+  },
+  {
+    "source_id": "VOICE-S304",
+    "url": "https://docs.mistral.ai/models/voxtral-mini-transcribe-realtime-3-0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Hosted realtime3.0; context field unspecified, latency80–2400ms not a duration cap."
+    ]
+  },
+  {
+    "source_id": "VOICE-S305",
+    "url": "https://docs.mistral.ai/models/voxtral-small-transcribe-3-0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Hosted Small3.0 model card32K context label."
+    ]
+  },
+  {
+    "source_id": "VOICE-S306",
+    "url": "https://docs.mistral.ai/models/voxtral-mini-transcribe-3-0",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Hosted Mini3.0 model card32K context label."
+    ]
+  },
+  {
+    "source_id": "VOICE-S307",
+    "url": "https://developers.deepgram.com/docs/deploy-stt-services",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Licensed API+Engine containers, encrypted model files and license-server/optional proxy dependencies."
+    ]
+  },
+  {
+    "source_id": "VOICE-S308",
+    "url": "https://developers.deepgram.com/docs/flux-self-hosted",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Flux dedicated Ampere+ GPU engine, noT4, release251015+, new.dgv2-only runtime since261020; explicit max_streams from vendor."
+    ]
+  },
+  {
+    "source_id": "VOICE-S309",
+    "url": "https://elevenlabs.io/docs/overview/capabilities/speech-to-text",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Scribe API3GB files, standard10hours, conflicting multichannel summaries, up to5channels; does not establish realtime session caps."
+    ]
+  },
+  {
+    "source_id": "VOICE-S310",
+    "url": "https://docs.cartesia.ai/build-with-cartesia/stt/latest",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Ink2 exact current streaming model and turn events; not evidence of public weights or private portability."
+    ]
+  },
+  {
+    "source_id": "VOICE-S311",
+    "url": "https://www.alibabacloud.com/help/en/model-studio/qwen-audio-3-1-tts-next",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "3000chars,120s/240spodcast outputs,3references×30s/10MB,nonstreaming."
+    ]
+  },
+  {
+    "source_id": "VOICE-S312",
+    "url": "https://help.aliyun.com/en/model-studio/qwen-audio-realtime-user-guides",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "3.1 Plus retained-history50turns/300s maximum,20turns default; audio formats and session protocols."
+    ]
+  },
+  {
+    "source_id": "VOICE-S313",
+    "url": "https://developers.openai.com/api/docs/models/gpt-live-1",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Live1 hosted model; no numeric context in inspected exact card."
+    ]
+  },
+  {
+    "source_id": "VOICE-S314",
+    "url": "https://developers.openai.com/api/docs/models/gpt-realtime-2.1",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact hosted128000 context/32000 max output token limits."
+    ]
+  },
+  {
+    "source_id": "VOICE-S315",
+    "url": "https://developers.openai.com/api/docs/models/gpt-realtime-2.1-mini",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact hosted Mini128000 context/32000 max output token limits."
+    ]
+  },
+  {
+    "source_id": "VOICE-S316",
+    "url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact hosted131072 input/65536 output token limits and modalities."
+    ]
+  },
+  {
+    "source_id": "VOICE-S317",
+    "url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live-extended-thinking",
+    "source_type": "primary",
+    "source_date": null,
+    "accessed_on": "2026-10-26",
+    "supports": [
+      "Exact Extended Thinking131072 input/65536 output; async-only function calls."
     ]
   }
 ]

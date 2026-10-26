@@ -1,0 +1,310 @@
+{
+  "reviewed_on": "2026-10-25",
+  "scope": "Runpod workflow, capacity interpretation and exact runtime constraints. Published documentation is not deployment evidence.",
+  "sources": [
+    {
+      "source_id": "RPH001",
+      "title": "Runpod Pods overview",
+      "url": "https://docs.runpod.io/pods/overview",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Dedicated GPU/CPU container environment and storage/connection options."
+    },
+    {
+      "source_id": "RPH002",
+      "title": "Runpod Pod pricing",
+      "url": "https://docs.runpod.io/pods/pricing",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Compute/storage meters, running versus stopped storage, deprecated savings plans, balance and data-loss behavior; reviewed current Oct23 text."
+    },
+    {
+      "source_id": "RPH003",
+      "title": "Runpod Serverless pricing",
+      "url": "https://docs.runpod.io/serverless/pricing",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Worker billing lifecycle; model loading and idle timeout; Flex/Active distinction; active discounts require sales inquiry."
+    },
+    {
+      "source_id": "RPH004",
+      "title": "Runpod public GPU pricing",
+      "url": "https://www.runpod.io/pricing",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Dated public Pod/Serverless GPU and storage prices. Retrieved page does not expose selected Pod cloud toggle reliably; not an account offer."
+    },
+    {
+      "source_id": "RPH005",
+      "title": "Runpod GPU model listings",
+      "url": "https://www.runpod.io/gpu-models",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Alternative advertised starting offers; differs from pricing page. Not silently substituted for a selected-region quote."
+    },
+    {
+      "source_id": "RPH006",
+      "title": "Runpod GPU types",
+      "url": "https://docs.runpod.io/references/gpu-types",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "GPU identifiers and nominal memory; does not establish host RAM, topology, stock or account price."
+    },
+    {
+      "source_id": "RPH007",
+      "title": "Choose a Runpod Pod",
+      "url": "https://docs.runpod.io/pods/choose-a-pod",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Secure versus Community infrastructure; existing Community resources remain available, new hosts no longer accepted."
+    },
+    {
+      "source_id": "RPH008",
+      "title": "Runpod network volumes",
+      "url": "https://docs.runpod.io/storage/network-volumes",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Regional persistent volume lifecycle, standard tariffs, mounting and balance exhaustion. Performance numbers are vendor claims."
+    },
+    {
+      "source_id": "RPH009",
+      "title": "Runpod Pod storage options",
+      "url": "https://docs.runpod.io/pods/storage/types",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Container/volume/network/global persistence, Pod attachment rules, encryption scope, mount paths and backup guidance."
+    },
+    {
+      "source_id": "RPH010",
+      "title": "Runpod high-performance storage",
+      "url": "https://docs.runpod.io/storage/high-performance-storage",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Premium regional tier; exact pricing varies by datacenter; speedup figures are internal vendor benchmarks."
+    },
+    {
+      "source_id": "RPH011",
+      "title": "Runpod global-volume overview",
+      "url": "https://docs.runpod.io/storage/globalvolume/overview",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Beta read-heavy region-independent storage; Class A/B request rates retrieved in primary search extracts. Direct page fetch repeatedly failed; exact storage tariff remains unverified."
+    },
+    {
+      "source_id": "RPH012",
+      "title": "Global volumes for Serverless",
+      "url": "https://docs.runpod.io/storage/globalvolume/globalvolume-serverless",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "GPU-only beta route; regional independence, mount path and creation-method/SDK limitations."
+    },
+    {
+      "source_id": "RPH013",
+      "title": "Manage Pods",
+      "url": "https://docs.runpod.io/pods/manage-pods",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Create/stop/start/update/terminate semantics and container/system logs; running-container edits can reset ephemeral data."
+    },
+    {
+      "source_id": "RPH014",
+      "title": "Zero GPU Pods on restart",
+      "url": "https://docs.runpod.io/pods/troubleshooting/zero-gpus",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Stopped capacity may be reassigned; storage recovery and redeployment possibilities."
+    },
+    {
+      "source_id": "RPH015",
+      "title": "Expose Pod ports",
+      "url": "https://docs.runpod.io/pods/configuration/expose-ports",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Public HTTP proxy, HTTPS,100-second timeout, direct TCP and no UDP; application authentication needed."
+    },
+    {
+      "source_id": "RPH016",
+      "title": "Serverless load-balancing overview",
+      "url": "https://docs.runpod.io/serverless/load-balancing/overview",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Direct custom HTTP routes, no queue/backlog or built-in retry, readiness codes/paths,2-minute wait,5.5-minute processing,30MB payload."
+    },
+    {
+      "source_id": "RPH017",
+      "title": "Build a load-balancing worker",
+      "url": "https://docs.runpod.io/serverless/load-balancing/build-a-worker",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Container/server contract, authenticated client examples and WebSocket support/handshake startup timeout; tutorial is not our deployment."
+    },
+    {
+      "source_id": "RPH018",
+      "title": "Serverless endpoint settings",
+      "url": "https://docs.runpod.io/serverless/endpoints/endpoint-configurations",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Workers/GPUs/scaling, regional constraints, lifetimes, FlashBoot and inactivity downscaling. Embedded GPU tariffs conflict with pricing page; preserve discrepancy."
+    },
+    {
+      "source_id": "RPH019",
+      "title": "Send queue-based API requests",
+      "url": "https://docs.runpod.io/serverless/endpoints/send-requests",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Input envelope, job identity/status, execution/TTL policies, result retention, operation rate limits and retry operations."
+    },
+    {
+      "source_id": "RPH020",
+      "title": "Queue endpoint operation reference",
+      "url": "https://docs.runpod.io/serverless/endpoints/operation-reference",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Streaming operation and maximum1MB streamed payload chunk; queue contract, not a generic OpenAI-compatible endpoint."
+    },
+    {
+      "source_id": "RPH021",
+      "title": "Serverless handler functions",
+      "url": "https://docs.runpod.io/serverless/workers/handler-functions",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Queue handler input contract and10MB run/20MB runsync payload guidance."
+    },
+    {
+      "source_id": "RPH022",
+      "title": "Runpod cached models",
+      "url": "https://docs.runpod.io/serverless/endpoints/model-caching",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "HF host caching, supported public/gated/private models and pre-worker download billing distinction; no measured startup guarantee."
+    },
+    {
+      "source_id": "RPH023",
+      "title": "Runpod vLLM environment variables",
+      "url": "https://docs.runpod.io/serverless/vllm/environment-variables",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Packaged-worker settings and version-sensitive defaults; not universal upstream engine options."
+    },
+    {
+      "source_id": "RPH024",
+      "title": "Runpod vLLM configuration",
+      "url": "https://docs.runpod.io/serverless/vllm/configuration",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Model-specific parser, template and loader options; exact wrapper/image support still needed."
+    },
+    {
+      "source_id": "RPH025",
+      "title": "Runpod vLLM request formats",
+      "url": "https://docs.runpod.io/serverless/vllm/vllm-requests",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Discovery of packaged-worker request documentation; consult pinned implementation before an integration. No API request made."
+    },
+    {
+      "source_id": "RPH026",
+      "title": "vLLM conserving memory",
+      "url": "https://docs.vllm.ai/en/latest/configuration/conserving_memory/",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Weight loading/sharding, context and batch memory, CUDA graphs and multimodal CPU/GPU costs."
+    },
+    {
+      "source_id": "RPH027",
+      "title": "vLLM engine arguments",
+      "url": "https://docs.vllm.ai/en/latest/configuration/engine_args/",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Prompt-plus-output model length, revision identity, explicit cache budgets, sequence/batch/admission knobs, quantized cache and CPU offload. Latest docs are not a pinned image."
+    },
+    {
+      "source_id": "RPH028",
+      "title": "vLLM quantization",
+      "url": "https://docs.vllm.ai/en/latest/features/quantization/",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Hardware/backend compatibility and mixed quantization controls; selected model/version may impose additional restrictions."
+    },
+    {
+      "source_id": "RPH029",
+      "title": "Hugging Face chat templates",
+      "url": "https://huggingface.co/docs/transformers/chat_templating",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Model-specific role/control tokens, generation prompt and special-token duplication; exact serialization needed for counting."
+    },
+    {
+      "source_id": "RPH030",
+      "title": "Download files from Hugging Face Hub",
+      "url": "https://huggingface.co/docs/huggingface_hub/guides/download",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Revision pinning, snapshots, file-selection patterns and cache behavior. Documentation read only; no model download."
+    },
+    {
+      "source_id": "RPH031",
+      "title": "Runpod secrets",
+      "url": "https://docs.runpod.io/pods/templates/secrets",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Encrypted secret references in templates; runtime substitution instead of hardcoding credentials."
+    },
+    {
+      "source_id": "RPH032",
+      "title": "Runpod credentials",
+      "url": "https://docs.runpod.io/get-started/credentials",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Separation of account/API/SSH/registry credentials and secrets; no account credentials inspected."
+    },
+    {
+      "source_id": "RPH033",
+      "title": "Runpod terms of service",
+      "url": "https://www.runpod.io/legal/terms-of-service",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "March24 2026 terms, sections6/7 broad content language. No explicit lawful-fiction inference exception established; no claim of technical filtering or legal clearance."
+    },
+    {
+      "source_id": "RPH034",
+      "title": "Runpod rolling releases",
+      "url": "https://docs.runpod.io/serverless/endpoints/rolling-releases",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Progressive worker replacement, active-job completion and mixed-image overlap; strict version cutover requires deliberate procedure."
+    },
+    {
+      "source_id": "RPH036",
+      "title": "NVIDIA CUDA minor-version compatibility",
+      "url": "https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "CUDA major-family driver floors and feature/PTX caveats; a model can require more than the generic minimum."
+    },
+    {
+      "source_id": "RPH037",
+      "title": "vLLM parallelism and scaling",
+      "url": "https://docs.vllm.ai/en/latest/serving/parallelism_scaling/",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Tensor/pipeline parallel and distributed serving distinctions; interconnect and per-rank model support matter."
+    },
+    {
+      "source_id": "RPH038",
+      "title": "Runpod account-secret API",
+      "url": "https://docs.runpod.io/api-reference-v2/account/create-a-secret",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Boot-time secret references, write-only values and scoped authentication; documentation only, no account mutation."
+    },
+    {
+      "source_id": "RPH039",
+      "title": "Runpod CLI Pod operations",
+      "url": "https://docs.runpod.io/runpodctl/reference/runpodctl-pod",
+      "source_type": "primary_official",
+      "reviewed_on": "2026-10-25",
+      "supported_claims": "Desired/runtime status distinction and evidence of termination; no CLI operation executed."
+    }
+  ]
+}

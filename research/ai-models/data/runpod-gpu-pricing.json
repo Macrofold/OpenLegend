@@ -1,0 +1,298 @@
+{
+  "reviewed_on": "2026-10-25",
+  "currency": "USD",
+  "source_ids": [
+    "RPH004",
+    "RPH018",
+    "RPH005"
+  ],
+  "page_updated_on": "2026-10-08",
+  "scope": "Public retrieved pricing-page display; not inspected account inventory or a guaranteed offer. Taxes/storage/contract fees excluded.",
+  "pod_cloud_scope": "Public page contains both Community/Secure toggles; selected state not reliably available in text. Do not label these as verified cloud-specific quotes.",
+  "rate_semantics": "Published per-hour display. Do not infer a more precise per-second tariff from rounded hourly values. Confirm whole-worker versus per-GPU and the selected offer before budgeting.",
+  "pods": [
+    {
+      "gpu": "RTX A5000",
+      "memory_gb": 24,
+      "usd_per_hour": 0.27,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "RTX 3090",
+      "memory_gb": 24,
+      "usd_per_hour": 0.5,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "L4",
+      "memory_gb": 24,
+      "usd_per_hour": 0.59,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "RTX 4090",
+      "memory_gb": 24,
+      "usd_per_hour": 0.89,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "RTX 5090",
+      "memory_gb": 32,
+      "usd_per_hour": 1.19,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "A40",
+      "memory_gb": 48,
+      "usd_per_hour": 0.59,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "RTX A6000",
+      "memory_gb": 48,
+      "usd_per_hour": 0.59,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "L40",
+      "memory_gb": 48,
+      "usd_per_hour": 0.82,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "RTX 6000 Ada",
+      "memory_gb": 48,
+      "usd_per_hour": 0.99,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "L40S",
+      "memory_gb": 48,
+      "usd_per_hour": 1.09,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "A100 PCIe",
+      "memory_gb": 80,
+      "usd_per_hour": 1.79,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "A100 SXM",
+      "memory_gb": 80,
+      "usd_per_hour": 1.79,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "H100 PCIe",
+      "memory_gb": 80,
+      "usd_per_hour": 2.89,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "H100 SXM",
+      "memory_gb": 80,
+      "usd_per_hour": 3.99,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "H100 NVL",
+      "memory_gb": 94,
+      "usd_per_hour": 3.19,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "RTX Pro 6000",
+      "memory_gb": 96,
+      "usd_per_hour": 2.49,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "H200",
+      "memory_gb": 141,
+      "usd_per_hour": 5.29,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "B200",
+      "memory_gb": 180,
+      "usd_per_hour": 7.99,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu": "B300",
+      "memory_gb": 288,
+      "usd_per_hour": 8.99,
+      "source_id": "RPH004"
+    }
+  ],
+  "serverless": [
+    {
+      "gpu_tier": "A4000/A4500/RTX4000/RTX2000 tier",
+      "memory_gb": 16,
+      "usd_per_hour_display": 0.58,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "L4/A5000/3090/MIG24 tier",
+      "memory_gb": 24,
+      "usd_per_hour_display": 0.69,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "4090 PRO",
+      "memory_gb": 24,
+      "usd_per_hour_display": 1.1,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "RTX PRO4500 Blackwell",
+      "memory_gb": 32,
+      "usd_per_hour_display": 1.15,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "5090 PRO",
+      "memory_gb": 32,
+      "usd_per_hour_display": 1.58,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "A6000/A40",
+      "memory_gb": 48,
+      "usd_per_hour_display": 1.22,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "L40/L40S/6000Ada/MIG48",
+      "memory_gb": 48,
+      "usd_per_hour_display": 1.75,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "A100",
+      "memory_gb": 80,
+      "usd_per_hour_display": 2.72,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "H100 PRO",
+      "memory_gb": 80,
+      "usd_per_hour_display": 4.79,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "RTX6000Pro",
+      "memory_gb": 96,
+      "usd_per_hour_display": 3.49,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "H200",
+      "memory_gb": 141,
+      "usd_per_hour_display": 5.93,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "B200",
+      "memory_gb": 180,
+      "usd_per_hour_display": 8.64,
+      "source_id": "RPH004"
+    },
+    {
+      "gpu_tier": "B300",
+      "memory_gb": 280,
+      "usd_per_hour_display": 10.65,
+      "source_id": "RPH004"
+    }
+  ],
+  "discrepancies": [
+    {
+      "scope": "Serverless H100",
+      "pricing_page_hourly": 4.79,
+      "endpoint_settings_per_second": 0.00116,
+      "endpoint_settings_hourly_arithmetic": 4.176,
+      "note": "Different primary published values, not rounding. Actual selected endpoint rate unresolved."
+    },
+    {
+      "scope": "Serverless L40/L40S/6000Ada",
+      "pricing_page_hourly": 1.75,
+      "endpoint_settings_per_second": 0.00053,
+      "endpoint_settings_hourly_arithmetic": 1.908
+    },
+    {
+      "scope": "Serverless96GB Pro",
+      "pricing_page_hourly": 3.49,
+      "endpoint_settings_per_second": 0.00111,
+      "endpoint_settings_hourly_arithmetic": 3.996
+    },
+    {
+      "scope": "ServerlessH200",
+      "pricing_page_hourly": 5.93,
+      "endpoint_settings_per_second": 0.00155,
+      "endpoint_settings_hourly_arithmetic": 5.58
+    },
+    {
+      "scope": "B300 memory",
+      "pod_and_gpu_reference_gb": 288,
+      "serverless_pricing_display_gb": 280,
+      "note": "Preserve route-specific advertised usable capacity; do not assume288GB for that Serverless tier."
+    },
+    {
+      "scope": "High-performance network volume",
+      "headline_usd_per_gb_month": 0.14,
+      "note": "Specific storage guide says location-dependent premium; console quote controls."
+    },
+    {
+      "scope": "GPU-models starting offers",
+      "note": "Different advertised starting prices on another Runpod page; not substituted into this snapshot."
+    }
+  ],
+  "storage": [
+    {
+      "kind": "pod_container",
+      "usd_per_gb_month_running": 0.1,
+      "source_ids": [
+        "RPH002"
+      ],
+      "note": "Ephemeral; not billed as stopped retained disk."
+    },
+    {
+      "kind": "pod_volume",
+      "usd_per_gb_month_running": 0.1,
+      "usd_per_gb_month_stopped": 0.2,
+      "source_ids": [
+        "RPH002"
+      ]
+    },
+    {
+      "kind": "network_standard",
+      "usd_per_gb_month_first_tb": 0.07,
+      "usd_per_gb_month_above_tb": 0.05,
+      "source_ids": [
+        "RPH008"
+      ]
+    },
+    {
+      "kind": "network_high_performance",
+      "headline_usd_per_gb_month": 0.14,
+      "actual_datacenter_quote": null,
+      "source_ids": [
+        "RPH004",
+        "RPH010"
+      ]
+    },
+    {
+      "kind": "global_beta",
+      "usd_per_gb_month": null,
+      "usd_per_1000_class_a_requests": 0.005,
+      "usd_per_1000_class_b_requests": 0.0005,
+      "source_ids": [
+        "RPH011"
+      ],
+      "note": "Storage rate unverified; requests are charged separately."
+    }
+  ],
+  "actual_resources_provisioned": 0,
+  "actual_model_hosting_spend_usd": 0
+}
