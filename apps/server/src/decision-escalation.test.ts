@@ -854,7 +854,7 @@ describe('enabled character decision reconsideration', () => {
     expect((await pending).decision?.groups['q0']?.state).toBe('resolved');
     expect(h.calls.higher).toHaveLength(1);
   });
-  it('E22 an admitted new conversation fences only the older decision for that character', async () => {
+  it('E22 refuses a new conversation while that character has a funded reconsideration', async () => {
     const entered = deferred<GenerateRequest>(),
       released = deferred<AiResult<unknown>>();
     let first = true;
@@ -879,11 +879,12 @@ describe('enabled character decision reconsideration', () => {
       'Please consider this new question.',
       NPC_ID,
     );
-    expect(submitted.ok, JSON.stringify(submitted)).toBe(true);
+    expect(submitted).toMatchObject({ ok: false, code: 'busy' });
     released.resolve(value(request.requestId, 'openai', chooseFood(request)));
     await pending;
-    expect(h.food()).toBe(2);
-    expect((await h.store.getJob(old.id))?.decision?.groups['q0']?.state).toBe('ended-unresolved');
+    await h.service.tick(0.1);
+    expect(h.food()).toBe(1);
+    expect((await h.store.getJob(old.id))?.decision?.groups['q0']?.state).toBe('resolved');
     expect((await h.store.decisionAttempts(old.id)).every((attempt) => !!attempt.receipt)).toBe(
       true,
     );
@@ -1190,8 +1191,12 @@ describe('durable reader publication and bounded scheduling', () => {
     });
   });
   it('E30 refuses decision feeling work when installed definitions have not opted in', async () => {
-    const h = await harness(),
-      job = await admitted(h, { q0: 'appraisal' });
+    const h = await harness();
+    await editWorld(h.service, (world) => {
+      for (const definition of world.moduleManifest.appraisals?.definitions ?? [])
+        definition.decision = false;
+    });
+    const job = await admitted(h, { q0: 'appraisal' });
     const log = new IntelligenceLog(h.store),
       recall = new RecallService(h.service, log, undefined, h.execution);
     const escalator = new DecisionEscalator(

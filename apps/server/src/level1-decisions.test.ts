@@ -10,6 +10,7 @@ import {
   createItemLot,
   itemFor,
   quantityOf,
+  setAttentionFocus,
 } from '@open-legend/domain';
 import type { ActorResponse } from '@open-legend/domain';
 import type {
@@ -619,6 +620,13 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
         env,
         judge: (request) =>
           answer(request, { rate: (description) => noul(isEat(description) ? 0.6 : 0.1) }),
+      });
+      await editWorld(h.service, (world) => {
+        const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates)
+          .filter(([, candidate]) => entityGet(world.entities, candidate.sourceId)?.heat)
+          .map(([key]) => key);
+        expect(keys.length).toBeGreaterThan(0);
+        expect(setAttentionFocus(world, NPC_ID, keys)).toBe(true);
       });
       const job = await h.thought();
       expect(job.status).toBe('completed');

@@ -82,22 +82,25 @@ export async function prepareReconsideration(
     'Native candidates for one reconsideration',
   );
   const validity = decisionValidity(service.world, actorId);
-  const appraisal = service.world.moduleManifest.appraisals?.definitions.some(
-    (definition) => definition.decision,
-  )
-    ? await bindDecisionAppraisals(
-        service,
-        actorId,
-        state.higher.id,
-        prepared.binding.evidenceIds ?? evidenceIds,
-        prepared.entityReferences,
-        job.triggerEvidenceId ?? job.playerSpeechEventId,
-      )
-    : undefined;
   const response = Object.values(state.groups).some(
     (group) => group.state === 'open' && group.kind === 'response',
   );
   const appraisalOnly = state.groups['q0']?.kind === 'appraisal';
+  // A native choice cannot write feelings. Its existing semantic validity already
+  // checks relevant feeling conditions, so unrelated appraisal source identities
+  // must not veto that choice while a meter drifts or unrelated history changes.
+  const appraisal =
+    (response || appraisalOnly) &&
+    service.world.moduleManifest.appraisals?.definitions.some((definition) => definition.decision)
+      ? await bindDecisionAppraisals(
+          service,
+          actorId,
+          state.higher.id,
+          prepared.binding.evidenceIds ?? evidenceIds,
+          prepared.entityReferences,
+          job.triggerEvidenceId ?? job.playerSpeechEventId,
+        )
+      : undefined;
   if (appraisalOnly && !appraisal?.schema)
     throw new Error('No installed decision appraisal is available.');
   const schema = boundResponseSchema(

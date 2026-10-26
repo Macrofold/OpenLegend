@@ -174,3 +174,32 @@ it('persists receipt-only native movement before immediate recent browsing and d
     ),
   ).toBe(true);
 });
+
+it('keeps older observations reachable when a whole newest utterance exceeds the page allowance', async () => {
+  const store = await testRepository(),
+    service = new WorldService(store, readConfig());
+  cleanup.push(async () => {
+    service.releaseHostWork();
+    await store.close();
+  });
+  await enterLocalWorld(service);
+  await service.setPresence('large-recent-reader', true);
+  expect((await service.control({ paused: false })).ok).toBe(true);
+  expect(
+    (await service.say('small-recent-speech', PLAYER_ID, 'An earlier small sentence.')).ok,
+  ).toBe(true);
+  expect((await service.say('large-recent-speech', PLAYER_ID, '界'.repeat(1200))).ok).toBe(true);
+  let page = await memoryHistory(service, PLAYER_ID, service.localScope, { recent: true });
+  let found = page.entries.some((entry) => entry.text.includes('An earlier small sentence.'));
+  const cursors = new Set<string>();
+  for (let i = 0; i < 8 && !found && page.next; i++) {
+    expect(cursors.has(page.next)).toBe(false);
+    cursors.add(page.next);
+    page = await memoryHistory(service, PLAYER_ID, service.localScope, {
+      recent: true,
+      cursor: page.next,
+    });
+    found = page.entries.some((entry) => entry.text.includes('An earlier small sentence.'));
+  }
+  expect(found).toBe(true);
+});

@@ -1,6 +1,6 @@
 # Stealth and awareness — design and implementation dependencies
 
-**Core cognition/retention integration:** [PS04-A](product-scalability.md#ps04-a--core-attention-and-recording) now completes the design of broad received surroundings, ordinary detailed attention, shared temporal receipts, one familiarity score, native relation cues, justified cognition and selective remembering. PP/VG supply actual evidence, EPR existing intake, SPK linguistic consumers and SPX personal publication; ATI retains chosen physical work. All added runtime tasks and full PP07/SAI-A remain open.
+**Core cognition/retention integration:** [PS04-A](product-scalability.md#ps04-a--core-attention-and-recording) implements broad received surroundings, ordinary detailed attention, shared chronological receipts, subject-wide familiarity, native relation cues and separate lasting retention. [Evidence and limits](../verification/attention-and-memory-core.md) retain unfinished semantic/population qualification. Future physical vision/acoustics, attention/combat and full SAI-A acceptance remain separate.
 
 ## Status and ownership
 

@@ -1,5 +1,5 @@
 import { decisionFixtureResult } from '../../../tests/fixtures/actor-response.js';
-import { entityGet, entityValues } from '@open-legend/domain';
+import { entityGet, entityValues, setAttentionFocus } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import {
   closeTestDatabases,
@@ -308,7 +308,7 @@ afterEach(async () => {
 async function harness(
   options: { env?: Record<string, string>; client?: (config: AppConfig) => AiClient } = {},
 ) {
-  const now = 10_000;
+  let now = 10_000;
   const config = readConfig({
     TYPESAFE_API_KEY: 'test-fixture-key',
     OPENAI_API_KEY: 'test-fixture-key',
@@ -386,6 +386,9 @@ async function harness(
     store,
     service,
     director,
+    advanceClock: (ms: number) => {
+      now += ms;
+    },
     calls,
     state,
     reflectionKey,
@@ -488,6 +491,29 @@ describe(
   'CR02 cognition verification with explicit fixtures, no live calls',
   { timeout: 480_000 },
   () => {
+    it('keeps interactive conversation budgets while ordinary noticing expires after five seconds', async () => {
+      const chat = await harness();
+      chat.state.policy = { route: 'level2', reflection: 'no', possibleAction: 'no' };
+      chat.state.generate = (request) => {
+        expect(request.deadlineMs).toBeUndefined();
+        chat.advanceClock(6000);
+        return value(request.requestId, 'openai', { operations: [] });
+      };
+      expect(await chat.chat('interactive-six-seconds', 'Hello.')).toMatchObject({
+        status: 'completed',
+        result: { disposition: 'response-empty' },
+      });
+      const ordinary = await harness();
+      ordinary.state.policy = { route: 'level2', reflection: 'no', possibleAction: 'no' };
+      ordinary.state.generate = (request) => {
+        expect(request.deadlineMs).toBe(15000);
+        ordinary.advanceClock(6000);
+        return value(request.requestId, 'openai', { operations: [] });
+      };
+      const job = await ordinary.think();
+      expect(job).toMatchObject({ status: 'stale', result: { disposition: 'expired' } });
+      expect(ordinary.service.world.responseReceipts?.[job.id]).toBeUndefined();
+    });
     it('answers a greeting with one low-effort level-2 mini request, a minimal schema, no reflection and no harness', async () => {
       const h = await harness();
       h.state.policy = { route: 'level2', reflection: 'no', possibleAction: 'no' };
@@ -539,7 +565,7 @@ describe(
         ),
       ).toEqual([]);
       const validate = compileSchema(schema);
-      expect(validate({ operations: [] })).toBe(true);
+      expect(validate({ operations: [], queries: null })).toBe(true);
       expect(validate(talk(String(generation!.context), 'Hi.'))).toBe(true);
 
       // Real effects: Ada's reply is committed as speech, and nothing queued reflection.
@@ -689,7 +715,10 @@ describe(
       expect(h.director.executionSource).toBe('test-fixture');
       const first = await h.chat('fresh-1', 'Hello');
       const second = await h.chat('fresh-2', 'What are you making?');
-      expect(first).toMatchObject({ status: 'completed', result: { disposition: 'responded' } });
+      expect(first, JSON.stringify(first)).toMatchObject({
+        status: 'completed',
+        result: { disposition: 'responded' },
+      });
       expect(second).toMatchObject({
         status: 'completed',
         result: { disposition: 'response-empty' },
@@ -705,6 +734,9 @@ describe(
       const suffix = (await prepareActorInvention(h.service, NPC_ID)).instructions;
       const bodies = transport.responses();
       expect(bodies).toHaveLength(2);
+      expect(String(bodies[0]!['instructions'])).toContain(
+        'one batch of the supplied read-only situation queries',
+      );
       for (const body of bodies) {
         // Exact top-level keys: no stored response, previous response, conversation or session.
         expect(Object.keys(body).sort()).toEqual([
@@ -719,7 +751,7 @@ describe(
         ]);
         expect(body).toMatchObject({
           store: false,
-          instructions: `${RESPONSE_INSTRUCTIONS} ${suffix}`,
+          instructions: expect.stringContaining(`${RESPONSE_INSTRUCTIONS} ${suffix}`),
           text: { format: { type: 'json_schema', name: 'npc_response', strict: true } },
         });
         expect(typeof body['input']).toBe('string');
@@ -768,6 +800,16 @@ describe(
         env: { AI_BUDGET_USD: '5' },
         client: (config) => directClient(config, transport.fetch),
       });
+      // These routing fixtures explicitly attend the observed fire. A supported
+      // activity request needs actual offered participants, rather than assuming
+      // every broad visible object has been expanded in the character's context.
+      await editWorld(h.service, (world) => {
+        const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates)
+          .filter(([, candidate]) => entityGet(world.entities, candidate.sourceId)?.heat)
+          .map(([key]) => key);
+        expect(keys.length).toBeGreaterThan(0);
+        expect(setAttentionFocus(world, NPC_ID, keys)).toBe(true);
+      });
       const expected = {
         level2: { model: h.config.miniModel, effort: 'low', tokens: 1024, stage: 'fast' },
         level3: { model: h.config.complexModel, effort: 'low', tokens: 4096, stage: 'complex' },
@@ -782,7 +824,7 @@ describe(
         policy = { route, reflection: 'no', possibleAction: 'no' };
         const before = transport.requests.length;
         const job = await h.chat(`forward-${route}`, `Please consider this carefully (${route}).`);
-        expect(job).toMatchObject({
+        expect(job, JSON.stringify(job)).toMatchObject({
           status: 'completed',
           result: { disposition: 'response-empty' },
         });

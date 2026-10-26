@@ -7,6 +7,7 @@ export { validateEvidenceSource, validateObservedLocation } from './perception-v
 import { nextId } from './data.js';
 import { canonicalJson } from './events.js';
 import { chargeWork } from './work-budget.js';
+import { countDomainWork } from './diagnostic-counters.js';
 import { personalFactAlias } from './experience-source.js';
 import { validateDetectionSupportState, type DetectionSupportState } from './perception-support.js';
 import { cloneValue, readOnlyDraftView } from './draft.js';
@@ -329,7 +330,11 @@ function prepareVisualSourceValues(
 ): VisualSourceValues {
   let prepared = sourceToken && visualSourceValues.get(sourceToken);
   const prior = prepared?.get(subject.id);
-  if (token && prior?.token === token) return prior.values;
+  if (token && prior?.token === token) {
+    countDomainWork('visualSourcePreparationReuses');
+    return prior.values;
+  }
+  countDomainWork('visualSourcePreparations');
   const profile = bodyProfile(subject),
     placement = subject.placement!;
   const body: ObservedBody = {
@@ -824,13 +829,18 @@ function selectedCurrentSupports(
   observerId: string,
   current: PerceptionEvidenceOwner['current'] | undefined,
   exposures: ReadonlyMap<string, string>,
+  measuredSubjects?: ReadonlySet<string>,
 ): LiveFacetSupport[] {
   const held = current && readOnlyDraftView(current);
   return [...exposures].flatMap(([id, exposure]) =>
     CURRENT_BODY_FACET_KINDS.flatMap((kind) => {
       const lease = held?.[`${id}:${kind}`];
       return lease?.exposure.episodeId === exposure
-        ? [effectiveCurrentFacetSupport(world, observerId, lease)]
+        ? [
+            !measuredSubjects || measuredSubjects.has(id)
+              ? effectiveCurrentFacetSupport(world, observerId, lease)
+              : readOnlyDraftView(lease),
+          ]
         : [];
     }),
   );
@@ -1435,23 +1445,35 @@ export function reconcileAttendedTemporalEvidence(
       return body ? [[id, body.exposure.episodeId] as const] : [];
     }),
   );
-  const leases = selectedCurrentSupports(world, observerId, current, selectedExposures);
+  const entering = new Set([...after].filter((id) => !before.has(id))),
+    exiting = new Set([...before].filter((id) => !after.has(id)));
+  const measured = changedSourceIds
+    ? new Set([...changedSourceIds, ...entering, ...exiting])
+    : undefined;
   const contacts = new Map<string, ObserverSubject>();
-  for (const lease of leases) {
-    if (!creditContacts || lease.value.kind !== 'body' || lease.confirmedThrough !== world.simTime)
-      continue;
-    const subject =
-      currentBodyAssociation(world, observerId, lease.subjectId) ?? lease.localSubject;
-    if (subject && selectedAttentionContactDue(world, observerId, subject, lease.confirmedThrough))
-      contacts.set(lease.subjectId, subject);
-  }
+  if (creditContacts)
+    for (const id of selected) {
+      const body = current?.[`${id}:body`];
+      if (!body) continue;
+      const subject = currentBodyAssociation(world, observerId, id) ?? body.localSubject;
+      if (!subject || !selectedAttentionContactDue(world, observerId, subject, world.simTime))
+        continue;
+      const lease = effectiveCurrentFacetSupport(world, observerId, body);
+      if (lease.confirmedThrough === world.simTime) {
+        contacts.set(id, subject);
+        measured?.add(id);
+      }
+    }
+  // Unchanged leases still keep their deduplication ownership. They need no
+  // newly allocated confirmation view when this capture will skip them.
+  const leases = selectedCurrentSupports(world, observerId, current, selectedExposures, measured);
   const captured = captureTemporalCurrent(
     world,
     observerId,
     leases,
-    new Set([...after].filter((id) => !before.has(id))),
+    entering,
     selectedTemporalPolicy(world).recent,
-    new Set([...before].filter((id) => !after.has(id))),
+    exiting,
     new Set(contacts.keys()),
     changedSourceIds ? new Set(changedSourceIds) : undefined,
   );

@@ -396,6 +396,24 @@ describe('event-time observer facts', () => {
       incomplete: true,
     });
     const subject = captured.scene.bodies.get(PLAYER_ID)!.exposure;
+    const capturedAt = service.world.simTime;
+    await editWorld(service, (world) => {
+      place(world, PLAYER_ID, 33.1);
+      initializePerception(world, []);
+    });
+    expect(service.world.simTime).toBe(capturedAt);
+    const laterSameTime = await store.memories.temporalHistory(
+      scope,
+      { subjects: [subject], bytes: 262144, limit: 128 },
+      service.world,
+    );
+    expect(
+      laterSameTime.entries.some(
+        (entry) =>
+          entry.receipt.epoch === captured.receiptPrefix.epoch &&
+          entry.receipt.ordinal > captured.receiptPrefix.throughOrdinal,
+      ),
+    ).toBe(true);
     const unfiltered = await store.memories.temporalHistory(
       scope,
       { bytes: 262144, limit: 128 },
@@ -414,7 +432,17 @@ describe('event-time observer facts', () => {
       ],
       async (query) => {
         expect(query.subjects).toEqual([subject]);
-        return store.memories.temporalHistory(scope, query, service.world);
+        expect(query.cut).toEqual(captured.receiptPrefix);
+        const page = await store.memories.temporalHistory(scope, query, service.world);
+        expect(page.entries.length).toBeGreaterThan(0);
+        expect(
+          page.entries.every(
+            (entry) =>
+              entry.receipt.epoch !== captured.receiptPrefix.epoch ||
+              entry.receipt.ordinal <= captured.receiptPrefix.throughOrdinal,
+          ),
+        ).toBe(true);
+        return page;
       },
     );
     const entries = (expanded.results[0] as { result: { entries: Array<{ subject: string }> } })

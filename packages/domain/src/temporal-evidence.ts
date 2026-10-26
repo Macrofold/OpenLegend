@@ -747,8 +747,43 @@ export interface TemporalHistoryQuery {
   physicalLife?: number;
   epoch?: string;
   before?: { epoch: string; ordinal: number; at: number; order: number };
+  cut?: TemporalReceiptPrefix;
   limit?: number;
   bytes?: number;
+}
+
+export interface TemporalReceiptPrefix {
+  physicalLife: number;
+  epoch: string | null;
+  throughOrdinal: number;
+  throughOrder: number;
+}
+/** The currently open stream's exact append prefix; earlier sealed streams have
+ * no further writers. Allocation order also excludes later same-time streams. */
+export function captureTemporalReceiptPrefix(
+  world: WorldState,
+  actorId: string,
+): TemporalReceiptPrefix {
+  const actor = world.experience?.temporal?.actors[actorId];
+  return {
+    physicalLife:
+      actor?.physicalLife ?? entityGet(world.entities, actorId)?.actor?.physicalLife ?? 0,
+    epoch: actor?.epoch ?? null,
+    throughOrdinal: (actor?.nextOrdinal ?? 0) - 1,
+    throughOrder: world.nextId,
+  };
+}
+export function temporalReceiptWithinPrefix(
+  receipt: TemporalReceipt,
+  cut: TemporalReceiptPrefix,
+): boolean {
+  return (
+    cut.epoch !== null &&
+    receipt.order <= cut.throughOrder &&
+    (receipt.physicalLife !== cut.physicalLife ||
+      receipt.epoch !== cut.epoch ||
+      receipt.ordinal <= cut.throughOrdinal)
+  );
 }
 /** Cold callers supply only already actor-scoped selected chunks and their exact blocks. */
 export function selectTemporalHistory(
@@ -772,6 +807,7 @@ export function selectTemporalHistory(
     .filter(
       (receipt) =>
         receipt.actorId === actorId &&
+        (!query.cut || temporalReceiptWithinPrefix(receipt, query.cut)) &&
         (query.from === undefined || receipt.at >= query.from) &&
         (query.through === undefined || receipt.at <= query.through) &&
         (!subjects.length || subjects.includes(receipt.subject)) &&

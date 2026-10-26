@@ -4,12 +4,14 @@ import {
   temporalFacetEligible,
   retireTemporalChunks,
   clearTemporalCaptureReferences,
+  temporalReceiptWithinPrefix,
   updateWorld,
   type WorldState,
   type TemporalChunk,
   type TemporalEvidenceState,
   type TemporalHistorySelection,
   type TemporalSourceBlock,
+  type TemporalReceiptPrefix,
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { MemoryScope } from './memory-repository.js';
@@ -45,6 +47,7 @@ export interface TemporalHistoryQuery {
   epoch?: string;
   limit?: number;
   bytes?: number;
+  cut?: TemporalReceiptPrefix;
 }
 
 export function retentionNeedsPreparation(world: WorldState): boolean {
@@ -90,6 +93,7 @@ export async function readTemporalHistory(
   query: TemporalHistoryQuery,
 ): Promise<TemporalHistoryPage> {
   if (world.id !== scope.worldId) throw new MemoryRetentionError('Foreign temporal history scope.');
+  if (query.cut?.epoch === null) return { entries: [], incomplete: true, hasMore: false };
   const head = await db
     .prepare('SELECT generation FROM world_head WHERE world_id=?')
     .get(scope.worldId);
@@ -112,6 +116,7 @@ export async function readTemporalHistory(
       ${subjects.length ? 'AND subjects && ?::text[]' : ''}
       ${query.physicalLife === undefined ? '' : 'AND physical_life=?'}
       ${query.epoch === undefined ? '' : 'AND receipt_epoch=?'}
+      ${query.cut ? 'AND first_order<=? AND (physical_life<>? OR receipt_epoch<>? OR first_ordinal<=?)' : ''}
       ${query.before ? 'AND (first_at<? OR (first_at=? AND (first_order<? OR (first_order=? AND (receipt_epoch<? OR (receipt_epoch=? AND first_ordinal<?))))))' : ''}
     ORDER BY last_at DESC,last_order DESC,receipt_epoch DESC,last_ordinal DESC LIMIT ?`,
     )
@@ -123,6 +128,14 @@ export async function readTemporalHistory(
       ...(subjects.length ? [subjects] : []),
       ...(query.physicalLife === undefined ? [] : [query.physicalLife]),
       ...(query.epoch === undefined ? [] : [query.epoch]),
+      ...(query.cut
+        ? [
+            query.cut.throughOrder,
+            query.cut.physicalLife,
+            query.cut.epoch,
+            query.cut.throughOrdinal,
+          ]
+        : []),
       ...(query.before
         ? [
             query.before.at,
@@ -161,7 +174,6 @@ export async function readTemporalHistory(
     metadataBefore = metadataCursor(row);
     selected.push(String(row['id']));
     preparationBytes += size;
-    for (const id of row['source_refs'] as string[]) sourceIds.add(id);
     count += Number(row['receipt_count']);
     if (count >= limit) {
       incomplete ||= selected.length < metadata.length;
@@ -187,11 +199,36 @@ export async function readTemporalHistory(
       chunk.fromAt <= through &&
       (!subjects.length || chunk.subjects.some((subject) => subjects.includes(subject))) &&
       (query.physicalLife === undefined || chunk.physicalLife === query.physicalLife) &&
-      (query.epoch === undefined || chunk.epoch === query.epoch)
+      (query.epoch === undefined || chunk.epoch === query.epoch) &&
+      (!query.cut ||
+        chunk.receipts.some((receipt) => temporalReceiptWithinPrefix(receipt, query.cut!)))
     ) {
       chunks.set(chunk.id, chunk);
-      for (const id of chunk.sourceRefs) sourceIds.add(id);
     }
+  const receipts = [...chunks.values()]
+    .flatMap((chunk) => chunk.receipts)
+    .filter(
+      (receipt) =>
+        receipt.actorId === scope.actorId &&
+        (!query.cut || temporalReceiptWithinPrefix(receipt, query.cut)) &&
+        receipt.at >= from &&
+        receipt.at <= through &&
+        (!subjects.length || subjects.includes(receipt.subject)) &&
+        (!query.before ||
+          receipt.at < query.before.at ||
+          (receipt.at === query.before.at &&
+            (receipt.order < query.before.order ||
+              (receipt.order === query.before.order &&
+                (receipt.epoch < query.before.epoch ||
+                  (receipt.epoch === query.before.epoch &&
+                    receipt.ordinal < query.before.ordinal)))))),
+    )
+    .sort(
+      (a, b) =>
+        b.at - a.at || b.order - a.order || b.epoch.localeCompare(a.epoch) || b.ordinal - a.ordinal,
+    );
+  for (const receipt of receipts)
+    for (const reference of receipt.facets) sourceIds.add(reference.blockId);
   const sources: Record<string, TemporalSourceBlock> = {};
   const missing = [...sourceIds].filter((id) => !resident?.sources[id]);
   if (missing.length) {
@@ -218,27 +255,6 @@ export async function readTemporalHistory(
     }
   }
   for (const id of sourceIds) if (resident?.sources[id]) sources[id] = resident.sources[id]!;
-  const receipts = [...chunks.values()]
-    .flatMap((chunk) => chunk.receipts)
-    .filter(
-      (receipt) =>
-        receipt.actorId === scope.actorId &&
-        receipt.at >= from &&
-        receipt.at <= through &&
-        (!subjects.length || subjects.includes(receipt.subject)) &&
-        (!query.before ||
-          receipt.at < query.before.at ||
-          (receipt.at === query.before.at &&
-            (receipt.order < query.before.order ||
-              (receipt.order === query.before.order &&
-                (receipt.epoch < query.before.epoch ||
-                  (receipt.epoch === query.before.epoch &&
-                    receipt.ordinal < query.before.ordinal)))))),
-    )
-    .sort(
-      (a, b) =>
-        b.at - a.at || b.order - a.order || b.epoch.localeCompare(a.epoch) || b.ordinal - a.ordinal,
-    );
   const entries: TemporalHistorySelection['entries'] = [];
   let bytes = 0;
   let examined: TemporalHistoryPage['nextBefore'];

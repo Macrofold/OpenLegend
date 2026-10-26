@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   captureEvidenceCut,
+  captureTemporalReceiptPrefix,
   evidenceCutEligible,
   currentDetailedAttention,
   captureAttentionPresentation,
@@ -130,6 +131,7 @@ export function captureSituation(
   const geometry = currentReceivedGeometry(world, actorId);
   const cut = captureEvidenceCut(world, actorId, geometry.observations),
     entries = currentDetailedAttention(world, actorId);
+  const receiptPrefix = captureTemporalReceiptPrefix(world, actorId);
   const references = new Map(
     [...scene.bodies.keys()].map((id) => [entityHandle(world, actorId, id), id]),
   );
@@ -571,6 +573,7 @@ export function captureSituation(
     jobId,
     packet,
     history,
+    receiptPrefix,
     cut,
     frames,
     compactFrames,
@@ -672,6 +675,7 @@ export async function expandSituation(
       else {
         const history = await readHistory({
           ...(subject ? { subjects: [subject] } : {}),
+          cut: captured.receiptPrefix,
           from: query.from,
           through: Math.min(world.simTime, query.through),
           bytes: Math.max(0, policy.expansionBytes - encodedBytes()),
@@ -757,7 +761,12 @@ export async function expandSituation(
       const id = captured.references.get(row.reference);
       if (id) expandedIds.add(id);
       const key = captured.allAttentionReferences[row.reference];
-      if (key) captured.attentionReferences[row.reference] = key;
+      if (key) {
+        captured.attentionReferences[row.reference] = key;
+        const supplied = captureAttentionPresentation(world, actorId, [key])[0];
+        if (supplied && !captured.presented.some((entry) => entry.key === key))
+          captured.presented.push(supplied);
+      }
     }
   }
   const disclosed = new Set<string>();

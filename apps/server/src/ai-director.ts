@@ -1616,8 +1616,10 @@ export class AiDirector {
     }
     const run: Running = {
       urgent,
-      ...((job.kind === 'thought' || job.kind === 'chat') && actorId
+      ...(job.kind === 'thought' && actorId
         ? {
+            // Ordinary noticing has the world's short useful-lifetime limit. Player
+            // conversations retain their existing interactive decision/transport budgets.
             attentionDeadline: {
               wall: this.now() + selectedAttentionPolicy(this.service.world).semantic.deadlineMs,
               monotonic:
