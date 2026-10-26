@@ -4,6 +4,8 @@
 | ----------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | In progress | SPX01 existing-channel publication converted; broader controls, producers and integrated player qualification remain open. | 2026-10-25 15:35 UTC |
 
+**Core attention consumer integration, October 25, 2026, 22:38 EDT:** the [selected perception/attention/memory contract](attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) adds broad current surroundings, automatic detail history and explicitly less precise remembered impressions through these same permitted projections. A ten-subject detail limit cannot hide other received bodies/static terrain from the human; no AI interpretation gates ordinary rendering or controls. History/cold detail must materialize this observer's receipts, never the shared source archive directly. Current SPX01 delivery remains valid; this added consumer conversion and its full producer/privacy/UX qualification are open.
+
 ## Purpose and authority
 
 Make stalking a hare, listening outside a hut, watching a doorway and surviving betrayal understandable, exciting activities in the ordinary living world. The player should be able to act on what their character notices, distinguish knowledge from guesses, and recover from a mistake without wrestling the interface.

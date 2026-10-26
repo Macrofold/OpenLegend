@@ -6,6 +6,8 @@
 
 Design used for scoped implementation and review: **2026-10-25 15:35 UTC**.
 
+**Core attention consumer integration, October 25, 2026, 22:38 EDT:** the [selected perception/attention/memory contract](attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) adds broad current surroundings, automatic detail history and explicitly less precise remembered impressions through these same permitted projections. A ten-subject detail limit cannot hide other received bodies/static terrain from the human; no AI interpretation gates ordinary rendering or controls. History/cold detail must materialize this observer's receipts, never the shared source archive directly. Current SPX01 delivery remains valid; this added consumer conversion and its full producer/privacy/UX qualification are open.
+
 ## Scope
 
 This is SAD-G's implementation specification for the [feature](stealth-player-experience-feature-spec.md), covering the selected [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) control/presentation slice. It changes documentation only. All type/field names introduced below describe proposed current-format contracts to implement through existing owners; they are not claims that those APIs exist.

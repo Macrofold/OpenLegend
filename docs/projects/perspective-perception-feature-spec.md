@@ -1,8 +1,10 @@
 # Observer-specific perception, evidence and recognition — feature specification
 
-| Status      | Current progress                                                                                                             | Last updated         |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | Supported-channel PP01–PP06 foundation implemented; future physical producers and full PP07/SAI-A qualification remain open. | 2026-10-25 15:35 UTC |
+| Status      | Current progress                                                                                                                           | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Existing-channel evidence foundation delivered; shared temporal retention, future producers and full PP07/SAI-A qualification remain open. | 2026-10-25   |
+
+Temporal/familiarity design reconciled and architecture consulted **October 25, 2026, 23:24 EDT**; these additions remain implementation targets.
 
 ## Purpose and selected scope
 
@@ -21,6 +23,10 @@ The source baseline is the exact contracts-branch tip, `a3d40b4d71e29d6504e9f3fc
 The existing-channel implementation now adds observer-local individuals, voice familiarity under the selected Perception rule, exact received evidence, independently current details and faithful retained/cold/summary meaning. Native responses, NPC preparation and player publication consume these permitted records. [Implementation evidence](../verification/personal-perception-foundation.md) records supported-channel acquisition, correction, forgetting and restoration. Future visual/acoustic producers, attention/combat integration and full PP07/SAI-A acceptance remain open.
 
 The behavior and acceptance below remain the selected complete target. Scoped implementation evidence does not establish future-channel delivery, live-model quality, population capacity or player enjoyment.
+
+**Selected temporal-retention target; runtime open.** The [attention and memory design](attention-and-scenes-tech-design.md#53-recent-chronology-without-narrative-boundaries) adds shared immutable source fragments and exact observer receipt references through these existing owners. Ordinary detailed attention automatically retains changes to supported received facets/events, rather than a recorder with a list of activities. Common values can be shared; different heard fragments, precision, frames and uncertainty remain personal. Current broad perception and current motion support remain available without attention, but there is no separate background-history sampler. Beginning attention captures the actual current receipt; earlier chronology is available only if that actor independently retained it. Another observer's retained source never grants retrospective witnessing.
+
+The selected [subject-wide familiarity target](../worlds/base/perception-recognition.md#shared-subject-familiarity-target) likewise remains unimplemented. It replaces the foundation's modality-specific familiarity-credit accumulation while leaving physically available modality features and supported matching necessary. Familiarity can influence optional attention only through its world policy; it grants no new sensory evidence, source identity or unseen location.
 
 ## What makes this worth playing
 
@@ -93,6 +99,8 @@ Current knowledge is a set of independently supported facts, not a periodically 
 The practical account can therefore be: “Ada was last seen by the gate carrying a spear. I heard Ada recently from beyond that wall, but I do not know exactly where she is or what she is doing now.” Each clause comes from distinct structured support. If the voice was only a candidate match, the account must say so.
 
 A continuously perceived body remains the same physical target when its appearance or public condition changes. Its old meaningful detail remains historical and the new detail has its own support interval; this does not reset recognition or silently refresh unrelated facts. Moving positions and passive numeric changes retain the latest supported sample; exact discrete outcomes keep their own event records.
+
+That latest-sample behavior describes the current foundation, not a complete route archive. Under the selected temporal target, attended or independently required received changes also retain their ordered source references at the actual sensory resolution. Unsupported intervals remain gaps; neither shared source history nor two endpoints establish an unseen route. Later retention may preserve a useful less precise account or expire optional detail through the [recording owner](attention-and-scenes-tech-design.md#56-one-recording-boundary-and-lasting-retention).
 
 Intermittent visibility preserves the same distinction. A brief occlusion may preserve an acquisition episode or a learned association, while all unsupported live details stop immediately. A later glimpse grants only the newly available facets. It cannot fill the gap with an inferred hidden path. Historical location or bearing may be transformed for a display using its recorded frame, but must remain anchored to that old observation, never the source's unseen movement.
 

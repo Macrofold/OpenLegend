@@ -207,6 +207,8 @@ Selection: A readable duel can put a small set of personal loyalties at stake wi
 
 The party's best scout loves another member but remains loyal to a faction the player now intends to attack. Earlier conversations, assistance and witnessed conduct establish that allegiance. Recruiting a useful former enemy further strains it. Affection, professional respect and political agreement are separate; sufficient gifts cannot automatically purchase obedience.
 
+After another shared outing, the scout may remember being helped while losing incidental route detail. That [useful recollection](../projects/attention-and-scenes-feature-spec.md#9-meaning-exact-language-and-memory) can affect how they explain a refusal without erasing political allegiance or requiring friendship.
+
 The scout might refuse, resign, warn their faction, conceal information or participate under a specific concession. Their choice follows established motives and actual circumstances. The player can alter the objective, accept the departure, conceal their plan at the risk of later discovery, or continue with another scout.
 
 If the conflict becomes violence, a visible companion's apparently cordial approach can still end in a surprising attack. A credible warning and genuine readiness for that danger can prevent surprise; an earlier disagreement alone does not establish such readiness. Private hostile intent is not a player-visible label, and what becomes evident after contact cannot retroactively warn the victim. The attack, the bodily startle and the survivor's later interpretation remain different parts of the event.

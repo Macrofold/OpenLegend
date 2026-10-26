@@ -2,6 +2,8 @@
 
 **Design complete; runtime implementation and qualification remain open.** This tracker owns SAD-E's selected attention methods, accepted work, native extension and preparation-evidence producer. [Feature](../projects/attention-and-investigation-feature-spec.md), [technical design](../projects/attention-and-investigation-tech-design.md), [world policy](../worlds/base/attention-and-investigation.md) and [limits](../limits/attention-and-investigation.md) are its canonical inputs. The parent [stealth tracker](stealth-awareness.md) keeps shared integration and SAI-E/F; AC, AG, EPR, CTR and SPK keep their broader tasks.
 
+Ordinary detailed attention and temporal memory are [PS04-A](product-scalability.md#ps04-a--core-attention-and-recording), not prerequisites to be unlocked by Watch. Integrate its current-work preference, shared received-source/history admission and cause-resolution contract; ATI still supplies actual chosen physical coverage/preparation.
+
 ## Baseline and dependencies
 
 [The authority and owner audit](../projects/attention-and-investigation-tech-design.md#1-authority-baseline-and-dependency-reads) records the integrated sensing dependencies and existing owners. Recheck affected owners on the implementation base before ATI01; completed specialist design does not establish runtime delivery.

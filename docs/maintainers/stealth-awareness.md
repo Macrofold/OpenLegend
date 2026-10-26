@@ -1,5 +1,7 @@
 # Stealth and awareness — design and implementation dependencies
 
+**Core cognition/retention integration:** [PS04-A](product-scalability.md#ps04-a--core-attention-and-recording) now completes the design of broad received surroundings, ordinary detailed attention, shared temporal receipts, one familiarity score, native relation cues, justified cognition and selective remembering. PP/VG supply actual evidence, EPR existing intake, SPK linguistic consumers and SPX personal publication; ATI retains chosen physical work. All added runtime tasks and full PP07/SAI-A remain open.
+
 ## Status and ownership
 
 **Integrated design is complete. Runtime implementation and gameplay qualification remain open; SA-D01 retains its explicit product-dependent slice.** This tracker owns cross-project dependencies for [the feature specification](../projects/stealth-awareness-feature-spec.md), [shared contracts](../projects/stealth-awareness-tech-design.md) and [A–U scenario traces](../projects/stealth-awareness-scenarios.md). Focused trackers own detailed implementation; SPK, CTR, EPR, CL, CE, action, clock and save work is not duplicated here.

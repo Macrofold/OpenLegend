@@ -28,6 +28,8 @@ A visible, associated speaker receives a plain caption above its head. Speech fr
 
 “Faint talking” means audible sound with potentially unintelligible words, not clear words from an unknown source. Use **unintelligible speech** for that state. Reserve **inaudible** for no detected sound. A caption must never invent speech content, identity, recipient, delivery mode, or direction.
 
+The selected [shared familiarity target](worlds/base/perception-recognition.md#shared-subject-familiarity-target) will reuse the same observer identity for attention and recognition, with separate learned voice evidence and name knowledge. It remains unimplemented: the delivered voice path still uses modality-based familiarity. The target changes neither actual word thresholds nor event-time recipient proof, and reinforcement alone cannot request a paid thought. [SPK02](maintainers/speech-and-social-perception.md#spk02--addressing-recognition-and-names-through-installed-world-policy) and [PP03](maintainers/perspective-perception.md#pp03--familiarity-local-individuals-recognition-and-names) retain integration and qualification.
+
 ## 2. Continuous quantities, three thresholds
 
 Use continuous decibel quantities internally, with three world-configurable thresholds producing four outcomes. Do not make a 1–10 hearing score, three radii, or a percentage the authoritative acoustic representation. Rounded labels and approximate overlays are presentations only.

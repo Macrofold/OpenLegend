@@ -4,6 +4,8 @@
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-10-24   |
 
+**Core attention integration, October 25, 2026, 22:38 EDT:** [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) and its [technical contract](attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) own ordinary detailed attention, shared received chronology, familiarity, bounded relation cues and justified cognition. None requires this project's deliberate watch/follow action. Chosen physical observation may favor current-work focus and retain the minimum exact evidence its accepted finite method requires; it does not grant unbounded regional history or bypass common recording admission. This integration does not complete ATI runtime, combat preparation or PP07/SAI-A acceptance.
+
 ## Purpose and scope
 
 An inhabitant should be able to spend attention on something worth understanding while the rest of life continues. Hearing footsteps may prompt a question, a glance, a search, a warning, escape, a prepared stance or simply continued work. A builder watching for helpers and a sentry watching an entrance use the same finite, physically supported commitments. Neither requires an omniscient threat list.
@@ -40,7 +42,7 @@ Compare each activity with the capable ordinary alternative: keep walking, look 
 
 A thought such as “Ada might be nearby,” a spoken “I'll keep watch,” a menu preview and a proposed plan are not accepted physical work. Actual admission binds the person, body, supported method, scope, current work and finite ending. A refusal preserves the previous work.
 
-A person's focus may favor relevant evidence without erasing ordinary sensory-eligible history. The rejected [busy-worker observation-loss experiment](../worlds/base/attention.md) is not reinstated. Hearing remains possible while looking closely at a workpiece; strong unexpected evidence does not need to match the chosen inquiry.
+A person's focus may favor relevant evidence without changing what the senses actually received. Current sensory-eligible history remains until the coordinated PS04-A retention cutover; its target independently controls recent and lasting retention. The rejected [busy-worker observation-loss experiment](../worlds/base/attention.md) is not reinstated. Hearing remains possible while looking closely at a workpiece; strong unexpected evidence does not need to match the chosen inquiry.
 
 ## The selected activities
 

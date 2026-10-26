@@ -98,6 +98,8 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 **Exit:** canonical samples, held support and existing supported narrow-window measurements produce the same actual A evidence across speed/host/save partitions. Current projection keeps measured times, typed motion uses two actually received samples, and F captures no extra contact-time observation.
 
+**Shared temporal consumer target; runtime open:** feed actual visual samples and availability/correspondence breaks into [A's shared source/receipt boundary](../projects/perspective-perception-tech-design.md#shared-temporal-source-and-receipt-target). Common source fragments may be shared, but received precision, clipped geometry, observer frame and actual acquired membership remain exact per observer. Attention begins from the actual current receipt, not another observer's older source history. This adds no physical sample cadence or separate background-history sampler; VG05/VG07/VG08 and full SAI-A/B acceptance remain open.
+
 ### VG06 — Complete candidates, caches and operational bounds
 
 **Status: Not started.** Coordinate spatial indexing, native interval work and the [vision limits inventory](../limits/vision-and-gaze.md).

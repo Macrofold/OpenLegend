@@ -14,6 +14,8 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 [Vision and gaze (VG00–VG08)](vision-and-gaze.md) owns specialist B's [feature specification](../projects/vision-and-gaze-feature-spec.md), [technical design](../projects/vision-and-gaze-tech-design.md), [world policy](../worlds/base/vision-and-gaze.md) and [limits](../limits/vision-and-gaze.md): physical looking while moving, exposed visual detail, world light, canonical sampled values and their declared temporal limits. Implementation and qualification of the integrated A/E/F/G interfaces remain explicit in that tracker.
 
+[Core perception, attention and remembering (PS04-A)](product-scalability.md#ps04-a--core-attention-and-recording) owns the selected broad-scene/detail, shared-history, familiarity, justified-cognition and optional-retention redesign. Its [paired design](../projects/attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) includes literal scenarios and producer/consumer/storage contracts; design is complete, implementation and qualification remain open. Ordinary attention needs no watch action.
+
 [Attention and investigation](attention-and-investigation.md) owns finite observation/watch/search, compatible work, native curiosity and the preparation-evidence producer. Its specialist design is complete; ATI01–ATI08 remain runtime work.
 
 ## Game production methods
