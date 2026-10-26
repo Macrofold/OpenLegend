@@ -419,7 +419,12 @@ describe('event-time observer facts', () => {
       { bytes: 262144, limit: 128 },
       service.world,
     );
-    expect(unfiltered.entries.some((entry) => entry.receipt.subject !== subject)).toBe(true);
+    expect(
+      unfiltered.entries.some(
+        (entry) =>
+          entry.receipt.subject !== subject && !entry.receipt.contextSubjects?.includes(subject),
+      ),
+    ).toBe(true);
     const expanded = await expandSituation(
       captured,
       [
@@ -445,12 +450,22 @@ describe('event-time observer facts', () => {
         return page;
       },
     );
-    const entries = (expanded.results[0] as { result: { entries: Array<{ subject: string }> } })
-      .result.entries;
+    const entries = (
+      expanded.results[0] as {
+        result: { entries: Array<{ subject: string; contextFor?: string[] }> };
+      }
+    ).result.entries;
     expect(entries.length).toBeGreaterThan(0);
-    expect(new Set(entries.map((entry) => entry.subject))).toEqual(
-      new Set([permittedSourceHandle(service.world, NPC_ID, ['received-subject', subject])]),
-    );
+    const requestedSubject = permittedSourceHandle(service.world, NPC_ID, [
+      'received-subject',
+      subject,
+    ]);
+    expect(
+      entries.every(
+        (entry) =>
+          entry.subject === requestedSubject || entry.contextFor?.includes(requestedSubject),
+      ),
+    ).toBe(true);
     const saveId = randomUUID();
     await service.createSave('Observer facts', saveId);
     const payload = await store.saves.read(service.world.id, saveId);

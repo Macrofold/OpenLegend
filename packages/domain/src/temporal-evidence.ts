@@ -6,6 +6,7 @@ import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
 import { ensureExperienceAccounting } from './remembered-impressions.js';
 import { personalFactAlias } from './experience-source.js';
+import { isImmutableData } from './records.js';
 import { selectedRecognitionSupportSourceIds } from './world-composition.js';
 import type { WorldState } from './types.js';
 import type { ObserverSubject } from './knowledge.js';
@@ -321,8 +322,12 @@ function retainValue(
   maxBytes: number,
   sharedSourceId?: string,
 ) {
-  const entity = sharedSourceId && entityGet(world.entities, sharedSourceId);
-  const source = entity && readOnlyDraftView(entity);
+  const immutable = readOnlyDraftView(value),
+    heldValue = isImmutableData(immutable);
+  const entity = !heldValue && sharedSourceId && entityGet(world.entities, sharedSourceId);
+  // Source-only geometry has no entity to invent. Its immutable received value
+  // uses the same verified payload reuse as a body, including later entry baselines.
+  const source = heldValue ? immutable : entity && readOnlyDraftView(entity);
   const previous = source && sourceValues.get(source)?.get(value.kind);
   const existing = previous && temporal.sources[previous.blockId]?.values[previous.valueOrdinal];
   // Reuse never reads a hidden value into evidence: the actual receiver supplied
@@ -409,7 +414,9 @@ export function appendTemporalReceipt(
     order: world.nextId,
     ...(input.origin ? { origin: cloneValue(input.origin) } : {}),
     subject: input.subject,
-    ...(input.contextSubjects?.length ? {contextSubjects:[...new Set(input.contextSubjects)]} : {}),
+    ...(input.contextSubjects?.length
+      ? { contextSubjects: [...new Set(input.contextSubjects)] }
+      : {}),
     ...(input.subjectIdentity ? { subjectIdentity: cloneValue(input.subjectIdentity) } : {}),
     change: input.change,
     required: input.required === true,
@@ -468,7 +475,7 @@ export function appendTemporalReceipt(
   chunk.bytes += bytes + (chunk.receipts.length > 1 ? 1 : 0);
   chunk.throughAt = receipt.at;
   chunk.throughOrdinal = receipt.ordinal;
-  for (const subject of [receipt.subject,...(receipt.contextSubjects ?? [])])
+  for (const subject of [receipt.subject, ...(receipt.contextSubjects ?? [])])
     if (!chunk.subjects.includes(subject)) chunk.subjects.push(subject);
   for (const id of receipt.sourceIds) if (!chunk.sourceIds.includes(id)) chunk.sourceIds.push(id);
   for (const id of temporalReceiptIndividualIds(receipt, temporal.sources))
@@ -672,7 +679,12 @@ export function captureTemporalObservation(
   sourceIds: string[],
   required: boolean,
   policy: TemporalRetentionPolicy,
-  options: { subject?: string; ordinals?: ReadonlySet<number>; contextSubjects?:readonly string[]; change?:TemporalReceipt['change'] } = {},
+  options: {
+    subject?: string;
+    ordinals?: ReadonlySet<number>;
+    contextSubjects?: readonly string[];
+    change?: TemporalReceipt['change'];
+  } = {},
 ): TemporalReceiptLocator | undefined {
   return appendTemporalReceipt(
     world,
@@ -684,7 +696,7 @@ export function captureTemporalObservation(
           ? observation.origin.episodeId
           : observation.origin.eventId),
       change: options.change ?? 'occurrence',
-      ...(options.contextSubjects?.length ? {contextSubjects:options.contextSubjects} : {}),
+      ...(options.contextSubjects?.length ? { contextSubjects: options.contextSubjects } : {}),
       required,
       sourceIds,
       origin: cloneValue(observation.origin),
@@ -816,7 +828,9 @@ export function selectTemporalHistory(
         (!query.cut || temporalReceiptWithinPrefix(receipt, query.cut)) &&
         (query.from === undefined || receipt.at >= query.from) &&
         (query.through === undefined || receipt.at <= query.through) &&
-        (!subjects.length || subjects.includes(receipt.subject) || receipt.contextSubjects?.some((subject) => subjects.includes(subject))) &&
+        (!subjects.length ||
+          subjects.includes(receipt.subject) ||
+          receipt.contextSubjects?.some((subject) => subjects.includes(subject))) &&
         (query.physicalLife === undefined || query.physicalLife === receipt.physicalLife) &&
         (query.epoch === undefined || query.epoch === receipt.epoch) &&
         (!query.before ||
@@ -900,7 +914,11 @@ function refreshChunk(
   temporal: TemporalEvidenceState,
   world: WorldState,
 ): void {
-  chunk.subjects = [...new Set(chunk.receipts.flatMap((receipt) => [receipt.subject,...(receipt.contextSubjects ?? [])]))];
+  chunk.subjects = [
+    ...new Set(
+      chunk.receipts.flatMap((receipt) => [receipt.subject, ...(receipt.contextSubjects ?? [])]),
+    ),
+  ];
   chunk.sourceIds = [...new Set(chunk.receipts.flatMap((receipt) => receipt.sourceIds))];
   chunk.sourceIds = [
     ...new Set(

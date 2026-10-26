@@ -70,7 +70,13 @@ export function temporalHistoryForModel(
         receipt.ordinal,
       ]),
       subject: permittedSourceHandle(world, actorId, ['received-subject', receipt.subject]),
-      ...(receipt.contextSubjects?.length ? { contextFor: receipt.contextSubjects.map((subject) => permittedSourceHandle(world, actorId, ['received-subject', subject])) } : {}),
+      ...(receipt.contextSubjects?.length
+        ? {
+            contextFor: receipt.contextSubjects.map((subject) =>
+              permittedSourceHandle(world, actorId, ['received-subject', subject]),
+            ),
+          }
+        : {}),
       acquiredAt: receipt.at,
       change: receipt.change,
       facts: values.map((value, index) => {
@@ -672,10 +678,7 @@ export async function expandSituation(
   }
   for (const { receipt } of captured.history.entries)
     for (const subject of [receipt.subject, ...(receipt.contextSubjects ?? [])])
-      subjects.set(
-        permittedSourceHandle(world, actorId, ['received-subject', subject]),
-        subject,
-      );
+      subjects.set(permittedSourceHandle(world, actorId, ['received-subject', subject]), subject);
   for (const query of queries) {
     const frameStart = captured.frames.length;
     let result: unknown;

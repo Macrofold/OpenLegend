@@ -533,6 +533,7 @@ export async function prepareDecision(
   const snapshotActor = observed.actor.actor!;
   const requiredActivity = activityDecisionFacts(world, actorId, observed);
   const requiredContext: Record<string, unknown> = {
+    situationQueries: mode !== 'native-only',
     receivedSituation: capturedSituation.packet,
     ...requiredActivity,
     capabilities: {
@@ -832,6 +833,7 @@ export async function prepareDecision(
   ];
   const currentActivity = activityDecisionFacts(currentWorld, actorId, currentObserved);
   const context: Record<string, unknown> = {
+    situationQueries: mode !== 'native-only',
     receivedSituation: capturedSituation.packet,
     ...currentActivity,
     ...(inspected

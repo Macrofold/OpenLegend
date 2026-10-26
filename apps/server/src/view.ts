@@ -533,16 +533,17 @@ export async function projectView(
         : {}),
     };
   });
+  const eventEvidenceOwners = (snapshot: WorldState) => [
+    snapshot.experience?.awareness[scope.actorId],
+    snapshot.experience?.temporal?.actors[scope.actorId]?.chunks,
+    snapshot.perceptionEvidence?.[scope.actorId]?.received,
+    snapshot.experience?.forgotten[scope.actorId],
+    snapshot.experience?.corrections?.[scope.actorId],
+  ];
+  const capturedEventOwners = eventEvidenceOwners(world);
   const events = memo(
     'visibleEvents',
-    [
-      world.events,
-      world.experience?.awareness[scope.actorId],
-      world.experience?.temporal?.actors[scope.actorId]?.chunks,
-      world.perceptionEvidence?.[scope.actorId]?.received,
-      world.experience?.forgotten[scope.actorId],
-      world.experience?.corrections?.[scope.actorId],
-    ],
+    [world.events, ...capturedEventOwners],
     () => {
       // Current reception may be displayed without becoming a lasting memory.
       // Actor-owned receipts authorize the recent sequence; global events supply
@@ -1179,6 +1180,16 @@ export async function projectView(
   )
     throw new ViewChangedError();
   service.assertScope(scope);
+  // Natural expiry can remove a recent account without a creator edit. Recheck
+  // selected event facts after asynchronous preparation, only when this person's
+  // evidence owners changed; unrelated motion must not invalidate their view.
+  if (eventEvidenceOwners(service.world).some((owner, i) => owner !== capturedEventOwners[i])) {
+    const wanted = new Set(events.map((event) => event.id));
+    const before = receivedEventAccounts(world, scope.actorId, wanted, { current: true });
+    const after = receivedEventAccounts(service.world, scope.actorId, wanted, { current: true });
+    if (events.some((event) => !after.has(event.id) || !same(before.get(event.id)?.evidence, after.get(event.id)?.evidence)))
+      throw new ViewChangedError();
+  }
   return projected;
 }
 

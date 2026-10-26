@@ -559,7 +559,9 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
         const name =
           request.schemaName ?? request.task.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
         if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) throw new InvalidData('invalid_schema_name');
-        const schema: unknown = JSON.parse(serialize(request.schema, 500_000));
+        const schema: unknown = JSON.parse(
+          serialize(request.schema, 500_000, { preserveKeyOrder: true }),
+        );
         const validate = compileSchema(schema);
         const maxOutputTokens = request.maxOutputTokens ?? 4096;
         if (

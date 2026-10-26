@@ -1,3 +1,4 @@
+import { readableDecisionContext } from './response-context.js';
 import { entityHandle } from './entity-references.js';
 import {
   expandSituation,
@@ -3341,12 +3342,15 @@ export class AiDirector {
           })
         : undefined;
     let preview = startPreview();
-    const querySchema = schema.extend({
-      queries: z
-        .array(situationQuerySchema)
-        .max(prepared.situation.policy.maximumQueries)
-        .nullable(),
-    });
+    const querySchema = z
+      .object({
+        queries: z
+          .array(situationQuerySchema)
+          .max(prepared.situation.policy.maximumQueries)
+          .nullable(),
+        ...schema.shape,
+      })
+      .strict();
     const responseSchema = z.toJSONSchema(querySchema, { target: 'draft-7' });
     let value: unknown;
     if (requestedActivity) value = requestedActivity;
@@ -3379,7 +3383,7 @@ export class AiDirector {
               : limits.outputTokens,
             instructions:
               instructions +
-              ' You may make one batch of the supplied read-only situation queries when needed. For a query batch return an empty operations list, queries, and no invention. A final continuation follows only if funded; otherwise the character continues current behavior. For a complete decision set queries to null. Coordinates and geometry are received measurements, never inferred intent. Partial coverage does not prove absence.',
+              ' First choose one mode and write queries before operations. Set queries to null for a complete decision. You may make one batch of the supplied read-only situation queries when needed. For a query batch return an empty operations list, queries, and no invention. A final continuation follows only if funded; otherwise the character continues current behavior. For a complete decision set queries to null. Coordinates and geometry are received measurements, never inferred intent. Partial coverage does not prove absence.',
             context,
             schema: responseSchema,
             ...(preview ? { onProgress: preview.progress } : {}),
@@ -3455,7 +3459,7 @@ export class AiDirector {
           preview?.finish();
           preview = startPreview();
           const { expandedIds: _expandedIds, ...disclosedExpansion } = expansion;
-          context += '\nRequested received evidence: ' + JSON.stringify(disclosedExpansion);
+          context = `${readableDecisionContext({ ...prepared.context, situationQueries: false }, prepared.offered, prepared.prompt.includes('## Actions'))}\n${actorInvention.context}${appraisals ? '\nPermitted feeling proposals: ' + JSON.stringify(appraisals.context) : ''}\nRequested received evidence: ${JSON.stringify(disclosedExpansion)}`;
           if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
             throw new ContextBudgetError(
               'The bounded situation expansion exceeds the decision input allowance.',

@@ -556,8 +556,8 @@ describe(
         properties: Record<string, unknown>;
         required: string[];
       };
-      expect(Object.keys(schema.properties)).toEqual(['operations', 'queries']);
-      expect(schema.required).toEqual(['operations', 'queries']);
+      expect(Object.keys(schema.properties)).toEqual(['queries', 'operations']);
+      expect(schema.required).toEqual(['queries', 'operations']);
       expect(schema.properties['operations']).not.toHaveProperty('minItems');
       expect(
         [...propertyNames(schema)].filter((name) =>

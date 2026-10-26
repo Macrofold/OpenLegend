@@ -121,7 +121,7 @@ export class MacrofoldTransport {
         ...(matchVersion === undefined ? {} : { 'If-Match': JSON.stringify(matchVersion) }),
         ...(operationId ? { 'Idempotency-Key': operationId } : {}),
       },
-      ...(body === undefined ? {} : { body: serialize(body, 500_000) }),
+      ...(body === undefined ? {} : { body: serialize(body, 500_000, { preserveKeyOrder: true }) }),
       signal: control,
     });
     if (response.ok && response.headers.get('content-type')?.includes('text/event-stream')) {

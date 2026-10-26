@@ -483,6 +483,29 @@ describe('standalone Macrofold schema generation', () => {
     ]);
   });
 
+  it('preserves caller schema field order through the actual Macrofold request envelope', async () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        queries: { type: 'null' },
+        operations: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['queries', 'operations'],
+      additionalProperties: false,
+    };
+    const f = fixture({ value: generationRaw('{"queries":null,"operations":[]}') });
+    const result = await generationClient(f.fetcher).generate({ ...generationRequest, schema });
+    expect(result.outcome).toBe('value');
+    const body = f.bodies[0] as {
+      input: { response_format: { json_schema: { schema: { properties: object } } } };
+    };
+    expect(Object.keys(body.input.response_format.json_schema.schema.properties)).toEqual([
+      'queries',
+      'operations',
+    ]);
+    expect(f.paths.filter((path) => path === '/v1/inferences')).toHaveLength(1);
+  });
+
   it('submits native OpenRouter chat and retains provider-reported cost separately', async () => {
     const f = fixture({ value: generationRaw() });
     const accepted = vi.fn(async () => {});

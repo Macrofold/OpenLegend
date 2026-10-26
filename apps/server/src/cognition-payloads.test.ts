@@ -1635,11 +1635,18 @@ describe('actual director situation query continuation', () => {
               };
         if (generations === 2) {
           expect(request.context).toContain('Requested received evidence:');
+          expect(request.context).toContain('Examples: empty {"operations":[]}');
+          expect(request.context).not.toContain('Examples: empty {"queries":null');
           expect(
             (request.schema['properties'] as Record<string, unknown>)['queries'],
           ).toBeUndefined();
         } else {
           expect(request.schema['required'] as string[]).toContain('queries');
+          expect(Object.keys(request.schema['properties'] as object)).toEqual([
+            'queries',
+            'operations',
+          ]);
+          expect(request.context).toContain('Examples: empty {"queries":null,"operations":[]}');
           expect(request.context).toContain('## Received situation');
         }
         request.onProgress?.({ kind: 'text', text: JSON.stringify(result), sequence: 1 });

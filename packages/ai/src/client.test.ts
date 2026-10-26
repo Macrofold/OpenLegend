@@ -1,3 +1,4 @@
+import { digest, serialize } from './validation.js';
 import { describe, expect, it, vi } from 'vitest';
 import { createAiClient, estimateCostUsd } from './index.js';
 import type { FetchTransport, GenerateRequest, JudgeRequest } from './types.js';
@@ -214,6 +215,29 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
       }
     },
   );
+
+  it('preserves declared schema field order on the wire without changing canonical request hashing', async () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        queries: { type: 'null' },
+        operations: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['queries', 'operations'],
+      additionalProperties: false,
+    };
+    const fetcher = vi.fn<FetchTransport>(async () =>
+      response(generateResponse('{"queries":null,"operations":[]}')),
+    );
+    const result = await createAiClient({
+      openai: { apiKey: 'fixture', prices },
+      fetch: fetcher,
+    }).generate({ ...generation, schema });
+    expect(result.outcome).toBe('value');
+    const body = JSON.parse(String(fetcher.mock.calls[0]![1].body));
+    expect(Object.keys(body.text.format.schema.properties)).toEqual(['queries', 'operations']);
+    expect(result.receipt.providerRequestDigest).toBe(digest(serialize(body, 500000)));
+  });
 
   it('uses Responses strict JSON Schema, scans beyond reasoning output, and validates locally', async () => {
     const fetcher = vi.fn<FetchTransport>(async () => response(generateResponse()));

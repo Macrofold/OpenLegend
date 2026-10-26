@@ -158,8 +158,12 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
       if (!validEndpoint(endpoint) || !model || model.length > 128 || /[\r\n]/.test(options.apiKey))
         throw new OutcomeError('unavailable', 'invalid_provider_configuration');
       const prepared = prepare(model, contextJson);
-      const body = serialize(prepared.body, maxRequestBytes);
-      receipt.providerRequestDigest = digest(body);
+      const canonicalBody = serialize(prepared.body, maxRequestBytes);
+      receipt.providerRequestDigest = digest(canonicalBody);
+      const body =
+        provider === 'openai'
+          ? serialize(prepared.body, maxRequestBytes, { preserveKeyOrder: true })
+          : canonicalBody;
       const remaining = Math.min(
         timeoutMs,
         (request.deadlineMs ?? started + timeoutMs) - Date.now(),
@@ -294,7 +298,9 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
         const name =
           request.schemaName ?? request.task.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
         if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) throw new InvalidData('invalid_schema_name');
-        const schema: unknown = JSON.parse(serialize(request.schema, maxRequestBytes));
+        const schema: unknown = JSON.parse(
+          serialize(request.schema, maxRequestBytes, { preserveKeyOrder: true }),
+        );
         const validate = compileSchema(schema);
         const outputLimit = request.maxOutputTokens ?? maxOutputTokens;
         if (!Number.isSafeInteger(outputLimit) || outputLimit < 1 || outputLimit > maxOutputTokens)

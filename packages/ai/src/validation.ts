@@ -16,8 +16,12 @@ export function digest(value: string): string {
   return createHash('sha256').update(value).digest('hex');
 }
 
-/** Canonical JSON: no implicit toJSON, omitted undefined values, cycles, or non-finite numbers. */
-export function serialize(value: unknown, maxBytes: number): string {
+/** Strict JSON, canonical by default: no implicit toJSON, omitted undefined values, cycles, or non-finite numbers. */
+export function serialize(
+  value: unknown,
+  maxBytes: number,
+  options: { preserveKeyOrder?: boolean } = {},
+): string {
   let nodes = 0;
   const ancestors = new Set<object>();
   function visit(v: unknown, depth: number): unknown {
@@ -40,7 +44,11 @@ export function serialize(value: unknown, maxBytes: number): string {
       result = Array.from(v, (item) => visit(item, depth + 1));
     } else {
       const obj: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
-      for (const key of Object.keys(v).sort()) {
+      // Schema property order controls the generated field order. Transport may
+      // preserve it while canonical validation/digests keep the default sorting.
+      const keys = Object.keys(v);
+      if (!options.preserveKeyOrder) keys.sort();
+      for (const key of keys) {
         const descriptor = Object.getOwnPropertyDescriptor(v, key);
         if (!descriptor || !('value' in descriptor)) throw new InvalidData('non_json_input');
         obj[key] = visit(descriptor.value, depth + 1);

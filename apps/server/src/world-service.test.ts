@@ -3,7 +3,7 @@ import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from '@open-legend/domain';
-import { worldPosition } from '@open-legend/domain';
+import { worldPosition, initializePerception } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -483,4 +483,41 @@ describe('public projection', () => {
     const action = (await projectView(service)).player.action;
     expect(action === null || Number.isFinite(action.progress)).toBe(true);
   });
+});
+
+
+it('withdraws a pending player view when its current-only heard sound disappears', async () => {
+  const { service } = await setup();
+  await activate(service);
+  await service.control({ paused: false });
+  await editWorld(service, (world) => {
+    const player = entityGet(world.entities, PLAYER_ID)!;
+    const other = entityGet(world.entities, NPC_ID)!;
+    player.actor!.capabilities = {
+      cognition: true, innerWorld: true, speech: true, memory: false, comprehendsSpeech: true,
+    };
+    setSpatialPosition(world, player, {x:1,y:0,z:2}, worldSupport(player));
+    setSpatialPosition(world, other, {x:2,y:0,z:2}, worldSupport(other));
+    initializePerception(world, []);
+  });
+  expect((await service.say('temporary-heard-view', NPC_ID, 'An actually heard temporary sentence.', PLAYER_ID)).ok).toBe(true);
+  expect(JSON.stringify((await projectView(service)).events)).toContain('voice-like sound');
+  let started!: () => void, release!: () => void;
+  const waiting = new Promise<void>((resolve) => { started = resolve; });
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  const delayed = vi.spyOn(service, 'presentationReleaseFor').mockImplementationOnce(async () => {
+    started();
+    await gate;
+    return undefined;
+  });
+  const pending = projectView(service);
+  const rejected = expect(pending).rejects.toThrow('The world changed');
+  await waiting;
+  const historyEpoch = service.historyEpoch;
+  await service.tick(0.005);
+  expect(service.historyEpoch).toBe(historyEpoch);
+  release();
+  await rejected;
+  delayed.mockRestore();
+  expect(JSON.stringify((await projectView(service)).events)).not.toContain('voice-like sound');
 });

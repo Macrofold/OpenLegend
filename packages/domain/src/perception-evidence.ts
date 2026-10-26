@@ -17,7 +17,12 @@ import { outwardStates } from './perception-frame.js';
 import { equippedItems } from './equipment.js';
 import { itemsForOwner } from './objects.js';
 import { retainObservationConfirmation } from './experience.js';
-import { currentDetailedAttention, currentAttentionCues, updateAttention } from './attention.js';
+import {
+  currentDetailedAttention,
+  currentAttentionCues,
+  updateAttention,
+  type AttentionEntry,
+} from './attention.js';
 import {
   validateReceivedSurfacePatch,
   validateReceivedBoundary,
@@ -1368,9 +1373,17 @@ export function reconcileVisualEvidence(
     through: world.simTime,
     revision: (state.visualConfirmation?.revision ?? 0) + 1,
   };
-  refreshReceivedGeometry(world, observer.id);
+  const newGeometry = refreshReceivedGeometry(world, observer.id).acquired;
   const priorCues = new Set(currentAttentionCues(world, observer.id).map((cue) => cue.id));
-  reconcileAttendedTemporalEvidence(world, observer.id, beforeAttention, [], [...attentionChanges]);
+  const recordedGeometry = reconcileAttendedTemporalEvidence(
+    world,
+    observer.id,
+    beforeAttention,
+    [],
+    [...attentionChanges],
+    true,
+    newGeometry,
+  );
   evaluateAttentionRelations(world, observer.id);
   const geometry = currentReceivedGeometry(world, observer.id).observations;
   for (const cue of currentAttentionCues(world, observer.id)) {
@@ -1380,11 +1393,31 @@ export function reconcileVisualEvidence(
     );
     if (!anchor) continue;
     for (const observation of geometry) {
+      if (recordedGeometry?.has(observation.id)) continue;
       const facts = cue.proof.filter(
         (fact) =>
           fact.source.id === observation.id && fact.source.revision === observation.revision,
       );
       if (!facts.length) continue;
+      for (const facet of observation.facets)
+        if (facet.value.kind === 'physical-boundary')
+          for (const support of [
+            facet.value.boundary.nearSurface.support,
+            facet.value.boundary.farSurface.support,
+          ]) {
+            if (recordedGeometry?.has(support.source.id)) continue;
+            const original = geometry.find((value) => value.id === support.source.id);
+            if (original)
+              captureTemporalObservation(
+                world,
+                observer.id,
+                original,
+                [original.id, cue.id],
+                false,
+                selectedTemporalPolicy(world).recent,
+                { contextSubjects: [anchor.exposure.episodeId], change: 'baseline' },
+              );
+          }
       captureTemporalObservation(
         world,
         observer.id,
@@ -1399,6 +1432,67 @@ export function reconcileVisualEvidence(
       );
     }
   }
+}
+
+/** Recording context links actual received geometry to the attended exposures at
+ * this boundary. It asserts no spatial relation or scene meaning. Entry baselines
+ * reuse the original facts/times; unchanged confirmation alone writes nothing. */
+function captureAttendedGeometryContext(
+  world: WorldState,
+  observerId: string,
+  previous: readonly AttentionEntry[],
+  acquired: readonly ObservationContribution[],
+): ReadonlySet<string> | undefined {
+  const entries = currentDetailedAttention(world, observerId);
+  const oldContexts = new Set(previous.map((entry) => entry.exposure.episodeId));
+  const newContexts = entries
+    .map((entry) => entry.exposure.episodeId)
+    .filter((id) => !oldContexts.has(id));
+  const active = new Set([...oldContexts, ...entries.map((entry) => entry.exposure.episodeId)]);
+  if (!active.size || (!acquired.length && !newContexts.length)) return;
+  const available = currentReceivedGeometry(world, observerId).observations;
+  const byId = new Map(available.map((observation) => [observation.id, observation]));
+  const fresh = new Set(acquired.map((observation) => observation.id));
+  const scopes = new Map<string, { observation: ObservationContribution; subjects: Set<string> }>();
+  const include = (observation: ObservationContribution, subjects: Iterable<string>) => {
+    let scope = scopes.get(observation.id);
+    if (!scope) scopes.set(observation.id, (scope = { observation, subjects: new Set() }));
+    for (const subject of subjects) scope.subjects.add(subject);
+  };
+  for (const observation of acquired) include(observation, active);
+  if (newContexts.length) for (const observation of available) include(observation, newContexts);
+  // A received edge needs its actual near/far patch facts even when those were
+  // acquired before this recording scope began. Never consult today's terrain.
+  for (const { observation, subjects } of scopes.values())
+    for (const facet of observation.facets)
+      if (facet.value.kind === 'physical-boundary')
+        for (const support of [
+          facet.value.boundary.nearSurface.support,
+          facet.value.boundary.farSurface.support,
+        ]) {
+          const original = byId.get(support.source.id);
+          if (original) include(original, subjects);
+        }
+  const captured = new Set<string>();
+  // Source patches precede their dependent boundaries in this owned collection.
+  for (const observation of available) {
+    const scope = scopes.get(observation.id);
+    if (!scope) continue;
+    const receipt = captureTemporalObservation(
+      world,
+      observerId,
+      observation,
+      [observation.id],
+      false,
+      selectedTemporalPolicy(world).recent,
+      {
+        contextSubjects: [...scope.subjects],
+        change: fresh.has(observation.id) ? 'change' : 'baseline',
+      },
+    );
+    if (receipt) captured.add(observation.id);
+  }
+  return captured;
 }
 
 function pruneLostBodyIndividuals(
@@ -1432,9 +1526,13 @@ export function reconcileAttendedTemporalEvidence(
   directSubjects: readonly string[] = [],
   changedSourceIds?: readonly string[],
   creditContacts = true,
-): void {
+  newGeometry: readonly ObservationContribution[] = [],
+): ReadonlySet<string> | undefined {
   const observer = entityGet(world.entities, observerId);
   if (!observer || !hasMemory(observer)) return;
+  const priorEntries = currentDetailedAttention(world, observerId).filter((entry) =>
+    before.has(entry.sourceId),
+  );
   const result = updateAttention(world, observerId, { directSubjects, changedSourceIds });
   const after = new Set(result.after);
   const selected = new Set([...before, ...after]);
@@ -1528,6 +1626,7 @@ export function reconcileAttendedTemporalEvidence(
       );
     }
   }
+  return captureAttendedGeometryContext(world, observerId, priorEntries, newGeometry);
 }
 
 /** Physical loss ends availability immediately; episode/familiarity continuity is separate. */
