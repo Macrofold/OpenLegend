@@ -4,7 +4,7 @@
 
 ## Current progress
 
-Ashes of Creation, New World / Aeternum, Lost Ark and Guild Wars 2 are researched and reviewed across R01–R15, each with five substantive firsthand editorial assessments and explicit evidence limits. Their completed dossiers are committed with the corresponding ledger updates. Guild Wars 3 is next; its unreleased status requires a development/promise assessment rather than invented player outcomes. The comparative essay records the census, persistence definitions and existing design routes; its full game-by-game conclusions and the final integration gates remain open.
+Ashes of Creation, New World / Aeternum, Lost Ark and Guild Wars 2 are researched and reviewed across R01–R15, each with five substantive firsthand editorial assessments and explicit evidence limits. Their completed dossiers are committed with the corresponding ledger updates. Guild Wars 3 is in progress; its official systems/lore and observed-alpha evidence are being assessed separately from unproven live-service outcomes. The comparative essay records the census, persistence definitions and existing design routes; its full game-by-game conclusions and the final integration gates remain open.
 
 ## Scope and evidence rules
 
@@ -24,7 +24,7 @@ Ashes of Creation, New World / Aeternum, Lost Ark and Guild Wars 2 are researche
 | [New World / Aeternum](dossiers/new-world.md)      | Original launch, later overhaul, current service                       | Researched and reviewed; committed with this ledger |
 | [Lost Ark](dossiers/lost-ark.md)                   | Korean and Western evidence separated; test the pay-to-win explanation | Researched and reviewed; committed with this ledger |
 | [Guild Wars 2](dossiers/guild-wars-2.md)           | Released game and expansion changes                                    | Researched and reviewed; committed with this ledger |
-| Guild Wars 3                                       | Announced/development evidence only                                    | Pending                                             |
+| [Guild Wars 3](dossiers/guild-wars-3.md) | Announced/development evidence and observed alpha, not released outcomes | In progress; partial checkpoint |
 | The Elder Scrolls Online                           | Current game versus launch; PC add-ons separated                       | Pending                                             |
 | The Lord of the Rings Online                       | Long-lived service, world/lore and player culture                      | Pending                                             |
 | Final Fantasy XIV                                  | Refresh existing dossier; 1.0, ARR and later eras distinguished        | Pending                                             |
