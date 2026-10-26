@@ -307,7 +307,6 @@ All sources were accessed **26 October 2026**. “Text read” means the substan
 | [M55] | **gaming.tools, Pororin Forest Guardians.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered faction text read. |
 | [M56] | **gaming.tools, Master Du.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered character text read. |
 | [M57] | **gaming.tools, Gabriel Caliburn knowledge.** Version 2.0.0, updated 30 Sep 2026. Fan-hosted recovered character text read; later-story spoiler. |
-
 | [M58] | **Pearl Abyss, patch 1.00.03.** March 2026. Primary update text read; automated initial Visione playback after Lantern discovery. |
 | [M59] | **Gamers Heroes, Blaine Smith, artifact meter guide.** 19 Mar 2026. Original guide body read; combat acquisition route, no verified current cap. |
 

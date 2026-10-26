@@ -1,6 +1,6 @@
 # Crimson Desert: production, technology, marketing, and commercial evidence
 
-**Research cut-off: 26 October 2026.** This chapter separates developer testimony, reported financial results, third-party estimates, and our interpretation. References B01–B34 are local to this chapter; the source register records access limits. No claim here depends on having personally played the game, watched an untranscribed video, inspected its source code, or obtained private sales data.
+**Research cut-off: 26 October 2026.** This chapter separates developer testimony, reported financial results, third-party estimates, and our interpretation. References B01–B39 are local to this chapter; the source register records access limits. No claim here depends on having personally played the game, watched an untranscribed video, inspected its source code, or obtained private sales data.
 
 ## 1. The central finding
 
@@ -127,7 +127,9 @@ The official audio feature names Huiman Ryu as executive audio director and Inro
 
 The useful production lesson is to plan sound as a system with authored identity. Ambient beds establish a location, close sound confirms action, and music changes the emotional reading of an event. If all three operate at maximum intensity, they compete. If they are timed and differentiated, an ordinary journey can provide enough contrast for a spectacular encounter to feel exceptional.
 
-The available material does **not** justify a detailed claim about Crimson Desert’s full motion-capture, facial-animation, retargeting, or outsourced-art pipeline. Those remain research gaps. Reports of a studio facility or a performer’s participation would establish a narrower fact than “this is how all animation was produced.” This dossier does not fill that gap with speculation about camera counts, neural animation, or procedural dialogue.
+Pearl Abyss’s Art Center announcement describes investment in motion capture and 3D scanning, including a planned roughly 1,000-square-meter capture studio with 150 cameras and space for wire action. It explicitly names Crimson Desert among the intended beneficiaries. This establishes the studio’s production investment, not the final provenance of every animation. [B35]
+
+An early participant’s public correction is a useful warning about production attribution: the poster says their facial/motion data served the initial Kliff announcement period and was no longer used after a technology change. This self-report is not independent confirmation of the shipped pipeline. [B36] The complete final facial-animation, retargeting and outsourcing pipeline remains undocumented here; neither a facility description nor an old credit supplies that missing detail.
 
 ## 7. Marketing: a sequence of promises, demonstrations, and renewed reasons to return
 
@@ -194,6 +196,14 @@ The distinction matters commercially. A free improvement can reduce uncertainty 
 
 For Open Legend, maintain a visible connection between reported friction and a shipped improvement. Explain the player-facing benefit and any changed rule. A regular stream of activity is only valuable if it improves the experience; patch frequency by itself does not measure quality. Excessively rapid changes can also destabilize guides, builds, and player expectations. The useful cadence is one the team can validate and communicate reliably.
 
+### Compatibility and asset transparency are part of the promise
+
+A launch-period PC Gamer hardware report describes an Intel Arc machine being blocked from starting the game. [B38] The developer’s current support FAQ states that Arc support was added in patch 1.03.00 and that further compatibility/performance work continues. [B37] This is a dated launch failure and a subsequent change; it is not evidence that October Arc systems are universally unsupported or uniformly problem-free.
+
+In March, Pearl Abyss also acknowledged that some experimental AI-created 2D props had reached release despite an intention to replace them, and apologized for insufficient disclosure. The Verge reported the statement and planned audit; the original X post was inaccessible directly in this run. [B39] This evidence does not establish the proportion of game assets involved or confirm that every replacement was completed.
+
+The applicable lesson is precise promise management: publish supported hardware clearly, distinguish prototypes from production-ready assets, and communicate the actual role of generated content. Neither incident establishes a general verdict on all AI-assisted development or all custom engines. Both show how a concrete mismatch between presentation and delivery can distract from an otherwise impressive game.
+
 ## 10. What to take into Open Legend, and how to test it
 
 These are proposed design and production experiments drawn from the evidence above. They are not a recommendation to reproduce Crimson Desert’s budget, engine, scale, or feature list.
@@ -251,6 +261,11 @@ All sources below were checked on **26 October 2026**. “Primary” means the c
 | B32 | [Charting the Unknown delay](https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=134), 30 Sep 2026; primary. | Full notice read. UTC release time used; upcoming at cut-off. |
 | B33 | [Charting the Unknown feature overview](https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=137), 20 Oct 2026; primary. | Written feature/prerequisite list read. Promises separated from shipped base-game mechanics. |
 | B34 | [Patch 2.00.00, Enhanced](https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=123), 25 Aug 2026; primary release notes. | Dated heading, Enhanced identity, and all-platform availability checked. Resolves stale homepage future tense. |
+| B35 | [Pearl Abyss Art Center announcement](https://www.pearlabyss.com/en-US/Board/Detail?_boardNo=12018), undated retrieved body; primary. | Facility investment and planned capture capabilities; not an audit of the final animation pipeline. |
+| B36 | [Early capture participant’s corrected account](https://www.reddit.com/r/CrimsonDesert/comments/1so14or/i_did_performance_capture_and_acted_as_kliff_in/), edited post with relative date; firsthand self-report. | Current correction read; older comments do not override the correction and identity was not independently authenticated. |
+| B37 | [Pearl Abyss Intel Arc FAQ](https://support.pearlabyss.com/crimsondesert/en-US/Faq/Home/Detail?_faqNo=604), updated 23 Jun 2026; primary. | Support introduced in 1.03; continuing compatibility work. |
+| B38 | [PC Gamer, Intel Arc support report](https://www.pcgamer.com/hardware/graphics-cards/pearl-abyss-working-on-bringing-arc-gpu-support-to-crimson-desert-with-intel-ready-to-assist/), 23 Mar 2026; original hardware report. | Reporter’s launch attempt and contemporaneous developer response; not current benchmark evidence. |
+| B39 | [The Verge, AI asset statement](https://www.theverge.com/games/898771/crimson-desert-dev-apologizes-ai-art), 22 Mar 2026; secondary report of publisher statement. | Body read; [original statement](https://x.com/crimsondesert_/status/2035718975909470706) returned 403. Audit intention, not verified completed removal. |
 
 ### Deliberately unresolved or excluded claims
 
@@ -296,3 +311,8 @@ All sources below were checked on **26 October 2026**. “Primary” means the c
 [B32]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=134
 [B33]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=137
 [B34]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=123
+[B35]: https://www.pearlabyss.com/en-US/Board/Detail?_boardNo=12018
+[B36]: https://www.reddit.com/r/CrimsonDesert/comments/1so14or/i_did_performance_capture_and_acted_as_kliff_in/
+[B37]: https://support.pearlabyss.com/crimsondesert/en-US/Faq/Home/Detail?_faqNo=604
+[B38]: https://www.pcgamer.com/hardware/graphics-cards/pearl-abyss-working-on-bringing-arc-gpu-support-to-crimson-desert-with-intel-ready-to-assist/
+[B39]: https://www.theverge.com/games/898771/crimson-desert-dev-apologizes-ai-art

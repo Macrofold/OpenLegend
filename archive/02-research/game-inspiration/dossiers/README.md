@@ -6,6 +6,10 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Crimson Desert — October 2026 addition
+
+[Crimson Desert — G185](crimson-desert.md) covers the released game and Enhanced, major mechanics and lore, broad reception, development/marketing/commercial evidence and the community modding ecosystem. Start with its question-based reading routes; [Open Legend applications](crimson-desert/05-openlegend-lessons.md) connect research proposals to existing owners. The [scoped record](../research-progress-crimson-desert-2026-10-26.md) preserves completion and evidence limits.
+
 ## Shared crews and persistent survival — October 2026 addition
 
 The [scoped ledger](../research-progress-pirate-games-2026-10-20.md) records the separately authorized Sea of Thieves and ATLAS passes and their completion commits. The earlier ARK research retains its own edition boundaries and audit history.
@@ -63,3 +67,4 @@ Companions: [GM adjudication and simulation research](../mechanics/dungeons-and-
 **Does a convenience preserve the interesting decision?** Read the reviews and version histories beside the mechanics: saving, encounter controls, growth boosts, equipment information and timed-input support alter different costs. A launch complaint is not proof that every later version behaves the same way.
 
 For broader entry points, use the [interaction lookup](../mechanics/interaction-lookup.md), [comparative map](../essays/comparative-map.md) and [evidence interpretation](../essays/how-to-interpret-the-evidence.md). For completion status, commits and remaining whole-library gates, return to the [progress ledger](../research-progress.md). The separate [D&D packet status](../games/dungeons-and-dragons.md#evidence-and-completion-status) covers the additive tabletop expansion.
+

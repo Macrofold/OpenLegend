@@ -174,7 +174,7 @@ The Open Legend implication is a research question: can an early session deliver
 
 In the inspected later discussion, Reallyroundthefamily describes an existing long playthrough becoming awkward to resume after story revision. PomponOrsay already liked the original experience and welcomes free additions. Seph0007 returns around updates while retaining reservations about the story. Ok-Credit-9201 considers the world appealing but a poor match for players prioritizing character and narrative. Flare12345678 reports stopping before reaching the exciting dragon material. Other comments favor waiting for a sale or a more settled version. Positive and negative accounts coexist within the game's own community. [P27]
 
-This exposes two different update costs. A usability fix can make the existing journey easier to resume. Rewriting foundational context can create uncertainty about whether to continue, replay, or wait. For Open Legend, patch planning should include continuity for existing saves and an intelligible account of what returning players have missed. That is an inference from the discussion, not evidence that Crimson Desert's overall update strategy failed.
+This exposes two different update costs. A usability fix can make the existing journey easier to resume. Rewriting foundational context can create uncertainty about whether to continue, replay, or wait. For a future Open Legend release with supported player saves, patch planning should include continuity and an intelligible account of what returning players have missed. Current development saves remain disposable under the [root development-state policy](../../../../../AGENTS.md#development-save-policy); this comparison does not authorize compatibility work. That is an inference from the discussion, not evidence that Crimson Desert's overall update strategy failed.
 
 ## 6. What makes the game great—and where that mechanism breaks
 
@@ -255,7 +255,7 @@ This model deliberately separates session quality from total hours. A player can
 
 6. **Test the full ability vocabulary against real encounters.** A move that exists but is hard to remember, difficult to aim, or rarely useful is largely absent from the experienced game. Investigate dominant strategies, camera behavior, input conflicts, and opportunities to recover from mistakes. Do not use difficulty as a substitute for expressive depth.
 
-7. **Plan updates around the continuity of a player's journey.** Publish intelligible changes and offer an understandable return path. When revising narrative foundations, consider how an existing save communicates new context without demanding an unwanted restart. Listen to both those requesting fixes and those attached to the previous experience.
+7. **For a future supported player release, plan updates around the continuity of a player's journey.** Publish intelligible changes and offer an understandable return path. When revising narrative foundations, consider how an existing save communicates new context without demanding an unwanted restart. Listen to both those requesting fixes and those attached to the previous experience.
 
 8. **Preserve disagreement in future research.** Recruit people who enjoy wandering and people who need a strong narrative purpose; people who play in short sessions and people who settle in for hours. Record difficulty, hardware, input device, patch, and progression. The goal is to identify which design choices serve which desired experience, not force a universal verdict.
 
