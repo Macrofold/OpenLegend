@@ -2019,13 +2019,50 @@ export class WorldService {
       after = this.world;
     const unchanged = (a: unknown[] | undefined, b: unknown[] | undefined) =>
       a === b || (!includeAppends && !!a && !!b && appendedRecordCount(a, b) !== undefined);
+    const oldTemporal = before?.experience?.temporal,
+      newTemporal = after.experience?.temporal,
+      oldHistory = oldTemporal?.actors[actorId],
+      newHistory = newTemporal?.actors[actorId];
+    const chunksUnchanged =
+      oldHistory?.chunks === newHistory?.chunks ||
+      (!oldHistory?.chunks.length && !newHistory?.chunks.length) ||
+      (!includeAppends &&
+        (!oldHistory ||
+          (!!newHistory &&
+            newHistory.chunks.length >= oldHistory.chunks.length &&
+            oldHistory.chunks.every((chunk, index) => {
+              const next = newHistory.chunks[index]!;
+              return (
+                chunk === next || (chunk.id === next.id && unchanged(chunk.receipts, next.receipts))
+              );
+            }))));
+    const supportsUnchanged =
+      oldHistory?.supports === newHistory?.supports ||
+      (!Object.keys(oldHistory?.supports ?? {}).length &&
+        !Object.keys(newHistory?.supports ?? {}).length) ||
+      (!includeAppends &&
+        Object.entries(oldHistory?.supports ?? {}).every(
+          ([id, support]) => newHistory?.supports?.[id] === support,
+        ));
+    // Shared fragments alone grant no read. Compare only this actor's actual receipts
+    // and sparse proof; another observer's source-pool update cannot force a save.
+    const temporalUnchanged =
+      chunksUnchanged &&
+      supportsUnchanged &&
+      (!oldHistory ||
+        (!oldHistory.count && !Object.keys(oldHistory.supports ?? {}).length) ||
+        (oldHistory.physicalLife === newHistory?.physicalLife &&
+          oldHistory.epoch === newHistory?.epoch &&
+          oldHistory.releasedThrough === newHistory?.releasedThrough &&
+          oldTemporal?.namespace === newTemporal?.namespace));
     if (
       !before ||
       !unchanged(before.memories[actorId], after.memories[actorId]) ||
       !unchanged(before.experience?.awareness[actorId], after.experience?.awareness[actorId]) ||
       !unchanged(before.experience?.summaries[actorId], after.experience?.summaries[actorId]) ||
       before.experience?.forgotten[actorId] !== after.experience?.forgotten[actorId] ||
-      before.experience?.corrections?.[actorId] !== after.experience?.corrections?.[actorId]
+      before.experience?.corrections?.[actorId] !== after.experience?.corrections?.[actorId] ||
+      !temporalUnchanged
     )
       await this.whenDurable();
   }

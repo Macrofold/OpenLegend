@@ -23,13 +23,10 @@ import {
   evidenceSourceHandle,
   permittedSourceHandle,
   projectEntityMarkers,
+  historicalAccountText,
 } from './entity-references.js';
-import {
-  currentFacetForModel,
-  facetValueForModel,
-  observationForModel,
-} from './experience-context.js';
-import type { BoundsQueryCursor } from '@open-legend/spatial';
+import { facetValueForModel, observationForModel } from './experience-context.js';
+import type { TemporalHistoryPage } from './temporal-storage.js';
 
 const reference = z.string().min(1).max(120);
 // Each branch already has an exclusive literal kind. The ordinary union emits
@@ -40,23 +37,19 @@ export const situationQuerySchema = z.union([
       kind: z.literal('near'),
       anchor: reference,
       radius: z.number().finite().min(0).max(100),
-      cursor: reference.nullable(),
     })
     .strict(),
   z.object({ kind: z.literal('separation'), first: reference, second: reference }).strict(),
-  z
-    .object({ kind: z.literal('boundaries'), anchor: reference, cursor: reference.nullable() })
-    .strict(),
+  z.object({ kind: z.literal('boundaries'), anchor: reference }).strict(),
   z
     .object({
       kind: z.literal('history'),
       subject: reference.nullable(),
       from: z.number().finite().min(0),
       through: z.number().finite().min(0),
-      cursor: reference.nullable(),
     })
     .strict(),
-  z.object({ kind: z.literal('expand'), region: reference, cursor: reference.nullable() }).strict(),
+  z.object({ kind: z.literal('expand'), region: reference }).strict(),
 ]);
 export type SituationQuery = z.infer<typeof situationQuerySchema>;
 
@@ -100,7 +93,7 @@ function temporalValueForModel(
   if (value.kind === 'personal-account')
     return {
       kind: value.kind,
-      text: projectEntityMarkers(value.text, world, actorId),
+      text: historicalAccountText(value.text),
       eventType: value.eventType,
     };
   if (value.kind === 'received-motion')
@@ -201,10 +194,13 @@ export function captureSituation(
     frames.forEach((frame, id) => frameIds.set(JSON.stringify(frame), id));
   };
   const detailIds = new Set(entries.map((entry) => entry.sourceId));
-  const bodyFacts = (id: string) => {
+  const bodyFacts = (id: string, kinds?: readonly string[]) => {
     const facets = currentObservedFacets(world, actorId, id);
     const rendered = facets
-      .filter((facet) => facet.value.kind !== 'perceived-feature')
+      .filter(
+        (facet) =>
+          facet.value.kind !== 'perceived-feature' && (!kinds || kinds.includes(facet.value.kind)),
+      )
       .map((facet) => {
         const reference = permittedSourceHandle(world, actorId, [
           'current-fact',
@@ -285,15 +281,13 @@ export function captureSituation(
   const waiting = Object.entries(world.perceptionEvidence?.[actorId]?.attention?.candidates ?? {})
     .filter(([, candidate]) => candidate.presentedDescription !== candidate.descriptionRevision)
     .sort((a, b) => a[1].order - b[1].order);
-  const discovery: Array<{ reference: string; facts: unknown[] }> = [];
+  const discovery: Array<{ reference: string; facts: ReturnType<typeof bodyFacts> }> = [];
   let discoveryBytes = 0;
   const presentedKeys = entries.map((entry) => entry.key);
   for (const [key, candidate] of waiting) {
     if (detailIds.has(candidate.sourceId)) continue;
     if (discovery.length >= policy.discoveryRows) break;
-    const facts = currentObservedFacets(world, actorId, candidate.sourceId)
-      .filter((facet) => ['body', 'association', 'carried'].includes(facet.value.kind))
-      .map((facet) => currentFacetForModel(world, actorId, facet));
+    const facts = bodyFacts(candidate.sourceId, ['body', 'association', 'carried']);
     const row = { reference: entityHandle(world, actorId, candidate.sourceId), facts };
     const bytes = Buffer.byteLength(JSON.stringify(row));
     if (discoveryBytes + bytes > policy.discoveryBytes) continue;
@@ -528,7 +522,7 @@ export function captureSituation(
   packet.coverage.hierarchyVisits = cover.visited;
   const presented = captureAttentionPresentation(world, actorId, presentedKeys);
   const currentReferences = Object.fromEntries(
-    packet.detailed.flatMap((row) =>
+    [...packet.detailed, ...packet.discovery].flatMap((row) =>
       row.facts.facts.map(
         (fact) =>
           [
@@ -538,19 +532,6 @@ export function captureSituation(
       ),
     ),
   );
-  const expansionCursors = new Map<
-    string,
-    {
-      signature: string;
-      offset?: number;
-      before?: { epoch: string; ordinal: number; at: number; order: number };
-    }
-  >();
-  const cursors = new Map<
-    string,
-    { signature: string; cursor?: BoundsQueryCursor; pending?: string[] }
-  >();
-  let cursorSequence = 0;
   const queryBodies = (
     input: Extract<SituationQuery, { kind: 'near' | 'separation' | 'expand' }>,
     visits: number,
@@ -565,23 +546,12 @@ export function captureSituation(
     const id = input.kind === 'near' ? references.get(input.anchor) : undefined;
     const anchor = id ? scene.bodies.get(id) : undefined;
     const region = input.kind === 'expand' ? regions.get(input.region) : undefined;
-    const signature = JSON.stringify({ ...input, cursor: undefined });
-    const continuation = input.cursor ? cursors.get(input.cursor) : undefined;
-    if (
-      (input.cursor && continuation?.signature !== signature) ||
-      (input.kind === 'near' ? !anchor : region === undefined)
-    )
+    if (input.kind === 'near' ? !anchor : region === undefined)
       return { result: { status: 'unavailable' }, visited: 0 };
-    const found = continuation?.pending?.length
-      ? {
-          values: continuation.pending.map((id) => scene.bodies.get(id)!),
-          visited: 0,
-          status: continuation.cursor ? ('partial' as const) : ('complete' as const),
-          cursor: continuation.cursor,
-        }
-      : input.kind === 'near'
-        ? receivedNear(scene, anchor!, input.radius, visits, continuation?.cursor)
-        : scene.index.region(region!, visits, continuation?.cursor);
+    const found =
+      input.kind === 'near'
+        ? receivedNear(scene, anchor!, input.radius, visits)
+        : scene.index.region(region!, visits);
     const result = {
       status: found.status,
       bodies: found.values.map((body) => ({
@@ -591,26 +561,9 @@ export function captureSituation(
       })),
     } as {
       status: 'complete' | 'partial';
-      cursor?: string;
       bodies: Array<{ reference: string; facts: ReturnType<typeof bodyFacts> }>;
     };
-    // A byte-shortened page keeps its undisclosed IDs before the tree cursor.
-    // Reusing the tree cursor alone would silently skip those received bodies.
-    const token = permittedSourceHandle(world, actorId, ['query-cursor', jobId, cursorSequence++]);
-    const paginate = () => {
-      const pending = found.values.slice(result.bodies.length).map((body) => body.sourceId);
-      if (pending.length || found.cursor) {
-        cursors.set(token, {
-          signature,
-          ...(found.cursor ? { cursor: found.cursor } : {}),
-          ...(pending.length ? { pending } : {}),
-        });
-        result.cursor = token;
-        result.status = 'partial';
-      } else delete result.cursor;
-    };
-    paginate();
-    return { result, visited: found.visited, paginate };
+    return { result, visited: found.visited };
   };
   return {
     world,
@@ -635,7 +588,6 @@ export function captureSituation(
     bindHistory,
     bodyFacts,
     queryBodies,
-    expansionCursors,
     allAttentionReferences,
     allCurrentReferences,
     currentReferences,
@@ -678,7 +630,7 @@ export async function expandSituation(
   queries: readonly SituationQuery[],
   readHistory: (
     query: import('./temporal-storage.js').TemporalHistoryQuery,
-  ) => Promise<TemporalHistorySelection>,
+  ) => Promise<TemporalHistoryPage>,
 ) {
   const { policy, world, actorId } = captured;
   if (queries.length > policy.maximumQueries) throw new Error('Too many situation queries.');
@@ -712,75 +664,35 @@ export async function expandSituation(
   for (const query of queries) {
     const frameStart = captured.frames.length;
     let result: unknown;
-    let paginate: (() => void) | undefined;
     let keepNewest = false;
-    const signature = JSON.stringify({ ...query, cursor: undefined });
-    const continuation =
-      'cursor' in query && query.cursor ? captured.expansionCursors.get(query.cursor) : undefined;
-    const nextCursor = (value: {
-      offset?: number;
-      before?: { epoch: string; ordinal: number; at: number; order: number };
-    }) => {
-      const token = permittedSourceHandle(world, actorId, [
-        'expansion',
-        captured.jobId,
-        captured.expansionCursors.size,
-      ]);
-      captured.expansionCursors.set(token, { signature, ...value });
-      return token;
-    };
     if (query.kind === 'history') {
       const subject = query.subject ? subjects.get(query.subject) : undefined;
-      if (
-        (query.cursor && continuation?.signature !== signature) ||
-        (query.subject && !subject) ||
-        query.from > query.through
-      )
+      if ((query.subject && !subject) || query.from > query.through)
         result = { status: 'unavailable' };
       else {
         const history = await readHistory({
-          ...(subject ? { subject } : {}),
+          ...(subject ? { subjects: [subject] } : {}),
           from: query.from,
           through: Math.min(world.simTime, query.through),
           bytes: Math.max(0, policy.expansionBytes - encodedBytes()),
           limit: policy.expansionReceipts,
-          ...(continuation?.before ? { before: continuation.before } : {}),
         });
         captured.bindHistory(history);
         // Historical receipts stay historical; expansion never invents a current entity lease.
-        const page = temporalHistoryForModel(world, actorId, history) as ReturnType<
-          typeof temporalHistoryForModel
-        > & { cursor?: string; status?: string };
-        result = page;
+        result = temporalHistoryForModel(world, actorId, history);
         keepNewest = true;
-        paginate = () => {
-          const oldest = history.entries[history.entries.length - page.entries.length]?.receipt;
-          if (oldest && (history.hasMore || page.entries.length < history.entries.length))
-            page.cursor = nextCursor({
-              before: {
-                epoch: oldest.epoch,
-                ordinal: oldest.ordinal,
-                at: oldest.at,
-                order: oldest.order,
-              },
-            });
-          else delete page.cursor;
-        };
-        paginate();
       }
     } else if (query.kind === 'boundaries') {
       const id = captured.references.get(query.anchor),
         body = id ? captured.scene.bodies.get(id) : undefined;
-      if (!body || (query.cursor && continuation?.signature !== signature))
-        result = { status: 'unavailable' };
+      if (!body) result = { status: 'unavailable' };
       else {
         const facts: unknown[] = [];
         let seen = 0;
         const boundaries = captured.geometry.observations.filter((observation) =>
           observation.facets.some((f) => f.value.kind === 'physical-boundary'),
         );
-        const start = continuation?.offset ?? 0;
-        for (const observation of boundaries.slice(start)) {
+        for (const observation of boundaries) {
           if (seen >= visits) break;
           seen++;
           const facet = observation.facets.find(
@@ -805,24 +717,19 @@ export async function expandSituation(
           });
         }
         visits -= seen;
-        const page: { status: string; facts: unknown[]; cursor?: string } = {
-          status: 'partial',
+        const page: { status: string; facts: unknown[] } = {
+          status:
+            captured.geometry.complete && facts.length === boundaries.length
+              ? 'complete'
+              : 'partial',
           facts,
         };
         result = page;
-        paginate = () => {
-          if (start + facts.length < boundaries.length)
-            page.cursor = nextCursor({ offset: start + facts.length });
-          else delete page.cursor;
-          page.status = captured.geometry.complete && !page.cursor ? 'complete' : 'partial';
-        };
-        paginate();
       }
     } else {
       const found = captured.queryBodies(query, visits);
       visits -= found.visited;
       result = found.result;
-      paginate = 'paginate' in found ? found.paginate : undefined;
     }
     const row = { query, result };
     results.push(row);
@@ -836,7 +743,6 @@ export async function expandSituation(
         while (rows.length && encodedBytes() > policy.expansionBytes) {
           if (keepNewest) rows.shift();
           else rows.pop();
-          paginate?.();
           captured.compactFrames(result, frameStart);
         }
       }

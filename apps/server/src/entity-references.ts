@@ -121,6 +121,12 @@ export function resolveEntityMarkers(text: string, references: Record<string, st
   });
 }
 
+/** Native routing annotations in retained prose are not participant evidence.
+ * Structured historical references carry any supported identity separately. */
+export function historicalAccountText(text: string): string {
+  return text.replace(/[ \t]*\(ID:[^()\s]+\)/g, '');
+}
+
 /** Persist full identities in intentions, then reproject annotations in a later context. */
 export function projectEntityMarkers(text: string, world: WorldState, observerId: string): string {
   return text.replace(/\(ID:([^()\s]+)\)/g, (_original, id: string) =>

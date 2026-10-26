@@ -87,7 +87,7 @@ export function learnRecipe(
     return 'already-known';
   let record: KnowledgeRecord = { recipeId, source, evidenceId, learnedAt: world.simTime };
   if (source !== 'authored') {
-    const recipe = world.recipes[recipeId];
+    const recipe = getOwn(world.recipes, recipeId);
     if (!recipe) return 'capacity';
     let accepted = false;
     // This rare grant boundary reserves both proof and knowledge before installing either.
@@ -321,7 +321,14 @@ export function validateKnowledge(world: WorldState): void {
       throw new Error('Invalid learned capability owner.');
     const seen = new Set<string>();
     for (const record of records) {
-      const recipe = world.recipes[record.recipeId];
+      if (
+        !record ||
+        typeof record !== 'object' ||
+        Array.isArray(record) ||
+        !isSafeRecordId(record.recipeId)
+      )
+        throw new Error('Invalid learned capability.');
+      const recipe = getOwn(world.recipes, record.recipeId);
       if (
         !recipe ||
         seen.has(record.recipeId) ||

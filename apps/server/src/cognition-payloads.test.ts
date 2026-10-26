@@ -1524,7 +1524,7 @@ describe('actual director situation query continuation', () => {
           );
           return {
             operations: [],
-            queries: [{ kind: 'near', anchor: speakerHandle(request), radius: 14, cursor: null }],
+            queries: [{ kind: 'near', anchor: speakerHandle(request), radius: 14 }],
           };
         }
         const expansion = JSON.parse(
@@ -1620,7 +1620,6 @@ describe('actual director situation query continuation', () => {
                     subject: null,
                     from: 0,
                     through: h.service.world.simTime,
-                    cursor: null,
                   },
                 ],
               }
@@ -1680,7 +1679,6 @@ describe('actual director situation query continuation', () => {
               subject: null,
               from: 0,
               through: h.service.world.simTime,
-              cursor: null,
             },
           ],
         };

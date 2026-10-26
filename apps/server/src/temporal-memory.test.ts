@@ -11,6 +11,7 @@ import {
   learnRecipe,
   executeCommand,
   temporalReceiptId,
+  retainTemporalSupport,
   entitySet,
   initializePerception,
   setAttentionFocus,
@@ -19,6 +20,8 @@ import {
   worldPosition,
   worldSupport,
   selectedRecognitionSupportSourceIds,
+  selectedRecognitionMaintenanceDue,
+  adjustRetainedKnowledgeAccounting,
 } from '@open-legend/domain';
 import { appendMemory, acquireExposure } from '../../../packages/domain/src/events.js';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
@@ -288,7 +291,7 @@ describe('bounded personal temporal storage', () => {
         .filter((entry) => entry.receipt.subject === 'fixture-animal')
         .map((entry) => entry.values[0]),
     ).toHaveLength(5);
-    expect(await store.memories.temporalReceiptsCurrent(scope, locators)).toBe(true);
+    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, locators)).toBe(true);
     expect(
       (
         await store.memories.temporalHistory(
@@ -313,7 +316,7 @@ describe('bounded personal temporal storage', () => {
       ).entries,
     ).toHaveLength(4);
     expect((await service.forgetRecentObservation(locators[2]!)).ok).toBe(true);
-    expect(await store.memories.temporalReceiptsCurrent(scope, [locators[2]!])).toBe(false);
+    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, [locators[2]!])).toBe(false);
     expect(
       (
         await store.memories.temporalHistory(
@@ -338,7 +341,7 @@ describe('bounded personal temporal storage', () => {
     expect((await service.correctRecentObservation(locators[3]!, correcting.eventId)).ok).toBe(
       true,
     );
-    expect(await store.memories.temporalReceiptsCurrent(scope, [locators[3]!])).toBe(false);
+    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, [locators[3]!])).toBe(false);
     expect(
       service.world.experience!.awareness[PLAYER_ID]!.some(
         (entry) => entry.eventId === correcting.eventId,
@@ -347,7 +350,7 @@ describe('bounded personal temporal storage', () => {
     await editWorld(service, (world) => {
       world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 2;
     });
-    expect(await store.memories.temporalReceiptsCurrent(scope, locators)).toBe(false);
+    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, locators)).toBe(false);
     expect(
       (
         await store.memories.temporalHistory(
@@ -413,7 +416,7 @@ describe('bounded personal temporal storage', () => {
           .get(stored.id))!['generation'],
       ),
     };
-    expect(await store.memories.temporalReceiptsCurrent(scope, [first])).toBe(true);
+    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, [first])).toBe(true);
     expect((await service.control({ paused: false, clientId: 'temporal-memory-fixture' })).ok).toBe(
       true,
     );
@@ -693,5 +696,262 @@ describe('bounded personal temporal storage', () => {
       initializePerception(world, []);
     });
     expect(service.world.observerIdentities?.[PLAYER_ID]?.[contact.individualId]).toBeUndefined();
+  });
+  it('expires a provisional heard introduction at its scheduled deadline without another utterance', async () => {
+    const { store, service } = await setup();
+    await editWorld(service, (world) => {
+      for (const [key, identity] of Object.entries(world.observerIdentities![PLAYER_ID]!)) {
+        if (identity.retained && !identity.authored)
+          adjustRetainedKnowledgeAccounting(world, PLAYER_ID, identity, undefined, {
+            revocation: true,
+          });
+        delete world.observerIdentities![PLAYER_ID]![key];
+      }
+      const player = entityGet(world.entities, PLAYER_ID)!,
+        speaker = entityGet(world.entities, NPC_ID)!;
+      const at = worldPosition(player);
+      setSpatialPosition(world, speaker, { ...at, x: at.x + 2 }, worldSupport(player));
+      world.map.spatial.blockers.push({
+        id: 'fixture-seed-sight-screen',
+        bounds: {
+          min: { x: at.x + 0.9, y: at.y, z: at.z - 1 },
+          max: { x: at.x + 1.1, y: at.y + 3, z: at.z + 1 },
+        },
+        movement: false,
+        sight: true,
+        acousticTransmission: 1,
+        material: 'cloth',
+      });
+      world.map.spatial.revision++;
+      initializePerception(world, []);
+    });
+    expect(
+      (
+        await service.transition((world) =>
+          executeCommand(world, {
+            id: 'fixture-provisional-name',
+            actorId: NPC_ID,
+            type: 'say',
+            targetId: PLAYER_ID,
+            text: 'My name is Orin.',
+            selfIntroduction: 'Orin',
+          }),
+        )
+      ).ok,
+    ).toBe(true);
+    const [key, seed] = Object.entries(service.world.observerIdentities![PLAYER_ID]!).find(
+      ([, identity]) => identity.seedOnly && identity.givenName === 'Orin',
+    )!;
+    expect(seed.seedOnly).toBe(true);
+    const source = service.world
+      .experience!.awareness[PLAYER_ID]!.filter((entry) => entry.eventType === 'speech')
+      .at(-1)!.eventId;
+    const proofs = Object.values(service.world.experience!.temporal!.actors[PLAYER_ID]!.supports!)
+      .filter((capsule) => capsule.receipt.sourceIds.includes(source))
+      .map((capsule) => capsule.receipt.id);
+    expect(proofs.length).toBeGreaterThan(0);
+    const due = selectedRecognitionMaintenanceDue(service.world, PLAYER_ID)!;
+    expect(due).toBeGreaterThan(service.world.simTime);
+    await editWorld(service, (world) => {
+      world.simTime = due;
+    });
+    expect(service.world.observerIdentities![PLAYER_ID]![key]).toBeUndefined();
+    expect(
+      service.world.experience!.awareness[PLAYER_ID]!.some((entry) => entry.eventId === source),
+    ).toBe(true);
+    expect(
+      Number(
+        (await store.db
+          .prepare(
+            'SELECT COUNT(*)AS count FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
+          )
+          .get(service.world.id, PLAYER_ID, proofs))!['count'],
+      ),
+    ).toBe(0);
+    expect(
+      await store.db
+        .prepare('SELECT id FROM mind_recognition WHERE world_id=? AND id=?')
+        .get(service.world.id, JSON.stringify(['world', 'observerIdentities', PLAYER_ID, key])),
+    ).toBeUndefined();
+  });
+  it('continues past a whole oversized receipt without truncating it or hiding older observations', async () => {
+    const { store, service } = await setup();
+    const words = 'Received inscription '.repeat(800);
+    await editWorld(service, (world) => {
+      for (const [index, text] of [
+        'Earlier short observation',
+        words,
+        'Unrelated newer one',
+        'Unrelated newer two',
+      ].entries()) {
+        world.simTime++;
+        appendTemporalReceipt(
+          world,
+          PLAYER_ID,
+          {
+            subject: index < 2 ? 'fixture-large-source' : 'fixture-unrelated-source',
+            change: 'occurrence',
+            facets: [
+              {
+                role: 'direct',
+                asOf: world.simTime,
+                measuredFrom: world.simTime,
+                measuredThrough: world.simTime,
+                acquiredAt: world.simTime,
+                value: {
+                  kind: 'personal-account',
+                  source: 'memory',
+                  id: `fixture-large-${index}`,
+                  text,
+                },
+              },
+            ],
+          },
+          selectedTemporalPolicy(world).recent,
+        );
+      }
+    });
+    await service.flush();
+    await store.memories.synchronizeSources();
+    const scope = {
+      worldId: service.world.id,
+      actorId: PLAYER_ID,
+      generation: String(
+        (await store.db
+          .prepare('SELECT generation FROM world_head WHERE world_id=?')
+          .get(service.world.id))!['generation'],
+      ),
+    };
+    const first = await store.memories.temporalHistory(
+      scope,
+      { subjects: ['fixture-large-source'], limit: 1, bytes: 1024 },
+      service.world,
+    );
+    expect(first.entries).toHaveLength(0);
+    expect(first.incomplete).toBe(true);
+    expect(first.hasMore).toBe(true);
+    expect(first.nextBefore).toBeDefined();
+    const older = await store.memories.temporalHistory(
+      scope,
+      { subjects: ['fixture-large-source'], limit: 1, bytes: 1024, before: first.nextBefore },
+      service.world,
+    );
+    expect(older.entries).toHaveLength(1);
+    expect(older.entries[0]!.values[0]).toMatchObject({ text: 'Earlier short observation' });
+    const complete = await store.memories.temporalHistory(
+      scope,
+      { subjects: ['fixture-large-source'], bytes: 32768 },
+      service.world,
+    );
+    expect(complete.entries.at(-1)!.values[0]).toMatchObject({ text: words });
+  });
+  it('rejects a pending full observation after expiry even when one sparse fact still has lawful support', async () => {
+    const { store, service } = await setup();
+    const locator = await editWorld(service, (world) => {
+      world.simTime++;
+      const at = world.simTime,
+        policy = selectedTemporalPolicy(world);
+      const receipt = appendTemporalReceipt(
+        world,
+        PLAYER_ID,
+        {
+          subject: 'fixture-partial-proof',
+          change: 'occurrence',
+          facets: [
+            {
+              role: 'direct',
+              asOf: at,
+              measuredFrom: at,
+              measuredThrough: at,
+              acquiredAt: at,
+              value: {
+                kind: 'location',
+                location: { kind: 'point', point: { x: 2, y: 0, z: 2 }, errorRadius: 0 },
+                frame: { positionAtObservation: { x: 0, y: 0, z: 0 } },
+              },
+            },
+            {
+              role: 'direct',
+              asOf: at,
+              measuredFrom: at,
+              measuredThrough: at,
+              acquiredAt: at,
+              value: {
+                kind: 'personal-account',
+                source: 'memory',
+                id: 'fixture-expiring-words',
+                text: 'These exact words are not retained by the location proof.',
+              },
+            },
+          ],
+        },
+        policy.recent,
+      )!;
+      expect(
+        retainTemporalSupport(world, receipt, {
+          facetOrdinals: [0],
+          required: true,
+          maxBytes: policy.required.maxBytes,
+          maxRecords: policy.required.maxRecords,
+        }),
+      ).toBeDefined();
+      return receipt;
+    });
+    await service.flush();
+    await store.memories.synchronizeSources();
+    const scope = {
+      worldId: service.world.id,
+      actorId: PLAYER_ID,
+      generation: String(
+        (await store.db
+          .prepare('SELECT generation FROM world_head WHERE world_id=?')
+          .get(service.world.id))!['generation'],
+      ),
+    };
+    const full = (
+      await store.memories.temporalHistory(
+        scope,
+        { subjects: ['fixture-partial-proof'] },
+        service.world,
+      )
+    ).entries;
+    expect(full).toHaveLength(1);
+    expect(full[0]!.values).toHaveLength(2);
+    expect(await store.memories.temporalSelectionsCurrent(scope, full)).toBe(true);
+    let release!: () => void;
+    const delayed = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const pending = delayed.then(() => store.memories.temporalSelectionsCurrent(scope, full));
+    await editWorld(service, (world) => {
+      world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 1;
+    });
+    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, [locator])).toBe(true);
+    release();
+    expect(await pending).toBe(false);
+    const selected = full[0]!;
+    expect(
+      await store.memories.temporalSelectionsCurrent(scope, [
+        {
+          receipt: { ...selected.receipt, facets: [selected.receipt.facets[0]!] },
+          values: [selected.values[0]!],
+        },
+      ]),
+    ).toBe(true);
+    expect(
+      await store.memories.temporalSelectionsCurrent(scope, [
+        {
+          receipt: { ...selected.receipt, facets: [selected.receipt.facets[0]!] },
+          values: [
+            {
+              kind: 'personal-account',
+              source: 'memory',
+              id: 'forged',
+              text: 'Different value at the same address.',
+            },
+          ],
+        },
+      ]),
+    ).toBe(false);
   });
 });

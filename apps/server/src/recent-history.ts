@@ -3,7 +3,7 @@ import type { MemoryHistoryPage } from '@open-legend/protocol';
 import { z } from 'zod';
 import { AuthorityError, scopeKey, type RequestScope } from './authority.js';
 import { HistoryCursorError } from './perceived-events.js';
-import { permittedSourceHandle, projectEntityMarkers } from './entity-references.js';
+import { permittedSourceHandle, historicalAccountText } from './entity-references.js';
 import { digest } from './store.js';
 import { sealCursor, openCursor } from './scoped-cursor.js';
 import type { WorldService } from './world-service.js';
@@ -21,10 +21,11 @@ const point = (p: { x: number; y: number; z: number }) => `(${p.x}, ${p.y}, ${p.
 function receivedText(values: readonly TemporalValue[]): string {
   const parts: string[] = [];
   for (const value of values) {
-    if (value.kind === 'personal-account') parts.push(value.text);
+    if (value.kind === 'personal-account') parts.push(historicalAccountText(value.text));
     else if (value.kind === 'body')
       parts.push(`${value.body.label?.name ?? 'something'} at ${point(value.body.position)}`);
-    else if (value.kind === 'event') parts.push(value.text);
+    else if (value.kind === 'event')
+      parts.push(value.eventType === 'speech' ? value.text : historicalAccountText(value.text));
     else if (value.kind === 'claim') parts.push(value.wordsAsHeard);
     else if (value.kind === 'received-motion') {
       const a = value.earlier.location,
@@ -113,15 +114,18 @@ export async function recentHistory(
   );
   const rows = selected.entries.map((entry) => ({
     entry,
-    text: projectEntityMarkers(receivedText(entry.values), world, actorId),
+    text: receivedText(entry.values),
   }));
   const matching = rows.filter((row) => !query || row.text.toLocaleLowerCase().includes(query));
   const page = matching.slice(-20),
-    oldest = (page.length === 20 ? page[0]?.entry : rows[0]?.entry)?.receipt;
+    oldest =
+      matching.length > 20
+        ? page[0]?.entry.receipt
+        : (selected.nextBefore ?? rows[0]?.entry.receipt);
   const more = matching.length > 20 || selected.hasMore;
-  const receiptsCurrent = await memories.temporalReceiptsCurrent(
+  const receiptsCurrent = await memories.temporalSelectionsCurrent(
     { worldId: world.id, actorId, generation: head.generation },
-    page.map((row) => row.entry.receipt),
+    page.map((row) => row.entry),
   );
   if (
     !receiptsCurrent ||

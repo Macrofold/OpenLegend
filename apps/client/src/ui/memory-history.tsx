@@ -304,7 +304,7 @@ export function MemoryHistory({
           ? 'Reading did not finish.'
           : filtered
             ? recent
-              ? `${shown.length} recent observations${scanLimited ? '. Coverage is partial.' : ''}${next ? ' Older observations remain.' : ' End of retained observations.'}`
+              ? `${shown.length} recent observations${scanLimited ? '. This view does not include every retained observation.' : ''}${next ? ' Older observations remain.' : ' End of retained observations.'}`
               : `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
                   scanLimited
                     ? '. This search stopped at its record limit; older memories remain to search.'
@@ -382,7 +382,7 @@ export function MemoryHistory({
           !message && (
             <p className="ol-meta">
               {recent
-                ? `No matching retained observations.${next ? ' Continue with older observations.' : ''}`
+                ? `No observations are shown on this page.${next ? ' Continue with older observations.' : ''}`
                 : filtered
                   ? `No matches in the memories searched.${next ? ' Continue with older memories or change your search.' : ''}`
                   : owned

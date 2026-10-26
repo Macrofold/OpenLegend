@@ -19,6 +19,7 @@ import {
   subjectHandle,
   evidenceSourceHandle,
   personalSourceHandle,
+  historicalAccountText,
 } from './entity-references.js';
 
 /** The native source tuple stays in the binding. Models receive the same permitted
@@ -167,7 +168,7 @@ export function facetValueForModel(
       return {
         kind: value.kind,
         eventType: value.eventType,
-        text: value.text,
+        text: value.eventType === 'speech' ? value.text : historicalAccountText(value.text),
         data: eventFieldsForModel(world, actorId, value.data, sourceScope),
         references: value.references.map((ref) => ({
           reference: permittedSourceHandle(world, actorId, [

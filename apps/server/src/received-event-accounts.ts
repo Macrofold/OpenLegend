@@ -14,7 +14,7 @@ export interface ReceivedEventAccount {
   evidence: EventEvidence;
   awareness?: Awareness;
   projected?: Awareness;
-  temporal?: { chunkId: string; receipt: TemporalReceiptLocator; bytes:number };
+  temporal?: { chunkId: string; receipt: TemporalReceiptLocator; bytes: number };
 }
 
 /** Select only this actor's already received account. Current reception can feed
@@ -70,7 +70,12 @@ export function receivedEventAccounts(
           ),
           temporal: {
             chunkId: chunk.id,
-            bytes:Buffer.byteLength(JSON.stringify({receipt,values:values.filter((value)=>value.kind==='event')})),
+            bytes: Buffer.byteLength(
+              JSON.stringify({
+                receipt,
+                values: values.filter((value) => value.kind === 'event' || value.kind === 'sound'),
+              }),
+            ),
             receipt: {
               actorId,
               physicalLife: receipt.physicalLife,
@@ -88,9 +93,9 @@ export function receivedEventAccounts(
       if (!eventId || !wanted.has(eventId) || result.has(eventId) || forgotten.has(eventId))
         continue;
       const values = observation.facets
-        .filter((facet) => facet.value.kind === 'event')
+        .filter((facet) => facet.value.kind === 'event' || facet.value.kind === 'sound')
         .flatMap((facet) =>
-          facet.value.kind === 'event' &&
+          (facet.value.kind === 'event' || facet.value.kind === 'sound') &&
           temporalFacetEligible(
             world,
             actorId,

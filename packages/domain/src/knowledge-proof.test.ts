@@ -17,6 +17,18 @@ describe('learned method minimum proof', () => {
     const receipt = temporalReceiptId(record.sourceReceipt!);
     expect(world.experience!.temporal!.actors[PLAYER_ID]!.supports![receipt]!.required).toBe(true);
     validateKnowledge(world);
+    const missingProof = structuredClone(world);
+    delete missingProof.knowledge[PLAYER_ID]!.find((record) => record.recipeId === id)!
+      .sourceReceipt;
+    expect(() => validateKnowledge(missingProof)).toThrow('receipt locator');
+    const inheritedMethod = structuredClone(world);
+    inheritedMethod.knowledge[PLAYER_ID]!.push({
+      recipeId: '__proto__',
+      source: 'authored',
+      evidenceId: 'fixture-forged-method',
+      learnedAt: world.simTime,
+    });
+    expect(() => validateKnowledge(inheritedMethod)).toThrow('Invalid learned capability');
     const before = JSON.stringify(world);
     expect(learnRecipe(world, PLAYER_ID, id, 'taught', 'fixture-second-read')).toBe(
       'already-known',

@@ -685,7 +685,8 @@ describe('enabled character decision reconsideration', () => {
     const drifting = decisionValidity(h.service.world, NPC_ID);
     released.resolve(value(request.requestId, 'openai', chooseFood(request)));
     expect(drifting).toBe(original);
-    expect((await pending).decision?.groups['q0']?.state).toBe('resolved');
+    const completed = await pending;
+    expect(completed.decision?.groups['q0']?.state, JSON.stringify(completed)).toBe('resolved');
     await editWorld(h.service, (world) => {
       entityGet(world.entities, NPC_ID)!.actor!.attributes!['wilderness:fullness']!.value = 100;
     });
@@ -809,7 +810,7 @@ describe('enabled character decision reconsideration', () => {
     released.resolve(value(request.requestId, 'openai', chooseFood(request)));
     const job = await pending;
     await h.service.tick(0.1);
-    expect(h.food()).toBe(1);
+    expect(h.food(), JSON.stringify(job)).toBe(1);
     expect(job.decision?.groups['q0']?.state).toBe('resolved');
   });
   it('E23 cancels delayed gameplay on pause while settling the original charge', async () => {
@@ -872,16 +873,13 @@ describe('enabled character decision reconsideration', () => {
     const pending = h.thought(),
       request = await entered.promise,
       old = await h.root();
-    expect(
-      (
-        await h.director.submit(
-          'chat',
-          'new-fixture-conversation',
-          'Please consider this new question.',
-          NPC_ID,
-        )
-      ).ok,
-    ).toBe(true);
+    const submitted = await h.director.submit(
+      'chat',
+      'new-fixture-conversation',
+      'Please consider this new question.',
+      NPC_ID,
+    );
+    expect(submitted.ok, JSON.stringify(submitted)).toBe(true);
     released.resolve(value(request.requestId, 'openai', chooseFood(request)));
     await pending;
     expect(h.food()).toBe(2);

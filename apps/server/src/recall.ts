@@ -24,6 +24,7 @@ import {
 import {
   entityHandle,
   projectEntityMarkers,
+  historicalAccountText,
   entityLabel,
   awarenessBindsSubject,
 } from './entity-references.js';
@@ -331,14 +332,7 @@ export function candidateSet(
   }
   for (const memory of candidates) {
     memory.embeddingText ??= memory.text;
-    memory.text = projectEntityMarkers(memory.text, world, actorId);
-    const identities = [...new Set(memory.entityIds)].flatMap((id) =>
-      entityGet(world.entities, id) &&
-      !memory.text.includes(`(ID:${entityHandle(world, actorId, id)})`)
-        ? [`(ID:${entityHandle(world, actorId, id)})`]
-        : [],
-    );
-    if (identities.length) memory.text += ` Referenced entities: ${identities.join('; ')}.`;
+    memory.text = historicalAccountText(memory.text);
   }
   for (const memory of candidates)
     if (memory.sourceIds && memory.sourceIds.length > 1)

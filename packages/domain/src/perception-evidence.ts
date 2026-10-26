@@ -1667,7 +1667,8 @@ export function acquireAwarenessObservation(
         frame: { positionAtObservation: { ...speech.listenerPosition } },
       });
     values.push({ kind: 'speech', speech: cloneValue(speech) });
-  } else
+  }
+  if (!awareness.speech)
     values.push({
       kind: 'event',
       eventType: awareness.eventType ?? event.type,

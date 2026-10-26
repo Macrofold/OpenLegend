@@ -1,4 +1,4 @@
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import {
   PLAYER_ID,
   NPC_ID,
@@ -6,12 +6,17 @@ import {
   initializePerception,
   setSpatialPosition,
   worldSupport,
+  worldPosition,
+  executeCommand,
 } from '@open-legend/domain';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
-import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { editWorld, enterLocalWorld, useNearCampSight } from '../../../tests/fixtures/service.js';
 import { WorldService } from './world-service.js';
 import { memoryHistory } from './memory-history.js';
 import { resolveRecentObservationReference } from './recent-history.js';
+import { RecallService } from './recall.js';
+import { IntelligenceLog } from './intelligence-log.js';
+import { prepareDecision } from './decision-context.js';
 const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
   for (const close of cleanup.splice(0)) await close();
@@ -74,4 +79,98 @@ it('lets the owner read exact acquired recent positions without revealing an unk
       { recent: true },
     ),
   ).rejects.toThrow();
+});
+
+it('persists receipt-only native movement before immediate recent browsing and decision validation', async () => {
+  const store = await testRepository(),
+    service = new WorldService(
+      store,
+      readConfig({ OPEN_LEGEND_GOD_MODE: 'true', AI_BUDGET_USD: '0' }),
+      () => 1800000000000,
+    );
+  const log = new IntelligenceLog(store),
+    recall = new RecallService(service, log);
+  cleanup.push(async () => {
+    await recall.close();
+    await log.close();
+    service.releaseHostWork();
+    await store.close();
+  });
+  await enterLocalWorld(service);
+  await service.setPresence('moving-recent-reader', true);
+  await useNearCampSight(service);
+  await editWorld(service, (world) => {
+    const player = entityGet(world.entities, PLAYER_ID)!,
+      other = entityGet(world.entities, NPC_ID)!;
+    setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, worldSupport(player));
+    setSpatialPosition(world, other, { x: 3, y: 0, z: 2 }, worldSupport(other));
+    initializePerception(world, []);
+  });
+  expect(
+    (
+      await service.transition((world) =>
+        executeCommand(world, {
+          id: 'fixture-recent-moving',
+          actorId: NPC_ID,
+          type: 'move',
+          destination: {
+            x: 6,
+            y: 0,
+            z: 2,
+            surfaceId: worldSupport(entityGet(world.entities, NPC_ID))!,
+          },
+        }),
+      )
+    ).ok,
+  ).toBe(true);
+  const before = service.world;
+  await service.tick(0.005);
+  expect(worldPosition(entityGet(service.world.entities, NPC_ID)!).x).toBeGreaterThan(3);
+  expect(service.world.memories[PLAYER_ID]).toBe(before.memories[PLAYER_ID]);
+  expect(service.world.experience!.awareness[PLAYER_ID]).toBe(
+    before.experience!.awareness[PLAYER_ID],
+  );
+  expect(service.world.experience!.summaries[PLAYER_ID]).toBe(
+    before.experience!.summaries[PLAYER_ID],
+  );
+  expect(service.world.experience!.temporal!.actors[PLAYER_ID]!.chunks).not.toBe(
+    before.experience!.temporal!.actors[PLAYER_ID]!.chunks,
+  );
+  const durable = vi.spyOn(service, 'whenDurable');
+  await service.flushMemorySources(PLAYER_ID, false);
+  expect(durable).not.toHaveBeenCalled();
+  const page = await memoryHistory(service, PLAYER_ID, service.localScope, { recent: true });
+  expect(durable).toHaveBeenCalledTimes(1);
+  expect(page.entries.some((entry) => entry.time > before.simTime)).toBe(true);
+  const decision = await prepareDecision(
+    service,
+    recall,
+    PLAYER_ID,
+    'fixture-moving-context',
+    'Observe current surroundings.',
+    [],
+    async () => {
+      throw new Error('No semantic provider in this storage fixture');
+    },
+    new AbortController().signal,
+    0,
+    false,
+    0,
+    undefined,
+    undefined,
+    'native-only',
+  );
+  await expect(decision.validateConversation()).resolves.toBeUndefined();
+  const head = await store.records.head();
+  const selected = await store.memories.temporalHistory(
+    { worldId: service.world.id, actorId: PLAYER_ID, generation: head!.generation },
+    { from: before.simTime, bytes: 32768 },
+    service.world,
+  );
+  expect(
+    await store.memories.temporalSelectionsCurrent(
+      { worldId: service.world.id, actorId: PLAYER_ID, generation: head!.generation },
+      selected.entries,
+    ),
+  ).toBe(true);
 });

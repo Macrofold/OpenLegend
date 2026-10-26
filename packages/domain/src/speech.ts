@@ -427,6 +427,7 @@ export function receivedEventEvidence(
   if (!fact || fact.kind !== 'event') return;
   const sourceId = fact.references.find((reference) => reference.role === 'actor')?.id;
   const targetId = fact.references.find((reference) => reference.role === 'target')?.id;
+  const sound = values.find((value) => value.kind === 'sound');
   return {
     actorId,
     eventType: fact.eventType,
@@ -438,6 +439,7 @@ export function receivedEventEvidence(
     ...(sourceId ? { sourceId } : {}),
     ...(targetId ? { targetId } : {}),
     ...(fact.sourceSubject ? { sourceSubject: fact.sourceSubject } : {}),
+    ...(sound?.kind === 'sound' ? { sound: sound.sound } : {}),
     eventData: fact.data,
     references: fact.references,
   };

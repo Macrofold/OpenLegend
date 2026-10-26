@@ -1,7 +1,7 @@
 # Attention and scenes — technical design
 
-| Status      | Current progress                                                                                                                 | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Supported native evidence, attention and memory paths are implemented; integrated semantic and scale qualification remain open. | 2026-10-26   |
 
 **Selected design with supported core implementation; broader scene delivery remains separate.** This is the counterpart to the [feature specification](attention-and-scenes-feature-spec.md), particularly its [compact background family](attention-and-scenes-feature-spec.md#173-selected-compact-expressive-background-exchanges) and [shared-activity refinement](attention-and-scenes-feature-spec.md#18-research-refinement--independent-shared-activity-that-people-can-understand). It resolves the exact encounter and two-NPC compact meaning design under DG06/DG18 and PS04. Aggregate vocal activity, crowds, timed speech and broader ND13/ND15/ND16 scope remain separate. The psychological mechanism has its own [continuing-life owner](continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose).
@@ -238,12 +238,14 @@ At context construction, prepare relations for the bounded expanded subjects and
 
 The initial reusable query vocabulary is finite:
 
-- `near(anchor, radius, kinds, cursor)`: nearby received bodies/boundaries with distances and uncertainty.
-- `separation(a, b, span)`: current separation and measured change over overlapping received coverage.
-- `boundaries(anchor, span, cursor)`: nearby physical boundaries, clearance change and supported crossings.
-- `history(subjects, from, through, cursor)` and `expand(region, cursor)`: bounded exact recent/scene detail.
+- `near(anchor, radius)`: nearby received bodies with distances and uncertainty.
+- `separation(first, second)`: current separation and measured change over overlapping received coverage.
+- `boundaries(anchor)`: received physical boundaries and supported clearance measurements.
+- `history(subject, from, through)` and `expand(region)`: bounded exact recent/scene detail.
 
-These are typed native queries, not generated SQL, code or arbitrary graph traversal. Bind only offered local references and allowed time ranges. Each call has candidate, result and byte allowances; return `complete`, `partial` with continuation, or `unavailable`. A nearest query uses branch-and-bound lower distances and certifies its answer only when remaining bounds cannot beat it. A nearest-few result is not proof that no other object matters. An intersection query must inspect its relevant candidates or report partial coverage. Required physical safety checks use their owning complete computation; optional context exhaustion never establishes safety or absence.
+These are typed native queries, not generated SQL, code or arbitrary graph traversal. Bind only offered local references and allowed time ranges. Each call has candidate, result and byte allowances; return `complete`, `partial`, or `unavailable`. A nearest query uses branch-and-bound lower distances and certifies its answer only when remaining bounds cannot beat it. A nearest-few result is not proof that no other object matters. An intersection query must inspect its relevant candidates or report partial coverage. Required physical safety checks use their owning complete computation; optional context exhaustion never establishes safety or absence.
+
+**Implementation decision — October 26, 2026:** a character may submit one bounded query batch, followed by at most one funded final interpretation. AI queries neither accept nor return continuation tokens: the final schema cannot query again, and the next decision owns a different captured scene. Partial answers explicitly remain partial; history requests can choose a time interval. The player’s recent-history reader separately retains real paging and its examined-receipt boundary. This does not add a model loop or retain old query maps.
 
 Native measurements include separation intervals, change in separation, known boundary clearance and received crossing. A constant-motion projection can add a bounded prediction, explicitly labeled with its assumptions; it is not observed future motion or intent. Transform coordinates/units and calculate geometry natively before rendering readable measurements. Avoid requiring a language model to perform perspective transforms or distance arithmetic. Default packet construction uses a small number of these queries per expanded moving subject. Divide the initial candidate allowance across selected anchors before querying, with stable rotating allocation of remainder/unused work; an early dense anchor cannot starve later anchors every turn. Reserve a portion for requested expansion. Initial and requested queries share the complete turn's candidate/result/byte limits.
 

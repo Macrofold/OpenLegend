@@ -13,6 +13,7 @@ import {
   type WorldEvent,
   initializePerception,
   setAttentionFocus,
+  selectedTemporalPolicy,
 } from '@open-legend/domain';
 import { canStand, supportBelow } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition } from '../../../packages/domain/src/spatial-state.js';
@@ -28,6 +29,8 @@ import { readPerceivedEvents } from './perceived-events.js';
 import { responseTriggerContext } from './response-context.js';
 import { storyAccountSql, storySourceRow } from './personal-accounts.js';
 import { receivedEventAccounts } from './received-event-accounts.js';
+import { captureSituation, expandSituation } from './situation-context.js';
+import { entityHandle, permittedSourceHandle } from './entity-references.js';
 
 function place(world: WorldState, id: string, x: number, z = 2) {
   const entity = entityGet(world.entities, id)!;
@@ -98,6 +101,41 @@ afterEach(async () => {
 });
 
 describe('event-time observer facts', () => {
+  it('can display an actually heard voice-like sound without creating words or a memory', () => {
+    const world = createWorld(73);
+    place(world, NPC_ID, 11);
+    place(world, PLAYER_ID, 12);
+    const actor = entityGet(world.entities, NPC_ID)!.actor!;
+    actor.capabilities = {
+      cognition: false,
+      innerWorld: false,
+      speech: false,
+      memory: false,
+      comprehendsSpeech: false,
+    };
+    initializePerception(world, []);
+    const result = executeCommand(world, {
+      id: 'voice-only-current',
+      actorId: PLAYER_ID,
+      type: 'say',
+      text: 'Unreceived private fixture words.',
+    });
+    expect(result.outcome.ok).toBe(true);
+    const event = result.events.find((entry) => entry.type === 'speech')!;
+    const acquired = evidence(result.world, event);
+    expect(acquired.sound).toBeDefined();
+    expect(acquired.speech).toBeUndefined();
+    const projected = projectEventEvidence(event, acquired);
+    expect(projected.type).toBe('sound');
+    expect(projected.data).toEqual({});
+    expect(JSON.stringify(projected)).not.toContain('Unreceived private fixture words');
+    expect(projected.actorId).toBeUndefined();
+    expect(projected.targetId).toBeUndefined();
+    expect(
+      result.world.experience?.awareness[NPC_ID]?.some((entry) => entry.eventId === event.id) ??
+        false,
+    ).toBe(false);
+  });
   it.each(['gather', 'strike'] as const)(
     'keeps only visible activity after an actual %s on a hidden target',
     (family) => {
@@ -312,6 +350,21 @@ describe('event-time observer facts', () => {
     expect(
       service.world.experience!.awareness[NPC_ID]!.some((entry) => entry.eventId === event.id),
     ).toBe(false);
+    // Three actual received position changes publish separate chunks; ordinary
+    // residency releases the older receipt body while retaining its SQL reference.
+    for (let sample = 0; sample < 3; sample++)
+      await editWorld(service, (world) => {
+        world.simTime += 1;
+        place(world, PLAYER_ID, 32.6 + sample * 0.1);
+        initializePerception(world, []);
+      });
+    expect(
+      service.world
+        .experience!.temporal!.actors[NPC_ID]!.chunks.flatMap((chunk) => chunk.receipts)
+        .some(
+          (receipt) => receipt.origin?.kind === 'occurrence' && receipt.origin.eventId === event.id,
+        ),
+    ).toBe(false);
     const retrieved = await service.awarenessEvidence(NPC_ID, [event.id]);
     expect(retrieved).toHaveLength(1);
     expect(retrieved[0]!.eventData).toEqual({});
@@ -336,6 +389,40 @@ describe('event-time observer facts', () => {
     const stored = storySourceRow(row!);
     expect(stored.type).toBe('activity-observed');
     expect(projectEventEvidence(event, stored.evidence)).toEqual(projectEventEvidence(event, hot));
+    const head = await store.records.head();
+    const scope = { worldId: service.world.id, actorId: NPC_ID, generation: head!.generation };
+    const captured = captureSituation(service.world, NPC_ID, 'cold-subject-query', {
+      entries: [],
+      incomplete: true,
+    });
+    const subject = captured.scene.bodies.get(PLAYER_ID)!.exposure;
+    const unfiltered = await store.memories.temporalHistory(
+      scope,
+      { bytes: 262144, limit: 128 },
+      service.world,
+    );
+    expect(unfiltered.entries.some((entry) => entry.receipt.subject !== subject)).toBe(true);
+    const expanded = await expandSituation(
+      captured,
+      [
+        {
+          kind: 'history',
+          subject: entityHandle(service.world, NPC_ID, PLAYER_ID),
+          from: 0,
+          through: service.world.simTime,
+        },
+      ],
+      async (query) => {
+        expect(query.subjects).toEqual([subject]);
+        return store.memories.temporalHistory(scope, query, service.world);
+      },
+    );
+    const entries = (expanded.results[0] as { result: { entries: Array<{ subject: string }> } })
+      .result.entries;
+    expect(entries.length).toBeGreaterThan(0);
+    expect(new Set(entries.map((entry) => entry.subject))).toEqual(
+      new Set([permittedSourceHandle(service.world, NPC_ID, ['received-subject', subject])]),
+    );
     const saveId = randomUUID();
     await service.createSave('Observer facts', saveId);
     const payload = await store.saves.read(service.world.id, saveId);
@@ -387,5 +474,18 @@ describe('event-time observer facts', () => {
       { type: 'activity-observed', limit: 100 },
     );
     expect(revisedPage.events.find((entry) => entry.id === event.id)!.text).toBe(hot.text);
+    // The actor's original receipt owns this historical grant. Expiring it removes
+    // the derived event row even though objective world history still contains it.
+    await editWorld(service, (world) => {
+      world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 1;
+    });
+    expect(await service.awarenessEvidence(NPC_ID, [event.id])).toEqual([]);
+    expect(
+      await store.db
+        .prepare(
+          'SELECT event_id FROM history_perspectives WHERE world_id=? AND actor_id=? AND event_id=?',
+        )
+        .get(service.world.id, NPC_ID, event.id),
+    ).toBeUndefined();
   });
 });

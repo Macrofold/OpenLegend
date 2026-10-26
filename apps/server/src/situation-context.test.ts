@@ -11,15 +11,18 @@ import {
   worldSupport,
   selectTemporalHistory,
   currentDetailedAttention,
+  commitActorResponse,
 } from '@open-legend/domain';
 import {
   captureSituation,
   expandSituation,
   situationProposalBinding,
   situationQuerySchema,
+  temporalHistoryForModel,
 } from './situation-context.js';
 import { boundResponseSchema } from './cognition-contracts.js';
 import { entityHandle } from './entity-references.js';
+import { appendMemory } from '../../../packages/domain/src/events.js';
 
 function crowded(count = 16) {
   const world = createWorld(734),
@@ -44,6 +47,109 @@ function crowded(count = 16) {
 }
 
 describe('bounded received situation', () => {
+  it('retains an interpretation of an actually supplied discovery fact without exposing omitted candidates', () => {
+    const world = crowded();
+    world.paused = false;
+    const captured = captureSituation(world, PLAYER_ID, 'discovery-remember', {
+      entries: [],
+      incomplete: true,
+    });
+    const discovery = captured.packet.discovery[0]!;
+    expect(discovery).toBeDefined();
+    const source = discovery.facts.facts[0]!['reference'] as string;
+    expect(captured.currentReferences[source]).toBeDefined();
+    const actual = new Set(
+      [...captured.packet.detailed, ...captured.packet.discovery].flatMap((row) =>
+        row.facts.facts.map((fact) => fact['reference']),
+      ),
+    );
+    expect(
+      Object.keys(captured.currentReferences).every((reference) => actual.has(reference)),
+    ).toBe(true);
+    const result = commitActorResponse(
+      world,
+      'discovery-interpretation',
+      PLAYER_ID,
+      {
+        operations: [
+          {
+            localId: 'keep',
+            requiresAccepted: [],
+            talk: null,
+            act: null,
+            think: null,
+            goal: null,
+            plan: null,
+            note: null,
+            name: null,
+            appraise: null,
+            observe: null,
+            remember: { sources: [source], text: 'That unfamiliar person caught my attention.' },
+          },
+        ],
+      },
+      {},
+      [PLAYER_ID],
+      0,
+      [],
+      undefined,
+      [],
+      {},
+      undefined,
+      {},
+      {},
+      situationProposalBinding(captured),
+    );
+    expect(result.outcome.ok, result.outcome.message).toBe(true);
+    expect(result.world.memories[PLAYER_ID]!.some((memory) => memory.kind === 'impression')).toBe(
+      true,
+    );
+  });
+  it('never rebinds an old thought about an unknown person to a silently reacquired body', () => {
+    const world = crowded(1),
+      id = 'crowd-0';
+    const before = entityHandle(world, PLAYER_ID, id);
+    const source = appendMemory(world, PLAYER_ID, {
+      kind: 'episode',
+      source: 'self_thought',
+      summary: `I wondered about the person (ID:${id}).`,
+      entityIds: [id],
+      importance: 5,
+    })!;
+    expect(source).toBeTruthy();
+    const original = selectTemporalHistory(world.experience?.temporal, PLAYER_ID, {
+      bytes: 262144,
+      limit: 1000,
+    }).entries.find((entry) =>
+      entry.values.some((value) => value.kind === 'personal-account' && value.id === source),
+    )!;
+    expect(original).toBeDefined();
+    const person = entityGet(world.entities, id)!;
+    world.simTime = 1;
+    setSpatialPosition(world, person, { x: 60, y: 0, z: 2 }, worldSupport(person), 'physical');
+    initializePerception(world, []);
+    world.simTime = 40;
+    setSpatialPosition(world, person, { x: 4, y: 0, z: 2 }, worldSupport(person), 'physical');
+    initializePerception(world, []);
+    const after = entityHandle(world, PLAYER_ID, id);
+    expect(after).not.toBe(before);
+    const rendered = temporalHistoryForModel(world, PLAYER_ID, {
+      entries: [original],
+      incomplete: false,
+    });
+    expect(
+      rendered.entries[0]!.facts.find(
+        (fact) => (fact.value as { kind: string }).kind === 'personal-account',
+      )!.value,
+    ).toMatchObject({ text: 'I wondered about the person.' });
+    expect(JSON.stringify(rendered)).not.toContain(after);
+    expect(JSON.stringify(rendered)).not.toContain(id);
+    expect(
+      original.values.some(
+        (value) => value.kind === 'personal-account' && value.text.includes(`(ID:${id})`),
+      ),
+    ).toBe(true);
+  });
   it('uses supported anyOf branches in the strict provider query envelope', () => {
     const schema = z.toJSONSchema(
       boundResponseSchema(['actor'], [], { speech: true, expressions: true }).extend({
@@ -115,22 +221,22 @@ describe('bounded received situation', () => {
     const id = [...captured.scene.bodies.keys()][0]!;
     const result = await expandSituation(
       captured,
-      [{ kind: 'near', anchor: entityHandle(world, PLAYER_ID, id), radius: 8, cursor: null }],
-      async () => ({ entries: [], incomplete: false }),
+      [{ kind: 'near', anchor: entityHandle(world, PLAYER_ID, id), radius: 8 }],
+      async () => ({ entries: [], incomplete: false, hasMore: false }),
     );
     expect(result.visited).toBeLessThanOrEqual(128);
     expect(result.expandedIds.size).toBeGreaterThan(0);
     expect(JSON.stringify(result.results)).not.toContain('Private name');
     const invalid = await expandSituation(
       captured,
-      [{ kind: 'near', anchor: 'hidden-person', radius: 8, cursor: null }],
+      [{ kind: 'near', anchor: 'hidden-person', radius: 8 }],
       async () => {
         throw Error('must not read history');
       },
     );
     expect(invalid.results).toEqual([
       {
-        query: { kind: 'near', anchor: 'hidden-person', radius: 8, cursor: null },
+        query: { kind: 'near', anchor: 'hidden-person', radius: 8 },
         result: { status: 'unavailable' },
       },
     ]);
@@ -170,45 +276,40 @@ describe('bounded received situation', () => {
     expect(Number.isInteger(location.frame)).toBe(true);
     expect(captured.frames[location.frame]).toBeDefined();
   });
-  it('returns every received body across byte-shortened pages without skips or duplicates', async () => {
+  it('returns one bounded partial body answer without suggesting a continuation', async () => {
     const world = crowded(),
       captured = captureSituation(
         world,
         PLAYER_ID,
-        'body-pages',
+        'body-query',
         selectTemporalHistory(world.experience?.temporal, PLAYER_ID),
       );
     const anchor = entityHandle(world, PLAYER_ID, [...captured.scene.bodies.keys()][0]!);
-    const bounded = { ...captured, policy: { ...captured.policy, expansionBytes: 4500 } };
-    const seen = new Set<string>();
-    let cursor: string | null = null,
-      pages = 0;
-    do {
-      const result = await expandSituation(
-        bounded,
-        [{ kind: 'near', anchor, radius: 100, cursor }],
-        async () => {
-          throw Error('not a history query');
-        },
-      );
-      const { expandedIds: _, ...wire } = result;
-      expect(Buffer.byteLength(JSON.stringify(wire))).toBeLessThanOrEqual(4500);
-      const page = (
-        result.results[0] as { result: { bodies: Array<{ reference: string }>; cursor?: string } }
-      ).result;
-      expect(page.bodies.length).toBeGreaterThan(0);
-      for (const body of page.bodies) {
-        expect(seen.has(body.reference)).toBe(false);
-        seen.add(body.reference);
+    const result = await expandSituation(
+      { ...captured, policy: { ...captured.policy, expansionBytes: 4500 } },
+      [{ kind: 'near', anchor, radius: 100 }],
+      async () => {
+        throw Error('not history');
+      },
+    );
+    const { expandedIds: _, ...wire } = result;
+    expect(Buffer.byteLength(JSON.stringify(wire))).toBeLessThanOrEqual(4500);
+    const page = (
+      result.results[0] as {
+        result: { status: string; bodies: Array<{ reference: string }>; cursor?: unknown };
       }
-      cursor = page.cursor ?? null;
-      expect(++pages).toBeLessThan(64);
-    } while (cursor);
-    expect(pages).toBeGreaterThan(1);
-    // A near query returns other received bodies, not its anchor itself.
-    expect(seen.size).toBe(captured.scene.bodies.size - 1);
+    ).result;
+    expect(page.status).toBe('partial');
+    expect(page.bodies.length).toBeGreaterThan(0);
+    expect(page.bodies.length).toBeLessThan(captured.scene.bodies.size - 1);
+    expect(new Set(page.bodies.map((body) => body.reference)).size).toBe(page.bodies.length);
+    expect(page).not.toHaveProperty('cursor');
+    expect(
+      situationQuerySchema.safeParse({ kind: 'near', anchor, radius: 100, cursor: 'unusable' })
+        .success,
+    ).toBe(false);
   });
-  it('uses the oldest actually returned receipt as the history continuation after byte trimming', async () => {
+  it('keeps exact newest rows chronological and marks byte-shortened history partial', async () => {
     const world = crowded(1),
       history = selectTemporalHistory(world.experience?.temporal, PLAYER_ID);
     const captured = captureSituation(world, PLAYER_ID, 'history-pages', history);
@@ -231,40 +332,49 @@ describe('bounded received situation', () => {
       ],
     }));
     const bounded = { ...captured, policy: { ...captured.policy, expansionBytes: 4500 } };
-    let cursor: string | null = null;
-    const acquired: number[] = [];
-    do {
-      const result = await expandSituation(
-        bounded,
-        [{ kind: 'history', subject: null, from: 0, through: world.simTime, cursor }],
-        async (query) => ({
-          entries: entries.filter(
-            ({ receipt }) => !query.before || receipt.order < query.before.order,
-          ),
-          incomplete: false,
-          hasMore: false,
-        }),
-      );
-      const { expandedIds: _, ...wire } = result;
-      expect(Buffer.byteLength(JSON.stringify(wire))).toBeLessThanOrEqual(4500);
-      const page = (
-        result.results[0] as {
-          result: {
-            entries: Array<{ facts: Array<{ value: { text: string } }> }>;
-            cursor?: string;
-          };
-        }
-      ).result;
-      expect(page.entries.length).toBeGreaterThan(0);
-      acquired.push(
-        ...page.entries.map((entry) =>
-          Number(/Observed change (\d+)/.exec(entry.facts[0]!.value.text)![1]),
-        ),
-      );
-      cursor = page.cursor ?? null;
-      expect(acquired.length).toBeLessThanOrEqual(12);
-    } while (cursor);
-    expect([...acquired].sort((a, b) => a - b)).toEqual(entries.map((_, index) => index));
-    expect(new Set(acquired).size).toBe(12);
+    const result = await expandSituation(
+      bounded,
+      [{ kind: 'history', subject: null, from: 0, through: world.simTime }],
+      async () => ({ entries, incomplete: false, hasMore: false }),
+    );
+    const { expandedIds: _, ...wire } = result;
+    expect(Buffer.byteLength(JSON.stringify(wire))).toBeLessThanOrEqual(4500);
+    const page = (
+      result.results[0] as {
+        result: { coverage: string; entries: Array<{ facts: Array<{ value: { text: string } }> }> };
+      }
+    ).result;
+    expect(page.coverage).toBe('partial');
+    expect(page.entries.length).toBeGreaterThan(0);
+    expect(page.entries.length).toBeLessThan(entries.length);
+    const actual = page.entries.map((entry) =>
+      Number(/Observed change (\d+)/.exec(entry.facts[0]!.value.text)![1]),
+    );
+    expect(actual).toEqual(entries.slice(-actual.length).map((entry) => entry.receipt.ordinal));
+    expect(
+      page.entries.every((entry) => entry.facts[0]!.value.text.endsWith('x'.repeat(500))),
+    ).toBe(true);
+    expect(page).not.toHaveProperty('cursor');
+  });
+  it('keeps an empty incomplete history answer distinct from absence without a dead cursor', async () => {
+    const world = crowded(1),
+      captured = captureSituation(world, PLAYER_ID, 'omitted-history', {
+        entries: [],
+        incomplete: true,
+      });
+    const result = await expandSituation(
+      captured,
+      [{ kind: 'history', subject: null, from: 0, through: world.simTime }],
+      async () => ({
+        entries: [],
+        incomplete: true,
+        hasMore: true,
+        nextBefore: { at: 0, order: 44, epoch: 'issued-epoch', ordinal: 3 },
+      }),
+    );
+    const page = (result.results[0] as { result: { coverage: string; entries: unknown[] } }).result;
+    expect(page.entries).toEqual([]);
+    expect(page.coverage).toBe('partial');
+    expect(page).not.toHaveProperty('cursor');
   });
 });

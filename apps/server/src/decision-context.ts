@@ -380,12 +380,12 @@ export async function prepareDecision(
     if (generation !== service.generation || !capturedSituation.valid(service.world))
       throw new Error('Received situation evidence changed during this decision.');
     if (evidenceScope && service.store.memories) {
-      const locators = Object.values(capturedSituation.retentionReferences);
-      for (let offset = 0; offset < locators.length; offset += 128)
+      const selections = Object.values(capturedSituation.receiptDetails);
+      for (let offset = 0; offset < selections.length; offset += 128)
         if (
-          !(await service.store.memories.temporalReceiptsCurrent(
+          !(await service.store.memories.temporalSelectionsCurrent(
             evidenceScope,
-            locators.slice(offset, offset + 128),
+            selections.slice(offset, offset + 128),
           ))
         )
           throw new Error('Recent personal evidence expired during this decision.');
@@ -1057,7 +1057,7 @@ export async function prepareDecision(
           ? await service.store.memories.temporalHistory(evidenceScope, query, currentWorld)
           : selectTemporalHistory(currentWorld.experience?.temporal, actorId, query);
       await validatePrepared(false);
-      return result;
+      return { ...result, hasMore: result.hasMore ?? false };
     },
     context,
     prompt,

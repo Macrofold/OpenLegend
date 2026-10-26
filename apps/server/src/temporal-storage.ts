@@ -33,6 +33,8 @@ export interface PreparedMemoryRetention {
 }
 export interface TemporalHistoryPage extends TemporalHistorySelection {
   hasMore: boolean;
+  /** Last examined receipt, including a whole omitted oversized receipt. */
+  nextBefore?: NonNullable<TemporalHistoryQuery['before']>;
 }
 export interface TemporalHistoryQuery {
   from?: number;
@@ -104,6 +106,7 @@ export async function readTemporalHistory(
   const metadata = await db
     .prepare(
       `SELECT id,source_refs,logical_bytes,receipt_count,
+      first_at,first_order,receipt_epoch,first_ordinal,
       octet_length(payload) AS encoded_bytes FROM mind_temporal_chunks
     WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=?
       ${subjects.length ? 'AND subjects && ?::text[]' : ''}
@@ -136,6 +139,13 @@ export async function readTemporalHistory(
   const chunks = new Map<string, TemporalChunk>();
   const selected: string[] = [];
   const sourceIds = new Set<string>();
+  const metadataCursor = (row: Record<string, unknown>) => ({
+    at: Number(row['first_at']),
+    order: Number(row['first_order']),
+    epoch: String(row['receipt_epoch']),
+    ordinal: Number(row['first_ordinal']),
+  });
+  let metadataBefore: TemporalHistoryPage['nextBefore'];
   let preparationBytes = 0,
     count = 0,
     incomplete = metadata.length > limit,
@@ -145,8 +155,10 @@ export async function readTemporalHistory(
     if (preparationBytes + size > maximumPreparation) {
       incomplete = true;
       hasMore = true;
+      if (!selected.length) metadataBefore = metadataCursor(row);
       break;
     }
+    metadataBefore = metadataCursor(row);
     selected.push(String(row['id']));
     preparationBytes += size;
     for (const id of row['source_refs'] as string[]) sourceIds.add(id);
@@ -190,7 +202,12 @@ export async function readTemporalHistory(
       .get(scope.worldId, missing);
     preparationBytes += Number(sizes?.['bytes'] ?? 0);
     if (preparationBytes > maximumPreparation)
-      throw new MemoryRetentionError('Temporal history exceeds bounded preparation.');
+      return {
+        entries: [],
+        incomplete: true,
+        hasMore: !!metadataBefore,
+        ...(metadataBefore ? { nextBefore: metadataBefore } : {}),
+      };
     for (const row of await db
       .prepare(
         'SELECT payload FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
@@ -224,7 +241,19 @@ export async function readTemporalHistory(
     );
   const entries: TemporalHistorySelection['entries'] = [];
   let bytes = 0;
+  let examined: TemporalHistoryPage['nextBefore'];
   for (const receipt of receipts) {
+    if (entries.length >= limit) {
+      incomplete = true;
+      hasMore = true;
+      break;
+    }
+    const before = {
+      at: receipt.at,
+      order: receipt.order,
+      epoch: receipt.epoch,
+      ordinal: receipt.ordinal,
+    };
     if (
       receipt.sourceIds.some(
         (id) =>
@@ -233,6 +262,7 @@ export async function readTemporalHistory(
       )
     ) {
       incomplete = true;
+      examined = before;
       continue;
     }
     const values = receipt.facets.map(
@@ -240,6 +270,7 @@ export async function readTemporalHistory(
     );
     if (values.some((value) => !value)) {
       incomplete = true;
+      examined = before;
       continue;
     }
     const kept = receipt.facets
@@ -249,6 +280,7 @@ export async function readTemporalHistory(
       );
     if (!kept.length) {
       incomplete = true;
+      examined = before;
       continue;
     }
     if (kept.length !== receipt.facets.length) incomplete = true;
@@ -257,18 +289,32 @@ export async function readTemporalHistory(
       values: kept.map(({ value }) => value!),
     };
     const size = Buffer.byteLength(JSON.stringify(entry));
-    if (entries.length >= limit || bytes + size > maxBytes) {
+    if (size > maxBytes) {
+      // Omit the whole receipt, never a fragment of heard words. Its exact address
+      // still advances browsing so a large observation cannot hide older receipts.
+      incomplete = true;
+      examined = before;
+      continue;
+    }
+    if (bytes + size > maxBytes) {
       incomplete = true;
       hasMore = true;
       break;
     }
+    examined = before;
     entries.push(entry);
     bytes += size;
     incomplete ||= receipt.change === 'loss' || receipt.change === 'attention-exit';
   }
   const released = resident?.actors[scope.actorId]?.releasedThrough;
   incomplete ||= released !== undefined && (query.from === undefined || query.from <= released);
-  return { entries: entries.reverse(), incomplete: incomplete || entries.length === 0, hasMore };
+  const nextBefore = hasMore ? (examined ?? metadataBefore) : undefined;
+  return {
+    entries: entries.reverse(),
+    incomplete: incomplete || entries.length === 0,
+    hasMore,
+    ...(nextBefore ? { nextBefore } : {}),
+  };
 }
 
 /** Exact canonical row deletions join the normal ordered world transaction.

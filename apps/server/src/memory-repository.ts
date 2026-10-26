@@ -628,7 +628,66 @@ export class MemoryRepository {
       return { state: cleaned, rows, positions: accounts.positions };
     });
   }
-  async temporalReceiptsCurrent(
+  /** Revalidate the actual selected facts, not merely a surviving receipt address.
+   * A small name/profile proof cannot keep a pending full historical read valid. */
+  async temporalSelectionsCurrent(
+    scope: MemoryScope,
+    selections: readonly TemporalHistorySelection['entries'][number][],
+  ): Promise<boolean> {
+    if (!selections.length) return true;
+    if (
+      selections.length > RETRIEVAL_ROWS ||
+      selections.some(
+        ({ receipt, values }) =>
+          receipt.actorId !== scope.actorId ||
+          !receipt.facets.length ||
+          receipt.facets.length !== values.length,
+      )
+    )
+      return false;
+    const selected = selections.map(({ receipt, values }) => {
+      const { facets, sourceIds: _aliases, ...header } = receipt;
+      return {
+        actorId: receipt.actorId,
+        physicalLife: receipt.physicalLife,
+        epoch: receipt.epoch,
+        ordinal: receipt.ordinal,
+        header,
+        facets,
+        values,
+      };
+    });
+    const payload = JSON.stringify(selected);
+    if (Buffer.byteLength(payload) > RETRIEVAL_BYTES) return false;
+    const row = await this.db
+      .prepare(
+        `SELECT COUNT(*) AS count FROM jsonb_to_recordset(?::jsonb)
+      q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint,header jsonb,facets jsonb,values jsonb)
+      WHERE EXISTS(SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
+        EXISTS(SELECT 1 FROM LATERAL (
+          SELECT payload,last_ordinal,receipt_ordinals FROM mind_temporal_chunks c
+          WHERE c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife" AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
+          ORDER BY c.first_ordinal DESC LIMIT 1
+        ) chunk CROSS JOIN LATERAL jsonb_array_elements(chunk.payload::jsonb->'receipts') r(receipt)
+          WHERE chunk.last_ordinal>=q.ordinal AND chunk.receipt_ordinals @> ARRAY[q.ordinal]
+          AND (r.receipt->>'ordinal')::bigint=q.ordinal
+          AND (r.receipt-'facets'-'sourceIds')=q.header
+          AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(q.facets) WITH ORDINALITY f(value,position)
+            WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r.receipt->'facets') owned(facet)
+              JOIN mind_temporal_sources source ON source.world_id=? AND source.source_id=f.value->>'blockId'
+              WHERE owned.facet=f.value AND source.payload::jsonb->'values'->(f.value->>'valueOrdinal')::int=q.values->(f.position::int-1))))
+        OR EXISTS(SELECT 1 FROM mind_temporal_supports s
+          WHERE s.world_id=? AND s.actor_id=q."actorId" AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal
+          AND ((s.payload::jsonb->'receipt')-'facets'-'sourceIds')=q.header
+          AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(q.facets) WITH ORDINALITY f(value,position)
+            WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements(s.payload::jsonb->'receipt'->'facets') WITH ORDINALITY owned(facet,position)
+              WHERE owned.facet=f.value AND s.payload::jsonb->'values'->(owned.position::int-1)=q.values->(f.position::int-1))))
+      )`,
+      )
+      .get(payload, scope.worldId, scope.generation, scope.worldId, scope.worldId, scope.worldId);
+    return Number(row?.['count'] ?? 0) === selections.length;
+  }
+  async temporalReceiptLocatorsCurrent(
     scope: MemoryScope,
     locators: readonly TemporalReceiptLocator[],
   ): Promise<boolean> {
@@ -2536,7 +2595,7 @@ export class MemoryRepository {
       const receipts = sources.filter((source) => source.receipt);
       if (receipts.length) {
         if (
-          !(await this.temporalReceiptsCurrent(
+          !(await this.temporalReceiptLocatorsCurrent(
             scope,
             receipts.map((source) => source.receipt!),
           ))
