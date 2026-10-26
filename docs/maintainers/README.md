@@ -36,6 +36,8 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 [Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). CTR owns current delivery and unsatisfied independent acceptance; this index does not repeat its status.
 
+[Emergency reactions and equipment loadouts (ECL00–ECL08)](emergency-combat-and-loadouts.md) owns the selected top-center Defend/Retaliate interface, physical opening opportunity, focused combat view and rapid exact equipment sets. The [feature](../projects/emergency-combat-and-loadouts-feature-spec.md), [technical design](../projects/emergency-combat-and-loadouts-tech-design.md), [world profile](../worlds/base/combat-readiness.md), [limits](../limits/emergency-combat-and-loadouts.md) and [repertoire review](../projects/emergency-combat-and-loadouts-repertoire-review.md) define this scoped ND11/ND13/ND38 refinement. ECL00 owns design completion; ECL01–ECL08 retain runtime and player qualification. Existing CTR/ASE/SUR, inventory and barter obligations are not closed by this design.
+
 ## Skilled player action execution and real item quality
 
 [Action execution and skilled input (ASE01–ASE12)](action-execution-and-skill-expression.md) owns delivery of [ND38's feature specification](../projects/action-execution-and-skill-expression-feature-spec.md), [technical design](../projects/action-execution-and-skill-expression-tech-design.md), [selected world rules](../worlds/base/skilled-action-execution.md) and [limits](../limits/action-execution-and-skill-expression.md). Movement during preparation, animated timed release, exact pointer-directed attacks and bounded local bodily evasion share the native combat owners. ASE tracks the combat-only correction, focused qualification and independent player acceptance. CTR and ordinary action/craft owners retain authoritative contact, permission and material effects.
@@ -107,7 +109,6 @@ Reuse the [shelter technical design](../projects/editable-shelters-tech-design.m
 ## Future work needing design
 
 [The design register](needs-design.md) distinguishes remaining decisions/design from implementation and verification. Start with [dispositions](needs-design.md#current-design-dispositions), [design groups](needs-design.md#ordered-design-groups) and [dependencies](needs-design.md#order-and-parallel-opportunities). Actual work selection follows gameplay priorities and the available build, not group numbering.
-
 [NPC cognition research follow-up map](npc-cognition-research-needs-design.md) tracks model comparisons, low-refusal characterization, architecture questions and player-value tests through existing owners.
 
 ## Five researched product specifications
