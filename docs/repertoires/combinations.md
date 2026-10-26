@@ -6,6 +6,109 @@
 
 The [selected stealth and awareness journeys](../projects/stealth-awareness-feature-spec.md#representative-journeys) connect perception, uncertainty, choice and consequence across these situations. Where those rules are selected, use the [shared contracts](../projects/stealth-awareness-tech-design.md) and [delivery tracker](../maintainers/stealth-awareness.md). A scene's wider ecology, magic or specialist technology remains an optional proposal with its stated dependencies.
 
+The reading order foregrounds defended objectives, dangerous discovery, mastery, creative ambition and changed relationships, then offers quieter life play and comic contrast. It spans world families rather than prescribing a campaign or implementation order; retain each scene's world badge, priority and capability gaps. Choose a coherent subset. The quieter scenes are available pleasures, rest or supporting activities, not an obligatory queue of chores.
+
+## The toll tower at dawn
+
+**MD · Play · 2 Complete · Large/New.** Gap: tactical combat, contested occupation, supply and faction response.
+
+A lord's garrison has seized the crossing that supplies Bellwold. Its commander intends to hold it, its soldiers need food and pay, and a merchant offers a reward for reopening the road. An ambitious knight wants the tower as a personal holding. A player can want the crossing, the money, the knight's favor or the satisfaction of defeating a capable enemy. Reconnaissance reveals a strong front gate, a narrow riverside approach and a disputed relief schedule. These are actual opportunities with risks, not a guarantee of an optimal method.
+
+In a winter-road version, Captain Orren has gone unpaid but knowingly adds an unofficial charge to a convoy carrying grain and desirable trade goods. Merchant Mira wants the road open before particular households exhaust their stores; a raider wants the cargo for sale. Some soldiers fear hunger, while another enjoys threatening travelers. The households also have plans for the arriving goods, the merchant wants a profitable next journey and the knight hopes to establish a holding. These motives explain different choices without making extortion, need and commerce equivalent or turning every guard into a killer.
+
+Dawn light, moving cover and a guard's physical look direction can make a body visible before its face or carried weapon is clear. The scout can keep moving while checking the bank, then share only what was observed. An actually received warning and maintained readiness for that danger can defeat surprise even when the attacker remains unseen; an unready guard may still be surprised by an attack from someone in view. A failed stealth plan can become a readable fight or retreat, and walking behind an engaged opponent does not renew the same surprise advantage.
+
+| Approach                      | What can be gained                                   | Cost or changed situation                                                     |
+| ----------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Assault with a prepared force | Victory, captured equipment and immediate possession | Casualties, damaged defenses, prisoners and a hostile claimant remain         |
+| Infiltrate or suborn a guard  | Access or a momentary advantage                      | Evidence of betrayal, unreliable cooperation or an alarm can change the fight |
+| Bargain from strength         | Passage or withdrawal without taking the walls       | Tribute, recognition or a concession gives the garrison something it wants    |
+| Choose a rival crossing       | Trade continues on another route                     | The lord retains the tower and can pursue a different pressure                |
+
+An optional cargo variation adds a [chiming trophy chest](objects.md#containers-and-road-equipment): keep the prize, abandon another load, enlist a bearer or use [route-specific packing](work-crafting.md#field-trades-cargo-handling-and-dangerous-work). Muffling its clapper trades sound against hands, access and burden. The same successful handling can become a [quiet-cargo service](economy-logistics.md), while releasing the clapper at home turns yesterday's liability into a celebration. Each effect needs supported sound and carrying behavior.
+
+A defeated garrison does not respawn to erase success. Who holds and repairs the tower matters afterward. Reopening the road can deliver food, a real payment and useful access without a required casualty. Collusion or theft may instead enrich the player while the households suffer a real shortage; no automatic punishment or forgiveness is promised. An exposed false charge may alter bargaining, but evidence and a persuasive appeal do not compel surrender. Combine [construction](settlements-architecture.md), [combat](combat-rescue.md), [logistics](economy-logistics.md) and [diplomacy](diplomacy-conflict.md). Research seeds: [Bannerlord](source-atlas.md#g115), [Battle Brothers](source-atlas.md#g121), [Westeros](source-atlas.md#w10); the winter-road variation also draws on [The Witcher 3](source-atlas.md#g72) and [Fallout: New Vegas](source-atlas.md#g112).
+
+Selection: A defended objective, equipment and access reward make a strong early expansion; do not require regional government or supply simulation.
+
+## The quarry that learns
+
+**MD SC FA · Play · 2 Complete · Large/New.** Gap: bounded creature behavior, sensory evidence, tracking and differentiated combat.
+
+A powerful predator occupies the route to a valuable ruin. It hunts, rests, avoids some hazards and changes its approach after an actual encounter. Its materials or defeated territory enable a desired advancement. A hunter seeks fame, a trader wants the road and a naturalist wants observations. Their interests can overlap without being identical.
+
+Make the destination desirable before the hunt: a sheltered high pass, surviving survey equipment or a genuinely useful ruin can open the next expedition. The hunter may resent the player's growing reputation while remaining competent and helpful; the trader may press for haste because a profitable convoy is waiting. Give the naturalist useful field knowledge and an ambition beyond objecting to a kill. A rival reaching the site first can gain recognition or equipment that the player wanted.
+
+Study traces, prepare a counter, lure it into favorable terrain, challenge it directly, evade it or exploit a rival hunter's attempt.
+
+Different bodies make different plans useful. Rain may mask a hunter's quiet steps while leaving scent or movement available to a creature that actually has those channels. A rail-borne decoy only reaches a vibration-sensitive body through connected material. The creature can ignore an irrelevant cue or adapt after a witnessed failure; the player's clever description does not choose its response. If the quarry flees across noisy brush or scree, its own movement can give the hunter another broad clue or disturb nearby wildlife. Following that clue, changing vantage point or accepting the escape are real choices; a last-seen mark remains historical after contact is lost.
+
+The predator can injure someone, escape, die or drive the party away. Killing it need not be revealed as a moral mistake; preserving it need not be the easiest or most profitable choice. Record the consequences of the chosen method, including a rival's success if the player delays. Combine [ecology](ecology-weather.md), [bodies](bodies-species.md), [abilities](abilities-progression.md) and [adventure](adventure-discovery.md). Research seeds: [Grounded](source-atlas.md#g142), [The Forest](source-atlas.md#g137), [V Rising](source-atlas.md#g146), [The Witcher 3](source-atlas.md#g72).
+
+Selection: A worthwhile dangerous hunt and reward are early; adaptive encounter memory expands the basic predator.
+
+## The champion and the oath
+
+**MD FA · Play · 2 Complete · Moderate/Extend.** Gap: readable duel rules, reputation, equipment and incompatible commitments.
+
+A knight trained for years wants to win a tournament whose prize is land and command. Their patron demands a politically useful loss to another contender. The knight enjoys combat, loves a sibling whose education the patron finances, and believes an oath has meaning. The opponent is a real competitor with a different fighting style, not a prop waiting for the player's moral decision.
+
+Fight to win, obey, expose the arrangement, withdraw or negotiate a release from service. Combat mastery determines the bout if it proceeds; a heartfelt speech does not guarantee victory. A win can bring prestige and retaliation, a loss can preserve an obligation while costing self-respect, and withdrawal can close the desired career. The sibling has their own response. Combine [progression](abilities-progression.md), [relationships](relationships.md), [traits](traits.md) and [institutions](institutions-politics.md). Research seeds: [Kingdom Come II](source-atlas.md#g114), [Fire Emblem: Three Houses](source-atlas.md#g64), [Middle-earth](source-atlas.md#w01).
+
+Selection: A readable duel can put a small set of personal loyalties at stake without simulating an entire patronage system.
+
+For a separately selected fair contest, use [the open championship](abilities-progression.md#the-open-championship): the announced rules hold, a substantial prize and advanced teaching are attainable, and boasting, nerves or a sore loser supply ordinary friction. Keep the coerced knight's existing history intact. Corruption is a premise of this patronage scene, not the hidden truth of every competition.
+
+## The festival contract
+
+**MO · Play · 5 Specialist · Moderate/Extend.** Gap: meaningful performance criteria, scarce commissions, sponsorship and remembered conduct.
+
+Jo and Vic both want the single commission to produce the River Lights main-stage centerpiece. Jo proposes an illuminated river of moving shadows with a local band whose music follows visitors through it; Vic offers a staged musical homecoming with a crowd-sung finale. The bids compete on audience appeal, production quality, readiness and budget. Jo's design is inventive but unfinished; Vic has rehearsed a polished act and found a sponsor whose other business harms a neighbor. Jo wants to prove an ambitious idea can work; Vic wants recognition beyond reliable supporting roles. The audience wants a good evening, the organizer wants attendance, and performers want pay and recognition. None of those purposes can be reduced to a single reputation bar.
+
+Help one competitor, enter the contest, form a coalition, expose a concealed sponsorship term or take the money knowingly. Preparation and the performance matter. Negotiate credit for actual contributions; a successful collaboration need not erase envy, and a rejected offer can leave competitors opposed. A rejected proposal can become a smaller successful event without pretending it won the main contract. The winner can receive real payment, an appreciative audience and access to a larger commission; the loser may become an ally, rival or critic with another project to pursue. The festival should be enjoyable in its own right: a wonderful performance can end in dancing and earned recognition without a compulsory scandal. Combine [arts](arts-leisure.md), [work](work-crafting.md), [status and relationships](relationships.md) and [economy](economy-logistics.md). Research seeds: [The Sims](source-atlas.md#g24), [Austen](source-atlas.md#w23), [The Culture](source-atlas.md#w17).
+
+Selection: Full modern creative-industry competition; a small in-world contest remains Complete.
+
+## The crown below the ruins
+
+**FA · Play · 3 Depth · Large/New.** Gap: bounded ruin traversal, combat, a defined magical power and competing claims.
+
+A ruined royal sanctuary contains a crown that can command an admitted class of bound guardians. A claimant wants an army, a knight wants to end raids, a sorcerer wants the technique, and a custodian knows the crown's history. The ruin offers traps, enemies, evidence and treasure; mastering its dangers is a worthwhile adventure before the political decision.
+
+Take and wield the crown, sell it, transfer it to an ally, destroy it or leave it guarded. Each option changes who can use an actual power. The crown's limits and costs are discoverable through play; an unexpected punishment is not added merely because the player chooses domination. A well-intentioned ruler may abuse it, a ruthless claimant may restore order while committing other harms, and destroying it may remove the easiest defense against a genuine enemy. The setting can contain a clear villain without making every claimant secretly equivalent. Combine [magic](magic.md), [history](history-myth.md), [faith](faith-ritual.md), [adventure](adventure-discovery.md) and [politics](institutions-politics.md). Research seeds: [Middle-earth](source-atlas.md#w01), [Earthsea](source-atlas.md#w11), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59).
+
+Selection: A dangerous ruin and treasure precede the magical command system and competing political claims.
+
+## The household after the victory
+
+**ALL · Play · 3 Depth · Moderate/Extend.** Gap: remembered events, changed resources, relationships and ordinary activities.
+
+A returning party has won the objective. Let the gathering reflect that expedition's actual outcomes. In one version, a person gained wealth, another lost a friend, and another enjoyed the fight and wants a military career. A household member is proud and angry about a promise broken during the expedition. There is a meal, an attractive new possession, a real achievement and, where the events caused it, an absence that cannot be repaired by buying the correct gift. A clean expedition can instead bring everyone home; a casualty is not the price of making the feast meaningful.
+
+The immediate bodily shock has passed, yet a frightened survivor may still struggle with the supported consequences of fear while helping prepare the meal. Quietly reconsidering the remembered danger, accepting company or choosing a familiar task can change the aftermath without requiring a new external incident. The memory is not an inexhaustible source of fresh threats. Another survivor may feel relief or pride, and no shared conversation requires everyone to reach the same feeling or decision.
+
+Celebrate, mourn, distribute spoils, pay debts, pursue romance, tell a self-serving story or quietly return to work. Neither forced catharsis nor a mandatory new disaster is needed. A survivor may forgive, refuse, leave, marry, enlist or remain undecided. Let the victory make something better while keeping its actual costs. Combine the retained [debrief](combat-rescue.md#the-debrief-at-the-kitchen-table), [relationships](relationships.md), [needs](needs.md), [art](arts-leisure.md) and [history](history-myth.md). Research seeds: [Hades](source-atlas.md#g22), [Wildermyth](source-atlas.md#g25), [Fire Emblem](source-atlas.md#g64), [Middle-earth](source-atlas.md#w01).
+
+Selection: Establish the victory, reward and ability to continue before rich domestic aftermath.
+
+Someone can dance, flirt, boast, sit quietly or leave without a required group confession. The host may want to enjoy the new hall, a companion may invite a later outing and a disappointed relative may decline a toast. A separately chosen theft or disputed account can become another event; it should not automatically spoil the victory evening. A successful gathering may simply end.
+
+## The companion who changes sides
+
+**ALL · Play · 2 Complete · Large/New.** Gap: distinct loyalties, scoped knowledge, party commitments and faction consequences.
+
+The party's best scout loves another member but remains loyal to a faction the player now intends to attack. Earlier conversations, assistance and witnessed conduct establish that allegiance. Recruiting a useful former enemy further strains it. Affection, professional respect and political agreement are separate; sufficient gifts cannot automatically purchase obedience.
+
+The scout might refuse, resign, warn their faction, conceal information or participate under a specific concession. Their choice follows established motives and actual circumstances. The player can alter the objective, accept the departure, conceal their plan at the risk of later discovery, or continue with another scout.
+
+If the conflict becomes violence, a visible companion's apparently cordial approach can still end in a surprising attack. A credible warning and genuine readiness for that danger can prevent surprise; an earlier disagreement alone does not establish such readiness. Private hostile intent is not a player-visible label, and what becomes evident after contact cannot retroactively warn the victim. The attack, the bodily startle and the survivor's later interpretation remain different parts of the event.
+
+A betrayal can be deliberate and harmful without making every companion untrustworthy. Combine [psychology](psychology-behavior.md), [relationships](relationships.md), [knowledge](languages-knowledge.md) and [factions](diplomacy-conflict.md). Research seeds: [Dragon Age: Inquisition](source-atlas.md#g53), [Dragon Age II](source-atlas.md#g52), [Mass Effect 2](source-atlas.md#g102).
+
+Follow the actual choice into the next journey: departure can cost an available route or trusted expertise, a kept concession can sustain a difficult alliance, and betrayal can end a friendship. The scout still has a loved person, a faction and a future after leaving the party. Restitution, a later reunion and renewed trust remain separate possibilities; none is the required ending.
+
+Selection: A useful companion’s discoverable conflicting aim makes trust matter in the next activity; no unexplained betrayal or global approval meter.
+
 ## The wedding bridge
 
 **MD FA · Play · 2 Complete · Moderate/Extend.** Gap: temporary supports, cooperative work and commitments.
@@ -16,15 +119,52 @@ Combine [expandable shelter](settlements-architecture.md#the-expandable-first-sh
 
 Selection: A bounded crossing with several practical solutions and one independent collaborator can combine invention, building and a celebration worth reaching; do not require a civic simulator.
 
-## Soup before the summit
+## The claim beneath the outpost
 
-**MD SC FA · Play · 4 Detail · Moderate/Extend.** Gap: food preparation, shared loads and return plans.
+**SC · Play · 5 Specialist · Large/New.** Gap: ground encounters, authored ownership claims, environmental hazards and resource use.
 
-An expedition needs a warm meal at a cold lookout, but a companion's knee limits the load they can carry. Use warmstones, build a sheltered stove, change the menu, recruit a porter or choose a nearer view. The companion can plan the route and refuses to be treated as cargo. Wind may spoil one method while leaving others viable. Success is a good shared outing; no rare loot is needed. On returning, the group can teach the preparation as a reusable routine.
+A planetary survey reveals a valuable deposit beneath a settlement's atmospheric machinery. A charter company claims extraction rights, residents claim the infrastructure and a rival team arrives with armed escorts. The deposit is genuinely useful, not a fake prize introduced solely to teach a lesson about greed. The environmental cost and alternative extraction methods depend on inspectable local facts.
 
-Combine [warmstone](materials-resources.md#warmstone), [accommodation](bodies-species.md#accommodation-as-invention), [way back](mechanics.md#leave-a-way-back) and [particular cooking](arts-leisure.md#cooking-for-a-particular-person).
+| Objective               | Possible methods                                  | Consequence to carry forward                                         |
+| ----------------------- | ------------------------------------------------- | -------------------------------------------------------------------- |
+| Secure the deposit      | Negotiate, purchase, seize or defend a claim      | Revenue and power come with obligations, opposition or dispossession |
+| Protect the settlement  | Reinforce, contest the charter, bargain or fight  | Survival can cost wealth, allies or technical capacity               |
+| Find another method     | Investigate the site and test a supported process | Discovery may change bargaining power; it may also fail              |
+| Withdraw with knowledge | Sell, conceal or publish a bounded survey         | Others still act on the site and remember who helped them            |
 
-Selection: Thermal meal logistics must not become the first expedition milestone.
+The playable encounter occurs on the ground; ship arrival is abstract. Combine [materials](materials-resources.md), [technology](technology.md), [institutions](institutions-politics.md) and [combat](combat-rescue.md). Research seeds: [The Expanse](source-atlas.md#w15), [Dune](source-atlas.md#w09), [Mass Effect](source-atlas.md#g101), [Subnautica](source-atlas.md#g139).
+
+Selection: Planetary extraction, atmosphere and charter conflict; its generic contested-reward pattern is reusable earlier.
+
+## The witness and the promotion
+
+**MO · Play · 5 Specialist · Large/New.** Gap: investigative evidence, threats, institutional incentives and actual protection outcomes.
+
+Sera Holt can advance a case against the Quay Circle if a frightened stallholder testifies. Her superior wants an arrest before the festival; the witness wants their family left alone; an intermediary offers compensation in exchange for silence. A helpful disclosure can become dangerous as it travels between institutions. The player may want justice, a favor, payment, revenge or protection for a friend.
+
+Find corroboration, challenge a premature accusation, protect or relocate the witness through available means, publish evidence, accept a compromise or side with the Circle. These choices create different risks and responsibilities. A conviction can remove a perpetrator without eliminating the conditions supporting the organization; losing the case does not prove there was no crime. Preserve the particular witness's life and choices after the investigation. Combine [institutions](institutions-politics.md), [knowledge](languages-knowledge.md), [relationships](relationships.md) and [rescue](combat-rescue.md). Research seeds: [The Wire](source-atlas.md#w21), [The Sopranos](source-atlas.md#w22), [Deus Ex](source-atlas.md#g117).
+
+Selection: Modern institutional/crime/protection scenario.
+
+## The borrowed doorway
+
+**FA · Play · 2 Complete · Large/New.** Gap: temporary geometry, evidence and occupancy-safe expiry.
+
+An echo carpenter reveals an old doorway to a blocked archive collection: a beautiful survey of an abandoned high route and surviving records of how its bridges were built. Reaching it could make a desired expedition possible, while inspection establishes only what the actual records disclose. The doorway opens through someone's present kitchen, so using it intrudes on a lived-in home. Negotiate hours, build a new route, move the collection or abandon the shortcut. The resident has their own plans and may reject an offer. The echo's fading edge gives a deadline for one visit, not a requirement to force entry. Historical access does not override current inhabitants or grant ownership of their home.
+
+Combine [echo carpentry](magic.md#echo-carpentry), [privacy](needs.md#privacy-with-a-door), [ruin tenants](settlements-architecture.md#ruins-with-present-tenants) and [public archive](institutions-politics.md#the-public-archive-under-pressure).
+
+Selection: When fantasy is selected, a bounded traversal power plus independent local claims offers a practical alternative with consequences; no universal space rewriting.
+
+## The grounded rescue ship
+
+**SC · Play · 5 Specialist · Large/New.** Gap: inhabited interiors, station roles and discrete external-action resolution.
+
+A ship waiting at a surface port receives a distress call from another vessel on an abstract route. Crew can prepare medical space, negotiate a rendezvous, coordinate a remote tow service or support the other crew through communications. An optional encounter phase asks people to manage shields and damaged systems inside the ship. There are no flight controls or spatial pursuit. Success is arrival and rescue through bounded route-state changes, followed by care on the ground.
+
+Combine [route room](technology.md#the-route-room), [crew stations](technology.md#external-action-crew-stations), [get everyone home](combat-rescue.md#win-by-getting-everyone-home) and [debrief](combat-rescue.md#the-debrief-at-the-kitchen-table).
+
+Selection: Ship-crew and abstract-route rescue.
 
 ## The wolf at the school gate
 
@@ -37,78 +177,6 @@ A rustle behind the hedge can leave one parent unsure of the source while a watc
 Combine [wildlife elsewhere](ecology-weather.md#wildlife-with-an-elsewhere), [useful weed](ecology-weather.md#a-useful-weed), [rumor routes](languages-knowledge.md#rumor-with-a-route) and [useful error](adventure-discovery.md#the-mystery-that-permits-useful-error).
 
 Selection: A particular threat, observable clues and several remedies join danger to investigation and local consequences; do not require population ecology.
-
-## The harvest that tastes wrong
-
-**MD MO FA · Play · 4 Detail · Moderate/Extend.** Gap: ingredient properties, experiments and contextual preferences.
-
-A hardy grain survives a wet year but makes the traditional festival bread dense. A miller wants to blend it, a cook wants a new dish and an elder wants to preserve the old recipe. Try small batches, borrow grain, adapt the oven or celebrate both dishes. The first bad loaf can feed animals if the world's food rules allow it. The meaningful result is a community finding a new practice, not proving tradition or innovation universally superior.
-
-Combine [second-season seed](materials-resources.md#second-season-seed), [prototype club](work-crafting.md#the-prototype-club), [inherited method](work-crafting.md#an-inherited-method-questioned) and [amendable calendar](faith-ritual.md#a-calendar-people-can-amend).
-
-Selection: Ingredient texture and festival recipe disputes follow farming and cooking.
-
-## The midnight rehearsal
-
-**MO · Play · 5 Specialist · Moderate/Extend.** Gap: schedules, local noise and negotiated shared space.
-
-A band finally has all its members free at midnight, when a neighbor needs sleep before a hospital shift. Use a different room, change instruments, add insulation, rehearse quietly or negotiate a daytime shift swap. The neighbor also loves their music and wants to attend. A failed soundproofing attempt gives usable evidence about leakage. Once solved, the agreement should persist; repeat play comes from the music and relationships, not an endlessly reset noise complaint.
-
-Outside the room, someone may recognize a sufficiently clear familiar singing voice while missing the lyrics and the conversation between songs. Compare listening positions, a closed door and a cloth-lined gap to discover which path carries sound. A successful supported alteration can help with later rehearsals; it changes that acoustic path rather than granting its maker a general stealth bonus. Nobody has to turn away from an urgent task merely because they hear the music.
-
-Combine [quiet hours](materials-resources.md#quiet-hours), [household agreements](relationships.md#household-agreements), [neighborhood sound](arts-leisure.md#the-neighborhood-sound) and [diagnostic work](work-crafting.md#the-diagnostic-profession).
-
-Selection: Modern urban scheduling/noise scenario.
-
-## The library's hottest day
-
-**MO SC · Play · 5 Specialist · Large/New.** Gap: coarse heat, shared services and accessible relocation.
-
-A heatwave threatens a library's public cooling room just as its energy contract expires. Repair ventilation, borrow a portable unit, move activities or negotiate with a nearby workshop whose power schedule has slack. A rare manuscript needs special care, but people need shelter now. The librarian can choose to postpone an exhibit. Resolve one district-scale resource problem with clear limits; do not require a city-wide power-grid simulator to let players make a humane practical decision.
-
-Combine [heat loom](technology.md#the-district-heat-loom), [two publics](institutions-politics.md#the-institution-with-two-publics), [dignified threshold](settlements-architecture.md#a-dignified-threshold) and [repair budget](institutions-politics.md#the-council-has-a-repair-budget).
-
-Selection: Urban environmental-service scenario.
-
-## The missing parcel club
-
-**MO · Play · 5 Specialist · Moderate/Extend.** Gap: parcel identity, scoped testimony and delivery histories.
-
-Several packages disappear from a building lobby. Residents propose a locked cabinet, a shared receiving rota or accusing the newest tenant. Investigating may reveal mislabeling, an overhelpful neighbor or theft, depending on the authored starting facts. Players can improve delivery even before identifying a culprit. A wrong suspicion has a repair path through public correction. Neither a security camera nor a model may invent evidence from an unobserved interval.
-
-Combine [empty box](objects.md#the-honest-empty-box), [handoff improvement](institutions-politics.md#bureaucracy-that-can-improve), [local reputation](relationships.md#reputation-has-an-address) and [traveling correction](languages-knowledge.md#a-public-correction-that-travels).
-
-Selection: Modern delivery and building-management scenario.
-
-## A good job becomes smaller
-
-**MO · Play · 5 Specialist · Moderate/Extend.** Gap: learned routines, changing service demand and career goals.
-
-A tutor succeeds so well that their adult learners no longer need basic lessons. The group proposes a budgeting club, the tutor considers instrument making and one student offers to teach them. Continue the service, train a successor or celebrate its completion. The income change matters but need not trigger eviction. A useful system permits successful work to end and relationships to continue, instead of quietly making students forget so the quest can repeat.
-
-Combine [profession changing clients](work-crafting.md#a-profession-that-changes-its-clients), [late beginner](characters-backstories.md#the-late-beginner), [mastery](needs.md#mastery-with-a-stopping-point) and [holiday](arts-leisure.md#a-holiday-after-completion).
-
-Selection: Modern employment and career-transition scenario.
-
-## The alien welcome meal
-
-**SC · Play · 5 Specialist · Large/New.** Gap: environmental compatibility, translation and safe shared interfaces.
-
-Two delegations cannot breathe the same air or eat the same food. A chef, engineer and translator design adjacent dining rooms with a shared visual table, compatible scents or synchronized music. One guest prefers a simple conversation to ceremonial complexity. The challenge is creating a pleasant meeting, not forcing biological sameness. A prototype can fail through condensation or poor sound while preserving safety and offering another method.
-
-Combine [different air](bodies-species.md#a-guest-with-different-air), [translation](languages-knowledge.md#translation-leaves-a-question), [neutral meal](diplomacy-conflict.md#a-neutral-meal-with-real-stakes) and [commission](work-crafting.md#the-commission-with-room-for-taste).
-
-Selection: Multiple atmospheres and biological hospitality.
-
-## The grounded rescue ship
-
-**SC · Play · 5 Specialist · Large/New.** Gap: inhabited interiors, station roles and discrete external-action resolution.
-
-A ship waiting at a surface port receives a distress call from another vessel on an abstract route. Crew can prepare medical space, negotiate a rendezvous, coordinate a remote tow service or support the other crew through communications. An optional encounter phase asks people to manage shields and damaged systems inside the ship. There are no flight controls or spatial pursuit. Success is arrival and rescue through bounded route-state changes, followed by care on the ground.
-
-Combine [route room](technology.md#the-route-room), [crew stations](technology.md#external-action-crew-stations), [get everyone home](combat-rescue.md#win-by-getting-everyone-home) and [debrief](combat-rescue.md#the-debrief-at-the-kitchen-table).
-
-Selection: Ship-crew and abstract-route rescue.
 
 ## The colony's unwanted miracle
 
@@ -130,25 +198,25 @@ Combine [wayseed](materials-resources.md#wayseed-lattice), [phase kiln](technolo
 
 Selection: Science-fiction gate technology and economic transition.
 
-## The dragon and the laundry
+## The spell everyone stops casting
 
-**FA · Play · 4 Detail · Large/New.** Gap: one bounded weather-transfer rule and negotiated schedules.
+**FA · Play · 3 Depth · Large/New.** Gap: finite charm composition and transition to dependable infrastructure.
 
-A dragon's fog-clearing bargain makes the orchard flourish but leaves the town's laundry perpetually damp. A washer proposes a rotating schedule, a mage suggests a warmstone drying room and the dragon wants a quiet nesting ledge. A modest domestic complaint becomes diplomacy among unequal capabilities. Everyone can benefit without producing free heat or forcing the dragon into servitude. The agreement should settle into routine after the interesting decision.
+Apprentices spend mornings keeping market cloth rigid against rain. One invents a wet-triggered charm with a safe release, freeing them for lessons and play. Teachers disagree over losing a traditional exercise; shopkeepers worry about failure. Test, inspect, adopt selectively or keep manual alternatives. A good outcome removes repetitive labor and creates a new problem worth choosing, rather than inventing another compulsory spellcasting chore.
 
-Combine [weather debt](magic.md#a-dragons-weather-debt), [borrowed warmth](magic.md#borrowed-warmth), [small promise](diplomacy-conflict.md#the-credible-small-promise) and [retired solution](mechanics.md#retire-a-successful-solution).
+Combine [useful charms](magic.md#the-grammar-of-useful-charms), [deliberate limits](magic.md#the-school-of-deliberate-limits), [apprenticeship](relationships.md#an-apprenticeship-with-an-exit) and [rehearsal room](automation-creators.md#the-rehearsal-room).
 
-Selection: A dragon's domestic scheduling problem is not the basic formidable-enemy experience.
+Selection: Magic automation follows worthwhile spell use and an actual recurring burden.
 
-## The borrowed doorway
+## A good job becomes smaller
 
-**FA · Play · 2 Complete · Large/New.** Gap: temporary geometry, evidence and occupancy-safe expiry.
+**MO · Play · 5 Specialist · Moderate/Extend.** Gap: learned routines, changing service demand and career goals.
 
-An echo carpenter reveals an old doorway between a public archive and someone's present kitchen. It offers access to a blocked collection but violates the resident's privacy. Negotiate hours, build a new route, move the collection or abandon the shortcut. The echo's fading edge gives a deadline for one visit, not a requirement to force entry. Historical access does not override current inhabitants or grant ownership of their home.
+A tutor succeeds so well that their adult learners no longer need basic lessons. The group proposes a budgeting club, the tutor considers instrument making and one student offers to teach them. Continue the service, train a successor or celebrate its completion. The income change matters but need not trigger eviction. A useful system permits successful work to end and relationships to continue, instead of quietly making students forget so the quest can repeat.
 
-Combine [echo carpentry](magic.md#echo-carpentry), [privacy](needs.md#privacy-with-a-door), [ruin tenants](settlements-architecture.md#ruins-with-present-tenants) and [public archive](institutions-politics.md#the-public-archive-under-pressure).
+Combine [profession changing clients](work-crafting.md#a-profession-that-changes-its-clients), [late beginner](characters-backstories.md#the-late-beginner), [mastery](needs.md#mastery-with-a-stopping-point) and [holiday](arts-leisure.md#a-holiday-after-completion).
 
-Selection: When fantasy is selected, a bounded traversal power plus independent local claims offers a practical alternative with consequences; no universal space rewriting.
+Selection: Modern employment and career-transition scenario.
 
 ## The werewolf's first commission
 
@@ -160,130 +228,76 @@ Combine [two forms](bodies-species.md#two-forms-one-social-life), [commission](w
 
 Selection: Transformation and client interpretation expand ordinary delivery and equipment.
 
-## The spell everyone stops casting
+## The library's hottest day
 
-**FA · Play · 3 Depth · Large/New.** Gap: finite charm composition and transition to dependable infrastructure.
+**MO SC · Play · 5 Specialist · Large/New.** Gap: coarse heat, shared services and accessible relocation.
 
-Apprentices spend mornings keeping market cloth rigid against rain. One invents a wet-triggered charm with a safe release, freeing them for lessons and play. Teachers disagree over losing a traditional exercise; shopkeepers worry about failure. Test, inspect, adopt selectively or keep manual alternatives. A good outcome removes repetitive labor and creates a new problem worth choosing, rather than inventing another compulsory spellcasting chore.
+A heatwave threatens a library's public cooling room just as its energy contract expires. Repair ventilation, borrow a portable unit, move activities or negotiate with a nearby workshop whose power schedule has slack. A rare manuscript needs special care, but people need shelter now. The librarian can choose to postpone an exhibit. Resolve one district-scale resource problem with clear limits; do not require a city-wide power-grid simulator to let players make a humane practical decision.
 
-Combine [useful charms](magic.md#the-grammar-of-useful-charms), [deliberate limits](magic.md#the-school-of-deliberate-limits), [apprenticeship](relationships.md#an-apprenticeship-with-an-exit) and [rehearsal room](automation-creators.md#the-rehearsal-room).
+Combine [heat loom](technology.md#the-district-heat-loom), [two publics](institutions-politics.md#the-institution-with-two-publics), [dignified threshold](settlements-architecture.md#a-dignified-threshold) and [repair budget](institutions-politics.md#the-council-has-a-repair-budget).
 
-Selection: Magic automation follows worthwhile spell use and an actual recurring burden.
+Selection: Urban environmental-service scenario.
 
-## The toll tower at dawn
+## The midnight rehearsal
 
-**MD · Play · 2 Complete · Large/New.** Gap: tactical combat, contested occupation, supply and faction response.
+**MO · Play · 5 Specialist · Moderate/Extend.** Gap: schedules, local noise and negotiated shared space.
 
-A lord's garrison has seized the crossing that supplies Bellwold. Its commander intends to hold it, its soldiers need food and pay, and a merchant offers a reward for reopening the road. An ambitious knight wants the tower as a personal holding. A player can want the crossing, the money, the knight's favor or the satisfaction of defeating a capable enemy. Reconnaissance reveals a strong front gate, a narrow riverside approach and a disputed relief schedule. These are actual opportunities with risks, not a guarantee of an optimal method.
+A band finally has all its members free at midnight, when a neighbor needs sleep before a hospital shift. Use a different room, change instruments, add insulation, rehearse quietly or negotiate a daytime shift swap. The neighbor also loves their music and wants to attend. A failed soundproofing attempt gives usable evidence about leakage. Once solved, the agreement should persist; repeat play comes from the music and relationships, not an endlessly reset noise complaint.
 
-Dawn light, moving cover and a guard's physical look direction can make a body visible before its face or carried weapon is clear. The scout can keep moving while checking the bank, then share only what was observed. An actually received warning and maintained readiness for that danger can defeat surprise even when the attacker remains unseen; an unready guard may still be surprised by an attack from someone in view. A failed stealth plan can become a readable fight or retreat, and walking behind an engaged opponent does not renew the same surprise advantage.
+Outside the room, someone may recognize a sufficiently clear familiar singing voice while missing the lyrics and the conversation between songs. Compare listening positions, a closed door and a cloth-lined gap to discover which path carries sound. A successful supported alteration can help with later rehearsals; it changes that acoustic path rather than granting its maker a general stealth bonus. Nobody has to turn away from an urgent task merely because they hear the music.
 
-| Approach                      | What can be gained                                   | Cost or changed situation                                                     |
-| ----------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Assault with a prepared force | Victory, captured equipment and immediate possession | Casualties, damaged defenses, prisoners and a hostile claimant remain         |
-| Infiltrate or suborn a guard  | Access or a momentary advantage                      | Evidence of betrayal, unreliable cooperation or an alarm can change the fight |
-| Bargain from strength         | Passage or withdrawal without taking the walls       | Tribute, recognition or a concession gives the garrison something it wants    |
-| Choose a rival crossing       | Trade continues on another route                     | The lord retains the tower and can pursue a different pressure                |
+Combine [quiet hours](materials-resources.md#quiet-hours), [household agreements](relationships.md#household-agreements), [neighborhood sound](arts-leisure.md#the-neighborhood-sound) and [diagnostic work](work-crafting.md#the-diagnostic-profession).
 
-An optional cargo variation adds a [chiming trophy chest](objects.md#containers-and-road-equipment): keep the prize, abandon another load, enlist a bearer or use [route-specific packing](work-crafting.md#field-trades-cargo-handling-and-dangerous-work). Muffling its clapper trades sound against hands, access and burden. The same successful handling can become a [quiet-cargo service](economy-logistics.md), while releasing the clapper at home turns yesterday's liability into a celebration. Each effect needs supported sound and carrying behavior.
+Selection: Modern urban scheduling/noise scenario.
 
-A defeated garrison does not respawn to erase success. Who holds and repairs the tower matters afterward. Combine [construction](settlements-architecture.md), [combat](combat-rescue.md), [logistics](economy-logistics.md) and [diplomacy](diplomacy-conflict.md). Research seeds: [Bannerlord](source-atlas.md#g115), [Battle Brothers](source-atlas.md#g121), [Westeros](source-atlas.md#w10).
+## The missing parcel club
 
-Selection: A defended objective, equipment and access reward make a strong early expansion; do not require regional government or supply simulation.
+**MO · Play · 5 Specialist · Moderate/Extend.** Gap: parcel identity, scoped testimony and delivery histories.
 
-## The champion and the oath
+Several packages disappear from a building lobby. Residents propose a locked cabinet, a shared receiving rota or accusing the newest tenant. Investigating may reveal mislabeling, an overhelpful neighbor or theft, depending on the authored starting facts. Players can improve delivery even before identifying a culprit. A wrong suspicion has a repair path through public correction. Neither a security camera nor a model may invent evidence from an unobserved interval.
 
-**MD FA · Play · 2 Complete · Moderate/Extend.** Gap: readable duel rules, reputation, equipment and incompatible commitments.
+Keep those variants distinct. A deliberate thief may keep or sell a valuable parcel and leave its owner with a real loss; an honest delivery error has different causes. Correcting a false accusation can restore the public record without compelling the accused tenant to forgive. A solved delivery problem need not generate another missing parcel.
 
-A knight trained for years wants to win a tournament whose prize is land and command. Their patron demands a politically useful loss to another contender. The knight enjoys combat, loves a sibling whose education the patron finances, and believes an oath has meaning. The opponent is a real competitor with a different fighting style, not a prop waiting for the player's moral decision.
+Combine [empty box](objects.md#the-honest-empty-box), [handoff improvement](institutions-politics.md#bureaucracy-that-can-improve), [local reputation](relationships.md#reputation-has-an-address) and [traveling correction](languages-knowledge.md#a-public-correction-that-travels).
 
-Fight to win, obey, expose the arrangement, withdraw or negotiate a release from service. Combat mastery determines the bout if it proceeds; a heartfelt speech does not guarantee victory. A win can bring prestige and retaliation, a loss can preserve an obligation while costing self-respect, and withdrawal can close the desired career. The sibling has their own response. Combine [progression](abilities-progression.md), [relationships](relationships.md), [traits](traits.md) and [institutions](institutions-politics.md). Research seeds: [Kingdom Come II](source-atlas.md#g114), [Fire Emblem: Three Houses](source-atlas.md#g64), [Middle-earth](source-atlas.md#w01).
+Selection: Modern delivery and building-management scenario.
 
-Selection: A readable duel can put a small set of personal loyalties at stake without simulating an entire patronage system.
+## The harvest that tastes wrong
 
-## The companion who changes sides
+**MD MO FA · Play · 4 Detail · Moderate/Extend.** Gap: ingredient properties, experiments and contextual preferences.
 
-**ALL · Play · 2 Complete · Large/New.** Gap: distinct loyalties, scoped knowledge, party commitments and faction consequences.
+A hardy grain survives a wet year but makes the traditional festival bread dense. A miller wants to blend it, a cook wants a new dish and an elder wants to preserve the old recipe. Try small batches, borrow grain, adapt the oven or celebrate both dishes. The first bad loaf can feed animals if the world's food rules allow it. The meaningful result is a community finding a new practice, not proving tradition or innovation universally superior.
 
-The party's best scout loves another member but remains loyal to a faction the player now intends to attack. Earlier conversations, assistance and witnessed conduct establish that allegiance. Recruiting a useful former enemy further strains it. Affection, professional respect and political agreement are separate; sufficient gifts cannot automatically purchase obedience.
+Combine [second-season seed](materials-resources.md#second-season-seed), [prototype club](work-crafting.md#the-prototype-club), [inherited method](work-crafting.md#an-inherited-method-questioned) and [amendable calendar](faith-ritual.md#a-calendar-people-can-amend).
 
-The scout might refuse, resign, warn their faction, conceal information or participate under a specific concession. Their choice follows established motives and actual circumstances. The player can alter the objective, accept the departure, conceal their plan at the risk of later discovery, or continue with another scout.
+Selection: Ingredient texture and festival recipe disputes follow farming and cooking.
 
-If the conflict becomes violence, a visible companion's apparently cordial approach can still end in a surprising attack. A credible warning and genuine readiness for that danger can prevent surprise; an earlier disagreement alone does not establish such readiness. Private hostile intent is not a player-visible label, and what becomes evident after contact cannot retroactively warn the victim. The attack, the bodily startle and the survivor's later interpretation remain different parts of the event.
+## The alien welcome meal
 
-A betrayal can be deliberate and harmful without making every companion untrustworthy. Combine [psychology](psychology-behavior.md), [relationships](relationships.md), [knowledge](languages-knowledge.md) and [factions](diplomacy-conflict.md). Research seeds: [Dragon Age: Inquisition](source-atlas.md#g53), [Dragon Age II](source-atlas.md#g52), [Mass Effect 2](source-atlas.md#g102).
+**SC · Play · 5 Specialist · Large/New.** Gap: environmental compatibility, translation and safe shared interfaces.
 
-Selection: A useful companion’s discoverable conflicting aim makes trust matter in the next activity; no unexplained betrayal or global approval meter.
+Two delegations cannot breathe the same air or eat the same food. A chef, engineer and translator design adjacent dining rooms with a shared visual table, compatible scents or synchronized music. One guest prefers a simple conversation to ceremonial complexity. The challenge is creating a pleasant meeting, not forcing biological sameness. A prototype can fail through condensation or poor sound while preserving safety and offering another method.
 
-## The festival contract
+Combine [different air](bodies-species.md#a-guest-with-different-air), [translation](languages-knowledge.md#translation-leaves-a-question), [neutral meal](diplomacy-conflict.md#a-neutral-meal-with-real-stakes) and [commission](work-crafting.md#the-commission-with-room-for-taste).
 
-**MO · Play · 5 Specialist · Moderate/Extend.** Gap: meaningful performance criteria, scarce commissions, sponsorship and remembered conduct.
+Selection: Multiple atmospheres and biological hospitality.
 
-Jo and Vic both want the single commission to produce the River Lights main-stage centerpiece. Jo proposes a light installation and stage design with a local band; Vic offers a staged musical act. The bids compete on audience appeal, production quality, readiness and budget. Jo's design is inventive but unfinished; Vic has rehearsed a polished act and found a sponsor whose other business harms a neighbor. The audience wants a good evening, the organizer wants attendance, and performers want pay and recognition. None of those purposes can be reduced to a single reputation bar.
+## Soup before the summit
 
-Help one competitor, enter the contest, form a coalition, expose a concealed sponsorship term or take the money knowingly. Preparation and the performance matter. A rejected proposal can become a smaller successful event without pretending it won the main contract. The winner gains an audience and future access; the loser may become an ally, rival or critic. The festival should be enjoyable in its own right. Combine [arts](arts-leisure.md), [work](work-crafting.md), [status and relationships](relationships.md) and [economy](economy-logistics.md). Research seeds: [The Sims](source-atlas.md#g24), [Austen](source-atlas.md#w23), [The Culture](source-atlas.md#w17).
+**MD SC FA · Play · 4 Detail · Moderate/Extend.** Gap: food preparation, shared loads and return plans.
 
-Selection: Full modern creative-industry competition; a small in-world contest remains Complete.
+An expedition needs a warm meal at a cold lookout, but a companion's knee limits the load they can carry. Use warmstones, build a sheltered stove, change the menu, recruit a porter or choose a nearer view. The companion can plan the route and refuses to be treated as cargo. Wind may spoil one method while leaving others viable. Success is a good shared outing; no rare loot is needed. On returning, the group can teach the preparation as a reusable routine.
 
-## The witness and the promotion
+Combine [warmstone](materials-resources.md#warmstone), [accommodation](bodies-species.md#accommodation-as-invention), [way back](mechanics.md#leave-a-way-back) and [particular cooking](arts-leisure.md#cooking-for-a-particular-person).
 
-**MO · Play · 5 Specialist · Large/New.** Gap: investigative evidence, threats, institutional incentives and actual protection outcomes.
+Selection: Thermal meal logistics must not become the first expedition milestone.
 
-Sera Holt can advance a case against the Quay Circle if a frightened stallholder testifies. Her superior wants an arrest before the festival; the witness wants their family left alone; an intermediary offers compensation in exchange for silence. A helpful disclosure can become dangerous as it travels between institutions. The player may want justice, a favor, payment, revenge or protection for a friend.
+## The dragon and the laundry
 
-Find corroboration, challenge a premature accusation, protect or relocate the witness through available means, publish evidence, accept a compromise or side with the Circle. These choices create different risks and responsibilities. A conviction can remove a perpetrator without eliminating the conditions supporting the organization; losing the case does not prove there was no crime. Preserve the particular witness's life and choices after the investigation. Combine [institutions](institutions-politics.md), [knowledge](languages-knowledge.md), [relationships](relationships.md) and [rescue](combat-rescue.md). Research seeds: [The Wire](source-atlas.md#w21), [The Sopranos](source-atlas.md#w22), [Deus Ex](source-atlas.md#g117).
+**FA · Play · 4 Detail · Large/New.** Gap: one bounded weather-transfer rule and negotiated schedules.
 
-Selection: Modern institutional/crime/protection scenario.
+A dragon's fog-clearing bargain makes the orchard flourish but leaves the town's laundry perpetually damp. A washer proposes a rotating schedule, a mage suggests a warmstone drying room and the dragon wants a quiet nesting ledge. A modest domestic complaint becomes diplomacy among unequal capabilities. Everyone can benefit without producing free heat or forcing the dragon into servitude. The agreement should settle into routine after the interesting decision.
 
-## The claim beneath the outpost
+Combine [weather debt](magic.md#a-dragons-weather-debt), [borrowed warmth](magic.md#borrowed-warmth), [small promise](diplomacy-conflict.md#the-credible-small-promise) and [retired solution](mechanics.md#retire-a-successful-solution).
 
-**SC · Play · 5 Specialist · Large/New.** Gap: ground encounters, authored ownership claims, environmental hazards and resource use.
-
-A planetary survey reveals a valuable deposit beneath a settlement's atmospheric machinery. A charter company claims extraction rights, residents claim the infrastructure and a rival team arrives with armed escorts. The deposit is genuinely useful, not a fake prize introduced solely to teach a lesson about greed. The environmental cost and alternative extraction methods depend on inspectable local facts.
-
-| Objective               | Possible methods                                  | Consequence to carry forward                                         |
-| ----------------------- | ------------------------------------------------- | -------------------------------------------------------------------- |
-| Secure the deposit      | Negotiate, purchase, seize or defend a claim      | Revenue and power come with obligations, opposition or dispossession |
-| Protect the settlement  | Reinforce, contest the charter, bargain or fight  | Survival can cost wealth, allies or technical capacity               |
-| Find another method     | Investigate the site and test a supported process | Discovery may change bargaining power; it may also fail              |
-| Withdraw with knowledge | Sell, conceal or publish a bounded survey         | Others still act on the site and remember who helped them            |
-
-The playable encounter occurs on the ground; ship arrival is abstract. Combine [materials](materials-resources.md), [technology](technology.md), [institutions](institutions-politics.md) and [combat](combat-rescue.md). Research seeds: [The Expanse](source-atlas.md#w15), [Dune](source-atlas.md#w09), [Mass Effect](source-atlas.md#g101), [Subnautica](source-atlas.md#g139).
-
-Selection: Planetary extraction, atmosphere and charter conflict; its generic contested-reward pattern is reusable earlier.
-
-## The quarry that learns
-
-**MD SC FA · Play · 2 Complete · Large/New.** Gap: bounded creature behavior, sensory evidence, tracking and differentiated combat.
-
-A powerful predator occupies the route to a valuable ruin. It hunts, rests, avoids some hazards and changes its approach after an actual encounter. Its materials or defeated territory enable a desired advancement. A hunter seeks fame, a trader wants the road and a naturalist wants observations. Their interests can overlap without being identical.
-
-Study traces, prepare a counter, lure it into favorable terrain, challenge it directly, evade it or exploit a rival hunter's attempt.
-
-Different bodies make different plans useful. Rain may mask a hunter's quiet steps while leaving scent or movement available to a creature that actually has those channels. A rail-borne decoy only reaches a vibration-sensitive body through connected material. The creature can ignore an irrelevant cue or adapt after a witnessed failure; the player's clever description does not choose its response. If the quarry flees across noisy brush or scree, its own movement can give the hunter another broad clue or disturb nearby wildlife. Following that clue, changing vantage point or accepting the escape are real choices; a last-seen mark remains historical after contact is lost.
-
-The predator can injure someone, escape, die or drive the party away. Killing it need not be revealed as a moral mistake; preserving it need not be the easiest or most profitable choice. Record the consequences of the chosen method, including a rival's success if the player delays. Combine [ecology](ecology-weather.md), [bodies](bodies-species.md), [abilities](abilities-progression.md) and [adventure](adventure-discovery.md). Research seeds: [Grounded](source-atlas.md#g142), [The Forest](source-atlas.md#g137), [V Rising](source-atlas.md#g146), [The Witcher 3](source-atlas.md#g72).
-
-Selection: A worthwhile dangerous hunt and reward are early; adaptive encounter memory expands the basic predator.
-
-## The crown below the ruins
-
-**FA · Play · 3 Depth · Large/New.** Gap: bounded ruin traversal, combat, a defined magical power and competing claims.
-
-A ruined royal sanctuary contains a crown that can command an admitted class of bound guardians. A claimant wants an army, a knight wants to end raids, a sorcerer wants the technique, and a custodian knows the crown's history. The ruin offers traps, enemies, evidence and treasure; mastering its dangers is a worthwhile adventure before the political decision.
-
-Take and wield the crown, sell it, transfer it to an ally, destroy it or leave it guarded. Each option changes who can use an actual power. The crown's limits and costs are discoverable through play; an unexpected punishment is not added merely because the player chooses domination. A well-intentioned ruler may abuse it, a ruthless claimant may restore order while committing other harms, and destroying it may remove the easiest defense against a genuine enemy. The setting can contain a clear villain without making every claimant secretly equivalent. Combine [magic](magic.md), [history](history-myth.md), [faith](faith-ritual.md), [adventure](adventure-discovery.md) and [politics](institutions-politics.md). Research seeds: [Middle-earth](source-atlas.md#w01), [Earthsea](source-atlas.md#w11), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59).
-
-Selection: A dangerous ruin and treasure precede the magical command system and competing political claims.
-
-## The household after the victory
-
-**ALL · Play · 3 Depth · Moderate/Extend.** Gap: remembered events, changed resources, relationships and ordinary activities.
-
-A returning party has won the objective. One person gained wealth, another lost a friend, another enjoyed the fight and wants a military career. A household member is proud and angry about a promise broken during the expedition. There is a meal, an attractive new possession, a real achievement and an absence that cannot be repaired by buying the correct gift.
-
-The immediate bodily shock has passed, yet a frightened survivor may still struggle with the supported consequences of fear while helping prepare the meal. Quietly reconsidering the remembered danger, accepting company or choosing a familiar task can change the aftermath without requiring a new external incident. The memory is not an inexhaustible source of fresh threats. Another survivor may feel relief or pride, and no shared conversation requires everyone to reach the same feeling or decision.
-
-Celebrate, mourn, distribute spoils, pay debts, pursue romance, tell a self-serving story or quietly return to work. Neither forced catharsis nor a mandatory new disaster is needed. A survivor may forgive, refuse, leave, marry, enlist or remain undecided. Let the victory make something better while keeping its actual costs. Combine the retained [debrief](combat-rescue.md#the-debrief-at-the-kitchen-table), [relationships](relationships.md), [needs](needs.md), [art](arts-leisure.md) and [history](history-myth.md). Research seeds: [Hades](source-atlas.md#g22), [Wildermyth](source-atlas.md#g25), [Fire Emblem](source-atlas.md#g64), [Middle-earth](source-atlas.md#w01).
-
-Selection: Establish the victory, reward and ability to continue before rich domestic aftermath.
+Selection: A dragon's domestic scheduling problem is not the basic formidable-enemy experience.

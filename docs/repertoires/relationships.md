@@ -12,7 +12,7 @@ The [emotional-state design](../projects/emotional-physiology-feature-spec.md) l
 
 ## Coverage of the playable foundation
 
-**360 selectable inventory entries in 20 domains**, followed by the ten retained pattern cards. These are original proposals, not an implemented feature list. Seed worlds are recommendations, not sources or promises of initial-world scope. The shared [seed-world labels](README.md#four-possible-world-families), [Priority](README.md#priority), [Level](README.md#level) and [table conventions](README.md#catalogue-tables) apply. Rows are sorted within each domain by Priority, then stable ID. Most arrangements compose admitted capabilities and therefore use C; unusual subject matter alone does not make a row D or Frontier. The first sixteen domains retain twenty entries each; Ensembles and overlapping circles has sixteen, followed by three eight-entry extensions. Later IDs extend the original ranges without renumbering them.
+**360 selectable inventory entries in 20 domains**, followed by eleven worked pattern cards. These are original proposals, not an implemented feature list. Seed worlds are recommendations, not sources or promises of initial-world scope. The shared [seed-world labels](README.md#four-possible-world-families), [Priority](README.md#priority), [Level](README.md#level) and [table conventions](README.md#catalogue-tables) apply. Rows are sorted within each domain by Priority, then stable ID. Most arrangements compose admitted capabilities and therefore use C; unusual subject matter alone does not make a row D or Frontier. The first sixteen domains retain twenty entries each; Ensembles and overlapping circles has sixteen, followed by three eight-entry extensions. Later IDs extend the original ranges without renumbering them.
 
 | Domain                                                                        | IDs                  | Domain                                                                                    | IDs                  |
 | ----------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------- | -------------------- |
@@ -27,7 +27,7 @@ The [emotional-state design](../projects/emotional-physiology-feature-spec.md) l
 | [Ensembles and overlapping circles](#ensembles-and-overlapping-circles)       | RSH-321–336          | [Shared burdens and imperfect rescues](#shared-burdens-and-imperfect-rescues)             | RSH-337–344          |
 | [Teaching and ties across generations](#teaching-and-ties-across-generations) | RSH-345–352          | [Company beyond usefulness](#company-beyond-usefulness)                                   | RSH-353–360          |
 
-[Ten retained pattern cards](#the-reliable-disagreement) follow the inventory. [Completed research reading checklist](#game-reading-checkpoint).
+[Eleven worked pattern cards](#rivals-who-need-the-same-bridge) follow the inventory. [Completed research reading checklist](#game-reading-checkpoint).
 
 **Evidence convention:** “Synthesis” identifies an original relationship inspired by the linked dossier's broader concerns; it does not assert that the source contains this exact arrangement. “Original” makes no external evidence claim. All entries are ideas, with no implementation evidence asserted. Build scope names broad missing support, not an implementation audit. Intimate relationships below concern consenting adults; coercion and sexual violence are treated separately as harms, without explicit sexual depiction. Children have age-appropriate family, friendship and play entries.
 
@@ -531,17 +531,65 @@ A useful role can bring people together without defining everything they value i
 | RSH-359 | The household furnace jealous of the new oven         | —           | Play  | 5 Specialist | C     | An admitted sapient furnace has warmed the household for years, but a new oven now makes its favorite baking duty unnecessary. It demands an absurdly ambitious feast to prove its worth, then discovers one resident would rather sit beside it and hear old stories. The furnace may love the attention, pursue another craft or insist that it still wants real work.                                              | Large: admitted independent agency and specific capabilities; Magic or Technology owns heat, Work baking.                   | Original                                                                                                                                                   |
 | RSH-360 | The lovers whose union becomes a third person         | —           | Blend | 5 Specialist | C     | Two adult partners can voluntarily combine through an admitted process into a recurring conscious identity with tastes neither shares alone. Their combined self loves a friend the partners scarcely know and asks for more time together. Future unions require willing participants; the relationship must accommodate three perspectives without treating any one as an automatic average or owner of the others. | Large: explicit collective identity, memory and separation limits; Bodies and Magic own combination, not inherited consent. | Synthesis · [The Culture](source-atlas.md#w17), original collective-relationship extrapolation                                                             |
 
+## Rivals who need the same bridge
+
+**ALL · Play · Moderate/Extend.** Gap: overlapping interests and cooperative projects without forced alliance.
+
+Competing merchants both depend on a broken crossing: one has a valuable winter convoy waiting, the other can win a long-term supply contract if passage opens first. Each wants the crossing usable and also wants an advantage over the other. Nearby households need the goods, and an independent carrier wants a reliable route instead of permanent loyalty to either merchant.
+
+Players can inspect the crossing, support a feasible repair, find another route or bargain over access and tolls through the selected capabilities. A shared success can bring payment, a useful road and continuing competition. One merchant may withhold labor or break a promise; the other can withdraw, retaliate or work around them. Keep actual losses and access changes. A temporary agreement, earned respect and friendship are different results, and one profitable deal need not erase prior harm.
+
+Related entries: [RSH-131](#rivalry-and-recognition).
+
+Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Fallout](source-atlas.md#w28), [Rivalry and recognition](#rivalry-and-recognition), [Diplomacy](diplomacy-conflict.md).
+
 ## The reliable disagreement
 
 **ALL · Play · Moderate/Extend.** Gap: issue-specific positions alongside durable trust.
 
-Two companions argue about opening a road through woodland but reliably come when the other needs help. A player can seek a survey, alternate route or temporary agreement. This sustains interesting company after initial friendship. Do not make every disagreement reduce a global relationship score, or make affection silently erase a person's substantive concerns.
+Two companions argue about opening a road through woodland but reliably come when the other needs help. One wants access to a promising expedition site and better income; the other values the woodland and the livelihoods a careless route would damage. A player can seek a survey, an alternate route or a temporary agreement. The road might open with a worthwhile compromise, or the friends may keep helping each other while refusing to support the same project. Their disagreement can outlast a good evening together. Do not make every disagreement reduce a global relationship score, or make affection silently erase a person's substantive concerns.
 
 The decision needs the person's known issue, relevant shared experience and actual request, not just a label such as friend or rival. Preserve the reason this disagreement matters and evidence of cooperation that survives it; disclose the other person's reasons only through permitted experience. A comparison can change the road proposal while keeping the friendship, or introduce a new invitation while the dispute remains unresolved. The resulting choice can be useful, affectionate, funny or firm without requiring unanimous agreement or a speech explaining every feeling.
 
 Related entries: [RSH-003](#everyday-friendship).
 
 Seeds and references: [Dragon Age II](source-atlas.md#g52), [Baldur's Gate 3](source-atlas.md#g26), [Star Trek](source-atlas.md#w04), [Everyday friendship](#everyday-friendship).
+
+## The debt no one can settle
+
+**ALL · Play · Moderate/Extend.** Gap: asymmetric interpretations of help and bounded reminders.
+
+Someone saved a traveler who now insists on repaying every favor, while the rescuer wants ordinary friendship. An expedition may expose the tension through an unnecessary risk. Players can acknowledge, decline or redirect repayment toward a community. Keep this rescuer's wish for ordinary friendship intact; the mismatch can yield affection, frustration or a healthier chosen partnership without becoming a compulsory confession.
+
+A separate contrasting patron (RSH-180) exploits gratitude, asking a previously rescued courier to carry information against a former employer. The patron offers valuable lodging and claims that refusal would prove disloyalty; a claim is not an agreement or authority. The courier can seek another home, negotiate, refuse or knowingly take the work, with consequences grounded in what is actually disclosed and done. Ground coercive dependence in the lodging, leverage and actual available alternatives; getting free may be difficult, and separation need not bring reconciliation.
+
+Related entries: [RSH-150](#comrades-and-divided-allegiance).
+
+Seeds and references: [Kenshi](source-atlas.md#g36), [Red Dead Redemption](source-atlas.md#g69), [Earthsea](source-atlas.md#w11), [Comrades and divided allegiance](#comrades-and-divided-allegiance).
+
+## The plan sold to a rival
+
+**ALL · Play · Moderate/Extend.** Gap: actual information transfer, evidence, access and independent collaboration; trade and invention retain their existing owners.
+
+A colleague sells a shared expedition plan to a rival for money and a coveted place on the rival's team (RSH-172). They understand that the sale could cost their former partners the discovery and its reward. Establish the sale as authored past only when this version is selected; an accusation alone is insufficient. The betrayed partner wants a viable journey and recognition for their work, not merely an apology. The buyer wants to be first and can remain a competent, useful associate.
+
+Players can investigate the evidence, change the route, restrict shared access, compete for the find, negotiate compensation or leave the partnership. The seller can retain the money or new role, and the harmed partner can refuse friendship even after restitution. A later useful deed need not absolve the betrayal. The original team can also recover a genuine achievement without recovering the old bond. Follow who knows what, who still works together and what opportunity actually remains.
+
+RSH-174 provides the separate contrast of a betrayal offer refused at a real cost. RSH-284 supplies another selected motive: selling a shared project to free a friend. That rescue and the betrayal remain separate consequences; the rescued friend did not choose the price.
+
+Related entries: [RSH-172](#confidence-and-betrayal), [RSH-174](#confidence-and-betrayal), [RSH-284](#confidence-and-betrayal).
+
+Seeds and references: original expansion of those relationship entries, informed by [character formation](../../archive/02-research/worldbuilding/character-formation.md#7-relationships-are-not-one-scale-of-positive-feeling) and [Austen's social worlds](source-atlas.md#w23); these are possible Open Legend scenes, not events asserted to occur in the sources.
+
+## Found family with boundaries
+
+**ALL · Play · Moderate/Extend.** Gap: voluntary shared commitments and differentiated responsibilities.
+
+An expedition crew becomes a household, but one member wants private income and another wants to invite a relative. The home they have earned can be a real reward: familiar jokes, chosen company, useful shelter and plans for another journey. Care and autonomy remain negotiable; a member may resent an expectation or decline the next expedition without making the whole household a failure. Players can build a durable group without selecting a predefined family template. Avoid unanimous approval, compulsory romance or the idea that belonging cancels the right to refuse, travel or change one's role.
+
+Related entries: [RSH-052](#households-and-chosen-family), [RSH-057](#households-and-chosen-family).
+
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Mass Effect 2](source-atlas.md#g102), [One Piece](source-atlas.md#w14), [Households and chosen family](#households-and-chosen-family).
 
 ## An apprenticeship with an exit
 
@@ -553,33 +601,15 @@ Related entries: [RSH-098](#mentors-and-working-partners).
 
 Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Final Fantasy IX](source-atlas.md#g86), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110), [Mentors and working partners](#mentors-and-working-partners).
 
-## Household agreements
+## Repair without erasure
 
-**ALL · Play · Moderate/Extend.** Gap: shared-resource permissions and renegotiable routines.
+**ALL · Play · Moderate/Extend.** Gap: acknowledged harm, concrete restitution and continuing choice.
 
-Housemates agree who cooks, which room is quiet and what savings are for. A new job disrupts the arrangement, prompting practical and emotional choices. Domestic life becomes design and negotiation rather than synchronized need bars. Provide manageable defaults, recognize unpaid work, and let residents renegotiate or leave without turning every disagreement into a crisis.
+After misusing a borrowed boat, a player can repair damage, replace lost income and discuss why it happened. The owner may accept help while keeping stricter lending terms, or accept full restitution and end the friendship. Both are legitimate outcomes. Later trust has to follow actual shared experience; payment alone supplies neither forgiveness nor renewed access. A relationship can change without a reset. Do not keep replaying the same grievance once the parties have established a workable arrangement, or turn a settled separation into a pending reconciliation quest.
 
-Seeds and references: [The Sims](source-atlas.md#g24), [Red Dead Redemption 2](source-atlas.md#g70), [Austen’s social worlds](source-atlas.md#w23), [Households and chosen family](#households-and-chosen-family).
+Related entries: [RSH-163](#confidence-and-betrayal), [RSH-164](#confidence-and-betrayal).
 
-## The debt no one can settle
-
-**ALL · Play · Moderate/Extend.** Gap: asymmetric interpretations of help and bounded reminders.
-
-Someone saved a traveler who now insists on repaying every favor, while the rescuer wants ordinary friendship. An expedition may expose the tension through an unnecessary risk. Players can acknowledge, decline or redirect repayment toward a community. The two interpretations can lead to affection, frustration or manipulation. A claimed debt needs an actor’s response and, if enforced, a concrete means of enforcement.
-
-Related entries: [RSH-150](#comrades-and-divided-allegiance).
-
-Seeds and references: [Kenshi](source-atlas.md#g36), [Red Dead Redemption](source-atlas.md#g69), [Earthsea](source-atlas.md#w11), [Comrades and divided allegiance](#comrades-and-divided-allegiance).
-
-## Rivals who need the same bridge
-
-**ALL · Play · Moderate/Extend.** Gap: overlapping interests and cooperative projects without forced alliance.
-
-Competing merchants both depend on a broken crossing. They can share repairs, build alternatives or bargain over tolls while continuing to compete. Players see cooperation emerge from concrete stakes. Preserve the difference between a temporary agreement and friendship; one profitable deal should not erase prior harm or permanently unite factions.
-
-Related entries: [RSH-131](#rivalry-and-recognition).
-
-Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Fallout](source-atlas.md#w28), [Rivalry and recognition](#rivalry-and-recognition), [Diplomacy](diplomacy-conflict.md).
+Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Disco Elysium](source-atlas.md#g66), [A Song of Ice and Fire](source-atlas.md#w10), [Confidence and betrayal](#confidence-and-betrayal).
 
 ## A gift whose meaning changes
 
@@ -603,16 +633,6 @@ Related entries: [RSH-194](#absence-endings-and-reunion).
 
 Seeds and references: [Hades I](source-atlas.md#g22), [Final Fantasy XV](source-atlas.md#g92), [Middle-earth](source-atlas.md#w01), [Absence endings and reunion](#absence-endings-and-reunion).
 
-## Found family with boundaries
-
-**ALL · Play · Moderate/Extend.** Gap: voluntary shared commitments and differentiated responsibilities.
-
-An expedition crew becomes a household, but one member wants private income and another wants to invite a relative. Care and autonomy remain negotiable. Players can build a durable group without selecting a predefined family template. Avoid unanimous approval, compulsory romance or the idea that belonging cancels the right to refuse, travel or change one's role.
-
-Related entries: [RSH-052](#households-and-chosen-family), [RSH-057](#households-and-chosen-family).
-
-Seeds and references: [Wildermyth](source-atlas.md#g25), [Mass Effect 2](source-atlas.md#g102), [One Piece](source-atlas.md#w14), [Households and chosen family](#households-and-chosen-family).
-
 ## Reputation has an address
 
 **ALL · Blend · Moderate/Extend.** Gap: witnessed acts, transmission and local interpretation.
@@ -623,15 +643,13 @@ Related entries: [RSH-162](#confidence-and-betrayal).
 
 Seeds and references: [Red Dead Redemption](source-atlas.md#g69), [Fallout: New Vegas](source-atlas.md#g112), [Ultima VII: The Black Gate](source-atlas.md#g128), [Confidence and betrayal](#confidence-and-betrayal).
 
-## Repair without erasure
+## Household agreements
 
-**ALL · Play · Moderate/Extend.** Gap: acknowledged harm, concrete restitution and continuing choice.
+**ALL · Play · Moderate/Extend.** Gap: shared-resource permissions and renegotiable routines.
 
-After misusing a borrowed boat, a player can repair damage, replace lost income and discuss why it happened. The owner may accept help while keeping stricter lending terms. A relationship can change without a reset. Do not force forgiveness after a payment or keep replaying the same grievance once the parties have established a workable arrangement.
+Housemates agree who cooks, which room is quiet and what savings are for. A new job disrupts the arrangement, prompting practical and emotional choices. Domestic life becomes design and negotiation rather than synchronized need bars. Provide manageable defaults, recognize unpaid work, and let residents renegotiate or leave without turning every disagreement into a crisis.
 
-Related entries: [RSH-163](#confidence-and-betrayal), [RSH-164](#confidence-and-betrayal).
-
-Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Disco Elysium](source-atlas.md#g66), [A Song of Ice and Fire](source-atlas.md#w10), [Confidence and betrayal](#confidence-and-betrayal).
+Seeds and references: [The Sims](source-atlas.md#g24), [Red Dead Redemption 2](source-atlas.md#g70), [Austen’s social worlds](source-atlas.md#w23), [Households and chosen family](#households-and-chosen-family).
 
 ## Research coverage and integration notes
 

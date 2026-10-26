@@ -10,7 +10,7 @@
 
 ## Coverage to develop
 
-**288 selectable entries in eighteen domains**, followed by the ten retained pattern cards. Use the shared [seed-world recommendations](README.md#four-possible-world-families), [Priority and Level](README.md#reading-the-labels) and [table conventions](README.md#catalogue-tables). Rows are sorted within each domain by Priority, then stable ID. These situations mostly compose admitted commitments, observations, resources and faction roles, so C is common; a missing constituent remains a real gap. No diplomatic declaration grants new runtime powers, access to private cognition, or automatic obedience from every member of a population.
+**288 selectable entries in eighteen domains**, followed by the ten retained pattern cards. Begin with [a contested crossing](#a-boundary-marked-by-service), [a rescue bargain](#a-neutral-meal-with-real-stakes) or [a costly defection](#defection-with-dependents) when selecting consequential play. Use the shared [seed-world recommendations](README.md#four-possible-world-families), [Priority and Level](README.md#reading-the-labels) and [table conventions](README.md#catalogue-tables). Rows are sorted within each domain by Priority, then stable ID. These situations mostly compose admitted commitments, observations, resources and faction roles, so C is common; a missing constituent remains a real gap. No diplomatic declaration grants new runtime powers, access to private cognition, or automatic obedience from every member of a population.
 
 | Domain                                                                                            | IDs         | Domain                                                                                      | IDs         |
 | ------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------- | ----------- |
@@ -440,35 +440,25 @@ A new capability can make yesterday's ally useful in a different way, expose the
 | DIP-286 | The secret peace price is somebody else's afterlife            | —           | Play  | 5 Specialist | C     | Negotiators promise an immortal guardian that named dead citizens will serve it after the war. When an admitted communication route reveals the dead refusing, the living must renegotiate, abandon the pact or attempt coercion. The guardian's useful protection and the dead citizens' separate interests remain real, even when officials call the bargain a sacred sacrifice.                         | Large: bounded afterlife agency and service effects; Magic and Faith own the supernatural arrangement.                   | Synthesis · [Final Fantasy X](source-atlas.md#g87), [His Dark Materials](source-atlas.md#w20)       |
 | DIP-288 | The disaster warning remembered by only one delegation         | —           | Blend | 5 Specialist | C     | Under an admitted limited recurrence rule, one delegation retains experience of a failed evacuation that everyone else has forgotten. It asks rivals for costly preparations using observations it can partly demonstrate, not an infallible prophecy. A trial, a narrower joint measure or disbelief changes the next attempt without giving the witness authority over everyone else's future.           | Large: explicit recurrence and memory limits; Unusual realities owns them, Knowledge the evidence.                       | Synthesis · [Outer Wilds](source-atlas.md#g34)                                                      |
 
-## The shared watershed treaty
+## A boundary marked by service
 
-**MD MO FA · Blend · Large/New.** Gap: joint resource rules, monitoring and renegotiation.
+**MD SC FA · Play · Moderate/Extend.** Gap: territorial claims tied to maintained public works.
 
-Two settlements agree on seasonal water use, but a dry year changes what each can spare. Inspect gauges, fund a reservoir, alter crops or revise allocations. Diplomacy becomes work grounded in place. The treaty should specify observable commitments and dispute paths, not magically compel every resident or trigger total war after one accidental violation.
+A frontier community recognizes the authority that repairs its bridges and protects its wells, while neighboring rulers claim old maps prove ownership. The disputed crossing also opens a coveted upland market and expedition route: a caravan leader wants freedom from tribute, a local defender wants a command worth keeping, and a claimant wants the toll income. A successful alliance can protect a profitable journey and gain useful equipment without making every member a friend. Players can contribute services, gather testimony, defend a claim by force, back a conqueror or broker shared administration. The conflict links legitimacy to lived experience. An efficient conqueror can still intend permanent subjugation (DIP-157), and deliberate terror after tribute (DIP-125) or betrayal of surrender terms (DIP-173) remains selectable established harm rather than an obligatory misunderstanding. These severe versions are alternatives to a working bargain, not the inevitable truth behind it. Service must not buy total obedience, and inhabitants can reject even an efficient outside ruler.
 
-Related entries: [DIP-033](#borders-territory-and-shared-environments).
+Related entries: [DIP-036](#borders-territory-and-shared-environments).
 
-Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Dune](source-atlas.md#w09), [Fallout](source-atlas.md#w28), [Borders and environments](#borders-territory-and-shared-environments).
+Seeds and references: [Warcraft: Orcs & Humans](source-atlas.md#g94), [Warcraft II: Tides of Darkness](source-atlas.md#g95), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Borders](#borders-territory-and-shared-environments).
 
 ## A neutral meal with real stakes
 
 **ALL · Play · Moderate/Extend.** Gap: meeting commitments, hospitality customs and scoped disclosure.
 
-A host brings rival delegates together to discuss missing travelers. Seating, food and who serves can signal recognition, but a shared map may matter more. Players prepare a credible setting, protect confidences or knowingly exploit the gathering for a betrayal whose fallout survives the scene. Customs should be learnable through people, with recoverable mistakes; hospitality must not become a secret etiquette quiz whose wrong answer starts a war.
+A host brings rival delegates together because a missing convoy includes people one side needs and cargo the other wants. A captain seeks unpaid wages, an envoy wants exclusive use of the crossing, and a traveler's sibling wants a feasible rescue before the convoy moves. A reopened road, released people or a lucrative agreement supplies an achievable gain; their interests do not all align. Establish the known location, actual mandate, contested demand and available means before choosing a method. Seating, food and who serves can signal recognition, but a shared map may matter more. Players prepare a credible setting, protect confidences or knowingly exploit the gathering for a betrayal whose fallout survives the scene. A credible offer can still be refused, and an apology need not end a grievance. In an explicitly selected MD/SC/FA variant, DIP-265's sponsor pays more to abandon a feasible rescue: refusing, leaking the offer or accepting the money has different material and personal consequences. Preserve the actual stranded people's outcome rather than awarding automatic rescue or punishment. Customs should be learnable through people, with recoverable mistakes; hospitality must not become a secret etiquette quiz whose wrong answer starts a war.
 
 Related entries: [DIP-002](#envoys-recognition-and-protocol).
 
 Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [A Song of Ice and Fire](source-atlas.md#w10), [Envoys](#envoys-recognition-and-protocol).
-
-## Trade before friendship
-
-**ALL · Play · Moderate/Extend.** Gap: limited agreements between actors with distinct wider positions.
-
-Hostile districts can still exchange medicine and machine parts through a trusted intermediary. A player builds reliability around one narrow need before attempting larger reconciliation. Partial success is valuable. Do not require a global alliance flag before every transaction or treat one successful exchange as proof that histories, boundaries and grievances have disappeared.
-
-Related entries: [DIP-049](#trade-sanctions-and-resource-leverage).
-
-Seeds and references: [Fallout: New Vegas](source-atlas.md#g112), [Starsector](source-atlas.md#g120), [Fallout](source-atlas.md#w28), [Trade](#trade-sanctions-and-resource-leverage).
 
 ## Defection with dependents
 
@@ -480,6 +470,46 @@ Related entries: [DIP-099](#intelligence-secrets-and-deception), [DIP-130](#rebe
 
 Seeds and references: [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60), [Fire Emblem: Path of Radiance](source-atlas.md#g61), [Mass Effect 2](source-atlas.md#g102), [Intelligence](#intelligence-secrets-and-deception), [Rebellion](#rebellion-secession-and-revolution), [Relationships](relationships.md#comrades-and-divided-allegiance).
 
+## Trade before friendship
+
+**ALL · Play · Moderate/Extend.** Gap: limited agreements between actors with distinct wider positions.
+
+Hostile districts can still exchange medicine and machine parts through a trusted intermediary. A player builds reliability around one narrow need before attempting larger reconciliation. Partial success is valuable. Do not require a global alliance flag before every transaction or treat one successful exchange as proof that histories, boundaries and grievances have disappeared.
+
+Related entries: [DIP-049](#trade-sanctions-and-resource-leverage).
+
+Seeds and references: [Fallout: New Vegas](source-atlas.md#g112), [Starsector](source-atlas.md#g120), [Fallout](source-atlas.md#w28), [Trade](#trade-sanctions-and-resource-leverage).
+
+## The faction within the faction
+
+**ALL · Blend · Moderate/Extend.** Gap: overlapping memberships and delegated authority limits.
+
+A trading league's merchants favor a new road while its porters oppose dangerous working conditions. A player can support one proposal without declaring the entire league good or evil. Negotiations become more nuanced with only a few named constituencies. Avoid an all-to-all faction matrix; model differences that affect current decisions and summarize distant politics.
+
+Related entries: [DIP-225](#internal-factions-and-contested-representation).
+
+Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Crusader Kings III](source-atlas.md#g126), [Internal factions](#internal-factions-and-contested-representation).
+
+## Peace creates work
+
+**ALL · Play · Moderate/Extend.** Gap: demobilization projects and evolving livelihoods.
+
+After fighting stops, former guards need work, damaged roads need repair and old supply contracts become awkward. Players help build new livelihoods and remember the dead without assuming everyone wants revenge. Peace is a fertile phase of play. Do not force a new enemy to maintain excitement or erase the skills and relationships formed during conflict.
+
+Related entries: [DIP-211](#peace-restitution-and-the-work-after-war), [DIP-216](#peace-restitution-and-the-work-after-war).
+
+Seeds and references: [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Battle Brothers](source-atlas.md#g121), [Warhammer 40,000](source-atlas.md#w26), [Peace and aftermath](#peace-restitution-and-the-work-after-war).
+
+## The right to remain uninvolved
+
+**ALL · Play · Moderate/Extend.** Gap: neutral paths and localized consequences of nonparticipation.
+
+A village wants to repair boats and shelter travelers without joining either major faction. Maintaining neutrality may require transparent terms, escorts or diversified suppliers. Players can choose a smaller meaningful life, but neutrality is a position others may respect, exploit or challenge. A blockade or demand for tribute can create a legible local problem rather than force every player toward ruling everyone. Make threatened services and alternatives visible; declining one political quest is not itself a hidden total lockout.
+
+Related entries: [DIP-193](#neutrality-refuge-and-humanitarian-agreements).
+
+Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Starsector](source-atlas.md#g120), [Neutrality](#neutrality-refuge-and-humanitarian-agreements).
+
 ## A border market
 
 **ALL · Play · Moderate/Extend.** Gap: local jurisdictions, entry terms and shared services.
@@ -489,6 +519,16 @@ A market straddles two rule systems, hosting translators, repairers and traveler
 Related entries: [DIP-050](#trade-sanctions-and-resource-leverage).
 
 Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [The Expanse](source-atlas.md#w15), [Trade](#trade-sanctions-and-resource-leverage).
+
+## The shared watershed treaty
+
+**MD MO FA · Blend · Large/New.** Gap: joint resource rules, monitoring and renegotiation.
+
+Two settlements agree on seasonal water use, but a dry year changes what each can spare. Inspect gauges, fund a reservoir, alter crops or revise allocations. Diplomacy becomes work grounded in place. The treaty should specify observable commitments and dispute paths, not magically compel every resident or trigger total war after one accidental violation.
+
+Related entries: [DIP-033](#borders-territory-and-shared-environments).
+
+Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Dune](source-atlas.md#w09), [Fallout](source-atlas.md#w28), [Borders and environments](#borders-territory-and-shared-environments).
 
 ## The credible small promise
 
@@ -501,46 +541,6 @@ An informed next negotiation needs the exact relevant terms, the delegate's own 
 Related entries: [DIP-017](#promises-treaties-and-guarantees), [DIP-021](#promises-treaties-and-guarantees).
 
 Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Mass Effect 3](source-atlas.md#g103), [A Song of Ice and Fire](source-atlas.md#w10), [Promises](#promises-treaties-and-guarantees).
-
-## Peace creates work
-
-**ALL · Play · Moderate/Extend.** Gap: demobilization projects and evolving livelihoods.
-
-After fighting stops, former guards need work, damaged roads need repair and old supply contracts become awkward. Players help build new livelihoods and remember the dead without assuming everyone wants revenge. Peace is a fertile phase of play. Do not force a new enemy to maintain excitement or erase the skills and relationships formed during conflict.
-
-Related entries: [DIP-211](#peace-restitution-and-the-work-after-war), [DIP-216](#peace-restitution-and-the-work-after-war).
-
-Seeds and references: [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Battle Brothers](source-atlas.md#g121), [Warhammer 40,000](source-atlas.md#w26), [Peace and aftermath](#peace-restitution-and-the-work-after-war).
-
-## The faction within the faction
-
-**ALL · Blend · Moderate/Extend.** Gap: overlapping memberships and delegated authority limits.
-
-A trading league's merchants favor a new road while its porters oppose dangerous working conditions. A player can support one proposal without declaring the entire league good or evil. Negotiations become more nuanced with only a few named constituencies. Avoid an all-to-all faction matrix; model differences that affect current decisions and summarize distant politics.
-
-Related entries: [DIP-225](#internal-factions-and-contested-representation).
-
-Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Crusader Kings III](source-atlas.md#g126), [Internal factions](#internal-factions-and-contested-representation).
-
-## A boundary marked by service
-
-**MD SC FA · Play · Moderate/Extend.** Gap: territorial claims tied to maintained public works.
-
-A frontier community recognizes the authority that repairs its bridges and protects its wells, while neighboring rulers claim old maps prove ownership. Players can contribute services, gather testimony, defend a claim by force, back a conqueror or broker shared administration. The conflict links legitimacy to lived experience. Service must not buy total obedience, and inhabitants can reject even an efficient outside ruler.
-
-Related entries: [DIP-036](#borders-territory-and-shared-environments).
-
-Seeds and references: [Warcraft: Orcs & Humans](source-atlas.md#g94), [Warcraft II: Tides of Darkness](source-atlas.md#g95), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Borders](#borders-territory-and-shared-environments).
-
-## The right to remain uninvolved
-
-**ALL · Play · Moderate/Extend.** Gap: neutral paths and localized consequences of nonparticipation.
-
-A village wants to repair boats and shelter travelers without joining either major faction. Maintaining neutrality may require transparent terms, escorts or diversified suppliers. Players can choose a smaller meaningful life, but neutrality is a position others may respect, exploit or challenge. A blockade or demand for tribute can create a legible local problem rather than force every player toward ruling everyone. Make threatened services and alternatives visible; declining one political quest is not itself a hidden total lockout.
-
-Related entries: [DIP-193](#neutrality-refuge-and-humanitarian-agreements).
-
-Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [Starsector](source-atlas.md#g120), [Neutrality](#neutrality-refuge-and-humanitarian-agreements).
 
 ## Research coverage and integration notes
 

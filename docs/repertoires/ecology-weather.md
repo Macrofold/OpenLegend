@@ -26,13 +26,15 @@ Environmental evidence is local and fallible. Clear water need not be safe, sile
 
 The following ten patterns and their original source pointers are preserved as provenance. The full reading pass and its incorporation are recorded under [Research coverage](#research-coverage); a pattern citation alone is not reading evidence.
 
-## The orchard has neighbors
+## Wildlife with an elsewhere
 
-**MD MO FA · Blend · Moderate/Extend.** Gap: bounded pollination, shelter and harvest interactions.
+**ALL · Blend · Moderate/Extend.** Gap: ecological goals, refuges and bounded population transitions.
 
-A neglected hedge shelters pollinators and mice; clearing it helps one crop while harming another. Farmers can try mixed planting, owl perches or protective stores. Players discover relationships through visible seasonal outcomes. Use a few meaningful species and refuges so experiments produce visible tradeoffs and the garden can recover from ordinary mistakes.
+Predators visit a village because a route to their usual prey is blocked. Hunting the threatening animals, reopening habitat, protecting livestock or relocating stores are different responses with different costs. Animals pursue needs without being quest dispensers. Do not promise an exact living individual behind every distant population count; refuges and immigration can keep the world resilient without invisible instant respawns.
 
-Seeds and references: [Grow a Garden](source-atlas.md#g05), [Stardew Valley](source-atlas.md#g30), [Rain World](source-atlas.md#g123).
+Keep a distinct dangerous-hunt variant as well: a large boar occupies a trail to a valuable gathering ground and can injure an approaching hunter under the selected body and combat rules. Scout its signs, prepare a viable shot or retreat, lure it through supported behavior, or find a bypass. A successful hunt or opened route has useful material value. The animal need not be evil, secretly friendly or a metaphor for a misunderstood person; the blocked-prey explanation above is one premise, not the answer to every dangerous encounter.
+
+Seeds and references: [EverQuest Next](source-atlas.md#g18), [Ultima Online](source-atlas.md#g19), [Rain World](source-atlas.md#g123).
 
 ## Weather makes appointments
 
@@ -40,39 +42,9 @@ Seeds and references: [Grow a Garden](source-atlas.md#g05), [Stardew Valley](sou
 
 A storm shifts a market indoors, delays a survey and creates a good moment to collect roof water. Preparation has several payoffs without making weather only punishment. Forecasts should communicate likelihood and useful time windows. Stable shelter and known routines reduce repetitive response. The world's declared time and persistence rules determine whether hazards continue during absence; do not hide that choice from participants.
 
+A clearing front can also reveal the high pass and immense cloud view sought by the [observatory party](adventure-discovery.md#the-observatory-above-the-cloud). Choosing whether to climb, improve shelter or wait uses the actual forecast and route evidence. Learning the passage can open later travel; a safe interval can remain safe instead of generating another storm to cancel the achievement. Nature supplies opportunity and danger without needing a moral motive.
+
 Seeds and references: [Valheim](source-atlas.md#g31), [PEAK](source-atlas.md#g47), [S.T.A.L.K.E.R. 2: Heart of Chornobyl](source-atlas.md#g130).
-
-## The river remembers upstream
-
-**MD MO FA · Blend · Large/New.** Gap: bounded catchment flow and visible upstream-downstream effects.
-
-A new mill helps one village and changes sediment at another's fishing bank. Players can inspect, negotiate operating hours or construct a bypass. The river links politics to material decisions. Use a small catchment graph with declared approximations; avoid pretending to simulate all fluid dynamics, and provide readable traces before downstream harm becomes irreversible.
-
-Seeds and references: [Against the Storm](source-atlas.md#g45), [Oxygen Not Included](source-atlas.md#g129), [Fallout](source-atlas.md#w28).
-
-## Wildlife with an elsewhere
-
-**ALL · Blend · Moderate/Extend.** Gap: ecological goals, refuges and bounded population transitions.
-
-Predators visit a village because a route to their usual prey is blocked. Hunting the threatening animals, reopening habitat, protecting livestock or relocating stores are different responses with different costs. Animals pursue needs without being quest dispensers. Do not promise an exact living individual behind every distant population count; refuges and immigration can keep the world resilient without invisible instant respawns.
-
-Seeds and references: [EverQuest Next](source-atlas.md#g18), [Ultima Online](source-atlas.md#g19), [Rain World](source-atlas.md#g123).
-
-## A useful weed
-
-**MD MO FA · Play · Moderate/Extend.** Gap: multiple material affordances and contextual cultivation.
-
-A plant that crowds wheat also makes strong cord and feeds a useful insect. Players decide where to tolerate it, harvest it or trade it. The label “weed” belongs to a goal and a place. Limit growth cadence and provide settled garden policies; otherwise an appealing ecological tradeoff turns into endless clicking to remove unwanted plants.
-
-Seeds and references: [Minecraft](source-atlas.md#g20), [Stardew Valley](source-atlas.md#g30), [Core Keeper](source-atlas.md#g46).
-
-## Fire as a changing landscape
-
-**MD FA · Blend · Large/New.** Gap: bounded fuel, spread, smoke, recovery and firebreaks.
-
-A controlled burn can protect a settlement or renew grazing, while smoke affects neighbors and wind changes the plan. The appeal can be skilled management, dangerous improvisation or deliberate destruction: a raider may use the same fire to deny cover or burn a settlement. Use finite regions, clear containment tools and world-selected severity. Bound propagation work and provide usable evidence of danger.
-
-Seeds and references: [Noita](source-atlas.md#g32), [Project Zomboid](source-atlas.md#g37), [The Legend of Zelda: Breath of the Wild](source-atlas.md#g73).
 
 ## The migration festival
 
@@ -89,6 +61,38 @@ Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Rai
 On a planet where suspended crystals fall as a harmless-to-locals abrasive haze, residents close cloth roofs while visitors learn to shield optics. The cycle changes routes, work and architecture. Start with one distinctive law and several consequences. Do not generate a new physics exception for every biome or make alien weather simply Earth weather with lethal colors.
 
 Seeds and references: [No Man's Sky](source-atlas.md#g17), [Mass Effect: Andromeda](source-atlas.md#g104), [The Expanse](source-atlas.md#w15).
+
+## The orchard has neighbors
+
+**MD MO FA · Blend · Moderate/Extend.** Gap: bounded pollination, shelter and harvest interactions.
+
+A neglected hedge shelters pollinators and mice; clearing it helps one crop while harming another. Farmers can try mixed planting, owl perches or protective stores. Players discover relationships through visible seasonal outcomes. Use a few meaningful species and refuges so experiments produce visible tradeoffs and the garden can recover from ordinary mistakes.
+
+Seeds and references: [Grow a Garden](source-atlas.md#g05), [Stardew Valley](source-atlas.md#g30), [Rain World](source-atlas.md#g123).
+
+## The river remembers upstream
+
+**MD MO FA · Blend · Large/New.** Gap: bounded catchment flow and visible upstream-downstream effects.
+
+A new mill helps one village and changes sediment at another's fishing bank. Players can inspect, negotiate operating hours or construct a bypass. The river links politics to material decisions. Use a small catchment graph with declared approximations; avoid pretending to simulate all fluid dynamics, and provide readable traces before downstream harm becomes irreversible.
+
+Seeds and references: [Against the Storm](source-atlas.md#g45), [Oxygen Not Included](source-atlas.md#g129), [Fallout](source-atlas.md#w28).
+
+## A useful weed
+
+**MD MO FA · Play · Moderate/Extend.** Gap: multiple material affordances and contextual cultivation.
+
+A plant that crowds wheat also makes strong cord and feeds a useful insect. Players decide where to tolerate it, harvest it or trade it. The label “weed” belongs to a goal and a place. Limit growth cadence and provide settled garden policies; otherwise an appealing ecological tradeoff turns into endless clicking to remove unwanted plants.
+
+Seeds and references: [Minecraft](source-atlas.md#g20), [Stardew Valley](source-atlas.md#g30), [Core Keeper](source-atlas.md#g46).
+
+## Fire as a changing landscape
+
+**MD FA · Blend · Large/New.** Gap: bounded fuel, spread, smoke, recovery and firebreaks.
+
+A controlled burn can protect a settlement or renew grazing, while smoke affects neighbors and wind changes the plan. The appeal can be skilled management, dangerous improvisation or deliberate destruction: a raider may use the same fire to deny cover or burn a settlement. Use finite regions, clear containment tools and world-selected severity. Bound propagation work and provide usable evidence of danger.
+
+Seeds and references: [Noita](source-atlas.md#g32), [Project Zomboid](source-atlas.md#g37), [The Legend of Zelda: Breath of the Wild](source-atlas.md#g73).
 
 ## The town's waste becomes a garden
 

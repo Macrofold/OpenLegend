@@ -4,6 +4,8 @@
 
 The intended pleasure is gradually understanding a place through a life there. A discovery can offer immediate usefulness, beauty, company or a changed interpretation before the player cares about the larger mystery. Learning more should create possibilities for action and affection as well as explain the past.
 
+For a complementary example with a consequential public claim, see [the founding bell](../repertoires/history-myth.md#the-founding-bell): craft achievement, displaced households, separately attributed traces and present choices about land or commemoration. The quiet flooded-district example below retains its own useful scale; both apply the same method.
+
 ## Prepare a small, connected piece of history
 
 Start with one event that still matters to somebody. Record enough to make its traces coherent, then develop what a player can encounter:

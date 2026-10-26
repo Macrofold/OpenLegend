@@ -20,51 +20,19 @@ The inventory includes hunting bows, crossbows, guns, ammunition, blades, polear
 
 An empty hand can be a deliberate equipment choice, not an unfinished loadout: carrying a shield, using a two-handed tool and practicing an unarmed method need different arrangements. A transferable item need not transfer its former owner's learning, personality or relationships. A familiar object can also have several distinct histories: its own modification, a component's accumulated use, and the user's learned technique. The later Final Fantasy and Fire Emblem studies inform these distinctions without imposing one series' equipment or inheritance rules on every world. [Final Fantasy I][ff1] · [Final Fantasy VII][ff7] · [Final Fantasy IX][ff9] · [Awakening][fea] · [Heroes][feh]
 
-## The mended kettle
-
-**ALL · Play · Small/Compose.** Gap: authored provenance and reactions; heating still needs its own mechanic.
-
-A kettle repaired with three visibly different handles passes between households. It can prepare a welcoming drink, mark a debt repaid or become the village meeting signal. Its history emerges from actual owners and repairs. Let players treasure it without outperforming all new kettles; destroying it does not erase the remembered kindness, though deliberate destruction may cause a lasting rupture.
-
-Related entries: [ITEM-001](#food-hearth-and-household).
-
-Seeds and references: [The Sims](source-atlas.md#g24), [Red Dead Redemption 2](source-atlas.md#g70), [Spirited Away](source-atlas.md#w25).
-
 ## Surveyor's folding frame
 
 **ALL · Play · Moderate/Extend.** Gap: explicit dimensions, alignment and supported attachments.
 
 A frame measures a doorway, braces a sapling or holds cloth as a wind signal. A carpenter and traveler see different opportunities in the same geometry. Show dimensions and load limits through inspection, including a rough reading when precision is unavailable. Avoid requiring pixel-perfect placement or reducing every improvised use to a crafting-menu entry.
 
+One selected frame returned from an earlier failed expedition with its owner's measurements still scratched into the wood. The surviving surveyor lends it for a second attempt because she wants the pass found, while her former partner disputes who earned the original findings. The frame can help measure a compatible anchor or signal across the gap during the [observatory ascent](adventure-discovery.md#the-observatory-above-the-cloud); it does not become a bridge merely through its name. Actual markings, testimony and later use provide different evidence. Success can make this ordinary tool a treasured possession without an extra stat bonus, a compulsory curse or proof of either person's entire account.
+
 An evocative name alone cannot authorize another use.
 
 Related entries: [ITEM-043](#hand-tools-and-workshop-possessions).
 
 Seeds and references: [Garry's Mod](source-atlas.md#g35), [The Legend of Zelda: Breath of the Wild](source-atlas.md#g73), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
-
-## The honest empty box
-
-**ALL · Play · Moderate/Extend.** Gap: containment, visible capacity and credible concealment.
-
-A marked box can be a reserve store, stool, protected parcel or harmless decoy. Its emptiness matters: light enough to carry, insufficient cover against some threats. Players choose what to pack and what to leave available. Give containers searchable contents and sensible transfer controls; nesting boxes must not create unlimited capacity or hide ownership rules.
-
-Labels and wish lists are not inventory contents.
-
-Related entries: [ITEM-061](#containers-and-road-equipment).
-
-Seeds and references: [Project Zomboid](source-atlas.md#g37), [Prey (2017)](source-atlas.md#g118), [Cataclysm: Dark Days Ahead](source-atlas.md#g122).
-
-## Festival cloth
-
-**MD MO FA · Play · Moderate/Extend.** Gap: material state plus local symbolic interpretations.
-
-A town's long embroidered cloth becomes a table covering, an emergency sling and later an argument about cutting inherited work. Its physical strength and cultural meaning coexist. A repair can become the next commemorated panel. Avoid universal theft or sacredness flags: communities and individuals can disagree about an object's appropriate use.
-
-It can also serve as an awning, banner, table covering or costume when its properties allow; changing the decoration does not settle ownership or shared meaning.
-
-Related entries: [ITEM-164](#arts-festivals-toys-and-games).
-
-Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Austen’s social worlds](source-atlas.md#w23).
 
 ## Witness lamp
 
@@ -78,37 +46,27 @@ Related entries: [ITEM-150](#records-signals-and-treasured-evidence).
 
 Seeds and references: [Outer Wilds](source-atlas.md#g34), [Dragon Age: Inquisition](source-atlas.md#g53), [S.T.A.L.K.E.R. 2: Heart of Chornobyl](source-atlas.md#g130).
 
-## Borrower's tool roll
+## The mended kettle
 
-**ALL · Play · Moderate/Extend.** Gap: lending terms, item identity and substitutable consumables.
+**ALL · Play · Small/Compose.** Gap: authored provenance and reactions; heating still needs its own mechanic.
 
-A shared roll includes a named hammer, replaceable nails and a note about who knows the best repair. Borrowers may return equivalent nails but should discuss replacing the hammer. It connects tool access to people without demanding ownership of every profession's kit. This shared roll can use forgiving, renegotiable terms; another lender may be strict or exploitative, with those terms and their consequences visible. Tracking every nail's biography would add noise.
+A kettle repaired with three visibly different handles passes between households. It can prepare a welcoming drink, mark a debt repaid or become the village meeting signal. Its history emerges from actual owners and repairs. Let players treasure it without outperforming all new kettles; destroying it does not erase the remembered kindness, though deliberate destruction may cause a lasting rupture.
 
-Related entries: [ITEM-044](#hand-tools-and-workshop-possessions).
+Related entries: [ITEM-001](#food-hearth-and-household).
 
-Seeds and references: [Ultima Online](source-atlas.md#g19), [Assassin's Creed III](source-atlas.md#g99), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+Seeds and references: [The Sims](source-atlas.md#g24), [Red Dead Redemption 2](source-atlas.md#g70), [Spirited Away](source-atlas.md#w25).
 
-## A chair with a place
+## Festival cloth
 
-**ALL · Play · Small/Compose.** Gap: placement and authored social recognition; seating support verified separately.
+**MD MO FA · Play · Moderate/Extend.** Gap: material state plus local symbolic interpretations.
 
-One chair belongs by the bakery door because a retired driver likes watching deliveries. Moving it creates room for a wheelchair or a music corner, and invites a conversation about habits. Decorators shape encounters without optimizing mood points. The occupant can choose another seat; furniture should influence opportunities, never mechanically dictate affection.
+A town's long embroidered cloth becomes a table covering, an emergency sling and later an argument about cutting inherited work. Its physical strength and cultural meaning coexist. A repair can become the next commemorated panel. Avoid universal theft or sacredness flags: communities and individuals can disagree about an object's appropriate use.
 
-Related entries: [ITEM-006](#food-hearth-and-household).
+It can also serve as an awning, banner, table covering or costume when its properties allow; changing the decoration does not settle ownership or shared meaning.
 
-Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [The Sopranos](source-atlas.md#w22).
+Related entries: [ITEM-164](#arts-festivals-toys-and-games).
 
-## Map of unfinished things
-
-**ALL · Play · Moderate/Extend.** Gap: player-kept annotations linked to evidence and evolving places.
-
-A map records “bridge almost repaired” and “orchard owner welcomes help,” rather than covering the world with compulsory markers. Friends can share selected notes, old notes can be contradicted, and authors can leave deliberate blanks. This gives returning players a direction. Do not reveal hidden quests or silently replace a personal interpretation with an omniscient answer.
-
-Intention is not completed work; the author can revise or abandon the plan.
-
-Related entries: [ITEM-149](#records-signals-and-treasured-evidence).
-
-Seeds and references: [Outer Wilds](source-atlas.md#g34), [Elden Ring](source-atlas.md#g75), [Dragon's Dogma 2](source-atlas.md#g127).
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Austen’s social worlds](source-atlas.md#w23).
 
 ## Companion vessel
 
@@ -133,6 +91,50 @@ A good evening may simply remain a good evening, without a compulsory emergency 
 Related entries: [ITEM-163](#arts-festivals-toys-and-games).
 
 Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Final Fantasy XV](source-atlas.md#g92), [Discworld](source-atlas.md#w12).
+
+## Borrower's tool roll
+
+**ALL · Play · Moderate/Extend.** Gap: lending terms, item identity and substitutable consumables.
+
+A shared roll includes a named hammer, replaceable nails and a note about who knows the best repair. Borrowers may return equivalent nails but should discuss replacing the hammer. It connects tool access to people without demanding ownership of every profession's kit. This shared roll can use forgiving, renegotiable terms; another lender may be strict or exploitative, with those terms and their consequences visible. Tracking every nail's biography would add noise.
+
+Related entries: [ITEM-044](#hand-tools-and-workshop-possessions).
+
+Seeds and references: [Ultima Online](source-atlas.md#g19), [Assassin's Creed III](source-atlas.md#g99), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+
+## The honest empty box
+
+**ALL · Play · Moderate/Extend.** Gap: containment, visible capacity and credible concealment.
+
+A marked box can be a reserve store, stool, protected parcel or harmless decoy. Its emptiness matters: light enough to carry, insufficient cover against some threats. Players choose what to pack and what to leave available. Give containers searchable contents and sensible transfer controls; nesting boxes must not create unlimited capacity or hide ownership rules.
+
+Labels and wish lists are not inventory contents.
+
+Related entries: [ITEM-061](#containers-and-road-equipment).
+
+Seeds and references: [Project Zomboid](source-atlas.md#g37), [Prey (2017)](source-atlas.md#g118), [Cataclysm: Dark Days Ahead](source-atlas.md#g122).
+
+## Map of unfinished things
+
+**ALL · Play · Moderate/Extend.** Gap: player-kept annotations linked to evidence and evolving places.
+
+A map records “bridge almost repaired” and “orchard owner welcomes help,” rather than covering the world with compulsory markers. Friends can share selected notes, old notes can be contradicted, and authors can leave deliberate blanks. This gives returning players a direction. Do not reveal hidden quests or silently replace a personal interpretation with an omniscient answer.
+
+Intention is not completed work; the author can revise or abandon the plan.
+
+Related entries: [ITEM-149](#records-signals-and-treasured-evidence).
+
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Elden Ring](source-atlas.md#g75), [Dragon's Dogma 2](source-atlas.md#g127).
+
+## A chair with a place
+
+**ALL · Play · Small/Compose.** Gap: placement and authored social recognition; seating support verified separately.
+
+One chair belongs by the bakery door because a retired driver likes watching deliveries. Moving it creates room for a wheelchair or a music corner, and invites a conversation about habits. Decorators shape encounters without optimizing mood points. The occupant can choose another seat; furniture should influence opportunities, never mechanically dictate affection.
+
+Related entries: [ITEM-006](#food-hearth-and-household).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [The Sopranos](source-atlas.md#w22).
 
 ## Specific inventory
 

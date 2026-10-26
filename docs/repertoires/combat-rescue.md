@@ -427,6 +427,16 @@ Retained archetypes: [everyone home](#win-by-getting-everyone-home), [nonlethal 
 
 A party caught near a collapsing bridge can fight, distract, negotiate or retreat with an injured companion. This encounter is won by getting the party home. Roles include route finder, carrier and rear guard. Make withdrawal a supported outcome with legible pursuit, and avoid awarding so much combat experience that rescue becomes the inferior choice.
 
+### The lift above the flood
+
+**SC variant.** WORK-243's intact-drive assembly is Specialist and selected for MO/SC; the [Work example](work-crafting.md#the-lift-above-the-flood) also covers the modern version. A medieval hand-powered counterpart needs separately selected supported machinery, rather than importing that drive or changing the parent pattern's world badge.
+
+In this original variant, rising water cuts off a cliffside hall while an identified refuge remains stable for a limited interval. Maker Ena wants to prove her lifting design; rival Ors wants the commission and doubts the anchor; trapped caretaker Tala knows where the hall's old hauling gear is stored. Their disagreement concerns a real rescue and a valued future, while Tala contributes knowledge and choices of her own. A compatible drive can power the lift only if the selected world supports its assembly, load and operation.
+
+Players inspect the approach and equipment, salvage compatible parts, test the load, coordinate willing helpers, attempt another supported route or abandon an infeasible attempt. CR-170, CR-176 and CR-195 supply access and extraction; WORK-200/243 own the work rather than a rescue-only invention shortcut. [Shared mastery](abilities-progression.md#teaching-recognition-and-advancement) can credit what each participant actually learned. Clear access requirements and the observed water level make urgency playable without promising a successful rescue.
+
+A good plan can save everyone reachable, prove a useful invention and open a later expedition or commission. Named injuries, abandoned equipment, losses and survivors remain those of the actual result; partial failure need not destroy every future possibility, and a clean success needs no compulsory death. A working lift can remain useful after the emergency. The proposal adapts [continuing consequences in Kenshi](../../archive/02-research/game-inspiration/dossiers/kenshi.md#6-eight-worked-situations), not its exact injury rules or an already verified runtime encounter.
+
 Related entries: [CR-094](#formation-and-coordinated-tactics), [CR-181](#extraction-and-evacuation), [CR-195](#extraction-and-evacuation), [CR-212](#mounted-crewed-and-objective-driven-encounters).
 
 Seeds and references: [Kenshi](source-atlas.md#g36), [PEAK](source-atlas.md#g47), [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60).
@@ -446,6 +456,8 @@ Seeds and references: [Red Dead Redemption](source-atlas.md#g69), [Deus Ex (2000
 **MD SC FA · Play · U.** Build scope: Moderate; observable enemy preparation and response windows. See CR-078 and CR-121.
 
 An opponent braces a spear or a machine starts charging, letting players reposition, interrupt, shield or retreat. Information creates tactical agency. Different bodies and tools can answer the same threat. Keep timing adjustable and give turn-like planning options where appropriate; reaction speed should not be the only route to using a character's tactical knowledge.
+
+For a concrete opposed encounter, a toll captain holds the route to a winter convoy and wants its merchant to pay twice. A spear guard wants wages, another enjoys frightening travelers, and the captain has no intention of conceding merely because the player explains the shortage. Players can scout, bargain, fight for the crossing, protect a companion or withdraw by a known alternative. The guards' actual preparation creates readable danger; a successful contest can reopen the road and earn a useful reward. Loss can leave the convoy diverted or its cargo taken. Their motives need not be equivalent, and victory does not require their repentance.
 
 Related entries: [CR-078](#perception-stealth-and-morale), [CR-121](#enemy-roles-and-changing-threat-patterns).
 
@@ -497,6 +509,8 @@ Seeds and references: [Kenshi](source-atlas.md#g36), [Battle Brothers](source-at
 
 A defeated band can surrender tools, offer restitution or negotiate safe departure. Captors have objectives beyond killing, and promises may be credible or uncertain. Players can accept risk while retaining safeguards. Do not make surrender automatically betray the player every time, or turn captives into loot objects whose agency and basic needs disappear.
 
+In one selected encounter a captain honors surrender, releases the defeated and keeps the agreed prize. In another, a previously established cruel opponent rejects the plea or kills a surrendered prisoner through the owning combat and custody rules. CR-162/165 retain that possibility without making every captive doomed. Report a known killing plainly and carry its absence, witnesses and consequences forward; the word “surrender” cannot force mercy, forgiveness or a change of allegiance.
+
 Related entries: [CR-151](#capture-surrender-and-bounded-violence), [CR-165](#capture-surrender-and-bounded-violence), [CR-223](#mounted-crewed-and-objective-driven-encounters).
 
 Seeds and references: [Red Dead Redemption](source-atlas.md#g69), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Battle Brothers](source-atlas.md#g121).
@@ -516,6 +530,8 @@ Seeds and references: [Middle-earth: Shadow of War](source-atlas.md#g116), [Wild
 **ALL · Play · C.** Build scope: Moderate; selected factual callbacks and voluntary reflection. See CR-204–CR-210.
 
 After danger, companions discuss what worked, mend equipment and decide whether to go again. Someone may be proud, frightened, amused or ready for a different life. This gives consequences emotional space. Reactions should refer to witnessed events and distinct goals, not expose hidden thoughts or repeat a generated congratulatory speech after every minor encounter.
+
+The table can also hold a celebration, a sharp disagreement, a quiet meal or an empty place. CR-205's loss remains real even if someone laughs tonight; other companions can enjoy a victory without having suffered a loss. Reflection is optional, and silence does not imply recovery or resentment. Let the gained route, payment, useful equipment or saved person improve later play without immediately inventing another emergency to spoil the result.
 
 Related entries: [CR-204](#care-recovery-and-continuing-lives), [CR-210](#care-recovery-and-continuing-lives).
 

@@ -35,6 +35,8 @@ The expansion makes room for institution-shaped expeditions, public discovery, b
 | [Impossible journeys](#impossible-journeys)                                                | AD-211–AD-225; AD-297–AD-300; AD-333–AD-334 | Unfamiliar laws that change navigation, choices and the meaning of arrival.             |
 | [Homecomings and lasting endings](#homecomings-and-lasting-endings)                        | AD-226–AD-240; AD-301–AD-304; AD-335–AD-336 | Returns, retirement, celebration, loss and places changed by an expedition.             |
 
+For a first selection, pair a [dangerous quarry](#hunts-and-dangerous-quarries), [observatory expedition](#the-observatory-above-the-cloud), [rival claim](#a-rival-expedition-with-manners) or [payroll robbery](#heists-cons-and-illicit-opportunities) with a worthwhile [homecoming](#homecomings-and-lasting-endings). AD-189's honest-paying cruel commander and AD-201's prisoner killings remain explicit options; they need not become the hidden explanation for every beautiful discovery.
+
 The ten retained archetypes follow the tables: [return expedition](#the-return-expedition), [missing person](#the-missing-person-who-made-a-choice), [route as treasure](#a-treasure-that-is-a-route), [several purposes](#the-expedition-with-several-purposes), [useful error](#the-mystery-that-permits-useful-error), [mannerly rival](#a-rival-expedition-with-manners), [living location](#the-monster-is-a-location), [local ending](#a-local-ending-worth-choosing), [optional guidance](#the-guided-path-and-the-wild-path) and [discovery as celebration](#a-discovery-that-invites-a-party).
 
 ## Roads and route discoveries
@@ -479,6 +481,14 @@ Seeds and references: [The Witcher 3: Wild Hunt](source-atlas.md#g72), [Deus Ex 
 
 Explorers find a sheltered passage that makes two communities practical neighbors. Its value emerges through trade, friendship and rescue. Players can share, improve or restrict access, creating consequences beyond selling loot. Keep the route spatially and socially credible; discovery should not automatically transfer ownership of the places or people it connects.
 
+### The observatory above the cloud
+
+In this original mountain variant, a rare clear interval makes a long-unvisited observatory reachable. Guide Nera wants recognition for completing her father's partial route; apprentice Pell wants to use the surviving instrument; rival scout Orin wants the first reliable account of the pass. Nera's pride, Pell's impatience and Orin's caution can complicate the ascent without making any of them secretly malicious. The view, the instrument and the useful passage are desirable before their larger history is understood.
+
+Players can inspect cairns, compare attributed route notes, prepare a portable span, share loads, choose another approach or turn back with useful knowledge. AD-004, AD-015 and AD-305 supply those premises; [AP-210](abilities-progression.md#teaching-recognition-and-advancement) supplies a demanding shared project, not identical expertise for everyone. A borrowed span cannot remain at every gap, and reaching an instrument does not automatically teach its method or transfer ownership. A clean success can bring wonder, a usable route, earned recognition and a new expedition opportunity. A partial ascent can leave a missed opening or a disappointed companion as well as real information.
+
+On return, preserve the route actually surveyed, the obstacles actually altered and who knows which findings. Later visitors encounter those changes rather than a reset puzzle. Use the [discoverable-history questions](../narrative/authoring-discoverable-history.md) if the instrument or records carry a past worth investigating; no atrocity or casualty is required to justify the discovery. This is a selected scene proposal under the parent pattern's capability gaps, informed by [knowledge as capability](../../archive/02-research/game-inspiration/dossiers/outer-wilds.md#10-openlegend-patterns-and-limits--interpretation-not-requirements) and [consequential worldbuilding](../../archive/02-research/worldbuilding/comparative-synthesis.md#6-entry-begins-with-something-worth-seeking).
+
 Related entries: [AD-005](#roads-and-route-discoveries), [AD-109](#treasure-and-salvage).
 
 Seeds and references: [Outer Wilds](source-atlas.md#g34), [Elden Ring](source-atlas.md#g75), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
@@ -508,6 +518,8 @@ Seeds and references: [Outer Wilds](source-atlas.md#g34), [Disco Elysium](source
 **ALL · Play · C.** Build scope: Moderate; independent bounded plans and negotiable shared interests. See AD-125 and AD-132.
 
 Another team wants the same summit but carries the spare rope you need. Compete for a record, share supplies or divide research goals. Their competitive spirit can make an eventual shared camp enjoyable as well as useful. Their progress should follow plausible resources and information, not teleport ahead to preserve drama, and cooperation should not erase their desire for recognition.
+
+The rival leader has promised a sponsor the first usable survey; a paid place on the next expedition depends on it. They may refuse a joint claim or demand a real share for the rope. A courteous refusal still leaves incompatible interests. Winning the record can secure the player's own commission; losing can cost it, while a negotiated joint result can open a different opportunity. These are conditional outcomes of actual travel, evidence and agreements, not instructions that every rival must cooperate or that every defeat secretly rewards the player.
 
 Related entries: [AD-125](#rivals-contests-and-recognition), [AD-132](#rivals-contests-and-recognition).
 

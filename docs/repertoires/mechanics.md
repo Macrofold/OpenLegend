@@ -94,6 +94,8 @@ Seeds and references: [Baldur's Gate 3](source-atlas.md#g26), [Dragon Age II](so
 
 Moving a relay lets a healer reach an inaccessible courtyard; turning a flooded cellar into a passage changes where conflict happens. Let players alter relationships among spaces rather than only damage numbers. Preview affected routes and occupants, bound edits to supported structures, and make required capabilities discoverable before commitment. Ordinary routes can offer alternatives; an explicitly specialized challenge may still demand a particular kind of capability.
 
+In a selected encounter, the courtyard contains a trapped companion and the cellar offers a bypass around a rival's toll gate. Opening it can secure an evacuation, a profitable convoy route or access to a coveted discovery. The rival may contest the entrance because the lost toll matters to them. Successful access remains available under its actual structural conditions; a companion saved or payment earned is a real gain. The connector mechanism decides reachable paths and costs, while people and world rules decide claims, hostility and use. No moral score or recurring disaster is needed to keep the result meaningful.
+
 Previews must not reveal unexplored destinations.
 
 Related entries: [MEC-051–060](#access-distance-and-changing-topology).

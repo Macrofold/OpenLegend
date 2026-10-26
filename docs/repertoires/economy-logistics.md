@@ -18,17 +18,51 @@ Keep buying bread, paying for repairs, running a shop, giving presents, borrowin
 
 **ALL · Play · Moderate/Extend.** Gap: route plans, cargo reservations and local demand.
 
-A courier carries grain downhill, repaired tools uphill and letters both ways. A route becomes a web of familiar people rather than repeated empty return trips. New cargo competes with favors and passenger space. Summarize routine travel after discovery, show capacity and deadlines, and avoid simulating every distant transaction to sustain a handful of meaningful stops.
+A courier carries grain downhill, repaired tools uphill and letters both ways. A profitable first winter run could buy a better wagon and establish a route people will use again. At a disputed crossing, an unpaid guard captain wants wages, a merchant wants passage and a raider wants the cargo. A frightened guard's need and the captain's decision to seize a household's seed are distinct facts; desperation does not erase the resulting shortage. The [toll tower](combinations.md#the-toll-tower-at-dawn) develops the encounter without making a complete debt or campaign system its prerequisite.
+
+Players can inspect the claim, scout another passage, bargain, defend the convoy, take a paid side or attempt theft through supported actions. Success can yield money, a dependable road and returning customers; profitable collusion can leave particular growers without seed, and a victim need not forgive. The outcome changes the next journey. On an established peaceful circuit, new cargo still competes with favors and passenger space, and familiar stops can be pleasurable rather than endlessly attacked. Summarize routine travel after discovery, show capacity and deadlines, and avoid simulating every distant transaction to sustain a handful of meaningful stops.
 
 Related entries: [ECON-061](#routes-delivery-transport-and-last-mile-work).
 
 Seeds and references: [Factorio](source-atlas.md#g27), [Old School RuneScape](source-atlas.md#g49), [Starsector](source-atlas.md#g120).
 
+## The substitute supplier
+
+**ALL · Play · Moderate/Extend.** Gap: requirement-based procurement with quality and deadline tradeoffs.
+
+When a mine closes, a builder can buy reclaimed metal, redesign a joint or hire a different craftsperson. The disruption invites invention instead of halting all progress. Show consequences before purchase and let reliable suppliers become valued contacts. Do not require every production chain to end at the same rare resource or mandatory combat zone.
+
+Related entries: [ECON-015](#everyday-buying-selling-barter-and-procurement).
+
+Seeds and references: [Against the Storm](source-atlas.md#g45), [Mass Effect: Andromeda](source-atlas.md#g104), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+
+## A fair that creates demand
+
+**ALL · Play · Small/Compose.** Gap: authored visitors and projects; dynamic demand can be added later.
+
+A regional fair brings cooks, builders and musicians who want specific useful things, allowing small makers to find an audience. A coveted expedition outfit or public commission gives the fair a concrete prize: demonstrate an excellent product, beat a competent rival, agree terms and receive real payment. Pride, envy, flirtation and a rejected bid can animate the day without fraudulent judging. Successful goods can inspire future commissions, and profit can simply buy comfort or time for a chosen adventure. Creators get a bounded economic event instead of an empty global marketplace. Supply a few real needs and varied buyers; popularity should not be determined solely by an opaque engagement score.
+
+Related entries: [ECON-141](#fairs-patronage-gifts-luxury-and-celebration).
+
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Assassin's Creed Valhalla](source-atlas.md#g100).
+
+## Money with a local story
+
+**MD MO FA · Blend · Moderate/Extend.** Gap: authored exchange media and explicit redemption rules.
+
+A repair cooperative issues vouchers redeemable for workshop time; travelers prefer grain or common coins. Players can negotiate, pool vouchers or help restore confidence after a missed obligation. Keep only a few media with distinct purposes. A dozen currencies with identical uses would add bookkeeping, and a promise token must not silently create real ownership or infinite credit.
+
+Currency does not confer ownership of a person or guarantee acceptance by strangers.
+
+Related entries: [ECON-025](#money-prices-valuation-and-information).
+
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Final Fantasy VIII](source-atlas.md#g85), [Discworld](source-atlas.md#w12).
+
 ## Reserve enough for tomorrow
 
 **ALL · Play · Moderate/Extend.** Gap: purpose-bound stock reserves and understandable production caps.
 
-A village sells surplus flour only after reserving seed and agreed meals. A sudden visitor group tests the policy without requiring the player to count sacks manually. Makers can express sensible standing rules. Explain which reserve blocks a sale and who may change it; do not let automation reinterpret “surplus” as everything not currently in use.
+A village sells surplus flour only after reserving seed and agreed meals. A sudden visitor group tests the policy without requiring the player to count sacks manually. Makers can express sensible standing rules. Keep that dependable ordinary version. In a distinct shortage variant, a well-provisioned steward knowingly sells grain promised to named households to secure a prestigious buyer; a cook wants enough for agreed meals and a grower needs the next sowing's seed. Inspect, purchase another supply, expose the sale or support the profitable deal, with actual stock and recipients determining who benefits or goes without. The steward's appetite for status, rather than universal insatiable need, supplies the conflict. Explain which reserve blocks a sale and who may change it; do not let automation reinterpret “surplus” as everything not currently in use.
 
 Related entries: [ECON-041](#reserves-storage-stock-and-allocation).
 
@@ -53,28 +87,6 @@ A neighborhood buys a kiln that no household could justify alone. Access, teachi
 Related entries: [ECON-121](#ownership-rental-shared-access-and-commons).
 
 Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Assassin's Creed III](source-atlas.md#g99).
-
-## The substitute supplier
-
-**ALL · Play · Moderate/Extend.** Gap: requirement-based procurement with quality and deadline tradeoffs.
-
-When a mine closes, a builder can buy reclaimed metal, redesign a joint or hire a different craftsperson. The disruption invites invention instead of halting all progress. Show consequences before purchase and let reliable suppliers become valued contacts. Do not require every production chain to end at the same rare resource or mandatory combat zone.
-
-Related entries: [ECON-015](#everyday-buying-selling-barter-and-procurement).
-
-Seeds and references: [Against the Storm](source-atlas.md#g45), [Mass Effect: Andromeda](source-atlas.md#g104), [Kingdom Come: Deliverance II](source-atlas.md#g114).
-
-## Money with a local story
-
-**MD MO FA · Blend · Moderate/Extend.** Gap: authored exchange media and explicit redemption rules.
-
-A repair cooperative issues vouchers redeemable for workshop time; travelers prefer grain or common coins. Players can negotiate, pool vouchers or help restore confidence after a missed obligation. Keep only a few media with distinct purposes. A dozen currencies with identical uses would add bookkeeping, and a promise token must not silently create real ownership or infinite credit.
-
-Currency does not confer ownership of a person or guarantee acceptance by strangers.
-
-Related entries: [ECON-025](#money-prices-valuation-and-information).
-
-Seeds and references: [Caves of Qud](source-atlas.md#g33), [Final Fantasy VIII](source-atlas.md#g85), [Discworld](source-atlas.md#w12).
 
 ## Insurance by neighbors
 
@@ -107,16 +119,6 @@ Immediate means and intended use can make either choice understandable.
 Related entries: [ECON-016](#everyday-buying-selling-barter-and-procurement).
 
 Seeds and references: [Project Zomboid](source-atlas.md#g37), [Fallout 4](source-atlas.md#g74), [Starsector](source-atlas.md#g120).
-
-## A fair that creates demand
-
-**ALL · Play · Small/Compose.** Gap: authored visitors and projects; dynamic demand can be added later.
-
-A regional fair brings cooks, builders and musicians who want specific useful things, allowing small makers to find an audience. Successful goods can inspire future commissions. Creators get a bounded economic event instead of an empty global marketplace. Supply a few real needs and varied buyers; popularity should not be determined solely by an opaque engagement score.
-
-Related entries: [ECON-141](#fairs-patronage-gifts-luxury-and-celebration).
-
-Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Assassin's Creed Valhalla](source-atlas.md#g100).
 
 ## Everyday buying, selling, barter, and procurement
 

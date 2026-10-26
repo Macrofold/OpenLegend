@@ -22,23 +22,13 @@ The inventory contains **272 rows, ACR-001–ACR-272**. The ten retained introdu
 
 [Households](#households-and-dependable-mornings) · [Food and hospitality](#food-hospitality-and-pleasant-evenings) · [Gardens and gathering](#gardens-gathering-and-land-stewardship) · [Workshops](#workshops-making-and-repair) · [Logistics](#stores-deliveries-and-shared-supplies) · [Field command](#watch-rescue-and-field-command) · [Performance](#performances-games-and-public-pleasure) · [Delegation](#delegates-with-limits-and-preferences) · [Blueprints](#blueprints-layouts-and-construction) · [Interaction authoring](#objects-contraptions-and-interaction-authoring) · [First sessions](#scenarios-with-a-first-evening) · [Cast and history](#inhabited-casts-and-usable-histories) · [World contracts](#world-contracts-and-selected-modes) · [Rehearsal](#rehearsal-inspection-and-debugging) · [Attention](#attention-views-and-meaningful-interruptions) · [Scale](#offscreen-life-and-bounded-scale) · [Sharing](#sharing-remixing-and-compatible-reuse) · [Succession](#long-projects-handover-and-retirement) · [Strange creators](#strange-automation-and-experimental-creation) · [Complete experiences](#creator-challenges-and-complete-experiences) · [Playable authoring](#playful-authoring-with-observable-results) · [Scene direction](#cast-aware-scenes-and-returning-lives) · [Operational institutions](#material-roles-and-institutions-that-actually-work) · [Visiting and publishing](#visiting-publishing-and-preserving-a-creation) · [Practice and loadouts](#practice-loadouts-and-configurable-help) · [Cases and handoffs](#case-direction-and-continuing-cast-handoffs) · [Earned returns](#earned-recovery-and-different-kinds-of-return) · [Legible policies](#legible-policies-and-bounded-production) · [Readiness and continuity](#readiness-evidence-and-personal-continuity).
 
-## The explainable household routine
-
-**ALL · Play · Moderate/Extend.** Gap: bounded standing plans with priorities, reserves and stop reasons.
-
-“Prepare supper if ingredients remain after tomorrow's lunches” is an inspectable routine. A resident can pause it, propose a substitute or refuse an excessive workload. Casual players gain dependable help; experts tune priorities. Show the decisive condition and current owner. Never use a fresh model call per tick or let routine execution silently change its purpose.
-
-Show which ingredients were counted and why the routine stops.
-
-Related entries: [ACR-001](#households-and-dependable-mornings), [ACR-011](#food-hospitality-and-pleasant-evenings).
-
-Seeds and references: [RimWorld](source-atlas.md#g21), [Palworld](source-atlas.md#g41), [Final Fantasy XII](source-atlas.md#g89).
-
 ## A creation with a first evening
 
 **ALL · Play · Small/Compose.** Gap: authored onboarding scenario; packaging capability reviewed separately.
 
 A shared harbor pack includes three people, one damaged landing, a valuable salvage claim and a rival crew. Visitors can repair access, bargain for cooperation or race the rival to the prize, then return with a reward or a changed relationship. Builders can expand a playable experience from that first evening. Evaluate whether another person enjoys the first evening, not how many generated entities exist. Avoid shipping only a vocabulary of parts and expecting every recipient to invent the missing experience.
+
+Give those three people current aims: a boatwright wants to prove a portable landing, a diver wants a profitable salvage share, and a rival captain wants the same cargo for her own promised voyage. She may bargain, deceive or attempt supported sabotage; the boatwright may resent unfair credit, and the diver may prefer a paid rival offer. Author their histories, resources and opportunities rather than instructions forcing betrayal, cooperation or remorse. Visitors can win something useful, lose the race or settle a genuine joint claim. An actual success can end this contest and leave room to enjoy the harbor. ACR-115 preserves a villain who wants the harmful result; ACR-120 preserves independence from the creator's preferred arc. Helpful household routines elsewhere in this catalogue are not the default personality of every inhabitant.
 
 Related entries: [ACR-101–110](#scenarios-with-a-first-evening).
 
@@ -54,6 +44,26 @@ Related entries: [ACR-081–090](#blueprints-layouts-and-construction).
 
 Seeds and references: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
 
+## A quiet world still runs
+
+**ALL · Blend · Moderate/Extend.** Gap: due work, native routines and graceful model unavailability.
+
+Known routines continue when no one needs a conversation: ovens finish, agreed deliveries progress, patrols follow their orders and characters rest. A hostile routine remains limited to its admitted purposes, observations and actions. A model is used for a meaningful novel decision, not each motion. Hosts can budget interaction without freezing basic life. If inference is unavailable, pause or use an admitted fallback honestly; never narrate completion for a task that did not execute.
+
+Related entries: [ACR-151](#offscreen-life-and-bounded-scale), [ACR-160](#offscreen-life-and-bounded-scale).
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Final Fantasy XIV](source-atlas.md#g91).
+
+## The rehearsal room
+
+**ALL · Blend · Large/New.** Gap: isolated scenario copies with explicit external-effect fencing.
+
+Creators rehearse a flood, spell combination, assault, betrayal or council dispute using disposable fictional state. They inspect causal traces and try a different parameter without harming the main world. Rehearsal should show its seed, rules and limits. It cannot undo real charges or messages, and a successful small rehearsal is evidence only for the tested conditions.
+
+Related entries: [ACR-131–140](#rehearsal-inspection-and-debugging).
+
+Seeds and references: [Dreams](source-atlas.md#g13), [Noita](source-atlas.md#g32), [Garry's Mod](source-atlas.md#g35), [Simulation](simulation-experiments.md).
+
 ## The scenario dial with a promise
 
 **ALL · Play · Moderate/Extend.** Gap: world policies with understandable effects and save-safe transitions.
@@ -65,46 +75,6 @@ This includes offscreen changes: adjusting the dial is an explicit transition, n
 Related entries: [ACR-121–130](#world-contracts-and-selected-modes).
 
 Seeds and references: [Fortnite](source-atlas.md#g07), [Valheim](source-atlas.md#g31), [Project Zomboid](source-atlas.md#g37).
-
-## The bounded civic planner
-
-**ALL · Blend · Large/New.** Gap: group-level scheduling with limited materialized participants.
-
-A creator describes a town's services and a few named residents, then models distant districts as aggregate supply and demand until interaction matters. This supports scale without pretending every citizen has continuous private cognition. Preserve identity for encountered people and reconcile stock flows. Explicitly show approximation boundaries; aggregate transitions cannot invent witnesses or personal memories retroactively.
-
-Related entries: [ACR-151–160](#offscreen-life-and-bounded-scale).
-
-Seeds and references: [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Crusader Kings III](source-atlas.md#g126), [Oxygen Not Included](source-atlas.md#g129).
-
-## A quiet world still runs
-
-**ALL · Blend · Moderate/Extend.** Gap: due work, native routines and graceful model unavailability.
-
-Known routines continue when no one needs a conversation: ovens finish, agreed deliveries progress, patrols follow their orders and characters rest. A hostile routine remains limited to its admitted purposes, observations and actions. A model is used for a meaningful novel decision, not each motion. Hosts can budget interaction without freezing basic life. If inference is unavailable, pause or use an admitted fallback honestly; never narrate completion for a task that did not execute.
-
-Related entries: [ACR-151](#offscreen-life-and-bounded-scale), [ACR-160](#offscreen-life-and-bounded-scale).
-
-Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Final Fantasy XIV](source-atlas.md#g91).
-
-## A remix with a family tree
-
-**ALL · Play · Large/New.** Gap: definition versions, dependency disclosure and authorized adoption.
-
-A creator adapts a festival game into a rescue drill, retaining attribution and a readable account of changed rules. Other hosts can choose which version to adopt. Reuse becomes social craft. A new version should not silently rewrite active worlds, and copied presentation does not prove compatibility, licensing or permission to activate its mechanics.
-
-Related entries: [ACR-161–170](#sharing-remixing-and-compatible-reuse).
-
-Seeds and references: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Fire Emblem Heroes](source-atlas.md#g65).
-
-## The rehearsal room
-
-**ALL · Blend · Large/New.** Gap: isolated scenario copies with explicit external-effect fencing.
-
-Creators rehearse a flood, spell combination, assault, betrayal or council dispute using disposable fictional state. They inspect causal traces and try a different parameter without harming the main world. Rehearsal should show its seed, rules and limits. It cannot undo real charges or messages, and a successful small rehearsal is evidence only for the tested conditions.
-
-Related entries: [ACR-131–140](#rehearsal-inspection-and-debugging).
-
-Seeds and references: [Dreams](source-atlas.md#g13), [Noita](source-atlas.md#g32), [Garry's Mod](source-atlas.md#g35), [Simulation](simulation-experiments.md).
 
 ## A creator's attention budget
 
@@ -125,6 +95,38 @@ A host documents the town's active rules, unresolved projects and necessary serv
 Related entries: [ACR-171–180](#long-projects-handover-and-retirement).
 
 Seeds and references: [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14), [Worlds Adrift](source-atlas.md#g15).
+
+## A remix with a family tree
+
+**ALL · Play · Large/New.** Gap: definition versions, dependency disclosure and authorized adoption.
+
+A creator adapts a festival game into a rescue drill, retaining attribution and a readable account of changed rules. Other hosts can choose which version to adopt. Reuse becomes social craft. A new version should not silently rewrite active worlds, and copied presentation does not prove compatibility, licensing or permission to activate its mechanics.
+
+Related entries: [ACR-161–170](#sharing-remixing-and-compatible-reuse).
+
+Seeds and references: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Fire Emblem Heroes](source-atlas.md#g65).
+
+## The bounded civic planner
+
+**ALL · Blend · Large/New.** Gap: group-level scheduling with limited materialized participants.
+
+A creator describes a town's services and a few named residents, then models distant districts as aggregate supply and demand until interaction matters. This supports scale without pretending every citizen has continuous private cognition. Preserve identity for encountered people and reconcile stock flows. Explicitly show approximation boundaries; aggregate transitions cannot invent witnesses or personal memories retroactively.
+
+Related entries: [ACR-151–160](#offscreen-life-and-bounded-scale).
+
+Seeds and references: [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Crusader Kings III](source-atlas.md#g126), [Oxygen Not Included](source-atlas.md#g129).
+
+## The explainable household routine
+
+**ALL · Play · Moderate/Extend.** Gap: bounded standing plans with priorities, reserves and stop reasons.
+
+“Prepare supper if ingredients remain after tomorrow's lunches” is an inspectable routine. A resident can pause it, propose a substitute or refuse an excessive workload. Casual players gain dependable help; experts tune priorities. Show the decisive condition and current owner. Never use a fresh model call per tick or let routine execution silently change its purpose.
+
+Show which ingredients were counted and why the routine stops.
+
+Related entries: [ACR-001](#households-and-dependable-mornings), [ACR-011](#food-hospitality-and-pleasant-evenings).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [Palworld](source-atlas.md#g41), [Final Fantasy XII](source-atlas.md#g89).
 
 ## Households and dependable mornings
 

@@ -6,7 +6,7 @@
 
 **Proposal catalogue · September 29, 2026.** History gives places, customs, knowledge and relationships their present shape. Inventions, migrations, love stories, wars and acts of courage or cruelty leave different kinds of evidence. People inherit achievements and unresolved claims, then add their own events to what later generations remember.
 
-[The flood with three anniversaries](#the-flood-with-three-anniversaries) · [A hero's useful mistake](#a-heros-useful-mistake) · [An invention with several parents](#an-invention-with-several-parents) · [A ruin older than the explanation](#a-ruin-older-than-the-explanation) · [The road whose name traveled](#the-road-whose-name-traveled) · [The missing ordinary archive](#the-missing-ordinary-archive) · [A prophecy as a social machine](#a-prophecy-as-a-social-machine) · [History changes an object](#history-changes-an-object) · [A villain's ordinary constituency](#a-villains-ordinary-constituency) · [The future historian](#the-future-historian)
+[History changes an object](#history-changes-an-object) · [A ruin older than the explanation](#a-ruin-older-than-the-explanation) · [The flood with three anniversaries](#the-flood-with-three-anniversaries) · [An invention with several parents](#an-invention-with-several-parents) · [A hero's useful mistake](#a-heros-useful-mistake) · [A villain's ordinary constituency](#a-villains-ordinary-constituency) · [The road whose name traveled](#the-road-whose-name-traveled) · [The missing ordinary archive](#the-missing-ordinary-archive) · [A prophecy as a social machine](#a-prophecy-as-a-social-machine) · [The future historian](#the-future-historian)
 
 ## Coverage of the playable foundation
 
@@ -25,29 +25,23 @@ These domains orient the inventory below; the ten retained cards illustrate sele
 
 Research anchors: [Final Fantasy VI](source-atlas.md#g83), [Warcraft III](source-atlas.md#g96), [Foundation](source-atlas.md#w16), [The Broken Earth](source-atlas.md#w18) and [Narnia](source-atlas.md#w19).
 
-## The flood with three anniversaries
+## History changes an object
 
-**ALL · Play · Small/Compose.** Gap: authored accounts and present-day consequences.
+**ALL · Play · Moderate/Extend.** Gap: event-linked provenance and local appraisal.
 
-One district remembers a rescue, another a failed warning and a third the founding of its new home. Their festivals overlap awkwardly. Players can compare accounts, support distinct commemorations or create a shared project without forcing a single story. Give each memory material anchors and living witnesses; disagreement need not mean every account is equally accurate.
+An ordinary spade used in a rescue becomes a community emblem, then returns to useful work when someone argues it should not sit behind glass. Players choose display, use, copies or retirement. The object need not gain supernatural damage. Its meaning can differ among people, and a replacement can carry a new story without erasing the old one.
 
-Seeds and references: [Dragon Age II](source-atlas.md#g52), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Macondo](source-atlas.md#w24).
+Select the object's useful current properties together with the relevant history that this observer actually knows. A rescue veteran, someone who heard the story and an uninformed visitor can meet the same spade with different evidence; physical similarity does not give a replacement its predecessor's experiences. A brief attributed reminder can reconnect the object to a person or worthwhile occasion without inserting a complete chronicle into every decision. Preserve the exact underlying occurrence and distinguish a later appraisal from a fact the object itself proves.
 
-## A hero's useful mistake
+### The founding bell
 
-**ALL · Play · Small/Compose.** Gap: authored layered records and a recoverable present problem.
+A separate original variant uses a beloved bell: its casting marked the settlement's survival and a real craft achievement, while the founding clearance displaced the Kel and Dorr households. The bellkeeper wants its music heard again; Ena Kel wants to reopen her family's riverside workshop; the current steward wants to keep the quay available to trade. Those present aims can persist after the historical question is answered.
 
-A celebrated founder built a canal that saved harvests but trapped fish upstream. Repairing the mistake can honor their practical spirit while challenging the statue's inscription. Players inherit unfinished work instead of merely discovering that heroes were secretly evil. Separate documented consequences from later legend, and let admiration survive a more complete understanding.
+Use the [many-entrances authoring method](../narrative/authoring-discoverable-history.md). A listener can first enjoy the bell's sound or use its tower as a landmark. A maker can inspect the founder's mark and unusual casting repair. A surviving record of the completed clearance names the homes actually taken, while a household account identifies a lost workshop and a festival song celebrates survival without mentioning the displacement. These traces contribute different evidence; disputed motives do not make the documented clearance uncertain, and a beautiful bell proves neither innocence nor guilt by itself.
 
-Seeds and references: [The Witcher 3: Wild Hunt](source-atlas.md#g72), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Middle-earth](source-atlas.md#w01).
+Players can inspect, compare accounts, bring an evidenced claim, seek workshop access, propose a changed commemoration or leave after a worthwhile performance. Any compensation, permission or political change needs the appropriate people's actual decisions and the selected world's capabilities. A reopened workshop or recognized claim can be a substantial success without destroying the bell, prescribing forgiveness or requiring everyone to agree. Later visitors encounter the actual access, public accounts and remaining traces. This variant shares the card's scope and gaps; it installs no new adjudication or history system.
 
-## An invention with several parents
-
-**ALL · Play · Moderate/Extend.** Gap: provenance and independently evidenced contributions.
-
-A famous waterwheel combines a fisher's paddle, a migrant miller's gearing and a local mason's foundation. Different groups claim ownership. Restoring a prototype reveals the collaboration and opens a dispute over teaching rights. The story encourages remixing and credit. Do not invent a hidden single genius who conveniently makes all collective history irrelevant.
-
-Seeds and references: [Dreams](source-atlas.md#g13), [Assassin's Creed III](source-atlas.md#g99), [Discworld](source-atlas.md#w12).
+Seeds and references: [Dwarf Fortress](source-atlas.md#g23), [Wildermyth](source-atlas.md#g25), [Middle-earth: Shadow of War](source-atlas.md#g116). The bell is original synthesis using the [institutional-history comparison](../../archive/02-research/worldbuilding/institutions-history-and-power.md) and the existing discoverable-history method.
 
 ## A ruin older than the explanation
 
@@ -57,11 +51,43 @@ A structure fits modern tools but predates the people said to have built them. P
 
 Seeds and references: [Outer Wilds](source-atlas.md#g34), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [The Elder Scrolls](source-atlas.md#w27).
 
+## The flood with three anniversaries
+
+**ALL · Play · Small/Compose.** Gap: authored accounts and present-day consequences.
+
+One district remembers a rescue, another a failed warning and a third the founding of its new home. Their festivals overlap awkwardly. Players can compare accounts, support distinct commemorations or create a shared project without forcing a single story. Give each memory material anchors and living witnesses; disagreement need not mean every account is equally accurate.
+
+Seeds and references: [Dragon Age II](source-atlas.md#g52), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Macondo](source-atlas.md#w24).
+
+## An invention with several parents
+
+**ALL · Play · Moderate/Extend.** Gap: provenance and independently evidenced contributions.
+
+A famous waterwheel combines a fisher's paddle, a migrant miller's gearing and a local mason's foundation. Different groups claim ownership. Restoring a prototype reveals the collaboration and opens a dispute over teaching rights. The story encourages remixing and credit. Do not invent a hidden single genius who conveniently makes all collective history irrelevant.
+
+Seeds and references: [Dreams](source-atlas.md#g13), [Assassin's Creed III](source-atlas.md#g99), [Discworld](source-atlas.md#w12).
+
+## A hero's useful mistake
+
+**ALL · Play · Small/Compose.** Gap: authored layered records and a recoverable present problem.
+
+A celebrated founder built a canal that saved harvests but trapped fish upstream. Repairing the mistake can honor their practical spirit while challenging the statue's inscription. Players inherit unfinished work instead of merely discovering that heroes were secretly evil. Separate documented consequences from later legend, and let admiration survive a more complete understanding.
+
+Seeds and references: [The Witcher 3: Wild Hunt](source-atlas.md#g72), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Middle-earth](source-atlas.md#w01).
+
+## A villain's ordinary constituency
+
+**ALL · Play · Small/Compose.** Gap: authored motives and concrete institutional dependencies.
+
+A coercive governor also stabilized food deliveries, so removing them risks the service residents rely on. Players can expose harm while preparing a successor system. Complexity does not excuse abuse or require making every accusation ambiguous. The interesting task is separating a useful function from destructive control, with affected people helping decide what replaces it.
+
+Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [The Sopranos](source-atlas.md#w22).
+
 ## The road whose name traveled
 
 **ALL · Play · Small/Compose.** Gap: authored place-name layers and local recognition.
 
-An old name meaning “reed crossing” survives after the river moves and newcomers reinterpret it as a hero's name. Maps, songs and trades retain different versions. Explorers learn history through directions and misunderstandings. Names should help navigation as well as suggest depth; keep aliases discoverable and avoid making one exact spelling a mandatory password.
+An old name meaning “reed crossing” survives after the river moves and newcomers reinterpret it as a hero's name. Maps, songs and trades retain different versions. Explorers learn history through directions and misunderstandings. Names should help navigation as well as suggest depth; keep aliases discoverable and avoid making one exact spelling a mandatory password. HMY087's combined heroic name and HMY139's traveling legend can enter through [attributed bard accounts](../narrative/authored-worlds-and-personal-discovery.md#bards-carry-player-legends-and-world-news): a performance can be enjoyable and lead toward a route or claimant, without rewriting the people or events it describes.
 
 Seeds and references: [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Ultima VII: The Black Gate](source-atlas.md#g128), [Middle-earth](source-atlas.md#w01).
 
@@ -80,24 +106,6 @@ Seeds and references: [Dwarf Fortress](source-atlas.md#g23), [Disco Elysium](sou
 A prediction that “the third bell opens the road” motivates rival groups to build bells, reinterpret dates and claim authority. Whether magic is involved remains a world choice. Players can examine who benefits and create an unforeseen practical fulfillment. Avoid forcing all events toward one chosen savior or treating belief itself as proof that the prophecy is true.
 
 Seeds and references: [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Dune](source-atlas.md#w09).
-
-## History changes an object
-
-**ALL · Play · Moderate/Extend.** Gap: event-linked provenance and local appraisal.
-
-An ordinary spade used in a rescue becomes a community emblem, then returns to useful work when someone argues it should not sit behind glass. Players choose display, use, copies or retirement. The object need not gain supernatural damage. Its meaning can differ among people, and a replacement can carry a new story without erasing the old one.
-
-Select the object's useful current properties together with the relevant history that this observer actually knows. A rescue veteran, someone who heard the story and an uninformed visitor can meet the same spade with different evidence; physical similarity does not give a replacement its predecessor's experiences. A brief attributed reminder can reconnect the object to a person or worthwhile occasion without inserting a complete chronicle into every decision. Preserve the exact underlying occurrence and distinguish a later appraisal from a fact the object itself proves.
-
-Seeds and references: [Dwarf Fortress](source-atlas.md#g23), [Wildermyth](source-atlas.md#g25), [Middle-earth: Shadow of War](source-atlas.md#g116).
-
-## A villain's ordinary constituency
-
-**ALL · Play · Small/Compose.** Gap: authored motives and concrete institutional dependencies.
-
-A coercive governor also stabilized food deliveries, so removing them risks the service residents rely on. Players can expose harm while preparing a successor system. Complexity does not excuse abuse or require making every accusation ambiguous. The interesting task is separating a useful function from destructive control, with affected people helping decide what replaces it.
-
-Seeds and references: [Pillars of Eternity II: Deadfire](source-atlas.md#g55), [Fallout: New Vegas](source-atlas.md#g112), [The Sopranos](source-atlas.md#w22).
 
 ## The future historian
 

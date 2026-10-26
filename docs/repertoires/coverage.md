@@ -1,6 +1,6 @@
 # Whole-game coverage
 
-[Library](README.md) · [Priority policy](gameplay-priorities.md) · [270 patterns](README.md#catalogue-map) · [385 actions](actions.md) · [Worked situations](combinations.md)
+[Library](README.md) · [Priority policy](gameplay-priorities.md) · [272 patterns](README.md#catalogue-map) · [385 actions](actions.md) · [Worked situations](combinations.md)
 
 **Current survival-adventure priorities · October 24, 2026.** Coverage tables describe broader families than the illustrative pattern cards. This guide decomposes those families into the basic player capabilities and later elaborations they contain. It prevents a catalogue full of interesting refinements from hiding an absent weapon, enemy, objective, reward or usable camp. It is selection policy, not a second delivery tracker, implementation audit or approval to adopt an optional world's lore. The [existing opening specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the required survival-first scenario; [FPV](../maintainers/first-playable-validation.md) connects it to actual design, delivery and player evidence.
 
@@ -89,7 +89,17 @@ The last column records deferral, not permission to violate protected engine con
 
 [Combinations](combinations.md) contains all 25 complete scenes with their current priority and selection boundary beside each description. They combine owned entries; they are not another inventory of required systems. A simpler adaptation can deliver an opening experience without adopting a scene's entire politics, psychology or physics.
 
-The [toll tower](combinations.md#the-toll-tower-at-dawn), [recognizable quarry](combinations.md#the-quarry-that-learns), [wedding crossing](combinations.md#the-wedding-bridge), [local predator mystery](combinations.md#the-wolf-at-the-school-gate) and [companion allegiance](combinations.md#the-companion-who-changes-sides) offer different combinations of challenge, invention, knowledge and personal consequence. Pick a coherent small experience rather than implementing this list as a quest queue.
+Use the examples below to choose a coherent small experience, respecting each scene's world scope and capability gaps.
+
+| Experience to find                          | Representative situations and patterns                                                                                                                                                                                                                                          |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Active opposition and useful victory        | [Defended crossing](combinations.md#the-toll-tower-at-dawn), [dangerous quarry](combinations.md#the-quarry-that-learns), [profitable bandit](characters-backstories.md#the-bandit-at-a-profitable-crossing)                                                                     |
+| Discovery that changes a possibility        | [Observatory and high pass](adventure-discovery.md#the-observatory-above-the-cloud), [ruined crown](combinations.md#the-crown-below-the-ruins), [borrowed doorway](combinations.md#the-borrowed-doorway), [founding bell and present claims](history-myth.md#the-founding-bell) |
+| Mastery, invention and substantial reward   | [Fair championship](abilities-progression.md#the-open-championship), [festival commission](combinations.md#the-festival-contract), [inventive rescue](combat-rescue.md#the-lift-above-the-flood)                                                                                |
+| Relationship change and ordinary friction   | [Companion allegiance](combinations.md#the-companion-who-changes-sides), [rival crossing](relationships.md#rivals-who-need-the-same-bridge), [wedding celebration](combinations.md#the-wedding-bridge), [deliberate betrayal](relationships.md#the-plan-sold-to-a-rival)        |
+| Enjoyment, recovery and chosen continuation | [Victory homecoming](combinations.md#the-household-after-the-victory), [completed work](combinations.md#a-good-job-becomes-smaller), [summit outing](combinations.md#soup-before-the-summit), [a holiday](arts-leisure.md#a-holiday-after-completion)                           |
+
+These experiences overlap. Use [the selected scene-mix review](selection-and-scale.md#review-the-selected-scene-mix) to judge their variety across an opening and cast; individual scenes can remain focused, practical, quiet or comic.
 
 ## Optional world families
 

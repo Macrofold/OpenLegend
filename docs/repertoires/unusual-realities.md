@@ -32,6 +32,8 @@ A city's streets slowly rearrange according to a public seasonal rule. Neighbors
 
 Residents may also plan an ambush around the shift. This is a wider-library premise, not an assumed living-fantasy or planetary capability.
 
+A selected annual shift puts a guarded prison block beside a public garden until the next declared rearrangement. A former prisoner wants to reach a willing friend inside; a gardener wants to protect the rare flowers she has prepared for tonight's exhibition; a warder wants to prevent an escape. The map's declared connections make scouting, a diversion, an agreed visit or a supported escape possible, not automatically successful. A person who reaches freedom changes a relationship and future destination; a garden exhibition can still be beautiful and enjoyable. Other residents may celebrate the new neighborhood or resent it. Use this one local law to change real choices without requiring everyone to share one emotion or installing a city-wide persecution plot.
+
 Related entries: [UNR-031](#architecture-that-changes-the-map).
 
 Seeds and references: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Dishonored 2](source-atlas.md#g119), [The Elder Scrolls](source-atlas.md#w27), [The Elder Scrolls](../../archive/02-research/worldbuilding/worlds/27-the-elder-scrolls.md).
