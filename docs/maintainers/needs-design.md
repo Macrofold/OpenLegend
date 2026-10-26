@@ -834,6 +834,8 @@ The [well-being vision](../../archive/08-wellbeing-vision/README.md) is optional
 
 **Adult audience resolved; remaining adopted-service conduct needs decisions/design.** NC/CR owns conversation and authorized memory correction/forgetting; PD07/PD10 owns model/service boundaries. ND37 separately owns public enforcement.
 
+For the selected Runpod hosting research, the [exact scope of its fictional-content terms](../../research/ai-models/runpod-hosting.md#hosting-terms-are-part-of-fictional-freedom) remains unverified. Resolve that provider-contract question with the existing PD/MX06 adoption and operating work; it does not reopen the adult-audience decision or create a new character-behavior design. Per-model resource and context requirements are documented in the [hosting matrix](../../research/ai-models/hosting-matrix.md).
+
 Select official behavior versus authored fiction, real-life conversation boundaries, human/AI disclosure, farewells, dependency/commercial-message policies and any crisis/operator experience. Optional resident-memory controls must protect shared/other-human privacy; model/prompt continuity needs explicit preserved identity and evidence. Do not import archive romance rules or audit thresholds automatically. Sources: [resident proposals](../../archive/08-wellbeing-vision/04-ideas-residents-who-point-outward.md), [guardrails](../../archive/08-wellbeing-vision/11-guardrails-risks-and-law.md), [questions](../../archive/08-wellbeing-vision/14-questions-and-first-experiments.md), D16/D21.
 
 ### ND28 — Optional session endings, play rhythms and returning experience

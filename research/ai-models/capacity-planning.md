@@ -22,7 +22,7 @@ The [current operator guide](../../docs/live-ai-setup.md#discover-and-authorize-
 
 | Intended route | Exact identity | How to interpret it |
 | --- | --- | --- |
-| Native judgments | `jaredpalmer/kev-4b@6cfce5c2fa4b4bd64026336ab649c5ca78857d52`, using `Qwen/Qwen3.5-4B-Base@1001bb4d826a52d1f399e183466143f4da7b741b` | A native supplied-question model, with its own head/base/runtime recipe and protocol. Ordinary chat context/output assumptions do not describe the whole interface. See the [Kev family record](decision-models.md#decision-kev). |
+| Native judgments | `jaredpalmer/kev-4b@6cfce5c2fa4b4bd64026336ab649c5ca78857d52`, using `Qwen/Qwen3.5-4B-Base@1001bb4d826a52d1f399e183466143f4da7b741b` | A native supplied-question model, with its own head/base/runtime recipe and protocol. Ordinary chat context/output assumptions do not describe the whole interface. See the [Kev family record](decision-models.md#decision-kev-canonical). |
 | Chat replies | `huihui-ai/Huihui-Qwen3-4B-abliterated-v2@a494c65b10bf8fdc56c0ff11d36987c1d018f162` | This is the pinned 4B derivative, distinct from the catalogue's Huihui Qwen3.8 27B and Flash Next entries. See [RP35](character-models.md#rp35) for the distinction between its config value and parent context claims. |
 
 A model repository commit, container image digest and Macrofold serving-revision UUID identify different things. Preserve all three when available. Earlier upstream inference or a qualified native image does not establish current game-key access, a qualified managed chat image, the full scenario's fit, or useful character behavior.

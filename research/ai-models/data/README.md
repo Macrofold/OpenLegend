@@ -16,6 +16,35 @@ These files contain the complete sourced model records represented in the human-
 
 ## Interpretation
 
+### Runpod hosting records
+
+Each domain record now has a `hosting` object, reviewed October 25. The domain JSON remains the complete model-specific owner; [hosting-matrix.md](../hosting-matrix.md) is its compact reading view. This adds deployment preparation without turning the catalogue into a tested hardware compatibility list.
+
+| Field | Meaning |
+| --- | --- |
+| `reviewed_on`, `source_ids` | Date and primary-source references for the hosting review. Earlier sentiment/example dates remain distinct. |
+| `runpod_disposition`, `reason` | `self_host_candidate`: a documented artifact/runtime route; `conditional_self_host`: access, contract, license or runtime prerequisites; `external_api_only`: no documented local route for this exact product; `unverified`: insufficient evidence. None means deployed or approved. |
+| `profiles[]` | Separately identified artifact/runtime/precision combinations. A family may have many; an API-only entry has none. |
+| Profile identity | `artifact_id`, nullable `artifact_revision`, format, precision, runtime/version and `api_protocol`. Missing revision means it still needs pinning; an image and model commit are distinct. |
+| `context` | Native, extended, runtime-default and output lengths when supported by evidence; optional `config_max_position_embeddings_tokens` preserves config-only values. Scope/notes state exact-artifact versus parent evidence and recipe limitations. None is the actual deployed cap. |
+| `request_limits` | Text characters and audio/reference/output seconds where known, plus original-unit/transport notes. Phonemes, UTF-16 units, bytes, training envelopes and recommendation ranges must not be silently treated as the same limit. |
+| `memory` | Total parameters, raw weight arithmetic/file size, published VRAM/hardware, a clearly labeled GPU candidate, host RAM and cache notes. `*_basis` fields distinguish publisher requirements, estimates and missing evidence. Numeric GB fields use decimal GB; source GiB is retained in prose or explicitly converted. |
+| `storage` | Selected artifact bytes, complete disk requirement if actually supported, and basis. Repository-total bytes, selected quantization bytes and temporary working disk are different. |
+| `requirements`, `source_ids` | Exact runtime/hardware/components/access conditions and supporting domain-ledger references for that profile. |
+| `hosted_route_limits[]` | Optional separate limits for a provider API. These are not self-host profiles, Runpod settings or transferable hardware requirements. |
+| `deployment_evidence` | Always `not_deployed_or_tested_by_this_research`, with configured caps and measurements null and `request_fit: unknown`. Published or historical outside evidence never fills these fields. |
+| `blocking_unknowns` | The concrete information still needed for selecting or sizing that record's deployment. Unknown is not zero, unlimited or an implied successful fit. |
+
+The common `catalogue.json` additionally exposes `runpod_disposition`, `hosting_profile_count` and `hosting_reviewed_on` as selection facets; read the domain profiles before treating a family-level match as applicable to an exact variant.
+
+Additional platform files:
+
+- [runpod-sources.json](runpod-sources.json): primary platform/runtime source ledger; source identifiers use `source_id` inside `sources`.
+- [runpod-gpu-pricing.json](runpod-gpu-pricing.json): dated public Pod/Serverless prices, memory tiers, storage meters and retained source discrepancies. No account offer or resources were inspected/provisioned.
+- [deployment-record-template.json](deployment-record-template.json): unfilled evidence worksheet for the existing MX06 owner, not executable configuration or authorization to run it.
+
+### Existing discovery evidence
+
 Research priority means interest in a possible comparison, not an instruction to run every highly rated model. The catalogue preserves each original `priority` and adds a coarse `research_interest`; the scales are not calibrated performance rankings. Access, commercial terms and comparison purpose remain separate. Every record is untested and unqualified for production by this research.
 
 Release dates, model-file updates, service snapshots, article publication dates, crawl dates and retrieval dates are different. Records describe which one is known. The initial inspection date is October 23; October 24 review fields identify narrower checks and additions, not a claim that every source was fully refreshed again.

@@ -211,6 +211,8 @@ Measure end-to-end accepted/usable output latency, request bytes, throughput, ca
 
 MX06 verifies the production path independently of optional evaluation tooling:
 
+The [Runpod hosting reference](../../research/ai-models/runpod-hosting.md) and [capacity guide](../../research/ai-models/capacity-planning.md) supply current per-artifact requirements and an evidence worksheet for this acceptance. Published context, config positions, runtime limits and measured full-request fit are separate values. The research does not alter this API contract or qualify a managed image.
+
 - Shared request/receipt examples agree with the matching Macrofold API and generated SDK. Configured SystemOne decisions preserve multiple named Choice/Score/Noul answers, native metadata and fractional scores; chat targets retain their response schema. Wrong-protocol configuration and native streaming fail without inference.
 - A configured NPC purpose uses the deployment through actual context preparation, schema/reference validation and native publication. Other purposes and ordinary escalation remain unchanged.
 - Default deployment selection follows an intentional revision update for new Runs; pinned selection does not. Earlier valid replies remain tied to their admitted Run and can finish under normal world checks.

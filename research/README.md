@@ -2,11 +2,11 @@
 
 | Research status           | Progress                                                                                                                                                     | Last updated |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Maintained research index | Links engine/platform studies and the current character, decision and voice model inventory; the browser-first milestone remains the selected next delivery. | 2026-10-24   |
+| Maintained research index | Links engine/platform studies and the character, decision, voice and Runpod hosting inventory; the browser-first milestone remains the selected next delivery. | 2026-10-25 |
 
 ## Character, decision and voice models
 
-The [current AI-model research collection](ai-models/README.md) inventories low-refusal character models, supplied-choice and general reasoning models, expressive speech, speech recognition and conversational voice. It includes exact model links, version evidence, use cases, community reports, published examples, deployment, rights and cost semantics, with complete structured records. Sources were inspected October 23–24, 2026; no models were tested or adopted.
+The [current AI-model research collection](ai-models/README.md) inventories low-refusal character models, supplied-choice and general reasoning models, expressive speech, speech recognition and conversational voice. It includes exact model links, version evidence, use cases, community reports, published examples, deployment, rights and cost semantics, with complete structured records. The October 25 [Runpod hosting review](ai-models/runpod-hosting.md) adds per-record GPU/host RAM/disk, context/output limits, runtime/protocol requirements, storage, costs and explicit unknowns. Initial sources date October 23–24; no models or hosting were tested or adopted.
 
 Start with its [shortlists](ai-models/README.md#a-small-starting-panel) and [compact catalogue](ai-models/catalogue.md). The [existing NPC cognition research](../archive/02-research/npc-cognition/README.md), selected evaluation design and maintainer owners retain their authority.
 

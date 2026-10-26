@@ -12,6 +12,7 @@
 - Wire protocol: [Macrofold deployment contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md).
 - Existing owners: [AI providers](../ai-providers.md), [cognition](cognition-redesign.md), [character experience](character-experience.md), [agency](agent-agency.md), [public speech](npc-speech-streaming.md), [production deployment](production-deployment.md).
 - Optional research: [October 20 library](../../archive/02-research/npc-cognition/README.md), [research design map](npc-cognition-research-needs-design.md).
+- Runpod preparation: [current model profiles](../../research/ai-models/hosting-matrix.md), [hosting workflow](../../research/ai-models/runpod-hosting.md), [context/memory accounting](../../research/ai-models/capacity-planning.md) and [unfilled deployment worksheet](../../research/ai-models/data/deployment-record-template.json). October 25 desk research supplies requirements and explicit unknowns; it closes no operating acceptance.
 
 ## Scope and sequence
 
@@ -111,6 +112,8 @@ Native judgments and ordinary NPC replies use separately configured deployment t
   Actual HTTP probes verify these safe boundaries; the current Macrofold adapter reports upstream context/service errors as generic provider failure. Real hosted recovery/load and actual hosting invoices remain open below.
 
 - [ ] Under the existing spending authority, establish actual supported runtime and warm/concurrent/recovery behavior. Record tested versions, input/output limits, useful latency, throughput and costs; static/fixture success is not live acceptance.
+
+  Use the researched Runpod profile to record exact artifact/base/tokenizer revisions, image/runtime, GPU topology, host RAM, selected disk files, configured context/output/concurrency, and the actual full request's count and reservation. Keep publisher requirements, planning estimates and measured peaks separate. Include startup/idle/storage/replica costs, the selected service's content terms and recovery/cleanup evidence; the [Runpod contract-scope question](../../research/ai-models/runpod-hosting.md#hosting-terms-are-part-of-fictional-freedom) remains unresolved. This elaborates the existing operating check rather than commissioning a broad model benchmark.
 
   Four live Qwen 2.5 7B JSON-object API calls returned validated values, including two concurrent requests and streaming; the ordinary complex NPC path published live speech. [Evidence](../verification/custom-models.md#live-external-model-checks) retains all four NPC attempts, measured limits/timings, native fast-reply rejection, separate provider/request fees and verified cleanup preserving accounting. This bounded workload does not establish sustained GPU capacity, reliable character quality or managed-worker recovery. Required current-head CI is reported with the implementation PR.
 

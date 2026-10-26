@@ -14,6 +14,8 @@ Restart after configuration changes and inspect the selected backend. A configur
 
 ### Use existing model deployments for decisions and replies
 
+For Runpod resource selection, use the [hosting workflow](../research/ai-models/runpod-hosting.md), [per-model hosting matrix](../research/ai-models/hosting-matrix.md) and [context/memory guide](../research/ai-models/capacity-planning.md). Their published requirements and estimates do not establish a deployed allowance: record the exact server context/output settings, full serialized request count, GPU/host-memory peak and costs when qualifying the selected service. The [Kev/Huihui explanation](../research/ai-models/capacity-planning.md#what-the-kevhuihui-statement-establishes) separates the reported preflight failure from measured inference. The research launched no hosting or model calls.
+
 Select hosting in Macrofold, grant the game principal access, then configure the existing `OPENLEGEND_MODEL_TARGETS_JSON` setting. Native judgments use `judgment`; chat replies use `npc_response_fast` and `npc_response_complex`. Either protocol submits immediate inference through the existing adapter without a Worker, sandbox or agent harness. Missing purposes retain current provider settings. A supplied target requires the Macrofold adapter; malformed settings fail startup instead of selecting a different model.
 
 Set the normal `MACROFOLD_BASE_URL` and `MACROFOLD_API_KEY`, then supply trusted workspace/deployment references. These UUIDs are illustrative, not current services:

@@ -5,9 +5,18 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP01", "RP02"],
+    "used_by": [
+      "RP01",
+      "RP02"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
-    "spot_checked_at": "2026-10-24"
+    "spot_checked_at": "2026-10-24",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed Hermes prompt format and inference guidance"
+      }
+    ]
   },
   {
     "source_id": "RPS002",
@@ -15,9 +24,17 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary configuration file",
     "scope": "Configured architecture/context values; configuration alone does not validate practical quality at that context.",
-    "used_by": ["RP01"],
+    "used_by": [
+      "RP01"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
-    "spot_checked_at": "2026-10-24"
+    "spot_checked_at": "2026-10-24",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Re-read exact config for hosting"
+      }
+    ]
   },
   {
     "source_id": "RPS003",
@@ -25,7 +42,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model release article",
     "scope": "Hermes 4.3 release timing, capability descriptions and links to evaluation artifacts.",
-    "used_by": ["RP01"],
+    "used_by": [
+      "RP01"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -34,7 +53,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP01"],
+    "used_by": [
+      "RP01"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -43,7 +64,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP02"],
+    "used_by": [
+      "RP02"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -52,7 +75,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": ["RP02"],
+    "used_by": [
+      "RP02"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -61,7 +86,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP03"],
+    "used_by": [
+      "RP03"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -70,7 +97,10 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": ["RP03", "RP04"],
+    "used_by": [
+      "RP03",
+      "RP04"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -79,7 +109,11 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary serving-provider documentation",
     "scope": "Current exact API identifiers, catalog capabilities, context and/or per-million-token prices. Provider layer does not prove weight behavior.",
-    "used_by": ["RP03", "RP31", "RP32"],
+    "used_by": [
+      "RP03",
+      "RP31",
+      "RP32"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -88,7 +122,11 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary serving-provider documentation",
     "scope": "Current exact API identifiers, catalog capabilities, context and/or per-million-token prices. Provider layer does not prove weight behavior.",
-    "used_by": ["RP03", "RP31", "RP32"],
+    "used_by": [
+      "RP03",
+      "RP31",
+      "RP32"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -98,7 +136,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP03"],
+    "used_by": [
+      "RP03"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -107,7 +147,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP03"],
+    "used_by": [
+      "RP03"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -116,9 +158,17 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP04"],
+    "used_by": [
+      "RP04"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
-    "spot_checked_at": "2026-10-24"
+    "spot_checked_at": "2026-10-24",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed ChatML/runtime guidance"
+      }
+    ]
   },
   {
     "source_id": "RPS014",
@@ -126,7 +176,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author release article",
     "scope": "Dolphin X1 Nano training/evaluation claims.",
-    "used_by": ["RP04"],
+    "used_by": [
+      "RP04"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -135,8 +187,16 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP05"],
-    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+    "used_by": [
+      "RP05"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed Llama3 template guidance"
+      }
+    ]
   },
   {
     "source_id": "RPS016",
@@ -144,7 +204,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP05"],
+    "used_by": [
+      "RP05"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -153,8 +215,16 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP06"],
-    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+    "used_by": [
+      "RP06"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed APEX/offload/runtime claims"
+      }
+    ]
   },
   {
     "source_id": "RPS018",
@@ -162,7 +232,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": ["RP06"],
+    "used_by": [
+      "RP06"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -171,7 +243,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP07"],
+    "used_by": [
+      "RP07"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -180,7 +254,10 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": ["RP07", "RP08"],
+    "used_by": [
+      "RP07",
+      "RP08"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -189,7 +266,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP08"],
+    "used_by": [
+      "RP08"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -199,7 +278,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP08"],
+    "used_by": [
+      "RP08"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -208,8 +289,16 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP09"],
-    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+    "used_by": [
+      "RP09"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed exact NVFP4-GGUF and context claims"
+      }
+    ]
   },
   {
     "source_id": "RPS024",
@@ -217,7 +306,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP10"],
+    "used_by": [
+      "RP10"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -227,9 +318,17 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP10"],
+    "used_by": [
+      "RP10"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
-    "spot_checked_at": "2026-10-24"
+    "spot_checked_at": "2026-10-24",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed per-format vLLM/GGUF hardware/setup guidance"
+      }
+    ]
   },
   {
     "source_id": "RPS026",
@@ -237,7 +336,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP10"],
+    "used_by": [
+      "RP10"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -246,7 +347,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP11"],
+    "used_by": [
+      "RP11"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -255,7 +358,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary raw model card",
     "scope": "Exact authored README text; runtime claims and selected testimonials remain publisher evidence.",
-    "used_by": ["RP11"],
+    "used_by": [
+      "RP11"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -264,7 +369,12 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": ["RP11", "RP14", "RP15", "RP16"],
+    "used_by": [
+      "RP11",
+      "RP14",
+      "RP15",
+      "RP16"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -273,7 +383,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP12"],
+    "used_by": [
+      "RP12"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -282,7 +394,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP13"],
+    "used_by": [
+      "RP13"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -292,7 +406,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP13"],
+    "used_by": [
+      "RP13"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -301,7 +417,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP13"],
+    "used_by": [
+      "RP13"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -310,7 +428,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP14"],
+    "used_by": [
+      "RP14"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -319,7 +439,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary raw model card",
     "scope": "Exact authored README text; runtime claims and selected testimonials remain publisher evidence.",
-    "used_by": ["RP14"],
+    "used_by": [
+      "RP14"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -328,8 +450,16 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP15"],
-    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+    "used_by": [
+      "RP15"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed Mistral v3 Tekken warning"
+      }
+    ]
   },
   {
     "source_id": "RPS037",
@@ -337,7 +467,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP15"],
+    "used_by": [
+      "RP15"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -346,7 +478,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP15"],
+    "used_by": [
+      "RP15"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -355,7 +489,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP16"],
+    "used_by": [
+      "RP16"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -364,7 +500,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary raw model card",
     "scope": "Exact authored README text; runtime claims and selected testimonials remain publisher evidence.",
-    "used_by": ["RP16"],
+    "used_by": [
+      "RP16"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -374,7 +512,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP17"],
+    "used_by": [
+      "RP17"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -383,7 +523,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP18"],
+    "used_by": [
+      "RP18"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -392,7 +534,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP19"],
+    "used_by": [
+      "RP19"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -401,7 +545,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP20"],
+    "used_by": [
+      "RP20"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -410,7 +556,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP21"],
+    "used_by": [
+      "RP21"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -420,7 +568,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": ["RP21"],
+    "used_by": [
+      "RP21"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -429,7 +579,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP21"],
+    "used_by": [
+      "RP21"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -438,7 +590,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP22"],
+    "used_by": [
+      "RP22"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -447,7 +601,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP22"],
+    "used_by": [
+      "RP22"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -456,7 +612,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP23"],
+    "used_by": [
+      "RP23"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -465,7 +623,11 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": ["RP23", "RP24", "RP25"],
+    "used_by": [
+      "RP23",
+      "RP24",
+      "RP25"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -474,7 +636,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP24"],
+    "used_by": [
+      "RP24"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -483,7 +647,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP25"],
+    "used_by": [
+      "RP25"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -492,7 +658,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP25"],
+    "used_by": [
+      "RP25"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -501,9 +669,17 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP26"],
+    "used_by": [
+      "RP26"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
-    "spot_checked_at": "2026-10-24"
+    "spot_checked_at": "2026-10-24",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed gating/reference-engine/SGLang dependencies"
+      }
+    ]
   },
   {
     "source_id": "RPS056",
@@ -511,7 +687,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP26"],
+    "used_by": [
+      "RP26"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -520,7 +698,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP26"],
+    "used_by": [
+      "RP26"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -529,9 +709,17 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP27"],
+    "used_by": [
+      "RP27"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
-    "spot_checked_at": "2026-10-24"
+    "spot_checked_at": "2026-10-24",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed Marlin/Hopper and reasoning/parser guidance"
+      }
+    ]
   },
   {
     "source_id": "RPS059",
@@ -539,9 +727,17 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP28"],
+    "used_by": [
+      "RP28"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
-    "spot_checked_at": "2026-10-24"
+    "spot_checked_at": "2026-10-24",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed exact Kyojin hook and AMD reference"
+      }
+    ]
   },
   {
     "source_id": "RPS060",
@@ -549,8 +745,16 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP29"],
-    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+    "used_by": [
+      "RP29"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed selected-artifact catalog and copied-benchmark warning"
+      }
+    ]
   },
   {
     "source_id": "RPS061",
@@ -558,7 +762,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP29"],
+    "used_by": [
+      "RP29"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -567,8 +773,16 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP30"],
-    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+    "used_by": [
+      "RP30"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed adapter/template evidence"
+      }
+    ]
   },
   {
     "source_id": "RPS063",
@@ -576,8 +790,16 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary serving-provider model listing",
     "scope": "Hosted system description, release date, live pricing/context and application usage. Live counters are snapshots, not guarantees.",
-    "used_by": ["RP31"],
-    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
+    "used_by": [
+      "RP31"
+    ],
+    "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed exact FAQ context262144/completion32768 caps and price listing; no API calls made."
+      }
+    ]
   },
   {
     "source_id": "RPS064",
@@ -585,7 +807,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary provider website",
     "scope": "API access/billing semantics and service positioning.",
-    "used_by": ["RP31"],
+    "used_by": [
+      "RP31"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -594,7 +818,10 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary provider website",
     "scope": "API access/billing semantics and service positioning.",
-    "used_by": ["RP31", "RP32"],
+    "used_by": [
+      "RP31",
+      "RP32"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -603,7 +830,10 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary provider terms",
     "scope": "Terms effective 2026-10-17: commercial embedding and model access rights, AUP; not a claim of zero technical refusal.",
-    "used_by": ["RP31", "RP32"],
+    "used_by": [
+      "RP31",
+      "RP32"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -612,7 +842,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP31"],
+    "used_by": [
+      "RP31"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -621,9 +853,17 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary serving-provider model listing",
     "scope": "Hosted system description, release date, live pricing/context and application usage. Live counters are snapshots, not guarantees.",
-    "used_by": ["RP32"],
+    "used_by": [
+      "RP32"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
-    "spot_checked_at": "2026-10-24"
+    "spot_checked_at": "2026-10-24",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Refreshed exact FAQ context262144/completion32768 caps and price listing; no API calls made."
+      }
+    ]
   },
   {
     "source_id": "RPS069",
@@ -631,7 +871,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP32"],
+    "used_by": [
+      "RP32"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -640,7 +882,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP33"],
+    "used_by": [
+      "RP33"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -650,7 +894,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP33"],
+    "used_by": [
+      "RP33"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -659,7 +905,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP33"],
+    "used_by": [
+      "RP33"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -668,7 +916,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary author profile or collection",
     "scope": "Model discovery and update-date evidence; update timestamps are not release dates.",
-    "used_by": ["RP33"],
+    "used_by": [
+      "RP33"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -677,7 +927,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary model card",
     "scope": "Exact checkpoint specification, publisher claims, usage guidance and license metadata; claims are not independently tested.",
-    "used_by": ["RP34"],
+    "used_by": [
+      "RP34"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions.",
     "spot_checked_at": "2026-10-24"
   },
@@ -687,7 +939,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP34"],
+    "used_by": [
+      "RP34"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -696,7 +950,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "original community discussion",
     "scope": "First-person sentiment, examples or creator announcement. Anecdotal, nonrepresentative and often prompt/quant/provider dependent.",
-    "used_by": ["RP34"],
+    "used_by": [
+      "RP34"
+    ],
     "retrieval_note": "Public web retrieval; no inference, downloads of model weights, paid calls or account actions."
   },
   {
@@ -804,7 +1060,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary base-model raw card",
     "scope": "Official component-level parameter, activated-compute and context definitions; distinguishes base architecture from unvalidated derivative behavior.",
-    "used_by": ["RP08"],
+    "used_by": [
+      "RP08"
+    ],
     "retrieval_note": "Opened and inspected official raw README; no model execution."
   },
   {
@@ -813,7 +1071,9 @@
     "retrieved_at": "2026-10-23",
     "source_type": "primary base-model raw card",
     "scope": "Official component-level parameter, activated-compute and context definitions; distinguishes base architecture from unvalidated derivative behavior.",
-    "used_by": ["RP26"],
+    "used_by": [
+      "RP26"
+    ],
     "retrieval_note": "Opened and inspected official raw README; no model execution."
   },
   {
@@ -822,7 +1082,908 @@
     "retrieved_at": "2026-10-24",
     "source_type": "primary raw model card",
     "scope": "Exact derivative publisher warning about reasoning-budget exhaustion, empty final content and parser/template dependencies; not independently tested.",
-    "used_by": ["RP27"],
-    "retrieval_note": "Targeted review read only; no model inference."
+    "used_by": [
+      "RP27"
+    ],
+    "retrieval_note": "Targeted review read only; no model inference.",
+    "additional_reviews": [
+      {
+        "reviewed_at": "2026-10-25",
+        "scope": "Re-read reasoning-budget and parser/runtime warning"
+      }
+    ]
+  },
+  {
+    "source_id": "RPS091",
+    "url": "https://huggingface.co/NousResearch/Hermes-4-70B/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP02"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS092",
+    "url": "https://huggingface.co/dphn/Dolphin-X1-Trinity-Nano/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP04"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS093",
+    "url": "https://huggingface.co/dphn/Dolphin-X1-8B/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP05"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS094",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-27B-abliterated/raw/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP07"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS095",
+    "url": "https://huggingface.co/TheDrummer/Cydonia-24B-v4.3/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP11"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS096",
+    "url": "https://huggingface.co/TheDrummer/Magidonia-24B-v4.3/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP12"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS097",
+    "url": "https://huggingface.co/coder3101/Cydonia-24B-v4.3-heretic/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP13"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS098",
+    "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1/raw/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP14"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS099",
+    "url": "https://huggingface.co/TheDrummer/Rocinante-XL-16B-v1/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP15"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS100",
+    "url": "https://huggingface.co/TheDrummer/Skyfall-31B-v4.2/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP16"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS101",
+    "url": "https://huggingface.co/TheDrummer/Anubis-70B-v1.2/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP17"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS102",
+    "url": "https://huggingface.co/TheDrummer/Anubis-Mini-8B-v1/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP18"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS103",
+    "url": "https://huggingface.co/TheDrummer/Behemoth-128B-v3/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP19"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS104",
+    "url": "https://huggingface.co/Gryphe/Pantheon-Reasoning-27B/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP20"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS105",
+    "url": "https://huggingface.co/zerofata/G4-MeroMero-v2-31B/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP21"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS106",
+    "url": "https://huggingface.co/zerofata/G4-MeroMero-26B-A4B/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP22"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS107",
+    "url": "https://huggingface.co/AuriAetherwiing/G4-31B-Musica-v1/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP23"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS108",
+    "url": "https://huggingface.co/ArliAI/Qwen3.5-122B-RpRMax-v1/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP24"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS109",
+    "url": "https://huggingface.co/ArliAI/Qwen3.5-9B-RpRMax-v1/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP25"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS110",
+    "url": "https://huggingface.co/dealignai/DeepSeek-V4.1-Flash-1017-UNCENSORED-FP8/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP26"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS111",
+    "url": "https://huggingface.co/dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP27"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS112",
+    "url": "https://huggingface.co/sophosympatheia/Glistening-Gem-31B-v2.1/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP33"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS113",
+    "url": "https://huggingface.co/llmfan46/G4-MeroMero-26B-A4B-it-uncensored-heretic/blob/main/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact configuration",
+    "scope": "Exact checkpoint architecture, text context positions and attention/cache fields. Serialization transformers_version is not a verified minimum runtime. Config ceiling is not deployed capacity.",
+    "used_by": [
+      "RP34"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS114",
+    "url": "https://huggingface.co/NousResearch/Hermes-4.3-36B/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP01"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS115",
+    "url": "https://huggingface.co/dphn/Venice-Role-Play-Uncensored/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP03"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS116",
+    "url": "https://huggingface.co/dphn/Dolphin-X1-Trinity-Nano/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP04"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS117",
+    "url": "https://huggingface.co/dphn/Dolphin-X1-8B/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP05"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS118",
+    "url": "https://huggingface.co/LuffyTheFox/Qwen3.6-35B-A3B-Uncensored-Genesis-Hermes-GGUF/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP06"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS119",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-27B-abliterated/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP07"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS120",
+    "url": "https://huggingface.co/LuffyTheFox/Qwen3.8-27B-Uncensored-Genesis-MTP-GGUF/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP09"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS121",
+    "url": "https://huggingface.co/TheDrummer/Cydonia-24B-v4.3/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP11"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS122",
+    "url": "https://huggingface.co/TheDrummer/Magidonia-24B-v4.3/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP12"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS123",
+    "url": "https://huggingface.co/coder3101/Cydonia-24B-v4.3-heretic/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP13"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS124",
+    "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP14"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS125",
+    "url": "https://huggingface.co/TheDrummer/Rocinante-XL-16B-v1/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP15"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS126",
+    "url": "https://huggingface.co/TheDrummer/Skyfall-31B-v4.2/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP16"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS127",
+    "url": "https://huggingface.co/TheDrummer/Anubis-70B-v1.2/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP17"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS128",
+    "url": "https://huggingface.co/TheDrummer/Anubis-Mini-8B-v1/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP18"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS129",
+    "url": "https://huggingface.co/TheDrummer/Behemoth-128B-v3/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP19"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS130",
+    "url": "https://huggingface.co/Gryphe/Pantheon-Reasoning-27B/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP20"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS131",
+    "url": "https://huggingface.co/zerofata/G4-MeroMero-v2-31B/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP21"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS132",
+    "url": "https://huggingface.co/zerofata/G4-MeroMero-26B-A4B/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP22"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS133",
+    "url": "https://huggingface.co/AuriAetherwiing/G4-31B-Musica-v1/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP23"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS134",
+    "url": "https://huggingface.co/ArliAI/Qwen3.5-122B-RpRMax-v1/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP24"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS135",
+    "url": "https://huggingface.co/ArliAI/Qwen3.5-9B-RpRMax-v1/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP25"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS136",
+    "url": "https://huggingface.co/dealignai/DeepSeek-V4.1-Flash-1017-UNCENSORED-FP8/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP26"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS137",
+    "url": "https://huggingface.co/dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP27"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS138",
+    "url": "https://huggingface.co/DavidAU/Qwen3.6-27B-Fable-Fusion-711-Uncensored-Heretic-NM-DAU-NEO-MAX-MTP-GGUF/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP29"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS139",
+    "url": "https://huggingface.co/Darksp33d/loreweaver-rp-v1/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP30"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS140",
+    "url": "https://huggingface.co/sophosympatheia/Glistening-Gem-31B-v2.1/tree/main?not-for-all-audiences=true",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP33"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS141",
+    "url": "https://huggingface.co/llmfan46/G4-MeroMero-26B-A4B-it-uncensored-heretic/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Exact repository files and rounded decimal sizes. A repository total may include alternative quantizations, calibration or auxiliary files; it is not automatically a selected model's footprint or runtime VRAM.",
+    "used_by": [
+      "RP34"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS142",
+    "url": "https://huggingface.co/NousResearch/Hermes-4-70B/blob/main/model.safetensors.index.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary tensor index metadata",
+    "scope": "metadata.total_size records tensor payload bytes; does not include every repository file or serving allocations.",
+    "used_by": [
+      "RP02"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS143",
+    "url": "https://huggingface.co/coder3101/Cydonia-24B-v4.3-heretic/blob/main/model.safetensors.index.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary tensor index metadata",
+    "scope": "metadata.total_size records tensor payload bytes; does not include every repository file or serving allocations.",
+    "used_by": [
+      "RP13"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS144",
+    "url": "https://huggingface.co/TheDrummer/Rocinante-X-12B-v1/blob/main/model.safetensors.index.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary tensor index metadata",
+    "scope": "metadata.total_size records tensor payload bytes; does not include every repository file or serving allocations.",
+    "used_by": [
+      "RP14"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS145",
+    "url": "https://huggingface.co/TheDrummer/Anubis-Mini-8B-v1/blob/main/model.safetensors.index.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary tensor index metadata",
+    "scope": "metadata.total_size records tensor payload bytes; does not include every repository file or serving allocations.",
+    "used_by": [
+      "RP18"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS146",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-Flash-Next-abliterated-v2-GGUF/tree/main/unsloth-UD-Q4_K_XL-V2",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary selected quantization file listing",
+    "scope": "Exact V2 directory: four model shards and separate calibration/imatrix artifacts; no substitution of another Huihui checkpoint.",
+    "used_by": [
+      "RP08"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS147",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-Flash-Next-abliterated-v2-GGUF/raw/main/README.md",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-artifact serving card",
+    "scope": "Publisher llama.cpp b11540 test and example context; does not establish hardware capacity. Integrity-bypass instructions in source were not followed or adopted.",
+    "used_by": [
+      "RP08"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS148",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3.8-Flash-Next-abliterated-v2-GGUF/tree/main",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact file listing",
+    "scope": "Alternative quant families and separate0.908 GB vision projectors;1.06 TB repo aggregate is not one model.",
+    "used_by": [
+      "RP08"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS149",
+    "url": "https://huggingface.co/LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-2.0-GPTQ-Int4",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-variant card",
+    "scope": "Exact GPTQ artifact identity and publisher serving guidance.",
+    "used_by": [
+      "RP10"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS150",
+    "url": "https://huggingface.co/LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-2.0-FP8",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-variant card",
+    "scope": "Exact FP8 artifact identity and publisher serving guidance.",
+    "used_by": [
+      "RP10"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS151",
+    "url": "https://github.com/Yamz-Labs/kyojin",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary runtime repository",
+    "scope": "Kyojin custom engine: AMD Strix Halo reference runs and newer NVIDIA sm80+ port tested with other models. Exact GLM320B NVIDIA deployment remains unverified.",
+    "used_by": [
+      "RP28"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS152",
+    "url": "https://huggingface.co/Darksp33d/loreweaver-rp-v1/blob/main/adapter_config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary exact-adapter configuration",
+    "scope": "Exact base reference togethercomputer/Qwen3.6-35B-A3B_bnb_4bit_t, LoRA rank64 alpha128 q/k/v/o targets; revision null.",
+    "used_by": [
+      "RP30"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS153",
+    "url": "https://huggingface.co/togethercomputer/Qwen3.6-35B-A3B_bnb_4bit_t",
+    "retrieved_at": "2026-10-25",
+    "source_type": "unavailable primary artifact",
+    "scope": "Referenced adapter base could not be inspected; not proof it was deleted or permission denied. Do not silently substitute the official BF16 parent.",
+    "used_by": [
+      "RP30"
+    ],
+    "retrieval_note": "Public URL could not be retrieved by research tool; no access requested."
+  },
+  {
+    "source_id": "RPS154",
+    "url": "https://docs.vllm.ai/en/latest/models/supported_models/",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary runtime compatibility documentation",
+    "scope": "Current architecture registry includes SeedOss, Llama, Mistral, Afmoe and Qwen/Gemma families. Family support is not an exact derivative/quant test.",
+    "used_by": [
+      "RP01",
+      "RP02",
+      "RP04",
+      "RP05",
+      "RP07",
+      "RP10",
+      "RP11",
+      "RP12",
+      "RP13",
+      "RP14",
+      "RP15",
+      "RP16",
+      "RP17",
+      "RP18",
+      "RP19",
+      "RP20",
+      "RP21",
+      "RP22",
+      "RP23",
+      "RP24",
+      "RP25",
+      "RP26",
+      "RP27",
+      "RP30",
+      "RP33",
+      "RP34",
+      "RP35"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS155",
+    "url": "https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary runtime server documentation",
+    "scope": "Current ctx-size0 reads model metadata; parallel slots and shared KV pool configuration affect per-request capacity. Unset runtime version prevents treating current defaults as pinned deployment facts.",
+    "used_by": [
+      "RP06",
+      "RP08",
+      "RP09",
+      "RP10",
+      "RP29"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS156",
+    "url": "https://recipes.vllm.ai/Qwen/Qwen3.8-27B",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary base-model runtime recipe",
+    "scope": "Official vLLM Qwen3.8-27B recipes and quant-specific hardware setups; cannot transfer another quant's fit to an abliterated derivative.",
+    "used_by": [
+      "RP07",
+      "RP09",
+      "RP10"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS157",
+    "url": "https://recipes.vllm.ai/Google/gemma-4-31B-it",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary base-model runtime recipe",
+    "scope": "Base Gemma4-31B vLLM>=0.19.1 banner, pinned gemma4-0505 CUDA images and serving/template examples; derivative compatibility not tested here.",
+    "used_by": [
+      "RP21",
+      "RP23",
+      "RP33"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS158",
+    "url": "https://recipes.vllm.ai/Google/gemma-4-26B-A4B-it",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary base-model runtime recipe",
+    "scope": "Base Gemma4-26B vLLM>=0.25.0 banner,1×A100/H100 BF16 example at32768; recipe131072 context differs from exact current derivative config262144.",
+    "used_by": [
+      "RP22",
+      "RP34"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS159",
+    "url": "https://huggingface.co/docs/peft/v0.21.0/package_reference/lora",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary runtime adapter documentation",
+    "scope": "General PEFT LoRA behavior and adapter configuration; does not establish this exact base's availability or served throughput.",
+    "used_by": [
+      "RP30"
+    ],
+    "retrieval_note": "Primary source read as metadata/documentation only; no weights downloaded and no model executed."
+  },
+  {
+    "source_id": "RPS160",
+    "url": "https://github.com/Yamz-Labs/kyojin/blob/main/tools/cuda/README.md",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary runtime build documentation",
+    "scope": "Current Kyojin CUDA port: RTX3090 toolchain test, torch2.10 cu130, nvcc13.0.88,gcc13. Does not prove exact GLM320B pack or ablation-hook fit on NVIDIA.",
+    "used_by": [
+      "RP28"
+    ],
+    "retrieval_note": "Read only; no toolchain installed, no build or smoke test executed."
+  },
+  {
+    "source_id": "RPS161",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3-4B-abliterated-v2/raw/a494c65b10bf8fdc56c0ff11d36987c1d018f162/README.md",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary pinned model card",
+    "scope": "Pinned publisher ablation claim, exact parent lineage and usage examples; no model execution.",
+    "used_by": [
+      "RP35"
+    ],
+    "retrieval_note": "Pinned metadata/documentation read only; no weights downloaded or model tests/deployments."
+  },
+  {
+    "source_id": "RPS162",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3-4B-abliterated-v2/blob/a494c65b10bf8fdc56c0ff11d36987c1d018f162/config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary pinned configuration",
+    "scope": "Exact Qwen3ForCausalLM BF16 config40960positions,36layers/8KVheads/head128; no runtime/deployed cap implied.",
+    "used_by": [
+      "RP35"
+    ],
+    "retrieval_note": "Pinned metadata/documentation read only; no weights downloaded or model tests/deployments."
+  },
+  {
+    "source_id": "RPS163",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3-4B-abliterated-v2/tree/a494c65b10bf8fdc56c0ff11d36987c1d018f162",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary pinned artifact file listing",
+    "scope": "Pinned8.06GB repository with two weight shards and tokenizer/template/config.",
+    "used_by": [
+      "RP35"
+    ],
+    "retrieval_note": "Pinned metadata/documentation read only; no weights downloaded or model tests/deployments."
+  },
+  {
+    "source_id": "RPS164",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3-4B-abliterated-v2/blob/a494c65b10bf8fdc56c0ff11d36987c1d018f162/model.safetensors.index.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary pinned tensor index",
+    "scope": "Exact tensorpayload8044936192bytes; not measured VRAM or full installedvolume.",
+    "used_by": [
+      "RP35"
+    ],
+    "retrieval_note": "Pinned metadata/documentation read only; no weights downloaded or model tests/deployments."
+  },
+  {
+    "source_id": "RPS165",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3-4B-abliterated-v2/blob/a494c65b10bf8fdc56c0ff11d36987c1d018f162/chat_template.jinja",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary pinned chat template",
+    "scope": "Exact template supports tools/reasoning fields and enable_thinking:false formatting.",
+    "used_by": [
+      "RP35"
+    ],
+    "retrieval_note": "Pinned metadata/documentation read only; no weights downloaded or model tests/deployments."
+  },
+  {
+    "source_id": "RPS166",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3-4B-abliterated-v2/blob/a494c65b10bf8fdc56c0ff11d36987c1d018f162/generation_config.json",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary pinned generation configuration",
+    "scope": "Generation config inspected; no max_length field or independent hard outputlimit established.",
+    "used_by": [
+      "RP35"
+    ],
+    "retrieval_note": "Pinned metadata/documentation read only; no weights downloaded or model tests/deployments."
+  },
+  {
+    "source_id": "RPS167",
+    "url": "https://huggingface.co/huihui-ai/Huihui-Qwen3-4B-abliterated-v2/commit/a494c65b10bf8fdc56c0ff11d36987c1d018f162",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary artifact commit metadata",
+    "scope": "Pinned weight/config upload datedJune19,2025; old baseline selected for current projectworkflow, not new2026release.",
+    "used_by": [
+      "RP35"
+    ],
+    "retrieval_note": "Pinned metadata/documentation read only; no weights downloaded or model tests/deployments."
+  },
+  {
+    "source_id": "RPS168",
+    "url": "https://huggingface.co/Qwen/Qwen3-4B/raw/main/README.md",
+    "retrieved_at": "2026-10-25",
+    "source_type": "primary parent-model card",
+    "scope": "32768native,131072YaRN;40960default config explanation and base runtime versions. Parent evidence is not derivative/deployment validation.",
+    "used_by": [
+      "RP35"
+    ],
+    "retrieval_note": "Pinned metadata/documentation read only; no weights downloaded or model tests/deployments."
   }
 ]

@@ -1,6 +1,6 @@
 # Deployment, content freedom and cost interpretation
 
-**Research snapshot: October 23–24, 2026.** This guide explains the inventory's fields. It selects no architecture, host, model or paid experiment. Model-specific claims and source dates remain in the three inventories.
+**Research snapshot: October 23–25, 2026.** This guide explains the inventory's fields and billing concepts. Runpod is the selected destination for the expanded hosting research; use its [workflow](runpod-hosting.md), [hosting matrix](hosting-matrix.md) and [context/memory guide](capacity-planning.md) for exact deployment preparation. No runtime architecture, model default or paid experiment was selected. Model-specific claims and source dates remain in the three inventories.
 
 ## The same model name can describe different products
 
