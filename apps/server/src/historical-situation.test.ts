@@ -9,6 +9,8 @@ import {
   setAttentionFocus,
   setSpatialPosition,
   worldSupport,
+  currentDetailedAttention,
+  currentReceivedGeometry,
 } from '@open-legend/domain';
 import { appendMemory } from '../../../packages/domain/src/events.js';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
@@ -20,6 +22,101 @@ import { permittedSourceHandle } from './entity-references.js';
 const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
   for (const close of cleanup.splice(0)) await close();
+});
+
+it('retrieves one shared terrain boundary from cold storage for both outgoing and entering attention', async () => {
+  const store = await testRepository(),
+    service = new WorldService(
+      store,
+      readConfig({ AI_BUDGET_USD: '0', OPENAI_EMBEDDING_API_KEY: '' }),
+    );
+  cleanup.push(async () => {
+    service.releaseHostWork();
+    await store.close();
+  });
+  await enterLocalWorld(service);
+  await service.setPresence('terrain-context-fixture', true);
+  await editWorld(service, (world) => {
+    const player = entityGet(world.entities, PLAYER_ID)!,
+      prototype = entityGet(world.entities, NPC_ID)!;
+    player.actor!.attentionCapacity = 2;
+    setSpatialPosition(world, player, { x: 10, y: 0, z: 12 }, 'terrain');
+    for (let index = 0; index < 3; index++) {
+      const person = structuredClone(prototype);
+      person.id = `terrain-context-person-${index}`;
+      entitySet(world.entities, person.id, person);
+      setSpatialPosition(world, person, { x: 12 + index, y: 0, z: 12 }, 'terrain');
+    }
+    world.simTime = 15;
+    initializePerception(world, []);
+  });
+  const previous = currentDetailedAttention(service.world, PLAYER_ID),
+    selected = new Set(previous.map((entry) => entry.sourceId)),
+    entering = Object.entries(
+      service.world.perceptionEvidence![PLAYER_ID]!.attention!.candidates,
+    ).find(
+      ([, candidate]) =>
+        candidate.sourceId.startsWith('terrain-context-person-') &&
+        !selected.has(candidate.sourceId),
+    )!,
+    subject = currentBodyObservation(service.world, PLAYER_ID, entering[1].sourceId)!.exposure
+      .episodeId,
+    original = currentReceivedGeometry(service.world, PLAYER_ID).observations[0]!;
+  expect(original).toBeDefined();
+  await editWorld(service, (world) => {
+    world.simTime = 16;
+    initializePerception(world, []);
+    expect(setAttentionFocus(world, PLAYER_ID, [entering[0]])).toBe(true);
+  });
+  // Later actual selected movement creates two newer chunks, so the terrain
+  // boundary is read through the repository rather than the resident tail.
+  for (const at of [17, 18])
+    await editWorld(service, (world) => {
+      world.simTime = at;
+      const person = entityGet(world.entities, entering[1].sourceId)!;
+      setSpatialPosition(world, person, { x: at - 1, y: 0, z: 12 }, 'terrain', 'physical');
+      initializePerception(world, []);
+    });
+  await service.flushMemorySources(PLAYER_ID);
+  const scope = {
+    worldId: service.world.id,
+    actorId: PLAYER_ID,
+    generation: (await store.records.head())!.generation,
+  };
+  const subjects = [...previous.map((entry) => entry.exposure.episodeId), subject];
+  const ids = new Set<string>();
+  const resident = new Set(
+    service.world.experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
+      chunk.receipts.map((receipt) => receipt.id),
+    ),
+  );
+  for (const subject of subjects) {
+    const history = await store.memories.temporalHistory(
+      scope,
+      {
+        subjects: [subject],
+        from: 16,
+        through: 16,
+        bytes: 65536,
+        limit: 128,
+      },
+      service.world,
+    );
+    const matches = history.entries.filter((entry) =>
+      entry.receipt.facets.some((facet) => facet.original?.source.id === original.id),
+    );
+    expect(matches).toHaveLength(1);
+    const entry = matches[0]!;
+    expect(new Set(entry.receipt.contextSubjects)).toEqual(new Set(subjects));
+    expect(entry.receipt.facets[0]).toMatchObject({
+      acquiredAt: original.acquiredAt,
+      measuredThrough: original.facets[0]!.measuredThrough,
+      confirmedThrough: 16,
+    });
+    expect(resident.has(entry.receipt.id)).toBe(false);
+    ids.add(entry.receipt.id);
+  }
+  expect(ids.size).toBe(1);
 });
 
 it('reads historical native distances through cold actor receipts, including a later issued held confirmation', async () => {
