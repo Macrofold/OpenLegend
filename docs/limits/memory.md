@@ -30,7 +30,7 @@ The latest 512 eligible linguistic speech experiences are protected from routine
 
 Original recommendation: **Expand**.
 
-**Proposed PS04-A replacement, not current behavior:** the [world attention profile](../worlds/base/attention.md#recent-history-and-lasting-memory) retains up to 512 exact ordinary speech sources within an additional byte allowance, while active exact-language obligations preserve their minimum necessary terms separately. Whole sources leave optional protection; no quote is clipped or replaced with invented wording. Explicit remembered impressions and actual source-closure expiry require coordinated speech/history/knowledge delivery under [the redesign](../projects/attention-and-scenes-tech-design.md#56-one-recording-boundary-and-lasting-retention).
+**Implemented supported-channel PS04-A policy; qualification open:** the [world attention profile](../worlds/base/attention.md#recent-history-and-lasting-memory) retains up to 512 exact ordinary speech sources within an additional byte allowance, while active exact-language obligations preserve their minimum necessary terms separately. Whole sources leave optional protection; no quote is clipped or replaced with invented wording. Explicit remembered impressions and actual source-closure expiry use the coordinated speech/history/knowledge owners under [the redesign](../projects/attention-and-scenes-tech-design.md#56-one-recording-boundary-and-lasting-retention).
 
 ## LA008
 
@@ -104,7 +104,7 @@ Raw experiences become eligible for replacement by summaries after 6 game hours;
 
 Original recommendation: **Keep**.
 
-**Proposed PS04-A replacement, not current behavior:** six game hours becomes the preferred attended-detail horizon within explicit count/byte bounds, with actual shortened coverage disclosed. Ordinary attention starts capture without a watch action; useful lasting impressions are separate, and trivial sequences may expire. [PS-L02](product-scalability.md#ps-l02--attention-and-sensory-grouping) owns these coordinated proposed limits and their qualification.
+**Implemented attended-detail policy; qualification open:** six game hours is the preferred attended-detail horizon within explicit count/byte bounds, with actual shortened coverage disclosed. Ordinary attention starts capture without a watch action; useful lasting impressions are separate, and trivial sequences may expire. [PS-L02](product-scalability.md#ps-l02--attention-and-sensory-grouping) owns these coordinated current limits and their qualification. Ordinary raw-experience summarization eligibility above remains separate.
 
 ## LA014
 
