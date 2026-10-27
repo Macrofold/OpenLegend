@@ -31,6 +31,8 @@ The [integrated UI review](../verification/ui-implementation-review.md#integrate
 
 **Parent:** ND13. **Owners:** native custody/equipment and inventory task UI. **Dependencies:** IWB01. **Behavior:** [equipment journey](../projects/item-and-building-workflows-feature-spec.md#5-replace-equipment-with-a-visible-disposition-for-conflicts).
 
+**Shared boundary with [ECL03 loadouts](emergency-combat-and-loadouts.md#ecl03--exact-native-equipment-sets-and-useful-protection):** ordinary Equip, grouped equipment sets and this future compound swap reuse the same pure final-placement/conflict/load calculation and attachment mutation owner. ECL selects timed complete sets with carried-root stowing; IWB02 retains its explicitly chosen own-container destinations and expanded review. Neither project requires a duplicate equipment writer, and ECL does not depend on this deferred destination editor or the wider crafting/building follow-on. Design completion elsewhere does not close IWB02's unchecked runtime criteria.
+
 - [ ] Extend the existing ordinary equip transaction with explicit own-container destinations for every actual conflicting item; retain the current default equip behavior.
 - [ ] Preflight complete final placements and ancestor loads, accounting for the candidate leaving its bag. Preserve exact individualization/remainders, condition, held inputs, compatible body places and complete authority.
 - [ ] Present candidate, displaced items and destinations together; commit all or nothing, with no auto-drop, substitute item, remote ground acquisition or implicit gift.
