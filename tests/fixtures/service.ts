@@ -1,6 +1,8 @@
 import { definitionPin, validateModuleManifest } from '../../packages/domain/src/world-modules.js';
 import type { WorldState } from '../../packages/domain/src/index.js';
 import type { WorldService } from '../../apps/server/src/world-service.js';
+import { materializeNativeValues } from '../../packages/domain/src/native-values.js';
+import { invalidateInheritedNativeInterval } from '../../packages/domain/src/draft.js';
 
 /** Simulate explicit control acquisition by this test's authenticated local connection. */
 export async function enterLocalWorld(service: WorldService): Promise<void> {
@@ -21,8 +23,14 @@ export async function editWorld<T>(
 ): Promise<T> {
   let value!: T;
   const result = await service.transition((original) => {
-    const world = structuredClone(original);
+    const world = structuredClone(materializeNativeValues(original));
+    const inherited = world.nativeInterval;
     value = edit(world);
+    // Authored fixture edits are semantic mutations, including clock edits. Keep
+    // earned values, but never retain the old future prediction merely because
+    // structuredClone created a new object. A callback's fresh prediction survives.
+    // docs/simulation-time.md#native-interval-contract
+    invalidateInheritedNativeInterval(world, inherited);
     return { world, events: [], outcome: { ok: true, code: 'fixture', message: 'Fixture setup' } };
   });
   if (!result.ok) throw new Error(result.message);

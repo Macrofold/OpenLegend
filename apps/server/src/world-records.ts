@@ -832,7 +832,10 @@ export class WorldRecords {
     if (active && state.world.experience?.temporal) {
       const temporal = state.world.experience.temporal;
       const maximum = selectedTemporalPolicy(state.world).recent.residentChunks;
-      const references = new Set<string>();
+      // The append owner can point outside every actor's resident tail. Load its
+      // one exact block with the existing batch; a cold pointer is not missing data.
+      // docs/save-and-load.md#shared-temporal-evidence-continuation
+      const references = new Set<string>(temporal.activeSource ? [temporal.activeSource] : []);
       const chunks = await this.db
         .prepare(
           `SELECT c.id,c.actor_id,c.position,c.payload

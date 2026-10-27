@@ -1545,11 +1545,18 @@ describe('actual director situation query continuation', () => {
         ) as {
           results: Array<{ result: { bodies: Array<{ reference: string }> } }>;
         };
-        selectedHandle = expansion.results
-          .flatMap((row) => row.result.bodies)
-          .find(
+        const expandedBodies = expansion.results.flatMap((row) => row.result.bodies ?? []);
+        const newlyDisclosed = expandedBodies.find(
             (row) => crowdHandles.has(row.reference) && !initialHandles.has(row.reference),
-          )!.reference;
+          );
+        if (!newlyDisclosed)
+          throw new Error(JSON.stringify({
+            initialCrowd: [...crowdHandles].filter((handle) => initialHandles.has(handle)),
+            returned: expandedBodies.map((row) => ({ reference: row.reference,
+              crowd: crowdHandles.has(row.reference), initial: initialHandles.has(row.reference) })),
+            results: expansion.results,
+          }));
+        selectedHandle = newlyDisclosed.reference;
         return {
           operations: [
             operation('note_new_person', {
@@ -1591,7 +1598,10 @@ describe('actual director situation query continuation', () => {
     );
     crowdHandles = new Set(crowdIds.map((id) => entityHandle(h.service.world, NPC_ID, id)));
     const job = await h.chat('fixture-expanded-local-subject', 'Who else can you see here?');
-    expect(job.status, job.message).toBe('completed');
+    const failure = job.status === 'completed'
+      ? job.message
+      : JSON.stringify((await h.trace(job.id)).stage('Workflow failure').map((call) => call.input));
+    expect(job.status, failure).toBe('completed');
     expect(generation).toBe(2);
     const noted = crowdIds.filter((id) =>
       knowledgeDocument(h.service.world, NPC_ID, subjects.get(id)!)?.text.includes(
