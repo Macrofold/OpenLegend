@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import * as worldComposition from './world-composition.js';
 import { createWorld, NPC_ID, PLAYER_ID } from './worlds/base/world.js';
 import {
   entityDelete,
@@ -212,7 +213,7 @@ describe('received detailed attention', () => {
       true,
     );
     expect(JSON.stringify(state)).not.toContain('Private identity');
-    validateAttentionState(state, selectedAttentionPolicy(world).maximumCapacity);
+    validateAttentionState(state, selectedAttentionPolicy(world));
   });
   it('resolves only the actually accepted native condition generation and withdraws corrected proof', () => {
     let { world, owner } = scene(2, 2);
@@ -288,7 +289,7 @@ describe('received detailed attention', () => {
         .filter((identity) => identity.individualId?.startsWith('fixture-local-'))
         .every((identity) => !identity.canonicalId),
     ).toBe(true);
-    validateAttentionState(owner.attention, selectedAttentionPolicy(world).maximumCapacity);
+    validateAttentionState(owner.attention, selectedAttentionPolicy(world));
   });
 
   it('lends unused ongoing slots and fairly rotates unconsidered discovery', () => {
@@ -304,7 +305,28 @@ describe('received detailed attention', () => {
     }
     expect(encountered.size).toBe(18);
     expect(owner.attention!.entries).toHaveLength(3);
-    validateAttentionState(owner.attention, selectedAttentionPolicy(world).maximumCapacity);
+    validateAttentionState(owner.attention, selectedAttentionPolicy(world));
+  });
+
+  it('uses the installed world score ceiling and ongoing share', () => {
+    const { world, owner, ids } = scene(8, 5);
+    const policy = {
+      ...selectedAttentionPolicy(world),
+      maximumScore: 1,
+      ongoingShare: 1,
+    };
+    vi.spyOn(worldComposition, 'selectedAttentionPolicy').mockReturnValue(policy);
+    const state = owner.attention!;
+    state.explicit = Object.entries(state.candidates)
+      .filter(([, candidate]) => ids.slice(4).includes(candidate.sourceId))
+      .map(([key]) => key);
+    updateAttention(world, PLAYER_ID);
+    expect(state.entries.filter((entry) => entry.basis === 'explicit')).toHaveLength(4);
+    expect(state.entries.filter((entry) => entry.basis === 'discovery')).toHaveLength(1);
+    expect(Object.values(state.candidates).every((candidate) => candidate.score === 1)).toBe(true);
+    validateAttentionState(state, policy);
+    Object.values(state.candidates)[0]!.score = 2;
+    expect(() => validateAttentionState(state, policy)).toThrow('Invalid attention candidate.');
   });
 
   it('offers older quiet received people before continuing arrivals and acknowledges only supplied descriptions', () => {
@@ -534,7 +556,7 @@ describe('received detailed attention', () => {
     expect(
       applyAttentionRelationEvaluations(world, PLAYER_ID, [{ ...evaluation, revision: 'again' }]),
     ).toHaveLength(1);
-    validateAttentionState(owner.attention, selectedAttentionPolicy(world).maximumCapacity);
+    validateAttentionState(owner.attention, selectedAttentionPolicy(world));
   });
 
   it('does not bridge an all-clear interval across a brief loss of its neighbor', () => {

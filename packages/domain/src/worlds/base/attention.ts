@@ -37,6 +37,8 @@ export const BASE_ATTENTION_POLICY: AttentionPolicy = {
   version: 1,
   defaultCapacity: 10,
   maximumCapacity: 15,
+  maximumScore: 10,
+  ongoingShare: 0.5,
   stabilitySeconds: 120,
   switchMargin: 2,
   familiarityBonus: 3,

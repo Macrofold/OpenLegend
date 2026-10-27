@@ -105,6 +105,8 @@ export interface AttentionPolicy {
   version: number;
   defaultCapacity: number;
   maximumCapacity: number;
+  maximumScore: number;
+  ongoingShare: number;
   stabilitySeconds: number;
   switchMargin: number;
   familiarityBonus: number;
@@ -497,7 +499,7 @@ export function updateAttention(
       ),
     );
     candidate.score = Math.min(
-      10,
+      policy.maximumScore,
       physical +
         (policy.familiarityBonus * selectedAttentionFamiliarity(world, observerId, subject)) / 100,
     );
@@ -553,7 +555,7 @@ export function updateAttention(
       if (urgent.length > capacity) urgent.pop();
     }
   for (const [key] of urgent) take(key, 'cue');
-  const ongoing = Math.ceil((capacity - 1) / 2);
+  const ongoing = Math.ceil((capacity - 1) * policy.ongoingShare);
   for (const [key, candidate] of candidates)
     if (
       candidate.direct &&
@@ -979,7 +981,7 @@ export function revokeAttentionEvidence(
 /** Current-save boundary: exact references are validated by the owning perception validator. */
 export function validateAttentionState(
   value: unknown,
-  maximumCapacity: number,
+  policy: Pick<AttentionPolicy, 'maximumCapacity' | 'maximumScore'>,
 ): asserts value is AttentionState {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('Invalid attention continuation.');
@@ -993,9 +995,9 @@ export function validateAttentionState(
     typeof state.candidates !== 'object' ||
     Array.isArray(state.candidates) ||
     !Array.isArray(state.entries) ||
-    state.entries.length > maximumCapacity ||
+    state.entries.length > policy.maximumCapacity ||
     !Array.isArray(state.explicit) ||
-    state.explicit.length > maximumCapacity ||
+    state.explicit.length > policy.maximumCapacity ||
     new Set(state.explicit).size !== state.explicit.length ||
     !state.latches ||
     typeof state.latches !== 'object' ||
@@ -1064,7 +1066,7 @@ export function validateAttentionState(
       candidate.acquiredAt < 0 ||
       !Number.isFinite(candidate.score) ||
       candidate.score < 0 ||
-      candidate.score > 10 ||
+      candidate.score > policy.maximumScore ||
       !Number.isFinite(candidate.urgency) ||
       candidate.urgency < 0 ||
       candidate.urgency > 10 ||
