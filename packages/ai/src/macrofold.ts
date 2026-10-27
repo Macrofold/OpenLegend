@@ -33,6 +33,9 @@ export class MacrofoldHttpError extends Error {
         ['deployment_binding_stale', 'deployment_not_ready'].includes(this.code)) ||
       (this.status === 402 && this.code === 'deployment_budget_exhausted') ||
       (this.status === 503 && this.code === 'deployment_unavailable') ||
+      // The immediate-inference contract uses this exact code only before
+      // admission or after a confirmed rollback. admission_unknown stays uncertain.
+      (this.status === 503 && this.code === 'inference_admission_timeout') ||
       [400, 401, 403, 404, 413, 422, 429].includes(this.status)
     );
   }

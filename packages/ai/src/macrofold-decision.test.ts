@@ -527,6 +527,7 @@ describe('standalone Macrofold native decisions', () => {
   it.each([
     { admitStatus: 402, admitCode: 'insufficient_credit' },
     { admitStatus: 503, admitCode: 'inference_disabled' },
+    { admitStatus: 503, admitCode: 'inference_admission_timeout' },
   ])('marks definitive admission rejection as undispatched without retry: %j', async (options) => {
     const f = fixture(options);
     const result = await client(f.fetcher).judge(request);
@@ -536,6 +537,16 @@ describe('standalone Macrofold native decisions', () => {
       dispatched: false,
       completionUncertain: false,
       httpStatus: options.admitStatus,
+    });
+    expect(f.fetcher).toHaveBeenCalledOnce();
+  });
+
+  it('keeps an unconfirmed inference admission uncertain without retry', async () => {
+    const f = fixture({ admitStatus: 503, admitCode: 'inference_admission_unknown' });
+    const result = await client(f.fetcher).judge(request);
+    expect(result).toMatchObject({
+      outcome: 'uncertain',
+      receipt: { dispatched: true, completionUncertain: true, httpStatus: 503 },
     });
     expect(f.fetcher).toHaveBeenCalledOnce();
   });
