@@ -130,14 +130,17 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
 }
 const itemPresentationKeys = new WeakMap<object, string>();
 const exposureDependencyKeys = new WeakMap<object, string>();
-/** Mutable builders cannot prove freshness by object identity. Compare their exact
- * settings; immutable installed definitions compute this key only once. */
-function exposureDependencyKey(value: object): string {
+/** Raw builders and newly assigned plain branches must compare exact settings.
+ * A tracked draft's current snapshot changes identity after every nested edit;
+ * only that owned continuation may reuse its unchanged snapshot's key.
+ * docs/architecture.md#cooperative-native-burst-handling */
+function exposureDependencyKey(value: object, working?: WeakMap<object, string>): string {
   const immutable = isImmutableData(value);
-  let key = immutable ? exposureDependencyKeys.get(value) : undefined;
+  const keys = immutable ? exposureDependencyKeys : working;
+  let key = keys?.get(value);
   if (key === undefined) {
     key = JSON.stringify(value);
-    if (immutable) exposureDependencyKeys.set(value, key);
+    keys?.set(value, key);
   }
   return key;
 }
@@ -232,6 +235,8 @@ interface ExposureCache {
   dirty?: Omit<ReturnType<typeof sensoryDraftWrites>, 'coverage'>;
   /** Phase coverage for one owned working draft only, never its published successor. */
   coverage?: ReturnType<typeof sensoryDraftWrites>['coverage'];
+  /** Exact current() snapshots, only for this private draft and never its successor. */
+  dependencyKeys?: WeakMap<object, string>;
 }
 export type EncounterBaseline = Pick<
   WorldState,
@@ -296,6 +301,10 @@ export function* prepareExposure(
   countDomainWork('sensoryPhases');
   const ancestor = isDraft(world) ? original(world)! : world;
   const working = pending.get(world);
+  const dependencyKeys = isDraft(world)
+    ? ((working?.owner === ownerToken(world) ? working.dependencyKeys : undefined) ??
+      new WeakMap<object, string>())
+    : undefined;
   let cache = working ?? caches.get(ancestor);
   const inherited = cache?.owner === ownerToken(ancestor) ? cache.dirty : undefined;
   const audit = sensoryDraftWrites(
@@ -313,9 +322,15 @@ export function* prepareExposure(
   const map = spatialMap(world),
     manifest = snapshot(world.moduleManifest),
     policy = snapshot(world.statusEffectPolicy),
-    mapKey = exposureDependencyKey(map),
-    manifestKey = exposureDependencyKey(manifest),
-    policyKey = exposureDependencyKey(policy),
+    mapKey = exposureDependencyKey(map, isDraft(world.map) ? dependencyKeys : undefined),
+    manifestKey = exposureDependencyKey(
+      manifest,
+      isDraft(world.moduleManifest) ? dependencyKeys : undefined,
+    ),
+    policyKey = exposureDependencyKey(
+      policy,
+      isDraft(world.statusEffectPolicy) ? dependencyKeys : undefined,
+    ),
     itemKey = itemPresentationKey(world);
   let rebuild: 'cold' | 'unknown' | 'overflow' | 'policy' | undefined;
   if (!cache || (cache.owner !== ownerToken(ancestor) && cache.owner !== ownerToken(world)))
@@ -363,6 +378,7 @@ export function* prepareExposure(
   const prepared = cache!;
   prepared.owner = ownerToken(world);
   prepared.coverage = audit.coverage;
+  prepared.dependencyKeys = dependencyKeys;
   delete prepared.dirty;
   pending.set(world, prepared);
   const previousPositions = new Map<string, Position | undefined>();
@@ -649,6 +665,7 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
     }
   }
   pending.delete(world);
+  if (evaluated) delete evaluated.dependencyKeys;
   return (result) => {
     if (!cache || (cache.owner !== ownerToken(world) && cache.owner !== ownerToken(ancestor)))
       return;

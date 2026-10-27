@@ -551,6 +551,105 @@ describe('simulation overhaul ownership and continuation', () => {
     ).toBeUndefined();
   });
 
+  it('reuses exact settings keys only within one tracked sight draft and rechecks nested edits and later continuations', () => {
+    const seed = structuredClone(createWorld()),
+      counters: DomainCounters = {},
+      encoding = vi.spyOn(JSON, 'stringify');
+    const calls = (value: object) =>
+      encoding.mock.calls.filter(([input]) => input === value).length;
+    const phase = (world: WorldState) => result(prepareExposure(world, snapshotEncounters(world)));
+    observeDomainCounters(counters);
+    try {
+      const first = draftWorld(seed);
+      phase(first);
+      phase(first);
+      for (const setting of [seed.map, seed.moduleManifest, seed.statusEffectPolicy])
+        expect(calls(setting)).toBe(1);
+
+      const published = finishWorld(first),
+        abandoned = draftWorld(published);
+      phase(abandoned);
+      const fork = draftWorld(published);
+      phase(fork);
+      for (const setting of [seed.map, seed.moduleManifest, seed.statusEffectPolicy])
+        expect(calls(setting)).toBe(3);
+      finishWorld(fork);
+
+      const restored = JSON.parse(JSON.stringify(published)) as WorldState,
+        working = draftWorld(restored);
+      phase(working);
+      phase(working);
+      for (const setting of [restored.map, restored.moduleManifest, restored.statusEffectPolicy])
+        expect(calls(setting)).toBe(1);
+
+      const before = counters.sensoryPolicyRebuilds ?? 0;
+      working.map.spatial.blockers.push({
+        id: 'fixture-tracked-blocker',
+        bounds: { min: { x: 0, y: 0, z: 0 }, max: { x: 1, y: 1, z: 1 } },
+        movement: false,
+        sight: true,
+        acousticTransmission: 1,
+        material: 'cloth',
+      });
+      phase(working);
+      expect(counters.sensoryPolicyRebuilds).toBe(before + 1);
+      const vision = working.moduleManifest.senses.find(
+        (sense) => sense.implementation === 'vision-geometry-v1',
+      );
+      if (vision?.implementation !== 'vision-geometry-v1')
+        throw new Error('The sight fixture requires installed vision.');
+      vision.radius++;
+      phase(working);
+      expect(counters.sensoryPolicyRebuilds).toBe(before + 2);
+      working.statusEffectPolicy.namedTimes['fixture-reviewed-time'] = 8;
+      phase(working);
+      expect(counters.sensoryPolicyRebuilds).toBe(before + 3);
+      finishWorld(working);
+    } finally {
+      encoding.mockRestore();
+      observeDomainCounters();
+    }
+  });
+
+  it('freshly compares raw sight builders and plain settings assigned into an owned draft', () => {
+    const builder = structuredClone(createWorld()),
+      encoding = vi.spyOn(JSON, 'stringify');
+    const calls = (value: object) =>
+      encoding.mock.calls.filter(([input]) => input === value).length;
+    const phase = (world: WorldState) => result(prepareExposure(world, snapshotEncounters(world)));
+    try {
+      phase(builder);
+      phase(builder);
+      for (const setting of [builder.map, builder.moduleManifest, builder.statusEffectPolicy])
+        expect(calls(setting)).toBe(2);
+      builder.map.spatial.revision++;
+      builder.moduleManifest.revision++;
+      builder.statusEffectPolicy.namedTimes['fixture-builder-time'] = 9;
+      phase(builder);
+      for (const setting of [builder.map, builder.moduleManifest, builder.statusEffectPolicy])
+        expect(calls(setting)).toBe(3);
+
+      const working = draftWorld(builder),
+        map = structuredClone(builder.map),
+        manifest = structuredClone(builder.moduleManifest),
+        policy = structuredClone(builder.statusEffectPolicy);
+      working.map = map;
+      working.moduleManifest = manifest;
+      working.statusEffectPolicy = policy;
+      phase(working);
+      phase(working);
+      for (const setting of [map, manifest, policy]) expect(calls(setting)).toBe(2);
+      map.spatial.revision++;
+      manifest.revision++;
+      policy.namedTimes['fixture-assigned-time'] = 10;
+      phase(working);
+      for (const setting of [map, manifest, policy]) expect(calls(setting)).toBe(3);
+      finishWorld(working);
+    } finally {
+      encoding.mockRestore();
+    }
+  });
+
   it('matches direct status stepping with retained flow preparation and rejects a replaced episode', () => {
     const seed = createWorld();
     seed.paused = false;
