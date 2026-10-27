@@ -1167,31 +1167,35 @@ export function reconcileVisualEvidence(
     values.forEach((facet, ordinal) => {
       chargeWork({ tests: 1 });
       const key = `${subject.id}:${facet.kind}`;
-      let prior = state.current[key];
+      let prior = readOnlyDraftView(state.current)[key];
       // Equality and semantic comparison read completed values, not deep Immer proxies.
       // Drafting every unchanged nested body here makes later native previews copy it.
-      const previous = prior && effectiveCurrentFacetSupport(world, observer.id, prior),
-        previousValue = previous && readOnlyDraftView(previous.value);
+      const priorLease = prior && readOnlyDraftView(prior),
+        previousValue = priorLease && readOnlyDraftView(priorLease.value);
       const changed = !previousValue || jsonText(previousValue) !== jsonText(facet);
       if (changed) attentionChanges.add(subject.id);
       if (
         prior &&
-        previous &&
+        priorLease &&
         facet.kind === 'location' &&
         previousValue?.kind === 'location' &&
         previousValue.location.kind === 'point' &&
         facet.location.kind === 'point' &&
-        previous.valueMeasuredThrough < world.simTime &&
-        previous.motionContinuityRevision === (placement.motionContinuityRevision ?? 0) &&
-        placement.revision > (previous.sourcePlacementRevision ?? -1) &&
+        priorLease.motionContinuityRevision === (placement.motionContinuityRevision ?? 0) &&
+        placement.revision > (priorLease.sourcePlacementRevision ?? -1) &&
         Math.hypot(
           previousValue.location.point.x - facet.location.point.x,
           previousValue.location.point.y - facet.location.point.y,
           previousValue.location.point.z - facet.location.point.z,
         ) >
           previousValue.location.errorRadius + facet.location.errorRadius
-      )
-        earlierLocation = captureCurrentFacet(previous) as CapturedLocationSample;
+      ) {
+        // Comparison needs only the received value. Materialize confirmation times
+        // only for an earlier motion sample that will actually use that support.
+        const previous = effectiveCurrentFacetSupport(world, observer.id, prior);
+        if (previous.valueMeasuredThrough < world.simTime)
+          earlierLocation = captureCurrentFacet(previous) as CapturedLocationSample;
+      }
       let facetOriginal = original;
       if (prior && previousValue && changed && semanticFacetChanged(previousValue, facet)) {
         finalizeLease(world, observer, prior);
@@ -1217,6 +1221,7 @@ export function reconcileVisualEvidence(
         });
         if (facet.kind === 'body' || facet.kind === 'public-attributes') {
           // The same observed body/contact continues while its semantic fact changes.
+          prior = state.current[key]!;
           prior.original = facetOriginal;
           prior.originalOrdinal = 0;
           prior.confirmedFrom = world.simTime;
@@ -1274,6 +1279,7 @@ export function reconcileVisualEvidence(
           confirmedThrough: world.simTime,
         };
       } else if (changed) {
+        prior = state.current[key]!;
         prior.revision++;
         prior.confirmedThrough = world.simTime;
         prior.value = copyFacetValue(facet);
