@@ -29,7 +29,11 @@ import {
 import { evaluateTimedRelease, type AdmittedWorldInput } from './execution-input.js';
 import { moveAlongPath, orderedMovementTracks } from './action-movement.js';
 import { canSteer, playerInputBoundary, preparePlayerSteering } from './player-steering.js';
-import { takeRoutineObservation, type RoutineObservation } from './perception-timing.js';
+import {
+  routineObservationDue,
+  takeRoutineObservation,
+  type RoutineObservation,
+} from './perception-timing.js';
 import { visibleFeature } from './perception-frame.js';
 import { beginNativeChangeFeed, takeNativeChanges } from './native-change-feed.js';
 import { pendingNavigationEntityIds, navigationMembershipChanged } from './entity-index.js';
@@ -6730,6 +6734,30 @@ function* advanceWorldNative(
       );
     localize([...new Set(changes.map((change) => change.entityId))]);
   };
+  const observationPreparation = () => {
+    let revision = mechanicalRevision(world),
+      eventCount = events.length;
+    return {
+      beforeMeasurement: function* (): Generator<void> {
+        const physical = revision - stateChangeRevision(world, 'attribute');
+        yield* materialize();
+        // Applying the already captured rates may advance ordinary attributes
+        // inside this same physical forecast. Real body/behavior effects or
+        // occurrences still end its authority before observations continue.
+        if (
+          mechanicalRevision(world) - stateChangeRevision(world, 'attribute') !== physical ||
+          events.length !== eventCount
+        )
+          discardMechanics();
+        revision = mechanicalRevision(world);
+        eventCount = events.length;
+      },
+      complete: () => {
+        if (mechanicalRevision(world) !== revision || events.length !== eventCount)
+          discardMechanics();
+      },
+    };
+  };
   native: while (
     remaining > 0 &&
     intervals < maxIntervals &&
@@ -7123,7 +7151,15 @@ function* advanceWorldNative(
         return due !== undefined && due <= world.simTime;
       })
     ) {
-      const observedActors = yield* updateEncounters(world, before, events, participants.actors);
+      const preparation = observationPreparation();
+      const observedActors = yield* updateEncounters(
+        world,
+        before,
+        events,
+        participants.actors,
+        false,
+        preparation.beforeMeasurement,
+      );
       reconcileOutings(world, events, {
         companyObserved: true,
         observedActors,
@@ -7131,6 +7167,7 @@ function* advanceWorldNative(
       });
       outingBaseline = original;
       reconcileCompacts(world, events);
+      preparation.complete();
       before = snapshotEncounters(world);
     }
     if (navigationBlocked(world, participants.actors, options.nativeRefuges, constructionBatch))
@@ -7323,7 +7360,7 @@ function* advanceWorldNative(
       }
       return executedMotion;
     };
-    let seconds = sensoryCrossingBound(
+    let sensory = sensoryCrossingBound(
       world,
       inputSeconds,
       participants.actors,
@@ -7331,6 +7368,7 @@ function* advanceWorldNative(
       crossings,
       movementAt(inputSeconds),
     );
+    let seconds = sensory.seconds;
     let sensedSeconds = inputSeconds;
     for (const id of mechanics.actionCandidates) {
       const action = entityGet(world.entities, id)?.actor?.action;
@@ -7353,14 +7391,14 @@ function* advanceWorldNative(
           sensoryBound =
             seconds === sensedSeconds
               ? seconds
-              : sensoryCrossingBound(
+              : (sensory = sensoryCrossingBound(
                   world,
                   seconds,
                   participants.actors,
                   participants.ambient,
                   crossings,
                   motion,
-                ),
+                )).seconds,
           projectileBound = projectileBodies
             ? projectileBoundary(
                 world,
@@ -7442,7 +7480,9 @@ function* advanceWorldNative(
         ? territorialReviewAt
         : seconds === contributionAt - world.simTime
           ? contributionAt
-          : undefined;
+          : sensory.endsAt !== undefined && seconds === sensory.endsAt - world.simTime
+            ? sensory.endsAt
+            : undefined;
     // Finish the caller's requested cut exactly. Repeated duration subtraction
     // must not drift the world clock past its requested endpoint by an ulp.
     if (seconds >= remaining && (endpoint === undefined || endpoint >= requestedEnd))
@@ -7806,7 +7846,15 @@ function* advanceWorldNative(
       if (mechanics.interval.privateWalkers.size) countDomainWork('nativeWalkingForecastReuses');
       localize(flightSources);
     }
-    const observedActors = yield* updateEncounters(world, before, events, participants.actors);
+    const preparation = observationPreparation();
+    const observedActors = yield* updateEncounters(
+      world,
+      before,
+      events,
+      participants.actors,
+      false,
+      preparation.beforeMeasurement,
+    );
     reconcileOutings(world, events, {
       companyObserved: true,
       observedActors,
@@ -7826,6 +7874,7 @@ function* advanceWorldNative(
         if (plan.revision !== revision) discardMechanics();
       }
     }
+    preparation.complete();
     if (remaining > 0 && intervals < maxIntervals && motionSlices < 4096) {
       if (yield 'boundary') break;
       if (completedInterval && world.coachingEpisodes) {
@@ -7911,7 +7960,19 @@ function* updateEncounters(
   events: WorldEvent[],
   actorIds: readonly string[],
   initialize = false,
+  beforeMeasurement?: () => Generator<void>,
 ): Generator<void | GeometryBatch, ReadonlySet<string>> {
+  // Held attention consumes only its received facts. A real physical sample
+  // first applies earned rates through their existing owner, without discarding
+  // the unrelated mechanical forecast merely because a sense is due.
+  if (
+    beforeMeasurement &&
+    actorIds.some((id) => {
+      const observer = entityGet(readOnlyDraftView(world.entities), id);
+      return !!observer && routineObservationDue(world, observer);
+    })
+  )
+    yield* beforeMeasurement();
   const encounter = encounterEmitter(world, events);
   const placesChanged =
     original.places !== (isDraft(world.places) ? current(world.places) : world.places);

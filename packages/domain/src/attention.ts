@@ -525,7 +525,7 @@ export function updateAttention(
       countDomainWork('attentionCandidatesChanged');
     }
   }
-  const live = new Set(Object.keys(state.candidates));
+  const live = new Set(Object.keys(readOnlyDraftView(state.candidates)));
   const explicit = readOnlyDraftView(state.explicit).filter((key) => live.has(key));
   if (explicit.length !== state.explicit.length) state.explicit = explicit;
   for (const [key, latch] of Object.entries(readOnlyDraftView(state.latches)))
@@ -555,7 +555,7 @@ export function updateAttention(
   >((value, entry) => (!value || entry[1].order < value[1].order ? entry : value), undefined);
   const discoveryKey = previousDiscovery?.key ?? oldest?.[0];
   if (discoveryKey && !previousDiscovery)
-    state.discoveryCursor = state.candidates[discoveryKey]!.order;
+    state.discoveryCursor = candidateMap.get(discoveryKey)!.order;
   const selected: Array<{ key: string; basis: AttentionBasis }> = [];
   const take = (key: string, basis: AttentionBasis) => {
     const reservation =
@@ -583,7 +583,8 @@ export function updateAttention(
       selected.length < ongoing
     )
       take(key, 'direct');
-  for (const key of state.explicit) if (selected.length < ongoing) take(key, 'explicit');
+  for (const key of readOnlyDraftView(state.explicit))
+    if (selected.length < ongoing) take(key, 'explicit');
   const workTarget = observer.actor.action?.targetId;
   for (const [key, candidate] of candidates)
     if (candidate.sourceId === workTarget && selected.length < ongoing) take(key, 'work');
@@ -661,16 +662,16 @@ export function updateAttention(
     nextEntries.some((entry, index) => entry !== entriesBefore[index])
   )
     state.entries = nextEntries;
-  for (const key of Object.keys(state.relationDirty)) {
+  for (const key of Object.keys(readOnlyDraftView(state.relationDirty))) {
     const [anchorKey] = JSON.parse(key) as [string, AttentionRelationFamily];
     if (!live.has(anchorKey)) delete state.relationDirty[key];
   }
-  for (const key of Object.keys(state.relationScans)) {
+  for (const key of Object.keys(readOnlyDraftView(state.relationScans))) {
     const [anchorKey] = JSON.parse(key) as [string, AttentionRelationFamily];
     if (!live.has(anchorKey)) delete state.relationScans[key];
   }
   if (geometryChanged) markAttentionRelationsDirty(world, observerId);
-  for (const entry of state.entries)
+  for (const entry of readOnlyDraftView(state.entries))
     if (!current.has(entry.key))
       for (const family of ['closing-body', 'closing-drop'] as const)
         state.relationDirty[relationKey(entry.key, family)] = state.relationRevision;

@@ -12,7 +12,6 @@ import { capabilityBlocked } from './status-capabilities.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { prepareAttributeForecast, readAttribute } from './world-modules.js';
 import { hasMemory } from './living.js';
-import { nextPerceptionWorkAt } from './perception-evidence.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
 import { nextCommitmentDeadline } from './commitments.js';
@@ -149,8 +148,6 @@ export function nativeInterval(
     ownerId = id;
     const entity = entityGet(world.entities, id),
       actor = entity?.actor;
-    const perception = nextPerceptionWorkAt(world, id);
-    if (perception !== undefined) at(perception);
     if (!entity || !actor?.alive || actor.incapacitated) continue;
     const action = actor.action;
     if (action?.guard) {

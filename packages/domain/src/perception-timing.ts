@@ -57,8 +57,23 @@ export function routineObservationRelevant(world: WorldState, observer: Entity):
  * Progress belongs to the complete transition, never the disposable native forecast.
  * Action admission, event-time hearing and consequential physics keep their owners. */
 export function takeRoutineObservation(world: WorldState, observer: Entity): RoutineObservation {
+  return routineObservation(world, observer, true);
+}
+
+/** Pending captured rates must be current before a physical sample. Reuse the
+ * same timing decision without advancing a clock merely to prepare that read. */
+export function routineObservationDue(world: WorldState, observer: Entity): boolean {
+  const timing = routineObservation(world, readOnlyDraftView(observer), false);
+  return timing.sight || timing.contact;
+}
+
+function routineObservation(
+  world: WorldState,
+  observer: Entity,
+  commit: boolean,
+): RoutineObservation {
   if (!routineObservationRelevant(world, observer)) {
-    if (observer.sensoryProgress) delete observer.sensoryProgress;
+    if (commit && observer.sensoryProgress) delete observer.sensoryProgress;
     return noRoutineObservation;
   }
   const policy = routineSensePolicy(world, observer),
@@ -106,7 +121,7 @@ export function takeRoutineObservation(world: WorldState, observer: Entity): Rou
       policy.contact?.seconds,
       policy.contact?.key,
     );
-  if (changed) {
+  if (commit && changed) {
     if (next.routineSight || next.incidentalContact) observer.sensoryProgress = next;
     else delete observer.sensoryProgress;
   }

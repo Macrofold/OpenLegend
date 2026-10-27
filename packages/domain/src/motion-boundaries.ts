@@ -1067,8 +1067,8 @@ export function sensoryCrossingBound(
   ambientIds: readonly string[],
   cache: CrossingCache,
   inputMotion?: ReadonlyMap<string, MotionTrack[]>,
-): number {
-  if (!(seconds > TIME_EPSILON)) return seconds;
+): { seconds: number; endsAt?: number } {
+  const requestedSeconds = seconds;
   const entities = readOnlyDraftView(world.entities);
   crossingGeometryCurrent(world, cache);
   const now = world.simTime,
@@ -1086,6 +1086,24 @@ export function sensoryCrossingBound(
   // retain their exact owners. Absolute sample times also agree after cold load.
   let sampled = seconds,
     exact = false;
+  let observationAt = Infinity;
+  const sampleAt = (at: number, overdue = false) => {
+    if (!(at > now)) {
+      if (overdue) sampled = Math.min(sampled, TIME_EPSILON);
+      return;
+    }
+    observationAt = Math.min(observationAt, at);
+    sampled = Math.min(sampled, at - now);
+  };
+  const result = (bound: number): { seconds: number; endsAt?: number } => {
+    // An actual received-work deadline owns its exact clock value, even when
+    // it precedes the conservative minimum displacement slice by one ulp.
+    const seconds = Math.min(requestedSeconds, Math.max(TIME_EPSILON, bound), observationAt - now);
+    return {
+      seconds,
+      ...(seconds === observationAt - now ? { endsAt: observationAt } : {}),
+    };
+  };
   const movingOrAlarmed = [...new Set([...actorIds, ...ambientIds])].some((id) => {
     const entity = entityGet(entities, id);
     return (
@@ -1097,6 +1115,8 @@ export function sensoryCrossingBound(
     );
   });
   for (const id of actorIds) {
+    const perceptionAt = nextPerceptionWorkAt(world, id);
+    if (perceptionAt !== undefined) sampleAt(perceptionAt);
     const entity = entityGet(entities, id);
     if (!entity) continue;
     const body = certificate(entity);
@@ -1114,7 +1134,7 @@ export function sensoryCrossingBound(
       (movingOrAlarmed || entity.sensoryProgress?.incidentalContact)
     ) {
       const at = entity.sensoryProgress?.incidentalContact?.nextAt ?? now + contact.seconds;
-      sampled = Math.min(sampled, Math.max(TIME_EPSILON, at - now));
+      sampleAt(at, true);
     }
     exact ||=
       body.touch ||
@@ -1134,10 +1154,10 @@ export function sensoryCrossingBound(
           ? (entity.sensoryProgress?.routineSight?.nextAt ?? now + cadence)
           : (Math.floor(now / cadence) + 1) * cadence;
       if (policy.sight?.mode !== 'cadence' && at - now <= TIME_EPSILON) at += cadence;
-      sampled = Math.min(sampled, Math.max(TIME_EPSILON, at - now));
+      sampleAt(at, true);
     }
   }
-  if (!exact) return Math.max(TIME_EPSILON, sampled);
+  if (!(requestedSeconds > TIME_EPSILON) || !exact) return result(sampled);
   seconds = sampled;
   // A body that left its predicted track invalidates everything derived from it.
   for (const [id, certain] of cache.tracks) {
@@ -1215,11 +1235,7 @@ export function sensoryCrossingBound(
     certain.set(id, entry);
   }
   if (!certain.size && !outcomes.size && !growingNativeRegion) {
-    for (const id of actorIds) {
-      const at = nextPerceptionWorkAt(world, id);
-      if (at !== undefined && at > now) seconds = Math.min(seconds, at - now);
-    }
-    return seconds;
+    return result(seconds);
   }
   const still = (entity: Entity): CertainTrack => {
     const cached = cache.tracks.get(entity.id);
@@ -1248,9 +1264,6 @@ export function sensoryCrossingBound(
     const entity = entityGet(entities, id);
     if (!entity) return [];
     observationDue = Math.min(observationDue, entity.actor?.encounters?.nextAt ?? Infinity);
-    const perceptionAt = nextPerceptionWorkAt(world, id);
-    if (perceptionAt !== undefined && perceptionAt > now)
-      observationDue = Math.min(observationDue, perceptionAt);
     if (Object.values(entity.actor?.encounters?.pairs ?? {}).some((pair) => pair.watch))
       watchedObservers.push(entity);
     const plan = entity.actor?.agency.plan;
@@ -1271,7 +1284,7 @@ export function sensoryCrossingBound(
   });
   const observationBound = Math.min(seconds, Math.max(TIME_EPSILON, observationDue - now));
   if (!observers.length && !proximityObservers.length && !watchedObservers.length)
-    return observationBound;
+    return result(observationBound);
   // Moving targets for every observer; static targets only matter to a moving observer.
   const targets = !observers.length
     ? []
@@ -1616,7 +1629,7 @@ export function sensoryCrossingBound(
       }
     }
   }
-  return Math.max(TIME_EPSILON, bound);
+  return result(bound);
 }
 function poseMoves(track: MotionTrack): boolean {
   return track.pose.some(
