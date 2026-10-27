@@ -5,7 +5,11 @@ import type {
   TemporalReceipt,
   TemporalFacetReference,
 } from './temporal-evidence.js';
-import { validateEvidenceSource, validateSensoryFacet } from './perception-evidence.js';
+import {
+  validateEvidenceSource,
+  validateReceivedEventObserver,
+  validateSensoryFacet,
+} from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
 import { isSafeRecordId } from './records.js';
 import { selectedAttentionPolicy } from './world-composition.js';
@@ -289,6 +293,14 @@ export function validateTemporalEvidenceState(
         ordinals.add(facet.ordinal);
         if (values) validateTemporalValue(values[index], originals);
         else validateReference(facet);
+        const value = values
+          ? values[index]
+          : temporal.sources[facet.blockId]?.values[facet.valueOrdinal];
+        if (value?.kind === 'event')
+          validateReceivedEventObserver(value, {
+            actorId,
+            physicalLife: receipt.physicalLife,
+          });
         if (
           !['direct', 'inference', 'testimony'].includes(facet.role) ||
           !finite(facet.asOf) ||
@@ -304,9 +316,6 @@ export function validateTemporalEvidenceState(
         )
           throw new Error('Invalid temporal measurement interval.');
         if (facet.confirmedThrough !== undefined) {
-          const value = values
-            ? values[index]
-            : temporal.sources[facet.blockId]?.values[facet.valueOrdinal];
           if (
             !finite(facet.confirmedThrough) ||
             facet.confirmedThrough < facet.measuredThrough ||

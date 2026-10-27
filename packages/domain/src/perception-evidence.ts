@@ -122,6 +122,11 @@ export type EvidenceParticipant =
   | { kind: 'exposure'; exposure: ObservationExposure }
   | { kind: 'individual'; subject: ObserverSubject; association?: ObservationFactKey }
   | { kind: 'described'; descriptionAsHeard: string };
+export interface ReceivedEventParticipant {
+  /** Index into this event's received references, never a live entity lookup. */
+  referenceOrdinal: number;
+  participant: Extract<EvidenceParticipant, { kind: 'exposure' }>;
+}
 export type ObservedLocation =
   | { kind: 'point'; point: Position; errorRadius: number }
   | {
@@ -228,6 +233,7 @@ export type SensoryFacet =
       content?: string;
       data: NonNullable<WorldEvent['data']>;
       references: NonNullable<Awareness['references']>;
+      participants?: ReceivedEventParticipant[];
     }
   | {
       kind: 'association';
@@ -2074,10 +2080,16 @@ export function endCurrentEvidence(
 function awarenessBodyContext(
   world: WorldState,
   awareness: Awareness,
-): ObservationContribution['context'] {
+):
+  | {
+      context: NonNullable<ObservationContribution['context']>;
+      participants: ReceivedEventParticipant[];
+    }
+  | undefined {
   const state = world.perceptionEvidence?.[awareness.actorId];
   if (!state) return;
   const result: ObservationExposure[] = [];
+  const receivedParticipants: ReceivedEventParticipant[] = [];
   let attended = false;
   const participants = new Set([
     ...Object.keys(awareness.entityEpisodes ?? {}),
@@ -2115,12 +2127,23 @@ function awarenessBodyContext(
     } else if (!awareness.references?.some((reference) => reference.id === id)) continue;
     if (!result.some((context) => context.episodeId === lease.exposure.episodeId))
       result.push(cloneValue(lease.exposure));
+    // Preserve the correspondence proved now. The recording scope alone cannot
+    // tell a later reader which unknown person performed each event role.
+    awareness.references?.forEach((reference, referenceOrdinal) => {
+      if (reference.id === id)
+        receivedParticipants.push({
+          referenceOrdinal,
+          participant: { kind: 'exposure', exposure: cloneValue(lease.exposure) },
+        });
+    });
     attended ||=
       state.attention?.entries.some(
         (entry) => entry.sourceId === id && entry.exposure.episodeId === lease.exposure.episodeId,
       ) === true;
   }
-  return result.length ? { subjects: result, attended } : undefined;
+  return result.length
+    ? { context: { subjects: result, attended }, participants: receivedParticipants }
+    : undefined;
 }
 
 export function acquireAwarenessObservation(
@@ -2138,7 +2161,7 @@ export function acquireAwarenessObservation(
   if (awareness.modality === 'internal') return;
   const observer = entityGet(world.entities, awareness.actorId);
   if (!observer?.actor) return;
-  const context = awarenessBodyContext(world, awareness);
+  const receivedContext = awarenessBodyContext(world, awareness);
   // An encounter is the existing story wrapper for this native sight input. It
   // retains the received original; recording its prose does not sample sight again.
   if (
@@ -2289,6 +2312,9 @@ export function acquireAwarenessObservation(
       ...(awareness.content !== undefined ? { content: awareness.content } : {}),
       data: cloneValue(awareness.eventData ?? {}),
       references: cloneValue(awareness.references ?? []),
+      ...(receivedContext?.participants.length
+        ? { participants: receivedContext.participants }
+        : {}),
     });
   const recognition = awareness.recognition;
   const associated = new Set<string>();
@@ -2341,7 +2367,7 @@ export function acquireAwarenessObservation(
       strength: awareness.recognized ? 'supported' : 'possible',
     });
   let contribution = acquireObservation(world, observer, {
-    ...(context ? { context } : {}),
+    ...(receivedContext ? { context: receivedContext.context } : {}),
     origin: {
       kind: 'occurrence',
       eventId: event.id,
@@ -2890,6 +2916,8 @@ export function validateObservationContribution(
   originals.set(key, body);
   for (const facet of observation.facets) {
     validateSensoryFacet(facet.value, originals);
+    if (facet.value.kind === 'event')
+      validateReceivedEventObserver(facet.value, observation.observer);
     if (
       (facet.value.kind === 'confirmation' &&
         facet.value.snapshot.valueAcquiredAt > observation.acquiredAt) ||
@@ -2898,6 +2926,21 @@ export function validateObservationContribution(
     )
       throw new Error('Perception support was acquired after its containing contribution.');
   }
+}
+
+/** The same retained event may never borrow another observer's body correspondence. */
+export function validateReceivedEventObserver(
+  value: Extract<SensoryFacet, { kind: 'event' }>,
+  observer: ObserverLife,
+): void {
+  if (
+    value.participants?.some(
+      ({ participant }) =>
+        participant.exposure.observer.actorId !== observer.actorId ||
+        participant.exposure.observer.physicalLife !== observer.physicalLife,
+    )
+  )
+    throw new Error('Foreign received event participant.');
 }
 
 export function validateSensoryFacet(
@@ -3176,7 +3219,30 @@ export function validateSensoryFacet(
             typeof reference.id !== 'string' ||
             typeof reference.label !== 'string' ||
             !['actor', 'target', 'participant'].includes(reference.role),
-        )
+        ) ||
+        (value.participants !== undefined &&
+          (!Array.isArray(value.participants) ||
+            value.participants.length > value.references.length ||
+            new Set(value.participants.map((entry) => entry?.referenceOrdinal)).size !==
+              value.participants.length ||
+            value.participants.some(
+              (entry) =>
+                !hasRecordFields(entry, ['referenceOrdinal', 'participant']) ||
+                !Number.isSafeInteger(entry.referenceOrdinal) ||
+                entry.referenceOrdinal < 0 ||
+                entry.referenceOrdinal >= value.references.length ||
+                !hasRecordFields(entry.participant, ['kind', 'exposure']) ||
+                entry.participant.kind !== 'exposure' ||
+                !hasRecordFields(entry.participant.exposure, ['observer', 'episodeId']) ||
+                !isSafeRecordId(entry.participant.exposure.episodeId) ||
+                !hasRecordFields(entry.participant.exposure.observer, [
+                  'actorId',
+                  'physicalLife',
+                ]) ||
+                !isSafeRecordId(entry.participant.exposure.observer.actorId) ||
+                !Number.isSafeInteger(entry.participant.exposure.observer.physicalLife) ||
+                entry.participant.exposure.observer.physicalLife < 0,
+            )))
       )
         throw new Error('Invalid permitted event detail.');
       break;
