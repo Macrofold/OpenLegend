@@ -1909,6 +1909,12 @@ export class AiDirector {
       run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
       return true;
     }
+    // The immediate tier's admission clock can expire during native preparation
+    // or provider metadata checks. It does not end the original useful lifetime
+    // or consume the separately admitted higher decision. No paid call is retried.
+    const response = run.job.kind === 'chat' || run.discovery !== undefined;
+    if (error instanceof StopJob && error.outcome === 'expired')
+      return this.handoff(run, 'semantic-escalation', response);
     const outcome =
       error instanceof StopJob
         ? error.outcome
@@ -1922,7 +1928,7 @@ export class AiDirector {
           run.receipt,
         )
       : undefined;
-    return !!reason && this.handoff(run, reason, run.job.kind === 'chat');
+    return !!reason && this.handoff(run, reason, response);
   }
 
   /** Explicit player requests survive a simulation pause. Never start another paid
@@ -2095,20 +2101,26 @@ export class AiDirector {
       if (!(await this.service.store.markDecisionDispatch(id))) {
         throw new StopJob('failed', 'This model request already has dispatch intent.', 'uncertain');
       }
+      let sourceFailure: unknown;
       const result = await this.macrofold.withSourceValidation(
         async () => {
-          this.current(run);
-          await run.validateJudgmentSource?.();
-          this.current(run);
-          if (!sourceCurrent())
-            throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
-          if (
-            run.job.decision &&
-            !run.preparedResponse &&
-            (this.now() >= run.job.decision.fastPublishBy ||
-              performance.now() >= run.job.decision.fastPublishByMonotonic)
-          )
-            throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
+          try {
+            this.current(run);
+            await run.validateJudgmentSource?.();
+            this.current(run);
+            if (!sourceCurrent())
+              throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
+            if (
+              run.job.decision &&
+              !run.preparedResponse &&
+              (this.now() >= run.job.decision.fastPublishBy ||
+                performance.now() >= run.job.decision.fastPublishByMonotonic)
+            )
+              throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
+          } catch (error) {
+            sourceFailure = error;
+            throw error;
+          }
         },
         async () => {
           if (run.discovery && !run.discovery.spent) {
@@ -2158,6 +2170,11 @@ export class AiDirector {
       )
         await this.awaitResume(run, true);
       if (run.cancelReason) throw new StopJob('cancelled', run.cancelReason);
+      // The transport cannot interpret a gameplay guard and reports a stopped
+      // admission. Settle its exact undispatched receipt, then retain the owning
+      // refusal (expiry, privacy or control), rather than mislabelling cancellation.
+      if (sourceFailure && !result.receipt.dispatched && !result.receipt.completionUncertain)
+        throw sourceFailure;
       // Surface actual provider failures even when an explicit request is paused.
       if (result.outcome === 'value' || !this.service.paused || run.job.kind === 'thought')
         this.current(run);
