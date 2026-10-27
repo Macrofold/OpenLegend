@@ -24,7 +24,7 @@ import {
   validRecognitionFeatures,
   validateIndividualRecognition,
 } from './worlds/base/recognition.js';
-import { hasMemory } from './living.js';
+import { hasMemory, understandsSpeech } from './living.js';
 import { selectedVoiceReception } from './world-composition.js';
 import { currentBodyLocalSubject } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
@@ -196,7 +196,7 @@ export function perceiveSpeech(
             }
           : undefined;
   const sourceId = visible ? source.id : voice?.recognized ? individual?.canonicalId : undefined;
-  if (!hasMemory(observer) || observer.actor?.capabilities?.language === false) {
+  if (!understandsSpeech(observer)) {
     if (perception === 'seen') return null;
     const received = perceiveSound(
       world,

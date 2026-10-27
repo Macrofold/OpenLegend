@@ -155,6 +155,7 @@ export function emitObservedOccurrence(
     undefined,
     undefined,
     origin,
+    origin,
   );
 }
 
@@ -335,6 +336,7 @@ function recordEvent(
   awarenessBatch?: ExperienceMutation[],
   exposure?: import('./places.js').EncounterExposure,
   origin?: WorldEvent['origin'],
+  receivedPoint?: WorldEvent['origin'],
 ): WorldEvent {
   const text = typeof narration === 'string' ? narration : renderNarration(world, narration);
   const boundedMetric = (value: unknown, fallback: number) =>
@@ -464,9 +466,7 @@ function recordEvent(
       // Native participants and grammar are rendered once for this observer; literal
       // prose/quotes retain their supplied ownership. Speech has listener-specific evidence.
       // docs/architecture.md#private-perception-and-evidence-batches
-      const nativeContact =
-        actorId === nativeTarget?.id &&
-        (type === 'projectile-contact' || type === 'projectile-passage');
+      const nativeContact = actorId === nativeTarget?.id && type === 'projectile-contact';
       const perceived = observeEvent(
         world,
         event,
@@ -530,7 +530,7 @@ function recordEvent(
           ? { change: data['change'] }
           : {}),
       };
-      awareness.observation = acquireAwarenessObservation(world, event, awareness);
+      awareness.observation = acquireAwarenessObservation(world, event, awareness, receivedPoint);
       acquired.push(awareness);
     }
   }

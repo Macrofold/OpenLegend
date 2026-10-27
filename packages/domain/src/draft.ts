@@ -24,7 +24,7 @@ import { captureContributionSources } from './status-capabilities.js';
 import { captureContributionResidency } from './contribution-residency.js';
 import { Immer, current, isDraft, original, enablePatches, freeze, type Patch } from 'immer';
 import { reconcileSemanticInterval } from './semantic-opportunities.js';
-import { isImmutableData } from './records.js';
+import { isImmutableData, immutableDataSnapshot } from './records.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { materializeNativeValuesInPlace } from './native-values.js';
@@ -474,31 +474,10 @@ function sealNativeEvidence(world: WorldState): void {
  * observation through every lease/motion/support path. The latest draft view avoids
  * creating unread child proxies; frozen originals are already immutable authority.
  * Keep this at the existing publication boundary, never as a second writable store. */
-function immutableDraftSnapshot<T>(value: T, memo = new WeakMap<object, object>()): T {
-  if (!value || typeof value !== 'object') return value;
-  const draft = isDraft(value);
-  const latest = draft ? readOnlyDraftView(value) : value;
-  if (Object.isFrozen(latest)) return latest;
-  const known = memo.get(latest);
-  if (known) return known as T;
-  const prototype = Object.getPrototypeOf(latest);
-  if (prototype !== Object.prototype && prototype !== null && !Array.isArray(latest))
-    return frozenRecord(isDraft(value) ? current(value) : value);
-  const result = Array.isArray(latest) ? new Array(latest.length) : Object.create(prototype);
-  memo.set(latest, result);
-  for (const key of Object.keys(latest)) {
-    const child = immutableDraftSnapshot((latest as Record<string, unknown>)[key], memo);
-    if (key === '__proto__')
-      Object.defineProperty(result, key, {
-        value: child,
-        enumerable: true,
-        writable: true,
-        configurable: true,
-      });
-    else result[key] = child;
-  }
-  return Object.freeze(result) as T;
+function immutableDraftSnapshot<T>(value: T): T {
+  return immutableDataSnapshot(value, readOnlyDraftView);
 }
+
 export function draftWorld(
   world: WorldState,
   options: { retainNativeValues?: boolean } = {},

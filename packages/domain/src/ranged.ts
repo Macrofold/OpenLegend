@@ -1338,11 +1338,12 @@ export function advanceProjectiles(
           actual.animal!.episode?.profilePin ?? actual.animal!.profile,
         );
         if (!profile) continue;
-        emit(
+        emitObservedOccurrence(
           world,
           events,
           'projectile-passage',
           subjectNarration(actual, profile.presentation.alarmed),
+          [actual.id],
           actual,
           actual.id,
           {
@@ -1351,7 +1352,6 @@ export function advanceProjectiles(
             incomingY: -flight.direction.y,
             incomingZ: -flight.direction.z,
           },
-          'external',
           passage.point,
         );
       }

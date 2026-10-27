@@ -58,7 +58,13 @@ import {
 import { hasMemory } from './living.js';
 import { knownPlaceEvidence } from './known-place-evidence.js';
 import { validEncounterExposure, type EncounterExposure } from './places.js';
-import { hasRecordFields, isSafeRecordId, isImmutableData, jsonText } from './records.js';
+import {
+  hasRecordFields,
+  isSafeRecordId,
+  isImmutableData,
+  immutableDataSnapshot,
+  jsonText,
+} from './records.js';
 import {
   selectedBodyIndividual,
   selectedPruneObserverIndividuals,
@@ -743,36 +749,18 @@ export function evidenceCutEligible(world: WorldState, cut: EvidenceCut): boolea
 const immutableObservations = new WeakMap<ObservationContribution, ObservationContribution>();
 function immutableObservation(value: ObservationContribution): ObservationContribution {
   const source = readOnlyDraftView(value);
-  if (Object.isFrozen(source)) return source;
+  if (isImmutableData(source)) return source;
   let result = immutableObservations.get(source);
   if (!result) {
-    result = freeze(cloneValue(source), true);
+    result = immutableDataSnapshot(source, readOnlyDraftView);
     immutableObservations.set(source, result);
   }
   return result;
 }
-function immutableSnapshot(value: CapturedCurrentFacet): CapturedCurrentFacet {
-  const source = readOnlyDraftView(value);
-  return Object.isFrozen(source) ? source : freeze(cloneValue(source), true);
-}
 function copyFacetValue(value: SensoryFacet): SensoryFacet {
-  const source = readOnlyDraftView(value);
-  if (isImmutableData(source)) return source;
-  if (source.kind === 'confirmation')
-    return freeze({ kind: 'confirmation', snapshot: immutableSnapshot(source.snapshot) }, true);
-  if (source.kind === 'observed-motion')
-    return freeze(
-      {
-        ...source,
-        exposure: cloneValue(source.exposure),
-        earlier: immutableSnapshot(source.earlier) as CapturedLocationSample,
-        later: immutableSnapshot(source.later) as CapturedLocationSample,
-      },
-      true,
-    );
-  // Received values are replaced as a whole. Seal the detached value once so
-  // later capture/publication can retain it instead of copying the same sample.
-  return freeze(cloneValue(source), true);
+  // One constructor detaches mutable inputs and shares only proved immutable
+  // children, including nested original observations and prior motion samples.
+  return immutableDataSnapshot(value, readOnlyDraftView);
 }
 export function captureCurrentFacet(lease: LiveFacetSupport): CapturedCurrentFacet {
   const {
@@ -2097,6 +2085,7 @@ export function acquireAwarenessObservation(
   world: WorldState,
   event: WorldEvent,
   awareness: Awareness,
+  receivedPoint?: Position,
 ): ObservationContribution | undefined {
   if (
     awareness.eventId === event.id &&
@@ -2177,7 +2166,18 @@ export function acquireAwarenessObservation(
     modality === 'sight' && visualSubjectId
       ? entityGet(world.entities, visualSubjectId)
       : undefined;
-  if (visualSubject?.placement?.mode === 'world' && !event.exposure)
+  // The physical producer already proved this occurrence point to its named
+  // witnesses. Keep that received point instead of joining a present participant.
+  if (receivedPoint)
+    values.push({
+      kind: 'location',
+      location: { kind: 'point', point: { ...receivedPoint }, errorRadius: 0 },
+      frame: {
+        positionAtObservation: { ...readOnlyDraftView(worldPosition(observer)) },
+        forwardAtObservation: observer.spatial.heading,
+      },
+    });
+  if (visualSubject?.placement?.mode === 'world' && !event.exposure && !receivedPoint)
     values.push({
       kind: 'location',
       location: {
@@ -2190,7 +2190,7 @@ export function acquireAwarenessObservation(
         forwardAtObservation: observer.spatial.heading,
       },
     });
-  else if (modality === 'touch')
+  else if (modality === 'touch' && !receivedPoint)
     values.push({
       kind: 'location',
       location: {

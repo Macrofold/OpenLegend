@@ -36,11 +36,12 @@ export function experienceModelBindings(
   ownerId: string,
   entry: ExperienceEntry,
   source: string,
+  frame?: ModelSpatialFrame,
 ): ExperienceModelBindings {
   return {
     source,
     owner: entityHandle(world, ownerId, ownerId),
-    value: memoryForModel(world, ownerId, experienceReading(entry, ownerId)),
+    value: memoryForModel(world, ownerId, experienceReading(entry, ownerId), frame),
   };
 }
 export function experienceForModel(entry: ExperienceEntry, bindings: ExperienceModelBindings) {

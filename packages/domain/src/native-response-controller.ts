@@ -162,13 +162,16 @@ export function acquireNativeResponseEvent(
   const source =
     sourcePermitted && event.actorId ? entityGet(world.entities, event.actorId) : undefined;
   const felt = observation.modality === 'touch';
+  const regional =
+    felt || (event.type === 'projectile-passage' && observation.modality === 'sight');
   const preparation = event.type === 'action-started' || event.type === 'attack-cue';
   if (
     preparation &&
     (!source || !attackPreparation(world, source) || source.actor?.action?.targetId !== animal.id)
   )
     return;
-  if (!felt && (!source || source.id === animal.id || !seesEntity(world, animal, source))) return;
+  if (!regional && (!source || source.id === animal.id || !seesEntity(world, animal, source)))
+    return;
   if (preparation && source) {
     observeNativeAttackPreparation(world, source, events);
     return;
@@ -193,7 +196,7 @@ export function acquireNativeResponseEvent(
       visible: true,
     };
   }
-  if (felt) {
+  if (regional) {
     const projectileId = event.data?.['projectileId'];
     const receivedLocation = observation.facets.find(
       (facet) => facet.value.kind === 'location',

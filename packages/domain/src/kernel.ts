@@ -7921,6 +7921,17 @@ function* updateEncounters(
     const observer = entityGet(world.entities, id);
     beginPerceptionPhase(world, id);
     if (
+      observer?.actor?.alive &&
+      activelyParticipates(observer) &&
+      visionRadius(world, observer) <= 0
+    )
+      endCurrentEvidence(
+        world,
+        id,
+        'sight',
+        normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
+      );
+    if (
       observer?.actor?.encounters &&
       (observer.actor.encounters.life !== (observer.actor.physicalLife ?? 0) ||
         !observer.actor.alive ||
@@ -7940,7 +7951,15 @@ function* updateEncounters(
     if (world.visiblePeople?.[id]?.length) world.visiblePeople[id] = [];
     if (world.visibleObjects?.[id]?.length) world.visibleObjects[id] = [];
     if (Object.keys(world.visiblePlaces?.[id] ?? {}).length) world.visiblePlaces![id] = {};
-    retirePerceptionEpisodes(world, id);
+    // Animals keep only actually seen acoustic-source continuity through their
+    // native sight owner. Human-only view cleanup cannot re-arm repeat sounds.
+    if (
+      !observer?.actor?.alive ||
+      !activelyParticipates(observer) ||
+      observer.actor.controller !== 'native' ||
+      !observer.animal
+    )
+      retirePerceptionEpisodes(world, id);
     if (observer?.actor && Object.keys(observer.actor.contacts ?? {}).length)
       observer.actor.contacts = {};
   }
@@ -8061,6 +8080,12 @@ function* updateEncounters(
       const episode = actor.entity.animal?.episode;
       const due = episode && episode.reviewAt <= world.simTime;
       if (timing.sight && (timing.sampledSight || frame.affected.has(actor.id) || due)) {
+        if (!episode) {
+          // Quiet native bodies only maintain already acquired acoustic sources.
+          // No danger, human attention or full-body history consumer runs here.
+          reconcileNativeExposure(world, entityGet(world.entities, actor.id)!);
+          continue;
+        }
         let candidates = nativePrepared.get(actor.id);
         if (!candidates) {
           const selected = nativeSources(actor.entity);

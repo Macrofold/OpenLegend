@@ -27,6 +27,7 @@ import {
   experienceForModel,
   experienceModelBindings,
   type SharedModelExperience,
+  type ModelSpatialFrame,
 } from './perceived-context.js';
 
 interface AppraisalPreparation {
@@ -36,6 +37,7 @@ interface AppraisalPreparation {
   guard?: 'all' | 'required';
   /** The caller includes the exact complete character.experience array. */
   sharedExperiences?: ReadonlyMap<string, SharedModelExperience>;
+  frame?: ModelSpatialFrame;
 }
 
 /** Feelings are the actor's interpretation, not knowledge of somebody else's mind.
@@ -234,6 +236,57 @@ async function bindAppraisals(
     }
     return sourcesCurrent();
   };
+  // Source meaning stays captured; only its request-owned spatial presentation
+  // can use the common decision frame after asynchronous source preparation.
+  const contextForFrame = (
+    frame = preparation.frame,
+    sharedExperiences = preparation.sharedExperiences,
+  ) => ({
+    ...(sharedExperiences?.size
+      ? {
+          sourceReferences:
+            'An experience.reference names the exact complete record at character.experience[index] in this same request. Read that record for the cause; each cause handle keeps its own native binding.',
+        }
+      : {}),
+    feelings: [...records].map(([handle, record]) => ({
+      handle,
+      revision: record.revision,
+      label: record.feeling,
+      subject: subjectRef(record.targetId),
+      value: record.value,
+      lifetime: record.lifetime,
+      coverage: record.coverage,
+      editable: (() => {
+        const definition = recordDefinitions.get(handle);
+        return !!definition && permitted(definition);
+      })(),
+    })),
+    policies: [...definitions].map(([handle, definition]) => ({
+      handle,
+      label: definition.label,
+      value: definition.value,
+      lifetime: definition.lifetime.kind,
+    })),
+    sources: [...sources].map(([handle, source], index) => {
+      const entry = selected[index]!,
+        shared = sharedExperiences?.get(experienceEntryKey(entry.entry));
+      // This request-owned pool already captured the observer's permitted
+      // meaning and frame. A later label/pose must not rebuild that old cut.
+      // Source/privacy guards still validate the exact native proof at dispatch.
+      const same = shared?.revision === entry.revision;
+      return {
+        handle,
+        experience: same
+          ? { reference: `character.experience[${shared.index}]` }
+          : experienceForModel(
+              entry.entry,
+              experienceModelBindings(world, actorId, entry.entry, handle, frame),
+            ),
+        coverage: source.coverage,
+        subjects: source.subjectIds.flatMap((id) => (subjectRef(id) ? [subjectRef(id)] : [])),
+      };
+    }),
+  });
   return {
     current,
     sourceCurrent,
@@ -253,53 +306,8 @@ async function bindAppraisals(
           })
         : variants[0];
     },
-    context: {
-      ...(preparation.sharedExperiences?.size
-        ? {
-            sourceReferences:
-              'An experience.reference names the exact complete record at character.experience[index] in this same request. Read that record for the cause; each cause handle keeps its own native binding.',
-          }
-        : {}),
-      feelings: [...records].map(([handle, record]) => ({
-        handle,
-        revision: record.revision,
-        label: record.feeling,
-        subject: subjectRef(record.targetId),
-        value: record.value,
-        lifetime: record.lifetime,
-        coverage: record.coverage,
-        editable: (() => {
-          const definition = recordDefinitions.get(handle);
-          return !!definition && permitted(definition);
-        })(),
-      })),
-      policies: [...definitions].map(([handle, definition]) => ({
-        handle,
-        label: definition.label,
-        value: definition.value,
-        lifetime: definition.lifetime.kind,
-      })),
-      sources: [...sources].map(([handle, source], index) => {
-        const entry = selected[index]!,
-          experience = experienceForModel(
-            entry.entry,
-            experienceModelBindings(world, actorId, entry.entry, handle),
-          ),
-          shared = preparation.sharedExperiences?.get(experienceEntryKey(entry.entry));
-        // Exact private identity and revision are necessary but not enough: a
-        // changed observer projection must retain its own complete wording.
-        const same =
-          shared?.revision === entry.revision &&
-          canonicalJson({ ...shared.experience, handle: null }) ===
-            canonicalJson({ ...experience, handle: null });
-        return {
-          handle,
-          experience: same ? { reference: `character.experience[${shared.index}]` } : experience,
-          coverage: source.coverage,
-          subjects: source.subjectIds.flatMap((id) => (subjectRef(id) ? [subjectRef(id)] : [])),
-        };
-      }),
-    },
+    context: contextForFrame(),
+    contextForFrame,
     resolve(proposals: AppraisalProposal[]): AppraisalChange[] {
       const changes: AppraisalChange[] = proposals.map((proposal) => {
         const existing = proposal.appraisal ? records.get(proposal.appraisal) : undefined;

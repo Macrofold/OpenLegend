@@ -488,7 +488,7 @@ it('records an actually attended resource target and a routine occurrence that d
     (event) => event.type === 'gathered' && event.actorId === NPC_ID,
   )!;
   expect(event.targetId).toBe(branches.id);
-  expect(event.data).toMatchObject({ definitionId: 'wood', quantity: 2 });
+  expect(event.data).toMatchObject({ definitionId: 'wood', quantity: 1 });
   const selected = selectTemporalHistory(result.world.experience!.temporal, PLAYER_ID, {
     subjects: [exposure],
     bytes: 1024 * 1024,

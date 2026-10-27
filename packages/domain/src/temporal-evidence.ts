@@ -6,7 +6,7 @@ import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
 import { ensureExperienceAccounting } from './remembered-impressions.js';
 import { personalFactAlias } from './experience-source.js';
-import { jsonEncoding, jsonText } from './records.js';
+import { immutableDataSnapshot, jsonEncoding, jsonText } from './records.js';
 import { selectedRecognitionSupportSourceIds } from './world-composition.js';
 import type { WorldState } from './types.js';
 import type { ObserverSubject } from './knowledge.js';
@@ -411,7 +411,7 @@ function retainValue(
   if (ordinal === undefined) {
     const before = block.bytes;
     ordinal = block.values.length;
-    const copy = freeze(cloneValue(readOnlyDraftView(value)), true);
+    const copy = immutableDataSnapshot(value, readOnlyDraftView);
     const previousHeader = sourceHeaderBytes(block);
     block.values.push(copy);
     block.bytes += valueBytes + (block.values.length > 1 ? 1 : 0);

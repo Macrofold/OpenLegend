@@ -11,6 +11,8 @@ import {
   selectedTemporalPolicy,
   updateWorld,
   expireExperience,
+  hasMemory,
+  entityGet,
   observationDependencies,
   selectedRecognitionMaintenanceDue,
   selectedExpireRecognitionSeeds,
@@ -53,10 +55,12 @@ const recordId = (actorId: string, kind: Kind, id: string) =>
       : ['world', 'experience', kind === 'awareness' ? 'awareness' : 'summaries', actorId, id],
   );
 const sourceEntries = (world: WorldState, actorId: string): ExperienceEntry[] => [
-  ...(world.experience?.awareness[actorId] ?? []).map((value) => ({
-    source: 'awareness' as const,
-    value,
-  })),
+  ...(world.experience?.awareness[actorId] ?? [])
+    .filter((value) => value.retentionClass !== 'sensory')
+    .map((value) => ({
+      source: 'awareness' as const,
+      value,
+    })),
   ...(world.memories[actorId] ?? []).map((value) => ({ source: 'memory' as const, value })),
   ...(world.experience?.summaries[actorId] ?? []).map((value) => ({
     source: 'summary' as const,
@@ -168,7 +172,7 @@ export async function prepareAccountRetention(
       ${Object.entries(tables)
         .map(
           ([kind, table]) =>
-            `SELECT '${kind}' AS source_kind,id,source_id,at,logical_bytes,retention_class,retention_reason,position,${kind === 'memory' ? 'expires_at,weaken_at,unresolved' : 'NULL::double precision AS expires_at,NULL::double precision AS weaken_at,0::bigint AS unresolved'} FROM ${table} WHERE world_id=? AND actor_id=?`,
+            `SELECT '${kind}' AS source_kind,id,source_id,at,logical_bytes,retention_class,retention_reason,position,${kind === 'memory' ? 'expires_at,weaken_at,unresolved' : 'NULL::double precision AS expires_at,NULL::double precision AS weaken_at,0::bigint AS unresolved'} FROM ${table} WHERE world_id=? AND actor_id=? AND retention_class<>'sensory'`,
         )
         .join(' UNION ALL ')}
       ) candidates ORDER BY at,source_kind,source_id LIMIT 8193`,
@@ -303,6 +307,7 @@ export async function prepareAccountRetention(
           }
         }
       }
+      const canRecall = hasMemory(entityGet(world.entities, actorId));
       const expired: ExperienceEntry[] = [],
         replacements: MemoryRecord[] = [];
       for (const candidate of batch) {
@@ -311,9 +316,9 @@ export async function prepareAccountRetention(
           throw new MemoryRetentionError('Selected personal memory disappeared before retention.');
         const category = accountClass(entry);
         let replacement: MemoryRecord | undefined;
-        if (entry.source === 'memory' && entry.value.impression)
+        if (canRecall && entry.source === 'memory' && entry.value.impression)
           replacement = weakenImpression(entry.value, now);
-        else if (entry.value.retention?.receipt) {
+        else if (canRecall && entry.value.retention?.receipt) {
           const locator = entry.value.retention.receipt;
           const record =
             entry.source === 'awareness'

@@ -1,3 +1,5 @@
+import { current, freeze, isDraft } from 'immer';
+
 /** JSON IDs never name object-prototype members or rely on inherited properties. */
 export function isSafeRecordId(value: unknown): value is string {
   return (
@@ -73,4 +75,52 @@ export function isImmutableData(value: unknown): boolean {
   }
   immutableData.add(value);
   return true;
+}
+
+/** Construct an owned immutable JSON graph and establish its proof in the same walk.
+ * The view callback resolves current draft children without exposing their proxies.
+ * Foreign shallow-frozen inputs are checked, then detached when their children can
+ * still change. There is no caller-supplied immutability hint.
+ */
+export function immutableDataSnapshot<T>(
+  value: T,
+  view: <V extends object>(value: V) => V = (value) => value,
+): T {
+  const memo = new WeakMap<object, object>();
+  const copy = (value: unknown): unknown => {
+    if (!value || typeof value !== 'object') return value;
+    const latest = view(value);
+    if (isImmutableData(latest)) return latest;
+    const held = memo.get(latest);
+    if (held) return held;
+    const array = Array.isArray(latest),
+      prototype = Object.getPrototypeOf(latest);
+    if (!array && prototype !== Object.prototype && prototype !== null)
+      return freeze(structuredClone(isDraft(value) ? current(value) : latest), true);
+    const result = array ? new Array(latest.length) : Object.create(prototype);
+    memo.set(latest, result);
+    const keys = Object.keys(latest);
+    let immutable =
+      !array ||
+      (keys.length === latest.length && keys.every((key, index) => key === String(index)));
+    for (const key of keys) {
+      const child = copy((latest as Record<string, unknown>)[key]);
+      if (key === '__proto__')
+        Object.defineProperty(result, key, {
+          value: child,
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        });
+      else result[key] = child;
+      immutable &&=
+        child !== null && typeof child === 'object'
+          ? immutableData.has(child)
+          : typeof child !== 'function';
+    }
+    Object.freeze(result);
+    if (immutable) immutableData.add(result);
+    return result;
+  };
+  return copy(value) as T;
 }

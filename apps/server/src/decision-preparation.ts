@@ -124,7 +124,7 @@ export async function prepareReconsideration(
           prepared.binding.evidenceIds ?? evidenceIds,
           prepared.entityReferences,
           job.triggerEvidenceId ?? job.playerSpeechEventId,
-          { sharedExperiences: prepared.sharedExperiences },
+          { sharedExperiences: prepared.sharedExperiences, frame: prepared.situation.frame },
         )
       : undefined;
   if (appraisalOnly && !appraisal?.schema)

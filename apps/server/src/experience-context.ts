@@ -33,6 +33,11 @@ import {
   type ModelSpatialFrame,
 } from './perceived-context.js';
 
+// Optional received details must be absent in both JSON text and structured Jev state.
+// Strict provider serialization rejects a present field whose value is undefined.
+const suppliedFields = (fields: Record<string, unknown>) =>
+  Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
+
 function soundForModel(
   frame: ModelSpatialFrame,
   sound: PerceivedSound,
@@ -139,8 +144,8 @@ export function facetValueForModel(
     case 'body':
       return {
         kind: value.kind,
-        body: {
-          label: value.body.label,
+        body: suppliedFields({
+          label: suppliedFields({ ...value.body.label }),
           position: modelSpatialPoint(frame, value.body.position),
           facing: modelSpatialVector(frame, {
             x: Math.sin(value.body.heading),
@@ -155,13 +160,13 @@ export function facetValueForModel(
           heatLit: value.body.heatLit,
           remainsPhase: value.body.remainsPhase,
           storage: value.body.storage ? { present: true } : undefined,
-        },
+        }),
       };
     case 'public-attributes':
       return {
         kind: value.kind,
-        attributes: value.attributes.map(
-          ({ id, name, value, status, min, max, unit, critical }) => ({
+        attributes: value.attributes.map(({ id, name, value, status, min, max, unit, critical }) =>
+          suppliedFields({
             id,
             name,
             value,
@@ -511,7 +516,7 @@ function exposureForModel(
 ) {
   if (!exposure) return undefined;
   if (exposure.kind === 'place')
-    return {
+    return suppliedFields({
       kind: exposure.kind,
       reference: reference(exposure.id),
       revision: exposure.revision,
@@ -522,9 +527,9 @@ function exposureForModel(
       landmarkReference: reference(exposure.landmarkId),
       mechanismFields: exposure.mechanismFields,
       ...(exposure.reportedBy ? { reportedBy: reference(exposure.reportedBy) } : {}),
-    };
+    });
   const location = exposure.observedLocation;
-  return {
+  return suppliedFields({
     kind: exposure.kind,
     reference: reference(exposure.id),
     definition: exposure.definition,
@@ -541,10 +546,14 @@ function exposureForModel(
             containerId: reference(location.containerId),
           }
         : location,
-  };
+  });
 }
-export function memoryMeaningForModel(world: WorldState, actorId: string, memory: MemoryRecord) {
-  const frame = captureModelSpatialFrame(world, actorId);
+export function memoryMeaningForModel(
+  world: WorldState,
+  actorId: string,
+  memory: MemoryRecord,
+  frame = captureModelSpatialFrame(world, actorId),
+) {
   const evidence = memory.evidence;
   const historyHandle = (id: string) =>
     id === actorId
@@ -592,7 +601,7 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
       : {}),
     ...(evidence
       ? {
-          experience: {
+          experience: suppliedFields({
             eventType: evidence.eventType,
             ...(!evidence.speech ? { text: evidence.text, content: evidence.content } : {}),
             modality: evidence.modality,
@@ -628,7 +637,7 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
               label: ref.label,
               role: ref.role,
             })),
-          },
+          }),
         }
       : {}),
     ...(memory.observation
@@ -649,7 +658,12 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
 
 /** A remembered occurrence keeps its own participant references. A later sighting
  * cannot turn an old unknown participant into today's body by native ID equality. */
-export function memoryForModel(world: WorldState, actorId: string, memory: MemoryRecord) {
+export function memoryForModel(
+  world: WorldState,
+  actorId: string,
+  memory: MemoryRecord,
+  frame = captureModelSpatialFrame(world, actorId),
+) {
   const source = permittedSourceHandle(world, actorId, ['experience', memory.id]);
   const participant = (id: string) =>
     id === actorId
@@ -669,7 +683,7 @@ export function memoryForModel(world: WorldState, actorId: string, memory: Memor
     ...(memory.speakerId ? { speakerId: participant(memory.speakerId) } : {}),
     ...(memory.eventType ? { eventType: memory.eventType } : {}),
     ...(memory.resolved !== undefined ? { resolved: memory.resolved } : {}),
-    ...memoryMeaningForModel(world, actorId, memory),
+    ...memoryMeaningForModel(world, actorId, memory, frame),
   };
 }
 

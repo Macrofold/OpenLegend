@@ -1624,7 +1624,10 @@ export function expireExperience(
   entries: readonly ExperienceEntry[],
   replacements: readonly MemoryRecord[],
 ): boolean {
-  if (!world.experience || !hasMemory(entityGet(world.entities, actorId))) return false;
+  // Capability loss stops new autobiographical accounts, not retirement of
+  // already stored exact sources under the ordinary retention owner.
+  if (!world.experience || (replacements.length && !hasMemory(entityGet(world.entities, actorId))))
+    return false;
   const selected = new Set<string>();
   for (const entry of entries) {
     const id = entry.source === 'awareness' ? entry.value.eventId : entry.value.id;

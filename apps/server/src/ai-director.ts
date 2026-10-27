@@ -2257,6 +2257,13 @@ export class AiDirector {
       'native-only',
       required,
     );
+    interpretations.context = {
+      ...interpretations.context,
+      ...interpretations.bound.contextForFrame(
+        prepared.situation.frame,
+        prepared.sharedExperiences,
+      ),
+    };
     const validityFor = (world: WorldState) =>
       preparedResponseValidity(
         world,
@@ -3322,6 +3329,7 @@ export class AiDirector {
           prepared.binding.evidenceIds ?? evidenceIds,
           prepared.entityReferences,
           triggerEvidenceId,
+          { sharedExperiences: prepared.sharedExperiences, frame: prepared.situation.frame },
         )
       : undefined;
     const buildResponseSchema = () =>
