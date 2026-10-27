@@ -214,6 +214,13 @@ export async function cleanupRetiredIndividuals(
   }
   let world = after.world;
   const removedAccounts = tables.flatMap((table) => rows.get(table) ?? []);
+  const individualTables = [...tables, 'mind_temporal_chunks'];
+  const individualMembership = individualTables
+    .map(
+      (table) =>
+        `SELECT individual_ids FROM ${table} WHERE world_id=? AND actor_id=? AND individual_ids && ?::text[] AND id<>ALL(?::text[])`,
+    )
+    .join(' UNION ALL ');
   for (const [actorId, candidate] of affected) {
     const retained = new Set<string>(),
       individuals = new Set<string>();
@@ -258,13 +265,12 @@ export async function cleanupRetiredIndividuals(
       for (const row of remaining) retained.add(String(row['id']));
     }
     if (!complete && ids.length)
-      for (const table of [...tables, 'mind_temporal_chunks'])
-        for (const row of await db
-          .prepare(
-            `SELECT individual_ids FROM ${table} WHERE world_id=? AND actor_id=? AND individual_ids && ?::text[] AND id<>ALL(?::text[])`,
-          )
-          .all(world.id, actorId, ids, rows.get(table) ?? []))
-          for (const id of row['individual_ids'] as string[]) individuals.add(id);
+      for (const row of await db
+        .prepare(individualMembership)
+        .all(
+          ...individualTables.flatMap((table) => [world.id, actorId, ids, rows.get(table) ?? []]),
+        ))
+        for (const id of row['individual_ids'] as string[]) individuals.add(id);
     for (const [source, entries] of [
       ['awareness', world.experience?.awareness[actorId] ?? []],
       ['memory', world.memories[actorId] ?? []],
