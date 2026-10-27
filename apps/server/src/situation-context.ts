@@ -471,7 +471,7 @@ export function captureSituation(
     frameEncoding:
       'Detailed body location/motion frames are indices into frames; other observations retain their captured frame objects. Coordinates remain received world positions.',
     measurementEncoding:
-      'Relation lower/upper bound body separation or boundary clearance in metres. Positive decreaseLower is the minimum supported decrease between measured endpoints, not a continuous path, speed or intent. dropLower is the minimum received vertical drop beyond the observed boundary; it proves neither crossing nor danger. Partial coverage is not absence.',
+      'Relation lower/upper conservatively bound body separation or boundary clearance in metres. Positive decreaseLower is the minimum supported decrease between measured endpoints, not a continuous path, speed or intent. dropLower is the minimum received vertical drop beyond the observed boundary; it proves neither crossing nor danger. Partial coverage is not absence.',
     units: { space: 'metres', time: 'simulation-seconds', frame: 'received-world-Y-up' },
     broad: cover.rows.map((row) => ({
       reference: permittedSourceHandle(world, actorId, ['region', jobId, row.key]),

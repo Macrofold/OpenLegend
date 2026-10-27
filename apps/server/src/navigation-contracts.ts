@@ -105,6 +105,8 @@ export function navigationInstructions(world: WorldState): string {
     times.length ? `, until ${times.join('/')} to end it` : '',
   );
   const requests = activityRequestDescriptors(world);
+  // Both decision and action-grounding contexts supply the complete descriptors.
+  // Repeating them in instructions doubles authored choices without adding authority.
   return requests.length
     ? `${navigation}\nFor a supplied installed activity request, set invocation.family to its exact id and invocation.parameters to all its selected closed fields. Every navigation field must be null. Keep its selected mode equal to act.mode. These are requested activities, never evidence that a method is learned. Choosing no new work and ordinary actions remain available; a request alone creates no goal or completed work.`
     : navigation;

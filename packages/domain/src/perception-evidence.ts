@@ -1009,27 +1009,6 @@ function attributeMeanings(value: Extract<SensoryFacet, { kind: 'public-attribut
     ...(detail.display === 'category' ? { value: sample } : {}),
   }));
 }
-/** Movement proves inequality without encoding a complete body/frame. Equal
- * points still need the full comparison, including uncertainty and new fields. */
-function facetPointChanged(before: SensoryFacet, after: SensoryFacet): boolean {
-  const earlier =
-    before.kind === 'body'
-      ? before.body.position
-      : before.kind === 'location' && before.location.kind === 'point'
-        ? before.location.point
-        : undefined;
-  const later =
-    after.kind === 'body'
-      ? after.body.position
-      : after.kind === 'location' && after.location.kind === 'point'
-        ? after.location.point
-        : undefined;
-  return (
-    !!earlier &&
-    !!later &&
-    (earlier.x !== later.x || earlier.y !== later.y || earlier.z !== later.z)
-  );
-}
 /** Called only after the complete received value changed. */
 function semanticFacetChanged(before: SensoryFacet, after: SensoryFacet): boolean {
   if (before.kind === 'body' && after.kind === 'body') {
@@ -1193,10 +1172,7 @@ export function reconcileVisualEvidence(
       // Drafting every unchanged nested body here makes later native previews copy it.
       const previous = prior && effectiveCurrentFacetSupport(world, observer.id, prior),
         previousValue = previous && readOnlyDraftView(previous.value);
-      const changed =
-        !previousValue ||
-        facetPointChanged(previousValue, facet) ||
-        jsonText(previousValue) !== jsonText(facet);
+      const changed = !previousValue || jsonText(previousValue) !== jsonText(facet);
       if (changed) attentionChanges.add(subject.id);
       if (
         prior &&

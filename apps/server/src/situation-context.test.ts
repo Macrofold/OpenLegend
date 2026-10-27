@@ -29,6 +29,7 @@ import {
 } from './situation-context.js';
 import { boundResponseSchema } from './cognition-contracts.js';
 import { entityHandle } from './entity-references.js';
+import { readableDecisionContext } from './response-context.js';
 import { appendMemory } from '../../../packages/domain/src/events.js';
 import { cloneValue } from '../../../packages/domain/src/draft.js';
 import { assignGivenName } from '../../../packages/domain/src/worlds/base/knowledge.js';
@@ -56,6 +57,34 @@ function crowded(count = 16) {
 }
 
 describe('bounded received situation', () => {
+  it('separates earlier memories from received surroundings without hiding actual contact evidence', () => {
+    const world = crowded(1);
+    const captured = captureSituation(world, PLAYER_ID, 'grounded-render', {
+      entries: [],
+      incomplete: true,
+    });
+    const memory = 'Earlier I reached a hearth. A lit fire can cook food.';
+    const context = {
+      receivedSituation: captured.packet,
+      recall: [memory],
+      surroundings: [],
+      contacts: [],
+    };
+    const rendered = readableDecisionContext(context, []);
+    expect(rendered).toContain(memory);
+    expect(rendered).toContain('not a current scene');
+    expect(rendered).toContain('Use this packet for current received surroundings');
+    expect(rendered).not.toContain('## Nearby actors and objects');
+    expect(rendered).toContain('minimum supported decrease between measured endpoints');
+    expect(rendered).toContain('not a continuous path, speed or intent');
+    const contact = 'I feel a touch against my left side.';
+    const withContact = readableDecisionContext({ ...context, contacts: [contact] }, []);
+    expect(withContact).toContain(`Contact evidence:\n- ${contact}`);
+    expect(
+      withContact.split('## Nearby actors and objects')[1]!.split('## Inventory')[0],
+    ).not.toContain('None supplied.');
+  });
+
   it('keeps actually received changes and native relation proof before optional crowd detail', () => {
     let world = updateWorld(createWorld(117), (draft) => {
       const observer = entityGet(draft.entities, NPC_ID)!,

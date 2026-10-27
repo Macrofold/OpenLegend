@@ -18,6 +18,9 @@ import {
   validateObservationContribution,
 } from './perception-evidence.js';
 import { invalidateExperience } from './experience.js';
+import { emit } from './events.js';
+import { subjectNarration } from './narration.js';
+import type { WorldEvent } from './types.js';
 import { validateTemporalEvidenceState } from './temporal-validation.js';
 import { selectedTemporalPolicy } from './world-composition.js';
 import {
@@ -371,28 +374,33 @@ it('records an actually attended resource target and a routine occurrence that d
   ]);
   const personExposure = currentBodyObservation(later, PLAYER_ID, NPC_ID)!.exposure.episodeId;
   later.simTime = 20;
-  const entry = executeCommand(later, {
-    id: 'routine-entry-boundary',
-    actorId: NPC_ID,
-    type: 'move',
-    destination: { x: 3.5, y: 0, z: 2, surfaceId: 'terrain' },
-  });
-  expect(entry.outcome.ok, entry.outcome.message).toBe(true);
-  const routine = entry.events.find((event) => event.type === 'action-started')!;
+  const nativeEvents: WorldEvent[] = [];
+  const performer = entityGet(later.entities, NPC_ID)!;
+  // An authored native occurrence supplies urgency, without an authored Awareness
+  // or a lasting-policy override. The real receiver and recorder do the rest.
+  const routine = emit(
+    later,
+    nativeEvents,
+    'routine-fixture-gesture',
+    subjectNarration(performer, 'makes a sudden visible gesture.'),
+    performer,
+    undefined,
+    { urgency: 8 },
+  );
   expect(
-    currentDetailedAttention(entry.world, PLAYER_ID).some((value) => value.sourceId === NPC_ID),
+    currentDetailedAttention(later, PLAYER_ID).some((value) => value.sourceId === NPC_ID),
   ).toBe(true);
   expect(
-    entry.world.experience!.awareness[PLAYER_ID]!.some((value) => value.eventId === routine.id),
+    later.experience!.awareness[PLAYER_ID]!.some((value) => value.eventId === routine.id),
   ).toBe(false);
   expect(
-    selectTemporalHistory(entry.world.experience!.temporal, PLAYER_ID, {
+    selectTemporalHistory(later.experience!.temporal, PLAYER_ID, {
       subjects: [personExposure],
       bytes: 1024 * 1024,
       limit: 1000,
     }).entries.some(({ receipt }) => receipt.sourceIds.includes(routine.id)),
   ).toBe(true);
-  validatePerceptionEvidenceState(JSON.parse(JSON.stringify(entry.world)));
+  validatePerceptionEvidenceState(JSON.parse(JSON.stringify(later)));
   const forgotten = structuredClone(result.world);
   invalidateExperience(forgotten, PLAYER_ID, [event.id], true);
   expect(

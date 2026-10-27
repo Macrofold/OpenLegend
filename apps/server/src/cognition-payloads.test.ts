@@ -18,6 +18,7 @@ import {
   worldSupport,
   currentBodySubject,
   knowledgeDocument,
+  activityRequestDescriptors,
 } from '@open-legend/domain';
 import {
   validateJudgmentSize,
@@ -872,8 +873,20 @@ describe(
         inspectGeneration(h, job.id, generation!, 2),
       ];
 
+      expect(generation!.instructions).toContain('Speak in natural observed-relative terms');
+      expect(generation!.instructions).toContain(
+        'actually received labels establish that convention',
+      );
       const context = String(generation!.context);
       const parts = sections(context);
+      expect(context).not.toContain('## Nearby actors and objects\nNone supplied.');
+      expect(section(parts, 'Recent memories').body).toContain('not a current scene');
+      expect(section(parts, 'Received situation').body).toContain(
+        'Use this packet for current received surroundings',
+      );
+      for (const request of activityRequestDescriptors(h.service.world))
+        expect(context.split(JSON.stringify(request))).toHaveLength(2);
+      expect(section(parts, 'Native navigation').body).not.toContain('"fields":');
       // Routing and generation share every section except the action shortlist; the
       // generation additionally carries the actor-invention context after References.
       const routeParts = sections(route!.state as string);
