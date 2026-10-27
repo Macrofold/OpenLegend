@@ -169,6 +169,18 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       observerIdentities: actorMaps('mind_recognition'),
       perceptionEvidence: map('mind_perception_owners', {
         current: map('mind_perception_current'),
+        // Confirmation clocks must not rewrite the unchanged scene and attention
+        // candidates. These retain their existing ordered, observer-owned values.
+        geometry: one('mind_perception_geometry', {
+          fragments: list('mind_perception_geometry_fragments', 'key'),
+          boundaries: list('mind_perception_geometry_boundaries', 'id'),
+        }),
+        attention: one('mind_perception_attention', {
+          candidates: map('mind_perception_attention_candidates'),
+          latches: map('mind_perception_attention_latches'),
+          relationDirty: map('mind_perception_attention_dirty'),
+          relationScans: map('mind_perception_attention_scans'),
+        }),
       }),
       // A subject leaving view must not renumber every remaining sight binding.
       // Episode identities fence recognition by key, never by iteration order.
