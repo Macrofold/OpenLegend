@@ -99,6 +99,11 @@ export function permittedSourceHandle(
     .subarray(0, 18)
     .toString('base64url');
 }
+/** One acquired exposure can join its received history and event participants;
+ * the token grants neither canonical identity nor a current physical target. */
+export function receivedSubjectHandle(world: WorldState, observerId: string, episodeId: string) {
+  return permittedSourceHandle(world, observerId, ['received-subject', episodeId]);
+}
 /** Preserve exact evidence-family identity across fact, support and confirmation views. */
 export function evidenceSourceHandle(
   world: WorldState,

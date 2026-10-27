@@ -339,7 +339,6 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
         !strings(op.remember.sources) ||
         !op.remember.sources.length ||
         op.remember.sources.length > 8 ||
-        new Set(op.remember.sources).size !== op.remember.sources.length ||
         !text(op.remember.text) ||
         !op.remember.text.trim() ||
         op.remember.text.length > 1200)
@@ -665,7 +664,8 @@ export function commitActorResponse(
       } else if (op.remember) {
         const received: Array<{ receipt: TemporalReceipt; values: TemporalValue[] }> = [];
         let available = true;
-        for (const reference of op.remember.sources) {
+        // A repeated granted reference selects one source, not another captured receipt.
+        for (const reference of new Set(op.remember.sources)) {
           const locator = getOwn(binding.retentionReferences, reference);
           if (locator) {
             const captured =

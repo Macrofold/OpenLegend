@@ -23,6 +23,7 @@ import {
   evidenceSourceHandle,
   personalSourceHandle,
   historicalAccountText,
+  receivedSubjectHandle,
 } from './entity-references.js';
 import {
   captureModelSpatialFrame,
@@ -244,13 +245,19 @@ export function facetValueForModel(
         wordsAsHeard: value.wordsAsHeard,
         support: value.support.map((key) => supportForModel(world, actorId, key)),
       };
-    case 'event':
+    case 'event': {
+      const participants = new Map(
+        value.participants?.map(({ referenceOrdinal, participant }) => [
+          referenceOrdinal,
+          receivedSubjectHandle(world, actorId, participant.exposure.episodeId),
+        ]),
+      );
       return {
         kind: value.kind,
         eventType: value.eventType,
         text: value.eventType === 'speech' ? value.text : historicalAccountText(value.text),
         data: eventFieldsForModel(world, actorId, value.data, sourceScope),
-        references: value.references.map((ref) => ({
+        references: value.references.map((ref, ordinal) => ({
           reference: permittedSourceHandle(world, actorId, [
             'historical-participant',
             sourceScope,
@@ -258,8 +265,10 @@ export function facetValueForModel(
           ]),
           label: ref.label,
           role: ref.role,
+          ...(participants.has(ordinal) ? { receivedSubject: participants.get(ordinal) } : {}),
         })),
       };
+    }
     case 'encounter-exposure':
       return {
         kind: value.kind,
@@ -375,6 +384,43 @@ export function currentFacetForModel(
     confirmedThrough: snapshot.confirmedThrough,
   };
 }
+
+/** These defaults encode equal metadata, never a normalized time or inferred
+ * continuity. A differing or absent optional confirmation stays facet-local. */
+export function modelFacetMetadata(
+  facets: readonly {
+    role: string;
+    asOf: number;
+    measuredFrom: number;
+    measuredThrough: number;
+    acquiredAt: number;
+    confirmedThrough?: number;
+  }[],
+) {
+  const keys = [
+    'role',
+    'asOf',
+    'measuredFrom',
+    'measuredThrough',
+    'acquiredAt',
+    'confirmedThrough',
+  ] as const;
+  const defaults: Record<string, string | number> = {};
+  for (const key of keys) {
+    const value = facets[0]?.[key];
+    if (value !== undefined && facets.every((facet) => facet[key] === value)) defaults[key] = value;
+  }
+  return {
+    defaults,
+    overrides: facets.map((facet) =>
+      Object.fromEntries(
+        keys.flatMap((key) =>
+          facet[key] !== undefined && facet[key] !== defaults[key] ? [[key, facet[key]]] : [],
+        ),
+      ),
+    ),
+  };
+}
 export function observationForModel(
   world: WorldState,
   actorId: string,
@@ -382,16 +428,7 @@ export function observationForModel(
   frame = captureModelSpatialFrame(world, actorId),
 ) {
   if (observation.observer.actorId !== actorId) throw new Error('Foreign personal observation.');
-  const first = observation.facets[0];
-  const defaults = first
-    ? {
-        role: first.role,
-        asOf: first.asOf,
-        measuredFrom: first.measuredFrom,
-        measuredThrough: first.measuredThrough,
-        acquiredAt: first.acquiredAt,
-      }
-    : undefined;
+  const metadata = modelFacetMetadata(observation.facets);
   return {
     source: evidenceSourceHandle(world, actorId, {
       family: 'native-exposure',
@@ -405,21 +442,13 @@ export function observationForModel(
     timeUnit: 'simulation-seconds',
     // Equal metadata is encoded once; each facet inherits these exact values.
     // Overrides retain independent times/roles rather than normalizing them away.
-    facetDefaults: { ...defaults, supportStatus: 'retained' },
-    facets: observation.facets.map((facet) => ({
+    facetDefaults: { ...metadata.defaults, supportStatus: 'retained' },
+    facets: observation.facets.map((facet, index) => ({
       ordinal: facet.ordinal,
       ...(factSupportStatus(world, actorId, observation.id, facet.ordinal) !== 'retained'
         ? { supportStatus: factSupportStatus(world, actorId, observation.id, facet.ordinal) }
         : {}),
-      ...Object.fromEntries(
-        Object.entries({
-          role: facet.role,
-          asOf: facet.asOf,
-          measuredFrom: facet.measuredFrom,
-          measuredThrough: facet.measuredThrough,
-          acquiredAt: facet.acquiredAt,
-        }).filter(([key, value]) => !defaults || value !== defaults[key as keyof typeof defaults]),
-      ),
+      ...metadata.overrides[index],
       value: facetValueForModel(world, actorId, facet.value, observation.id, frame),
     })),
   };
@@ -578,6 +607,7 @@ export function memoryMeaningForModel(
         JSON.stringify(facet.value.exposure) === JSON.stringify(evidence.exposure),
     );
   return {
+    temporalRole: 'historical',
     ...(memory.impression
       ? {
           rememberedImpression: {

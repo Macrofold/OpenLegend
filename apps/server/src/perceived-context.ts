@@ -67,10 +67,58 @@ export function experienceEmbeddingText(entry: ExperienceEntry, ownerId: string)
 
 /** One owned frame per decision, shared by presentation and fixed-point movement.
  * Native evidence keeps its original world coordinates and acquisition frame. */
+export const RECEIVED_HISTORY_INSTRUCTIONS =
+  'Recent input contains selected historical receipts. A participant’s receivedSubject joins that occurrence to the same received subject, without revealing identity or intent. Partial coverage can omit retained intermediate events; request history when earlier detail is needed. Omission does not mean an event was never perceived or did not happen.';
+
 export interface ModelSpatialFrame {
   position: Position;
   axes: ReturnType<typeof headingFrame>;
   support: string | null;
+}
+
+/** Exact acquisition frames are shared only inside one rendered packet. The
+ * ownership set prevents an unrelated numeric field named frame being rewritten. */
+export function modelFrameTable() {
+  const frames: unknown[] = [],
+    ids = new Map<string, number>(),
+    owners = new WeakSet<object>();
+  const indexed = (value: object, frame: unknown) => {
+    const key = JSON.stringify(frame);
+    let id = ids.get(key);
+    if (id === undefined) {
+      id = frames.length;
+      ids.set(key, id);
+      frames.push(frame);
+    }
+    const result: Record<string, unknown> = { ...value, frame: id };
+    owners.add(result);
+    return result;
+  };
+  const compact = (value: unknown, start: number) => {
+    const used = new Set<number>();
+    const visit = (node: unknown, rewrite?: Map<number, number>): void => {
+      if (Array.isArray(node)) {
+        node.forEach((child) => visit(child, rewrite));
+        return;
+      }
+      if (!node || typeof node !== 'object') return;
+      for (const [key, child] of Object.entries(node)) {
+        if (key === 'frame' && owners.has(node) && typeof child === 'number' && child >= start) {
+          if (rewrite) (node as Record<string, unknown>)[key] = rewrite.get(child)!;
+          else used.add(child);
+        } else visit(child, rewrite);
+      }
+    };
+    visit(value);
+    const kept = [...used].sort((a, b) => a - b),
+      mapping = new Map(kept.map((id, index) => [id, start + index])),
+      values = kept.map((id) => frames[id]);
+    visit(value, mapping);
+    frames.splice(start, frames.length - start, ...values);
+    ids.clear();
+    frames.forEach((frame, id) => ids.set(JSON.stringify(frame), id));
+  };
+  return { frames, indexed, compact };
 }
 export function captureModelSpatialFrame(world: WorldState, actorId: string): ModelSpatialFrame {
   const actor = entityGet(world.entities, actorId);

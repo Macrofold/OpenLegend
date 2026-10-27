@@ -1,6 +1,8 @@
 import { currentBodyObservation } from '@open-legend/domain';
 import {
   captureTemporalReceiptPrefix,
+  PERSONAL_EVIDENCE_PREPARATION,
+  selectedAttentionPolicy,
   currentDetailedAttention,
   selectTemporalHistory,
 } from '@open-legend/domain';
@@ -373,7 +375,18 @@ export async function prepareDecision(
   const evidenceScope = head
     ? { worldId: world.id, actorId, generation: head.generation }
     : undefined;
+  const bodies = new MemoryReadCache();
+  const retainedEvidence =
+    service.store.memories && evidenceScope
+      ? await service.store.memories.evidence(evidenceScope, evidenceIds, bodies)
+      : undefined;
+  const evidence = retainedEvidence
+    ? retainedEvidence.flatMap((entry) => (entry.awareness ? [entry.awareness] : []))
+    : (world.experience?.awareness[actorId] ?? []).filter((entry) =>
+        evidenceIds.includes(entry.eventId),
+      );
   const receiptPrefix = captureTemporalReceiptPrefix(world, actorId);
+  const historyPolicy = selectedAttentionPolicy(world).scene;
   const recentHistory =
     service.store.memories && evidenceScope
       ? await service.store.memories.temporalHistory(
@@ -384,14 +397,29 @@ export async function prepareDecision(
             ),
             through: world.simTime,
             cut: receiptPrefix,
+            bytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
+            limit: historyPolicy.historyReceipts,
           },
           world,
         )
-      : selectTemporalHistory(world.experience?.temporal, actorId, { cut: receiptPrefix });
+      : selectTemporalHistory(world.experience?.temporal, actorId, {
+          cut: receiptPrefix,
+          bytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
+          limit: historyPolicy.historyReceipts,
+        });
   // Size the same received measurements that this decision will actually use,
   // before optional paid selection. Later waits cannot replace them with a new
   // scene or make older retained changes newly observed.
-  const capturedSituation = captureSituation(world, actorId, jobId, recentHistory);
+  const capturedSituation = captureSituation(
+    world,
+    actorId,
+    jobId,
+    recentHistory,
+    evidence.flatMap((entry) => [
+      ...(entry.observation ? [entry.observation] : []),
+      ...(entry.observations ?? []),
+    ]),
+  );
   const validateSituation = async () => {
     if (generation !== service.generation || !capturedSituation.valid(service.world))
       throw new Error('Received situation evidence changed during this decision.');
@@ -418,16 +446,6 @@ export async function prepareDecision(
     observed.supplyOpportunities,
     knownSupplyPlaces,
   );
-  const bodies = new MemoryReadCache();
-  const retainedEvidence =
-    service.store.memories && evidenceScope
-      ? await service.store.memories.evidence(evidenceScope, evidenceIds, bodies)
-      : undefined;
-  const evidence = retainedEvidence
-    ? retainedEvidence.flatMap((entry) => (entry.awareness ? [entry.awareness] : []))
-    : (world.experience?.awareness[actorId] ?? []).filter((entry) =>
-        evidenceIds.includes(entry.eventId),
-      );
   if (triggerEvidenceId && evidence.some((entry) => entry.eventId === triggerEvidenceId))
     stimulus = projectEntityMarkers(
       responseTrigger(service, actorId, triggerEvidenceId, stimulus, evidence),

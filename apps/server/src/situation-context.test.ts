@@ -29,7 +29,7 @@ import {
   temporalHistoryForModel,
 } from './situation-context.js';
 import { boundResponseSchema } from './cognition-contracts.js';
-import { entityHandle } from './entity-references.js';
+import { entityHandle, evidenceSourceHandle } from './entity-references.js';
 import { readableDecisionContext } from './response-context.js';
 import { presentedSpatialSubject, receivedMeasurementDescription } from './perceived-context.js';
 import { appendMemory } from '../../../packages/domain/src/events.js';
@@ -428,7 +428,7 @@ describe('bounded received situation', () => {
     expect(currentBodyObservation(world, NPC_ID, 'edge-person-0')).toBeDefined();
   });
 
-  it('retains an interpretation of an actually supplied discovery fact without exposing omitted candidates', () => {
+  it('retains a repeated supplied discovery source once without exposing omitted candidates', () => {
     const world = crowded();
     world.paused = false;
     const captured = captureSituation(world, PLAYER_ID, 'discovery-remember', {
@@ -465,7 +465,10 @@ describe('bounded received situation', () => {
             name: null,
             appraise: null,
             observe: null,
-            remember: { sources: [source], text: 'That unfamiliar person caught my attention.' },
+            remember: {
+              sources: [source, source],
+              text: 'That unfamiliar person caught my attention.',
+            },
           },
         ],
       },
@@ -482,9 +485,9 @@ describe('bounded received situation', () => {
       situationProposalBinding(captured),
     );
     expect(result.outcome.ok, result.outcome.message).toBe(true);
-    expect(result.world.memories[PLAYER_ID]!.some((memory) => memory.kind === 'impression')).toBe(
-      true,
-    );
+    expect(
+      result.world.memories[PLAYER_ID]!.filter((memory) => memory.kind === 'impression'),
+    ).toHaveLength(1);
   });
   it('never rebinds an old thought about an unknown person to a silently reacquired body', () => {
     const world = crowded(1),
@@ -744,6 +747,72 @@ describe('bounded received situation', () => {
       expect(current[key]!.presentedDescription).toBe(original[key]!.presentedDescription);
   });
   it('keeps exact newest rows chronological and marks byte-shortened history partial', async () => {
+    const initialWorld = crowded(1);
+    for (let ordinal = 0; ordinal < 20; ordinal++)
+      appendMemory(initialWorld, PLAYER_ID, {
+        kind: 'episode',
+        source: 'self_thought',
+        summary: `Received detail ${ordinal}: ` + 'x'.repeat(700),
+        entityIds: [],
+        importance: 5,
+      });
+    const hydrated = selectTemporalHistory(initialWorld.experience?.temporal, PLAYER_ID, {
+      bytes: 4 * 1024 * 1024,
+      limit: 128,
+    });
+    const initial = captureSituation(
+      initialWorld,
+      PLAYER_ID,
+      'initial-history-byte-budget',
+      hydrated,
+    );
+    expect(Buffer.byteLength(JSON.stringify(initial.packet.recent))).toBeLessThanOrEqual(
+      selectedAttentionPolicy(initialWorld).scene.historyBytes,
+    );
+    expect(initial.packet.recent.coverage).toBe('partial');
+    expect(initial.packet.recent.entries.length).toBeLessThan(hydrated.entries.length);
+    expect(Object.keys(initial.retentionReferences).sort()).toEqual(
+      initial.packet.recent.entries.map((entry) => entry.reference).sort(),
+    );
+    initialWorld.paused = false;
+    const spoken = executeCommand(initialWorld, {
+      id: 'required-history-source',
+      type: 'say',
+      actorId: NPC_ID,
+      targetId: PLAYER_ID,
+      text: 'This is the initiating utterance.',
+      volume: 'shout',
+    });
+    expect(spoken.outcome.ok).toBe(true);
+    const represented = [...spoken.world.experience!.awareness[PLAYER_ID]!]
+      .reverse()
+      .find((entry) => entry.eventType === 'speech' && entry.observation)!.observation!;
+    const duplicate = selectTemporalHistory(spoken.world.experience?.temporal, PLAYER_ID, {
+      bytes: 4 * 1024 * 1024,
+      limit: 128,
+    }).entries.find(({ receipt }) =>
+      receipt.facets.every((facet) => facet.original?.source.id === represented.id),
+    )!;
+    expect(duplicate).toBeDefined();
+    const deduplicated = captureSituation(
+      spoken.world,
+      PLAYER_ID,
+      'required-source-already-supplied',
+      { entries: [duplicate], incomplete: false },
+      [represented],
+    );
+    expect(deduplicated.packet.recent.entries).toEqual([]);
+    expect(deduplicated.packet.recent.coverage).toBe('selected-retained');
+    expect(
+      deduplicated.observationReferences[
+        evidenceSourceHandle(spoken.world, PLAYER_ID, {
+          family: 'native-exposure',
+          observer: represented.observer,
+          id: represented.id,
+          revision: represented.revision,
+        })
+      ],
+    ).toBe(represented);
     const world = crowded(1),
       history = selectTemporalHistory(world.experience?.temporal, PLAYER_ID);
     const captured = captureSituation(world, PLAYER_ID, 'history-pages', history);
@@ -789,6 +858,17 @@ describe('bounded received situation', () => {
       page.entries.every((entry) => entry.facts[0]!.value.text.endsWith('x'.repeat(500))),
     ).toBe(true);
     expect(page).not.toHaveProperty('cursor');
+    const tinyCapture = captureSituation(world, PLAYER_ID, 'tiny-query', {
+      entries: [],
+      incomplete: false,
+    });
+    const tiny = await expandSituation(
+      { ...tinyCapture, policy: { ...tinyCapture.policy, expansionBytes: 1 } },
+      [{ kind: 'history', subject: null, from: 0, through: world.simTime }],
+      async () => ({ entries, incomplete: false, hasMore: false }),
+    );
+    expect(tiny.results).toEqual([]);
+    expect(Object.keys(tinyCapture.retentionReferences)).toHaveLength(0);
   });
   it('keeps an empty incomplete history answer distinct from absence without a dead cursor', async () => {
     const world = crowded(1),
