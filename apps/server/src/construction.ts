@@ -83,14 +83,15 @@ export const gateUsePlanSchema = z
 
 /** Called only for a personally perceived structure. Keep all four intentions:
  * an unseen bar must not select or disable a menu entry from hidden state. */
-export function gateUseOptions(world: WorldState, root: Entity) {
+export function gateUseOptions(world: WorldState, actorId: string, root: Entity) {
   const component = root.assembly,
     family = component && world.assemblyFamilies?.[component.family.id];
   if (
     component?.implementation !== 'grounded-panel-boundary' ||
     component.retired ||
     family?.implementation !== component.implementation ||
-    !nativeCommandSupported(world, 'operate-gate')
+    !nativeCommandSupported(world, 'operate-gate') ||
+    !constructionPreviewBasis(world, actorId, root.id)
   )
     return [];
   const pin = definitionPin(family);
@@ -143,7 +144,8 @@ export function prepareBoundaryImpactOptions(
       family?.implementation !== component.implementation ||
       !family.damage ||
       !sight ||
-      !nativeCommandSupported(world, 'impact-boundary')
+      !nativeCommandSupported(world, 'impact-boundary') ||
+      !constructionPreviewBasis(world, actorId, root.id)
     )
       return [];
     const faces = boundaryMaterialWorkQuery(world, root.id, actorId),

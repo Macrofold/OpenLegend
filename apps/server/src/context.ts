@@ -1032,7 +1032,7 @@ export function npcCandidates(
             command: option.command,
           });
     for (const entity of observed.visibleEntities)
-      for (const option of gateUseOptions(service.world, entity))
+      for (const option of gateUseOptions(service.world, actorId, entity))
         if (previewChoice(option.command).ok)
           actions.push({
             id: option.id,

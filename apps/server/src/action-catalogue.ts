@@ -713,7 +713,7 @@ function nativeActionCatalogue(
         description: option.description,
       });
     if (!context.itemId)
-      for (const option of gateUseOptions(world, target))
+      for (const option of gateUseOptions(world, scope.actorId, target))
         add(option.id, option.label, 'Build', option.command, [], target.id, {
           availability: controlling ? preview(option.command) : controlUnavailable,
           description: option.description,
