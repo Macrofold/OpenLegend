@@ -810,7 +810,18 @@ export function applyAttentionRelationEvaluations(
       active: false,
       revision: evaluation.revision,
     });
+    const sameCut = latch.revision === evaluation.revision;
     latch.revision = evaluation.revision;
+    const supportedClear =
+      evaluation.clearSupported &&
+      (!latch.active || evaluation.witnesses.some((value) => value.id === latch.witnessId)) &&
+      evaluation.witnesses.every(
+        (value) =>
+          value.distanceLower > bounds.clear ||
+          value.decreaseLower < policy.minimumDecrease ||
+          (evaluation.family === 'closing-drop' &&
+            (value.dropLower ?? -Infinity) < policy.drop.minimumDrop),
+      );
     if (witness) {
       latch.clearSince = undefined;
       latch.newestProof = cloneValue(witness.proof);
@@ -829,18 +840,9 @@ export function applyAttentionRelationEvaluations(
           at: world.simTime,
         });
       }
-    } else if (
-      evaluation.complete &&
-      evaluation.clearSupported &&
-      (!latch.active || evaluation.witnesses.some((value) => value.id === latch.witnessId)) &&
-      evaluation.witnesses.every(
-        (value) =>
-          value.distanceLower > bounds.clear ||
-          value.decreaseLower < policy.minimumDecrease ||
-          (evaluation.family === 'closing-drop' &&
-            (value.dropLower ?? -Infinity) < policy.drop.minimumDrop),
-      )
-    ) {
+    } else if (evaluation.complete && supportedClear) {
+      // A complete fresh pass can confirm the ongoing interval even when the
+      // global revision advanced for unrelated received input.
       latch.clearSince ??= world.simTime;
       if (world.simTime - latch.clearSince >= policy.clearSeconds) {
         latch.active = false;
@@ -848,7 +850,11 @@ export function applyAttentionRelationEvaluations(
         latch.newestProof = undefined;
         latch.witnessId = undefined;
       }
-    } else latch.clearSince = undefined;
+    } else if (!sameCut || evaluation.exhausted || !supportedClear) {
+      // A bounded partial page is not a reception gap. Keep an already supported
+      // interval only for this unchanged cut; rearming still needs a full pass.
+      latch.clearSince = undefined;
+    }
   }
   return cues;
 }

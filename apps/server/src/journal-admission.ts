@@ -130,8 +130,19 @@ export function journalTableFamily(
           next.mode !== 'world' ||
           !next.position ||
           ![next.position.x, next.position.y, next.position.z].every(Number.isFinite) ||
+          (next.motionContinuityRevision !== undefined &&
+            (!Number.isSafeInteger(next.motionContinuityRevision) ||
+              next.motionContinuityRevision < 0 ||
+              next.motionContinuityRevision > next.revision)) ||
           Object.keys(next).some(
-            (field) => !['mode', 'position', 'supportSurfaceId', 'revision'].includes(field),
+            (field) =>
+              ![
+                'mode',
+                'position',
+                'supportSurfaceId',
+                'revision',
+                'motionContinuityRevision',
+              ].includes(field),
           )
         )
           return false;

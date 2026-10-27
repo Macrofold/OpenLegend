@@ -123,33 +123,32 @@ describe('world presence, time and durable commands', () => {
     expect(restored.service.world.simTime).toBe(15);
   });
 
-  it('settles disconnected exposure and advances the requested game time at each speed', async () => {
-    await Promise.all(
-      [0.5, 1, 3, 8].map(async (speed) => {
-        const { service, clock } = await setup();
-        expect(service.paused).toBe(true);
-        expect(service.pauseReason).toBe('away');
-        await service.tick(1);
-        expect(service.world.simTime).toBe(60);
-        for (let i = 0; i < 16; i++) {
-          clock.now += 250;
-          await service.tick(0.25);
-        }
-        expect(service.world.simTime).toBe(300);
-        await activate(service);
-        expect((await service.control({ speed })).ok).toBe(true);
-        const restResult = await service.command('rest', {
-          type: 'status-effect',
-          definitionId: 'wilderness:restorative-rest',
-          targetId: PLAYER_ID,
-          effectOperation: 'activate',
-        });
-        expect(restResult.ok, restResult.message).toBe(true);
-        await run(service, clock, 6 / speed);
-        expect(service.world.simTime).toBeCloseTo(660, 9);
-      }),
-    );
-  });
+  it.each([0.5, 1, 3, 8])(
+    'settles disconnected exposure and advances the requested game time at speed %s',
+    async (speed) => {
+      const { service, clock } = await setup();
+      expect(service.paused).toBe(true);
+      expect(service.pauseReason).toBe('away');
+      await service.tick(1);
+      expect(service.world.simTime).toBe(60);
+      for (let i = 0; i < 16; i++) {
+        clock.now += 250;
+        await service.tick(0.25);
+      }
+      expect(service.world.simTime).toBe(300);
+      await activate(service);
+      expect((await service.control({ speed })).ok).toBe(true);
+      const restResult = await service.command('rest', {
+        type: 'status-effect',
+        definitionId: 'wilderness:restorative-rest',
+        targetId: PLAYER_ID,
+        effectOperation: 'activate',
+      });
+      expect(restResult.ok, restResult.message).toBe(true);
+      await run(service, clock, 6 / speed);
+      expect(service.world.simTime).toBeCloseTo(660, 9);
+    },
+  );
   it('simulates five vulnerable seconds on explicit absence, then freezes without return catch-up', async () => {
     const { service, clock } = await setup();
     await activate(service);

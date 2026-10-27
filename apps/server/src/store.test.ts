@@ -13,6 +13,10 @@ import {
   freezeWorld,
   updateWorld,
   defaultStoryPolicy,
+  advanceWorld,
+  setSpatialPosition,
+  worldPosition,
+  worldSupport,
 } from '@open-legend/domain';
 import { appendMemory } from '../../../packages/domain/src/events.js';
 import { journalTableFamily } from './journal-admission.js';
@@ -78,7 +82,7 @@ afterEach(async () => {
 });
 
 describe('PostgreSQL committed world boundary', () => {
-  it('defers current native receipt and personal-source arrays, rejects malformed metadata, and recovers their exact bytes', async () => {
+  it('defers current native movement and personal-source arrays, rejects malformed metadata, and recovers their exact bytes', async () => {
     const path = diskPath();
     let store = await open(path);
     const initial = save();
@@ -88,7 +92,19 @@ describe('PostgreSQL committed world boundary', () => {
       ...(initial.world.storyPolicy ?? defaultStoryPolicy()),
       enabled: false,
     };
+    initial.world.paused = false;
+    const player = entityGet(initial.world.entities, PLAYER_ID)!;
+    setSpatialPosition(
+      initial.world,
+      player,
+      { ...worldPosition(player), x: worldPosition(player).x + 0.1 },
+      worldSupport(player),
+    );
+    const from = { ...worldPosition(player) };
     createItemLot(initial.world, PLAYER_ID, 'berries', 1, 'journal-array-fixture');
+    // First-use sensing belongs to the initial save; the deferred change then
+    // exercises an ordinary already-running world rather than activation.
+    initial.world = advanceWorld(initial.world, 0.25).world;
     freezeWorld(initial.world);
     const revision = await store.commit(0, initial);
     const inspected = executeCommand(initial.world, {
@@ -97,7 +113,17 @@ describe('PostgreSQL committed world boundary', () => {
       type: 'inspect-inventory',
     });
     expect(inspected.outcome.ok).toBe(true);
-    const world = updateWorld(inspected.world, (candidate) => {
+    const walking = executeCommand(inspected.world, {
+      id: 'placement-journal-walk',
+      actorId: PLAYER_ID,
+      type: 'move',
+      destination: { ...from, x: from.x + 1, surfaceId: worldSupport(player)! },
+    });
+    expect(walking.outcome.ok).toBe(true);
+    const moved = advanceWorld(walking.world, 0.25);
+    expect(moved.outcome.ok).toBe(true);
+    expect(worldPosition(entityGet(moved.world.entities, PLAYER_ID)!)).not.toEqual(from);
+    const world = updateWorld(moved.world, (candidate) => {
       appendMemory(candidate, PLAYER_ID, {
         kind: 'episode',
         source: 'felt',
@@ -111,9 +137,43 @@ describe('PostgreSQL committed world boundary', () => {
     const prepared = store.prepareCommit(revision, candidate, { after: world });
     const history = prepared.history!;
     expect(history).toBeDefined();
-    for (const table of ['mind_temporal_chunks', 'mind_awareness', 'mind_memories'])
+    const placement = entityGet(world.entities, PLAYER_ID)!.placement!;
+    expect(placement.mode).toBe('world');
+    if (placement.mode !== 'world') throw new Error('Expected a world-root placement.');
+    expect(placement.motionContinuityRevision).toBeGreaterThanOrEqual(0);
+    expect(placement.revision).toBeGreaterThan(placement.motionContinuityRevision!);
+    for (const table of [
+      'sim_placements',
+      'mind_temporal_chunks',
+      'mind_awareness',
+      'mind_memories',
+    ])
       expect(prepared.changes.writes.get(table)?.length).toBeGreaterThan(0);
-    expect(journalTableFamily(initial.world, world, prepared.changes, history.changed)).toBe(true);
+    expect(
+      journalTableFamily(initial.world, world, prepared.changes, history.changed),
+      JSON.stringify({
+        rows: prepared.changes.rows,
+        writes: [...prepared.changes.writes].map(([table, rows]) => [table, rows.length]),
+      }),
+    ).toBe(true);
+    for (const invalid of [
+      -1,
+      0.5,
+      NaN,
+      Number.MAX_SAFE_INTEGER + 1,
+      placement.revision + 1,
+      null,
+    ]) {
+      const malformed = structuredClone(world);
+      Reflect.set(
+        entityGet(malformed.entities, PLAYER_ID)!.placement!,
+        'motionContinuityRevision',
+        invalid,
+      );
+      expect(journalTableFamily(initial.world, malformed, prepared.changes, history.changed)).toBe(
+        false,
+      );
+    }
     expect(store.history.canDeferAppend(world, history)).toBe(true);
     const columnIndex = (name: string) =>
       Object.keys(RECORD_NODES.get('mind_temporal_chunks')!.columns!).indexOf(name);
@@ -155,7 +215,12 @@ describe('PostgreSQL committed world boundary', () => {
       // at restart; it cannot rely on a retained world or prepared source objects.
       (Reflect.get(journal, 'online') as Map<number, unknown>).clear();
       await journal.flush();
-      for (const table of ['mind_temporal_chunks', 'mind_awareness', 'mind_memories'])
+      for (const table of [
+        'sim_placements',
+        'mind_temporal_chunks',
+        'mind_awareness',
+        'mind_memories',
+      ])
         for (const row of prepared.changes.writes.get(table)!)
           expect(
             (await raw
