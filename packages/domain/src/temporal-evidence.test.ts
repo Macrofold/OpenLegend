@@ -296,11 +296,12 @@ it('retains received speech independently of optional detailed attention and rev
   expect(after.entries.some(({ receipt }) => !receipt.sourceIds.includes(event.id))).toBe(true);
 });
 
-it('records an actually attended target even when its visible performer is unattended', () => {
+it('records an actually attended resource target and a routine occurrence that draws its performer into attention', () => {
   const world = scene(53);
   const player = entityGet(world.entities, PLAYER_ID)!;
   player.actor!.attentionCapacity = 1;
   const branches = entityGet(world.entities, 'branches')!;
+  branches.resource!.workSeconds = 1;
   setSpatialPosition(world, branches, { x: 4, y: 0, z: 2 }, 'terrain');
   initializePerception(world, []);
   const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
@@ -338,10 +339,11 @@ it('records an actually attended target even when its visible performer is unatt
     targetId: branches.id,
   });
   expect(started.outcome.ok, started.outcome.message).toBe(true);
-  const result = advanceWorld(started.world, branches.resource!.workSeconds + 1);
+  const result = advanceWorld(started.world, 2);
   const event = result.events.find(
     (event) => event.type === 'gathered' && event.actorId === NPC_ID,
   )!;
+  expect(event.targetId).toBe(branches.id);
   expect(event.data).toMatchObject({ definitionId: 'wood', quantity: 2 });
   const selected = selectTemporalHistory(result.world.experience!.temporal, PLAYER_ID, {
     subjects: [exposure],
@@ -351,16 +353,46 @@ it('records an actually attended target even when its visible performer is unatt
   const received = selected.entries.find(({ receipt }) => receipt.sourceIds.includes(event.id))!;
   expect(received).toBeDefined();
   expect(received.receipt.contextSubjects).toContain(exposure);
-  const original = result.world.perceptionEvidence![PLAYER_ID]!.received.find(
-    (observation) =>
-      observation.origin.kind === 'occurrence' && observation.origin.eventId === event.id,
-  )!;
-  expect(original.context?.attended).toBe(true);
-  const invalid = structuredClone(original);
-  invalid.context!.subjects[0]!.observer.physicalLife++;
-  expect(() => validateObservationContribution(invalid)).toThrow(
-    'Invalid received occurrence context',
+  expect(
+    result.world.experience!.awareness[PLAYER_ID]!.some((value) => value.eventId === event.id),
+  ).toBe(false);
+  const later = structuredClone(result.world);
+  acknowledgeAttention(
+    later,
+    PLAYER_ID,
+    captureAttentionPresentation(
+      later,
+      PLAYER_ID,
+      Object.keys(later.perceptionEvidence![PLAYER_ID]!.attention!.candidates),
+    ),
   );
+  expect(currentDetailedAttention(later, PLAYER_ID).map((entry) => entry.sourceId)).toEqual([
+    branches.id,
+  ]);
+  const personExposure = currentBodyObservation(later, PLAYER_ID, NPC_ID)!.exposure.episodeId;
+  later.simTime = 20;
+  const entry = executeCommand(later, {
+    id: 'routine-entry-boundary',
+    actorId: NPC_ID,
+    type: 'move',
+    destination: { x: 3.5, y: 0, z: 2, surfaceId: 'terrain' },
+  });
+  expect(entry.outcome.ok, entry.outcome.message).toBe(true);
+  const routine = entry.events.find((event) => event.type === 'action-started')!;
+  expect(
+    currentDetailedAttention(entry.world, PLAYER_ID).some((value) => value.sourceId === NPC_ID),
+  ).toBe(true);
+  expect(
+    entry.world.experience!.awareness[PLAYER_ID]!.some((value) => value.eventId === routine.id),
+  ).toBe(false);
+  expect(
+    selectTemporalHistory(entry.world.experience!.temporal, PLAYER_ID, {
+      subjects: [personExposure],
+      bytes: 1024 * 1024,
+      limit: 1000,
+    }).entries.some(({ receipt }) => receipt.sourceIds.includes(routine.id)),
+  ).toBe(true);
+  validatePerceptionEvidenceState(JSON.parse(JSON.stringify(entry.world)));
   const forgotten = structuredClone(result.world);
   invalidateExperience(forgotten, PLAYER_ID, [event.id], true);
   expect(
@@ -370,6 +402,59 @@ it('records an actually attended target even when its visible performer is unatt
       limit: 1000,
     }).entries.some(({ receipt }) => receipt.sourceIds.includes(event.id)),
   ).toBe(false);
+});
+
+it('captures an attended person recipient while the actually visible speaker is unattended', () => {
+  const world = scene(55);
+  const speaker = entityGet(world.entities, 'mara')!;
+  setSpatialPosition(world, speaker, { x: 4, y: 0, z: 2 }, 'terrain');
+  initializePerception(world, []);
+  const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
+  acknowledgeAttention(
+    world,
+    PLAYER_ID,
+    captureAttentionPresentation(world, PLAYER_ID, Object.keys(attention.candidates)),
+  );
+  entityGet(world.entities, PLAYER_ID)!.actor!.attentionCapacity = 1;
+  expect(setAttentionFocus(world, PLAYER_ID, [])).toBe(true);
+  const recipient = Object.entries(attention.candidates).find(
+    ([, candidate]) => candidate.sourceId === NPC_ID,
+  )![0];
+  expect(setAttentionFocus(world, PLAYER_ID, [recipient])).toBe(true);
+  expect(currentDetailedAttention(world, PLAYER_ID).map((entry) => entry.sourceId)).toEqual([
+    NPC_ID,
+  ]);
+  const exposure = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.episodeId;
+  expect(currentBodyObservation(world, PLAYER_ID, speaker.id)).toBeDefined();
+  const result = executeCommand(world, {
+    id: 'addressed-attended-person',
+    actorId: speaker.id,
+    type: 'say',
+    targetId: NPC_ID,
+    text: 'Please wait here.',
+  });
+  expect(result.outcome.ok).toBe(true);
+  const event = result.events.find((event) => event.type === 'speech')!;
+  const observation = result.world.experience!.awareness[PLAYER_ID]!.find(
+    (entry) => entry.eventId === event.id,
+  )!.observation!;
+  expect(observation.context?.attended).toBe(true);
+  const invalid = structuredClone(observation);
+  invalid.context!.subjects[0]!.observer.physicalLife++;
+  expect(() => validateObservationContribution(invalid)).toThrow(
+    'Invalid received occurrence context',
+  );
+  expect(observation.context?.subjects.some((subject) => subject.episodeId === exposure)).toBe(
+    true,
+  );
+  expect(
+    selectTemporalHistory(result.world.experience!.temporal, PLAYER_ID, {
+      subjects: [exposure],
+      bytes: 1024 * 1024,
+      limit: 1000,
+    }).entries.some(({ receipt }) => receipt.sourceIds.includes(event.id)),
+  ).toBe(true);
+  validatePerceptionEvidenceState(JSON.parse(JSON.stringify(result.world)));
 });
 
 it('keeps an actually heard unseen voice separate from a previously seen body', () => {

@@ -1755,25 +1755,31 @@ function awarenessBodyContext(
   awareness: Awareness,
 ): ObservationContribution['context'] {
   const state = world.perceptionEvidence?.[awareness.actorId];
-  if (!state || !awareness.entityEpisodes) return;
+  if (!state) return;
   const result: ObservationExposure[] = [];
   let attended = false;
-  for (const [id, episode] of Object.entries(awareness.entityEpisodes)) {
+  const participants = new Set([
+    ...Object.keys(awareness.entityEpisodes ?? {}),
+    ...(awareness.references?.map((reference) => reference.id) ?? []),
+  ]);
+  for (const id of participants) {
+    const episode = awareness.entityEpisodes?.[id];
     const lease = eligibleBodyLease(world, awareness.actorId, id),
       detected = state.current[`${id}:detected`];
     if (
-      !episode ||
       !lease ||
       !detected ||
       lease.value.kind !== 'body' ||
       detected.original.origin.kind !== 'exposure' ||
-      detected.original.origin.episodeId !== episode ||
+      (lease.subjectPhysicalLife !== null &&
+        (episode === undefined || detected.original.origin.episodeId !== episode)) ||
       detected.exposure.episodeId !== lease.exposure.episodeId ||
       detected.observer.actorId !== lease.observer.actorId ||
       detected.observer.physicalLife !== lease.observer.physicalLife ||
       lease.original.acquiredAt > awareness.at
     )
       continue;
+    if (lease.subjectPhysicalLife === null && awareness.modality !== 'observed') continue;
     if (awareness.speech) {
       // A known unseen voice names no visible body. Only the actual received
       // speaker/body grant or independently perceived addressee can join this view.

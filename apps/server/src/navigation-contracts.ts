@@ -106,7 +106,7 @@ export function navigationInstructions(world: WorldState): string {
   );
   const requests = activityRequestDescriptors(world);
   return requests.length
-    ? `${navigation}\nOptional installed activity requests: ${JSON.stringify(requests)}. To explicitly choose one, set invocation.family to its exact id and invocation.parameters to all its selected closed fields. Every navigation field must be null. Keep its selected mode equal to act.mode. These are requested activities, never evidence that a method is learned. Choosing no new work and ordinary actions remain available; a request alone creates no goal or completed work.`
+    ? `${navigation}\nFor a supplied installed activity request, set invocation.family to its exact id and invocation.parameters to all its selected closed fields. Every navigation field must be null. Keep its selected mode equal to act.mode. These are requested activities, never evidence that a method is learned. Choosing no new work and ordinary actions remain available; a request alone creates no goal or completed work.`
     : navigation;
 }
 const NAVIGATION_TEXT =

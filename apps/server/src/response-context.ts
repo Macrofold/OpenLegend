@@ -138,6 +138,8 @@ export function readableDecisionContext(
     Array.isArray(value) && value.length
       ? value.map((line) => `- ${String(line).replace(/\n/g, '\n  ')}`).join('\n')
       : 'None supplied.';
+  const surroundings = context['surroundings'] as unknown[] | undefined;
+  const contacts = context['contacts'] as unknown[] | undefined;
   const sections = [
     `## Me\n${context['identity']}\n${context['aboutMe']}\n${context['body']} ${context['feelings'] ?? ''}${context['carryingConcern'] ? `\n${context['carryingConcern']}` : ''}\n${expressionGuidance}${capabilities?.speech === false ? '\nI cannot speak; talk must be null.' : ''}`,
     `## My commitments\n${list(context['commitments'])}\n${context['activityCoverage'] ?? ''}`,
@@ -174,13 +176,19 @@ export function readableDecisionContext(
     ...(context['inspectedMethods']
       ? [`## Activities I chose to inspect\n${list(context['inspectedMethods'])}`]
       : []),
-    `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
+    `## Recent memories\nThese are earlier personal experiences, not a current scene. A remembered location, activity or object state is not still present unless current received evidence supports it; a remembered conditional rule does not establish its condition now.\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
     ...(context['receivedSituation']
       ? [
-          `## Received situation\n${JSON.stringify(context['receivedSituation'])}\nThese are personally received measurements and retained changes, not other people's intentions. Original times and gaps matter. Unexpanded or missing detail does not prove absence. Use only the supplied references for optional situation queries, further attention or a fallible remembered interpretation.`,
+          `## Received situation\n${JSON.stringify(context['receivedSituation'])}\nUse this packet for current received surroundings and its explicitly timed retained changes. These are personally received measurements, not other people's intentions. Original times and gaps matter. Unexpanded or missing detail does not prove absence. Use only the supplied references for optional situation queries, further attention or a fallible remembered interpretation.`,
         ]
       : []),
-    `## Nearby actors and objects\n${list(context['surroundings'])}${Array.isArray(context['contacts']) && context['contacts'].length ? `\nContact evidence:\n${list(context['contacts'])}` : ''}`,
+    // Current scene capture supersedes the old separate entity shortlist. An empty
+    // shortlist must not contradict supplied bodies; actual contact text remains useful.
+    ...(surroundings?.length || contacts?.length || !context['receivedSituation']
+      ? [
+          `## Nearby actors and objects\n${surroundings?.length || !context['receivedSituation'] ? list(surroundings) : ''}${contacts?.length ? `\nContact evidence:\n${list(contacts)}` : ''}`,
+        ]
+      : []),
     `## Inventory\n${list(context['possessions'])}${context['inventoryCoverage'] ? `\nPartial inventory preparation: ${JSON.stringify(context['inventoryCoverage'])}. Only this page and bound tools were considered. Other possessions may be useful; explicitly inspect another page when needed. Omission is not absence.` : ''}`,
     `## General knowledge notepad\n${JSON.stringify(context['notepad'] ?? {})}`,
     `## Knowledge\n${list(context['knowledge'])}`,
