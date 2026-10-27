@@ -1018,7 +1018,18 @@ export function currentBodyAssociation(
   if (association?.value.kind !== 'association' || association.value.strength !== 'supported')
     return;
   const body = eligibleBodyLease(world, observerId, subjectId);
+  const subject = receivedBodyAssociation(world, observerId, body, association);
+  return subject && cloneValue(subject);
+}
+function receivedBodyAssociation(
+  world: WorldState,
+  observerId: string,
+  body: LiveFacetSupport | undefined,
+  association: LiveFacetSupport | undefined,
+): ObserverSubject | undefined {
   return body &&
+    association?.value.kind === 'association' &&
+    association.value.strength === 'supported' &&
     association.bodyLeaseId === body.id &&
     associationEvidenceStatus(
       world,
@@ -1027,8 +1038,26 @@ export function currentBodyAssociation(
       association.original,
       association.originalOrdinal,
     ) === 'retained'
-    ? cloneValue(association.value.subject)
+    ? association.value.subject
     : undefined;
+}
+/** Reuse observer/life/sense admission for one synchronous candidate pass. This
+ * reader grants neither later execution nor access after the world changes. */
+export function prepareCurrentBodySubjects(
+  world: WorldState,
+  observerId: string,
+): (subjectId: string) => ObserverSubject | undefined {
+  const scope = bodyReadScope(world, observerId);
+  return (subjectId) => {
+    if (!scope) return;
+    const body = scope.body(subjectId);
+    if (!body) return;
+    const held = scope.current[`${subjectId}:association`];
+    const association = held && readOnlyDraftView(held);
+    const subject =
+      receivedBodyAssociation(world, observerId, body, association) ?? body.localSubject;
+    return subject && cloneValue(subject);
+  };
 }
 export function associationEvidenceStatus(
   world: WorldState,

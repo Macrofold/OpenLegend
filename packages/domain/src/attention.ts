@@ -2,8 +2,7 @@ import { entityGet } from './entity-collection.js';
 import { cloneValue, readOnlyDraftView } from './draft.js';
 import { validObserverSubject, type ObserverSubject } from './knowledge.js';
 import {
-  currentBodyAssociation,
-  currentBodyLocalSubject,
+  prepareCurrentBodySubjects,
   effectiveCurrentFacetSupport,
   publicAttributeMeanings,
   reconcileAttendedTemporalEvidence,
@@ -337,6 +336,7 @@ export function updateAttention(
     owner = owned(world, observerId);
   if (!observer?.actor || !owner) return { before: [], after: [] };
   const state = stateFor(world, observerId)!;
+  const bodySubject = prepareCurrentBodySubjects(world, observerId);
   const entriesBefore = readOnlyDraftView(state.entries).map((entry) => readOnlyDraftView(entry));
   const before = entriesBefore.map((entry) => entry.sourceId);
   const policy = selectedAttentionPolicy(world);
@@ -407,9 +407,7 @@ export function updateAttention(
     const motionSource = readOnlyDraftView(owner.current)[`${sourceId}:observed-motion`];
     const motion = motionSource && readOnlyDraftView(motionSource);
     const measured = currentPoint(owner, sourceId, world, observerId);
-    const subject =
-      currentBodyAssociation(world, observerId, sourceId) ??
-      currentBodyLocalSubject(world, observerId, sourceId);
+    const subject = bodySubject(sourceId);
     const candidate: AttentionCandidate = old
       ? { ...old }
       : {
@@ -426,7 +424,7 @@ export function updateAttention(
           geometryRevision: '',
         };
     candidate.leaseId = body.id;
-    candidate.subject = subject ? cloneValue(subject) : undefined;
+    candidate.subject = subject;
     candidate.descriptionRevision = descriptions(owner, sourceId);
     candidate.changeRevision = JSON.stringify([
       readOnlyDraftView(body.original).id,
