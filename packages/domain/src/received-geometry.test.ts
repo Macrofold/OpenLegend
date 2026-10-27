@@ -10,8 +10,10 @@ import { createWorld, PLAYER_ID, NPC_ID } from './worlds/base/world.js';
 import { BASE_TERRAIN } from './worlds/base/spatial-definitions.js';
 import { entityGet, entitySet, emptyEntities } from './entity-collection.js';
 import { worldPlacement, setSpatialPosition } from './spatial-state.js';
-import { initializePerception, advanceWorld } from './kernel.js';
+import { initializePerception, advanceWorld, executeCommand } from './kernel.js';
 import { freezeWorld } from './draft.js';
+import { elapsedDeadline } from './simulation-time.js';
+import { assignGivenName } from './worlds/base/knowledge.js';
 import { currentAttentionCues, currentDetailedAttention, setAttentionFocus } from './attention.js';
 import { observationDependencies, observationLearningSources } from './experience-manifest.js';
 import {
@@ -256,12 +258,17 @@ function nativeScene(
 
 describe('native received relation producers', () => {
   it('finishes stationary pending perception on the ordinary clock with JSON continuation and no exhausted-source spin', () => {
-    const { world } = nativeScene(18,
-      map([surface('ground', 0, 4, 0), surface('unseen-upper-face', 0, 4, 10)]));
+    const { world } = nativeScene(
+      18,
+      map([surface('ground', 0, 4, 0), surface('unseen-upper-face', 0, 4, 10)]),
+    );
     world.paused = false;
     const key = currentDetailedAttention(world, PLAYER_ID)[0]!.key;
-    expect(world.perceptionEvidence![PLAYER_ID]!.attention!.relationDirty[
-      JSON.stringify([key, 'closing-body'])]).toBeDefined();
+    expect(
+      world.perceptionEvidence![PLAYER_ID]!.attention!.relationDirty[
+        JSON.stringify([key, 'closing-body'])
+      ],
+    ).toBeDefined();
     expect(nextPerceptionWorkAt(world, PLAYER_ID)).toBe(15);
     const input = freezeWorld(world);
     const saved = JSON.parse(JSON.stringify(input)) as WorldState;
@@ -270,15 +277,62 @@ describe('native received relation producers', () => {
     for (const result of [warm, cold]) {
       expect(result.outcome.code, result.outcome.message).toBe('advanced');
       expect(result.world.simTime).toBe(90);
-      expect(result.world.perceptionEvidence![PLAYER_ID]!.attention!.relationDirty[
-        JSON.stringify([key, 'closing-body'])]).toBeUndefined();
+      expect(
+        result.world.perceptionEvidence![PLAYER_ID]!.attention!.relationDirty[
+          JSON.stringify([key, 'closing-body'])
+        ],
+      ).toBeUndefined();
       expect(currentReceivedGeometry(result.world, PLAYER_ID).complete).toBe(false);
       expect(nextPerceptionWorkAt(result.world, PLAYER_ID)).toBe(120);
     }
-    expect(JSON.parse(JSON.stringify(warm.world.perceptionEvidence)))
-      .toEqual(JSON.parse(JSON.stringify(cold.world.perceptionEvidence)));
-    expect(JSON.parse(JSON.stringify(warm.world.experience!.temporal)))
-      .toEqual(JSON.parse(JSON.stringify(cold.world.experience!.temporal)));
+    expect(JSON.parse(JSON.stringify(warm.world.perceptionEvidence))).toEqual(
+      JSON.parse(JSON.stringify(cold.world.perceptionEvidence)),
+    );
+    expect(JSON.parse(JSON.stringify(warm.world.experience!.temporal))).toEqual(
+      JSON.parse(JSON.stringify(cold.world.experience!.temporal)),
+    );
+  });
+  it('keeps the recognized contact deadline after the older body-local deadline is confirmed', () => {
+    const { world, people } = nativeScene(1, map());
+    expect(
+      assignGivenName(
+        world,
+        PLAYER_ID,
+        {
+          subjectId: people[0]!.id,
+          expectedRevision: 0,
+          givenName: 'A familiar voice',
+        },
+        [people[0]!.id],
+        true,
+      ).ok,
+    ).toBe(true);
+    world.paused = false;
+    world.simTime = 60;
+    const spoken = executeCommand(world, {
+      id: 'known-voice-contact-deadline',
+      actorId: people[0]!.id,
+      type: 'say',
+      text: 'I am here.',
+    });
+    expect(spoken.outcome.ok, spoken.outcome.message).toBe(true);
+    const owner = spoken.world.perceptionEvidence![PLAYER_ID]!;
+    const body = owner.current[`${people[0]!.id}:body`]!;
+    const entry = currentDetailedAttention(spoken.world, PLAYER_ID).find(
+      (value) => value.sourceId === people[0]!.id,
+    )!;
+    expect(body.localSubject?.kind).toBe('individual');
+    expect(entry.subject?.kind).toBe('individual');
+    if (body.localSubject?.kind !== 'individual' || entry.subject?.kind !== 'individual')
+      throw new Error('Expected actual local and recognized individual contact.');
+    expect(entry.subject.individualId).not.toBe(body.localSubject.individualId);
+    const identities = spoken.world.observerIdentities![PLAYER_ID]!;
+    expect(identities[body.localSubject.individualId]!.familiarity!.nextCreditAt).toBe(120);
+    expect(identities[entry.subject.individualId]!.familiarity!.nextCreditAt).toBe(180);
+    const continued = advanceWorld(spoken.world, 60);
+    expect(continued.outcome.code, continued.outcome.message).toBe('advanced');
+    expect(continued.world.simTime).toBe(120);
+    expect(nextPerceptionWorkAt(continued.world, PLAYER_ID)).toBe(180);
   });
   it('exhausts unchanged partial terrain once and rechecks actual received changes identically after restore', () => {
     const { world, people } = nativeScene(
@@ -808,7 +862,7 @@ describe('native received relation producers', () => {
       currentAttentionCues(world, PLAYER_ID).find((entry) => entry.id === cue!.id),
     ).toBeDefined();
   });
-  it('rearms a closing-body condition at its existing clear deadline using continuously confirmed stationary support', () => {
+  it('rearms a stationary closing-body condition on the ordinary clock at its existing clear deadline', () => {
     const { world, people } = nativeScene(2, map([surface('ground', -5, 25, 0)]));
     const anchor = people[0]!,
       neighbor = people[1]!;
@@ -821,21 +875,32 @@ describe('native received relation producers', () => {
       (entry) => entry.sourceId === anchor.id && entry.family === 'closing-body',
     )!;
     expect(cue).toBeDefined();
-    world.simTime = 30;
-    initializePerception(world, []);
-    const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
+    world.paused = false;
+    const first = advanceWorld(world, 105);
+    expect(first.outcome.code, first.outcome.message).toBe('advanced');
+    expect(first.world.simTime).toBe(120);
+    const attention = first.world.perceptionEvidence![PLAYER_ID]!.attention!;
     const key = JSON.stringify([cue.anchorKey, cue.family]);
-    expect(attention.latches[key]!.clearSince).toBe(30);
+    expect(attention.latches[key]!.clearSince).toBeDefined();
     expect(attention.relationDirty[key]).toBeUndefined();
-    const checkedThrough = attention.nextRelationAt;
-    world.simTime = 149;
-    initializePerception(world, []);
-    expect(attention.nextRelationAt).toBe(checkedThrough);
-    expect(currentAttentionCues(world, PLAYER_ID).some((value) => value.id === cue.id)).toBe(true);
-    world.simTime = 150;
-    initializePerception(world, []);
-    expect(currentAttentionCues(world, PLAYER_ID).some((value) => value.id === cue.id)).toBe(false);
-    expect(attention.relationDirty[key]).toBeUndefined();
+    const deadline = elapsedDeadline(
+      attention.latches[key]!.clearSince!,
+      worldComposition.selectedAttentionPolicy(first.world).relation.clearSeconds,
+    );
+    const before = advanceWorld(first.world, deadline - first.world.simTime - 1);
+    expect(before.outcome.code, before.outcome.message).toBe('advanced');
+    expect(currentAttentionCues(before.world, PLAYER_ID).some((value) => value.id === cue.id)).toBe(
+      true,
+    );
+    const after = advanceWorld(before.world, 1);
+    expect(after.outcome.code, after.outcome.message).toBe('advanced');
+    expect(after.world.simTime).toBe(deadline);
+    expect(currentAttentionCues(after.world, PLAYER_ID).some((value) => value.id === cue.id)).toBe(
+      false,
+    );
+    expect(
+      after.world.perceptionEvidence![PLAYER_ID]!.attention!.relationDirty[key],
+    ).toBeUndefined();
   });
   it('keeps a supported clear interval across bounded deadline pages but never across a received witness loss', () => {
     const value = map([surface('ground', -5, 25, 0)]);

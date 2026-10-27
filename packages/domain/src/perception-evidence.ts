@@ -341,15 +341,20 @@ export function nextPerceptionWorkAt(world: WorldState, observerId: string): num
   for (const entry of currentDetailedAttention(world, observerId)) {
     const body = current[`${entry.sourceId}:body`];
     if (!body || body.id !== entry.leaseId) continue;
-    const subject = body.localSubject?.kind === 'individual' ? body.localSubject : entry.subject;
-    if (subject?.kind !== 'individual') continue;
-    const at = selectedAttentionContactAt(
-      world,
-      observerId,
-      subject.individualId,
-      state.visualConfirmation?.through ?? -Infinity,
-    );
-    if (at !== undefined) next = Math.min(next, at);
+    const local = body.localSubject;
+    const recognized = entry.subject;
+    const through = state.visualConfirmation?.through ?? -Infinity;
+    if (local?.kind === 'individual') {
+      const at = selectedAttentionContactAt(world, observerId, local.individualId, through);
+      if (at !== undefined) next = Math.min(next, at);
+    }
+    if (
+      recognized?.kind === 'individual' &&
+      (local?.kind !== 'individual' || local.individualId !== recognized.individualId)
+    ) {
+      const at = selectedAttentionContactAt(world, observerId, recognized.individualId, through);
+      if (at !== undefined) next = Math.min(next, at);
+    }
   }
   return Number.isFinite(next) ? next : undefined;
 }
