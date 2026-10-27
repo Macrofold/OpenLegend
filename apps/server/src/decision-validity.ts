@@ -86,6 +86,9 @@ export function decisionValidity(world: WorldState, actorId: string): string {
     }
     return attribute;
   });
+  // Spending or acknowledging a bounded thinking opportunity changes bookkeeping,
+  // not the question's meaning. It must not cancel its own admitted decision.
+  const { semantic: _semantic, ...agency } = actor.agency;
   const feelings = activeAppraisals(world, actorId).map((feeling) => {
     const definition = appraisalDefinition(world, feeling.definitionPin);
     if (definition?.lifetime.kind === 'decays' && feeling.value.kind === 'scaled') {
@@ -119,7 +122,7 @@ export function decisionValidity(world: WorldState, actorId: string): string {
     attributes,
     feelings,
     planGeneration: actor.planGeneration,
-    agency: actor.agency,
+    agency,
     action: actor.action
       ? {
           id: actor.action.id,
