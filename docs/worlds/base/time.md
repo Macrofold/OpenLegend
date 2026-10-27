@@ -84,7 +84,7 @@ Engine code never states these names. Deadline binding, request validation, the 
 
 A follow or wait that ends at a named time is an exact interval boundary: elapsed-time integration stops at that instant instead of running the 60-second fallback horizon past it. Named times are a small clock vocabulary, not a general time-expression parser; "wait N minutes" is the only relative form. A separate clock policy is warranted when another clock consumer (calendar, seasons) appears.
 
-Clock displays (the HUD clock, event times and God-tool time labels) read the world's `clockOffsetHours` from the view.
+Clock displays (the HUD clock, event times and God-tool time labels) read the world's `clockOffsetHours` from the view. The day number changes at local midnight ([BW27](../../maintainers/base-world.md#bw27--day-number-changes-at-midnight)); today it still changes at 08:00.
 
 ## Daylight presentation
 

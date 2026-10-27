@@ -27,7 +27,7 @@ Canonical behavior: [base world](../worlds/base/README.md), [items and ground pi
 
 [PW07's client contribution](parallel-batch-01-playable-week.md#pw07--world-configured-survival) now consumes authored meter/editor presentation, with [actual native alternate-world browser slices](../verification/parallel-batch-01-playable-week-engineer-4.md#pw07--real-alternate-world-ui-final-pairing-pending) showing a non-100 body range, Charge units and read-only Disposition without copied wilderness labels or formulas in React. The observed UI has no food, energy, dreaming or survival-specific status equivalents. This is relevant to BW06's removal of mandatory wilderness consumers; it does not close external packaging, the compiled body-profile seam, remaining world wording or PW07's complete matrix.
 
-BW07 now includes the finite nested-bag, exact-lot/individual equipment and declared-owner consumer delivered by [PO01–PO09](persistent-objects.md). Remaining physical scatter, richer carrying restrictions, encumbrance and theft semantics require their own consumers; BW07 is not closed wholesale. BW05's typed pickup/drop codecs and quantity binding are delivered on top of the existing exact-handle placement/claim/scope seams.
+BW07 now includes the finite nested-bag, exact-lot/individual equipment and declared-owner consumer delivered by [PO01–PO09](persistent-objects.md). Remaining physical scatter, richer carrying restrictions, encumbrance and theft semantics require their own consumers; BW07 is not closed wholesale. [CMA04](character-and-map-additions.md#cma04--stats-calculated-values-and-carrying-weight) designs the consumer for item mass and carrying capacity: Strength's carrying limit. BW05's typed pickup/drop codecs and quantity binding are delivered on top of the existing exact-handle placement/claim/scope seams.
 
 PW03 extends BW07 through the authorized woven-container recipe and existing custody owner. Two admissible sizes passed name-independent native admission/crafting, nested packing, filled drop/return/take, access-loss refusal and current-format native restore; scoped PostgreSQL inspection/restart also passed. The small design passed player-to-NPC teaching/crafting and pack/drop/inspect/reopen/take in PostgreSQL; scripted ordinary craft/custody passed, and NP04 supplies ground-cache activity inspection. The [Engineer 3 evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026) retains that original scope; the [later PG01 player journey](../verification/camp-life.md#live-player-journey--october-4-2026) adds live generated cord/pouch manufacture, packing, retrieval and reopening. Broader voluntary NPC invention, transfer and reuse remain unqualified. This does not close BW07's other consumers.
 
@@ -48,6 +48,14 @@ Cross-cutting deferred automated checks are in [TODO](TODO.md#base-world-items--
 ## Selected injury and care design
 
 [DG21 injuries and care](../projects/recovery-and-care-feature-spec.md) and its [technical design](../projects/recovery-and-care-tech-design.md) specify independently persistent injuries with useful effects, plausible harm-based selection and real recovery/treatment. [CARE00–CARE08](recovery-and-care.md) owns the design and undelivered implementation beneath ACT04/BW14; the [world profile](../worlds/base/recovery-and-care.md) and [care inventory](../limits/recovery-and-care.md) own its catalog and tuning. Health recovery, particular injury resolution and installed death-scar treatment remain distinct. Broader illness, rescue and precise anatomical targeting retain conditional scope rather than becoming requirements for this selected journey.
+
+## BW27 — Day number changes at midnight
+
+Mike decided on 2026-10-27 that the day number changes at local midnight. Today it changes at the world's starting hour (08:00), because four places compute it as whole days since the world began without the clock offset: `gameTime` in `apps/server/src/recall.ts`, `calendarFields` in `apps/server/src/view.ts`, `clockParts` in `apps/client/src/ui/event-time.tsx`, and the HUD and Events day separators that use them.
+
+- [ ] Compute the day once from the world clock with the offset applied, and use that one helper everywhere, including the day characters perceive.
+
+**Exit:** at 23:59 the HUD, Events separators and a character's recalled time say Day N; at 00:00 they say Day N + 1; day 1 still begins when the world starts.
 
 ## BW26 — Heat, ignition and material consequences
 

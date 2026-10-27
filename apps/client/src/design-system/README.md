@@ -1,5 +1,7 @@
 # Open Legend UI system
 
+The accepted next design system, **Gildmoss**, is in [`gildmoss/`](gildmoss/README.md). It is not yet integrated; this guide describes the interface the game runs today.
+
 ## Whole-interface hierarchy
 
 The world remains the main view. The upper-left character summary names the controlled character and current location, shows the installed world's condition attributes and participation state, and opens Character at the requested condition. A separate collapsible Current work panel sits beneath it, behind other panels, without moving the centered launcher rails or resizing open workspaces. Its body scrolls within the available space. Current work is shown from the server's `hasWork` projection, including queued or paused work; a retained completed activity alone does not create a current-work strip. Save failures remain visible with the permitted recovery route.

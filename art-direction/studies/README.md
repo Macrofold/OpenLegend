@@ -2,6 +2,8 @@
 
 For new studies, use the [Standard or Higgsfield art flow](../../docs/production-workflows/art-flows/README.md) and [record/handoff outline](../../docs/production-workflows/art-flows/study-record.md). The [UI surface-language brief](ui-surface-language/brief.md) defines the requested border, panel and connector exploration; no generated candidates or archived image collection are claimed yet.
 
+**Interface overhaul, direct method (2026-10-18 to 2026-10-26):** the [study record](2026-10-18-interface-direct-method/README.md) covers every round, the owner-selected Gildmoss design and its production package, all stored as private S3 collections with exact indexes.
+
 Every recoverable earlier capture is preserved here, including rejected work. Original review packages and filenames are unchanged. Source assets and alternate exports remain in their existing catalogs.
 
 **Storage:** the links below use verified immutable hosted study copies. [The published study collection](https://assets.openlegend.ai/studies/public/viewers/navigation-81bd67a16da37540aa1b9688cc22b05b5ed495c727692cab64ab5ffd5b877d36/index.html) also opens the current interactive tools. Follow [Asset workflows](../../docs/asset-workflow.md) for exact downloads, external editable workspaces and new retained studies. [The study directory contract](../../docs/projects/game-asset-storage-tech-design.md#43-study-archive) defines organization; [AS03/AS05](../../docs/maintainers/game-asset-storage.md) retains the remaining broader history, recovery and checkout-cleanup gates. Original captures and their recorded limits remain unchanged in preservation storage.

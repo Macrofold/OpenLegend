@@ -14,6 +14,6 @@ Projects own proposed/accepted scope and delivery plans; their focused trackers 
 | Commercial and creator proposals   | [Customer offers](customer-and-supporter-offers-feature-spec.md), [published packs](published-packs-and-creator-revenue-feature-spec.md), [creator fund](creator-fund-and-contributor-governance-feature-spec.md) |
 | Workflow/document organization     | [Adoption](agent-workflow-efficiency/01-workflow-feature-spec.md)                                                                                                                                                 |
 
-The [Spirit and mental-status design note](spirit-and-mental-statuses-design-note.md) records the selected naming and coexistence model; detailed gameplay effects remain undecided.
+The [Spirit and mental-status design note](spirit-and-mental-statuses-design-note.md) records the selected naming and coexistence model. [Character and map additions](character-and-map-additions-feature-spec.md) specifies Spirit, stats, more equipment slots, map markers and nicknames.
 
 Other project families are linked from the [maintainer index](../maintainers/README.md); list/search this directory for a known subject. [Completed projects](completed/README.md) are filed separately; their current contracts remain discoverable through [features](../features/README.md) and [technical owners](../technical/README.md).

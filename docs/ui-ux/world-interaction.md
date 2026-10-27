@@ -178,6 +178,8 @@ Visual/audio prominence should track actionable importance and urgency, not how 
 
 Do not fake audible words or speaker identity when only faint/unattributed sound was perceived. Give hearing/caption settings and readable history a discoverable route, not one dependent on tiny overhead text. Reduced motion must preserve the same information and task access.
 
+**Accepted Gildmoss presentation (2026-10-26); integration pending:** timed statuses are rings whose thick part is the time left and lasting effects are squares, both in the status colours; names and status over the world are text with a drop shadow; speech captions show the speaker's head; and the day-and-night dial is not a clock — the sun crosses its top by day and the moon its bottom by night, between the world's own dawn and dusk. The [Gildmoss design system](../../apps/client/src/design-system/gildmoss/README.md) owns the visual specification; [timed UI](../timed-ui.md) still owns the clocks.
+
 ## Acceptance scenes
 
 Exercise a world-edge popup, two open panels at enlarged UI scale, an active chat composer while pressing movement keys, a drag ending over a button, a dismissed picker over walkable ground, a rotated multi-floor scene and a dense caption burst. Add a child popup inside a dialog, a short viewport with a keyboard, and any known targeting footprint against the actual supported geometry. Check that selection, focus and action authority remain separate. Current full-scene, touch and assistive-device qualification remains with the existing spatial/hearing trackers; source inspection does not close it.

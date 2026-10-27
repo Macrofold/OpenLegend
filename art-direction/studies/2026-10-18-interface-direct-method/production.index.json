@@ -1,0 +1,4591 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "openlegend-curated"
+    },
+    "assetId": "interface-gildmoss-production-2026-10-26",
+    "revisionId": "sha256-5ecd8fa2f3d58499b40d95faf517775a1be97d81f35cc37549b34e0ff017940e",
+    "manifestSha256": "0779d508d63a5d6d572e945f886401cc4e6b723e647df534ee37a75ae0874b75"
+  },
+  "files": {
+    "README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6664533ef9d5cb2777f789bf63dbc468588f41899cfd565073cc3b2fbf90dc13",
+      "bytes": 11161,
+      "mediaType": "text/markdown"
+    },
+    "art/sample-characters/head-mara-reed.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96f82bd84a655934f7740bee9563048bfaa59c76e15d075f65b81f8c5aee0f18",
+      "bytes": 6830,
+      "mediaType": "image/png"
+    },
+    "art/sample-characters/head-mike.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "df5cedef64bb11665d71fbaf7d40fbecc4ec46ac533a0d81e793e66a651c8567",
+      "bytes": 5769,
+      "mediaType": "image/png"
+    },
+    "art/sample-characters/mike-fullbody-227x560.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84f9849e8d5fcbb437030e8ef59001dcb118c3353e99b79253eac8765861abc6",
+      "bytes": 155100,
+      "mediaType": "image/png"
+    },
+    "art/sample-characters/mike-fullbody-227x560@2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7c8bb7da18797d878833f58cbc01e1d3e11909809b5b42c327c62ec004b7564",
+      "bytes": 513246,
+      "mediaType": "image/png"
+    },
+    "art/sample-characters/mike-fullbody.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "acb464d3306fc2ed7a3584329e40c35e735b2dcbb97bb2db44108fc06a0305ac",
+      "bytes": 1175941,
+      "mediaType": "image/png"
+    },
+    "art/sample-characters/portrait-mara-reed.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2007977ce2caa88c6d8b9984186afd2160e9aa7b386f5a6cde8919eb9181f0ad",
+      "bytes": 4814,
+      "mediaType": "image/png"
+    },
+    "art/sample-characters/portrait-mike.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "671977eb9ecf30012b3541db41114f167ffb2086ef1f6af6abb61f86d0596dc1",
+      "bytes": 4639,
+      "mediaType": "image/png"
+    },
+    "art/ui/logo-seal-campfire-28.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8a43a3db247c9bb3be5ac52b665867d36df3fb05bdc9f77434bb04230097f05a",
+      "bytes": 1809,
+      "mediaType": "image/png"
+    },
+    "art/ui/logo-seal-campfire-28@2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "27825daf97881e75de03cac9de6292de565e80bc18e84346f764a1cf87a293ba",
+      "bytes": 5341,
+      "mediaType": "image/png"
+    },
+    "art/ui/logo-seal-campfire-28@3x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "078118af61b01f42a3a15b26950322950bf9ce4e7782efc87d707d68629498db",
+      "bytes": 9995,
+      "mediaType": "image/png"
+    },
+    "art/ui/logo-seal-campfire-32.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "796882bd18956a26ed3e20fa4b028c637a5cdc1b113442d90db4a3f19a00e4f9",
+      "bytes": 2202,
+      "mediaType": "image/png"
+    },
+    "art/ui/logo-seal-campfire-32@2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a1f4a17d4808ae4617c6c507b9f8a45854bd2a0d99dc9995f81217fa985f92f4",
+      "bytes": 6674,
+      "mediaType": "image/png"
+    },
+    "art/ui/logo-seal-campfire-32@3x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c50484e66ce81da5991e47d9f1cc066bdf0b4055ce8e7000a367e51a90350b42",
+      "bytes": 12525,
+      "mediaType": "image/png"
+    },
+    "art/ui/logo-seal-campfire.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a5175bec12e785b05258a46b7b059bb04417f77c769e02048a9b4878aaf52e5",
+      "bytes": 82577,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/bone-fragment.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4160f5654a9c2444c5cceb9d681bf6d3ab5c90878c138042538e8a89a467f8a8",
+      "bytes": 1290,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/cooked-meat.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "26f3e7e1e96d8c028acc8e13fd5423cca17207b604d2f158ad3d1fb4ad76d7c8",
+      "bytes": 1439,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/cooked-river-fish.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "325adf78f1b8ace08e7ef32854c3c0df602c2c5681f6f29177d0b861aa82124b",
+      "bytes": 1647,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/fiber-cord.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8cca0a915f6a469c0ef20a3d8ab8663164a786eba6777d81a2947d77d4c86663",
+      "bytes": 1709,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/field-arrow.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2b0cdb469850e61b67ef4bf573852e4f937881e3986740d1cc52d205f8ded390",
+      "bytes": 954,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/field-sling.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad3839dc35ac9c53d623f0dfaf2cfd385ad0b88718091ad9cad1c11a138d215c",
+      "bytes": 1784,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/flaked-cutting-stone.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "612c53127a0a845c7629185c32c42dfed5d075aaf7478ef50e8a9033b85ab9fc",
+      "bytes": 1490,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/knife.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8adda061bd24e8624028d845afba449b3bf86d377e2e51ad0b8ff6b558bad44e",
+      "bytes": 1027,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/large-travel-cloak.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa0f072ba24a79f258abccbcc4e9964d02db002c266b09db96b4f2a5165bb91b",
+      "bytes": 1866,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/light-canopy-post.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bdb43c39422d70cd66753580e4a85bd012b9c97fa5c0f275a339e0103d802c0e",
+      "bytes": 929,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/prepared-fibers.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0e0df1cf5bef254fe9b5faacb2c96dd4d51f80ce49b6819f03b231209674cd01",
+      "bytes": 1744,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/raw-meat.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cd908f3cf8917f4d290e858d55771ee5c7180b3969e2bf6c82f4b2c0e60e5bc7",
+      "bytes": 1411,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/raw-river-fish.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8580c58c2c41ad4bbe799aa351c4f752b06beb4b39f13a9aec5462ee4bd59eca",
+      "bytes": 1221,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/reed-fibers.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6906cf4b83fb5546ddd02adf40f35a818461abc7d91bc50dae145ff3d628f166",
+      "bytes": 1879,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/small-stone.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5eede0d1f8f49e5addbb84f1185751f12ce698a8638e78ab1b5446c28e237d30",
+      "bytes": 1130,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/spare-weather-cloth.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "72a4c71223119958c501d26b2f514f3c103f8bc46ece8c06a6b313d5d0041524",
+      "bytes": 1789,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/supple-branch.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e6b3c9af5cdb0f0c49788cc1db0bb6d56494edd479d37872fb44baf4e761ee12",
+      "bytes": 1286,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/tall-canopy-post.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "475f2cfdc8f91cd801d885578c6e596017f2522465ece97057f9aa15d67df977",
+      "bytes": 1107,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/tavins-sorting-note.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ba516f0a7a6fb9052a2008f404c8c6c54d7a6c834364b3c669972a3318f0112a",
+      "bytes": 1715,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/torn-red-fastening.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bab490c165e6d2cd20f12aac3ea054a5f71c8e692485f24013ac094ae2c184f0",
+      "bytes": 1583,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/wild-berries.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5146968fd270fbd2d1ce5521419f26b579f0f66d2254a09814d10e210bb69dda",
+      "bytes": 1277,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/wooden-shield-large.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b4bb973ef33f64287600225c48eb5a799627c3341e9c16a361c1e333e7509ea",
+      "bytes": 7764,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/wooden-shield.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "86ae7c15598683fbfa91219e4f278dfa26d9b8a9538c6d1422ca02e5ad0e5c77",
+      "bytes": 2335,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/woven-bag.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8c10e614da4355b92e3cbe60573af7b5cc1ed4ed5f5210f614f2e963782d9440",
+      "bytes": 2098,
+      "mediaType": "image/png"
+    },
+    "art/world/base/items/woven-gathering-pouch.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "784d8d2f609fd59d090cecbaa0aebc72d663075d7c92feaa87ff3602c8bc37d1",
+      "bytes": 2177,
+      "mediaType": "image/png"
+    },
+    "art/world/base/map-starting-land-parchment.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b3764ee042db9d0b6267d6db0d1833d5051f986e602b52d44e8d6d24f3e0bfb",
+      "bytes": 583498,
+      "mediaType": "image/jpeg"
+    },
+    "art/world/base/structures/banked-campfire.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f36148404aaffc61fa989f294d2659402b96a0ddaaae43ddf541cc52d818874b",
+      "bytes": 3815,
+      "mediaType": "image/png"
+    },
+    "design-system/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d3e992b5029fcf1ea6f300de94d5a686813ed3f639f0f9ed5fe0086cae2765ff",
+      "bytes": 16912,
+      "mediaType": "text/markdown"
+    },
+    "design-system/components.reference.css": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21f9007ad0544754b758ea9e07e798419b79bd0e77cb83feb28de74a1a75e764",
+      "bytes": 23877,
+      "mediaType": "text/css"
+    },
+    "design-system/tokens.css": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "649688d27b95166859c4b6a00f3329c71717be2c78fd6b0346b49826b720968a",
+      "bytes": 4982,
+      "mediaType": "text/css"
+    },
+    "design-system/tokens.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de235c5afef832227a090f3feb0a950cbbd191c5fe8ddef77770c252c55c71c4",
+      "bytes": 25263,
+      "mediaType": "application/json"
+    },
+    "fonts/figtree/OFL.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ee23e6c84000126692e112ff067b456470493349f993ceaa8b4d3766dd6fad5d",
+      "bytes": 4498,
+      "mediaType": "text/plain"
+    },
+    "fonts/figtree/figtree-latin-ext-wght-italic.woff2": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0cc105b3241fe952fd58ba226633f8ba733b16fd5419affbda6c8cc5c627a0b",
+      "bytes": 10376,
+      "mediaType": "font/woff2"
+    },
+    "fonts/figtree/figtree-latin-ext-wght-normal.woff2": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bf7828e2c258cffcfa50a048ee388a36b95bc16b452e8d36fa797635dbe15965",
+      "bytes": 10280,
+      "mediaType": "font/woff2"
+    },
+    "fonts/figtree/figtree-latin-wght-italic.woff2": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7242fa62d13d46172816b266f03c027999faa3755a52c2124bc2c440f6f4b983",
+      "bytes": 20928,
+      "mediaType": "font/woff2"
+    },
+    "fonts/figtree/figtree-latin-wght-normal.woff2": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ba7d3d096695818fe0686be4f1e82c6b05134e18a22260336130335027462dd",
+      "bytes": 20156,
+      "mediaType": "font/woff2"
+    },
+    "fonts/figtree/fontsource-variable-figtree-5.3.0.tgz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "745eb850be26774948b5aa9342b7182660ed3a48ac40509c7babcfdcd90c39d7",
+      "bytes": 68892,
+      "mediaType": "application/gzip"
+    },
+    "fonts/fonts.css": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "063e2de415e5df1a3a3900736949904312d56f15410bac5734daf3a89573c046",
+      "bytes": 3052,
+      "mediaType": "text/css"
+    },
+    "fonts/gelasio/OFL.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "92a43077648051e82bab440620283dfb16de5520f8b96c7db890cb69d79f6bb8",
+      "bytes": 4494,
+      "mediaType": "text/plain"
+    },
+    "fonts/gelasio/fontsource-variable-gelasio-5.3.0.tgz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "98c478e1dd8232389c47b17dd85d3d024a8b19574c2243b5f68cb6b2b408c652",
+      "bytes": 191947,
+      "mediaType": "application/gzip"
+    },
+    "fonts/gelasio/gelasio-latin-ext-wght-italic.woff2": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d3ce84fd0b54cd9178ca07de88e79950d28b172ebbd8b6558c0a10e61692239",
+      "bytes": 46072,
+      "mediaType": "font/woff2"
+    },
+    "fonts/gelasio/gelasio-latin-ext-wght-normal.woff2": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f3f0cd292326e19687d727f87400d91632ab2ab3a0020a187ce22db6f358961",
+      "bytes": 40592,
+      "mediaType": "font/woff2"
+    },
+    "fonts/gelasio/gelasio-latin-wght-italic.woff2": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed0963db68abeaf30b52fbadc14ecfe912fc0b247055f063da0d491d41072050",
+      "bytes": 40068,
+      "mediaType": "font/woff2"
+    },
+    "fonts/gelasio/gelasio-latin-wght-normal.woff2": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ba5b902e472cfe3456eba6b2d8fcf2d237988ff181d8da3cb5cf839de989ab15",
+      "bytes": 34832,
+      "mediaType": "font/woff2"
+    },
+    "icons/catalog-merge.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "26f156dcd83558244534acdf48984b48332324d27ead46b8ca889b2ce0db08d9",
+      "bytes": 18589,
+      "mediaType": "application/json"
+    },
+    "icons/hud/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f479638db8d39bb1c95d324ccfd260c84aa50c2fea5c3cdd9a6f104fd02f1233",
+      "bytes": 339,
+      "mediaType": "text/markdown"
+    },
+    "icons/hud/hud-horizon-sunrise.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16c7cf1c1cb13b2a195da1198e91ca91ac353555aa768c0f74e107bb3243b4fd",
+      "bytes": 759,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/hud/hud-horizon-sunset.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2475ddf90e1ac8d52e4eb137b88b931a019f0b06bfadd97e92ebebe644b839bb",
+      "bytes": 759,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/hud/hud-moon.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fc5cf238317888314ee2ec20085e05b6e32132bd87ebd2345c70aff75342cd7d",
+      "bytes": 474,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/hud/hud-player-marker.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2cf473c602a42a711a7601af55d04f2d3fe1c657d2c559426eb5040f868f5a29",
+      "bytes": 203,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/hud/hud-sun.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "787cd3a39ab3868e05a369cb2eb96a69a86784301862abdee19749c25ba62184",
+      "bytes": 393,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/icons.css": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f60bc38505849669896dfdb38879c9246f35d6a2996ba579d9afedf0d2384f2e",
+      "bytes": 1276,
+      "mediaType": "text/css"
+    },
+    "icons/icons.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1cfa81886c4c929e991ba9d934eaa518da4a4ae1e461a2a42b8bb3ea555c2dac",
+      "bytes": 66745,
+      "mediaType": "application/json"
+    },
+    "icons/icons.meta.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7a223f2034897d2d9a356a9cd86df89e1ba4ed06c8c6f56796877eea59a3f352",
+      "bytes": 18514,
+      "mediaType": "application/json"
+    },
+    "icons/metal-gradients.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc57e2c686cd9ccd3dbb8af4fd15000888092d406b7d9fc99c2ccdcd6dca2dfc",
+      "bytes": 1163,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/action-cook.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "38e6758c2a7012c523468706c564f29602224bb50b0c4a164b5f840ee114434c",
+      "bytes": 883,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/action-craft.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7725dad9c3ab7f858a91473e80ad5d09136e0b22f915ccfa554823c8c9b5b4a",
+      "bytes": 760,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/action-eat.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "29e3d285ed7d889f4593e3790667392fd344b9f672f8317486a2855cead05614",
+      "bytes": 893,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/action-fire.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "409b8f38af5e26c8c75bb0144c215e02d1c8d42e490785e12e37a496e638368e",
+      "bytes": 813,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/action-gather.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a48e4663ea2ef1b9a3156995fb3d5a5c3518a3000ffd8d82958c6f317c7610a",
+      "bytes": 934,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/action-hunt.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7df87d662d31c5c5062f04d2c4f8e58de073bc6e18e2c396b024b8240cf6d03a",
+      "bytes": 840,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/action-invent.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db448656614f9e0611d6cfe77bba3da747af3736e59ebb1745437239d1063204",
+      "bytes": 978,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/action-rest.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b391e77814093b2ef722d2edc49a5e86b7a1c06183c60f6c38fb778148f8d5e",
+      "bytes": 769,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/action-talk.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3cbc7a9727d33d620e8ef51eb4d5a2e2dc258cbfdeef78fa166425e563bcb40e",
+      "bytes": 1026,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/action-walk.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a2a7af79f2804e9f2888a5accdaa7905f32ed714d2be90fdc334f8432a8cfe81",
+      "bytes": 779,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/body-back.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e4f386bfd2679daf9fc890f8e6b5fb077225ca811d264667298aba652011b1b",
+      "bytes": 800,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/body-feet.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eb78abdbf7f8ca5a22a0f47a9d670d4b0a99e3174f6f99b988aa7793904342de",
+      "bytes": 688,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/body-hands.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "65a765e3c8b9dc09e2ea9c1c283bc9ce8b2c84366346e42b72dce370975a6fda",
+      "bytes": 790,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/body-head.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1dc3b6bd2f3484118f5d94cc2146fc98290dbb5ac6b26fa0701574e916d8e40f",
+      "bytes": 726,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/body-inner-torso.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "817c8ebec3964b4e5712695465700c340316c2e9e43d5635eeb6aca938e6515e",
+      "bytes": 716,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/body-legs.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b1ee79df0947411f98abc8a54c02f7c71b21542d74a1b7056502965ed2af2c3",
+      "bytes": 678,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/body-main-hand.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b45cbdd1cdd13c3fa16f82a73c7102a26670a4edd8c6efcfe1a720163f94f499",
+      "bytes": 873,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/body-neck.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bd96e0d398c35cfa03decf4a8eae0408711238f0a5e7c933234f149f2c977c6f",
+      "bytes": 691,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/body-off-hand.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca7349b0d3a9651551c1b1c55ec8890e7436b06759edb872404f86e656efcb8a",
+      "bytes": 710,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/body-outer-torso.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2e8745e5339d01c94ed8634c7a70a1073c1117bc700a4ad6db56f1030f83836f",
+      "bytes": 723,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/category-all-recipes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "62c3bcf020099658394530bc2f17d8001700d48e9975cd422452bc06bc0f913b",
+      "bytes": 562,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/category-ammunition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d0e4d8710512546348cc7952cebc846e8124b187486ec7685d6f4cf538d2d415",
+      "bytes": 546,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/category-containers.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db3b747eeec53b839e92f8e40bc68a0b69066e81d733eedff7111b0fe96f295c",
+      "bytes": 930,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/category-materials.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b1a5fa350a3eb5f98c72d8f5c1b2ff2e3ca63c509fbf7cca19f986c7f51d4d0c",
+      "bytes": 865,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/category-melee-weapons.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b45cbdd1cdd13c3fa16f82a73c7102a26670a4edd8c6efcfe1a720163f94f499",
+      "bytes": 873,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/category-notes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b40a2f77f920c7922f2452d9f8350df7901a537ab3cbb4a94c55a4dc152a15da",
+      "bytes": 712,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/category-ranged-weapons.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5be25dc80ad8d8fe0067a446524c9775c57ba94d8b9df2fcee27520a2a196bf6",
+      "bytes": 801,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/category-survival.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ac5f519f15292a1bad527f38ea4a2853d8b31e8955ecb4af872b2992a38fe826",
+      "bytes": 676,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/category-tools.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a442981534a9ff2998bbe74605b6741f467212b99304351231c76d72d9d78a24",
+      "bytes": 856,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/item-river-line.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "191526fc5d6ac6eb8bfc4dcc11bbf64ab4382f8be4e71bf36aee3162faa00383",
+      "bytes": 540,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/meter-energy.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20a6ead7cda8966f723550371b31897a85fb8b19c5c57538b7106bfddb386d2b",
+      "bytes": 687,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/meter-food.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fa420daad20ebf1ec06966492cde890655b76acf10559c0b27c4df82a30c4a09",
+      "bytes": 848,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/meter-health.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a8ee94485f111726dffc1d9e71ec3e9aa39b46eba890ea77c4e3bee42ef44a8a",
+      "bytes": 742,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/meter-spirit.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "304e7b96b39cc306fa89e4a983dda3c11bdd5f3d667a8da756f507b103512554",
+      "bytes": 753,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/speech-normal.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e19625d493527cd66a442b6fadf2b310e6b74c7777b75977ef864a4e6f62314e",
+      "bytes": 735,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/speech-shout.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c70a388c207631f591d8ebd0ef2690cf90827cc98a41e011009ba33e4f4eff9a",
+      "bytes": 767,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/speech-whisper.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "830bb7121775a0c0030f16abf98fb9cee57ab93f978978f897b71f00dc0daf55",
+      "bytes": 713,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/status-damp.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6f6c3932fce5a2d08dbebe1455d8ebb637a53b962d35ceb8febcf953e1a42925",
+      "bytes": 729,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/status-inspired.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "40c64979b4b0f191a9eb999cd3994cc56ccf0410a88ca1c006c757ff4c62745f",
+      "bytes": 734,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/status-promise-kept.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6ab7397d684a2f2d22157ea7ca4a2197c71c27376ecfa664bf6bcceab905a4a3",
+      "bytes": 831,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/status-smells-of-smoke.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c084117d991623a517eeb049ddfc1d092ab67ff9b0e3ae0596626e1a320c9a5e",
+      "bytes": 595,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/status-stiff-leg.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7409fd58c138d15abd050a1e8c8687c08046d4a6d86deb8e52cfba488357be81",
+      "bytes": 581,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/status-trail-legs.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e081ff84d451c5b0156115d220f219cea2585f2d83292821dd069611273a521b",
+      "bytes": 838,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/status-well-fed.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b7af55203630573091741c6478c485097fee8006c06eac3edc534dd652cf27cd",
+      "bytes": 875,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/status-winded.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5e4496cb37c0cf65594140938b03ab9933c2c78fc65bad75c563b3ff3d456cce",
+      "bytes": 557,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/structure-campfire.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "409b8f38af5e26c8c75bb0144c215e02d1c8d42e490785e12e37a496e638368e",
+      "bytes": 813,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-act.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed25840a55597648f284cf9d0ad0acc047e1b41df8d7ec70e37efca0d4562fd5",
+      "bytes": 1038,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-agent.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d9c096562852f61194fa60dff33c49bba72afd5695e8a09a3e36b16b5e7fc8a0",
+      "bytes": 975,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-all.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7e05b89eae7d4cf43c272e70b1dd5507c647f8f464735e550319aee025e6b5b",
+      "bytes": 520,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-attack-mode.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "449af5086268aed251aeb6066d452547fb35b8fc2ca14fdcb8476579ee05768f",
+      "bytes": 600,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-attributes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e712191392649632bc63df5153de0a1650c652ab2270e94ff3e9081b3187859a",
+      "bytes": 540,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-back.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8fb4dec4d19d0229554bf4add6402ddf37654405d402c5742ebc286ab37928a3",
+      "bytes": 493,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-build.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8cc507a810d96ebfcfca624b4e3609c746af520b03c757e0374ae765469cdfa8",
+      "bytes": 846,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-character.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ac809dcf2ef74b749ccdb3577bda7fb83c83c36d6fb32b2777cc3d034e8d4f7",
+      "bytes": 727,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-check.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3a75505e90b089871b9f1b960e5cbe938342404a1c0852ddb6726eb76d69ac29",
+      "bytes": 497,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-checkpoints.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0e264aed2a3526cdd469ed5c8c6416c9a984b61a98ae772f8bc28c181ab697f9",
+      "bytes": 691,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-choose.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8b04b490faa71b4167979d5ded936e98d26a188d57bdcdb15d9fe5c2264d03aa",
+      "bytes": 489,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-close.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9f9275f776670763f29114f9cde45dbdd319eb7868fb875cc664735a84c8a525",
+      "bytes": 506,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-cognition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "783b0a18d7c01ef63895509d9086f2e3b181b993b5f4c03ae8883e5d10b4b667",
+      "bytes": 1101,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-commitment.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93fde98e94bd7bb8bfde5dcb7705245a6fa5f707dbc643e1101e525fefe1e995",
+      "bytes": 727,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-commitments.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bcc5c0e37e6994208b890c87eda2369547b10fc03a604e0d83a7fe237c3499aa",
+      "bytes": 637,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-condition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "76a4feb808addd9ab7c49a137a5d51f2d4445aa303b8e743cb898db87f0a2ec5",
+      "bytes": 750,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-copy.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a75cdf947d4a8d55b9e4d0f99af128666757a96060b85ba8d49f6a95b835f83",
+      "bytes": 787,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-crafting.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2e00184b7f4e645b185c7386ba94b974cc3c5b1beacf96a18c4c5d8459ed5cc9",
+      "bytes": 722,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-create.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "40c64979b4b0f191a9eb999cd3994cc56ccf0410a88ca1c006c757ff4c62745f",
+      "bytes": 734,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-day.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f2567ce4deae7bff03d7972414a0291ce74e37ecfb73b71840c18eac2923bca",
+      "bytes": 810,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-describe-action.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0427e201476231925a1bde97a3521956416dfe99f37f56acd8654f1e200001ff",
+      "bytes": 738,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-diagnostics.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8e46a3f4d27088fa372cb76ccfc1f6831d00396346a1a8792d4bfcdcf4b58981",
+      "bytes": 697,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-edit.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "213e88545ff204c8888b3fc24ad72c81f871c19f3d82788c2b5cbd3dd9944587",
+      "bytes": 862,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-events.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ae7df630f2ac7765d927d6861c1baebbc93e5d7d181bf0e27ea0ec565e2cf1b",
+      "bytes": 776,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-have-everything.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d2186467604d59cba80febf7029cde9df337f81332ef43b1d680caadc7e9186",
+      "bytes": 697,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-hearing.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6a31520928ea71af7b6ce6d0684fd80770a8a6ca7af035444b82cded5ecc266",
+      "bytes": 1044,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-help.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c3256131f102afc98a7cd525db2d57abb0acfac191f6a47d53970e6e824183db",
+      "bytes": 741,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-inventory.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4cc21e898af07cb844f0da77b12373f201696afbdc4c13cfcddf43df35d06c97",
+      "bytes": 950,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-inview.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8aa80ac40975d67ae804b312b963335c6e5480b84431173d9b8fe226f7a6ff3",
+      "bytes": 804,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-journal.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b7f80fe1d41c49fe340b967ac1bcfbe9c91b3a3952abd5b05d8c71654733a95",
+      "bytes": 953,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-json.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "557f63bccf0eb7ddb3e658765deba8b3d9d278d4fe7e484f3c7da0ef7b700303",
+      "bytes": 693,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-lock-perspective.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f3df5305caffda3c2f6dceac680575450d7766f2967e8d172e3cb6f38cb7219f",
+      "bytes": 1043,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-lock.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed3c5709f08058a7e3d99713e7666ffc0d8ba95f5cf728033c02e977c51b4fe6",
+      "bytes": 914,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-log-out.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f63cd86cd178652c1d0107b1588ead07cb375ba6ebd3617a5d2a9051e7ec5f1f",
+      "bytes": 541,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-look-closer.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c1903159cdbfd764d9322b1fc24af35a2d247596627cedc75353f57312c4262",
+      "bytes": 847,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-map-marker.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0662104a81f1e188aed36a7de66cc5e60dcdce3fae037b1d91c7db4f771bfb1",
+      "bytes": 676,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-map.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a499e98bdb4909798b87c35008acae5efd40f9ab1c7cc3c83af88c18a3b11f2",
+      "bytes": 721,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-memories.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a997aee7b031a89a23da62bcc3d0196f518a7db5c420fc74da6a19539dbeeab5",
+      "bytes": 758,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-mind.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "783b0a18d7c01ef63895509d9086f2e3b181b993b5f4c03ae8883e5d10b4b667",
+      "bytes": 1101,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-minus.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7ec95a2524f9acade9969339201ea13c9a30f5f7314787827a0a20794eb6fb0",
+      "bytes": 485,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-more.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "881c7ea1a0b962c54d824039a2ed3b639769181de7b4043ab7c5274228860193",
+      "bytes": 508,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-move-window.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0a37b8cc56a66c758e5a53f7ed6f1f46a19a86f162b3fb6e65649b8e128b597d",
+      "bytes": 533,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-next.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "89891bb44ec62374b662dd2179b0c121122850d194d4dc08fd3199e925b252f1",
+      "bytes": 490,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-night.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ae168d72eca8a77284a4105987e50385826d1ea07a930a031bd006985a821db1",
+      "bytes": 581,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-notes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1194752e0ae2bb2d8983d59129a2496e6bbddd63b1756c4561d3ac828ff10976",
+      "bytes": 728,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-overview.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8aa80ac40975d67ae804b312b963335c6e5480b84431173d9b8fe226f7a6ff3",
+      "bytes": 804,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-pause.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1536890e2cafd8c2ad06cb15d73a5e98a22134ef7847bf5ea6e3b82b57d171e7",
+      "bytes": 677,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-people.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fa6445d8d768e006064d84e18210874b892c9d50e848b8720584dbb2f37f3208",
+      "bytes": 931,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-places.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e690ef7250c8e9365dac29ce812ac436f6ba76fb26695a3042ed8a97cb0103db",
+      "bytes": 739,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-play.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "98456c2c55fad14b506892f62e0ee9e2c94b5c5cc5c0bc19eab00f3ce3798ec6",
+      "bytes": 547,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-plus.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "94af822ab9a4e5f112f9de4cf84e8b0f3aa5d9933963eb41f7afebaa799c1ad3",
+      "bytes": 496,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-recenter.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d5e2607fa2cb35a85810e92ff5c34f3025da6a220e257346f9c0d6b5ce7db401",
+      "bytes": 743,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-refresh.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f2267dc3c9137bbc9768f5cf0c4ade76e840084ecab811d702a56a26b39cab73",
+      "bytes": 613,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-review.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "518861e6919390ca2a550b84d6432c7f84c94582ce58b1baa97372c0fd5ab1ac",
+      "bytes": 917,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-search.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "76669554f4bf75a4aecb67183ab5ac938d4c1241ec09a5bc4e453349aed3b4ce",
+      "bytes": 668,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-send.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "634aff6fb9d1bc4282b0fcce8e34f3c8ba124cc63a7c928c0b749f4a2a16ca48",
+      "bytes": 544,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-settings.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3ec2710db8f839c1fe77bb9f735f77d4ae8bdc5fc9d59710b7770ef59afae793",
+      "bytes": 938,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-skills.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6aa1fea76254741b760d8a3f2baa8cd89877efbe7bfa0385ac797c06aadf74dc",
+      "bytes": 767,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-sort.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c31cf994c0831c0c52dc85235cd48c8447b6f8e7520153ccd1cbcbf0b861af2",
+      "bytes": 548,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-special.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6ab7397d684a2f2d22157ea7ca4a2197c71c27376ecfa664bf6bcceab905a4a3",
+      "bytes": 831,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-speech.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d17b0c07742afc818f032c8350ff871e8a18199e61feb2840d8dc27d95c5d918",
+      "bytes": 843,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-star.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "40c64979b4b0f191a9eb999cd3994cc56ccf0410a88ca1c006c757ff4c62745f",
+      "bytes": 734,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-story.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2157408f0cc0c3b8e7e53af7dc9efcfcf61eab6836aa9e032da35666b95d554b",
+      "bytes": 962,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-submenu.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "89891bb44ec62374b662dd2179b0c121122850d194d4dc08fd3199e925b252f1",
+      "bytes": 490,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-time.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ff9e8786f0b2db05a7b475cbcbf7c06a265999000df83e2ae06d7c80536520fe",
+      "bytes": 706,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-unavailable.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5654058ae969dc68f3199148c5346c175e6f5cbf1ad8e8d180a2214960de596",
+      "bytes": 672,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-weight.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0e9d0d5914435446fd8f03f17911e5d8f905b7c6d8513fda9361d65825b17f37",
+      "bytes": 702,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-world-operations.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a2687602cba1873df35e9f95f091adeb31884f03f3dde91587a6771a85da3c",
+      "bytes": 774,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-world.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c65b2e5bd2d0e16a7eda172b04375889200881967a62957a96a206de43f44ed3",
+      "bytes": 714,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-zoom-in.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d715bdc13d17333e86ded6a91f97bd172c36a0e55e2b97a0f5c45e1eed816ef1",
+      "bytes": 877,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/gold/ui-zoom-out.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "06f03cc24eb68b0cc463e0944716b74e5e74b9983e10d87af4265b626f59fe75",
+      "bytes": 863,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/green/ui-have-everything.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b7e4b321c5c73e7ea32766388a3394ceaf4747a3004e39e3a2934f0145d10773",
+      "bytes": 658,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ink/ui-act.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b1f83a8285f63ec3b9a89279fc11a0d0e4b5a8e5a8fe37cb2340b0b2191f7a03",
+      "bytes": 992,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ink/ui-check.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42cacb20d2ab1189fb3d2f4d0ecfcc843302038df44928955c9efa0e29385964",
+      "bytes": 453,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ink/ui-crafting.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "57446ad53e5e1b2ae374af4371cce9f7ddc6da0f08b06108c12fd54f074de13f",
+      "bytes": 676,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ink/ui-send.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eaa3460d14e1da197ea0f511e00a1cc65a6bc6b00cf5b5fa6852db08e1212071",
+      "bytes": 500,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ink/ui-speech.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7ba11f1a1fcd2f5bce0dd20f7546079071a86657027cd959819b2a7f13e75aaf",
+      "bytes": 798,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/action-cook.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "840b92878fa4b7789130d3d6bf8cf842655d4fc67cd1a25e2fb9d1fbf528d408",
+      "bytes": 845,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/action-craft.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21325db2131a03c82da977cf29ece0ca5706d98a238492ad41337c28817d1ab4",
+      "bytes": 722,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/action-eat.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bf2afbe0362226a1e0235e2bbcb4030757fd59f017387fc9f7f1ae9aa172d242",
+      "bytes": 855,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/action-fire.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3ddfa2efc90f43df8ede414701280157e36ee84cc9cde2b9676facceea827964",
+      "bytes": 774,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/action-gather.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7e28c8b68792a4948dba27bae1c61a6e7bfb76cf2fae7ab8862f849f70d3ec44",
+      "bytes": 896,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/action-hunt.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "52ad30e6832648467c7ed67398c1770f017d228632a4d0d50ea055675a0ffb05",
+      "bytes": 802,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/action-invent.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96348d666d0d3e7c00cc635f48d138f98018ddf8fd14c8f4638acc8cb18299bf",
+      "bytes": 940,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/action-rest.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "53f5edf57b90cda90efc04206a5977da3d541225f0a1f7e9620730e9707267c4",
+      "bytes": 731,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/action-talk.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ecd071b393ec8b28bf55faed5c4faf6c451d3198ea2fa7b1b892098d5677c23a",
+      "bytes": 988,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/action-walk.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2083f9cdd979c9133566b4b22ee422b527c3e9e0835a6c45670355a4db8d0f6b",
+      "bytes": 741,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/body-back.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cb463ccd2bbc25e1be3207c275cbc8d72fe6e9b7a105456105dc1e86bc701e21",
+      "bytes": 761,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/body-feet.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "09faa0f5a7c99ecc89cfb540f51efde074a45b1b3b7a91493ef06ee92cf7845c",
+      "bytes": 649,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/body-hands.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c28cb8b824ab7251b5b10f5fe5f7a3d74f421c6d4fc261ebbf222be2f05d52b",
+      "bytes": 751,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/body-head.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4882a355652cde03dea4e6bfc7ce1ee9a8894c5f5b0d4cbf9d07ea9e18a0edee",
+      "bytes": 687,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/body-inner-torso.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "31c49da5e6e54b527c1146dd2dfc98d1b4d16d012d629bf82be345bdfeddbdcb",
+      "bytes": 677,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/body-legs.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de4d14755f840a04138d76df1a259e34521e4f91ceca5211de4c14091c29ed52",
+      "bytes": 639,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/body-main-hand.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9547a0dd5f01aeaf8f1e0d0060678ad39f8dc429791d34e1a5652292fa5f8b71",
+      "bytes": 835,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/body-neck.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "02e6b63d918c1b4a0d5472f392cb2c0cf056f547db8ed40c6ca878ecc68ff0ac",
+      "bytes": 653,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/body-off-hand.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e64bf5b2acf563177133aa134290523b3df08d755661cdee70ba841e64876e99",
+      "bytes": 671,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/body-outer-torso.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b76fdff6b3512df901aa6acf3416470ff9fb5189b24309e7fd4cd27172c3011",
+      "bytes": 684,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/category-all-recipes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9e567385febf39c54bcb40a1dc409410f7f200a0f96f6635691a360638f764f1",
+      "bytes": 522,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/category-ammunition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "92f9e06aa03af8bfa2f6d78a9c072722e3fddcfdcc38b538bba07399cb362180",
+      "bytes": 506,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/category-containers.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d24cfea225787bc0d72edf4a4b81e6e0dcfa5eded6e33092a2253c6ab8e7cab2",
+      "bytes": 892,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/category-materials.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0b3e7525cfb7fdee2002a48de70ca42cc9f980ddf1a002f19a26c7ccaa98ef2",
+      "bytes": 827,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/category-melee-weapons.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9547a0dd5f01aeaf8f1e0d0060678ad39f8dc429791d34e1a5652292fa5f8b71",
+      "bytes": 835,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/category-notes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6c40f1577d905dba8a13bc72827fb19ba74b316402b3a28db28fa06dec2095a2",
+      "bytes": 673,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/category-ranged-weapons.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ba932bc02bef6a47664732117e01d5776b61b002a7aadc2c3589957b8569e7eb",
+      "bytes": 763,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/category-survival.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa914cfccd6031d7e7576ef74f39e593ddb3c6e310d35006a33fd6b67438b483",
+      "bytes": 637,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/category-tools.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d3ee1c6c9e855ee6ca15cb4099c9f48e176a2aed38f350012008b92e5d730822",
+      "bytes": 818,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/item-river-line.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c3f3143ebffeaadd86b2b1683d6afa923569f270909e6fec4600ef979bce3f4",
+      "bytes": 500,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/meter-energy.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b59b6493348f414f3e52f52ea058511377eadb9efb26515c86aa0b0aebd41f5",
+      "bytes": 648,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/meter-food.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b4e23d639ccbf6a687fb8523e4e901374ef8e6ef709859d00db03ce9f959477e",
+      "bytes": 810,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/meter-health.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9a708a1a97e521fde02c06920672bf398d267f5c43bd930d9ce18d52ce086e27",
+      "bytes": 703,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/meter-spirit.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "adbde320ef682d383b411c4fccf4d932746e3db18bfa864af620a07a5d6b29cd",
+      "bytes": 715,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/speech-normal.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5fc31bf7991f532b92fed43bbe454b86b53dc4a9673d82caa8624ac68da19e37",
+      "bytes": 697,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/speech-shout.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bae8bba8f9079163ebfdf3e4bdb2187db1abfdbee22c57ac373b40582b00139f",
+      "bytes": 729,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/speech-whisper.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c9169d229a4bbc72a971704c49147ef89c7947721e824a24a9de1eba2eb35e7e",
+      "bytes": 675,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/status-damp.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bca11dcc1b0726c8c9cf73f072972ba31faff84b64e24d658a4955deed21c519",
+      "bytes": 690,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/status-inspired.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3858eb1e0579a06010c9b0d4b0fe32b6b2732e390a2dea0ec631e50082fbdf3",
+      "bytes": 696,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/status-promise-kept.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eff9201c36cc1e6a4cf406117f6835e91b7d0a62768d18e762b3b9ed99bcc1a2",
+      "bytes": 792,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/status-smells-of-smoke.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "69edb52b8436c7396ff5e9aa43f7a9d0e068a9bb027e3c9fbc7e81a7d0715846",
+      "bytes": 555,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/status-stiff-leg.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "acb1e665351e6060ce4ffe10d350e2f5af5df5cde34917a92836f06355b7f3b4",
+      "bytes": 541,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/status-trail-legs.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2742ccefab919fab40dc815f1613cb775048163a3fbcfaded2b248ffaa14feb8",
+      "bytes": 800,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/status-well-fed.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ba1d30580d72aadb2b057c4fbfe95ee38254ef3903d3dc497d9a53806a0c0c8",
+      "bytes": 837,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/status-winded.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5aac25fd7f141cd69f31a188de4a3bc0c353564e47c5fd6387861b554320cce1",
+      "bytes": 517,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/structure-campfire.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3ddfa2efc90f43df8ede414701280157e36ee84cc9cde2b9676facceea827964",
+      "bytes": 774,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-act.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f8d2a3a50a9e7fe4508859b94605dc52db7104481c76851f27c43c011ec0e71c",
+      "bytes": 1000,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-agent.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "da778122ce03a3e3ec1a6ac158c59d624c8923ccd2d28ede9bef13fbc4d6ae81",
+      "bytes": 937,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-all.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c03607e5eb9a8880c1aaeae7f93cad9594f221eab2d1303a9d979c6f76d05cf3",
+      "bytes": 481,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-attack-mode.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c9fca5852e4cb5b5f20860204611366b7551557c9982785c45ea4f47b1a8ef4e",
+      "bytes": 560,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-attributes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2a39954976ee3a427c2bbe68918c762a19f71bd0ec0ff513d6ffadcb1caa9ba3",
+      "bytes": 500,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-back.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8833e975592bcdd5155e66c3196213f3f9fec38530408d2b2330e85a27e49886",
+      "bytes": 453,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-build.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "381dc64c84a9fa4e146976207e7be565c49329ef2d923872a34936fd0451ef59",
+      "bytes": 808,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-character.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2241e64cf65cfaaa019e2dbf974dd54cd3373a3c755d3f768bfb8fc6e30c38c9",
+      "bytes": 688,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-check.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "90e2eddf93926b7bc8882eb1c6ca3e64e40b639552eca6e6015f7b0800037941",
+      "bytes": 457,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-checkpoints.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7391b17296421a5cfd60df3e9b60e32e4fce5031f29ffe34be8724121f0a640",
+      "bytes": 653,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-choose.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e2d5c44b87c4cfbe4e113dd8b0b12585127087ca92eca5b50a6364dd4a2bf3e",
+      "bytes": 449,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-close.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7829fbdf3dd4a3f352858858c47b5aefe2560a2d0c9f529ba0dc7ca37cd3b6ea",
+      "bytes": 466,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-cognition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "32aad3a3607c609ec70494063710242d88258641bd112bd3a2b836108a1c1da4",
+      "bytes": 1063,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-commitment.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "faa8ac0c9595a227cdd986cf5414452a31c821f814d8ff254bc9b66cb373a428",
+      "bytes": 688,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-commitments.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b937ec74a050a3f18277d216b330883e4996760f981584a3adeb3439878f52a",
+      "bytes": 597,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-condition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fb2aced7b325ff6cdf9506c6d823aeee9bf2245534f8ca2ceafd79d1bef2e727",
+      "bytes": 711,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-copy.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1e72b01d506ae937097e3004b365fafbe20dd0980a06f38392dcf62abc0796db",
+      "bytes": 749,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-crafting.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7ee3b4fc618c99374715c548cdf9e277c1f676ed939989b5e30375394eaaf9d9",
+      "bytes": 684,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-create.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3858eb1e0579a06010c9b0d4b0fe32b6b2732e390a2dea0ec631e50082fbdf3",
+      "bytes": 696,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-day.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "50e98027071eeb989d241f0827d936dad3f58425883d24926c4055c6630af693",
+      "bytes": 772,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-describe-action.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "41f2efa473548a054da1121f57fd8f6e7825a288f746c3d927b4c11ca22fba63",
+      "bytes": 699,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-diagnostics.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a3ffe6c29f29cfb6f0ac2b1fc54f80bb06bd3fc240ccb9c2994a3565a2ec3f9",
+      "bytes": 658,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-edit.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d589c6e6dda7129e0018385da414fe58ca617ef19e163c9200d31a925ee07d8c",
+      "bytes": 824,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-events.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96c31e967e48aedebbf542f16a5b9e3830bbb2fd013f4f27b4e2529fd497b61d",
+      "bytes": 738,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-have-everything.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "64e5b60c54d4a10959794742f93b5330a21a655ec9eac7610a51b347e50b4c19",
+      "bytes": 658,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-hearing.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9da46207c8b8224fc9785cd08cd4f4a02a859c8fa5b6e489680e24571212e717",
+      "bytes": 1006,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-help.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2bfda7e50c5d8d67984aa9412b6bbac2482c26720f7c211427bc6289185f7527",
+      "bytes": 702,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-inventory.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c853a749fd335f293c05a7efd509fc88e9b00ec8ba59384bf7d8fbec126caf2",
+      "bytes": 912,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-inview.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9ea3ad4f9d3f855a2880e335345fa2587f02e801d91faab5093af83276556312",
+      "bytes": 765,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-journal.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6f5c8996a320f9d12a0eba8aec480f3b9f7a60f31a8fbc4631e56b08d37ceb57",
+      "bytes": 915,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-json.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "81449de6d902fdbadbcedfec017111db655b8f5fb86474e7c1d848779cc04133",
+      "bytes": 653,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-lock-perspective.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a0e1b3c0ee99bdbabc137a2d45a1f64a5268d72a1f3a3e23d918327d8004f8c",
+      "bytes": 1005,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-lock.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a9e997079c5c787e169ddc788d98a6e29540600b85522d161099d10861be00a2",
+      "bytes": 876,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-log-out.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8f608066beaa959c68b1023c9bc3a5ad65e5207d543cf3af6696aff1eb23ca82",
+      "bytes": 501,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-look-closer.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "27766a88a8771872e88f60dd5292ab1c00f4e04daa6f4132afedab1007991a7e",
+      "bytes": 809,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-map-marker.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d0aad9ac7681a3a0ce59488e69c516f46125b43e736a9e9d26e8e1eef5422c9c",
+      "bytes": 638,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-map.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "175af188b8dded3416a2a9ee8b8fd17a15329f8fe2e03cc277f821f3ab06c9ae",
+      "bytes": 682,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-memories.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16506c7cbe0dd0a15839f8dd91a9a4ccf6c411f59805a0cc21d505f9ce1b5443",
+      "bytes": 719,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-mind.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "32aad3a3607c609ec70494063710242d88258641bd112bd3a2b836108a1c1da4",
+      "bytes": 1063,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-minus.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b60f22b461d8154f22d0e6265b6e87ea67ef4dd4c68b5e7f51ed3d51e78bbd0",
+      "bytes": 445,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-more.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1b52fbe07353f63b1a6cdd9e52357ba329e2f70ca423571ebadd3e8b000fa15f",
+      "bytes": 468,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-move-window.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5288896f5fb176313e5e475e91a6a1a70311b3c6d69bfecfad78b615a3a5ba0a",
+      "bytes": 493,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-next.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3b0f2bdbd3966d800602d2394c7788dba657579c211f33238b712020b19f016",
+      "bytes": 450,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-night.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0cf1fe044887bc97d6daeaa1af175b2bd7e0120f50a25f3eaffdc291d8c61fd4",
+      "bytes": 542,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-notes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4b9062c8da9b48342676ce078f18e7a1d3ff9f71c4b3a08ab957bee5680988a8",
+      "bytes": 689,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-overview.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9ea3ad4f9d3f855a2880e335345fa2587f02e801d91faab5093af83276556312",
+      "bytes": 765,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-pause.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20d89169cb9a3745d6242d22ebebc2d27b8923a5f7381f9d00bbb0035ea3dcdb",
+      "bytes": 638,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-people.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b76a3c2ec64e8abf329d0b0b8d2175bb391e9ea4e82fde0d11fefd7d4a70b351",
+      "bytes": 893,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-places.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ff5caf6b89112bda5eda3639eefa5cb8876b74afb333d47b2f51d9be14a7bc5",
+      "bytes": 700,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-play.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "59ab0e58fdac9f9658caed1a10a0e806b58431f248fba4fd7d67195cb1b7f288",
+      "bytes": 508,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-plus.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8d7c46247ac0c4f0fe1e06030ba51797f8b8112415831270a860977e54d26404",
+      "bytes": 456,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-recenter.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9595b8ad821825f06512c2a8f01f54ba0134ee137dbbe18f4be2f1d00a12f6f1",
+      "bytes": 705,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-refresh.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fbf5f381030a9d9d2b69afde3820d98ac5b8a5636a8e29bc29589b241dafbd35",
+      "bytes": 573,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-review.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bee6bfa463350afd562d920a2883e3effa48aa723259b81b94c56dbb0991b3ad",
+      "bytes": 879,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-search.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01bfdbd459e86de87e7ecf8e55df1b3a4a22340b795e38b817b8e9d2a071a3d4",
+      "bytes": 630,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-send.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "06a2b29490009f3bff79a95e959d212607d788f219b7b6acf1a9fa0238122f24",
+      "bytes": 504,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-settings.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca7db8724d4ab7b510217f1c1da8f6148f6720e1a2ded3aec3c0a38c607ba09f",
+      "bytes": 900,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-skills.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "99aab52ba87ee6240c6fa1d28c57a5a4323d9dfa8d3c205874c5dedb8044bdf8",
+      "bytes": 728,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-sort.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fdc9fa82153440b2f2c09c6bc107c38190acd1320b765a12584f180a01a1c57",
+      "bytes": 508,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-special.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eff9201c36cc1e6a4cf406117f6835e91b7d0a62768d18e762b3b9ed99bcc1a2",
+      "bytes": 792,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-speech.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "34e7d34298c328684622823e2b01451da72e14dca93fdfa997e2f1bec0b05bb4",
+      "bytes": 804,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-star.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3858eb1e0579a06010c9b0d4b0fe32b6b2732e390a2dea0ec631e50082fbdf3",
+      "bytes": 696,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-story.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c27d912f1b43470347de81dc00feed93ea985e2bbd1b144d95076d64e0be0394",
+      "bytes": 924,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-submenu.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3b0f2bdbd3966d800602d2394c7788dba657579c211f33238b712020b19f016",
+      "bytes": 450,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-time.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ef22a2af49bfebeeb8158342c7f9698d8f2f343019d3150b958413c85c4a38e4",
+      "bytes": 667,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-unavailable.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4aaeccb5e7c4e7104652ecadf9690fbd2d9644577dab237ac2e8e2f2f0c816c8",
+      "bytes": 633,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-weight.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e2674c342bc8fa751daab89fda2582f7f35216ba6b55044d700e5c3667fe48f5",
+      "bytes": 664,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-world-operations.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "00d6485a4241c4a59f125406c8c3a28a578d0cdbcf58f55e571e5da9ee3f95da",
+      "bytes": 735,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-world.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "63f13c8d906bfc7b0750a16bdacb74bc47f50cd7049d47ebb14fad4121d2df5d",
+      "bytes": 675,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-zoom-in.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed1c35c7851ba9f07667d35499e173f46e39bda3bac7821ade75e990675c7060",
+      "bytes": 839,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/ivory/ui-zoom-out.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca5a3608bf639b5ec78351e27f79887194f77282f5dae094d3af611accd93edd",
+      "bytes": 825,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/action-cook.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7527b33a1933555050cf2e463ce5f3599240b0a7bc35b4a5f4e76fb19a9fb445",
+      "bytes": 617,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/action-craft.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "816c83fcc2a7c3678a7845b3d10edaa7881f9fec23a1207a50dc8f92a2d2cebf",
+      "bytes": 494,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/action-eat.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cb7375aec0e9fb0a9cff6a43e84d27e196774a26040d652520cb2e42bf754583",
+      "bytes": 627,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/action-fire.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e1eef1278b5d926bef876e6b77f80048ba5affc5ed9ff5c396330b3e8ecfb48d",
+      "bytes": 554,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/action-gather.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c69a4a7fb488e4882a3ad8670346e15a9f1e5c55e3e465f675900da6663d0742",
+      "bytes": 668,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/action-hunt.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0332e7f078e9e984423c8f045eab0e65b48e352545373a6910c22cc28e489578",
+      "bytes": 574,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/action-invent.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "287830beef0205b6d7d6aabb3b9abc6f4e758a9ad4a21a2519c44e9238a8433c",
+      "bytes": 712,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/action-rest.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cce08e16e533974fb1b6efd9c8354348b8ebb4f3028731afb54ac1ee8c83cac0",
+      "bytes": 503,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/action-talk.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de47b99f97f7b36707632a8bfaa4c30168407305689d3b980e1bbc23b649a792",
+      "bytes": 760,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/action-walk.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dc54ded2b6199748b319ff411ef7f19fa486eb5b15c296d362262e5a6221663e",
+      "bytes": 513,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/body-back.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4b3383f5f4a43ce093e31dc44ca99576084c19ec6be1d49c1dd6e920da8f7d30",
+      "bytes": 541,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/body-feet.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1816e03e99b03ff9be2a6452d9920e8ed9c1ec2599daafb4d1e96f2ede9f7953",
+      "bytes": 429,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/body-hands.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "954f19572f2c4575988906dd2fa5f365a75c8754213cb9ad79e7954623d69aa2",
+      "bytes": 531,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/body-head.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ccbd5a6562fb3f771a47dbdd21ae835abde60effdcfa1c191b4272ec9d777dc7",
+      "bytes": 467,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/body-inner-torso.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "753e15fd3e686d6a30c0fa4015a34ab93365da2c6efa29db97a0934cf2a329e1",
+      "bytes": 457,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/body-legs.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3ebab2790dfb0fa4c40849ca917e85088d2457f19af719eb47cd274dd864a2f4",
+      "bytes": 419,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/body-main-hand.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01e2a293e5e148e1e96e3466ea3839de6a77ffdef2e89deb0efddbf1354477fe",
+      "bytes": 607,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/body-neck.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2d8dad4e792cd0ce3c94c825e1c40d3213067aa8e70b8064f7cffe251a40e44c",
+      "bytes": 425,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/body-off-hand.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a4c566298bd184220feded30f29a9bbdedc93875e8b0200838b7ace2055f7d7e",
+      "bytes": 451,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/body-outer-torso.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1808343a3d25ae2528e75a6a3d33e450288609f2dcc5169ff0598608e2a4e516",
+      "bytes": 464,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/category-all-recipes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7baa1e0f7a5ae32c84813e09f25f776512be57dc37e7991fb5fe93a9e3ae5cd",
+      "bytes": 310,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/category-ammunition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c8f3df2a2c89dfebf0a7900c15f4a96215eba1394491b41ac743a536448c16e3",
+      "bytes": 294,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/category-containers.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "072feee5ec10ece0d651863958b801fad89520e2c1feb83812d896bbe1b255c8",
+      "bytes": 664,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/category-materials.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fc89c2183d68f77cedc7c0e201bf07f0e39dfaf0735dad1a3f524f2399f85d50",
+      "bytes": 599,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/category-melee-weapons.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01e2a293e5e148e1e96e3466ea3839de6a77ffdef2e89deb0efddbf1354477fe",
+      "bytes": 607,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/category-notes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fc3af8e2917dd9a74bd456fdc63ac52e02e19895af2e216b6b3d7d321a9cbd92",
+      "bytes": 453,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/category-ranged-weapons.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6cad8379a3e2533ef0569e5c23658256ad1058a715d6f01e04beec31ea344fb1",
+      "bytes": 535,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/category-survival.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5d6b1659826be8abfeebaa69edefd88de1b00ba1b4328cc0105fbf5d4f38e0c1",
+      "bytes": 417,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/category-tools.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c3e247bc0ab1d98a36c890e7f9bba5572c550bd261019b714f2a9af3fcf9d37c",
+      "bytes": 590,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/item-river-line.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b5ebaa15901966ead5c085c91bcadf60e75b65501430af018f4848043096f7b1",
+      "bytes": 288,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/meter-energy.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "47d4b4b256c8537c041e975eaa3bb39094def01e7d9b35a355aeb059228fe257",
+      "bytes": 428,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/meter-food.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "657edc94af53dd6e9361a26ed333b0c4dd8a0beea6f6874a11abd998b3ef7226",
+      "bytes": 582,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/meter-health.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d2e823bd39481983b55651e3f750dc623c2420f64964e6f4792f8e8dbc1444f2",
+      "bytes": 483,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/meter-spirit.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "05ccbdafc56dca741381190b90cd9f5f6267965f84b192c88ccb7a6955b3d0f5",
+      "bytes": 487,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/speech-normal.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "76449f9b24e479556f2373dd5a9247fe1e848d685001e429a741db29046ff452",
+      "bytes": 469,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/speech-shout.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b5c49519a4e660f544d81c4d9b16c5bf39a1fd61e1c2f3aa8cf5a27cd9acbbef",
+      "bytes": 501,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/speech-whisper.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "57338c53011bfabb3f189a25bff6a53597ef808a69e3773caeb82f6def471367",
+      "bytes": 447,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/status-damp.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "650db30c42138cedb166d8c784186c1f2a55cdea5fc4ef040e323e5ab8442854",
+      "bytes": 470,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/status-inspired.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ab88cac61f00366cc42fab51fc170ea534cf4212abff5b532e1657435e25b489",
+      "bytes": 468,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/status-promise-kept.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ccf272a4cb2a999448157fb9e71206ff0dba0a695cb70a02a9b451f0f3d4b22",
+      "bytes": 572,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/status-smells-of-smoke.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "052432fdb53e42b355b8a9c3d66f2236b0b24378ce3f89d80490ae0a7c2ad5d2",
+      "bytes": 343,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/status-stiff-leg.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "65f7a9135695411c3184955e03e6586514565737f6f0c5a58f92735be1ae0529",
+      "bytes": 329,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/status-trail-legs.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8bfbdfb89859f6f134503ac5200d672f24befcf5597612672687e75dfebfd8f1",
+      "bytes": 572,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/status-well-fed.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "34e84447945c41d790b44122324f1e30c7cf8c7e0991c034861e2f1d6c6cf435",
+      "bytes": 609,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/status-winded.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8c4734f9d784e2dfbf9ce4dc1f53a0d7e79c6207011f4db8ea0841cb3f2024a4",
+      "bytes": 305,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/structure-campfire.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e1eef1278b5d926bef876e6b77f80048ba5affc5ed9ff5c396330b3e8ecfb48d",
+      "bytes": 554,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-act.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6033057e807466b8228c97721221c87e193ff8498a067f6fae5b61c58017d906",
+      "bytes": 772,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-agent.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f9b8f0a46532ba1bf45d1136060e11342daf8f850d31343b30429fbacde3372a",
+      "bytes": 709,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-all.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b0514aba7c99e8bdc75d9c029e4143ce4716aee2922130df1abeae3d50a82be9",
+      "bytes": 261,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-attack-mode.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "edf5c18a981b4c0897f9ca884ad5a3dac2a3eeb3dd319dc8bbbc378f43a0c217",
+      "bytes": 348,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-attributes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0157b757df6d921cde6850ad3004c1589e24c8c1b0159cfc95d0dd2f527411a2",
+      "bytes": 288,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-back.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa003a4bebad88991d5343662b3d50f8fe7badb56ae0c2d6fc1e5e81cdb4d957",
+      "bytes": 241,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-build.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7f41417404fc24be70045615903c80eb3fbdaa67dcdb569951b68bb6050c9307",
+      "bytes": 580,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-character.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf0c13d7be728fa86b71ac0307b04261d1a981c382bba9a69015849193e2c8c4",
+      "bytes": 468,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-check.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "07309e8605b357d32d9fbf2d7438554e70f6bec75958ceff3710bab85097f24a",
+      "bytes": 245,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-checkpoints.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0584b2c4cad9c92c2d41fcdec305607f6c73c82234556932900b141f383d5d04",
+      "bytes": 425,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-choose.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f6bfba74eb21a3e6c868ea17f185030b9c6e1e0f5d1f07287fc04c8c21bb4df7",
+      "bytes": 237,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-close.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19675e24087927830f95c560ff06a9b5680bb304fa6981962c8b385af4539858",
+      "bytes": 254,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-cognition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7a2508100c7b4cd6af7e1cdac2cf8de88b3a5d65f3189e03d91e9d15ab1e12d4",
+      "bytes": 835,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-commitment.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b9f18a175037f1bc265012f82eec7e207f5c4bfbb8dc845922eecc3582b8b14",
+      "bytes": 468,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-commitments.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "57f973dfb6754d6214102533a9bdb4869543f04d8dcf9ca8fe92740480a4fd16",
+      "bytes": 385,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-condition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eb7ec6861c1c572d75b50e43ed1f9ccc37ab2bf0b8245ba09d73dc4b238fd520",
+      "bytes": 491,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-copy.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b4693c7540448e60f6384f945bdcca6fd29a902c34e85685dd091cdec0362059",
+      "bytes": 521,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-crafting.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ff0d200e29a0b863c3bcfcdfcc0f5e5cdaa5ee1c53acd8e7bb6d567da7b990a4",
+      "bytes": 456,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-create.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ab88cac61f00366cc42fab51fc170ea534cf4212abff5b532e1657435e25b489",
+      "bytes": 468,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-day.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "823c53ec17666ccd898d3b36dd1c3fdb9a77f5b8a3bbe09b4654d9ca06664d64",
+      "bytes": 544,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-describe-action.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8a8526a1fa4785b5eccbb04b378efb2e531774b28d25697f2439243ccc665f53",
+      "bytes": 479,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-diagnostics.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b8dc7916c93442ba23db4df0ce1f7f796ef636ef9a691d67604c9034de97c01",
+      "bytes": 438,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-edit.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "59bbfc0f26be929fa4294b3994ec7781e12d2eaa64f01cc10c7bee1b2af5c40c",
+      "bytes": 596,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-events.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0580c14c9e5492f24320122990e75243b195cb646b0ced51661ce9dd1b24ea23",
+      "bytes": 510,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-have-everything.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e5ea1062748afb6a7910394fca424e219eb9cee497b61d3c581ca53bd0f8452f",
+      "bytes": 438,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-hearing.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e6d484b5773ea2e357b58af99530d66812318732d89422bb7056abd461d8527",
+      "bytes": 778,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-help.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "afeff66bcf173a1238fadc593b2d052d56a4886433cec8e68c27071b832f6280",
+      "bytes": 482,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-inventory.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d12dd5f0f0b69efe6fa12bf6ac17894c4f12f5343d6ed16a172850507b145067",
+      "bytes": 684,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-inview.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "904ab483c77206c47f670e1f300433376a5feecd8ca00461fd4f79125b2aab27",
+      "bytes": 545,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-journal.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d00db7946a7b648598992f0798e118334705b0ea90135835d5991f7460042902",
+      "bytes": 687,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-json.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "27d9189571e7d1adb247bb54f8400ae7ff422fc2d5f5a77052b4d0aa80df8f2d",
+      "bytes": 441,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-lock-perspective.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3368d127f76b2f6e32de74d18c1741b8bc0f237ae609d9578c17f3ceea60462d",
+      "bytes": 777,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-lock.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c2943f74da318421e3e5f0d5d4d19b1f991d4ac74fb05081487af9c9bcade234",
+      "bytes": 648,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-log-out.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7d68ea4fed8e75b1f43c27cb2e1e160c4e9d1768901857bafdcd7a2f21037592",
+      "bytes": 289,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-look-closer.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a8bc5344894997c46317c018e44c3fdc41614476659469fae0949cc6fe728da6",
+      "bytes": 581,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-map-marker.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "face0cd9ece34d6d799056556b642a75d7ae15a03ceb7f6d97dada80d717e721",
+      "bytes": 410,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-map.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ec36516edfcc8c85c2abbfea8796dd20fb833cc33d1c5043f25452a635b9a88",
+      "bytes": 462,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-memories.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7ec53bb6bbae16ea1f55d3161bedce42a3d8cd72d011c699743c4dc6c4eb8cd7",
+      "bytes": 499,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-mind.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7a2508100c7b4cd6af7e1cdac2cf8de88b3a5d65f3189e03d91e9d15ab1e12d4",
+      "bytes": 835,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-minus.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5e470655a585b6f6a348b374fd32bbbf4a728ba23158000733a965982660d0b7",
+      "bytes": 233,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-more.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "903e4cbe8d258dc2f51cd497411588673119d9eec1ef87fc48adde1e57442a55",
+      "bytes": 256,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-move-window.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "37deb0bad9c9ee722ffcf1e43636e34a4f287da11d35b36b3d3c87edbf107a7f",
+      "bytes": 281,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-next.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "003e295669e34d546da40152ae8797b7a6233ff0f56ef7168b75fa333e6e282a",
+      "bytes": 238,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-night.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1e0f8a142ed48a9cd71d33b9484f4a7c4852e597fc14948d457251978f4e5314",
+      "bytes": 322,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-notes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b84a7ffc402e09c29de9fb35ce1f913354132449b6838eaaa74c9bbceb67a837",
+      "bytes": 469,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-overview.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "904ab483c77206c47f670e1f300433376a5feecd8ca00461fd4f79125b2aab27",
+      "bytes": 545,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-pause.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4cb4cae65a594e54e0e93e898aa98bb7732b355ae483047cdd39b75d6cef2ab6",
+      "bytes": 418,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-people.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f3b5e13131f1023627e51017b89868c4a7d5c0ab05c464b9ddb9c4cff508a932",
+      "bytes": 665,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-places.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a190068331b2344d046c1eaa110f2db8e200cf942763a6aca85cea232cc8d0f3",
+      "bytes": 480,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-play.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3c04d6faf6ec96a52e1d6ab0134e93eb6386797e974a78e0a6c04985287bb3e",
+      "bytes": 288,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-plus.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7e400988a168bd9e0eef8bf352db9ed93f67aa238cfe32c078af823ce23d9e0b",
+      "bytes": 244,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-recenter.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9f0737774bbb3cd66aec8fb6a4a0e84ac93f03a8b8d363fe32d40aee27b937a1",
+      "bytes": 477,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-refresh.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7097ec3b72f007f87cb996373ba2f145ca7e9b270efda908834cf4ec3e57d01e",
+      "bytes": 361,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-review.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "989992f969a922390c75d2f9754305dd93ed77db233dc79ad154673f73505a41",
+      "bytes": 651,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-search.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "290cf3ebd6ba9bd512677fa3b67dc83322234c3b041520b34e663125130e0e64",
+      "bytes": 402,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-send.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "882b5bc25d5ce2d2c1d6d7e1d359eb4f8640a124e0d92e8bcb82456bf03cfe8d",
+      "bytes": 292,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-settings.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "87b2420d56fb6db5bd637b893521b1cb657b03b6f8f5a445dfab267f1d941255",
+      "bytes": 672,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-skills.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "59b42ecf93f53b11aebd90b9d171ab88f33b2f77821e47a11bf6f12dd0943460",
+      "bytes": 508,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-sort.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bf36ab07b3d0a0bc8943f1937b7042604a4651540766d79b2e04281ea8303651",
+      "bytes": 296,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-special.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ccf272a4cb2a999448157fb9e71206ff0dba0a695cb70a02a9b451f0f3d4b22",
+      "bytes": 572,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-speech.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "657d66b103bef86c4e41767ce99fa2b9b9f1dbfcc8f3c2ae0bac8c4cb2bb7b35",
+      "bytes": 584,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-star.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ab88cac61f00366cc42fab51fc170ea534cf4212abff5b532e1657435e25b489",
+      "bytes": 468,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-story.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2de2fed7c7166e94da43d2b342484a23d96dd76f4d184308dea5a87d3689ee0f",
+      "bytes": 696,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-submenu.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "003e295669e34d546da40152ae8797b7a6233ff0f56ef7168b75fa333e6e282a",
+      "bytes": 238,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-time.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "334dfdda4637dbe540ceada8c708894f91f07b38b9ef9563184790abf54268eb",
+      "bytes": 447,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-unavailable.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "337b96dd22819c734e8bb6f25b8636672ef7e1741b24a2d22c4999f166d58c66",
+      "bytes": 413,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-weight.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5bfafe20d29a1b8d83a3dcc43643257b5633ce7975149ee0ff909d07f9d2f3c",
+      "bytes": 436,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-world-operations.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0e072eee51a019412bd0b0167684ff8c48f9d058bd246d380e6a5ec41e5b427a",
+      "bytes": 515,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-world.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c9b7dc832e5c2f14d28aba16484214702207b5ecfef88f91333e56c71d75268a",
+      "bytes": 455,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-zoom-in.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21f9d1e2e8d8769642904ed48fb6d6dedbf29096aaa712615674a533db8ab29c",
+      "bytes": 611,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/mono/ui-zoom-out.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "14efcfd0c4aaed6cd05517bd89f13a4b61d54215a29c30e168c56809d15ef9c3",
+      "bytes": 597,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/action-cook.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4176c041ff282eeddddeaa584cbde4c3f049299723bd995ed985115e4c460dd0",
+      "bytes": 891,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/action-craft.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c13ecc5301f7aa70c067d940b6ed40c9e5400edebcdcc3f03116ba21d4a0547a",
+      "bytes": 768,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/action-eat.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8a3028ba761e3d55e637c47e588069ba6efdf4475db08e1b277e4ea0679de9fa",
+      "bytes": 901,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/action-fire.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "123b366f706de69b39b6081e3319e18db6502df75b0b9ad3b84bae55f2d29d27",
+      "bytes": 819,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/action-gather.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d2abad467454ea0ac519cb45732796d1d93053609d26e61b5b1473f5645a3b46",
+      "bytes": 942,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/action-hunt.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dcb81098a906a5e96483beda0302be5b7f307f1020b6959080e9c036371c250f",
+      "bytes": 848,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/action-invent.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7f2076170cc11941208fcf5aa0e4a7f99878e6a717349926d1b0d25038106c13",
+      "bytes": 986,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/action-rest.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4920b929180205a4e543a1ddfabd92e81e03be22a4c5965109fe8f298a547c2f",
+      "bytes": 777,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/action-talk.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6ecb8b0bf401b1ca4be0cca2c9cde0513eb5ae38a11d117dd518b1991ec140a",
+      "bytes": 1034,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/action-walk.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f43bdd6bc6428399b48b4d749a7a708a3f75c15428c81833723ceaadd67d4be2",
+      "bytes": 787,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/body-back.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "24708457dc344260eece52005ed4b1a13c11989870198e678b355096aa7ae152",
+      "bytes": 806,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/body-feet.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01199b9e4bd5b704dbd35d8069010579e55f4606e37d82de72f02c10a3cbe55b",
+      "bytes": 694,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/body-hands.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a82a9a78724d591324c754942eaa050da9924b7269f5c51b2437d7995fe1b43",
+      "bytes": 796,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/body-head.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b149f0ffa2dbef171bfc437d86f141b4889c373cb931665c7a98d6d6f70afa0d",
+      "bytes": 732,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/body-inner-torso.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1dab474fea51a18f716601f0cc2cdc0d9b934dadbc36112bf55bb33c40695170",
+      "bytes": 722,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/body-legs.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ac3d9f614f3b62cc344359c64a5dc95614c5848e7780bb9fc697069373a5886b",
+      "bytes": 684,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/body-main-hand.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a65220106c70f546968a71042469b6a519a2786377147d17e344bdf720eb134e",
+      "bytes": 881,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/body-neck.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "537d7ae5f42cfcfdfc50e060b6e488548db8fc6233452d9f8f15895abd8ebcea",
+      "bytes": 699,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/body-off-hand.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e9f9a433a148fc4f51c3ff6dd9b265a40be3e9491a40af49d98d4e85f9c2e96c",
+      "bytes": 716,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/body-outer-torso.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa8786b07ec67d73c65e162591f0974363ff8c3dcf40be4ace0266b731b92a29",
+      "bytes": 729,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/category-all-recipes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ebee0d278a9ad02563e25012e644c0ac091ca7fc05f9c56bd398e201876fb716",
+      "bytes": 566,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/category-ammunition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f8db4ce8b4bbaaf5defd8649b97643f19ee78074f2cd9ecde2d3d5044d5a6cb",
+      "bytes": 550,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/category-containers.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db79997e33d52ba5096b2d8fa97c1f835d5154f42d32596703aa6e8eb55c7ef8",
+      "bytes": 938,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/category-materials.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5f9af51079b715491a5b845a02919022921a1e8b441d97af40dd4274bd58fdc",
+      "bytes": 873,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/category-melee-weapons.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a65220106c70f546968a71042469b6a519a2786377147d17e344bdf720eb134e",
+      "bytes": 881,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/category-notes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "28a7e444513dda1cd3c00e82f50751b0f3446ae9dc45c0ab909958e0c17a9c81",
+      "bytes": 718,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/category-ranged-weapons.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35c6e7c48b2963eceaaefc4f67cab26818aa77c8f6e403b1e3cff8043e846f7a",
+      "bytes": 809,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/category-survival.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f3774434ae2ac840790e603ad18b5f56d15c82a939f93533970378128e7e2abe",
+      "bytes": 682,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/category-tools.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "897df229c23c35982a1e1e665d1fe806c9f4adb5cca1aa7211fb91033fa2ff90",
+      "bytes": 864,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/item-river-line.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0934a4233c48754b4f5e49fdf57fa3ba93ba6ada7e2b207f619b9165dbf92658",
+      "bytes": 544,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/meter-energy.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3d4cdf67146c306d6ea9787eda944dd219a62e74af461b6bf89f9e5388e95db",
+      "bytes": 693,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/meter-food.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d2d569cb9ab0a3d68ebbf747474fd613d31b7de0dc044fc874924258a43b9f05",
+      "bytes": 856,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/meter-health.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ab5756ae8469f53ce9c35b6b8623898796faad1fda0822caa64d0dc11c719fcf",
+      "bytes": 748,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/meter-spirit.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bd77c16dcbda29fa89bd400aadc8b71bde250e6089a8f387f59affbf76f993d3",
+      "bytes": 761,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/speech-normal.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1878e5ccf597819f04911cdf227ad3d06d814860be7acacf76c5ca030e4e2ebc",
+      "bytes": 743,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/speech-shout.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ff4a1fa8dd209cf80b6a3af8f044add426c23273e3e26d3804b63f0e4aaee285",
+      "bytes": 775,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/speech-whisper.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cea2363aa868139ac2dc4948f5cee5807f203dc1ae43c220a9876bf1193898c7",
+      "bytes": 721,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/status-damp.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4fc862469921fc3c66f0a7164f94170a66381b430f38255bb7b7c1e2f570638d",
+      "bytes": 735,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/status-inspired.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c893fffacb1b3c819fa04992d3a6c678388502a10dca942475bea0e83997bbd1",
+      "bytes": 742,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/status-promise-kept.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0156b9df00b6ea07f3f5eb0941d9890f121c3e766cf4ee3d30dd61ae47758604",
+      "bytes": 837,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/status-smells-of-smoke.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d1a21124a5d5c7395a51b35b183cdfc713e1eee36bfae9cfaaf230b48692d67d",
+      "bytes": 599,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/status-stiff-leg.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "323fbc8c24fe27f5948d85b788ca55f2fd4d6f42a83334e6a8b7d8aea3fb06a2",
+      "bytes": 585,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/status-trail-legs.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "556ae92e069390f87bb95970785dec6a7342aaec6c70cc1c552f26177fee5e97",
+      "bytes": 846,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/status-well-fed.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a35bf2c8af4c3e1c1b79a61eb940e5a2923c296672694d0bc90514e68a35fff",
+      "bytes": 883,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/status-winded.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6ca9abe1182cbcd235f04eceee9167b64018dd8799ae72e19455540671a152af",
+      "bytes": 561,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/structure-campfire.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "123b366f706de69b39b6081e3319e18db6502df75b0b9ad3b84bae55f2d29d27",
+      "bytes": 819,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-act.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "92486615d834d9fec054c2e0ca1a784fa072bccb6f73a97c70880a9b4d3a7d3f",
+      "bytes": 1046,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-agent.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "67368d8850290532d81ef52f9d85276b09e60fb083ab337bdac7a327ce5169db",
+      "bytes": 983,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-all.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b56856edc3012dc618a5b67f71f26f9d513315849e5684f7c1edb953c86dfd27",
+      "bytes": 526,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-attack-mode.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "463310b0229d1e54bbd7554ddd569420d24f109fbc039eed22c75b3ff3533f58",
+      "bytes": 604,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-attributes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1a216bff90ac0db63bbcfa6bb79441f0cf1fbf650d53c7f52e111afff85c9ce",
+      "bytes": 544,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-back.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e055fe841572a4bb0c5bf95875ef190dd353aafe4d954ba79ae0722075027eff",
+      "bytes": 497,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-build.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b386ab09fa1ecf45e78af5d04e3ae413adecfad022ccebf3d9335dcc96614551",
+      "bytes": 854,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-character.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c0ee27c6152e8de201f7568d9ec8797d225ce19324fe304c808da8355dfa60e",
+      "bytes": 733,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-check.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "355bd624fe9f72518787cbbc7cfcb5e5fa45416f4a86401f1fe670da1981bfed",
+      "bytes": 501,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-checkpoints.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dbb348372bd2677a4be4cf8882ccace3a8c78d9e14b61b850f60c2e0009061f4",
+      "bytes": 699,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-choose.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7244d3010ea9de8c79aeabbab9f187a632925ad1e4e8ec6bf95e3a3a627118dc",
+      "bytes": 493,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-close.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4f1a444dd3b84ad37590225ae50ff44816f6ddfeb6f9890d942b28d6e452d1cf",
+      "bytes": 510,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-cognition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5bd7bb5c5a2a69522e9ec625a16b6d654a3e876b845b872c7b5e8917c289ea3",
+      "bytes": 1109,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-commitment.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e1653137a985df0c23899d222faee1b342aab7f9c408fa6125b7b3a2594b0992",
+      "bytes": 733,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-commitments.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "51ba1016bff6d8cc11cb3cc34aaffd17911b796bfc507ba01887d61a0681334d",
+      "bytes": 641,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-condition.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6e79c47999194dd63c5ec236d7ff9108f2ee702dd9bf2b80191e5ae6c220f295",
+      "bytes": 756,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-copy.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ca26acfb715ac96710dcf24b2fd39c1dc8ffa25d9471eeb45a3ed3542ea41d2",
+      "bytes": 795,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-crafting.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eb3f8a95a59be4e7c6eca551ffd92f189990d5621b05a494665d1932fe252c5b",
+      "bytes": 730,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-create.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c893fffacb1b3c819fa04992d3a6c678388502a10dca942475bea0e83997bbd1",
+      "bytes": 742,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-day.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c71435206035b7c44e88497710295dce1343de4907ad6491badc6c1a66c43807",
+      "bytes": 818,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-describe-action.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d17533f50dd01105ff100ea1d6fb1daf721ffd7b6fc65abeb2b7465827508a20",
+      "bytes": 744,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-diagnostics.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c380858aca845cce40d3870b9e5d081468790a7a25d57dc261316a42e23c92d5",
+      "bytes": 703,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-edit.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0869bee1a5ba4c3fa8dd6032ca6f5f77bd74e41b28927c61b3dc299c17b5147",
+      "bytes": 870,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-events.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc541a17b903abca8ee35770f7864bd55e76424fa50022cc77b8acc5af66f520",
+      "bytes": 784,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-have-everything.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "14ba6834ef4fb501554ddb8be7bc73aaeb0edc468e15c75828561dcb7d550df9",
+      "bytes": 703,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-hearing.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1430e21c0909d2429de82605ab92e5eb50b8d6de7cb7e4dd23de0ee3228f7aed",
+      "bytes": 1052,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-help.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "94b1c6c38ca5548b83bf99eef7919fd3d5627a0c8cd1f0edaad357152d25280b",
+      "bytes": 747,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-inventory.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c0d3eb88b251c758b8627357a423860b089d1d057a765a2220c26d43c9a40d1c",
+      "bytes": 958,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-inview.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a03e544edc6c36936ae12ce07d53bcf1e82e93ab11e1fa5ac8dbb1fa3e80497d",
+      "bytes": 810,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-journal.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e56327d21944690efe2f8b3b6a7b29e3319ed38eaca91591b34b6032fafc1d11",
+      "bytes": 961,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-json.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3a31fa2e072001640b8d02ee5ed5560f2ece6ba28999e5b8b32da441c095454",
+      "bytes": 697,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-lock-perspective.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c523678a813e506e8ae4b694bbab287c261965b2df7554abc74bf97cbf41bde5",
+      "bytes": 1051,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-lock.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "61ffde5a28f6ec0d61bfe99e915c20ab05f3a1381b0099c41e7a91fc171c5388",
+      "bytes": 922,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-log-out.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d1e52bc6b80ebf2c2122eba4ecc2abed2349941aa1c336553675c88b1706a634",
+      "bytes": 545,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-look-closer.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "842f705823244729e6528286ae09a9b2cd84a79f2ebd78796c00554ca4bb577d",
+      "bytes": 855,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-map-marker.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f260edb12194320c8fb81dd4bd89faaaaa704776b3acd13e4c7ede98176e5889",
+      "bytes": 684,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-map.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a92c7d0b3e74a1f03bcee5cc6b93e60b665154187593010d453fc54d6dcd44e2",
+      "bytes": 727,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-memories.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e2655dca3872c0727b5e7ba8f2112d1eabfda4ebbe328f6f9a7649b83cd3787c",
+      "bytes": 764,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-mind.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5bd7bb5c5a2a69522e9ec625a16b6d654a3e876b845b872c7b5e8917c289ea3",
+      "bytes": 1109,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-minus.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8020fe59362a4dc1dd2f13cea4c043c04c435b3372cc4a986ca1ae94d51f245d",
+      "bytes": 489,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-more.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b3be2cae4399ad0e06b6600ed8eb126c0ac7833dc14fec57c7d485b5b3b2112",
+      "bytes": 512,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-move-window.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b824a393141c850c3099deb40f852403c255f499e93aac9edb3f8c2b2b2ea505",
+      "bytes": 537,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-next.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f812f986fecdf978e3b70ed143befaec563bf9d3a55803963b90d21df85b9e72",
+      "bytes": 494,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-night.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7f5bd2eb7100ee4b224f5a2e628ac857b5b3c57459b85c0dec5d4c2e54a33db0",
+      "bytes": 587,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-notes.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b716ea482f7ee24da51491b86d33472d8f9149a9f9625be252fa80655202f9f0",
+      "bytes": 734,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-overview.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a03e544edc6c36936ae12ce07d53bcf1e82e93ab11e1fa5ac8dbb1fa3e80497d",
+      "bytes": 810,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-pause.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a543b5be3482e7eec8560b60ce0596a975300c03bf357cc9bf97de46d705f1ec",
+      "bytes": 683,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-people.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9cbf877bba48994142e363c956d6e1afb4019af821d5d4adce797a8d574c8c95",
+      "bytes": 939,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-places.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "add7a70204d5433d2da71a2ba3905682e2455b1a65f2248fd3134ccdf468c152",
+      "bytes": 745,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-play.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b51ca35f61fd02a4410cd3524fa0d1e4140fe06ab49d3a84c8e40d864dfcc305",
+      "bytes": 553,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-plus.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e4655291f4a57efa72de7710db634a3a5813328b18f22e2f103ad593817c998f",
+      "bytes": 500,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-recenter.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "68a287e306c3cecc57ceb7cc8664afddf0d4e97f3ece941c27a84910c38a93fd",
+      "bytes": 751,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-refresh.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f4158da05dd9303c0074aad104883c11706753f7e84705bfcc4a4d394462c69d",
+      "bytes": 617,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-review.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2949abec2cc703db805cdf1f26faca0658ece6a13b6726c9fb10ea9a4c00c259",
+      "bytes": 925,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-search.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c0693e8e1bdb3cd0fc6ea55a4a0065145e87b330937e51d7b3f386a8751e61f",
+      "bytes": 676,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-send.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e0c864fc73f5dc1eb5d980d3d70eb537383fe09c13803150c477250c339007a",
+      "bytes": 548,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-settings.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca5b53d2c77490067763af90e5e0cc4ed41ae2077d556738873e0b77a5f380e3",
+      "bytes": 946,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-skills.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b9afb910e41224387f37c61227ceea1d9e79f27e9369c90631b34edf44dc38cb",
+      "bytes": 773,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-sort.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "49c9f0f5966badb542eac83897e0df0ae94994168d2b5e2d3af9d6d2a29d51ef",
+      "bytes": 552,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-special.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0156b9df00b6ea07f3f5eb0941d9890f121c3e766cf4ee3d30dd61ae47758604",
+      "bytes": 837,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-speech.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0bc4595cc2ec17ee60d9453b9d84725ddfd07d0a69d939abbc424a2c6cb44d7b",
+      "bytes": 849,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-star.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c893fffacb1b3c819fa04992d3a6c678388502a10dca942475bea0e83997bbd1",
+      "bytes": 742,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-story.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96b77cb65d0e10d83cce74d2e63ceb22d2d1b10a3e4f886579c935757b2d9c02",
+      "bytes": 970,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-submenu.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f812f986fecdf978e3b70ed143befaec563bf9d3a55803963b90d21df85b9e72",
+      "bytes": 494,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-time.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d9ed69d0416a9a683ef713277deb822445cdd24f5b91165210a74c3dc112f990",
+      "bytes": 712,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-unavailable.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c4cf6df4bb4371886e61d4109d2317a7611d2a49037fa415366d6cc34c3660fa",
+      "bytes": 678,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-weight.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c95af15baf2ece3b81d770d27957b122ac556adaf380fcbda1e34d2c450eda15",
+      "bytes": 710,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-world-operations.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b1352aa5c75b887ebf1177cddaba1f879563cbf0f863176fa3196b2856e6e77",
+      "bytes": 780,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-world.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa78eb7b7d1342459e8270335fe23fc3724a7788ccf1407070281008b7f088f2",
+      "bytes": 720,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-zoom-in.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "535e8650fc8b79254e7447e9bc05a462f33b3b1bd55adf0f169bd680c57287e6",
+      "bytes": 885,
+      "mediaType": "image/svg+xml"
+    },
+    "icons/svg/silver/ui-zoom-out.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c1e596aa8314e85774796006c85e6717d1218293016b300f0093baee3fc674c",
+      "bytes": 871,
+      "mediaType": "image/svg+xml"
+    },
+    "inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a2cc9915331009727c71dca1ad8699183a45f252fa82345a23a5e67850adde9d",
+      "bytes": 156654,
+      "mediaType": "application/json"
+    },
+    "previews/boards/Q-Attributes.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a54ca0da7d146c4cba2ad769bf97d38d6076a3154bb3c559c9e72b0b80fb981",
+      "bytes": 1271418,
+      "mediaType": "image/png"
+    },
+    "previews/boards/Q-Condition.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d09ec0dc82e48308c4e51b557985bce1d8be1f0943f226fa0e7a80d9fd910d3c",
+      "bytes": 1327045,
+      "mediaType": "image/png"
+    },
+    "previews/boards/Q-Crafting.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "462136c5a32a5a12bb80a3e5a8f7b454b4787e483d8e0fb3a2b8a4ab1de9246f",
+      "bytes": 1242869,
+      "mediaType": "image/png"
+    },
+    "previews/boards/Q-Journal.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "94a839aa9fef59263c25a574b4468875ef1fbf207791043031b2d8dad7f939fe",
+      "bytes": 1188565,
+      "mediaType": "image/png"
+    },
+    "previews/boards/Q-Map.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c0ebbc0e3cdfc462fb88cc1e4c63e1a2551647e42aedc2a69039e746108d75e9",
+      "bytes": 2492458,
+      "mediaType": "image/png"
+    },
+    "previews/boards/Q-Person.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "00b4c861bd82681debd59da21f67d9d7cbdc6e3a49156e6d254cf9000f18a5aa",
+      "bytes": 1352611,
+      "mediaType": "image/png"
+    },
+    "previews/boards/Q-Play.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "162bcffbb740638ce29bd56f2a71fc6fabd78c5b750694806b85a4c34dd42bf6",
+      "bytes": 1581966,
+      "mediaType": "image/png"
+    },
+    "previews/boards/Q-Say.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7beecfbae3d9115c2b41085f1d526f0443534c4cf7703c1b5d49160c081afb26",
+      "bytes": 1500542,
+      "mediaType": "image/png"
+    },
+    "previews/boards/Q-Sheet.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d0bdc281993f77a11f85ce841516ff3fe78d00ea02c638d493f98ca8e3c0382e",
+      "bytes": 7796304,
+      "mediaType": "image/png"
+    },
+    "previews/boards/Q-Trade.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d499b6d5f83848a7f0db0872d2d982d9b7215a97c8be16e168319b94b777f25",
+      "bytes": 1320579,
+      "mediaType": "image/png"
+    },
+    "previews/boards/Q-World-agent.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0daca002d98f20a02c40391502f1d30ab7ffe8a581a57c08dd3e4a7bf547859",
+      "bytes": 1231767,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/sec-art-2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "17e354153dc1eae350b3fed5d9280ba5727696a515aa9c9b6f9b81627afbd3ac",
+      "bytes": 2710234,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/sec-colour-2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2469370c14da0bc700bfed1d35a9ba7ae1e051e59b0a04a48b5578dd4eafbce0",
+      "bytes": 226891,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/sec-components-2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3ff85984c1e4d15c8a9df41440ffdcee7a3a2e1daa5b7ed9514781a30fa9ea5b",
+      "bytes": 2148244,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/sec-hud-2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a297044de5f986ccdc7e5effed312e45988f6525c2fd68d958f3395521800f06",
+      "bytes": 922257,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/sec-icons-dark-2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "40c51a12564e5ea6e918df691758cd8832f612bcd7dfc0d9a2f00bca14d2199e",
+      "bytes": 890566,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/sec-icons-day-2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "32b670249bc22c37f32c6bcf9a01ffdd0ee95b997133921a97f6b3baca02c346",
+      "bytes": 3251875,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/sec-night-2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eacf006c6db998c6b7b55f56059aab446f8e32dfa7904de1e0bc4557d27e9058",
+      "bytes": 1157310,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/sec-status-2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4dd845c4f87cedfd4b73cdf6ac453d20e896a32df4c491e8c08f190ff7f7f073",
+      "bytes": 89549,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/sec-type-2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "09bd2ad9f1d1ea18627c5112576ad21581f053cf32dc7b4d1ec65858455f8113",
+      "bytes": 156781,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/specimen-full-1x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "178cc4c97b4166f97e236d477ba28fbf2d3f5eae355dad4480f746906c0802c6",
+      "bytes": 4491660,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/captures/specimen-full-2x.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6db5619dc4a7432a1e160130549792fcaf1873fe44713f95d2c9d86d59f66db6",
+      "bytes": 10940392,
+      "mediaType": "image/png"
+    },
+    "previews/specimen/index.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1e6957ada51fe6639a61cbc31c8d984d430cce6237731b29124c7d80cd3083dd",
+      "bytes": 22764,
+      "mediaType": "text/html"
+    },
+    "recipes/build-gildmoss-package.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2e810c32872c085d71c58ab87c5a0bfc33f0dd45c54b10101797a672d47f4332",
+      "bytes": 48164,
+      "mediaType": "text/x-python"
+    },
+    "recipes/finalize-gildmoss-package.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2a5859c043283ac03fe3faf75395f7522ec43aab91fee6046402f3cae6b095e",
+      "bytes": 1759,
+      "mediaType": "text/x-python"
+    },
+    "recipes/look-gildmoss-specimen.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf5dc2e728ebf99fbb3271d9a35ebde87291a9b97bf07a85fd5c62d1cb445cbb",
+      "bytes": 2916,
+      "mediaType": "text/javascript"
+    },
+    "recipes/make-asset-index.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "100d24bd7b6c928cce4bc28ceb9a16fb18d42934a28a9336988af7ce36e0bfa4",
+      "bytes": 1675,
+      "mediaType": "text/x-python"
+    },
+    "recipes/make-asset-manifest.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f8715fd53919ae910d6a1fa2b37b365418aa2438656c9d1f9eeace0c8a41cef0",
+      "bytes": 5071,
+      "mediaType": "text/x-python"
+    },
+    "recipes/render-artboards.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20e3dd0c5e30ff0f667721b0024a52fb3d734fe95614390aa7ac4a05e6fd740e",
+      "bytes": 5592,
+      "mediaType": "text/javascript"
+    },
+    "sources/claude-design/artifact-type/dc-runtime.js": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3f160299989dc595cf434dac7b7f3e6fd20ed015a2d99e075c3eac09dffe0f10",
+      "bytes": 187897,
+      "mediaType": "text/javascript"
+    },
+    "sources/claude-design/blob-map.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c98b3c97c3a78ec56c35ba4eda45f1b8af86dfbca1efe97df67e9891f2a54688",
+      "bytes": 18390,
+      "mediaType": "application/json"
+    },
+    "sources/claude-design/blobs/0c45f4637ac648e49d08cc16d7734494.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b3764ee042db9d0b6267d6db0d1833d5051f986e602b52d44e8d6d24f3e0bfb",
+      "bytes": 583498,
+      "mediaType": "image/jpeg"
+    },
+    "sources/claude-design/blobs/0e061a6e919612fc57990ce022c35005.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2b0cdb469850e61b67ef4bf573852e4f937881e3986740d1cc52d205f8ded390",
+      "bytes": 954,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/112e4725268e245cd7a437f88304d912.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa0f072ba24a79f258abccbcc4e9964d02db002c266b09db96b4f2a5165bb91b",
+      "bytes": 1866,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/1b4fb29ce365559bfb95b87ea42b5a63.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad3839dc35ac9c53d623f0dfaf2cfd385ad0b88718091ad9cad1c11a138d215c",
+      "bytes": 1784,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/2841a5e87e2aabc62f92fd56589e15ce.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8580c58c2c41ad4bbe799aa351c4f752b06beb4b39f13a9aec5462ee4bd59eca",
+      "bytes": 1221,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/405700be27ce30f36accc7fc04885f85.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "72a4c71223119958c501d26b2f514f3c103f8bc46ece8c06a6b313d5d0041524",
+      "bytes": 1789,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/4175f02f9877cac9ed7968e5039e23b7.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e6b3c9af5cdb0f0c49788cc1db0bb6d56494edd479d37872fb44baf4e761ee12",
+      "bytes": 1286,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/451cdecfcd675e21397467cbcb926fe4.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "df5cedef64bb11665d71fbaf7d40fbecc4ec46ac533a0d81e793e66a651c8567",
+      "bytes": 5769,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/477cd3c4a71ab11555bb0b30edcad25f.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "475f2cfdc8f91cd801d885578c6e596017f2522465ece97057f9aa15d67df977",
+      "bytes": 1107,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/555c9da2d45f50e6d80809ef12a448dd.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5146968fd270fbd2d1ce5521419f26b579f0f66d2254a09814d10e210bb69dda",
+      "bytes": 1277,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/5d5f31742a6566e0551fdff43cd3155f.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a356d95ced5f45bc13fbbd63499b024b42484a572ef302efa7d6abca12b5aa4",
+      "bytes": 372072,
+      "mediaType": "image/jpeg"
+    },
+    "sources/claude-design/blobs/703f514404fd1a9d448c793e5ec06c41.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bab490c165e6d2cd20f12aac3ea054a5f71c8e692485f24013ac094ae2c184f0",
+      "bytes": 1583,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/727437000143cf6ec2e7766693b9b0e1.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4160f5654a9c2444c5cceb9d681bf6d3ab5c90878c138042538e8a89a467f8a8",
+      "bytes": 1290,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/7f55789c14ed0258bd1241b7a5414d37.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "26f3e7e1e96d8c028acc8e13fd5423cca17207b604d2f158ad3d1fb4ad76d7c8",
+      "bytes": 1439,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/960d2ed96f4ef573c0a2cfa75498b937.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0e0df1cf5bef254fe9b5faacb2c96dd4d51f80ce49b6819f03b231209674cd01",
+      "bytes": 1744,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/98e3b2da6dc7bfd99c4e56d061313b2d.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "06b093f1eada1aa13f65bf76bc9647d91404e60b34fdc909d05b62c00cd442ca",
+      "bytes": 586937,
+      "mediaType": "image/jpeg"
+    },
+    "sources/claude-design/blobs/9b14b37a77804303eeefd7f7cee82d23.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2007977ce2caa88c6d8b9984186afd2160e9aa7b386f5a6cde8919eb9181f0ad",
+      "bytes": 4814,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/9bae703cef84c233dc8929738aace3d2.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96f82bd84a655934f7740bee9563048bfaa59c76e15d075f65b81f8c5aee0f18",
+      "bytes": 6830,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/a0186526656097105c688f5b89f1de20.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8adda061bd24e8624028d845afba449b3bf86d377e2e51ad0b8ff6b558bad44e",
+      "bytes": 1027,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/a20cd3460ec9b38a7d1eb04090dd95b3.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "86ae7c15598683fbfa91219e4f278dfa26d9b8a9538c6d1422ca02e5ad0e5c77",
+      "bytes": 2335,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/a43c8a1d2a13dd0322b1d554e3bb12e1.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8cca0a915f6a469c0ef20a3d8ab8663164a786eba6777d81a2947d77d4c86663",
+      "bytes": 1709,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/a74c26df1cd16fc1accf9012fd6844c8.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b4bb973ef33f64287600225c48eb5a799627c3341e9c16a361c1e333e7509ea",
+      "bytes": 7764,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/a92728a654f5f08b73fec81f91e4db21.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cd908f3cf8917f4d290e858d55771ee5c7180b3969e2bf6c82f4b2c0e60e5bc7",
+      "bytes": 1411,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/bb8a6543a135d09049dca2a9717f9d8a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ba516f0a7a6fb9052a2008f404c8c6c54d7a6c834364b3c669972a3318f0112a",
+      "bytes": 1715,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/bf79972dd40d1fbb00ecbde37b20f191.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "689e1b12cf97e3d5a595a316312ae74157a53e23d7c68b72555705c64a3ffa34",
+      "bytes": 379909,
+      "mediaType": "image/jpeg"
+    },
+    "sources/claude-design/blobs/c134c401a006576c107cbb96c05cf2b1.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6906cf4b83fb5546ddd02adf40f35a818461abc7d91bc50dae145ff3d628f166",
+      "bytes": 1879,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/c65df29cd0b04710ae18a2437e2245e4.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a5175bec12e785b05258a46b7b059bb04417f77c769e02048a9b4878aaf52e5",
+      "bytes": 82577,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/c97d6f30a9fbef1b4ae59360390cf85d.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5eede0d1f8f49e5addbb84f1185751f12ce698a8638e78ab1b5446c28e237d30",
+      "bytes": 1130,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/cb3194396a32def76f7773637831520b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "325adf78f1b8ace08e7ef32854c3c0df602c2c5681f6f29177d0b861aa82124b",
+      "bytes": 1647,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/d252a127fa9ab996728eb30d21ea085b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f36148404aaffc61fa989f294d2659402b96a0ddaaae43ddf541cc52d818874b",
+      "bytes": 3815,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/de974ccf15d11ec812582d360af6665e.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "671977eb9ecf30012b3541db41114f167ffb2086ef1f6af6abb61f86d0596dc1",
+      "bytes": 4639,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/e0324daa88925f35ac479adc51726e6c.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "acb464d3306fc2ed7a3584329e40c35e735b2dcbb97bb2db44108fc06a0305ac",
+      "bytes": 1175941,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/e3ff81cec72f02b473a2655eabb0a677.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "612c53127a0a845c7629185c32c42dfed5d075aaf7478ef50e8a9033b85ab9fc",
+      "bytes": 1490,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/e70ad570d24dfbc24c5f34dae95d57b3.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bdb43c39422d70cd66753580e4a85bd012b9c97fa5c0f275a339e0103d802c0e",
+      "bytes": 929,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/f4e212f36695ddddaf1633be088942d7.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "28c2b2e975867183d36839b98ca3e875a271b0e9196e8d458d77489d34408d7b",
+      "bytes": 1258836,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/f8965702c521d131df1aedda6788dbd1.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8c10e614da4355b92e3cbe60573af7b5cc1ed4ed5f5210f614f2e963782d9440",
+      "bytes": 2098,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/fbddc8bbd9591fa8ee9e7acbc549e9e3.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "784d8d2f609fd59d090cecbaa0aebc72d663075d7c92feaa87ff3602c8bc37d1",
+      "bytes": 2177,
+      "mediaType": "image/png"
+    },
+    "sources/claude-design/blobs/feacd1e3c0564bc2d6f42ea6ec6a18e5.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2e9941fbc5e23871e5bc222d14b570f6d9f4682e86eae1a0c0e34eb5117cc816",
+      "bytes": 195800,
+      "mediaType": "image/jpeg"
+    },
+    "sources/claude-design/project/Q-Attributes.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "88fd7ed5ff4e6867cbcd5ef57509a4e811a89e6267955fa3c8acf70b6218a5d9",
+      "bytes": 80873,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/Q-Condition.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6bdc8fd9a43dd9f84caa46ed7df0b9bf5e41b34b552883422dadc7ea70404e8",
+      "bytes": 89793,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/Q-Crafting.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dd06bbb4d0e76d169981b73c4c3ff312f02ba8c6e75ab9b7c98cd1b7748bc460",
+      "bytes": 70259,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/Q-Journal.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "10106d44369a13abe7f590b5d3a3a9177e9e4895d7b27eded1a6d87d306b431a",
+      "bytes": 64586,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/Q-Map.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c636e005820ffbfc493170807c277a2677bbe2fd997283bdfb6046f90fc434b2",
+      "bytes": 61687,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/Q-Person.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "733e02a8443875fb680550cfe409f1a145e12c41c4891c2fc64e971c66462996",
+      "bytes": 58986,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/Q-Play.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d92c05117aa2f54118093253e2390311fb6c71465c88a5e2afd1304e57c9d3be",
+      "bytes": 56157,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/Q-Say.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b48c3d58040cb97ac0f9a851763ccb6733208d64d8e7cd1a7de8fdc91a63ce98",
+      "bytes": 69149,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/Q-Sheet.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "513037656f40a3616513735f4a98559d814bc92ff034638bbd92e4da2b74d67e",
+      "bytes": 550380,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/Q-Trade.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "453d35b2985888ae9d2bf70ca2b2064534d8326405ad3d3dc065eb81df2e4cde",
+      "bytes": 66072,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/Q-World-agent.dc.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8ccd3d5af3a2486510d85a19775c1402735d98408046079a8e311abbcb8f54cc",
+      "bytes": 57077,
+      "mediaType": "text/html"
+    },
+    "sources/claude-design/project/canvas.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa4ee710e4d8668553b35171a1a92d41ec46d3126da587592a63b9689223e3cf",
+      "bytes": 16028,
+      "mediaType": "application/json"
+    },
+    "sources/claude-design/render-blobs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9477a83cc309e264248651d3960c65050c308d6afa88b28c9ea027a87b5844c9",
+      "bytes": 3993,
+      "mediaType": "application/json"
+    },
+    "sources/generation/kits/r7/mike-fullbody.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "acb464d3306fc2ed7a3584329e40c35e735b2dcbb97bb2db44108fc06a0305ac",
+      "bytes": 1175941,
+      "mediaType": "image/png"
+    },
+    "sources/generation/kits/r7/ornament-seal-campfire.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a5175bec12e785b05258a46b7b059bb04417f77c769e02048a9b4878aaf52e5",
+      "bytes": 82577,
+      "mediaType": "image/png"
+    },
+    "sources/generation/kits/r8/head-mara-reed.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96f82bd84a655934f7740bee9563048bfaa59c76e15d075f65b81f8c5aee0f18",
+      "bytes": 6830,
+      "mediaType": "image/png"
+    },
+    "sources/generation/kits/r8/head-mike.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "df5cedef64bb11665d71fbaf7d40fbecc4ec46ac533a0d81e793e66a651c8567",
+      "bytes": 5769,
+      "mediaType": "image/png"
+    },
+    "sources/generation/kits/r8b/map-atlas-parchment.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e04bc85fa59e8fbbe6e3f921850c38a791d08bb90e414ee51a9ecf3548c30cbf",
+      "bytes": 3671437,
+      "mediaType": "image/png"
+    },
+    "sources/generation/originals/fin-c-items-1.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "39410a2eabcd1dfa82b801b89e4edb16607cc171ed51557ff46fb23d43c9b42c",
+      "bytes": 1660846,
+      "mediaType": "image/png"
+    },
+    "sources/generation/originals/fin-c-items-2.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de83d9ab8d52fc34c51541bb6524dc7eb5d322f5c2021d242affb4fe885e5142",
+      "bytes": 1820063,
+      "mediaType": "image/png"
+    },
+    "sources/generation/originals/fin-c-items-3.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c0d46dd883ba20eb54ea28a11d245b0299093fdc04d9df5e41694fb938a08251",
+      "bytes": 1895756,
+      "mediaType": "image/png"
+    },
+    "sources/generation/originals/fin-c-portraits.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7012d0d87550f5b69c5edd5c1cbb16ba8cb042486a500bf66df9b388b0f9ae60",
+      "bytes": 1548041,
+      "mediaType": "image/png"
+    },
+    "sources/generation/originals/fin-c-structures.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8e3719730d796057c877dd0daef66c1e7e3bc0e98dde54ab62bd3eb44d95e93c",
+      "bytes": 1423690,
+      "mediaType": "image/png"
+    },
+    "sources/generation/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d4e9e7285aa6f6a7ed145ad2f38c36c4ecfbf381501233a5e2aed77007cad7c3",
+      "bytes": 70074,
+      "mediaType": "application/json"
+    },
+    "status/frames/lasting-bad.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "63587d91d81ffd1c9c15cd27b40f15b71c59bdbb0166b165029d01fa8337e434",
+      "bytes": 277,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/lasting-good.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be06b1f45bb4bcae8d4291018a6e82dfda4772b14aeca6cd557e5df4a65175e7",
+      "bytes": 277,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/lasting-neutral.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c7648d2a5269fbd98e93f859eb9ac8bd9c86514f2dfa058524871459ad6c28cc",
+      "bytes": 277,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/lasting-special.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "61fceee0c06638ca662caecc99887e0eac83877ac943055e6773552b3c9a6127",
+      "bytes": 277,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-bad-10.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95f210330728712872ee55ec376d1fd3973b3564c560d548c2d1f0a64a307d3f",
+      "bytes": 413,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-bad-100.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "33bc26549fc6a0478d2ec4bb22f1922a33c912215641fd427334abbb17e9ba6b",
+      "bytes": 210,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-bad-50.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d40cd34f5256d8b85896643480f41b1aeaf9868626a5fba120b9c438a7edbf6f",
+      "bytes": 413,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-good-10.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6ccdf036376afb89f4b90e78e916647d3fda6926b4bc3cd8d7e4344568c1f134",
+      "bytes": 413,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-good-100.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c9c9a22d2438c443fa972c3bce4e7d172337e8f528af4dd698755b104ee611a",
+      "bytes": 210,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-good-50.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7043334362d00d49fa671dea6c953b90e455d1baa974b4020ea6eb251cb84bc",
+      "bytes": 413,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-neutral-10.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6af29e1f5ee7d5cf70a466120e383efcd884dd0a0e2e501e195a2e3d7282f747",
+      "bytes": 414,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-neutral-100.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7ba3706b77a866703aa5f4e8a914b9405775e1ec1c952a17238a1f2e5107c5b",
+      "bytes": 210,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-neutral-50.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c695b570debc810ad46e65cb3f1f8efb5ee40a442fcb13d83c8528f151c0ff98",
+      "bytes": 414,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-special-10.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "28bce3a699a95ef7982a0d01a26f8cc888119edb20c0a2c1972e0f0e19d2d156",
+      "bytes": 414,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-special-100.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9f185c5b4ea6628314fda37fe81baa0e5ec9c061e1ca7717f22af86c10c85df4",
+      "bytes": 210,
+      "mediaType": "image/svg+xml"
+    },
+    "status/frames/timed-special-50.svg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "608bf3857dcd7b6ac13859b425a545a528c331f983b63bb3228b5514652ef0dc",
+      "bytes": 414,
+      "mediaType": "image/svg+xml"
+    }
+  }
+}

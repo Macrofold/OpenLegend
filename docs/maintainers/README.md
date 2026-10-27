@@ -32,6 +32,10 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 [Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) specify the general foundation and four-family authored player profile; implementation/qualification remain open. [SA-D01](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects authored native interpretation during direct control; EP retains exact profile rules, retained-appraisal integration and qualification.
 
+## Character and map additions
+
+[Character and map additions (CMA01–CMA06)](character-and-map-additions.md) owns delivery of Spirit, stats, more equipment slots, map markers and nicknames from the accepted Gildmoss design. Its [feature](../projects/character-and-map-additions-feature-spec.md) and [technical design](../projects/character-and-map-additions-tech-design.md) are complete; implementation has not started.
+
 ## Combat and immediate threat responses
 
 [Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). CTR owns current delivery and unsatisfied independent acceptance; this index does not repeat its status.
