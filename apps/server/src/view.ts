@@ -551,6 +551,7 @@ export async function projectView(
     };
   });
   const eventEvidenceOwners = (snapshot: WorldState) => [
+    entityGet(snapshot.entities, scope.actorId)?.actor?.physicalLife ?? 0,
     snapshot.experience?.awareness[scope.actorId],
     snapshot.experience?.temporal?.actors[scope.actorId]?.chunks,
     snapshot.perceptionEvidence?.[scope.actorId]?.received,

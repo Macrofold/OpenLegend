@@ -484,55 +484,80 @@ describe('public projection', () => {
   });
 });
 
-it('withdraws a pending player view when its current-only heard sound disappears', async () => {
-  const { service } = await setup();
-  await activate(service);
-  await service.control({ paused: false });
-  await editWorld(service, (world) => {
-    const player = entityGet(world.entities, PLAYER_ID)!;
-    const other = entityGet(world.entities, NPC_ID)!;
-    player.actor!.capabilities = {
-      cognition: true,
-      innerWorld: true,
-      speech: true,
-      memory: false,
-      comprehendsSpeech: true,
-    };
-    setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, worldSupport(player));
-    setSpatialPosition(world, other, { x: 2, y: 0, z: 2 }, worldSupport(other));
-    initializePerception(world, []);
-  });
-  expect(
-    (
-      await service.say(
-        'temporary-heard-view',
-        NPC_ID,
-        'An actually heard temporary sentence.',
-        PLAYER_ID,
-      )
-    ).ok,
-  ).toBe(true);
-  expect(JSON.stringify((await projectView(service)).events)).toContain('voice-like sound');
-  let started!: () => void, release!: () => void;
-  const waiting = new Promise<void>((resolve) => {
-    started = resolve;
-  });
-  const gate = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  const delayed = vi.spyOn(service, 'presentationReleaseFor').mockImplementationOnce(async () => {
-    started();
-    await gate;
-    return undefined;
-  });
-  const pending = projectView(service);
-  const rejected = expect(pending).rejects.toThrow('The world changed');
-  await waiting;
-  const historyEpoch = service.historyEpoch;
-  await service.tick(0.005);
-  expect(service.historyEpoch).toBe(historyEpoch);
-  release();
-  await rejected;
-  delayed.mockRestore();
-  expect(JSON.stringify((await projectView(service)).events)).not.toContain('voice-like sound');
-});
+it.each(['disappearance', 'revival'] as const)(
+  'withdraws a pending player view after current-only heard sound %s',
+  async (change) => {
+    const { service } = await setup();
+    await activate(service);
+    await service.control({ paused: false });
+    await editWorld(service, (world) => {
+      const player = entityGet(world.entities, PLAYER_ID)!;
+      const other = entityGet(world.entities, NPC_ID)!;
+      // A native fixture body uses the existing creator revival route rather than
+      // the bundled world's separate player reincarnation action.
+      if (change === 'revival') player.actor!.controller = 'native';
+      player.actor!.capabilities = {
+        cognition: true,
+        innerWorld: true,
+        speech: true,
+        memory: false,
+        comprehendsSpeech: true,
+      };
+      setSpatialPosition(world, player, { x: 20, y: 0, z: 5.5 }, 'terrain');
+      setSpatialPosition(world, other, { x: 20, y: 3, z: 5.5 }, 'lookout-deck');
+      initializePerception(world, []);
+    });
+    expect(
+      (
+        await service.say(
+          'temporary-heard-view',
+          NPC_ID,
+          'An actually heard temporary sentence.',
+          PLAYER_ID,
+          'shout',
+        )
+      ).ok,
+    ).toBe(true);
+    expect(JSON.stringify((await projectView(service)).events)).toContain('voice-like sound');
+    let started!: () => void, release!: () => void;
+    const waiting = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const delayed = vi.spyOn(service, 'presentationReleaseFor').mockImplementationOnce(async () => {
+      started();
+      await gate;
+      return undefined;
+    });
+    const pending = projectView(service);
+    const rejected = expect(pending).rejects.toThrow('The world changed');
+    await waiting;
+    const historyEpoch = service.historyEpoch;
+    if (change === 'revival') {
+      const received = service.world.perceptionEvidence![PLAYER_ID]!.received;
+      const before = entityGet(service.world.entities, PLAYER_ID)!.actor!;
+      const life = before.physicalLife ?? 0;
+      expect(
+        (
+          await service.godEffects(
+            'pending-sound-fatal-effect',
+            [{ targetId: PLAYER_ID, kind: 'health', amount: -100 }],
+            { [PLAYER_ID]: before.body!.revision },
+          )
+        ).ok,
+      ).toBe(true);
+      expect(entityGet(service.world.entities, PLAYER_ID)!.actor!.alive).toBe(false);
+      const revived = await service.godAct('revive', PLAYER_ID);
+      expect(revived, JSON.stringify(revived)).toMatchObject({ ok: true });
+      expect(entityGet(service.world.entities, PLAYER_ID)!.actor!.physicalLife).toBe(life + 1);
+      expect(service.world.perceptionEvidence![PLAYER_ID]!.received).toBe(received);
+    } else await service.tick(0.005);
+    expect(service.historyEpoch).toBe(historyEpoch);
+    release();
+    await rejected;
+    delayed.mockRestore();
+    expect(JSON.stringify((await projectView(service)).events)).not.toContain('voice-like sound');
+  },
+);
