@@ -208,6 +208,8 @@ function references(context: string) {
           entityId: string;
           label: string;
           relation?: string;
+          currentBody?: boolean;
+          position?: { x: number; y: number; z: number };
           triggerRoles: { role: string }[];
         },
     );
@@ -1532,19 +1534,17 @@ describe('actual director situation query continuation', () => {
       script: { route: { level2: 0.99 } },
       reply(request) {
         if (++generation === 1) {
-          initialHandles = new Set(
-            references(String(request.context)).map((entry) => entry.entityId),
-          );
-          const situation = JSON.parse(
-            section(sections(String(request.context)), 'Received situation').body.split('\n')[0]!,
-          ) as { broad: Array<{ reference: string; bounds: { max: { z: number } } }> };
-          // Request a supplied farther region rather than repeatedly returning
-          // the already-listed nearest people under the expansion byte limit.
-          const region = [...situation.broad].sort((a, b) => b.bounds.max.z - a.bounds.max.z)[0];
-          expect(region, 'An actually offered broad region is required.').toBeDefined();
+          const offered = references(String(request.context));
+          initialHandles = new Set(offered.map((entry) => entry.entityId));
+          // A narrow neighborhood around an actually offered farther body
+          // reaches the unlisted crowd without replaying all nearer details.
+          const anchor = offered
+            .filter((entry) => entry.currentBody && entry.position && entry.relation !== 'myself')
+            .sort((a, b) => b.position!.z - a.position!.z || b.position!.x - a.position!.x)[0];
+          expect(anchor, 'An actually offered current body is required.').toBeDefined();
           return {
             operations: [],
-            queries: [{ kind: 'expand', region: region!.reference }],
+            queries: [{ kind: 'near', anchor: anchor!.entityId, radius: 0.5 }],
           };
         }
         const expansion = JSON.parse(
@@ -1556,7 +1556,10 @@ describe('actual director situation query continuation', () => {
         const newlyDisclosed = expandedBodies.find(
           (row) => crowdHandles.has(row.reference) && !initialHandles.has(row.reference),
         );
-        expect(newlyDisclosed, 'Expansion must actually disclose a new unknown person.').toBeDefined();
+        expect(
+          newlyDisclosed,
+          'Expansion must actually disclose a new unknown person.',
+        ).toBeDefined();
         selectedHandle = newlyDisclosed!.reference;
         return {
           operations: [
@@ -1576,22 +1579,36 @@ describe('actual director situation query continuation', () => {
       // starting scenery. A copied person behind that scenery is no received
       // body and cannot prove expansion or observer-local note binding.
       const floor = {
-        id: 'query-fixture-ground', name: 'Private fixture support',
+        id: 'query-fixture-ground',
+        name: 'Private fixture support',
         levelId: world.map.spatial.levels[0]!.id,
-        minX: 40, maxX: 60, minZ: 0, maxZ: 12,
-        y: 0, slopeX: 0, slopeZ: 0, thickness: 0.1,
-        material: 'stone', acousticTransmission: 0,
+        minX: 40,
+        maxX: 60,
+        minZ: 0,
+        maxZ: 12,
+        y: 0,
+        slopeX: 0,
+        slopeZ: 0,
+        thickness: 0.1,
+        material: 'stone',
+        acousticTransmission: 0,
       };
       world.map.width = Math.max(world.map.width, 64);
       world.map.tiles = world.map.tiles.map((row) => [
-        ...row, ...Array(world.map.width - row.length).fill('grass'),
+        ...row,
+        ...Array(world.map.width - row.length).fill('grass'),
       ]);
       world.map.spatial.surfaces.push(floor);
       world.map.spatial.revision++;
       const prototype = entityGet(world.entities, NPC_ID)!;
       setSpatialPosition(world, prototype, { x: 42, y: 0, z: 2 }, floor.id, 'physical');
-      setSpatialPosition(world, entityGet(world.entities, controlledEntityId(world)!)!,
-        { x: 43, y: 0, z: 2 }, floor.id, 'physical');
+      setSpatialPosition(
+        world,
+        entityGet(world.entities, controlledEntityId(world)!)!,
+        { x: 43, y: 0, z: 5.8 },
+        floor.id,
+        'physical',
+      );
       const point = worldPosition(prototype);
       return Array.from({ length: 16 }, (_, index) => {
         const entity = structuredClone(prototype),
@@ -1622,9 +1639,12 @@ describe('actual director situation query continuation', () => {
     ).toEqual([]);
     crowdHandles = new Set(crowdIds.map((id) => entityHandle(h.service.world, NPC_ID, id)));
     const job = await h.chat('fixture-expanded-local-subject', 'Who else can you see here?');
-    const failure = job.status === 'completed'
-      ? job.message
-      : JSON.stringify((await h.trace(job.id)).stage('Workflow failure').map((call) => call.input));
+    const failure =
+      job.status === 'completed'
+        ? job.message
+        : JSON.stringify(
+            (await h.trace(job.id)).stage('Workflow failure').map((call) => call.input),
+          );
     expect(job.status, failure).toBe('completed');
     expect(generation).toBe(2);
     const noted = crowdIds.filter((id) =>

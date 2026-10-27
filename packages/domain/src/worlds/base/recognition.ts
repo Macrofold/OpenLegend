@@ -140,8 +140,12 @@ export function individualFamiliarityContactAt(
   individualId: string,
   confirmedThrough: number,
 ): number | undefined {
-  const identity = world.observerIdentities?.[observerId]?.[individualId];
-  const at = identity?.familiarity?.nextCreditAt;
+  const records = readOnlyDraftView(world).observerIdentities;
+  const owned = records && readOnlyDraftView(records)[observerId];
+  const stored = owned && readOnlyDraftView(owned)[individualId];
+  const identity = stored && readOnlyDraftView(stored);
+  const familiarity = identity?.familiarity && readOnlyDraftView(identity.familiarity);
+  const at = familiarity?.nextCreditAt;
   return identity && !identity.seedOnly && at !== undefined && at > confirmedThrough
     ? at
     : undefined;

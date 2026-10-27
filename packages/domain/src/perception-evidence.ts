@@ -315,10 +315,15 @@ export type PerceptionEvidenceState = Record<string, PerceptionEvidenceOwner>;
  * attempted declined contact provide no recurring wake-up. Motion retains its
  * explicit received interval until another genuine sight phase ends it. */
 export function nextPerceptionWorkAt(world: WorldState, observerId: string): number | undefined {
+  const owners = readOnlyDraftView(world).perceptionEvidence;
+  const source = owners && readOnlyDraftView(owners)[observerId];
+  if (!source) return;
+  const state = readOnlyDraftView(source);
+  const attention = state.attention && readOnlyDraftView(state.attention);
+  const geometry = state.geometry && readOnlyDraftView(state.geometry);
+  if (!attention?.entries.length && (!geometry || geometry.finished)) return;
   const observer = entityGet(world.entities, observerId);
-  const source = world.perceptionEvidence?.[observerId];
   if (
-    !source ||
     !observer?.actor?.alive ||
     !activelyParticipates(observer) ||
     (!hasMemory(observer) &&
@@ -327,8 +332,6 @@ export function nextPerceptionWorkAt(world: WorldState, observerId: string): num
     visionRadius(world, observer) <= 0
   )
     return;
-  const state = readOnlyDraftView(source);
-  const geometry = state.geometry && readOnlyDraftView(state.geometry);
   let next = nextAttentionWorkAt(world, observerId) ?? Infinity;
   if (
     geometry &&
@@ -815,12 +818,12 @@ export function currentBodyAssociation(
   observerId: string,
   subjectId: string,
 ): ObserverSubject | undefined {
-  const body = eligibleBodyLease(world, observerId, subjectId);
   const association = world.perceptionEvidence?.[observerId]?.current[`${subjectId}:association`];
+  if (association?.value.kind !== 'association' || association.value.strength !== 'supported')
+    return;
+  const body = eligibleBodyLease(world, observerId, subjectId);
   return body &&
-    association?.bodyLeaseId === body.id &&
-    association.value.kind === 'association' &&
-    association.value.strength === 'supported' &&
+    association.bodyLeaseId === body.id &&
     associationEvidenceStatus(
       world,
       observerId,
@@ -1107,15 +1110,13 @@ export function reconcileVisualEvidence(
   const lostIndividuals = new Set<string>();
   for (const [id, gap] of Object.entries(state.gaps))
     if (gap.through < world.simTime) delete state.gaps[id];
-  const eligible = new Set(subjects.map((entity) => entity.id));
+  const eligible = new Map(
+    subjects.map(
+      (entity) => [entity.id, entity.actor ? (entity.actor.physicalLife ?? 0) : null] as const,
+    ),
+  );
   for (const [key, lease] of Object.entries(readOnlyDraftView(state.current)))
-    if (
-      lease.modality === 'sight' &&
-      (!eligible.has(lease.subjectId) ||
-        lease.subjectPhysicalLife !==
-          (entityGet(world.entities, lease.subjectId)?.actor?.physicalLife ??
-            (entityGet(world.entities, lease.subjectId)?.actor ? 0 : null)))
-    ) {
+    if (lease.modality === 'sight' && lease.subjectPhysicalLife !== eligible.get(lease.subjectId)) {
       attentionChanges.add(lease.subjectId);
       if (lease.value.kind === 'body' && lease.localSubject?.kind === 'individual')
         lostIndividuals.add(lease.localSubject.individualId);
